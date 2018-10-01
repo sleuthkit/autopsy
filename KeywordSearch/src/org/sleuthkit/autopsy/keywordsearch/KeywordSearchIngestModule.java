@@ -164,7 +164,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (!IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
                 throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSolrVersionNotSupported(indexInfo.getSolrVersion()));
             }
-            if (!IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion())) {
+            if (!indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
                 throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));
             }
         } catch (NoOpenCoreException ex) {

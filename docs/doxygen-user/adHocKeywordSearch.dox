@@ -37,7 +37,7 @@ Substring match should be used where the search term is just part of a word, or 
 
 ## Regex match
 
-Regex match can be used to search for a specific pattern. Regular expressions are supported using Lucene Regex Syntax which is documented here: https://www.elastic.co/guide/en/elasticsearch/reference/1.6/query-dsl-regexp-query.html#regexp-syntax. Wildcards are automatically added to the beginning and end of the regular expressions to ensure all matches are found. Additionally, the resulting hits are split on common token separator boundaries (e.g. space, newline, colon, exclamation point etc.) to make the resulting keyword hit more amenable to highlighting.
+Regex match can be used to search for a specific pattern. Regular expressions are supported using Lucene Regex Syntax which is documented here: https://www.elastic.co/guide/en/elasticsearch/reference/1.6/query-dsl-regexp-query.html#regexp-syntax. Wildcards are automatically added to the beginning and end of the regular expressions to ensure all matches are found. Additionally, the resulting hits are split on common token separator boundaries (e.g. space, newline, colon, exclamation point etc.) to make the resulting keyword hit more amenable to highlighting. As of Autopsy 4.9, regex searches are no longer case sensitive. This includes literal characters and character classes.
 
 <b>Note:</b> Since Autopsy 4.4, boundary characters ('^' and '$') no longer work as word boundaries. Previously a search for "^[0-9]{5}$" would return all five 
 digit strings surrounded by some type of non-word characters. For example, "The number 12345 is.." would contain a match, while "123456789 people" would not. This was because the regex
@@ -48,8 +48,9 @@ There is some validation on the regex but it's best to test on a sample image to
 
 > In the year 1885 in an article titled Current Notes, the quick brown fox first jumped over the lazy dog.
 
-- "qu.ck", "Cu.*es" will match
-- "[Ff][Oo][Xx]" will match any version of "fox". There is no way to specify that an entire regex should be case-insensitive.
+- "fox" and "FOX" will both match since the search is case-insensitive
+- "qu.ck", "cu.*es" will match
+- "[JLK]umped" will match "jumped"
 - "[0-9]{4}" will match 1885. Character classes like "\d" are not supported. Backreferences are also not supported (but will not generate an error), so "Cu(.)\1ent" would not work to find "Current"
 
 ## Other notes
@@ -66,17 +67,15 @@ If you want to override this default behavior:
 - Make a new keyword list containing the result and run it either during ingest or through the Keyword Lists button.
 
 ### Non-Latin text
-In general all three types of keyword searches will work as expected but the feature has not been thoroughly tested with all character sets. As with regex above, we suggest testing on a sample file. Some notes:
-- Exact match and substring match may no longer be case-insensitive
-- In languages like Japanese that don't contain word breaks, every character is processed as a separate word. This tends to make substring match fail, but those searches can be run using exact match. For example, if the text contained 日本語, an exact match search on 日本 would find it (a substring search on 日本 would fail).
+In general all three types of keyword searches will work as expected but the feature has not been thoroughly tested with all character sets. For example, the searches may no longer be case-insensitive. As with regex above, we suggest testing on a sample file.
 
 \section ad_hoc_kw_search Keyword Search
 
-Individual keyword or regular expressions can quickly be searched using the search text box widget. You can select "Exact Match", "Substring Match" and "Regular Expression" match. See the earlier \ref ad_hoc_kw_types_section section for information on each keyword type.  The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+left click or control+left click.
+Individual keyword or regular expressions can quickly be searched using the search text box widget. You can select "Exact Match", "Substring Match" and "Regular Expression" match. See the earlier \ref ad_hoc_kw_types_section section for information on each keyword type.  The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+left click or control+left click. The "Save search results" checkbox determines whether the search results will be saved to the case database. 
 
 \image html keyword-search-bar.PNG
 
-Results will be opened in a separate Results Viewer for every search executed and they will also be saved in the Directory Tree as shown in the screenshot below.
+Results will be opened in a separate Results Viewer for every search executed. If the "Save search results" checkbox was enabled, the results will also be saved in the Directory Tree as shown in the screenshot below.
 
 \image html keyword-search-hits.PNG
 
@@ -84,11 +83,11 @@ Results will be opened in a separate Results Viewer for every search executed an
 
 In addition to being selected during ingest, keyword lists can also be run through the Keyword Lists button. For information on setting up these keyword lists, see the \ref keywordListsTab section of the ingest module documentation.
 
-Lists created using the Keyword Search Configuration Dialog can be manually searched by the user by pressing on the 'Keyword Lists' button and selecting the check boxes corresponding to the lists to be searched. The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+left click or control+left click. Once everything has been configured, press "Search" to begin the search.
+Lists created using the Keyword Search Configuration Dialog can be manually searched by the user by pressing on the 'Keyword Lists' button and selecting the check boxes corresponding to the lists to be searched. The search can be restricted to only certain data sources by selecting the checkbox near the bottom and then highlighting the data sources to search within. Multiple data sources can be selected used shift+left click or control+left click. Once everything has been configured, press "Search" to begin the search. The "Save search results" checkbox determines whether the search results will be saved to the case database.
 
 \image html keyword-search-list.PNG
 
-The results of the keyword list search are shown in the tree, as shown below.
+If the "Save search results" checkbox was enabled, the results of the keyword list search will be shown in the tree, as shown below.
 
 \image html keyword-search-list-results.PNG
 

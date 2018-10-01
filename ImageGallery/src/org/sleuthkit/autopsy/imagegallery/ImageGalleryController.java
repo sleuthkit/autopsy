@@ -38,7 +38,6 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
-import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -606,6 +605,7 @@ public final class ImageGalleryController {
 
             DRAWABLE_QUERY
                     = DATASOURCE_CLAUSE
+                      + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")"
                       + " AND ( "
                       + //grab files with supported extension
                     FILE_EXTENSION_CLAUSE
@@ -639,7 +639,7 @@ public final class ImageGalleryController {
         public void run() {
             progressHandle = getInitialProgressHandle();
             progressHandle.start();
-            updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status());
+            updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status()  + " (Data Source " + dataSourceObjId + ")" );
 
             DrawableDB.DrawableTransaction drawableDbTransaction = null;
             CaseDbTransaction caseDbTransaction = null;
@@ -654,6 +654,7 @@ public final class ImageGalleryController {
                 taskCompletionStatus = true;
                 int workDone = 0;
 
+                // Cycle through all of the files returned and call processFile on each
                 //do in transaction
                 drawableDbTransaction = taskDB.beginTransaction();
                 caseDbTransaction = tskCase.beginTransaction();
@@ -667,7 +668,7 @@ public final class ImageGalleryController {
                     }
 
                     processFile(f, drawableDbTransaction, caseDbTransaction);
-
+ 
                     workDone++;
                     progressHandle.progress(f.getName(), workDone);
                     updateProgress(workDone - 1 / (double) files.size());
@@ -676,11 +677,12 @@ public final class ImageGalleryController {
 
                 progressHandle.finish();
                 progressHandle = ProgressHandle.createHandle(Bundle.BulkTask_committingDb_status());
-                updateMessage(Bundle.BulkTask_committingDb_status());
+                updateMessage(Bundle.BulkTask_committingDb_status() + " (Data Source " + dataSourceObjId + ")" );
                 updateProgress(1.0);
 
                 progressHandle.start();
                 caseDbTransaction.commit();
+                // pass true so that groupmanager is notified of the changes
                 taskDB.commitTransaction(drawableDbTransaction, true);
 
             } catch (TskCoreException ex) {
@@ -732,10 +734,12 @@ public final class ImageGalleryController {
 
         CopyAnalyzedFiles(long dataSourceObjId, ImageGalleryController controller) {
             super(dataSourceObjId, controller);
+            taskDB.buildFileMetaDataCache();
         }
 
         @Override
         protected void cleanup(boolean success) {
+            taskDB.freeFileMetaDataCache();
             // at the end of the task, set the stale status based on the 
             // cumulative status of all data sources
             controller.setStale(controller.isDataSourcesTableStale());
@@ -748,20 +752,19 @@ public final class ImageGalleryController {
             if (known) {
                 taskDB.removeFile(f.getId(), tr);  //remove known files
             } else {
-
                 try {
+                    // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
+                    if (null == f.getMIMEType()) {
+                        // set to false to force the DB to be marked as stale
+                        this.setTaskCompletionStatus(false);
+                    }
                     //supported mimetype => analyzed
-                    if (null != f.getMIMEType() && FileTypeUtils.hasDrawableMIMEType(f)) {
+                    else if (FileTypeUtils.hasDrawableMIMEType(f)) {
                         taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
-                    } else {
-                        // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
-                        if (null == f.getMIMEType()) {
-                            // set to false to force the DB to be marked as stale
-                            this.setTaskCompletionStatus(false);
-                        } else {
-                            //unsupported mimtype => analyzed but shouldn't include
-                            taskDB.removeFile(f.getId(), tr);
-                        }
+                    }
+                    //unsupported mimtype => analyzed but shouldn't include
+                    else {
+                        taskDB.removeFile(f.getId(), tr);
                     }
                 } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                     throw new TskCoreException("Failed to initialize FileTypeDetector.", ex);

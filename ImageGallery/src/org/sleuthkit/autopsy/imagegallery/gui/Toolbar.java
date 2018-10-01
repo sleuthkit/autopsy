@@ -24,9 +24,11 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -42,7 +44,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Slider;
@@ -66,7 +67,6 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.datamodel.DhsImageCategory;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
-import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.actions.CategorizeGroupAction;
 import org.sleuthkit.autopsy.imagegallery.actions.TagGroupAction;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
@@ -75,7 +75,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Controller for the ToolBar
@@ -114,6 +113,7 @@ public class Toolbar extends ToolBar {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<Optional<DataSource>> dataSources = FXCollections.observableArrayList();
     private SingleSelectionModel<Optional<DataSource>> dataSourceSelectionModel;
+    private final Map<DataSource, Boolean> dataSourcesViewable = new HashMap<>();
 
     private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
         @Override
@@ -236,8 +236,8 @@ public class Toolbar extends ToolBar {
     }
 
     private void initDataSourceComboBox() {
-        dataSourceComboBox.setCellFactory(param -> new DataSourceCell());
-        dataSourceComboBox.setButtonCell(new DataSourceCell());
+        dataSourceComboBox.setCellFactory(param -> new DataSourceCell(dataSourcesViewable));
+        dataSourceComboBox.setButtonCell(new DataSourceCell(dataSourcesViewable));
         dataSourceComboBox.setConverter(new StringConverter<Optional<DataSource>>() {
             @Override
             public String toString(Optional<DataSource> object) {
@@ -265,27 +265,7 @@ public class Toolbar extends ToolBar {
                         -> dataSourceSelectionModel.select(Optional.ofNullable(newDataSource)));
         dataSourceSelectionModel.select(Optional.ofNullable(controller.getGroupManager().getDataSource()));
         dataSourceComboBox.disableProperty().bind(groupByBox.getSelectionModel().selectedItemProperty().isNotEqualTo(DrawableAttribute.PATH));
-        dataSourceSelectionModel.selectedItemProperty().addListener((observable, oldDataSource, newDataSource) -> {
-            //TODO: check that newDataSource is actually different than one in groupmanager.... avoid toomany files check.
-            Futures.addCallback(
-                    exec.submit(() -> controller.tooManyFiles(getSelectedDataSource())),
-                    new FutureCallback<Boolean>() {
-                @Override
-                public void onSuccess(Boolean result) {
-                    if (result) {
-                        ImageGalleryTopComponent.showTooManyFiles();
-                        dataSourceSelectionModel.select(oldDataSource);
-                    } else {
-                        queryInvalidationListener.invalidated(observable);
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    logger.log(Level.SEVERE, "Could not count files in datasource", t); //NON-NLS }
-                }
-            }, Platform::runLater);
-        });
+        dataSourceSelectionModel.selectedItemProperty().addListener(queryInvalidationListener);
     }
 
     private void initTagMenuButton() {
@@ -340,12 +320,23 @@ public class Toolbar extends ToolBar {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     private ListenableFuture<List<DataSource>> syncDataSources() {
-        ListenableFuture<List<DataSource>> future = exec.submit(controller.getSleuthKitCase()::getDataSources);
+        ListenableFuture<List<DataSource>> future = exec.submit(() -> {
+            List<DataSource> dataSources1 = controller.getSleuthKitCase().getDataSources();
+            synchronized (dataSourcesViewable) {
+                dataSourcesViewable.put(null, controller.tooManyFiles(null));
+                for (DataSource ds : dataSources1) {
+                    dataSourcesViewable.put(ds, controller.tooManyFiles(ds));
+                }
+            }
+            return dataSources1;
+        });
         Futures.addCallback(future, new FutureCallback<List<DataSource>>() {
             @Override
             public void onSuccess(List<DataSource> result) {
-                dataSources.setAll(Collections.singleton(Optional.empty()));
-                result.forEach(dataSource -> dataSources.add(Optional.of(dataSource)));
+                List<Optional<DataSource>> newDataSources = new ArrayList<>();
+                newDataSources.add(Optional.empty());
+                result.forEach(dataSource -> newDataSources.add(Optional.of(dataSource)));
+                dataSources.setAll(newDataSources);
             }
 
             @Override
@@ -413,40 +404,4 @@ public class Toolbar extends ToolBar {
 
     }
 
-    /**
-     * Cell used to represent a DataSource in the dataSourceComboBoc
-     */
-    private class DataSourceCell extends ListCell<Optional<DataSource>> {
-
-        @Override
-        protected void updateItem(Optional<DataSource> item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty) {
-                setText("");
-            } else if (item == null) {
-                setText("");
-            } else {
-                String text;
-                DataSource dataSource = item.orElse(null);
-                if (item.isPresent()) {
-                    text = dataSource.getName() + " (Id: " + dataSource.getId() + ")";
-                } else {
-                    text = "All";
-                }
-                boolean tooManyFilesInDataSource;
-                try {
-                    tooManyFilesInDataSource = controller.tooManyFiles(dataSource);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error counting files in datasource", ex);
-                    tooManyFilesInDataSource = false;
-                }
-
-                setDisable(tooManyFilesInDataSource);
-                if (tooManyFilesInDataSource) {
-                    text += " - Too many files";
-                }
-                setText(text);
-            }
-        }
-    }
 }
