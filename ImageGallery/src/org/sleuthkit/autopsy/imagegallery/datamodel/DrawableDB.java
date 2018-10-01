@@ -457,7 +457,7 @@ public final class DrawableDB {
                     + " hash_set_name VARCHAR(255) UNIQUE NOT NULL)"; //NON-NLS
             stmt.execute(sql);
         } catch (SQLException ex) {
-            throw new SQLException(String.format("Failed to create %s table in case datasbase for Image Gallery", CASEDB_GROUPS_SEEN_TABLENAME), ex); //NON-NLS
+            throw new SQLException(String.format("Failed to create hash_sets table for Image Gallery database at %s", this.dbPath), ex); //NON-NLS
         }
 
         try (Statement stmt = con.createStatement()) {

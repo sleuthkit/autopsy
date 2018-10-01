@@ -252,67 +252,59 @@ public class ImageGalleryModule {
 
             if (Case.Events.valueOf(evt.getPropertyName()) == Case.Events.CURRENT_CASE) {
                 synchronized (controllerLock) {
-                    if (evt.getNewValue() != null) {
+                    if (evt.getOldValue() != null) {
+
                         /*
-                         * There is a new current case.
-                         */
-                        Case newCase = (Case) evt.getNewValue();
-                        try {
-                            controller = new ImageGalleryController(newCase);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Failed to handle opening of new case in Image Gallery", ex);
-                        }
-                    } else {
-                        /*
-                         * The current case has been closed.
+                         * The current case has been closed, free resources.
                          */
                         SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                         if (controller != null) {
                             controller.shutDown();
                         }
                         controller = null;
+
+                    } else {
+                        ImageGalleryController con;
+                        try {
+                            con = getController();
+                        } catch (NoCurrentCaseException ex) {
+                            logger.log(Level.SEVERE, "Attempt to process a Case.Event with no case open", ex); //NON-NLS
+                            return;
+                        }
+                        switch (Case.Events.valueOf(evt.getPropertyName())) {
+                            case DATA_SOURCE_ADDED:
+                                //For a data source added on the local node, prepopulate all file data to drawable database
+                                if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                                    Content newDataSource = (Content) evt.getNewValue();
+                                    if (con.isListeningEnabled()) {
+                                        con.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
+                                    }
+                                }
+                                break;
+                            case CONTENT_TAG_ADDED:
+                                final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
+
+                                long objId = tagAddedEvent.getAddedTag().getContent().getId();
+
+                                // update the cache
+                                DrawableDB drawableDB = controller.getDatabase();
+                                drawableDB.addTagCache(objId);
+
+                                if (con.getDatabase().isInDB(objId)) {
+                                    con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
+                                }
+                                break;
+                            case CONTENT_TAG_DELETED:
+                                final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
+                                if (con.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
+                                    con.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
+                                }
+                                break;
+                            default:
+                                //we don't need to do anything for other events.
+                                break;
+                        }
                     }
-                }
-            } else {
-                ImageGalleryController con;
-                try {
-                    con = getController();
-                } catch (NoCurrentCaseException ex) {
-                    logger.log(Level.SEVERE, "Attempt to process a Case.Event with no case open", ex); //NON-NLS
-                    return;
-                }
-                switch (Case.Events.valueOf(evt.getPropertyName())) {
-                    case DATA_SOURCE_ADDED:
-                        //For a data source added on the local node, prepopulate all file data to drawable database
-                        if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
-                            Content newDataSource = (Content) evt.getNewValue();
-                            if (con.isListeningEnabled()) {
-                                con.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
-                            }
-                        }
-                        break;
-                    case CONTENT_TAG_ADDED:
-                        final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-
-                        long objId = tagAddedEvent.getAddedTag().getContent().getId();
-
-                        // update the cache
-                        DrawableDB drawableDB = controller.getDatabase();
-                        drawableDB.addTagCache(objId);
-
-                        if (con.getDatabase().isInDB(objId)) {
-                            con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
-                        }
-                        break;
-                    case CONTENT_TAG_DELETED:
-                        final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                        if (con.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
-                            con.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
-                        }
-                        break;
-                    default:
-                        //we don't need to do anything for other events.
-                        break;
                 }
             }
         }
