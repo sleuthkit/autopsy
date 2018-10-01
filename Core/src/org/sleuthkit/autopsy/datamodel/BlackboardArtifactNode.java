@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -351,15 +352,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
-        
+
         addScoreProperty(sheetSet, tags);
-        
+
         CorrelationAttributeInstance correlationAttribute = null;
         if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
-        
+
         if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
@@ -637,6 +638,22 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
             }
         }
+        //if the artifact being viewed is a hashhit check if the hashset is notable 
+        if ((score == Score.NO_SCORE || score == Score.INTERESTING_SCORE) && content.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+            try {
+                BlackboardAttribute attr = content.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME));
+                List<HashDbManager.HashDb> notableHashsets = HashDbManager.getInstance().getKnownBadFileHashSets();
+                for (HashDbManager.HashDb hashDb : notableHashsets) {
+                    if (hashDb.getHashSetName().equals(attr.getValueString())) {
+                        score = Score.NOTABLE_SCORE;
+                        break;
+                    }
+                }
+            } catch (TskCoreException ex) {
+                //unable to get the attribute so we can not update the status based on the attribute
+                logger.log(Level.WARNING, "Unable to get TSK_SET_NAME attribute for artifact of type TSK_HASHSET_HIT with artifact ID " + content.getArtifactID(), ex);
+            }
+        }
         try {
             if (score == Score.NO_SCORE && !content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).isEmpty()) {
                 score = Score.INTERESTING_SCORE;
@@ -679,8 +696,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         } catch (EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
-        }
-        catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
         sheetSet.put(

@@ -189,10 +189,10 @@ class DropdownToolbar extends javax.swing.JPanel {
                                      * schema version and selectively enable the ad
                                      * hoc search UI components.
                                      */
-                                    boolean schemaIsCurrent = IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion());
-                                    listsButton.setEnabled(schemaIsCurrent);
+                                    boolean schemaIsCompatible = indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion());
+                                    listsButton.setEnabled(schemaIsCompatible);
                                     searchDropButton.setEnabled(true);
-                                    dropPanel.setRegexSearchEnabled(schemaIsCurrent);
+                                    dropPanel.setRegexSearchEnabled(schemaIsCompatible);
                                     active = true;
                                 } else {
                                     /*

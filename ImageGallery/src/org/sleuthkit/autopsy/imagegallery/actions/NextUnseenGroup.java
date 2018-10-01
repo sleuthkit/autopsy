@@ -72,6 +72,7 @@ public class NextUnseenGroup extends Action {
             Optional.ofNullable(controller.getViewState())
                     .flatMap(GroupViewState::getGroup)
                     .ifPresent(group -> {
+                        setDisabled(true);
                         groupManager.markGroupSeen(group, true)
                                 .addListener(this::advanceToNextUnseenGroup, MoreExecutors.newDirectExecutorService());
                     });

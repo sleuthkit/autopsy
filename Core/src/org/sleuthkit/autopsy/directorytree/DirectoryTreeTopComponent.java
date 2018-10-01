@@ -166,9 +166,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             @Override
             public void preferenceChange(PreferenceChangeEvent evt) {
                 switch (evt.getKey()) {
+                    case UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME:
                     case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES:
+                    case UserPreferences.KEEP_PREFERRED_VIEWER:
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.SHOW_ONLY_CURRENT_USER_TAGS:
@@ -176,7 +178,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
                     case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:
-                        // TODO: Need a way to refresh the Views subtree
+                        // TODO: Need a way to refresh the Views subtree alone.
+                        refreshContentTreeSafe();
                         break;
                 }
             }
@@ -238,42 +241,46 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         treeView.setBorder(null);
 
-        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_large.png"))); // NOI18N
+        backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(backButton, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.backButton.text")); // NOI18N
         backButton.setBorderPainted(false);
         backButton.setContentAreaFilled(false);
-        backButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_disabled_large.png"))); // NOI18N
+        backButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_disabled.png"))); // NOI18N
         backButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         backButton.setMaximumSize(new java.awt.Dimension(55, 100));
         backButton.setMinimumSize(new java.awt.Dimension(5, 5));
-        backButton.setPreferredSize(new java.awt.Dimension(32, 32));
-        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_hover_large.png"))); // NOI18N
+        backButton.setPreferredSize(new java.awt.Dimension(24, 24));
+        backButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back_hover.png"))); // NOI18N
         backButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 backButtonActionPerformed(evt);
             }
         });
 
-        forwardButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_large.png"))); // NOI18N
+        forwardButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(forwardButton, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.forwardButton.text")); // NOI18N
         forwardButton.setBorderPainted(false);
         forwardButton.setContentAreaFilled(false);
-        forwardButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_disabled_large.png"))); // NOI18N
+        forwardButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_disabled.png"))); // NOI18N
         forwardButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         forwardButton.setMaximumSize(new java.awt.Dimension(55, 100));
         forwardButton.setMinimumSize(new java.awt.Dimension(5, 5));
-        forwardButton.setPreferredSize(new java.awt.Dimension(32, 32));
-        forwardButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_hover_large.png"))); // NOI18N
+        forwardButton.setPreferredSize(new java.awt.Dimension(24, 24));
+        forwardButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_forward_hover.png"))); // NOI18N
         forwardButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 forwardButtonActionPerformed(evt);
             }
         });
 
-        openViewPreferencesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/view-preferences-24.png"))); // NOI18N
+        openViewPreferencesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/view-preferences-23.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(openViewPreferencesButton, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.openViewPreferencesButton.text")); // NOI18N
-        openViewPreferencesButton.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        openViewPreferencesButton.setPreferredSize(new java.awt.Dimension(30, 30));
+        openViewPreferencesButton.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
+        openViewPreferencesButton.setBorderPainted(false);
+        openViewPreferencesButton.setContentAreaFilled(false);
+        openViewPreferencesButton.setMaximumSize(new java.awt.Dimension(24, 24));
+        openViewPreferencesButton.setMinimumSize(new java.awt.Dimension(24, 24));
+        openViewPreferencesButton.setPreferredSize(new java.awt.Dimension(24, 24));
         openViewPreferencesButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 openViewPreferencesButtonActionPerformed(evt);
@@ -286,23 +293,24 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(treeView)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 264, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 140, Short.MAX_VALUE)
                 .addComponent(openViewPreferencesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(0, 0, 0)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(openViewPreferencesButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(openViewPreferencesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(forwardButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(treeView, javax.swing.GroupLayout.DEFAULT_SIZE, 900, Short.MAX_VALUE))
+                .addComponent(treeView, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
