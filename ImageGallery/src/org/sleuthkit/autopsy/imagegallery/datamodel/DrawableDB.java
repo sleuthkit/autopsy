@@ -366,23 +366,76 @@ public final class DrawableDB {
     }
 
     /**
-     * Creates and opens a connection to a new drawable database at the given
-     * path.
+     * Opens a connection to a drawable database at the given path. If the
+     * database does not exist, it is created. If the database exists, it is
+     * checked for version compatibility, and if incompatible, it is deleted and
+     * replaced.
      *
-     * @param controller
+     * @param controller The image gallery controller for a case.
      *
-     * @return A DrawableDB for the given controller.
+     * @return A drawable database for the given image gallery controller.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public static DrawableDB getDrawableDB(ImageGalleryController controller) throws TskCoreException {
-        Path moduleOutputPath = ImageGalleryModule.getModuleOutputDir(controller.getAutopsyCase());
-        Path dbPath = moduleOutputPath.resolve(IMAGE_GALLERY_DB_NAME);
+        Path dbPath = ImageGalleryModule.getModuleOutputDir(controller.getAutopsyCase()).resolve(IMAGE_GALLERY_DB_NAME);
+
+        /*
+         * Check for version compatibility.
+         */
+        try {
+            if (hasDataSourceObjIdColumn(dbPath) == false) {
+                Files.deleteIfExists(dbPath);
+            }
+        } catch (IOException ex) {
+            throw new TskCoreException(String.format("Error deleting incompatible Image Gallery database at %s", dbPath), ex); //NON-NLS
+        }
+
+        /*
+         * Create or open database.
+         */
         try {
             return new DrawableDB(dbPath, controller); //NON-NLS
         } catch (SQLException | IOException ex) {
-            throw new TskCoreException(String.format("Error creating Image Gallery database at %s", dbPath), ex); //NON-NLS
+            throw new TskCoreException(String.format("Error creating or opening Image Gallery database at %s", dbPath), ex); //NON-NLS
         }
+    }
+
+    /**
+     * Check if the db at the given path has the data_source_obj_id column. If
+     * the db doesn't exist or doesn't even have the drawable_files table, this
+     * method returns false.
+     *
+     * NOTE: This method makes an ad-hoc connection to db, which has the side
+     * effect of creating the drawable.db file if it didn't already exist.
+     */
+    private static boolean hasDataSourceObjIdColumn(Path dbPath) throws TskCoreException {
+
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
+                Statement stmt = con.createStatement();) {
+            boolean tableExists = false;
+            try (ResultSet results = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table'");) {//NON-NLS
+                while (results.next()) {
+                    if ("drawable_files".equals(results.getString("name"))) {
+                        tableExists = true;
+                        break;
+                    }
+                }
+            }
+            if (false == tableExists) {
+                return false;
+            }
+            try (ResultSet results = stmt.executeQuery("PRAGMA table_info('drawable_files')");) {   //NON-NLS
+                while (results.next()) {
+                    if ("data_source_obj_id".equals(results.getString("name"))) {
+                        return true;
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new TskCoreException("SQL error checking database compatibility", ex); //NON-NLS
+        }
+        return false;
     }
 
     private void setPragmas() throws SQLException {

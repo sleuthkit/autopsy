@@ -63,14 +63,10 @@ public class ImageGalleryModule {
     private static final Object controllerLock = new Object();
     private static ImageGalleryController controller;
 
-    public static ImageGalleryController getController() throws NoCurrentCaseException {
+    public static ImageGalleryController getController() throws TskCoreException, NoCurrentCaseException {
         synchronized (controllerLock) {
             if (controller == null) {
-                try {
-                    controller = new ImageGalleryController(Case.getCurrentCaseThrows());
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    throw new NoCurrentCaseException("Error getting ImageGalleryController for the current case.", ex);
-                }
+                controller = new ImageGalleryController(Case.getCurrentCaseThrows());
             }
             return controller;
         }
@@ -214,6 +210,8 @@ public class ImageGalleryModule {
                     }
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
                 }
             } else if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == DATA_ADDED) {
                 ModuleDataEvent mde = (ModuleDataEvent) evt.getOldValue();
@@ -240,71 +238,74 @@ public class ImageGalleryModule {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            /*
+             * If running in "headless" mode, there is no need to process any
+             * events. Note that this check cannot be done earlier because the
+             * switch to core components inactive may not have been made at
+             * start up.
+             */
             if (RuntimeProperties.runningWithGUI() == false) {
-                /*
-                 * Running in "headless" mode, no need to process any events.
-                 * This cannot be done earlier because the switch to core
-                 * components inactive may not have been made at start up.
-                 */
                 Case.removePropertyChangeListener(this);
                 return;
             }
 
             if (Case.Events.valueOf(evt.getPropertyName()) == Case.Events.CURRENT_CASE) {
-                synchronized (controllerLock) {
-                    if (evt.getOldValue() != null) {
-
-                        /*
-                         * The current case has been closed, free resources.
-                         */
+                /*
+                 * If the event is a case closed event, free resources.
+                 */
+                if (evt.getOldValue() != null) {
+                    synchronized (controllerLock) {
                         SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                         if (controller != null) {
                             controller.shutDown();
                         }
                         controller = null;
-
-                    } else {
-                        ImageGalleryController con;
-                        try {
-                            con = getController();
-                        } catch (NoCurrentCaseException ex) {
-                            logger.log(Level.SEVERE, "Attempt to process a Case.Event with no case open", ex); //NON-NLS
-                            return;
-                        }
-                        switch (Case.Events.valueOf(evt.getPropertyName())) {
-                            case DATA_SOURCE_ADDED:
-                                //For a data source added on the local node, prepopulate all file data to drawable database
-                                if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
-                                    Content newDataSource = (Content) evt.getNewValue();
-                                    if (con.isListeningEnabled()) {
-                                        con.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
-                                    }
-                                }
-                                break;
-                            case CONTENT_TAG_ADDED:
-                                final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-
-                                long objId = tagAddedEvent.getAddedTag().getContent().getId();
-
-                                // update the cache
-                                DrawableDB drawableDB = controller.getDatabase();
-                                drawableDB.addTagCache(objId);
-
-                                if (con.getDatabase().isInDB(objId)) {
-                                    con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
-                                }
-                                break;
-                            case CONTENT_TAG_DELETED:
-                                final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                                if (con.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
-                                    con.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
-                                }
-                                break;
-                            default:
-                                //we don't need to do anything for other events.
-                                break;
-                        }
                     }
+                }
+            } else {
+                String eventType = evt.getPropertyName();
+                ImageGalleryController con;
+                try {
+                    con = getController();
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, String.format("Received a Case.Event.%s event with no case open", eventType), ex); //NON-NLS
+                    return;
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Error processing a Case.Event.%s event", eventType), ex); //NON-NLS
+                    return;
+                }
+                switch (Case.Events.valueOf(eventType)) {
+                    case DATA_SOURCE_ADDED:
+                        //For a data source added on the local node, prepopulate all file data to drawable database
+                        if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                            Content newDataSource = (Content) evt.getNewValue();
+                            if (con.isListeningEnabled()) {
+                                con.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
+                            }
+                        }
+                        break;
+                    case CONTENT_TAG_ADDED:
+                        final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
+
+                        long objId = tagAddedEvent.getAddedTag().getContent().getId();
+
+                        // update the cache
+                        DrawableDB drawableDB = controller.getDatabase();
+                        drawableDB.addTagCache(objId);
+
+                        if (con.getDatabase().isInDB(objId)) {
+                            con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
+                        }
+                        break;
+                    case CONTENT_TAG_DELETED:
+                        final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
+                        if (con.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
+                            con.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
+                        }
+                        break;
+                    default:
+                        //we don't need to do anything for other events.
+                        break;
                 }
             }
         }
@@ -330,31 +331,32 @@ public class ImageGalleryModule {
             }
             // A remote node added a new data source and just finished ingest on it.
             //drawable db is stale, and if ImageGallery is open, ask user what to do
-            ImageGalleryController con;
+
             try {
-                con = getController();
+                ImageGalleryController con = getController();
+                con.setStale(true);
+                if (con.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
+                    SwingUtilities.invokeLater(() -> {
+                        int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
+                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
+                                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                        switch (showAnswer) {
+                            case JOptionPane.YES_OPTION:
+                                con.rebuildDB();
+                                break;
+                            case JOptionPane.NO_OPTION:
+                            case JOptionPane.CANCEL_OPTION:
+                            default:
+                                break; //do nothing
+                            }
+                    });
+                }
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
-                return;
-            }
-            con.setStale(true);
-            if (con.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
-                SwingUtilities.invokeLater(() -> {
-                    int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
-                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
-                            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                    switch (showAnswer) {
-                        case JOptionPane.YES_OPTION:
-                            con.rebuildDB();
-                            break;
-                        case JOptionPane.NO_OPTION:
-                        case JOptionPane.CANCEL_OPTION:
-                        default:
-                            break; //do nothing
-                        }
-                });
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
             }
         }
     }
