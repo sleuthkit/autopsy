@@ -323,9 +323,10 @@ public class Toolbar extends ToolBar {
         ListenableFuture<List<DataSource>> future = exec.submit(() -> {
             List<DataSource> dataSources1 = controller.getSleuthKitCase().getDataSources();
             synchronized (dataSourcesViewable) {
-                dataSourcesViewable.put(null, controller.tooManyFiles(null));
+                dataSourcesViewable.clear();
+                dataSourcesViewable.put(null, controller.hasTooManyFiles(null));
                 for (DataSource ds : dataSources1) {
-                    dataSourcesViewable.put(ds, controller.tooManyFiles(ds));
+                    dataSourcesViewable.put(ds, controller.hasTooManyFiles(ds));
                 }
             }
             return dataSources1;

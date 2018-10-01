@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
-import org.sleuthkit.autopsy.imagegallery.gui.DataSourceCell;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +67,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableAttribute;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
+import org.sleuthkit.autopsy.imagegallery.gui.DataSourceCell;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.gui.NoGroupsDialog;
 import org.sleuthkit.autopsy.imagegallery.gui.StatusBar;
@@ -152,8 +152,10 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     /**
      * NOTE: This usually gets called on the EDT
      *
+     *
      * @throws NoCurrentCaseException
      */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Messages({
         "ImageGalleryTopComponent.chooseDataSourceDialog.headerText=Choose a data source to view.",
         "ImageGalleryTopComponent.chooseDataSourceDialog.contentText=Data source:",
@@ -210,8 +212,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         }).start();
     }
 
-    private void showDataSource(DataSource datasource) throws TskCoreException {
-        if (controller.tooManyFiles(datasource)) {
+    synchronized private void showDataSource(DataSource datasource) throws TskCoreException {
+        if (controller.hasTooManyFiles(datasource)) {
             Platform.runLater(ImageGalleryTopComponent::showTooManyFiles);
             return;
         }
@@ -223,10 +225,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         }
     }
 
-    private void promptForDataSource(List<DataSource> dataSources) throws TskCoreException {
+    synchronized private void promptForDataSource(List<DataSource> dataSources) throws TskCoreException {
+
         dataSourcesViewble.clear();
         for (DataSource dataSource : dataSources) {
-            dataSourcesViewble.put(dataSource, controller.tooManyFiles(dataSource));
+            dataSourcesViewble.put(dataSource, controller.hasTooManyFiles(dataSource));
         }
         /*
          * If there is more than one data source and the grouping is PATH (the
@@ -251,7 +254,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             Optional<DataSource> dataSource = datasourceDialog.showAndWait().orElse(Optional.empty());
 
             try {
-                showDataSource(dataSource.get());
+                showDataSource(dataSource.orElse(null));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error showing data source " + Objects.toString(dataSource), ex);
             }
@@ -275,7 +278,9 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public static void showTopComponent(TopComponent topComponent) {
-        topComponent.open();
+        if (topComponent.isOpened() == false) {
+            topComponent.open();
+        }
         topComponent.toFront();
         topComponent.requestActive();
     }
@@ -502,5 +507,4 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             setOpacity(.4);
         }
     }
-
 }
