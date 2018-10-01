@@ -1,7 +1,7 @@
 """
 Autopsy Forensic Browser
 
-Copyright 2016-17 Basis Technology Corp.
+Copyright 2016-2018 Basis Technology Corp.
 Contact: carrier <at> sleuthkit <dot> org
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,8 +72,8 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                     self._logger.log(Level.SEVERE, "Error parsing WWF messages", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error finding WWF messages", ex)
-            self._logger.log(Level.SEVERE, traceback.format_exc())
+            # Error finding WWF messages.
+            pass
 
     def __findWWFMessagesInDB(self, databasePath, abstractFile, dataSource):
         if not databasePath:
@@ -83,17 +83,21 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
             Class.forName("org.sqlite.JDBC"); # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
-        except (ClassNotFoundException, SQLException) as ex:
-            self._logger.log(Level.SEVERE, "Error opening database", ex)
+        except (ClassNotFoundException) as ex:
+            self._logger.log(Level.SEVERE, "Error loading JDBC driver", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
+        except (SQLException) as ex:
+            # Error opening database.
+            return
 
-	    # Create a 'Device' account using the data source device id
+        # Create a 'Device' account using the data source device id
         datasourceObjId = dataSource.getDataSource().getId()
         ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
         deviceID = ds.getDeviceId()
         deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, abstractFile)
 
+        resultSet = None
         try:
             resultSet = statement.executeQuery(
                     "SELECT message, strftime('%s' ,created_at) as datetime, user_id, game_id FROM chat_messages ORDER BY game_id DESC, created_at DESC;")
@@ -129,6 +133,9 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                     self._logger.log(Level.SEVERE, traceback.format_exc())
                     MessageNotifyUtil.Notify.error("Failed to index WWF message artifact for keyword search.", artifact.getDisplayName())
 
+        except SQLException as ex:
+            # Unable to execute WWF messages SQL query against database.
+            pass
         except Exception as ex:
             self._logger.log(Level.SEVERE, "Error parsing WWF messages to the blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -139,5 +146,5 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                 statement.close()
                 connection.close()
             except Exception as ex:
-                self._logger.log(Level.SEVERE, "Error closing database", ex)
-                self._logger.log(Level.SEVERE, traceback.format_exc())
+                # Error closing database.
+                pass
