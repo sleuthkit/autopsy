@@ -179,8 +179,9 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         }
 
         /**
-         * Updates the remainingCharactersLabel to reflect the current state
-         *
+         * Updates the remainingCharactersLabel to reflect the current state.
+         * If there are no more characters left, a red 0 is displayed in the 
+         * UI.
          */
         private void updateLabel() {
             if (remainingCharacters == 0) {
