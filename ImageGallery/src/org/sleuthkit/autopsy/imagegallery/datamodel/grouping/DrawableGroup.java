@@ -46,7 +46,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DrawableGroup implements Comparable<DrawableGroup> {
 
-    private static final Logger LOGGER = Logger.getLogger(DrawableGroup.class.getName());
+    private static final Logger logger = Logger.getLogger(DrawableGroup.class.getName());
 
     public static String getBlankGroupName() {
         return "unknown";
@@ -128,7 +128,9 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                         .filter(Boolean::booleanValue)
                         .count());
             } catch (NoCurrentCaseException ex) {
-                LOGGER.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
+                logger.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
+            } catch (TskCoreException ex) {
+               logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
             }
         }
         return hashSetHitsCount.get();
@@ -145,7 +147,7 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                 uncatCount.set(ImageGalleryModule.getController().getDatabase().getUncategorizedCount(fileIDs));
 
             } catch (TskCoreException | NoCurrentCaseException ex) {
-                LOGGER.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
+                logger.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
             }
         }
 

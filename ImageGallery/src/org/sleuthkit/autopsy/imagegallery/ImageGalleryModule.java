@@ -62,14 +62,10 @@ public class ImageGalleryModule {
     private static final Object controllerLock = new Object();
     private static ImageGalleryController controller;
 
-    public static ImageGalleryController getController() throws NoCurrentCaseException {
+    public static ImageGalleryController getController() throws TskCoreException, NoCurrentCaseException {
         synchronized (controllerLock) {
             if (controller == null) {
-                try {
-                    controller = new ImageGalleryController(Case.getCurrentCaseThrows());
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    throw new NoCurrentCaseException("Error getting ImageGalleryController for the current case.", ex);
-                }
+                controller = new ImageGalleryController(Case.getCurrentCaseThrows());
             }
             return controller;
         }
@@ -207,6 +203,8 @@ public class ImageGalleryModule {
                     }
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
                 }
             }
             else if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == DATA_ADDED) {
@@ -249,6 +247,9 @@ public class ImageGalleryModule {
                 con = getController();
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                return;
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
                 return;
             }
             switch (Case.Events.valueOf(evt.getPropertyName())) {
@@ -327,31 +328,32 @@ public class ImageGalleryModule {
             }
             // A remote node added a new data source and just finished ingest on it.
             //drawable db is stale, and if ImageGallery is open, ask user what to do
-            ImageGalleryController con;
+
             try {
-                con = getController();
+                ImageGalleryController con = getController();
+                con.setStale(true);
+                if (con.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
+                    SwingUtilities.invokeLater(() -> {
+                        int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
+                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
+                                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                        switch (showAnswer) {
+                            case JOptionPane.YES_OPTION:
+                                con.rebuildDB();
+                                break;
+                            case JOptionPane.NO_OPTION:
+                            case JOptionPane.CANCEL_OPTION:
+                            default:
+                                break; //do nothing
+                        }
+                    });
+                }
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
-                return;
-            }
-            con.setStale(true);
-            if (con.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
-                SwingUtilities.invokeLater(() -> {
-                    int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
-                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
-                            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                    switch (showAnswer) {
-                        case JOptionPane.YES_OPTION:
-                            con.rebuildDB();
-                            break;
-                        case JOptionPane.NO_OPTION:
-                        case JOptionPane.CANCEL_OPTION:
-                        default:
-                            break; //do nothing
-                    }
-                });
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
             }
         }
     }
