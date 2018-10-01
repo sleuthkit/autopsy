@@ -183,8 +183,15 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
          *
          */
         private void updateLabel() {
-            remainingCharactersLabel.setText(String.format("<html>%d %s</html>",
-                    remainingCharacters, "characters remaining"));
+            if (remainingCharacters == 0) {
+                remainingCharactersLabel.setText(String.format(
+                        "<html><font color=\"red\">%d</font> %s</html>",
+                    remainingCharacters, "characters remaining")); 
+            } else {
+                remainingCharactersLabel.setText(String.format(
+                        "<html><font color=\"black\">%d</font> %s</html>",
+                    remainingCharacters, "characters remaining")); 
+            }
         }
     }
 
