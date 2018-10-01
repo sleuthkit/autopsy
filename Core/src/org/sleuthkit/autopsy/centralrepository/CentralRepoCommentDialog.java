@@ -105,7 +105,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         private Integer remainingCharacters = MAX_CHARACTERS;
 
         public CentralRepoCommentLengthFilter() {
-            charactersRemainingLabel.setText(getUpdatedCharacterText());
+            updateLabel();
         }
 
         /**
@@ -146,7 +146,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
                 throws BadLocationException {
             super.remove(filter, offset, length);
             remainingCharacters += length;
-            charactersRemainingLabel.setText(getUpdatedCharacterText());
+            updateLabel();
         }
 
         /**
@@ -170,26 +170,21 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
             //Truncate the replace if its too long
             String truncatedText = input;
             if ((filter.getDocument().getLength() + input.length() - length) > MAX_CHARACTERS) {
-                truncatedText = input.substring(0, MAX_CHARACTERS - filter.getDocument().getLength() - length);
+                truncatedText = input.substring(0, MAX_CHARACTERS - 
+                        filter.getDocument().getLength() - length);
             }
             super.replace(filter, offset, length, truncatedText, attrSet);
             remainingCharacters -= truncatedText.length() - length;
-            charactersRemainingLabel.setText(getUpdatedCharacterText());
+            updateLabel();
         }
 
         /**
-         * Returns remaining character count in HTML format. If the remaining
-         * count is at the 0, then make the text red
+         * Updates the remainingCharactersLabel to reflect the current state
          *
-         * @return HTML formatted JLabel text
          */
-        private String getUpdatedCharacterText() {
-            if (remainingCharacters == 0) {
-                return String.format("<html><font color=\"red\">%d</font>%s</html>",
-                        remainingCharacters, " characters remaining");
-            }
-            return String.format("<html><font color=\"black\">%d</font>%s</html>",
-                    remainingCharacters, " characters remaining");
+        private void updateLabel() {
+            remainingCharactersLabel.setText(String.format("<html>%d %s</html>",
+                    remainingCharacters, "characters remaining"));
         }
     }
 
@@ -207,7 +202,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         commentLabel = new javax.swing.JLabel();
-        charactersRemainingLabel = new javax.swing.JLabel();
+        remainingCharactersLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setSize(getPreferredSize());
@@ -249,7 +244,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
                         .addComponent(commentLabel)
                         .addGap(0, 451, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(charactersRemainingLabel)
+                        .addComponent(remainingCharactersLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -268,7 +263,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(cancelButton)
                         .addComponent(okButton))
-                    .addComponent(charactersRemainingLabel))
+                    .addComponent(remainingCharactersLabel))
                 .addContainerGap())
         );
 
@@ -291,7 +286,7 @@ final class CentralRepoCommentDialog extends javax.swing.JDialog {
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel commentLabel;
     private javax.swing.JTextArea commentTextArea;
-    private javax.swing.JLabel charactersRemainingLabel;
+    private javax.swing.JLabel remainingCharactersLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton okButton;
     // End of variables declaration//GEN-END:variables
