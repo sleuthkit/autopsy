@@ -28,10 +28,10 @@ import org.sleuthkit.datamodel.DataSource;
  */
 public class DataSourceCell extends ListCell<Optional<DataSource>> {
 
-    private final Map<DataSource, Boolean> dataSourcesViewable;
+    private final Map<DataSource, Boolean> dataSourcesTooManyFiles;
 
     public DataSourceCell(Map<DataSource, Boolean> dataSourcesViewable) {
-        this.dataSourcesViewable = dataSourcesViewable;
+        this.dataSourcesTooManyFiles = dataSourcesViewable;
     }
 
     @Override
@@ -42,7 +42,7 @@ public class DataSourceCell extends ListCell<Optional<DataSource>> {
         } else {
             DataSource dataSource = item.orElse(null);
             String text = (dataSource == null) ? "All" : dataSource.getName() + " (Id: " + dataSource.getId() + ")";
-            Boolean tooManyFilesInDataSource = dataSourcesViewable.getOrDefault(dataSource, false);
+            Boolean tooManyFilesInDataSource = dataSourcesTooManyFiles.getOrDefault(dataSource, false);
             if (tooManyFilesInDataSource) {
                 text += " - Too many files";
                 setStyle("-fx-opacity : .5");

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
@@ -37,6 +38,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TabPane;
@@ -53,6 +55,7 @@ import javafx.stage.Modality;
 import javax.swing.SwingUtilities;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Exceptions;
@@ -125,7 +128,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     private Node infoOverlay;
     private final Region infoOverLayBackground = new TranslucentRegion();
-    private final Map<DataSource, Boolean> dataSourcesViewble = new HashMap<>();
 
     /**
      * Returns whether the ImageGallery window is open or not.
@@ -151,10 +153,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     }
 
     /**
-     * NOTE: This usually gets called on the EDT
+     * Open the ImageGalleryTopComponent.
      *
-     *
-     * @throws NoCurrentCaseException
+     * @throws NoCurrentCaseException If there is no case open.
+     * @throws TskCoreException       If there is a problem accessing the case
+     *                                db.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Messages({
@@ -164,7 +167,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         "ImageGalleryTopComponent.chooseDataSourceDialog.titleText=Image Gallery",})
     public static void openTopComponent() throws NoCurrentCaseException, TskCoreException {
 
-        // This creates the top component and adds the UI widgets if it has not yet been opened
+        // This creates the top component and adds the UI widgets (via the constructor) if it has not yet been opened
         final TopComponent topComponent = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (topComponent == null) {
             return;
@@ -182,16 +185,15 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         }
 
         ImageGalleryController controller = ImageGalleryModule.getController();
-
         ImageGalleryTopComponent igTopComponent = (ImageGalleryTopComponent) topComponent;
         igTopComponent.setController(controller);
 
+        //gather information about datasources and the groupmanager in a bg thread.
         new Thread(new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-
-                List<DataSource> dataSources = new ArrayList<>();
-                dataSources.addAll(controller.getSleuthKitCase().getDataSources());
+                Map<DataSource, Boolean> dataSourcesTooManyFiles = new HashMap<>();
+                List<DataSource> dataSources = controller.getSleuthKitCase().getDataSources();
 
                 /*
                  * If there is only one datasource or the grouping is already
@@ -200,22 +202,59 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                  */
                 if (dataSources.size() <= 1
                     || controller.getGroupManager().getGroupBy() != DrawableAttribute.PATH) {
-
-                    igTopComponent.showDataSource(null);
+                    // null represents all datasources, which is only one in this case.
+                    dataSourcesTooManyFiles.put(null, controller.hasTooManyFiles(null));
+                    igTopComponent.showDataSource(null, dataSourcesTooManyFiles);
                     return null;
                 }
 
+                /*
+                 * Else there is more than one data source and the grouping is
+                 * PATH (the default): open a dialog prompting the user to pick
+                 * a datasource.
+                 */
                 dataSources.add(0, null); //null represents all datasources
-                igTopComponent.promptForDataSource(dataSources);
+                //first, while still on background thread, gather viewability info for the datasources.
+                for (DataSource dataSource : dataSources) {
+                    dataSourcesTooManyFiles.put(dataSource, controller.hasTooManyFiles(dataSource));
+                }
+
+                Platform.runLater(() -> {
+                    //configure the dialog
+                    List<Optional<DataSource>> dataSourceOptionals = dataSources.stream().map(Optional::ofNullable).collect(Collectors.toList());
+                    ChoiceDialog<Optional<DataSource>> datasourceDialog = new ChoiceDialog<>(null, dataSourceOptionals);
+                    datasourceDialog.setTitle(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_titleText());
+                    datasourceDialog.setHeaderText(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_headerText());
+                    datasourceDialog.setContentText(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_contentText());
+                    datasourceDialog.initModality(Modality.APPLICATION_MODAL);
+                    GuiUtils.setDialogIcons(datasourceDialog);
+                    //get the combobox by its css class... this is hacky but should be safe.
+                    @SuppressWarnings(value = "unchecked")
+                    ComboBox<Optional<DataSource>> comboBox = (ComboBox<Optional<DataSource>>) datasourceDialog.getDialogPane().lookup(".combo-box");
+                    //set custom cell renderer
+                    comboBox.setCellFactory((ListView<Optional<DataSource>> param) -> new DataSourceCell(dataSourcesTooManyFiles));
+                    comboBox.setButtonCell(new DataSourceCell(dataSourcesTooManyFiles));
+
+                    DataSource dataSource = datasourceDialog.showAndWait().orElse(Optional.empty()).orElse(null);
+                    try {
+
+                        igTopComponent.showDataSource(dataSource, dataSourcesTooManyFiles);
+                    } catch (TskCoreException ex) {
+                        if (dataSource != null) {
+                            logger.log(Level.SEVERE, "Error showing data source " + dataSource.getName() + ":" + dataSource.getId() + " in Image Gallery", ex);
+                        } else {
+                            logger.log(Level.SEVERE, "Error showing all data sources in Image Gallery.", ex);
+                        }
+                    }
+                });
 
                 return null;
             }
-
         }).start();
     }
 
-    synchronized private void showDataSource(DataSource datasource) throws TskCoreException {
-        if (controller.hasTooManyFiles(datasource)) {
+    synchronized private void showDataSource(DataSource datasource, Map<DataSource, Boolean> dataSourcesTooManyFiles) throws TskCoreException {
+        if (dataSourcesTooManyFiles.get(datasource)) {
             Platform.runLater(ImageGalleryTopComponent::showTooManyFiles);
             return;
         }
@@ -225,43 +264,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         synchronized (groupManager) {
             groupManager.regroup(datasource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
         }
-    }
-
-    synchronized private void promptForDataSource(List<DataSource> dataSources) throws TskCoreException {
-
-        dataSourcesViewble.clear();
-        for (DataSource dataSource : dataSources) {
-            dataSourcesViewble.put(dataSource, controller.hasTooManyFiles(dataSource));
-        }
-        /*
-         * If there is more than one data source and the grouping is PATH (the
-         * default), open a dialog prompting the user to pick a datasource.
-         */
-        Platform.runLater(() -> {
-            List<Optional<DataSource>> dataSourceOptionals = dataSources.stream().map(Optional::ofNullable).collect(Collectors.toList());
-            //configure the dialog
-            ChoiceDialog<Optional<DataSource>> datasourceDialog = new ChoiceDialog<>(null, dataSourceOptionals);
-            datasourceDialog.setTitle(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_titleText());
-            datasourceDialog.setHeaderText(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_headerText());
-            datasourceDialog.setContentText(Bundle.ImageGalleryTopComponent_chooseDataSourceDialog_contentText());
-            datasourceDialog.initModality(Modality.APPLICATION_MODAL);
-            GuiUtils.setDialogIcons(datasourceDialog);
-            //get the combobox by its css class... this is hacky but should be safe.
-            @SuppressWarnings("unchecked")
-            ComboBox<Optional<DataSource>> comboBox = (ComboBox<Optional<DataSource>>) datasourceDialog.getDialogPane().lookup(".combo-box");
-            //set custom cell renderer
-            comboBox.setCellFactory(param -> new DataSourceCell(dataSourcesViewble));
-            comboBox.setButtonCell(new DataSourceCell(dataSourcesViewble));
-
-            Optional<DataSource> dataSource = datasourceDialog.showAndWait().orElse(Optional.empty());
-
-            try {
-                showDataSource(dataSource.orElse(null));
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error showing data source " + Objects.toString(dataSource), ex);
-            }
-
-        });
     }
 
     @NbBundle.Messages({"ImageGallery.dialogTitle=Image Gallery",
