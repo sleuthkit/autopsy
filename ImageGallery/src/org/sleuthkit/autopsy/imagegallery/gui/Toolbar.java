@@ -321,15 +321,15 @@ public class Toolbar extends ToolBar {
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     private ListenableFuture<List<DataSource>> syncDataSources() {
         ListenableFuture<List<DataSource>> future = exec.submit(() -> {
-            List<DataSource> dataSources1 = controller.getSleuthKitCase().getDataSources();
+            List<DataSource> dataSourcesInCase = controller.getSleuthKitCase().getDataSources();
             synchronized (dataSourcesViewable) {
                 dataSourcesViewable.clear();
                 dataSourcesViewable.put(null, controller.hasTooManyFiles(null));
-                for (DataSource ds : dataSources1) {
+                for (DataSource ds : dataSourcesInCase) {
                     dataSourcesViewable.put(ds, controller.hasTooManyFiles(ds));
                 }
             }
-            return dataSources1;
+            return dataSourcesInCase;
         });
         Futures.addCallback(future, new FutureCallback<List<DataSource>>() {
             @Override

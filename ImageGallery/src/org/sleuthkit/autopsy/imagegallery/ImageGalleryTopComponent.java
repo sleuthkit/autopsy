@@ -158,13 +158,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     @Messages({
- 
         "ImageGalleryTopComponent.chooseDataSourceDialog.headerText=Choose a data source to view.",
         "ImageGalleryTopComponent.chooseDataSourceDialog.contentText=Data source:",
         "ImageGalleryTopComponent.chooseDataSourceDialog.all=All",
         "ImageGalleryTopComponent.chooseDataSourceDialog.titleText=Image Gallery",})
     public static void openTopComponent() throws NoCurrentCaseException, TskCoreException {
- 
 
         // This creates the top component and adds the UI widgets if it has not yet been opened
         final TopComponent topComponent = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
@@ -184,7 +182,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         }
 
         ImageGalleryController controller = ImageGalleryModule.getController();
- 
+
         ImageGalleryTopComponent igTopComponent = (ImageGalleryTopComponent) topComponent;
         igTopComponent.setController(controller);
 
@@ -197,7 +195,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
                 /*
                  * If there is only one datasource or the grouping is already
-                 * set to something other than path , don't both to ask for
+                 * set to something other than path , don't bother to ask for
                  * datasource.
                  */
                 if (dataSources.size() <= 1
@@ -222,7 +220,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             return;
         }
         // Display the UI so that they can see the progress screen
-        SwingUtilities.invokeLater(() -> showTopComponent(this)); 
+        SwingUtilities.invokeLater(() -> showTopComponent(this));
         GroupManager groupManager = controller.getGroupManager();
         synchronized (groupManager) {
             groupManager.regroup(datasource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
@@ -269,7 +267,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     @NbBundle.Messages({"ImageGallery.dialogTitle=Image Gallery",
         "ImageGallery.showTooManyFiles.contentText=There are too many files in the selected datasource(s) to ensure reasonable performance.",
         "ImageGallery.showTooManyFiles.headerText="})
-
     public static void showTooManyFiles() {
         Alert dialog = new Alert(Alert.AlertType.INFORMATION,
                 Bundle.ImageGallery_showTooManyFiles_contentText(), ButtonType.OK);
