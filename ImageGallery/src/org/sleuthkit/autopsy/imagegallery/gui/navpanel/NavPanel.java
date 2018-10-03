@@ -41,7 +41,11 @@ import org.sleuthkit.autopsy.imagegallery.gui.SortChooser;
 
 /**
  * Base class for Tabs in the left hand Navigation/Context area.
+ *
+ * @param <X> The type of the model objects backing this view.
  */
+@NbBundle.Messages({
+    "NavPanel.placeHolder.text=There are no groups."})
 abstract class NavPanel<X> extends Tab {
 
     @FXML
@@ -73,7 +77,6 @@ abstract class NavPanel<X> extends Tab {
         assert borderPane != null : "fx:id=\"borderPane\" was not injected: check your FXML file 'NavPanel.fxml'.";
         assert toolBar != null : "fx:id=\"toolBar\" was not injected: check your FXML file 'NavPanel.fxml'.";
 
-   
         sortChooser = new SortChooser<>(GroupComparators.getValues());
         sortChooser.setComparator(getDefaultComparator());
         sortChooser.sortOrderProperty().addListener(order -> NavPanel.this.sortGroups());
