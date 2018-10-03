@@ -38,7 +38,6 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
-import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -50,12 +49,10 @@ import javax.annotation.Nonnull;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -72,7 +69,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
@@ -80,8 +76,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Connects different parts of ImageGallery together and is hub for flow of
- * control.
+ * Connects different parts of the image gallery together and is the hub for
+ * flow of control.
  */
 public final class ImageGalleryController {
 
@@ -131,7 +127,7 @@ public final class ImageGalleryController {
 
     public DoubleProperty thumbnailSizeProperty() {
         return thumbnailSizeProp;
-    }
+}
 
     public GroupViewState getViewState() {
         return historyManager.getCurrentState();
@@ -210,8 +206,8 @@ public final class ImageGalleryController {
                 // if we just turned on listening and a single-user case is open and that case is not up to date, then rebuild it
                 // For multiuser cases, we defer DB rebuild till the user actually opens Image Gallery
                 if (isEnabled && !wasPreviouslyEnabled
-                    && isDataSourcesTableStale()
-                    && (Case.getCurrentCaseThrows().getCaseType() == CaseType.SINGLE_USER_CASE)) {
+                        && isDataSourcesTableStale()
+                        && (Case.getCurrentCaseThrows().getCaseType() == CaseType.SINGLE_USER_CASE)) {
                     //populate the db
                     this.rebuildDB();
                 }
@@ -352,7 +348,7 @@ public final class ImageGalleryController {
 
     }
 
-    synchronized private void shutDownDBExecutor() {
+    private synchronized void shutDownDBExecutor() {
         if (dbExecutor != null) {
             dbExecutor.shutdownNow();
             try {
@@ -420,12 +416,10 @@ public final class ImageGalleryController {
 
     public synchronized SleuthkitCase getSleuthKitCase() {
         return sleuthKitCase;
-
     }
 
     public ThumbnailCache getThumbsCache() {
         return thumbnailCache;
-
     }
 
     /**
@@ -576,13 +570,13 @@ public final class ImageGalleryController {
 
         static private final String FILE_EXTENSION_CLAUSE
                 = "(extension LIKE '" //NON-NLS
-                  + String.join("' OR extension LIKE '", FileTypeUtils.getAllSupportedExtensions()) //NON-NLS
-                  + "') ";
+                + String.join("' OR extension LIKE '", FileTypeUtils.getAllSupportedExtensions()) //NON-NLS
+                + "') ";
 
         static private final String MIMETYPE_CLAUSE
                 = "(mime_type LIKE '" //NON-NLS
-                  + String.join("' OR mime_type LIKE '", FileTypeUtils.getAllSupportedMimeTypes()) //NON-NLS
-                  + "') ";
+                + String.join("' OR mime_type LIKE '", FileTypeUtils.getAllSupportedMimeTypes()) //NON-NLS
+                + "') ";
 
         private final String DRAWABLE_QUERY;
         private final String DATASOURCE_CLAUSE;
@@ -605,14 +599,14 @@ public final class ImageGalleryController {
 
             DRAWABLE_QUERY
                     = DATASOURCE_CLAUSE
-                      + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")"
-                      + " AND ( "
-                      + //grab files with supported extension
+                    + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")"
+                    + " AND ( "
+                    + //grab files with supported extension
                     FILE_EXTENSION_CLAUSE
-                      //grab files with supported mime-types
-                      + " OR " + MIMETYPE_CLAUSE //NON-NLS
-                      //grab files with image or video mime-types even if we don't officially support them
-                      + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"; //NON-NLS
+                    //grab files with supported mime-types
+                    + " OR " + MIMETYPE_CLAUSE //NON-NLS
+                    //grab files with image or video mime-types even if we don't officially support them
+                    + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"; //NON-NLS
         }
 
         /**
@@ -639,7 +633,7 @@ public final class ImageGalleryController {
         public void run() {
             progressHandle = getInitialProgressHandle();
             progressHandle.start();
-            updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status()  + " (Data Source " + dataSourceObjId + ")" );
+            updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status() + " (Data Source " + dataSourceObjId + ")");
 
             DrawableDB.DrawableTransaction drawableDbTransaction = null;
             CaseDbTransaction caseDbTransaction = null;
@@ -668,7 +662,7 @@ public final class ImageGalleryController {
                     }
 
                     processFile(f, drawableDbTransaction, caseDbTransaction);
- 
+
                     workDone++;
                     progressHandle.progress(f.getName(), workDone);
                     updateProgress(workDone - 1 / (double) files.size());
@@ -677,7 +671,7 @@ public final class ImageGalleryController {
 
                 progressHandle.finish();
                 progressHandle = ProgressHandle.createHandle(Bundle.BulkTask_committingDb_status());
-                updateMessage(Bundle.BulkTask_committingDb_status() + " (Data Source " + dataSourceObjId + ")" );
+                updateMessage(Bundle.BulkTask_committingDb_status() + " (Data Source " + dataSourceObjId + ")");
                 updateProgress(1.0);
 
                 progressHandle.start();
@@ -757,12 +751,10 @@ public final class ImageGalleryController {
                     if (null == f.getMIMEType()) {
                         // set to false to force the DB to be marked as stale
                         this.setTaskCompletionStatus(false);
-                    }
-                    //supported mimetype => analyzed
+                    } //supported mimetype => analyzed
                     else if (FileTypeUtils.hasDrawableMIMEType(f)) {
                         taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
-                    }
-                    //unsupported mimtype => analyzed but shouldn't include
+                    } //unsupported mimtype => analyzed but shouldn't include
                     else {
                         taskDB.removeFile(f.getId(), tr);
                     }

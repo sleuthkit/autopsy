@@ -45,12 +45,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
-import javax.swing.SwingUtilities;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -163,17 +161,16 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
             showTopComponent(topComponent);
             return;
         }
-        
-        // Wait until the FX UI has been created.  This way, we can always
-        // show the gray progress screen
-        // TODO: do this in a more elegant way.  
-        while (topComponentInitialized == false) {}
 
         ImageGalleryController controller = ImageGalleryModule.getController();
         ((ImageGalleryTopComponent) topComponent).setController(controller);
- 
-        
-        // Display the UI so taht they can see the progress screen
+                
+        // Wait until the FX UI has been created.  This way, we can always
+        // show the gray progress screen
+        // TODO: do this in a more elegant way.  
+         while (topComponentInitialized == false) {}
+
+        // Display the UI so that they can see the progress screen
         showTopComponent(topComponent);
         
         List<DataSource> dataSources = Collections.emptyList();

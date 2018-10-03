@@ -34,7 +34,6 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -63,6 +62,16 @@ public class ImageGalleryModule {
     private static final Object controllerLock = new Object();
     private static ImageGalleryController controller;
 
+    /**
+     * Gets the per case singleton image gallery controller for the current
+     * case.
+     *
+     * @return The image gallery controller.
+     *
+     * @throws NoCurrentCaseException If there is no current case.
+     * @throws TskCoreException       If there is a problem creating the
+     *                                controller.
+     */
     public static ImageGalleryController getController() throws TskCoreException, NoCurrentCaseException {
         synchronized (controllerLock) {
             if (controller == null) {
@@ -73,124 +82,152 @@ public class ImageGalleryModule {
     }
 
     /**
-     *
-     *
-     * This method is invoked by virtue of the OnStart annotation on the OnStart
-     * class class
+     * Shuts down the per case singleton image gallery controller for the
+     * current case (FRAGILE!).
+     */
+    public static void shutDownController() {
+        synchronized (controllerLock) {
+            if (controller != null) {
+                controller.shutDown();
+            }
+            controller = null;
+        }
+    }
+
+    /**
+     * Sets the implicit exit property attribute of the JavaFX Runtime to false
+     * and sets up listeners for application events. It is invoked at
+     * application start up by virtue of the OnStart annotation on the OnStart
+     * class in this package.
      */
     static void onStart() {
         Platform.setImplicitExit(false);
         logger.info("Setting up ImageGallery listeners"); //NON-NLS
-
         IngestManager.getInstance().addIngestJobEventListener(new IngestJobEventListener());
         IngestManager.getInstance().addIngestModuleEventListener(new IngestModuleEventListener());
         Case.addPropertyChangeListener(new CaseEventListener());
     }
 
+    /**
+     * Gets the image gallery module name.
+     *
+     * @return The module name,
+     */
     static String getModuleName() {
         return MODULE_NAME;
     }
 
     /**
-     * get the Path to the Case's ImageGallery ModuleOutput subfolder; ie
-     * ".../[CaseName]/ModuleOutput/Image Gallery/"
+     * Gets the path to the image gallery module output folder for a given case.
      *
-     * @param theCase the case to get the ImageGallery ModuleOutput subfolder
-     *                for
+     * @param theCase The case.
      *
-     * @return the Path to the ModuleOuput subfolder for Image Gallery
+     * @return The path to the module output folder for the case.
      */
     public static Path getModuleOutputDir(Case theCase) {
         return Paths.get(theCase.getModuleDirectory(), getModuleName());
     }
 
     /**
-     * provides static utilities, can not be instantiated
+     * Prevents instantiation.
      */
     private ImageGalleryModule() {
     }
 
     /**
-     * is listening enabled for the given case
+     * Indicates whether or not the image gallery module is handling application
+     * events for a given case.
      *
-     * @param c
+     * @param theCase
      *
-     * @return true if listening is enabled for the given case, false otherwise
+     * @return True if application event handling is enabled for the given case,
+     *         false otherwise.
      */
-    static boolean isEnabledforCase(Case c) {
-        if (c != null) {
-            String enabledforCaseProp = new PerCaseProperties(c).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.ENABLED);
-            return isNotBlank(enabledforCaseProp) ? Boolean.valueOf(enabledforCaseProp) : ImageGalleryPreferences.isEnabledByDefault();
+    static boolean isEnabledforCase(Case theCase) {
+        if (theCase != null) {
+            String enabled = new PerCaseProperties(theCase).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.ENABLED);
+            return isNotBlank(enabled) ? Boolean.valueOf(enabled) : ImageGalleryPreferences.isEnabledByDefault();
         } else {
             return false;
         }
     }
 
     /**
-     * Is the given file 'supported' and not 'known'(nsrl hash hit). If so we
-     * should include it in {@link DrawableDB} and UI
+     * Indicates whether or not a given file is supported by the image gallery
+     * (is "drawable") and is not marked as a "known" file (e.g., is a file in
+     * the NSRL hash set).
      *
-     * @param abstractFile
+     * @param file The file.
      *
-     * @return true if the given {@link AbstractFile} is "drawable" and not
-     *         'known', else false
+     * @return True if the file is "drawable" and not "known", false otherwise.
      *
-     * @throws
-     * org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException
+     * @throws FileTypeDetectorInitExceptioif there is an error determining the
+     *                                        type of the file.
      */
-    public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws FileTypeDetector.FileTypeDetectorInitException {
-        return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(abstractFile);
+    private static boolean isDrawableAndNotKnown(AbstractFile file) throws FileTypeDetector.FileTypeDetectorInitException {
+        return (file.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(file);
     }
 
     /**
-     * Listener for IngestModuleEvents
+     * A listener for ingest module application events.
      */
     static private class IngestModuleEventListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            /*
+             * If running in "headless" mode, there is no need to process any
+             * ingest module events during the current session.
+             *
+             * Note that this check cannot be done earlier on start up because
+             * the "headless" property may not have been set yet.
+             */
             if (RuntimeProperties.runningWithGUI() == false) {
-                /*
-                 * Running in "headless" mode, no need to process any events.
-                 * This cannot be done earlier because the switch to core
-                 * components inactive may not have been made at start up.
-                 */
                 IngestManager.getInstance().removeIngestModuleEventListener(this);
                 return;
             }
 
             /*
-             * only process individual files in realtime on the node that is
-             * running the ingest. on a remote node, image files are processed
-             * enblock when ingest is complete
+             * Only process individual files and artifacts in "real time" on the
+             * node that is running the ingest job. On a remote node, image
+             * files are processed enbloc when the ingest job is complete.
              */
             if (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL) {
                 return;
             }
 
-            // Bail out if the case is closed
+            /*
+             * Get the image gallery controller for the current case, and check
+             * whether event handling is enabled for the image gallery for this
+             * case.
+             */
+            String eventType = evt.getPropertyName();
+            ImageGalleryController controller;
             try {
-                if (controller == null || Case.getCurrentCaseThrows() == null) {
+                controller = getController();
+                if (controller.isListeningEnabled() == false) {
                     return;
                 }
             } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, String.format("Attempted to handle ingest module event (%s) with no current case", eventType), ex); //NON-NLS
+                return;
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Unable to get image gallery controller to handle ingest module event (%s)", eventType), ex); //NON-NLS
                 return;
             }
 
-            if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == FILE_DONE) {
-                // getOldValue has fileID getNewValue has  Abstractfile
-                AbstractFile file = (AbstractFile) evt.getNewValue();
-                if (false == file.isFile()) {
-                    return;
-                }
-
-                try {
-                    ImageGalleryController con = getController();
-                    if (con.isListeningEnabled()) {
+            /*
+             * Add analyzed files to the drawables database and add selected
+             * artifacts to the artifacts cache.
+             */
+            switch (IngestManager.IngestModuleEvent.valueOf(eventType)) {
+                case FILE_DONE:
+                    AbstractFile file = (AbstractFile) evt.getNewValue();
+                    if (file.isFile()) {
                         try {
                             // Update the entry if it is a picture and not in NSRL
                             if (isDrawableAndNotKnown(file)) {
-                                con.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
+                                controller.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
                             } // Remove it from the DB if it is no longer relevant, but had the correct extension
                             else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
                                 /*
@@ -198,41 +235,37 @@ public class ImageGalleryModule {
                                  * queued up, and faster completion of db
                                  * update. This file would have gotten scooped
                                  * up in initial grab, but actually we don't
-                                 * need it
+                                 * need it.
                                  */
-                                con.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
+                                controller.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
                             }
                         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                            logger.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
-                            MessageNotifyUtil.Notify.error("Image Gallery Error",
-                                    "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
+                            logger.log(Level.SEVERE, String.format("Error determining file type for %s (obj_id = %s), FILE_DONE event not handled", file.getName(), file.getId()), ex); //NON-NLS
                         }
                     }
-                } catch (NoCurrentCaseException ex) {
-                    logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
-                }
-            } else if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == DATA_ADDED) {
-                ModuleDataEvent mde = (ModuleDataEvent) evt.getOldValue();
-
-                if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
-                    DrawableDB drawableDB = controller.getDatabase();
-                    for (BlackboardArtifact art : mde.getArtifacts()) {
-                        drawableDB.addExifCache(art.getObjectID());
+                    break;
+                case DATA_ADDED:
+                    ModuleDataEvent mde = (ModuleDataEvent) evt.getOldValue();
+                    if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+                        DrawableDB drawableDB = controller.getDatabase();
+                        for (BlackboardArtifact art : mde.getArtifacts()) {
+                            drawableDB.addExifCache(art.getObjectID());
+                        }
+                    } else if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                        DrawableDB drawableDB = controller.getDatabase();
+                        for (BlackboardArtifact art : mde.getArtifacts()) {
+                            drawableDB.addHashSetCache(art.getObjectID());
+                        }
                     }
-                } else if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                    DrawableDB drawableDB = controller.getDatabase();
-                    for (BlackboardArtifact art : mde.getArtifacts()) {
-                        drawableDB.addHashSetCache(art.getObjectID());
-                    }
-                }
+                    break;
+                default:
+                    break;
             }
         }
     }
 
     /**
-     * Listener for case events.
+     * A listener for case application events.
      */
     static private class CaseEventListener implements PropertyChangeListener {
 
@@ -240,79 +273,101 @@ public class ImageGalleryModule {
         public void propertyChange(PropertyChangeEvent evt) {
             /*
              * If running in "headless" mode, there is no need to process any
-             * events. Note that this check cannot be done earlier because the
-             * switch to core components inactive may not have been made at
-             * start up.
+             * case events during the current session.
+             *
+             * Note that this check cannot be done earlier on start up because
+             * the "headless" property may not have been set yet.
              */
             if (RuntimeProperties.runningWithGUI() == false) {
                 Case.removePropertyChangeListener(this);
                 return;
             }
 
-            if (Case.Events.valueOf(evt.getPropertyName()) == Case.Events.CURRENT_CASE) {
-                /*
-                 * If the event is a case closed event, free resources.
-                 */
-                if (evt.getOldValue() != null) {
-                    synchronized (controllerLock) {
+            /*
+             * Ignore everything other than a subset of case events.
+             */
+            Case.Events eventType = Case.Events.valueOf(evt.getPropertyName());
+            if ((eventType != Case.Events.CURRENT_CASE)
+                    && (eventType != Case.Events.DATA_SOURCE_ADDED)
+                    && (eventType != Case.Events.CONTENT_TAG_ADDED)
+                    && (eventType != Case.Events.CONTENT_TAG_DELETED)) {
+                return;
+            }
+
+            /*
+             * Get the image gallery controller for the current case. Note that
+             * this has the SIDE EFFECT of creating the controller, so there is
+             * no need to do anything more for a CURRENT_CASE(_OPENED) event.
+             */
+            ImageGalleryController controller;
+            try {
+                controller = getController();
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, String.format("Attempted to handle case event (%s) with no current case", eventType), ex); //NON-NLS
+                return;
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Unable to get image gallery controller to handle case event (%s)", eventType), ex); //NON-NLS
+                return;
+            }
+
+            /*
+             * Preprocess the files in a data source when it is added (local
+             * node only; processing is completed in FILE_DONE event handler)
+             * and add and delete content tags from the cache.
+             */
+            switch (eventType) {
+                case CURRENT_CASE:
+                    if (evt.getNewValue() != null) {
+                        /*
+                         * CURRENT_CASE(_CLOSED) event. Shut down the controller
+                         * for the case and close the top component, if it is
+                         * open.
+                         */
                         SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
-                        if (controller != null) {
-                            controller.shutDown();
-                        }
-                        controller = null;
+                        controller.shutDown();
                     }
-                }
-            } else {
-                String eventType = evt.getPropertyName();
-                ImageGalleryController con;
-                try {
-                    con = getController();
-                } catch (NoCurrentCaseException ex) {
-                    logger.log(Level.SEVERE, String.format("Received a Case.Event.%s event with no case open", eventType), ex); //NON-NLS
-                    return;
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error processing a Case.Event.%s event", eventType), ex); //NON-NLS
-                    return;
-                }
-                switch (Case.Events.valueOf(eventType)) {
-                    case DATA_SOURCE_ADDED:
-                        //For a data source added on the local node, prepopulate all file data to drawable database
+                    break;
+                case DATA_SOURCE_ADDED:
+                    /*
+                     * For a data source added to the case locally, prepopulate
+                     * the drawable database with file data. Extraneous data
+                     * will be removed file by file in the FILE_DONE event
+                     * handler.
+                     */
+                    if (controller.isListeningEnabled()) {
                         if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
                             Content newDataSource = (Content) evt.getNewValue();
-                            if (con.isListeningEnabled()) {
-                                con.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
-                            }
+                            controller.queueDBTask(new ImageGalleryController.PrePopulateDataSourceFiles(newDataSource.getId(), controller));
                         }
-                        break;
-                    case CONTENT_TAG_ADDED:
+                    }
+                    break;
+                case CONTENT_TAG_ADDED:
+                    if (controller.isListeningEnabled()) {
                         final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-
                         long objId = tagAddedEvent.getAddedTag().getContent().getId();
-
-                        // update the cache
                         DrawableDB drawableDB = controller.getDatabase();
                         drawableDB.addTagCache(objId);
-
-                        if (con.getDatabase().isInDB(objId)) {
-                            con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
+                        if (controller.getDatabase().isInDB(objId)) {
+                            controller.getTagsManager().fireTagAddedEvent(tagAddedEvent);
                         }
-                        break;
-                    case CONTENT_TAG_DELETED:
+                    }
+                    break;
+                case CONTENT_TAG_DELETED:
+                    if (controller.isListeningEnabled()) {
                         final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                        if (con.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
-                            con.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
+                        if (controller.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
+                            controller.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
                         }
-                        break;
-                    default:
-                        //we don't need to do anything for other events.
-                        break;
-                }
+                    }
+                    break;
+                default:
+                    break;
             }
         }
     }
 
     /**
-     * Listener for Ingest Job events.
+     * Listener for ingest job events.
      */
     static private class IngestJobEventListener implements PropertyChangeListener {
 
@@ -324,39 +379,72 @@ public class ImageGalleryModule {
         })
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            /*
+             * If running in "headless" mode, there is no need to process any
+             * ingest job events during the current session.
+             *
+             * Note that this check cannot be done earlier on start up because
+             * the "headless" property may not have been set yet.
+             */
+            if (RuntimeProperties.runningWithGUI() == false) {
+                Case.removePropertyChangeListener(this);
+                return;
+            }
+
+            /*
+             * Only the completed ingest of a data source added by another node
+             * is of interest here. Processing the files of a data source added
+             * locally is done over time.by a combination of DATA_SOURCE_ADDED
+             * and FILE_DONE event handlers.
+             */
             IngestJobEvent eventType = IngestJobEvent.valueOf(evt.getPropertyName());
             if (eventType != IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED
                     || ((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.REMOTE) {
                 return;
             }
-            // A remote node added a new data source and just finished ingest on it.
-            //drawable db is stale, and if ImageGallery is open, ask user what to do
 
+            /*
+             * Get the image gallery controller for the current case, and check
+             * whether event handling is enabled for the image gallery for this
+             * case.
+             */
+            ImageGalleryController controller;
             try {
-                ImageGalleryController con = getController();
-                con.setStale(true);
-                if (con.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
-                    SwingUtilities.invokeLater(() -> {
-                        int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
-                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
-                                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                        switch (showAnswer) {
-                            case JOptionPane.YES_OPTION:
-                                con.rebuildDB();
-                                break;
-                            case JOptionPane.NO_OPTION:
-                            case JOptionPane.CANCEL_OPTION:
-                            default:
-                                break; //do nothing
-                            }
-                    });
+                controller = getController();
+                if (controller.isListeningEnabled() == false) {
+                    return;
                 }
             } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Attempted to ingest job event (%s) with no current case", eventType), ex); //NON-NLS
+                return;
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Unable to get image gallery controller to handle ingest job event (%s)", eventType), ex); //NON-NLS
+                return;
+            }
+
+            /*
+             * A remote node added a new data source and just finished ingest on
+             * it. Mark the drawables database as stale, and give the user the
+             * option to update it if the GUI is open.
+             */
+            controller.setStale(true);
+            if (controller.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
+                SwingUtilities.invokeLater(() -> {
+                    int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
+                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
+                            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                    switch (showAnswer) {
+                        case JOptionPane.YES_OPTION:
+                            controller.rebuildDB();
+                            break;
+                        case JOptionPane.NO_OPTION:
+                        case JOptionPane.CANCEL_OPTION:
+                        default:
+                            break; //do nothing
+                    }
+                });
             }
         }
     }
