@@ -24,9 +24,11 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -42,7 +44,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Slider;
@@ -112,11 +113,14 @@ public class Toolbar extends ToolBar {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<Optional<DataSource>> dataSources = FXCollections.observableArrayList();
     private SingleSelectionModel<Optional<DataSource>> dataSourceSelectionModel;
+    private final Map<DataSource, Boolean> dataSourcesViewable = new HashMap<>();
 
     private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable invalidated) {
-            controller.getGroupManager().regroup(getSelectedDataSource(),
+            DataSource selectedDataSource = getSelectedDataSource();
+
+            controller.getGroupManager().regroup(selectedDataSource,
                     groupByBox.getSelectionModel().getSelectedItem(),
                     sortChooser.getComparator(),
                     sortChooser.getSortOrder(),
@@ -232,8 +236,8 @@ public class Toolbar extends ToolBar {
     }
 
     private void initDataSourceComboBox() {
-        dataSourceComboBox.setCellFactory(param -> new DataSourceCell());
-        dataSourceComboBox.setButtonCell(new DataSourceCell());
+        dataSourceComboBox.setCellFactory(param -> new DataSourceCell(dataSourcesViewable));
+        dataSourceComboBox.setButtonCell(new DataSourceCell(dataSourcesViewable));
         dataSourceComboBox.setConverter(new StringConverter<Optional<DataSource>>() {
             @Override
             public String toString(Optional<DataSource> object) {
@@ -316,12 +320,24 @@ public class Toolbar extends ToolBar {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     private ListenableFuture<List<DataSource>> syncDataSources() {
-        ListenableFuture<List<DataSource>> future = exec.submit(controller.getSleuthKitCase()::getDataSources);
+        ListenableFuture<List<DataSource>> future = exec.submit(() -> {
+            List<DataSource> dataSourcesInCase = controller.getSleuthKitCase().getDataSources();
+            synchronized (dataSourcesViewable) {
+                dataSourcesViewable.clear();
+                dataSourcesViewable.put(null, controller.hasTooManyFiles(null));
+                for (DataSource ds : dataSourcesInCase) {
+                    dataSourcesViewable.put(ds, controller.hasTooManyFiles(ds));
+                }
+            }
+            return dataSourcesInCase;
+        });
         Futures.addCallback(future, new FutureCallback<List<DataSource>>() {
             @Override
             public void onSuccess(List<DataSource> result) {
-                dataSources.setAll(Collections.singleton(Optional.empty()));
-                result.forEach(dataSource -> dataSources.add(Optional.of(dataSource)));
+                List<Optional<DataSource>> newDataSources = new ArrayList<>();
+                newDataSources.add(Optional.empty());
+                result.forEach(dataSource -> newDataSources.add(Optional.of(dataSource)));
+                dataSources.setAll(newDataSources);
             }
 
             @Override
@@ -389,19 +405,4 @@ public class Toolbar extends ToolBar {
 
     }
 
-    /**
-     * Cell used to represent a DataSource in the dataSourceComboBoc
-     */
-    static private class DataSourceCell extends ListCell<Optional<DataSource>> {
-
-        @Override
-        protected void updateItem(Optional<DataSource> item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
-                setText("All");
-            } else {
-                setText(item.map(DataSource::getName).orElse("All"));
-            }
-        }
-    }
 }

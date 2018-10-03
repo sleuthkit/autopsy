@@ -38,7 +38,6 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.Bundle;
 
 /**
  * Enum to represent the six categories in the DHS image categorization scheme.

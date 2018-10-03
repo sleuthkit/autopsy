@@ -38,7 +38,6 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
-import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -50,12 +49,10 @@ import javax.annotation.Nonnull;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -72,7 +69,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
@@ -86,6 +82,13 @@ import org.sleuthkit.datamodel.TskData;
 public final class ImageGalleryController {
 
     private static final Logger logger = Logger.getLogger(ImageGalleryController.class.getName());
+
+    /**
+     * The file limit for Image Gallery. If the selected datasource (or all
+     * datasources if that option is selected) has more than this many files (in
+     * the tsk_files table) we don't allow the user to view it.
+     */
+    private static final long FILE_LIMIT = 6_000_000;
 
     /**
      * true if Image Gallery should listen to ingest events, false if it should
@@ -265,13 +268,6 @@ public final class ImageGalleryController {
     }
 
     /**
-     * configure the controller for a specific case.
-     *
-     * @param theNewCase the case to configure the controller for
-     *
-     * @throws org.sleuthkit.datamodel.TskCoreException
-     */
-    /**
      * Rebuilds the DrawableDB database.
      *
      */
@@ -349,6 +345,15 @@ public final class ImageGalleryController {
             logger.log(Level.SEVERE, "Image Gallery failed to check if datasources table is stale.", ex);
             return staleDataSourceIds;
         }
+
+    }
+
+    public boolean hasTooManyFiles(DataSource datasource) throws TskCoreException {
+        String whereClause = (datasource == null)
+                ? "1 = 1"
+                : "data_source_obj_id = " + datasource.getId();
+
+        return sleuthKitCase.countFilesWhere(whereClause) > FILE_LIMIT;
 
     }
 
@@ -639,7 +644,7 @@ public final class ImageGalleryController {
         public void run() {
             progressHandle = getInitialProgressHandle();
             progressHandle.start();
-            updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status()  + " (Data Source " + dataSourceObjId + ")" );
+            updateMessage(Bundle.CopyAnalyzedFiles_populatingDb_status() + " (Data Source " + dataSourceObjId + ")");
 
             DrawableDB.DrawableTransaction drawableDbTransaction = null;
             CaseDbTransaction caseDbTransaction = null;
@@ -668,7 +673,7 @@ public final class ImageGalleryController {
                     }
 
                     processFile(f, drawableDbTransaction, caseDbTransaction);
- 
+
                     workDone++;
                     progressHandle.progress(f.getName(), workDone);
                     updateProgress(workDone - 1 / (double) files.size());
@@ -677,7 +682,7 @@ public final class ImageGalleryController {
 
                 progressHandle.finish();
                 progressHandle = ProgressHandle.createHandle(Bundle.BulkTask_committingDb_status());
-                updateMessage(Bundle.BulkTask_committingDb_status() + " (Data Source " + dataSourceObjId + ")" );
+                updateMessage(Bundle.BulkTask_committingDb_status() + " (Data Source " + dataSourceObjId + ")");
                 updateProgress(1.0);
 
                 progressHandle.start();
@@ -757,12 +762,10 @@ public final class ImageGalleryController {
                     if (null == f.getMIMEType()) {
                         // set to false to force the DB to be marked as stale
                         this.setTaskCompletionStatus(false);
-                    }
-                    //supported mimetype => analyzed
+                    } //supported mimetype => analyzed
                     else if (FileTypeUtils.hasDrawableMIMEType(f)) {
                         taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
-                    }
-                    //unsupported mimtype => analyzed but shouldn't include
+                    } //unsupported mimtype => analyzed but shouldn't include
                     else {
                         taskDB.removeFile(f.getId(), tr);
                     }
