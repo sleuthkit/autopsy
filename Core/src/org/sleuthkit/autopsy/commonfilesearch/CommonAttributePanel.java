@@ -78,7 +78,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     @NbBundle.Messages({
         "CommonAttributePanel.title=Common Property Panel",
         "CommonAttributePanel.exception=Unexpected Exception loading DataSources.",
-        "CommonAttributePanel.frame.title=Find Common Properties",
+        "CommonAttributePanel.frame.title=Common Property Search",
         "CommonAttributePanel.intraCasePanel.title=Curren Case Options"})
     CommonAttributePanel() {
         super(WindowManager.getDefault().getMainWindow(), Bundle.CommonAttributePanel_frame_title(), true);
@@ -568,7 +568,6 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         intraCasePanel.setVerifyInputWhenFocusTarget(false);
 
         interCasePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.interCasePanel.border.title"))); // NOI18N
-        interCasePanel.setMaximumSize(new java.awt.Dimension(32779, 230));
         interCasePanel.setMinimumSize(new java.awt.Dimension(430, 230));
         interCasePanel.setPreferredSize(new java.awt.Dimension(430, 230));
 
