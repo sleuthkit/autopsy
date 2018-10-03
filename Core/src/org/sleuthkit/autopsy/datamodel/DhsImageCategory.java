@@ -136,12 +136,12 @@ public enum DhsImageCategory {
             region.setBackground(new Background(new BackgroundFill(getColor(), CORNER_RADII_4, Insets.EMPTY)));
             region.setPrefSize(16, 16);
             region.setBorder(new Border(new BorderStroke(getColor().darker(), BorderStrokeStyle.SOLID, CORNER_RADII_4, BORDER_WIDTHS_2)));
-            Scene scene = new Scene(region, 16, 16, Color.TRANSPARENT);
+            Scene scene = new Scene(region, 16, 16, Color.TRANSPARENT); // nead to add region to a scene for snapshot to work right.
             return region.snapshot(null, null);
         } else {
             //if we are not already on the JFX thread, do the generation on the javafx thread and block until done.
             SettableFuture<Image> imageFuture = SettableFuture.create();
-            Platform.runLater(() -> generateSnapshot());
+            Platform.runLater(() -> imageFuture.set(generateSnapshot()));
             return Futures.getUnchecked(imageFuture); //block until snapshot is generated. It should be quick.
         }
     }
