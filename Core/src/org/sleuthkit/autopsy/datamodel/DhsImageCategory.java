@@ -19,26 +19,13 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.SettableFuture;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.Border;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.openide.util.NbBundle;
 
@@ -58,15 +45,12 @@ public enum DhsImageCategory {
      * preserves the fact that lower category numbers are first/most sever,
      * except 0 which is last
      */
-    ONE(Color.RED, 1, Bundle.Category_one()),
-    TWO(Color.ORANGE, 2, Bundle.Category_two()),
-    THREE(Color.YELLOW, 3, Bundle.Category_three()),
-    FOUR(Color.BISQUE, 4, Bundle.Category_four()),
-    FIVE(Color.GREEN, 5, Bundle.Category_five()),
-    ZERO(Color.LIGHTGREY, 0, Bundle.Category_zero());
-
-    private static final BorderWidths BORDER_WIDTHS_2 = new BorderWidths(2);
-    private static final CornerRadii CORNER_RADII_4 = new CornerRadii(4);
+    ONE(Color.RED, 1, Bundle.Category_one(), "cat1.png"),
+    TWO(Color.ORANGE, 2, Bundle.Category_two(), "cat2.png"),
+    THREE(Color.YELLOW, 3, Bundle.Category_three(), "cat3.png"),
+    FOUR(Color.BISQUE, 4, Bundle.Category_four(), "cat4.png"),
+    FIVE(Color.GREEN, 5, Bundle.Category_five(), "cat5.png"),
+    ZERO(Color.LIGHTGREY, 0, Bundle.Category_zero(), "cat0.png");
 
     public static ImmutableList<DhsImageCategory> getNonZeroCategories() {
         return nonZeroCategories;
@@ -97,12 +81,13 @@ public enum DhsImageCategory {
     private final Color color;
     private final String displayName;
     private final int id;
-    private Image snapshot;
+    private final Image icon;
 
-    private DhsImageCategory(Color color, int id, String name) {
+    private DhsImageCategory(Color color, int id, String name, String filename) {
         this.color = color;
         this.displayName = name;
         this.id = id;
+        this.icon = new Image(getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/" + filename));
     }
 
     public int getCategoryNumber() {
@@ -122,27 +107,7 @@ public enum DhsImageCategory {
         return displayName;
     }
 
-    synchronized public Node getGraphic() {
-        if (snapshot == null) {
-            snapshot = generateSnapshot();
-        }
-        return new ImageView(snapshot);
-    }
-
-    private Image generateSnapshot() {
-        if (Platform.isFxApplicationThread()) {
-            //We generate the 'icons' for the categories by taking a snapshot of ssimple custom Node.  This must be done on the JFX thread.
-            Region region = new Region();
-            region.setBackground(new Background(new BackgroundFill(getColor(), CORNER_RADII_4, Insets.EMPTY)));
-            region.setPrefSize(16, 16);
-            region.setBorder(new Border(new BorderStroke(getColor().darker(), BorderStrokeStyle.SOLID, CORNER_RADII_4, BORDER_WIDTHS_2)));
-            Scene scene = new Scene(region, 16, 16, Color.TRANSPARENT); // nead to add region to a scene for snapshot to work right.
-            return region.snapshot(null, null);
-        } else {
-            //if we are not already on the JFX thread, do the generation on the javafx thread and block until done.
-            SettableFuture<Image> imageFuture = SettableFuture.create();
-            Platform.runLater(() -> imageFuture.set(generateSnapshot()));
-            return Futures.getUnchecked(imageFuture); //block until snapshot is generated. It should be quick.
-        }
+    public Node getGraphic() {
+        return new ImageView(icon);
     }
 }
