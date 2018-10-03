@@ -80,7 +80,9 @@ class AddFileTypePanel extends javax.swing.JPanel {
             this.signaturesListModel.addElement(sig);
         }
         this.postHitCheckBox.setSelected(toEdit.shouldCreateInterestingFileHit());
+        this.setNameTextField.setEnabled(toEdit.shouldCreateInterestingFileHit());
         this.setNameTextField.setText(toEdit.getInterestingFilesSetName());
+            
     }
 
     /**
