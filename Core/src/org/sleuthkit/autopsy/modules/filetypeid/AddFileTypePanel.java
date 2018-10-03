@@ -79,6 +79,8 @@ class AddFileTypePanel extends javax.swing.JPanel {
         for (Signature sig : toEdit.getSignatures()) {
             this.signaturesListModel.addElement(sig);
         }
+        this.postHitCheckBox.setSelected(toEdit.shouldCreateInterestingFileHit());
+        this.setNameTextField.setText(toEdit.getInterestingFilesSetName());
     }
 
     /**
@@ -136,11 +138,11 @@ class AddFileTypePanel extends javax.swing.JPanel {
         //trailing forward slashes will cause this mismatch to happen
         //suggests a mime_type that will be the same after it is split appart and rejoined
         if (!StringUtils.join(ArrayUtils.subarray(splitName, 0, splitName.length), "/").equals(typeName)) {
-            String rejoinedMimeType = StringUtils.join(ArrayUtils.subarray(splitName, 0, splitName.length), "/");  
+            String rejoinedMimeType = StringUtils.join(ArrayUtils.subarray(splitName, 0, splitName.length), "/");
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message", rejoinedMimeType),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.title"),
-                    JOptionPane.WARNING_MESSAGE);  
+                    JOptionPane.WARNING_MESSAGE);
             mimeTypeTextField.setText(rejoinedMimeType);
             return null;
         }

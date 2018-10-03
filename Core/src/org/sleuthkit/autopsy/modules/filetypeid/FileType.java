@@ -104,7 +104,7 @@ class FileType implements Serializable {
      * @return true if an interesting files hit should be created, otherwise
      * false
      */
-    boolean createInterestingFileHit() {
+    boolean shouldCreateInterestingFileHit() {
         return createInterestingFileHit;
     }
 
