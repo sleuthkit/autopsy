@@ -145,7 +145,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         enableUTF8Checkbox.setSelected(utf8);
         final boolean extractEnabled = utf16 || utf8;
 
-        boolean ingestRunning = !IngestManager.getInstance().isIngestRunning() && !IngestManager.getInstance().isIngestRunning();
+        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         //enable / disable checboxes
         activateScriptsCheckboxes(extractEnabled && !ingestRunning);
         ingestWarningLabel.setVisible(ingestRunning);
