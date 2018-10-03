@@ -19,10 +19,9 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import java.util.Arrays;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -32,7 +31,8 @@ import org.openide.util.NbBundle;
 /**
  * Enum to represent the six categories in the DHS image categorization scheme.
  */
-@NbBundle.Messages({"Category.one=CAT-1: Child Exploitation (Illegal)",
+@NbBundle.Messages({
+    "Category.one=CAT-1: Child Exploitation (Illegal)",
     "Category.two=CAT-2: Child Exploitation (Non-Illegal/Age Difficult)",
     "Category.three=CAT-3: CGI/Animation (Child Exploitive)",
     "Category.four=CAT-4: Exemplar/Comparison (Internal Use Only)",
@@ -52,31 +52,9 @@ public enum DhsImageCategory {
     FIVE(Color.GREEN, 5, Bundle.Category_five(), "cat5.png"),
     ZERO(Color.LIGHTGREY, 0, Bundle.Category_zero(), "cat0.png");
 
-    public static ImmutableList<DhsImageCategory> getNonZeroCategories() {
-        return nonZeroCategories;
-    }
-
-    private static final ImmutableList<DhsImageCategory> nonZeroCategories
-            = ImmutableList.of(DhsImageCategory.FIVE, DhsImageCategory.FOUR, DhsImageCategory.THREE, DhsImageCategory.TWO, DhsImageCategory.ONE);
-
-    /**
-     * map from displayName to enum value
-     */
+    /** Map from displayName to enum value */
     private static final Map<String, DhsImageCategory> nameMap
-            = Stream.of(values()).collect(Collectors.toMap(DhsImageCategory::getDisplayName,
-                    Function.identity()));
-
-    public static DhsImageCategory fromDisplayName(String displayName) {
-        return nameMap.get(displayName);
-    }
-
-    public static boolean isCategoryName(String tName) {
-        return nameMap.containsKey(tName);
-    }
-
-    public static boolean isNotCategoryName(String tName) {
-        return nameMap.containsKey(tName) == false;
-    }
+            = Maps.uniqueIndex(Arrays.asList(values()), DhsImageCategory::getDisplayName);
 
     private final Color color;
     private final String displayName;
@@ -88,6 +66,22 @@ public enum DhsImageCategory {
         this.displayName = name;
         this.id = id;
         this.icon = new Image(getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/" + filename));
+    }
+
+    public static ImmutableList<DhsImageCategory> getNonZeroCategories() {
+        return ImmutableList.of(FIVE, FOUR, THREE, TWO, ONE);
+    }
+
+    public static DhsImageCategory fromDisplayName(String displayName) {
+        return nameMap.get(displayName);
+    }
+
+    public static boolean isCategoryName(String tName) {
+        return nameMap.containsKey(tName);
+    }
+
+    public static boolean isNotCategoryName(String tName) {
+        return nameMap.containsKey(tName) == false;
     }
 
     public int getCategoryNumber() {
