@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.EventQueue;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +45,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<>();
     private ActionListener updateLanguagesAction;
     private List<SCRIPT> toUpdate;
-    
+
     KeywordSearchGlobalLanguageSettingsPanel() {
         initComponents();
         customizeComponents();
@@ -63,13 +66,26 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
                 }
             }
         };
-        
+
         if (!PlatformUtil.isWindowsOS()) {
             enableOcrCheckbox.setVisible(false);
         }
 
         initScriptsCheckBoxes();
         reloadScriptsCheckBoxes();
+
+        //allow panel to toggle its enabled status while it is open based on ingest events
+        IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                Object source = evt.getSource();
+                if (source instanceof String && ((String) source).equals("LOCAL")) { //NON-NLS
+                    EventQueue.invokeLater(() -> {
+                        activateWidgets();
+                    });
+                }
+            }
+        });
     }
 
     private void activateScriptsCheckboxes(boolean activate) {
@@ -118,8 +134,8 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         enableUTF8Checkbox.setSelected(utf8);
 
         boolean ocr = KeywordSearchSettings.getOcrOption();
-        enableOcrCheckbox.setSelected(ocr);        
-        
+        enableOcrCheckbox.setSelected(ocr);
+
         final List<SCRIPT> serviceScripts = KeywordSearchSettings.getStringExtractScripts();
         final int components = checkPanel.getComponentCount();
 

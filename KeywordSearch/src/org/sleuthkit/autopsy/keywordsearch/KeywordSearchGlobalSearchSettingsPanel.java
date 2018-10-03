@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
@@ -48,7 +49,7 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
         showSnippetsCB.setSelected(KeywordSearchSettings.getShowSnippets());
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         ingestWarningLabel.setVisible(ingestRunning);
-        skipNSRLCheckBox.setEnabled(!ingestRunning);     
+        skipNSRLCheckBox.setEnabled(!ingestRunning);
         setTimeSettingEnabled(!ingestRunning);
 
         final UpdateFrequency curFreq = KeywordSearchSettings.getUpdateFrequency();
@@ -382,6 +383,19 @@ class KeywordSearchGlobalSearchSettingsPanel extends javax.swing.JPanel implemen
                         logger.log(Level.WARNING, "Could not get number of indexed chunks"); //NON-NLS
 
                     }
+                }
+            }
+        });
+        
+        //allow panel to toggle its enabled status while it is open based on ingest events
+        IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                Object source = evt.getSource();
+                if (source instanceof String && ((String) source).equals("LOCAL")) { //NON-NLS
+                    EventQueue.invokeLater(() -> {
+                        activateWidgets();
+                    });
                 }
             }
         });
