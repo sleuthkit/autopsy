@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +19,14 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.SettableFuture;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -38,7 +42,7 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.Bundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Enum to represent the six categories in the DHS image categorization scheme.
@@ -63,6 +67,7 @@ public enum DhsImageCategory {
     FIVE(Color.GREEN, 5, Bundle.Category_five()),
     ZERO(Color.LIGHTGREY, 0, Bundle.Category_zero());
 
+    private static final Logger logger = Logger.getLogger(DhsImageCategory.class.getName());
     private static final BorderWidths BORDER_WIDTHS_2 = new BorderWidths(2);
     private static final CornerRadii CORNER_RADII_4 = new CornerRadii(4);
 
@@ -70,15 +75,15 @@ public enum DhsImageCategory {
         return nonZeroCategories;
     }
 
-    private static final ImmutableList<DhsImageCategory> nonZeroCategories =
-            ImmutableList.of(DhsImageCategory.FIVE, DhsImageCategory.FOUR, DhsImageCategory.THREE, DhsImageCategory.TWO, DhsImageCategory.ONE);
+    private static final ImmutableList<DhsImageCategory> nonZeroCategories
+            = ImmutableList.of(DhsImageCategory.FIVE, DhsImageCategory.FOUR, DhsImageCategory.THREE, DhsImageCategory.TWO, DhsImageCategory.ONE);
 
     /**
      * map from displayName to enum value
      */
-    private static final Map<String, DhsImageCategory> nameMap =
-            Stream.of(values()).collect(Collectors.toMap(DhsImageCategory::getDisplayName,
-                            Function.identity()));
+    private static final Map<String, DhsImageCategory> nameMap
+            = Stream.of(values()).collect(Collectors.toMap(DhsImageCategory::getDisplayName,
+                    Function.identity()));
 
     public static DhsImageCategory fromDisplayName(String displayName) {
         return nameMap.get(displayName);
@@ -93,9 +98,7 @@ public enum DhsImageCategory {
     }
 
     private final Color color;
-
     private final String displayName;
-
     private final int id;
     private Image snapshot;
 
@@ -124,13 +127,26 @@ public enum DhsImageCategory {
 
     synchronized public Node getGraphic() {
         if (snapshot == null) {
+            generateGraphic();
+        }
+        return new ImageView(snapshot);
+    }
+
+    synchronized private Image generateGraphic() {
+        SettableFuture<Image> imageFuture = SettableFuture.create();
+        Platform.runLater(() -> {
             Region region = new Region();
             region.setBackground(new Background(new BackgroundFill(getColor(), CORNER_RADII_4, Insets.EMPTY)));
             region.setPrefSize(16, 16);
             region.setBorder(new Border(new BorderStroke(getColor().darker(), BorderStrokeStyle.SOLID, CORNER_RADII_4, BORDER_WIDTHS_2)));
             Scene scene = new Scene(region, 16, 16, Color.TRANSPARENT);
-            snapshot = region.snapshot(null, null);
+            imageFuture.set(region.snapshot(null, null));
+        });
+        try {
+            return imageFuture.get();
+        } catch (InterruptedException | ExecutionException ex) {
+            logger.log(Level.SEVERE, "Error generating graphic for DhsImageCategory" + this.getDisplayName(), ex);
         }
-        return new ImageView(snapshot);
+        return null;
     }
 }
