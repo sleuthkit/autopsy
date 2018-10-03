@@ -19,11 +19,10 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
@@ -42,7 +41,6 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Enum to represent the six categories in the DHS image categorization scheme.
@@ -67,7 +65,6 @@ public enum DhsImageCategory {
     FIVE(Color.GREEN, 5, Bundle.Category_five()),
     ZERO(Color.LIGHTGREY, 0, Bundle.Category_zero());
 
-    private static final Logger logger = Logger.getLogger(DhsImageCategory.class.getName());
     private static final BorderWidths BORDER_WIDTHS_2 = new BorderWidths(2);
     private static final CornerRadii CORNER_RADII_4 = new CornerRadii(4);
 
@@ -127,26 +124,25 @@ public enum DhsImageCategory {
 
     synchronized public Node getGraphic() {
         if (snapshot == null) {
-            generateGraphic();
+            snapshot = generateSnapshot();
         }
         return new ImageView(snapshot);
     }
 
-    synchronized private Image generateGraphic() {
-        SettableFuture<Image> imageFuture = SettableFuture.create();
-        Platform.runLater(() -> {
+    private Image generateSnapshot() {
+        if (Platform.isFxApplicationThread()) {
+            //We generate the 'icons' for the categories by taking a snapshot of ssimple custom Node.  This must be done on the JFX thread.
             Region region = new Region();
             region.setBackground(new Background(new BackgroundFill(getColor(), CORNER_RADII_4, Insets.EMPTY)));
             region.setPrefSize(16, 16);
             region.setBorder(new Border(new BorderStroke(getColor().darker(), BorderStrokeStyle.SOLID, CORNER_RADII_4, BORDER_WIDTHS_2)));
             Scene scene = new Scene(region, 16, 16, Color.TRANSPARENT);
-            imageFuture.set(region.snapshot(null, null));
-        });
-        try {
-            return imageFuture.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            logger.log(Level.SEVERE, "Error generating graphic for DhsImageCategory" + this.getDisplayName(), ex);
+            return region.snapshot(null, null);
+        } else {
+            //if we are not already on the JFX thread, do the generation on the javafx thread and block until done.
+            SettableFuture<Image> imageFuture = SettableFuture.create();
+            Platform.runLater(() -> generateSnapshot());
+            return Futures.getUnchecked(imageFuture); //block until snapshot is generated. It should be quick.
         }
-        return null;
     }
 }
