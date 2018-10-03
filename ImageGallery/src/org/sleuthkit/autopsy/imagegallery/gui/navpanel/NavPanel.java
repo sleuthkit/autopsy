@@ -73,6 +73,7 @@ abstract class NavPanel<X> extends Tab {
         assert borderPane != null : "fx:id=\"borderPane\" was not injected: check your FXML file 'NavPanel.fxml'.";
         assert toolBar != null : "fx:id=\"toolBar\" was not injected: check your FXML file 'NavPanel.fxml'.";
 
+   
         sortChooser = new SortChooser<>(GroupComparators.getValues());
         sortChooser.setComparator(getDefaultComparator());
         sortChooser.sortOrderProperty().addListener(order -> NavPanel.this.sortGroups());

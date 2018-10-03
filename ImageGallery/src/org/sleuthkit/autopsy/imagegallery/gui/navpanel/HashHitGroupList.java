@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 import java.util.function.Function;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionModel;
 import javafx.scene.image.ImageView;
@@ -35,7 +36,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
  * sorting of list.
  */
 final public class HashHitGroupList extends NavPanel<DrawableGroup> {
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ListView<DrawableGroup> groupList = new ListView<>();
 
@@ -45,51 +46,51 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private SortedList<DrawableGroup> sorted;
-
+    
     public HashHitGroupList(ImageGalleryController controller) {
         super(controller);
         FXMLConstructor.construct(this, "NavPanel.fxml"); //NON-NLS
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
     SelectionModel<DrawableGroup> getSelectionModel() {
         return groupList.getSelectionModel();
     }
-
+    
     @Override
     Function< DrawableGroup, DrawableGroup> getDataItemMapper() {
         return Function.identity(); // this view already works with groups, so do nothing
     }
-
+    
     @Override
     void applyGroupComparator() {
         sorted.setComparator(getComparator());
     }
-
+    
     @FXML
     @Override
     @NbBundle.Messages({"HashHitGroupList.displayName.onlyHashHits=Only Hash Hits"})
     void initialize() {
         super.initialize();
-
+        groupList.setPlaceholder(new Label("There are no groups."));
         setText(Bundle.HashHitGroupList_displayName_onlyHashHits());
         setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png")); //NON-NLS
 
         getBorderPane().setCenter(groupList);
         sorted = getController().getGroupManager().getAnalyzedGroups().filtered((DrawableGroup t) -> t.getHashSetHitsCount() > 0).sorted(getDefaultComparator());
-
+        
         GroupCellFactory groupCellFactory = new GroupCellFactory(getController(), comparatorProperty());
         groupList.setCellFactory(groupCellFactory::getListCell);
         groupList.setItems(sorted);
     }
-
+    
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
     void setFocusedGroup(DrawableGroup grouping) {
         groupList.getSelectionModel().select(grouping);
     }
-
+    
     @Override
     GroupComparators<Long> getDefaultComparator() {
         return GroupComparators.HIT_COUNT;

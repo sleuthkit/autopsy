@@ -27,6 +27,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.SelectionModel;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -63,6 +64,7 @@ final public class GroupTree extends NavPanel<TreeItem<GroupTreeNode>> {
     @NbBundle.Messages({"GroupTree.displayName.allGroups=All Groups"})
     void initialize() {
         super.initialize();
+          groupTree.setPlaceholder(new Label("There are no groups."));
         setText(Bundle.GroupTree_displayName_allGroups());
         setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/Folder-icon.png")); //NON-NLS
 
