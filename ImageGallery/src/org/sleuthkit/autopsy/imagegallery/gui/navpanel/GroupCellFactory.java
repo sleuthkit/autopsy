@@ -249,7 +249,7 @@ class GroupCellFactory {
         @Override
         public String getGroupName() {
             return Optional.ofNullable(getItem())
-                    .map(group -> group.getGroupByValueDislpayName())
+                    .map(group -> StringUtils.defaultIfBlank(group.getGroupByValueDislpayName(), DrawableGroup.getBlankGroupName()))
                     .orElse("");
         }
 

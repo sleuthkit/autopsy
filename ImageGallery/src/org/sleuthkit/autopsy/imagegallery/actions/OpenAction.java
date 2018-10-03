@@ -22,10 +22,6 @@ import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.stage.Modality;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
@@ -47,7 +43,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
-import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.imagegallery.OpenAction")
@@ -65,7 +60,6 @@ public final class OpenAction extends CallableSystemAction {
 
     private static final Logger logger = Logger.getLogger(OpenAction.class.getName());
     private static final String VIEW_IMAGES_VIDEOS = Bundle.CTL_OpenAction();
-    private static final long FILE_LIMIT = 6_000_000;
 
     private final PropertyChangeListener pcl;
     private final JMenuItem menuItem;
@@ -137,11 +131,6 @@ public final class OpenAction extends CallableSystemAction {
             return;
         }
 
-        if (tooManyFiles()) {
-            Platform.runLater(OpenAction::showTooManyFiles);
-            setEnabled(false);
-            return;
-        }
         try {
             ImageGalleryController controller = ImageGalleryModule.getController();
             if (controller.isDataSourcesTableStale()) {
@@ -192,33 +181,6 @@ public final class OpenAction extends CallableSystemAction {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
         }
-    }
-
-    private boolean tooManyFiles() {
-        try {
-            return FILE_LIMIT < Case.getCurrentCaseThrows().getSleuthkitCase().countFilesWhere("1 = 1");
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Can not open image gallery with no case open.", ex);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error counting files in the DB.", ex);
-        }
-        //if there is any doubt (no case, tskcore error, etc) just disable .
-        return false;
-    }
-
-    @NbBundle.Messages({
-        "ImageGallery.showTooManyFiles.contentText="
-        + "There are too many files in the DB to ensure reasonable performance."
-        + "  Image Gallery  will be disabled. ",
-        "ImageGallery.showTooManyFiles.headerText="})
-    private static void showTooManyFiles() {
-        Alert dialog = new Alert(Alert.AlertType.INFORMATION,
-                Bundle.ImageGallery_showTooManyFiles_contentText(), ButtonType.OK);
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.setTitle(Bundle.OpenAction_dialogTitle());
-        GuiUtils.setDialogIcons(dialog);
-        dialog.setHeaderText(Bundle.ImageGallery_showTooManyFiles_headerText());
-        dialog.showAndWait();
     }
 
     @Override
