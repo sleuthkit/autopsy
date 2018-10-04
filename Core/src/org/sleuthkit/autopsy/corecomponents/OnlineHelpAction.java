@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,9 +33,9 @@ import org.openide.awt.ActionRegistration;
 import org.openide.awt.HtmlBrowser;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.Version;
 
 /**
  * Implements a hyperlink to the Online Documentation.
@@ -69,12 +69,12 @@ public final class OnlineHelpAction implements ActionListener {
      */
     private void viewOnlineHelp() {
         try {
-            uri = new URI(NbBundle.getMessage(OnlineHelpAction.class, "URL_ON_HELP"));
+            uri = new URI("http://sleuthkit.org/autopsy/docs/user-docs/" + Version.getVersion() + "/");
         } catch (URISyntaxException ex) {
             Logger.log(Level.SEVERE, "Unable to load Online Documentation", ex); //NON-NLS
         }
         if (uri != null) {
-            // Display URL in the SYstem browser
+            // Display URL in the System browser
             if (Desktop.isDesktopSupported()) {
                 Desktop desktop = Desktop.getDesktop();
                 try {

@@ -548,6 +548,7 @@ public class GroupPane extends BorderPane {
         });
 
         setViewState(controller.viewStateProperty().get());
+
     }
 
     //TODO: make sure we are testing complete visability not just bounds intersection
@@ -626,7 +627,7 @@ public class GroupPane extends BorderPane {
 
             Platform.runLater(() -> {
                 gridView.getItems().setAll(Collections.emptyList());
-                setCenter(null);
+                setCenter(new Label("No group selected"));
                 slideShowToggle.setDisable(true);
                 groupLabel.setText("");
                 resetScrollBar();
@@ -649,14 +650,19 @@ public class GroupPane extends BorderPane {
 
             Platform.runLater(() -> {
                 gridView.getItems().setAll(getGroup().getFileIDs());
-                slideShowToggle.setDisable(gridView.getItems().isEmpty());
+                boolean empty = gridView.getItems().isEmpty();
+                slideShowToggle.setDisable(empty);
+
                 groupLabel.setText(header);
                 resetScrollBar();
-                if (newViewState.getMode() == GroupViewMode.TILE) {
+                if (empty) {
+                    setCenter(new Label("There are no files in the selected group."));
+                } else if (newViewState.getMode() == GroupViewMode.TILE) {
                     activateTileViewer();
                 } else {
                     activateSlideShowViewer(newViewState.getSlideShowfileID().orElse(null));
                 }
+
             });
         }
     }

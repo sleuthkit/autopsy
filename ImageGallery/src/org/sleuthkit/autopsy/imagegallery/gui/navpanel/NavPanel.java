@@ -41,7 +41,11 @@ import org.sleuthkit.autopsy.imagegallery.gui.SortChooser;
 
 /**
  * Base class for Tabs in the left hand Navigation/Context area.
+ *
+ * @param <X> The type of the model objects backing this view.
  */
+@NbBundle.Messages({
+    "NavPanel.placeHolder.text=There are no groups."})
 abstract class NavPanel<X> extends Tab {
 
     @FXML
