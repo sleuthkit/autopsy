@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.controlsfx.control.action.Action;
+import org.controlsfx.control.action.ActionUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
@@ -64,12 +65,11 @@ public final class GuiUtils {
      * @return
      */
     public static MenuItem createAutoAssigningMenuItem(ButtonBase button, Action action) {
-
-        MenuItem menuItem = new MenuItem(action.getText(), action.getGraphic());
+        MenuItem menuItem = ActionUtils.createMenuItem(action);
         menuItem.setOnAction(actionEvent -> {
             action.handle(actionEvent);
             button.setText(action.getText());
-            button.setGraphic(action.getGraphic());
+            button.setGraphic(menuItem.getGraphic());
             button.setOnAction(action);
         });
         return menuItem;
