@@ -18,14 +18,25 @@
  */
 package org.sleuthkit.autopsy.imagegallery.actions;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import static java.util.concurrent.Executors.newSingleThreadExecutor;
 import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -34,15 +45,18 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
+import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
+import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
+import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
 import org.sleuthkit.datamodel.TskCoreException;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.imagegallery.OpenAction")
@@ -119,9 +133,13 @@ public final class OpenAction extends CallableSystemAction {
     }
 
     @Override
-    @NbBundle.Messages({"OpenAction.dialogTitle=Image Gallery"})
+    @NbBundle.Messages({"OpenAction.dialogTitle=Image Gallery",
+        "OpenAction.multiUserDialog.Header=Multi-user Image Gallery",
+        "OpenAction.multiUserDialog.ContentText=The Image Gallery updates itself differently for multi-user cases than single user cases. Notably:\n\n"
+        + "If your computer is analyzing a data source, then you will get real-time Image Gallery updates as files are analyzed (hashed, EXIF, etc.). This is the same behavior as a single-user case.\n\n"
+        + "If another computer in your multi-user cluster is analyzing a data source, you will get updates about files on that data source only when you launch Image Gallery, which will cause the local database to be rebuilt based on results from other nodes.",
+        "OpenAction.multiUserDialog.checkBox.text=Don't show this message again."})
     public void performAction() {
-
         //check case
         final Case currentCase;
         try {
@@ -130,57 +148,103 @@ public final class OpenAction extends CallableSystemAction {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;
         }
-
+        ImageGalleryController controller;
         try {
-            ImageGalleryController controller = ImageGalleryModule.getController();
-            if (controller.isDataSourcesTableStale()) {
-                //drawable db is stale, ask what to do
-                int answer = JOptionPane.showConfirmDialog(
-                        WindowManager.getDefault().getMainWindow(),
-                        Bundle.OpenAction_stale_confDlg_msg(),
-                        Bundle.OpenAction_stale_confDlg_title(),
-                        JOptionPane.YES_NO_CANCEL_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
-
-                switch (answer) {
-                    case JOptionPane.YES_OPTION:
-                        /* For a single-user case, we favor user experience, and
-                         * rebuild the database as soon as Image Gallery is
-                         * enabled for the case. For a multi-user case, we favor
-                         * overall performance and user experience, not every
-                         * user may want to review images, so we rebuild the
-                         * database only when a user launches Image Gallery.
-                         */
-                        if (currentCase.getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-                            /*
-                             * Turning listening off is necessary in order to
-                             * invoke the listener that will call
-                             * controller.rebuildDB();
-                             */
-                            controller.setListeningEnabled(false);
-                            controller.setListeningEnabled(true);
-                        } else {
-                            controller.rebuildDB();
-                        }
-                        ImageGalleryTopComponent.openTopComponent();
-                        break;
-
-                    case JOptionPane.NO_OPTION: {
-                        ImageGalleryTopComponent.openTopComponent();
-                    }
-                    break;
-                    case JOptionPane.CANCEL_OPTION:
-                        break; //do nothing
-                }
-            } else {
-                //drawable db is not stale, just open it
-                ImageGalleryTopComponent.openTopComponent();
-            }
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
+            controller = ImageGalleryModule.getController();
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting ImageGalleryController for current case.", ex);
+            return;
         }
+        Platform.runLater(() -> {
+            if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE
+                && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
+                Alert dialog = new Alert(Alert.AlertType.INFORMATION);
+                dialog.initModality(Modality.APPLICATION_MODAL);
+                dialog.setResizable(true);
+                dialog.setTitle(Bundle.OpenAction_dialogTitle());
+                dialog.setHeaderText(Bundle.OpenAction_multiUserDialog_Header());
+
+                Label label = new Label(Bundle.OpenAction_multiUserDialog_ContentText());
+                label.setMaxWidth(450);
+                label.setWrapText(true);
+                CheckBox dontShowAgainCheckBox = new CheckBox(Bundle.OpenAction_multiUserDialog_checkBox_text());
+                dialog.getDialogPane().setContent(new VBox(10, label, dontShowAgainCheckBox));
+                GuiUtils.setDialogIcons(dialog);
+
+                dialog.showAndWait();
+
+                if (dialog.getResult() == ButtonType.OK && dontShowAgainCheckBox.isSelected()) {
+                    ImageGalleryPreferences.setMultiUserCaseInfoDialogDisabled(true);
+                }
+            }
+
+            checkDBStale(controller);
+        });
+    }
+
+    private void checkDBStale(ImageGalleryController controller) {
+        //check if db is stale on throw away bg thread and then react back on jfx thread.
+        ListenableFuture<Boolean> staleFuture = listeningDecorator(newSingleThreadExecutor())
+                .submit(controller::isDataSourcesTableStale);
+        addFXCallback(staleFuture,
+                dbIsStale -> {
+                    //back on fx thread.
+                    if (false == dbIsStale) {
+                        //drawable db is not stale, just open it
+                        openTopComponent();
+                    } else {
+                        //drawable db is stale, ask what to do
+                        Alert alert = new Alert(Alert.AlertType.WARNING,
+                                Bundle.OpenAction_stale_confDlg_msg(),
+                                ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+                        alert.initModality(Modality.APPLICATION_MODAL);
+                        alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
+                        GuiUtils.setDialogIcons(alert);
+                        ButtonType answer = alert.showAndWait().orElse(ButtonType.CANCEL);
+                        if (answer == ButtonType.CANCEL) {
+                            //just do nothing
+                        } else if (answer == ButtonType.NO) {
+                            openTopComponent();
+                        } else if (answer == ButtonType.YES) {
+                            if (controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
+                                /* For a single-user case, we favor user
+                                 * experience, and rebuild the database as soon
+                                 * as Image Gallery is enabled for the case.
+                                 *
+                                 * Turning listening off is necessary in order
+                                 * to invoke the listener that will call
+                                 * controller.rebuildDB();
+                                 */
+                                controller.setListeningEnabled(false);
+                                controller.setListeningEnabled(true);
+                            } else {
+                                /*
+                                 * For a multi-user case, we favor overall
+                                 * performance and user experience, not every
+                                 * user may want to review images, so we rebuild
+                                 * the database only when a user launches Image
+                                 * Gallery.
+                                 */
+                                controller.rebuildDB();
+                            }
+                            openTopComponent();
+                        }
+                    }
+                },
+                throwable -> logger.log(Level.SEVERE, "Error checking if drawable db is stale.", throwable)//NON-NLS
+        );
+    }
+
+    private void openTopComponent() {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                ImageGalleryTopComponent.openTopComponent();
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex);//NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS}
+            }
+        });
     }
 
     @Override
@@ -195,6 +259,6 @@ public final class OpenAction extends CallableSystemAction {
 
     @Override
     public boolean asynchronous() {
-        return false; // run on edt
+        return true; // run off edt
     }
 }
