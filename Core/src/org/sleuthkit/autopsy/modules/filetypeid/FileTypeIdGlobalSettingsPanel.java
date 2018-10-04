@@ -487,6 +487,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     private void newTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTypeButtonActionPerformed
         AddFileTypeDialog dialog = new AddFileTypeDialog();
+        dialog.display();
         AddFileTypeDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == AddFileTypeDialog.BUTTON_PRESSED.OK) {
             fileTypes.add(dialog.getFileType());
@@ -509,6 +510,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private void editTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editTypeButtonActionPerformed
         int selected = this.typesList.getSelectedIndex();
         AddFileTypeDialog dialog = new AddFileTypeDialog(this.typesListModel.get(this.typesList.getSelectedIndex()));
+        dialog.display();
         AddFileTypeDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == AddFileTypeDialog.BUTTON_PRESSED.OK) {
             this.fileTypes.remove(selected);
