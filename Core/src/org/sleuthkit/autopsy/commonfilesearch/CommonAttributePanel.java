@@ -78,12 +78,10 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     @NbBundle.Messages({
         "CommonAttributePanel.title=Common Property Panel",
         "CommonAttributePanel.exception=Unexpected Exception loading DataSources.",
-        "CommonAttributePanel.frame.title=Find Common Properties",
-        "CommonAttributePanel.frame.msg=Find Common Properties",
+        "CommonAttributePanel.frame.title=Common Property Search",
         "CommonAttributePanel.intraCasePanel.title=Curren Case Options"})
     CommonAttributePanel() {
-        super(new JFrame(Bundle.CommonAttributePanel_frame_title()),
-                Bundle.CommonAttributePanel_frame_msg(), true);
+        super(WindowManager.getDefault().getMainWindow(), Bundle.CommonAttributePanel_frame_title(), true);
         initComponents();
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         this.setupDataSources();
@@ -570,7 +568,6 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         intraCasePanel.setVerifyInputWhenFocusTarget(false);
 
         interCasePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.interCasePanel.border.title"))); // NOI18N
-        interCasePanel.setMaximumSize(new java.awt.Dimension(32779, 230));
         interCasePanel.setMinimumSize(new java.awt.Dimension(430, 230));
         interCasePanel.setPreferredSize(new java.awt.Dimension(430, 230));
 
@@ -646,7 +643,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }// </editor-fold>//GEN-END:initComponents
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        SwingUtilities.windowForComponent(this).dispose();
+        this.dispose();
     }//GEN-LAST:event_formWindowClosed
 
     private void percentageThresholdCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_percentageThresholdCheckActionPerformed
@@ -671,7 +668,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         search();
-        SwingUtilities.windowForComponent(this).dispose();
+        this.dispose();
     }//GEN-LAST:event_searchButtonActionPerformed
 
     /**
