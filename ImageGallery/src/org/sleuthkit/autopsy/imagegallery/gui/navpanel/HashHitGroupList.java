@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 import java.util.function.Function;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionModel;
 import javafx.scene.image.ImageView;
@@ -72,12 +73,14 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
     @NbBundle.Messages({"HashHitGroupList.displayName.onlyHashHits=Only Hash Hits"})
     void initialize() {
         super.initialize();
-
+        groupList.setPlaceholder(new Label(Bundle.NavPanel_placeHolder_text()));
         setText(Bundle.HashHitGroupList_displayName_onlyHashHits());
         setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png")); //NON-NLS
 
         getBorderPane().setCenter(groupList);
-        sorted = getController().getGroupManager().getAnalyzedGroups().filtered(group -> group.getHashSetHitsCount() > 0).sorted(getDefaultComparator());
+        sorted = getController().getGroupManager().getAnalyzedGroups()
+                .filtered(group -> group.getHashSetHitsCount() > 0)
+                .sorted(getDefaultComparator());
 
         GroupCellFactory groupCellFactory = new GroupCellFactory(getController(), comparatorProperty());
         groupList.setCellFactory(groupCellFactory::getListCell);
