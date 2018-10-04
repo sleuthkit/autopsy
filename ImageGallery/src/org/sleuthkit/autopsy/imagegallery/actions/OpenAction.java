@@ -56,6 +56,7 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
+import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -184,7 +185,7 @@ public final class OpenAction extends CallableSystemAction {
 
     private void checkDBStale(ImageGalleryController controller) {
         //check if db is stale on throw away bg thread and then react back on jfx thread.
-        ListenableFuture<Boolean> staleFuture = listeningDecorator(newSingleThreadExecutor())
+        ListenableFuture<Boolean> staleFuture = TaskUtils.getExecutorForClass(OpenAction.class)
                 .submit(controller::isDataSourcesTableStale);
         addFXCallback(staleFuture,
                 dbIsStale -> {
