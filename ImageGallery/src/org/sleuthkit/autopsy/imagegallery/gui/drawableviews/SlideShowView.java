@@ -131,8 +131,8 @@ public class SlideShowView extends DrawableTileBase {
         getGroupPane().grouping().addListener(observable -> {
             syncButtonVisibility();
             if (getGroupPane().getGroup() != null) {
-                getGroupPane().getGroup().getFileIDs().addListener((Observable observable1) ->
-                        syncButtonVisibility());
+                getGroupPane().getGroup().getFileIDs().addListener((Observable observable1)
+                        -> syncButtonVisibility());
             }
         });
     }
@@ -215,9 +215,7 @@ public class SlideShowView extends DrawableTileBase {
                 mediaTask = null;
             }
         });
-        myTask.setOnCancelled(cancelled -> {
-            disposeContent();
-        });
+        myTask.setOnCancelled(cancelled -> disposeContent());
 
         exec.execute(myTask);
         return progressNode;
@@ -245,7 +243,6 @@ public class SlideShowView extends DrawableTileBase {
 
     /**
      *
-     * @param file      the value of file
      * @param imageTask the value of imageTask
      */
     @Override
@@ -259,9 +256,6 @@ public class SlideShowView extends DrawableTileBase {
         return maskerPane;
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     protected String getTextForLabel() {
         return getFile().map(DrawableFile::getName).orElse("") + " " + getSupplementalText();
@@ -292,8 +286,8 @@ public class SlideShowView extends DrawableTileBase {
      *         of y"
      */
     @NbBundle.Messages({"# {0} - file id number",
-            "# {1} - number of file ids",
-            "SlideShowView.supplementalText={0} of {1} in group"})
+        "# {1} - number of file ids",
+        "SlideShowView.supplementalText={0} of {1} in group"})
     private String getSupplementalText() {
         final ObservableList<Long> fileIds = getGroupPane().getGroup().getFileIDs();
         return getFileID().map(fileID -> " ( " + Bundle.SlideShowView_supplementalText(fileIds.indexOf(fileID) + 1, fileIds.size()) + " )")
@@ -301,9 +295,6 @@ public class SlideShowView extends DrawableTileBase {
 
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Override
     @ThreadConfined(type = ThreadType.ANY)
     public DhsImageCategory updateCategory() {
