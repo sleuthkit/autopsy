@@ -30,22 +30,25 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -54,6 +57,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.IngestModuleInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -667,9 +674,101 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }//GEN-LAST:event_intraCaseRadioActionPerformed
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        search();
+        checkDataSourcesAndSearch();
         this.dispose();
     }//GEN-LAST:event_searchButtonActionPerformed
+
+    /**
+     * If the settings reflect that a inter-case search is being performed,
+     * checks that the data sources in the current case have been processed with
+     * Correlation Engine enabled and exist in the central repository. Prompting
+     * the user as to whether they still want to perform the search in the case
+     * any data sources are unprocessed. If the settings reflect that a
+     * intra-case search is being performed, it just performs the search.
+     *
+     * Notes: - Does not check that the data sources were processed into the
+     * current central repository instead of another. - Does not check that the
+     * appropriate modules to make all correlation types available were run. -
+     * Does not check if the correlation engine was run with any of the
+     * correlation properties properties disabled.
+     */
+    @Messages({"CommonAttributePanel.incompleteResults.introText=Results may be incomplete. Not all data sources in the current case were ingested into the current Central Repository. The following data sources have not been processed:",
+        "CommonAttributePanel.incompleteResults.continueText=\n\n Continue with search anyway?",
+        "CommonAttributePanel.incompleteResults.title=Search may be incomplete"
+    })
+    private void checkDataSourcesAndSearch() {
+        new SwingWorker<List<String>, Void>() {
+
+            @Override
+            protected List<String> doInBackground() throws Exception {
+                List<String> unCorrelatedDataSources = new ArrayList<>();
+                if (!interCaseRadio.isSelected() || !EamDb.isEnabled() || EamDb.getInstance() == null) {
+                    return unCorrelatedDataSources;
+                }
+                //if the eamdb is enabled and an instance is able to be retrieved check if each data source has been processed into the cr 
+                HashMap<DataSource, CorrelatedStatus> dataSourceCorrelationMap = new HashMap<>(); //keep track of the status of all data sources that have been ingested
+                String correlationEngineModuleName = IngestModuleFactory.getModuleName();
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                List<CorrelationDataSource> correlatedDataSources = EamDb.getInstance().getDataSources();
+                List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
+                for (IngestJobInfo jobInfo : ingestJobs) {
+                    //get the data source for each ingest job
+                    DataSource dataSource = skCase.getDataSource(jobInfo.getObjectId());
+                    String deviceID = dataSource.getDeviceId();
+                    //add its status as not_correlated for now if this is the first time the data source was processed
+                    dataSourceCorrelationMap.putIfAbsent(dataSource, CorrelatedStatus.NOT_CORRELATED);
+                    if (dataSourceCorrelationMap.get(dataSource) == CorrelatedStatus.NOT_CORRELATED) {
+                        //if the datasource was previously processed we do not need to perform this check
+                        for (CorrelationDataSource correlatedDataSource : correlatedDataSources) {
+                            if (deviceID.equals(correlatedDataSource.getDeviceID())) {
+                                //if the datasource exists in the central repository it may of been processed with the correlation engine
+                                dataSourceCorrelationMap.put(dataSource, CorrelatedStatus.IN_CENTRAL_REPO);
+                                break;
+                            }
+                        }
+                    }
+                    if (dataSourceCorrelationMap.get(dataSource) == CorrelatedStatus.IN_CENTRAL_REPO) {
+                        //if the data source was in the central repository check if any of the modules run on it were the correlation engine
+                        for (IngestModuleInfo ingestModuleInfo : jobInfo.getIngestModuleInfo()) {
+                            if (correlationEngineModuleName.equals(ingestModuleInfo.getDisplayName())) {
+                                dataSourceCorrelationMap.put(dataSource, CorrelatedStatus.CORRELATED);
+                                break;
+                            }
+                        }
+                    }
+                }
+                //convert the keys of the map which have not been correlated to a list
+                for (DataSource dataSource : dataSourceCorrelationMap.keySet()) {
+                    if (dataSourceCorrelationMap.get(dataSource) != CorrelatedStatus.CORRELATED) {
+                        unCorrelatedDataSources.add(dataSource.getName());
+                    }
+                }
+                return unCorrelatedDataSources;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    List<String> unProcessedDataSources = get();
+                    boolean performSearch = true;
+                    if (!unProcessedDataSources.isEmpty()) {
+                        String warning = Bundle.CommonAttributePanel_incompleteResults_introText();
+                        warning = unProcessedDataSources.stream().map((dataSource) -> "\n  - " + dataSource).reduce(warning, String::concat);
+                        warning += Bundle.CommonAttributePanel_incompleteResults_continueText();
+                        //let user know which data sources in the current case were not processed into a central repository
+                        NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(warning, Bundle.CommonAttributePanel_incompleteResults_title(), NotifyDescriptor.YES_NO_OPTION);
+                        performSearch = DialogDisplayer.getDefault().notify(descriptor) == NotifyDescriptor.YES_OPTION;
+                    }
+                    if (performSearch) {
+                        search();
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while performing common property search", ex); //NON-NLS
+                }
+            }
+        }.execute();
+    }
 
     /**
      * Convert the text in the percentage threshold input box into an integer,
@@ -790,4 +889,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         this.updateErrorTextAndSearchButton();
     }
 
+    /**
+     * Enum for keeping track of which data sources in the case have not been
+     * processed into the central repository.
+     */
+    private enum CorrelatedStatus {
+        NOT_CORRELATED,
+        IN_CENTRAL_REPO,
+        CORRELATED
+    }
 }

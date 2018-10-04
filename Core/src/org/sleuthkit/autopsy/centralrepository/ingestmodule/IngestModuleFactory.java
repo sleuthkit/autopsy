@@ -42,7 +42,7 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
      *
      * @return The module name.
      */
-    static String getModuleName() {
+    public static String getModuleName() {
         return Bundle.IngestModuleFactory_ingestmodule_name();
     }
 
