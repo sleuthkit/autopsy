@@ -42,7 +42,6 @@ import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -122,20 +121,21 @@ public class GroupManager {
     private final Map<GroupKey<?>, DrawableGroup> groupMap = new HashMap<>();
 
     /*
-     * --- current grouping/sorting attributes --- all guarded by GroupManager intrisic lock, aka 'this'
+     * --- current grouping/sorting attributes --- all guarded by GroupManager
+     * intrisic lock, aka 'this'
      */
     @GuardedBy("this") //NOPMD
     private final ReadOnlyObjectWrapper< GroupSortBy> sortByProp = new ReadOnlyObjectWrapper<>(GroupSortBy.PRIORITY);
     private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(DrawableAttribute.PATH);
     private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(SortOrder.ASCENDING);
     private final ReadOnlyObjectWrapper<DataSource> dataSourceProp = new ReadOnlyObjectWrapper<>(null);//null indicates all datasources
-     /**
+    /**
      * Is the GroupManager operating in 'collaborative mode': In collaborative
      * mode, groups seen by ANY examiner are considered seen. When NOT in
      * collaborative mode, groups seen by other examiners, are NOT considered
      * seen.
      */
-      @GuardedBy("this") //NOPMD
+    @GuardedBy("this") //NOPMD
     private final ReadOnlyBooleanWrapper collaborativeModeProp = new ReadOnlyBooleanWrapper(false);
 
     private final GroupingService regrouper;
@@ -208,7 +208,7 @@ public class GroupManager {
             return getGroupKeysForCurrentGroupBy(file);
 
         } catch (TskCoreException | TskDataException ex) {
-            logger.log(Level.SEVERE, "Failed to get group keys for file with ID " +fileID, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to get group keys for file with ID " + fileID, ex); //NON-NLS
         }
         return Collections.emptySet();
     }
@@ -438,7 +438,7 @@ public class GroupManager {
     }
 
     /**
-     * 
+     *
      * @return null if all data sources are being displayed
      */
     public synchronized DataSource getDataSource() {
@@ -446,7 +446,7 @@ public class GroupManager {
     }
 
     /**
-     * 
+     *
      * @param dataSource Data source to display or null to display all of them
      */
     synchronized void setDataSource(DataSource dataSource) {
@@ -517,23 +517,23 @@ public class GroupManager {
     }
 
     /**
-     * Adds an analyzed file to a group and marks the group as analyzed if the entire group is
-     * now analyzed.
-     * 
-     * @param group Group being added to (will be null if a group has not yet been created)
-     * @param groupKey Group type/value 
-     * @param fileID 
+     * Adds an analyzed file to a group and marks the group as analyzed if the
+     * entire group is now analyzed.
+     *
+     * @param group    Group being added to (will be null if a group has not yet
+     *                 been created)
+     * @param groupKey Group type/value
+     * @param fileID
      */
     @SuppressWarnings("AssignmentToMethodParameter")
     synchronized private void addFileToGroup(DrawableGroup group, final GroupKey<?> groupKey, final long fileID) {
-        
+
         // NOTE: We assume that it has already been determined that GroupKey can be displayed based on Data Source filters
         if (group == null) {
             //if there wasn't already a group check if there should be one now
             // path group, for example, only gets created when all files are analyzed
             group = popuplateIfAnalyzed(groupKey, null);
-        }
-        else {
+        } else {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             group.addFile(fileID);
         }
@@ -586,7 +586,7 @@ public class GroupManager {
          * the problem is that as a new files are analyzed they might be in new
          * groups( if we are grouping by say make or model) -jm
          */
-        for (long fileId : updatedFileIDs) {            
+        for (long fileId : updatedFileIDs) {
             // reset the hash cache
             controller.getHashSetManager().invalidateHashSetsCacheForFile(fileId);
 
@@ -604,8 +604,9 @@ public class GroupManager {
     }
 
     /**
-     * If the group is analyzed (or other criteria based on grouping) and should be shown to the user,
-     * then add it to the appropriate data structures so that it can be viewed.
+     * If the group is analyzed (or other criteria based on grouping) and should
+     * be shown to the user, then add it to the appropriate data structures so
+     * that it can be viewed.
      */
     synchronized private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
         /*
@@ -619,11 +620,11 @@ public class GroupManager {
         if (isNull(task) == false && task.isCancelled() == true) {
             return null;
         }
-        
+
         /*
          * For attributes other than path we can't be sure a group is fully
-         * analyzed because we don't know all the files that will be a part
-         * of that group. just show them no matter what.
+         * analyzed because we don't know all the files that will be a part of
+         * that group. just show them no matter what.
          */
         if (groupKey.getAttribute() != DrawableAttribute.PATH
             || getDrawableDB().isGroupAnalyzed(groupKey)) {
@@ -773,38 +774,17 @@ public class GroupManager {
                                 .flatMap(GroupViewState::getGroup);
                 Optional<GroupKey<?>> viewedKey = viewedGroup.map(DrawableGroup::getGroupKey);
                 DataSource dataSourceOfCurrentGroup
-                        = viewedKey.flatMap(GroupKey::getDataSource)
-                                .orElse(null);
+                        = viewedKey.flatMap(GroupKey::getDataSource).orElse(null);
                 DrawableAttribute attributeOfCurrentGroup
-                        = viewedKey.map(GroupKey::getAttribute)
-                                .orElse(null);
-                /* if no group or if groupbies are different or if data source
-                 * != null and does not equal group */
-                if (viewedGroup.isPresent() == false) {
+                        = viewedKey.map(GroupKey::getAttribute).orElse(null);
+
+                if (viewedGroup.isPresent() == false //if no group was being viewed,
+                    || (dataSource != null && notEqual(dataSourceOfCurrentGroup, dataSource)) //or the datasource of the viewed group is wrong,
+                    || groupBy != attributeOfCurrentGroup) { // or the groupBy attribute is wrong...
 
                     //the current group should not be visible so ...
-                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
-                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
-                    } else if (isNotEmpty(analyzedGroups)) {
-                        //show the first analyzed group.
-                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
-                    } else { //there are no groups,  clear the group area.
-                        controller.advance(GroupViewState.tile(null));
-                    }
-                } else if ((getDataSource() != null && notEqual(dataSourceOfCurrentGroup, getDataSource()))) {
-
-                    //the current group should not be visible so ...
-                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
-                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
-                    } else if (isNotEmpty(analyzedGroups)) {
-                        //show the first analyzed group.
-                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
-                    } else { //there are no groups,  clear the group area.
-                        controller.advance(GroupViewState.tile(null));
-                    }
-                } else if (getGroupBy() != attributeOfCurrentGroup) {
-                    //the current group should not be visible so ...
-                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
+                    if (isNotEmpty(unSeenGroups)) {
+                        //  show then next unseen group 
                         controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
                     } else if (isNotEmpty(analyzedGroups)) {
                         //show the first analyzed group.
@@ -839,7 +819,8 @@ public class GroupManager {
          *
          * @param groupBy
          *
-         * @return map of data source (or null if group by attribute ignores data sources) to list of unique group values
+         * @return map of data source (or null if group by attribute ignores
+         *         data sources) to list of unique group values
          */
         public Multimap<DataSource, AttrValType> findValuesForAttribute() {
 
