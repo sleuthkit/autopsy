@@ -325,7 +325,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                         accessDatabase = databaseBuilder.open();
                     } catch (IOException | BufferUnderflowException | IndexOutOfBoundsException ignored) {
                         //Usually caused by an Unsupported newer version IOException error while attempting to open the jackcess databaseBuilder, we do not know if it is password 
-                        //they are not being logged because we do not know that anything can be done to resolve them and they are numerous.
+                        //they are not being logged because we do not know that anything can be done to resolve them and they are numerous. TODO JIRA-4300 Uprage Jackcess version
                         return passwordProtected; 
                     }
                     /*
