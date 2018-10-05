@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeListener;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -627,7 +628,7 @@ public final class ImageGalleryController {
          */
         abstract void cleanup(boolean success);
 
-        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException;
+        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException, SQLException;
 
         /**
          * Gets a list of files to process.
@@ -690,7 +691,7 @@ public final class ImageGalleryController {
                 // pass true so that groupmanager is notified of the changes
                 taskDB.commitTransaction(drawableDbTransaction, true);
 
-            } catch (TskCoreException ex) {
+            } catch (Exception ex) {    // Exception Firewall - catch ALL exceptions, including Runtime exceptions, to make sure we rollback transaction and release locks in case of any error. 
                 if (null != drawableDbTransaction) {
                     taskDB.rollbackTransaction(drawableDbTransaction);
                 }
@@ -751,7 +752,7 @@ public final class ImageGalleryController {
         }
 
         @Override
-        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws TskCoreException {
+        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws TskCoreException, SQLException {
             final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
 
             if (known) {
@@ -804,7 +805,7 @@ public final class ImageGalleryController {
         }
 
         @Override
-        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) {
+        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException, SQLException {
             taskDB.insertFile(DrawableFile.create(f, false, false), tr, caseDBTransaction);
         }
 

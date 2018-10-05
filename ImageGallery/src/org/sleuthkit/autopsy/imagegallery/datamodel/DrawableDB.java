@@ -271,7 +271,7 @@ public final class DrawableDB {
                     insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY, caseDbTransaction);
                 }
                 caseDbTransaction.commit();
-            } catch (TskCoreException ex) {
+            } catch (Exception ex) { // Exception Firewall - catch ALL exceptions, including Runtime exceptions, to make sure we rollback transaction and release locks in case of any error. 
                 if (null != caseDbTransaction) {
                     try {
                         caseDbTransaction.rollback();
@@ -804,7 +804,7 @@ public final class DrawableDB {
             caseDbTransaction.commit();
             commitTransaction(trans, true);
 
-        } catch (TskCoreException ex) {
+        } catch (Exception ex) { // Exception Firewall - catch ALL exceptions, including Runtime exceptions, to make sure we rollback transaction and release locks in case of any error. 
             if (null != caseDbTransaction) {
                 try {
                     caseDbTransaction.rollback();
@@ -820,11 +820,11 @@ public final class DrawableDB {
 
     }
 
-    public void insertFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+    public void insertFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws TskCoreException, SQLException {
         insertOrUpdateFile(f, tr, insertFileStmt, caseDbTransaction);
     }
 
-    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws TskCoreException, SQLException {
         insertOrUpdateFile(f, tr, updateFileStmt, caseDbTransaction);
     }
     
@@ -958,7 +958,7 @@ public final class DrawableDB {
      * @param tr   a transaction to use, must not be null
      * @param stmt the statement that does the actual inserting
      */
-    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt, @Nonnull CaseDbTransaction caseDbTransaction) {
+    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt, @Nonnull CaseDbTransaction caseDbTransaction) throws TskCoreException, SQLException {
 
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
@@ -1058,6 +1058,7 @@ public final class DrawableDB {
              */
             if (Case.isCaseOpen()) {
                 logger.log(Level.SEVERE, "failed to insert/update file" + f.getContentPathSafe(), ex); //NON-NLS
+                throw ex;
             }
 
         } finally {
@@ -1380,7 +1381,7 @@ public final class DrawableDB {
      * @param groupBy           Type of the grouping (CATEGORY, MAKE, etc.)
      * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
-    private void insertGroup(final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
+    private void insertGroup(final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) throws TskCoreException {
         insertGroup(0, value, groupBy, caseDbTransaction);
     }
 
@@ -1392,7 +1393,7 @@ public final class DrawableDB {
      * @param groupBy           Type of the grouping (CATEGORY, MAKE, etc.)
      * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
-    private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
+    private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) throws TskCoreException {
         // don't waste DB round trip if we recently added it
         String cacheKey = Long.toString(ds_obj_id) + "_" + value + "_" + groupBy.getDisplayName();
         if (groupCache.getIfPresent(cacheKey) != null) 
@@ -1411,6 +1412,7 @@ public final class DrawableDB {
             // Don't need to report it if the case was closed
             if (Case.isCaseOpen()) {
                 logger.log(Level.SEVERE, "Unable to insert group", ex); //NON-NLS
+                throw ex;
             }
         }
     }
