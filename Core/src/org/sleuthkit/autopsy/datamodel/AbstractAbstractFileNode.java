@@ -417,23 +417,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                         .collect(Collectors.joining(", "))));
     }
 
-    /**
-     * Used by subclasses of AbstractAbstractFileNode to add the tags property
-     * to their sheets.
-     *
-     * @param sheetSet the modifiable Sheet.Set returned by
-     *                 Sheet.get(Sheet.PROPERTIES)
-     * @param tags     the list of tags associated with the file
-     * @deprecated
-     */
-    @Deprecated
-    protected final void addTagProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
-        sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
-                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
-                        .distinct()
-                        .collect(Collectors.joining(", "))));
-    }
-
     private static String getContentPath(AbstractFile file) {
         try {
             return file.getUniquePath();
