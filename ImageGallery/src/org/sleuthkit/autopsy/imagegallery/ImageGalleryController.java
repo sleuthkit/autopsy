@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeListener;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -627,7 +628,7 @@ public final class ImageGalleryController {
          */
         abstract void cleanup(boolean success);
 
-        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException;
+        abstract void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException, SQLException;
 
         /**
          * Gets a list of files to process.
@@ -648,6 +649,7 @@ public final class ImageGalleryController {
 
             DrawableDB.DrawableTransaction drawableDbTransaction = null;
             CaseDbTransaction caseDbTransaction = null;
+            boolean filesProcessed = false;
             try {
                 //grab all files with supported extension or detected mime types
                 final List<AbstractFile> files = getFiles();
@@ -689,25 +691,27 @@ public final class ImageGalleryController {
                 caseDbTransaction.commit();
                 // pass true so that groupmanager is notified of the changes
                 taskDB.commitTransaction(drawableDbTransaction, true);
-
-            } catch (TskCoreException ex) {
+                filesProcessed = true;
+            } catch (SQLException | TskCoreException ex) { 
                 if (null != drawableDbTransaction) {
                     taskDB.rollbackTransaction(drawableDbTransaction);
                 }
-                if (null != caseDbTransaction) {
-                    try {
-                        caseDbTransaction.rollback();
-                    } catch (TskCoreException ex2) {
-                        logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
-                    }
-                }
-
+                
                 progressHandle.progress(Bundle.BulkTask_stopCopy_status());
                 logger.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
                 MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());
                 cleanup(false);
                 return;
             } finally {
+                if (false == filesProcessed) {
+                    if (null != caseDbTransaction) {
+                        try {
+                            caseDbTransaction.rollback();
+                        } catch (TskCoreException ex2) {
+                            logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
+                        }
+                    }
+                }
                 progressHandle.finish();
                 if (taskCompletionStatus) {
                     taskDB.insertOrUpdateDataSource(dataSourceObjId, DrawableDB.DrawableDbBuildStatusEnum.COMPLETE);
@@ -751,7 +755,7 @@ public final class ImageGalleryController {
         }
 
         @Override
-        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws TskCoreException {
+        void processFile(AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws TskCoreException, SQLException {
             final boolean known = f.getKnown() == TskData.FileKnown.KNOWN;
 
             if (known) {
@@ -804,7 +808,7 @@ public final class ImageGalleryController {
         }
 
         @Override
-        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) {
+        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) throws TskCoreException, SQLException {
             taskDB.insertFile(DrawableFile.create(f, false, false), tr, caseDBTransaction);
         }
 
