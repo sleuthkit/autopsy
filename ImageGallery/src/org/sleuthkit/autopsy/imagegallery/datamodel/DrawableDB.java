@@ -271,7 +271,9 @@ public final class DrawableDB {
                     insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY, caseDbTransaction);
                 }
                 caseDbTransaction.commit();
-            } catch (TskCoreException ex) {
+                caseDbTransaction = null;
+            } 
+            finally {
                 if (null != caseDbTransaction) {
                     try {
                         caseDbTransaction.rollback();
@@ -279,7 +281,6 @@ public final class DrawableDB {
                         logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2);
                     }
                 }
-                throw ex;
             }
 
             initializeImageList();
@@ -793,7 +794,7 @@ public final class DrawableDB {
         return removeFile;
     }
 
-    public void updateFile(DrawableFile f) {
+    public void updateFile(DrawableFile f) throws SQLException, TskCoreException {
         DrawableTransaction trans = null;
         CaseDbTransaction caseDbTransaction = null;
 
@@ -802,9 +803,12 @@ public final class DrawableDB {
             caseDbTransaction = tskCase.beginTransaction();
             updateFile(f, trans, caseDbTransaction);
             caseDbTransaction.commit();
+            caseDbTransaction = null;
             commitTransaction(trans, true);
+            trans = null;
 
-        } catch (TskCoreException ex) {
+        } 
+        finally {
             if (null != caseDbTransaction) {
                 try {
                     caseDbTransaction.rollback();
@@ -815,16 +819,15 @@ public final class DrawableDB {
             if (null != trans) {
                 rollbackTransaction(trans);
             }
-            logger.log(Level.SEVERE, "Error updating file", ex); //NON-NLS
         }
 
     }
 
-    public void insertFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+    public void insertFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws SQLException, TskCoreException {
         insertOrUpdateFile(f, tr, insertFileStmt, caseDbTransaction);
     }
 
-    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) throws SQLException, TskCoreException {
         insertOrUpdateFile(f, tr, updateFileStmt, caseDbTransaction);
     }
     
@@ -958,7 +961,7 @@ public final class DrawableDB {
      * @param tr   a transaction to use, must not be null
      * @param stmt the statement that does the actual inserting
      */
-    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt, @Nonnull CaseDbTransaction caseDbTransaction) {
+    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt, @Nonnull CaseDbTransaction caseDbTransaction) throws SQLException, TskCoreException {
 
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
@@ -1050,15 +1053,6 @@ public final class DrawableDB {
 
             // @@@ Consider storing more than ID so that we do not need to requery each file during commit
             tr.addUpdatedFile(f.getId());
-
-        } catch (SQLException | NullPointerException | TskCoreException ex) {
-            /*
-             * This is one of the places where we get an error if the case is
-             * closed during processing, which doesn't need to be reported here.
-             */
-            if (Case.isCaseOpen()) {
-                logger.log(Level.SEVERE, "failed to insert/update file" + f.getContentPathSafe(), ex); //NON-NLS
-            }
 
         } finally {
             dbWriteUnlock();
@@ -1380,7 +1374,7 @@ public final class DrawableDB {
      * @param groupBy           Type of the grouping (CATEGORY, MAKE, etc.)
      * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
-    private void insertGroup(final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
+    private void insertGroup(final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) throws TskCoreException {
         insertGroup(0, value, groupBy, caseDbTransaction);
     }
 
@@ -1392,27 +1386,22 @@ public final class DrawableDB {
      * @param groupBy           Type of the grouping (CATEGORY, MAKE, etc.)
      * @param caseDbTransaction transaction to use for CaseDB insert/updates
      */
-    private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) {
+    private void insertGroup(long ds_obj_id, final String value, DrawableAttribute<?> groupBy, CaseDbTransaction caseDbTransaction) throws TskCoreException {
         // don't waste DB round trip if we recently added it
         String cacheKey = Long.toString(ds_obj_id) + "_" + value + "_" + groupBy.getDisplayName();
         if (groupCache.getIfPresent(cacheKey) != null) 
             return;
         
-        try {
-            String insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')",
-                    ds_obj_id, value, groupBy.attrName.toString());
+        
+        String insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')",
+                ds_obj_id, value, groupBy.attrName.toString());
 
-            if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
-                insertSQL += "ON CONFLICT DO NOTHING";
-            }
-            tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
-            groupCache.put(cacheKey, Boolean.TRUE);
-        } catch (TskCoreException ex) {
-            // Don't need to report it if the case was closed
-            if (Case.isCaseOpen()) {
-                logger.log(Level.SEVERE, "Unable to insert group", ex); //NON-NLS
-            }
+        if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+            insertSQL += "ON CONFLICT DO NOTHING";
         }
+        tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
+        groupCache.put(cacheKey, Boolean.TRUE);
+        
     }
 
     /**
