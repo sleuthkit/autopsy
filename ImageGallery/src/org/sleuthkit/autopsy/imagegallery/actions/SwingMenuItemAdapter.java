@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-14 Basis Technology Corp.
+ * Copyright 2013-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +24,13 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
+import javax.swing.SwingUtilities;
 
-//TODO: move this into CoreUtils? -jm
+/**
+ * Adpater that allows Swing menus to be used in JavaFx UIs.
+ *
+ * jira-1062: Is this generaly usefull? should we move into CoreUtils? -jm
+ */
 public class SwingMenuItemAdapter extends MenuItem {
 
     JMenuItem jMenuItem;
@@ -33,7 +38,8 @@ public class SwingMenuItemAdapter extends MenuItem {
     SwingMenuItemAdapter(final JMenuItem jMenuItem) {
         super(jMenuItem.getText());
         this.jMenuItem = jMenuItem;
-        setOnAction(actionEvent -> jMenuItem.doClick());
+        setOnAction(actionEvent -> SwingUtilities.invokeLater(jMenuItem::doClick)
+        );
     }
 
     public static MenuItem create(MenuElement jmenuItem) {
@@ -55,6 +61,11 @@ class SwingMenuAdapter extends Menu {
     SwingMenuAdapter(final JMenu jMenu) {
         super(jMenu.getText());
         this.jMenu = jMenu;
+        if (!jMenu.isEnabled()) {
+            /* Grey out text if the JMenu that this Menu is wrapping is not
+             * enabled. */
+            setDisable(true);
+        }
         buildChildren(jMenu);
 
     }
@@ -68,17 +79,15 @@ class SwingMenuAdapter extends Menu {
 
     private void buildChildren(MenuElement jMenu) {
 
-        for (MenuElement menuE : jMenu.getSubElements()) {
-            if (menuE instanceof JMenu) {
-                getItems().add(SwingMenuItemAdapter.create((JMenu) menuE));
-            } else if (menuE instanceof JMenuItem) {
-                getItems().add(SwingMenuItemAdapter.create((JMenuItem) menuE));
-            } else if (menuE instanceof JPopupMenu) {
-                buildChildren(menuE);
+        for (MenuElement menuElement : jMenu.getSubElements()) {
+            if (menuElement instanceof JMenu) {
+                getItems().add(SwingMenuItemAdapter.create((JMenu) menuElement));
+            } else if (menuElement instanceof JMenuItem) {
+                getItems().add(SwingMenuItemAdapter.create((JMenuItem) menuElement));
+            } else if (menuElement instanceof JPopupMenu) {
+                buildChildren(menuElement);
             } else {
-
-                System.out.println(menuE.toString());
-//                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("Unown MenuElement subclass: " + menuElement.getClass().getName());
             }
         }
     }

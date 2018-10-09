@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.centralrepository;
 import java.awt.event.ActionEvent;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
+import javax.swing.Action;
+import org.apache.commons.lang.StringUtils;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle.Messages;
@@ -37,9 +39,9 @@ import org.sleuthkit.datamodel.AbstractFile;
  * An AbstractAction to manage adding and modifying a Central Repository file
  * instance comment.
  */
-
-
-@Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
+@Messages({"AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentEmptyFile=Add/Edit Central Repository Comment (Empty File)",
+    "AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoCommentNoMD5=Add/Edit Central Repository Comment (No MD5 Hash)",
+    "AddEditCentralRepoCommentAction.menuItemText.addEditCentralRepoComment=Add/Edit Central Repository Comment"})
 public final class AddEditCentralRepoCommentAction extends AbstractAction {
 
     private static final Logger logger = Logger.getLogger(AddEditCentralRepoCommentAction.class.getName());
@@ -58,14 +60,19 @@ public final class AddEditCentralRepoCommentAction extends AbstractAction {
      *
      */
     public AddEditCentralRepoCommentAction(AbstractFile file) {
-        super(Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
         fileId = file.getId();
         correlationAttributeInstance = EamArtifactUtil.getInstanceFromContent(file);
         if (correlationAttributeInstance == null) {
             addToDatabase = true;
             correlationAttributeInstance = EamArtifactUtil.makeInstanceFromContent(file);
         }
-
+        if (file.getSize() == 0) {
+            putValue(Action.NAME, Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoCommentEmptyFile());
+        } else if (StringUtils.isBlank(file.getMd5Hash())) {
+            putValue(Action.NAME, Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoCommentNoMD5());
+        } else {
+            putValue(Action.NAME, Bundle.AddEditCentralRepoCommentAction_menuItemText_addEditCentralRepoComment());
+        }
     }
 
     /**

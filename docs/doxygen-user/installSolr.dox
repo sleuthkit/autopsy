@@ -79,13 +79,14 @@ The following steps will configure Solr to run using an account that will have a
  <br><br>
 5. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-XXX(current version)\autopsy\solr\solr\configsets"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
 6. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-XXX(current version)\autopsy\solr\solr\lib"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.  
-7. Stop the <i>solrJetty</i> service by pressing <i>Start</i>, typing <i>services.msc</i>, pressing Enter, and locating the <i>solrJetty</i> Windows service. Select the service and press <i>Stop the service</i>. If the service is already stopped and there is no <i>Stop the service</i> available, this is okay.
-8. Start a Windows command prompt as administrator by pressing Start, typing <i>command</i>, right clicking on <i>Command Prompt</i>, and clicking on <i>Run as administrator</i>. Then run the following command to uninstall the solrJetty service:
+7. From an Autopsy installation, copy the file <i>"C:\Program Files\Autopsy-XXX(current version)\autopsy\solr\solr\zoo.cfg"</i> to <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr"</i>.
+8. Stop the <i>solrJetty</i> service by pressing <i>Start</i>, typing <i>services.msc</i>, pressing Enter, and locating the <i>solrJetty</i> Windows service. Select the service and press <i>Stop the service</i>. If the service is already stopped and there is no <i>Stop the service</i> available, this is okay.
+9. Start a Windows command prompt as administrator by pressing Start, typing <i>command</i>, right clicking on <i>Command Prompt</i>, and clicking on <i>Run as administrator</i>. Then run the following command to uninstall the solrJetty service:
 
               cmd /c C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat UNINSTALL
 
        You will very likely see a result that says "The solrJetty service is not started." This is okay.
-9. Start a Windows command prompt as administrator by pressing Start, typing <i>command</i>, right clicking on <i>Command Prompt</i>, and clicking on <i>Run as administrator</i>. Then run the following command to install the solrJetty service:
+10. Start a Windows command prompt as administrator by pressing Start, typing <i>command</i>, right clicking on <i>Command Prompt</i>, and clicking on <i>Run as administrator</i>. Then run the following command to install the solrJetty service:
 
                cmd /c C:\Bitnami\solr-4.10.3-0\apache-solr\scripts\serviceinstall.bat INSTALL
 <br> Note the argument "INSTALL" is case sensitive. Your command prompt should look like the screenshot below. Very likely your command prompt will say "The solrJetty service could not be started." This is okay.

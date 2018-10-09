@@ -2,7 +2,7 @@
 
 The Content Viewer lives in the lower right-hand side of the Autopsy main screen and shows pictures, video, hex, text, extracted strings, metadata, etc. The Content Viewer is enabled when you select an entry in the \ref ui_results.
 
-The Content Viewer is context-aware, meaning different tabs will be enabled depending on the type of content selected and which ingest modules have been run. It will default to what it considers the "most specific" tab. For example, selecting a JPG will cause the Content Viewer to automatically select the "Application" tab and will display the image there. If you instead would like the Content Viewer to stay on the previously selected tab when you change to a different content object, go to Tools->Options->Application Tab and select the "Stay on the same file viewer" option.
+The Content Viewer is context-aware, meaning different tabs will be enabled depending on the type of content selected and which ingest modules have been run. It will default to what it considers the "most specific" tab. For example, selecting a JPG will cause the Content Viewer to automatically select the "Application" tab and will display the image there. If you instead would like the Content Viewer to stay on the previously selected tab when you change to a different content object, go to the \ref view_options_page panel through Tools->Options->Application Tab and select the "Stay on the same file viewer" option.
 
 \image html content_viewer_options_panel.png
 
@@ -61,6 +61,12 @@ The Results tab is active when selecting entries that are part of the Results tr
 \image html content_viewer_results_call.png
 <br>
 \image html content_viewer_results_bookmark.png
+
+\section cv_annotations Annotations
+
+The Annotations tab shows information added by an analyst about a file or result. It displays any tags and comments associated with the file or result, and if the \ref central_repo_page is enabled it will also display any comments saved to the Central Repository.
+
+\image html content_viewer_annotations.png
 
 \section cv_other_occurrences Other Occurrences
 

@@ -336,10 +336,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.",
         "AbstractAbstractFileNode.createSheet.interestingResult.description=File has interesting result associated with it.",
         "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
-        "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag."})
+        "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag.",
+        "AbstractAbstractFileNode.createSheet.noScore.description=No score"})
     protected final void addScoreProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
         Score score = Score.NO_SCORE;
-        String description = NO_DESCR;
+        String description = Bundle.AbstractAbstractFileNode_createSheet_noScore_description();
         if (content.getKnown() == TskData.FileKnown.BAD) {
             score = Score.NOTABLE_SCORE;
             description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
@@ -410,23 +411,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }
-        sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
-                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
-                        .distinct()
-                        .collect(Collectors.joining(", "))));
-    }
-
-    /**
-     * Used by subclasses of AbstractAbstractFileNode to add the tags property
-     * to their sheets.
-     *
-     * @param sheetSet the modifiable Sheet.Set returned by
-     *                 Sheet.get(Sheet.PROPERTIES)
-     * @param tags     the list of tags associated with the file
-     * @deprecated
-     */
-    @Deprecated
-    protected final void addTagProperty(Sheet.Set sheetSet, List<ContentTag> tags) {
         sheetSet.put(new NodeProperty<>("Tags", AbstractAbstractFileNode_tagsProperty_displayName(),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName())
                         .distinct()

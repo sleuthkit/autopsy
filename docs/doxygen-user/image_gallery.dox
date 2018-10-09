@@ -1,9 +1,9 @@
 /*! \page image_gallery_page Image Gallery Module
 Overview
 ========
-This document outlines the use of the new Image Gallery feature of Autopsy.  This feature was funded by DHS S&T to help provide free and open source digital forensics tools to law enforcement. 
+This document outlines the use of the Image Gallery feature of Autopsy.  This feature was funded by DHS S&T to help provide free and open source digital forensics tools to law enforcement. 
 
-The new image gallery feature has been designed specifically with child-exploitation cases in mind, but can be used for a variety of other investigation types that involve images and videos. It offers the following features beyond the traditional long list of thumbnails that Autopsy and other tools currently provide. 
+The Image Gallery feature has been designed specifically with child-exploitation cases in mind, but can be used for a variety of other investigation types that involve images and videos. It offers the following features beyond the traditional long list of thumbnails that Autopsy and other tools currently provide. 
 - Groups images by folder (and other attributes) to help examiner break the large set of images into smaller groups and to help focus on areas with images of interest.
 - Allows examiner to start viewing images immediately upon adding them to the case.  As images are hashed, they are updated in the interface.  You do not need to wait until the entire image is ingested.
 
@@ -99,18 +99,22 @@ The section in the top left with tabs labelled “Contents” and “Hash Hits�
 Each group shows the number of files that hit against configured Hash DBs during ingest (hash hits) and the total number of image/video files as a ratio (hash hits / total) after its name.  By selecting groups in the tree/list you can navigate directly to them in the main display area.  If the Hash Hits tab is selected only groups containing files that have hash hits are shown.    
 
 
+Listening for Changes
+======================
+The Image Gallery maintains its own database, which needs to be updated as files are analyzed by Autopsy. For example, it needs to know when a file has been hashed or had EXIF data extracted.  By default, the Image Gallery is always listening in single-user cases for these changes and keeps its database up to date. If this is causing a performance impact, you can disable this feature in the Options panel. 
+
+You can turn the listening off for the current case and you can change the default behavior for future cases. 
 
 
 
+Multi-User Cases
+=================
+If a case was created in a multi-user environment, then it becomes much harder to keep the Image Gallery database in sync because many other examiners could be analyzing data from that case.  Therefore, Image Gallery has different update behaviors in a multi-user case than it does for a single-user case.  Notably:
+- If your system is running ingest on the data source, then you will continue to get real-time updates just like in a single-user case. So, as soon as a folder of files has been hashed and had EXIF data extracted, it will be possible for you to view it. 
+- If another system in the cluster is running ingest on a data source,  you may not see its results until the ingest has completed.  You will not get real-time updates and instead you will get updates only after you have closed Image Gallery and opened it again. 
+- Each time you open Image Gallery, it will check the local database to see if it is in sync with the case database.  If it is not, it will ask you to rebuild it. This is because additional data may have been added to the case database by another system and your Image Gallery database is no longer accurate. 
 
-
-
-
-
-
-
-
-
+You also have the option to see groups (or folders) that are new to you or new to everyone. When you press “Show Next Unseen Group”, the default behavior is to show you the highest priority group that you have not seen yet.  But, you can also choose to see groups that no one else has seen. This choice can be made using the check box next to the “Show Next Unseen Group” button. 
 
 
 

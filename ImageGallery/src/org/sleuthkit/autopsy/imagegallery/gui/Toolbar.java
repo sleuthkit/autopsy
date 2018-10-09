@@ -24,9 +24,11 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -42,7 +44,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Slider;
@@ -73,6 +74,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
+import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -112,11 +114,14 @@ public class Toolbar extends ToolBar {
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ObservableList<Optional<DataSource>> dataSources = FXCollections.observableArrayList();
     private SingleSelectionModel<Optional<DataSource>> dataSourceSelectionModel;
+    private final Map<DataSource, Boolean> dataSourcesViewable = new HashMap<>();
 
     private final InvalidationListener queryInvalidationListener = new InvalidationListener() {
         @Override
         public void invalidated(Observable invalidated) {
-            controller.getGroupManager().regroup(getSelectedDataSource(),
+            DataSource selectedDataSource = getSelectedDataSource();
+
+            controller.getGroupManager().regroup(selectedDataSource,
                     groupByBox.getSelectionModel().getSelectedItem(),
                     sortChooser.getComparator(),
                     sortChooser.getSortOrder(),
@@ -232,8 +237,8 @@ public class Toolbar extends ToolBar {
     }
 
     private void initDataSourceComboBox() {
-        dataSourceComboBox.setCellFactory(param -> new DataSourceCell());
-        dataSourceComboBox.setButtonCell(new DataSourceCell());
+        dataSourceComboBox.setCellFactory(param -> new DataSourceCell(dataSourcesViewable));
+        dataSourceComboBox.setButtonCell(new DataSourceCell(dataSourcesViewable));
         dataSourceComboBox.setConverter(new StringConverter<Optional<DataSource>>() {
             @Override
             public String toString(Optional<DataSource> object) {
@@ -251,6 +256,7 @@ public class Toolbar extends ToolBar {
                 evt -> {
                     Platform.runLater(() -> {
                         Optional<DataSource> selectedItem = dataSourceSelectionModel.getSelectedItem();
+                        //restore selection once the sync is done.
                         syncDataSources().addListener(() -> dataSourceSelectionModel.select(selectedItem), Platform::runLater);
                     });
                 });
@@ -265,33 +271,30 @@ public class Toolbar extends ToolBar {
     }
 
     private void initTagMenuButton() {
-        ListenableFuture<TagGroupAction> future = exec.submit(() -> new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller));
-        Futures.addCallback(future, new FutureCallback<TagGroupAction>() {
-            @Override
-            public void onSuccess(TagGroupAction followUpGroupAction) {
-                tagGroupMenuButton.setOnAction(followUpGroupAction);
-                tagGroupMenuButton.setText(followUpGroupAction.getText());
-                tagGroupMenuButton.setGraphic(followUpGroupAction.getGraphic());
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-                /*
-                 * The problem appears to be a timing issue where a case is
-                 * closed before this initialization is completed, which It
-                 * appears to be harmless, so we are temporarily changing this
-                 * log message to a WARNING.
-                 *
-                 * TODO (JIRA-3010): SEVERE error logged by image Gallery UI
-                 */
-                if (Case.isCaseOpen()) {
-                    logger.log(Level.WARNING, "Could not create Follow Up tag menu item", throwable); //NON-NLS
-                } else {
-                    // don't add stack trace to log because it makes looking for real errors harder
-                    logger.log(Level.INFO, "Unable to get tag name. Case is closed."); //NON-NLS
+        addFXCallback(exec.submit(() -> new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller)),
+                followUpGroupAction -> {
+                    //on fx thread
+                    tagGroupMenuButton.setOnAction(followUpGroupAction);
+                    tagGroupMenuButton.setText(followUpGroupAction.getText());
+                    tagGroupMenuButton.setGraphic(followUpGroupAction.getGraphic());
+                },
+                throwable -> {
+                    /*
+                     * The problem appears to be a timing issue where a case is
+                     * closed before this initialization is completed, which It
+                     * appears to be harmless, so we are temporarily changing
+                     * this log message to a WARNING.
+                     *
+                     * TODO (JIRA-3010): SEVERE error logged by image Gallery UI
+                     */
+                    if (Case.isCaseOpen()) {
+                        logger.log(Level.WARNING, "Could not create Follow Up tag menu item", throwable); //NON-NLS
+                    } else {
+                        // don't add stack trace to log because it makes looking for real errors harder
+                        logger.log(Level.INFO, "Unable to get tag name. Case is closed."); //NON-NLS
+                    }
                 }
-            }
-        }, Platform::runLater);
+        );
 
         tagGroupMenuButton.showingProperty().addListener(showing -> {
             if (tagGroupMenuButton.isShowing()) {
@@ -299,38 +302,40 @@ public class Toolbar extends ToolBar {
                     return Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
                             tagName -> GuiUtils.createAutoAssigningMenuItem(tagGroupMenuButton, new TagGroupAction(tagName, controller)));
                 });
-                Futures.addCallback(getTagsFuture, new FutureCallback<List<MenuItem>>() {
-                    @Override
-                    public void onSuccess(List<MenuItem> result) {
-                        tagGroupMenuButton.getItems().setAll(result);
-                    }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        logger.log(Level.SEVERE, "Error getting non-gategory tag names.", t);
-                    }
-                }, Platform::runLater);
+                addFXCallback(getTagsFuture,
+                        menuItems -> tagGroupMenuButton.getItems().setAll(menuItems),
+                        throwable -> logger.log(Level.SEVERE, "Error getting non-gategory tag names.", throwable)
+                );
             }
         });
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     private ListenableFuture<List<DataSource>> syncDataSources() {
-        ListenableFuture<List<DataSource>> future = exec.submit(controller.getSleuthKitCase()::getDataSources);
-        Futures.addCallback(future, new FutureCallback<List<DataSource>>() {
-            @Override
-            public void onSuccess(List<DataSource> result) {
-                dataSources.setAll(Collections.singleton(Optional.empty()));
-                result.forEach(dataSource -> dataSources.add(Optional.of(dataSource)));
+        ListenableFuture<List<DataSource>> dataSourcesFuture = exec.submit(() -> {
+            List<DataSource> dataSourcesInCase = controller.getSleuthKitCase().getDataSources();
+            synchronized (dataSourcesViewable) {
+                dataSourcesViewable.clear();
+                dataSourcesViewable.put(null, controller.hasTooManyFiles(null));
+                for (DataSource ds : dataSourcesInCase) {
+                    dataSourcesViewable.put(ds, controller.hasTooManyFiles(ds));
+                }
             }
+            return dataSourcesInCase;
+        });
+        addFXCallback(dataSourcesFuture,
+                result -> {
+                    //on fx thread
+                    List<Optional<DataSource>> newDataSources = new ArrayList<>(Lists.transform(result, Optional::of));
+                    newDataSources.add(0, Optional.empty());
+                    dataSources.setAll(newDataSources);
+                },
+                throwable -> logger.log(Level.SEVERE, "Unable to get datasources for current case.", throwable) //NON-NLS
 
-            @Override
-            public void onFailure(Throwable t) {
-                logger.log(Level.SEVERE, "Unable to get datasources for current case.", t); //NON-NLS
-            }
-        }, Platform::runLater);
+        );
 
-        return future;
+        return dataSourcesFuture;
     }
 
     /**
@@ -368,8 +373,7 @@ public class Toolbar extends ToolBar {
      *                     selection.
      */
     private void syncGroupControlsEnabledState(GroupViewState newViewState) {
-        boolean noGroupSelected = (null == newViewState)
-                                  || (null == newViewState.getGroup());
+        boolean noGroupSelected = (null == newViewState) || (null == newViewState.getGroup());
         Platform.runLater(() -> {
             tagGroupMenuButton.setDisable(noGroupSelected);
             catGroupMenuButton.setDisable(noGroupSelected);
@@ -386,22 +390,5 @@ public class Toolbar extends ToolBar {
     public Toolbar(ImageGalleryController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
-
-    }
-
-    /**
-     * Cell used to represent a DataSource in the dataSourceComboBoc
-     */
-    static private class DataSourceCell extends ListCell<Optional<DataSource>> {
-
-        @Override
-        protected void updateItem(Optional<DataSource> item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty || item == null) {
-                setText("All");
-            } else {
-                setText(item.map(DataSource::getName).orElse("All"));
-            }
-        }
     }
 }

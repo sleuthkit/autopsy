@@ -82,7 +82,7 @@ public class SummaryTablePane extends AnchorPane {
 
         //register for category events
         controller.getCategoryManager().registerListener(this);
-        handleCategoryChanged(null);
+        new Thread(() -> handleCategoryChanged(null)).start();
     }
 
     public SummaryTablePane(ImageGalleryController controller) {

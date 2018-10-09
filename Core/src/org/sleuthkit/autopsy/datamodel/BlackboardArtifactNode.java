@@ -61,6 +61,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -351,15 +352,15 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getSourceName()));
-        
+
         addScoreProperty(sheetSet, tags);
-        
+
         CorrelationAttributeInstance correlationAttribute = null;
         if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
-        
+
         if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
@@ -627,14 +628,32 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         "BlackboardArtifactNode.createSheet.notableFile.description=Associated file recognized as notable.",
         "BlackboardArtifactNode.createSheet.interestingResult.description=Result has an interesting result associated with it.",
         "BlackboardArtifactNode.createSheet.taggedItem.description=Result or associated file has been tagged.",
-        "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag."})
+        "BlackboardArtifactNode.createSheet.notableTaggedItem.description=Result or associated file tagged with notable tag.",
+        "BlackboardArtifactNode.createSheet.noScore.description=No score"})
     protected final void addScoreProperty(Sheet.Set sheetSet, List<Tag> tags) {
         Score score = Score.NO_SCORE;
-        String description = "";
+        String description = Bundle.BlackboardArtifactNode_createSheet_noScore_description();
         if (associated instanceof AbstractFile) {
             if (((AbstractFile) associated).getKnown() == TskData.FileKnown.BAD) {
                 score = Score.NOTABLE_SCORE;
                 description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
+            }
+        }
+        //if the artifact being viewed is a hashhit check if the hashset is notable 
+        if ((score == Score.NO_SCORE || score == Score.INTERESTING_SCORE) && content.getArtifactTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+            try {
+                BlackboardAttribute attr = content.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_SET_NAME));
+                List<HashDbManager.HashDb> notableHashsets = HashDbManager.getInstance().getKnownBadFileHashSets();
+                for (HashDbManager.HashDb hashDb : notableHashsets) {
+                    if (hashDb.getHashSetName().equals(attr.getValueString())) {
+                        score = Score.NOTABLE_SCORE;
+                        description = Bundle.BlackboardArtifactNode_createSheet_notableFile_description();
+                        break;
+                    }
+                }
+            } catch (TskCoreException ex) {
+                //unable to get the attribute so we can not update the status based on the attribute
+                logger.log(Level.WARNING, "Unable to get TSK_SET_NAME attribute for artifact of type TSK_HASHSET_HIT with artifact ID " + content.getArtifactID(), ex);
             }
         }
         try {
@@ -679,8 +698,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
             }
         } catch (EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
-        }
-        catch (CorrelationAttributeNormalizationException ex) {
+        } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
         sheetSet.put(

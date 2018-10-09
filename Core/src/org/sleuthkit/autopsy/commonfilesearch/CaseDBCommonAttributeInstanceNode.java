@@ -49,7 +49,7 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
      * 
      */
     public CaseDBCommonAttributeInstanceNode(AbstractFile fsContent, String caseName, String dataSource) {
-        super(fsContent);
+        super(fsContent, false);
         this.caseName = caseName;
         this.dataSource = dataSource;
     }
