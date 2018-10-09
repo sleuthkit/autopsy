@@ -19,12 +19,8 @@
 package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,7 +43,6 @@ import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
 import net.sf.sevenzipjbinding.PropID;
 import org.netbeans.api.progress.ProgressHandle;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -792,7 +787,8 @@ class SevenZipExtractor {
     }
 
     /**
-     * Stream used to unpack the archive of unknown size to local file
+     * Stream used to unpack the archive item to local file. This will be used when 
+     * the 7ZIP bindings call getStream() on the StandardIArchiveExtractCallback.
      */
     private static class UnpackStream implements ISequentialOutStream, AutoCloseable {
 
@@ -815,7 +811,6 @@ class SevenZipExtractor {
         public int write(byte[] bytes) throws SevenZipException {
             try {
                 output.write(bytes);
-                // Update bytesWritten
                 this.bytesWritten += bytes.length;
             } catch (IOException ex) {
                 throw new SevenZipException(
@@ -825,6 +820,15 @@ class SevenZipExtractor {
             return bytes.length;
         }
 
+        /**
+         * Update the OutputStream to point to a new File. This method mutates the state so
+         * that there is no overhead of creating a new object and buffer. Additionally, the 
+         * 7zip binding has a memory leak, so this prevents multiple streams from being created
+         * and never GC'd since the 7zip lib never frees a reference to them.
+         * 
+         * @param localAbsPath Path to local file
+         * @throws IOException 
+         */
         public void setNewOutputStream(String localAbsPath) throws IOException {
             this.output.setOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
             this.localAbsPath = localAbsPath;
@@ -939,6 +943,11 @@ class SevenZipExtractor {
             final String localAbsPath = archiveDetailsMap.get(
                     inArchiveItemIndex).getLocalAbsPath();
             
+            //If the Unpackstream has been allocated, then set the Outputstream 
+            //to another file rather than creating a new unpack stream. The 7Zip 
+            //binding has a memory leak, so creating new unpack streams will not be
+            //dereferenced. As a fix, we create one UnpackStream, and mutate its state,
+            //so that there only exists one 8192 byte buffer in memory per archive.
             try {
                 if (unpackStream != null) {
                     unpackStream.setNewOutputStream(localAbsPath);
