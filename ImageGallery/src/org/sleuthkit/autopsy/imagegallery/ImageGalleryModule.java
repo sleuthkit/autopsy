@@ -203,8 +203,8 @@ public class ImageGalleryModule {
                     }
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
                 }
             }
             else if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == DATA_ADDED) {
@@ -212,14 +212,18 @@ public class ImageGalleryModule {
                 
                 if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
                     DrawableDB drawableDB = controller.getDatabase();
-                    for (BlackboardArtifact art : mde.getArtifacts()) {
-                        drawableDB.addExifCache(art.getObjectID());
+                    if (mde.getArtifacts() != null) {
+                        for (BlackboardArtifact art : mde.getArtifacts()) {
+                            drawableDB.addExifCache(art.getObjectID());
+                        }
                     }
                 }
                 else if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                     DrawableDB drawableDB = controller.getDatabase();
-                    for (BlackboardArtifact art : mde.getArtifacts()) {
-                        drawableDB.addHashSetCache(art.getObjectID());
+                    if (mde.getArtifacts() != null) {
+                        for (BlackboardArtifact art : mde.getArtifacts()) {
+                            drawableDB.addHashSetCache(art.getObjectID());
+                        }
                     }
                 }
             }
