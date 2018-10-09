@@ -687,10 +687,18 @@ public final class ImageGalleryController {
 
                 progressHandle.start();
                 caseDbTransaction.commit();
+                caseDbTransaction = null;
                 // pass true so that groupmanager is notified of the changes
                 taskDB.commitTransaction(drawableDbTransaction, true);
+                drawableDbTransaction = null;
 
             } catch (TskCoreException ex) {
+                progressHandle.progress(Bundle.BulkTask_stopCopy_status());
+                logger.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
+                MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());
+                cleanup(false);
+                return;
+            } finally {
                 if (null != drawableDbTransaction) {
                     taskDB.rollbackTransaction(drawableDbTransaction);
                 }
@@ -701,13 +709,6 @@ public final class ImageGalleryController {
                         logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
                     }
                 }
-
-                progressHandle.progress(Bundle.BulkTask_stopCopy_status());
-                logger.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
-                MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());
-                cleanup(false);
-                return;
-            } finally {
                 progressHandle.finish();
                 if (taskCompletionStatus) {
                     taskDB.insertOrUpdateDataSource(dataSourceObjId, DrawableDB.DrawableDbBuildStatusEnum.COMPLETE);
