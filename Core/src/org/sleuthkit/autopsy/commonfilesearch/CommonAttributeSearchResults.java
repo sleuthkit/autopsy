@@ -99,11 +99,10 @@ final public class CommonAttributeSearchResults {
      * @return map of sizes of children to list of matches
      */
     public Map<Integer, CommonAttributeValueList> getMetadata() throws EamDbException {
-        if (this.percentageThreshold == 0) {
+        if (this.percentageThreshold == 0 && mimeTypesToInclude.isEmpty()) {
             return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
-        } else {
-            return this.getMetadata(this.percentageThreshold);
         }
+        return this.getMetadata(this.percentageThreshold);
     }
 
     /**
@@ -117,11 +116,6 @@ final public class CommonAttributeSearchResults {
      * @return metadata
      */
     private Map<Integer, CommonAttributeValueList> getMetadata(int maximumPercentageThreshold) throws EamDbException {
-
-        if (maximumPercentageThreshold == 0 && mimeTypesToInclude.isEmpty()) {
-            return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
-        }
-
         CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
                 .getDefaultCorrelationTypes()
                 .stream()
@@ -141,6 +135,7 @@ final public class CommonAttributeSearchResults {
             final CommonAttributeValueList values = listOfValues.getValue();
 
             for (CommonAttributeValue value : values.getDelayedMetadataList()) { // Need the real metadata
+
                 //Intracase common attribute searches will have been created with an empty mimeTypesToInclude list 
                 //because when performing intra case search this filtering will have been done during the query of the case database 
                 boolean mimeTypeToRemove = false;
