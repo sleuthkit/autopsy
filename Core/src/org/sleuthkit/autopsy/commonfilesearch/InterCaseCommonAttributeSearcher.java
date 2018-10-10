@@ -19,7 +19,6 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.Map;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
