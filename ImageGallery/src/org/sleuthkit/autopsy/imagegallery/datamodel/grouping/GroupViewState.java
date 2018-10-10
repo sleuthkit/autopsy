@@ -26,12 +26,28 @@ import java.util.Optional;
  */
 public final class GroupViewState {
 
+    // what group is being represented
     private final DrawableGroup group;
 
+    // Tile, Slide show, etc.
     private final GroupViewMode mode;
 
     private final Optional<Long> slideShowfileID;
 
+    private GroupViewState(DrawableGroup group, GroupViewMode mode, Long slideShowfileID) {
+        this.group = group;
+        this.mode = mode;
+        this.slideShowfileID = Optional.ofNullable(slideShowfileID);
+    }
+
+    public static GroupViewState createTile(DrawableGroup group) {
+        return new GroupViewState(group, GroupViewMode.TILE, null);
+    }
+
+    public static GroupViewState createSlideShow(DrawableGroup group, Long fileID) {
+        return new GroupViewState(group, GroupViewMode.SLIDE_SHOW, fileID);
+    }
+    
     public Optional<DrawableGroup> getGroup() {
         return Optional.ofNullable(group);
     }
@@ -44,19 +60,7 @@ public final class GroupViewState {
         return slideShowfileID;
     }
 
-    private GroupViewState(DrawableGroup group, GroupViewMode mode, Long slideShowfileID) {
-        this.group = group;
-        this.mode = mode;
-        this.slideShowfileID = Optional.ofNullable(slideShowfileID);
-    }
-
-    public static GroupViewState tile(DrawableGroup group) {
-        return new GroupViewState(group, GroupViewMode.TILE, null);
-    }
-
-    public static GroupViewState slideShow(DrawableGroup group, Long fileID) {
-        return new GroupViewState(group, GroupViewMode.SLIDE_SHOW, fileID);
-    }
+    
 
     @Override
     public int hashCode() {
