@@ -103,6 +103,6 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         if (typeString.equals("Files")) {
             typeString = this.buildCategorySelectionString();
         }
-        return Bundle.SingleInterCaseCommonAttributeSearcher_buildTabTitle_titleInterSingle(this.correlationCaseName, this.corAttrType.getDisplayName(), this.getPercentThresholdString());
+        return Bundle.SingleInterCaseCommonAttributeSearcher_buildTabTitle_titleInterSingle(this.correlationCaseName, typeString, this.getPercentThresholdString());
     }
 }
