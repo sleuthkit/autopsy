@@ -52,8 +52,14 @@ final public class CommonAttributeSearchResults {
     /**
      * Create a values object which can be handed off to the node factories.
      *
-     * @param values list of CommonAttributeValue indexed by size of
-     *               CommonAttributeValue
+     * @param metadata            list of CommonAttributeValue indexed by size
+     *                            of CommonAttributeValue
+     * @param percentageThreshold threshold to filter out files which are too
+     *                            common, value of 0 is disabled
+     * @param resultType          The type of Correlation Attribute being
+     *                            searched for
+     * @param mimeTypesToFilterOn Set of mime types to include for intercase
+     *                            searches
      */
     CommonAttributeSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType, Set<String> mimeTypesToFilterOn) {
         //wrap in a new object in case any client code has used an unmodifiable collection
@@ -66,8 +72,10 @@ final public class CommonAttributeSearchResults {
     /**
      * Create a values object which can be handed off to the node factories.
      *
-     * @param values list of CommonAttributeValue indexed by size of
-     *               CommonAttributeValue
+     * @param metadata            list of CommonAttributeValue indexed by size
+     *                            of CommonAttributeValue
+     * @param percentageThreshold threshold to filter out files which are too
+     *                            common, value of 0 is disabled
      */
     CommonAttributeSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold) {
         //wrap in a new object in case any client code has used an unmodifiable collection
@@ -101,8 +109,9 @@ final public class CommonAttributeSearchResults {
     public Map<Integer, CommonAttributeValueList> getMetadata() throws EamDbException {
         if (this.percentageThreshold == 0 && mimeTypesToInclude.isEmpty()) {
             return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
+        } else {
+            return this.getMetadata(this.percentageThreshold);
         }
-        return this.getMetadata(this.percentageThreshold);
     }
 
     /**
@@ -138,7 +147,7 @@ final public class CommonAttributeSearchResults {
 
                 //Intracase common attribute searches will have been created with an empty mimeTypesToInclude list 
                 //because when performing intra case search this filtering will have been done during the query of the case database 
-                boolean mimeTypeToRemove = false;
+                boolean mimeTypeToRemove = false;  //allow code to be more efficient by not attempting to remove the same value multiple times
                 if (!mimeTypesToInclude.isEmpty()) { //only do the mime type filtering when mime types aren't empty
                     for (AbstractCommonAttributeInstance commonAttr : value.getInstances()) {
                         AbstractFile abstractFile = commonAttr.getAbstractFile();
