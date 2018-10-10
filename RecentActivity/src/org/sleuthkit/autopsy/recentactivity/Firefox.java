@@ -54,6 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class Firefox extends Extract {
 
     private static final Logger logger = Logger.getLogger(Firefox.class.getName());
+    private static final String PLACE_URL_PREFIX = "place:";
     private static final String HISTORY_QUERY = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) AS visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0"; //NON-NLS
     private static final String COOKIE_QUERY = "SELECT name,value,host,expiry,(lastAccessed/1000000) AS lastAccessed,(creationTime/1000000) AS creationTime FROM moz_cookies"; //NON-NLS
     private static final String COOKIE_QUERY_V3 = "SELECT name,value,host,expiry,(lastAccessed/1000000) AS lastAccessed FROM moz_cookies"; //NON-NLS
@@ -132,6 +133,10 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                if (isIgnoredUrl(result.get("url").toString())) {
+                    continue;
+                }
+                
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         NbBundle.getMessage(this.getClass(),
@@ -226,12 +231,16 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, BOOKMARK_QUERY);
             logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                String url = result.get("url").toString();
+                if (isIgnoredUrl(url)) {
+                    continue;
+                }
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
-                        ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
+                        ((url != null) ? url : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
@@ -249,7 +258,7 @@ class Firefox extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
-                        (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
+                        (Util.extractDomain((url != null) ? url : "")))); //NON-NLS
 
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
                 if (bbart != null) {
@@ -327,6 +336,9 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
             logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                if (isIgnoredUrl(result.get("host").toString())) {
+                    continue;
+                }
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
@@ -442,6 +454,9 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, DOWNLOAD_QUERY);
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                if (isIgnoredUrl(result.get("source").toString())) {
+                    continue;
+                }
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
@@ -565,7 +580,10 @@ class Firefox extends Extract {
 
             logger.log(Level.INFO, "{0} - Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-
+                if (isIgnoredUrl(result.get("url").toString())) {
+                    continue;
+                }
+                
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
@@ -626,5 +644,27 @@ class Firefox extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
+    }
+    
+    /**
+     * Determine if the URL should be ignored.
+     * 
+     * @param url The URL to test.
+     * 
+     * @return True if the URL should be ignored; otherwise false.
+     */
+    private boolean isIgnoredUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return true;
+        }
+        
+        if (url.toLowerCase().startsWith(PLACE_URL_PREFIX)) {
+            /*
+             * Ignore URLs that begin with the matched text.
+             */
+            return true;
+        }
+        
+        return false;
     }
 }

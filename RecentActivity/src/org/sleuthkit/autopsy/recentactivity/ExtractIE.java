@@ -31,9 +31,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
@@ -69,6 +72,7 @@ class ExtractIE extends Extract {
     private final String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private final String JAVA_PATH;
+    private static final List<String> IGNORE_URL_PREFIXES = Arrays.asList("res://", "?CodeDownloadErrorLog!");
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
@@ -473,9 +477,13 @@ class ExtractIE extends Extract {
 
             String actime = lineBuff[3];
             Long ftime = (long) 0;
-            String user;
-            String realurl;
+            String user = null;
+            String realurl = null;
             String domain;
+            
+            if (isIgnoredUrl(lineBuff[1])) {
+                continue;
+            }
 
             /*
              * We've seen two types of lines: URL http://XYZ.com .... URL
@@ -483,17 +491,42 @@ class ExtractIE extends Extract {
              */
             if (lineBuff[1].contains("@")) {
                 String url[] = lineBuff[1].split("@", 2);
-                user = url[0];
-                user = user.replace("Visited:", ""); //NON-NLS
-                user = user.replace(":Host:", ""); //NON-NLS
-                user = user.replaceAll("(:)(.*?)(:)", "");
-                user = user.trim();
-                realurl = url[1];
-                realurl = realurl.replace("Visited:", ""); //NON-NLS
-                realurl = realurl.replaceAll(":(.*?):", "");
-                realurl = realurl.replace(":Host:", ""); //NON-NLS
-                realurl = realurl.trim();
+                URL urlObject = null;
+                
+                try {
+                    /*
+                     * Attempt to use the left portion of the input for the URL.
+                     */
+                    urlObject = new URL(url[0]);
+                    user = "";
+                    realurl = lineBuff[1].trim();
+                } catch (MalformedURLException ex) {
+                    /*
+                     * Could not create a new URL object from the left portion
+                     * of the input. The right portion will be used instead.
+                     */
+                }
+                
+                if (urlObject == null) {
+                    /*
+                     * The left portion of the input could not be used for the
+                     * URL, so use the right portion instead.
+                     */
+                    user = url[0];
+                    user = user.replace("Visited:", ""); //NON-NLS
+                    user = user.replace(":Host:", ""); //NON-NLS
+                    user = user.replaceAll("(:)(.*?)(:)", "");
+                    user = user.trim();
+                    realurl = url[1];
+                    realurl = realurl.replace("Visited:", ""); //NON-NLS
+                    realurl = realurl.replaceAll(":(.*?):", "");
+                    realurl = realurl.replace(":Host:", ""); //NON-NLS
+                    realurl = realurl.trim();
+                }
             } else {
+                /*
+                 * Use the entire input for the URL.
+                 */
                 user = "";
                 realurl = lineBuff[1].trim();
             }
@@ -561,5 +594,25 @@ class ExtractIE extends Extract {
         }
         fileScanner.close();
         return bbartifacts;
+    }
+    
+    /**
+     * Determine if the URL should be ignored.
+     * 
+     * @param url The URL to test.
+     * 
+     * @return True if the URL should be ignored; otherwise false.
+     */
+    private boolean isIgnoredUrl(String url) {
+        for (String ignore : IGNORE_URL_PREFIXES) {
+            if (url.startsWith(ignore)) {
+                /*
+                 * Ignore URLs that begin with the matched text.
+                 */
+                return true;
+            }
+        }
+        
+        return false;
     }
 }
