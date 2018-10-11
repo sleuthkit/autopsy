@@ -72,7 +72,7 @@ class ExtractIE extends Extract {
     private final String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private final String JAVA_PATH;
-    private static final List<String> IGNORE_URL_PREFIXES = Arrays.asList("res://", "?CodeDownloadErrorLog!");
+    private static final String RESOURCE_URL_PREFIX = "res://";
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
@@ -480,10 +480,6 @@ class ExtractIE extends Extract {
             String user = null;
             String realurl = null;
             String domain;
-            
-            if (isIgnoredUrl(lineBuff[1])) {
-                continue;
-            }
 
             /*
              * We've seen two types of lines: URL http://XYZ.com .... URL
@@ -565,9 +561,12 @@ class ExtractIE extends Extract {
                                 "ExtractIE.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(),
                                 "ExtractIE.moduleName.text")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), domain));
+                
+                if (isIgnoredUrl(lineBuff[1]) == false) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            NbBundle.getMessage(this.getClass(),
+                                    "ExtractIE.parentModuleName.noSpace"), domain));
+                }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                         NbBundle.getMessage(this.getClass(),
                                 "ExtractIE.parentModuleName.noSpace"), user));
@@ -604,13 +603,15 @@ class ExtractIE extends Extract {
      * @return True if the URL should be ignored; otherwise false.
      */
     private boolean isIgnoredUrl(String url) {
-        for (String ignore : IGNORE_URL_PREFIXES) {
-            if (url.startsWith(ignore)) {
-                /*
-                 * Ignore URLs that begin with the matched text.
-                 */
-                return true;
-            }
+        if (url == null || url.isEmpty()) {
+            return true;
+        }
+        
+        if (url.toLowerCase().startsWith(RESOURCE_URL_PREFIX)) {
+            /*
+             * Ignore URLs that begin with the matched text.
+             */
+            return true;
         }
         
         return false;
