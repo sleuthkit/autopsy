@@ -128,16 +128,6 @@ public class TableFilterNode extends FilterNode {
             return null;
         }
     }
-    
-    /**
-     * Refreshes the inner node, which depending on the actual node type that was wrapped
-     * could trigger a dynamic refresh of the children, if supported.
-     */
-    void refresh() {
-        DataResultFilterNode innerNode = getLookup().lookup(DataResultFilterNode.class);
-        innerNode.refresh();
-    
-    }
 
     /**
      * @return the column order key, which allows custom column ordering to be
