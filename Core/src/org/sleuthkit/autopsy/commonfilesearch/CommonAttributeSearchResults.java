@@ -161,7 +161,10 @@ final public class CommonAttributeSearchResults {
                                     toRemove.add(value);
                                     itemsToRemove.put(key, toRemove);
                                 }
-                                break;  //will be removed do not need to check 
+                                //value will be removed as the mime type existed and was not in the set to be included
+                                //because value is removed this value does not need to be checked further
+                                mimeTypeToRemove = true;
+                                break;  
                             }
                         }
                         if (mimeTypeToRemove) {
