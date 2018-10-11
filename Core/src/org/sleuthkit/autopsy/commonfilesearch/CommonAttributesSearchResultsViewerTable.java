@@ -29,7 +29,6 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
-import org.sleuthkit.autopsy.corecomponents.DelayedLoadChildNodesOnTreeExpansion;
 
 /**
  * <code>DataResultViewerTable</code> which overrides the default column header
@@ -71,7 +70,7 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
      */
     public CommonAttributesSearchResultsViewerTable() {
         super();
-        addTreeExpansionListener(new DelayedLoadChildNodesOnTreeExpansion());
+        addTreeExpansionListener(new InstanceCountNodeTreeExpansionListener());
     }
 
     @NbBundle.Messages({
