@@ -449,7 +449,7 @@ public class GroupManager {
      *
      * @param dataSource Data source to display or null to display all of them
      */
-    synchronized void setDataSource(DataSource dataSource) {
+    public synchronized void setDataSource(DataSource dataSource) {
         dataSourceProp.set(dataSource);
     }
 
