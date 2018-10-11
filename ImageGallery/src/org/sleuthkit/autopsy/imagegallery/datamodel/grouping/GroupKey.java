@@ -99,7 +99,17 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         if (!Objects.equals(this.attr, other.attr)) {
             return false;
         }
-        return this.dataSource.getId() == other.dataSource.getId();
+        // Check datasource, if available
+        if (this.dataSource != null && other.dataSource != null) {
+             return this.dataSource.getId() == other.dataSource.getId();
+        } else if (this.dataSource == null && other.dataSource == null) {
+            // neither group has a datasource
+            return true;
+        } else {
+             // one group has a datasource, other doesn't
+            return false;
+        }
+       
     }
 
     @Override
