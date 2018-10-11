@@ -1411,7 +1411,7 @@ public final class DrawableDB {
                     ds_obj_id, value, groupBy.attrName.toString());
 
             if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
-                insertSQL += "ON CONFLICT DO NOTHING";
+                insertSQL += " ON CONFLICT DO NOTHING";
             }
             tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
             groupCache.put(cacheKey, Boolean.TRUE);
