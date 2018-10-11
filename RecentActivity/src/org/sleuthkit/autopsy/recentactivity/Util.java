@@ -84,7 +84,12 @@ class Util {
         }
     }
 
-    public static String getBaseDomain(String url) {
+    /**
+     * 
+     * @param url
+     * @return empty string if no domain could be found
+     */
+    private static String getBaseDomain(String url) {
         String host = null;
         
         //strip protocol
@@ -113,10 +118,21 @@ class Util {
                 hostB.append(".");
             }
         }
-
-        return hostB.toString();
+        
+        
+        String base = hostB.toString();
+        // verify there are no special characters in there
+        if (base.matches(".*[~`!@#$%^&\\*\\(\\)\\+={}\\[\\];:\\?<>,/ ].*")) {
+            return "";
+        }
+        return base;
     }
 
+    /**
+     * 
+     * @param value
+     * @return empty string if no domain name was found
+     */
     public static String extractDomain(String value) {
         if (value == null) {
             return "";
