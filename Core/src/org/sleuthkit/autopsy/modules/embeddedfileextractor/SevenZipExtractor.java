@@ -43,6 +43,7 @@ import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.ICryptoGetTextPassword;
 import net.sf.sevenzipjbinding.PropID;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -790,34 +791,19 @@ class SevenZipExtractor {
      * Stream used to unpack the archive item to local file. This will be used when 
      * the 7ZIP bindings call getStream() on the StandardIArchiveExtractCallback.
      */
-    private static class UnpackStream implements ISequentialOutStream, AutoCloseable {
+    private final static class MutableEncodedFileOutputStream extends EncodedFileOutputStream 
+            implements AutoCloseable {
+        
+        private static final int HEADER_LENGTH = 32;
+        private static final String HEADER = "TSK_CONTAINER_XOR1_xxxxxxxxxxxxx";
 
-        private EncodedFileOutputStream output;
-        private String localAbsPath;
-
-        private long bytesWritten;
-
-        UnpackStream(String localAbsPath) throws IOException {
-            output = new EncodedFileOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
-            this.localAbsPath = localAbsPath;
-            this.bytesWritten = 0;
-        }
-
-        public long getSize() {
-            return this.bytesWritten;
+        MutableEncodedFileOutputStream(String localAbsPath) throws IOException {
+            super(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
         }
 
         @Override
-        public int write(byte[] bytes) throws SevenZipException {
-            try {
-                output.write(bytes);
-                this.bytesWritten += bytes.length;
-            } catch (IOException ex) {
-                throw new SevenZipException(
-                        NbBundle.getMessage(SevenZipExtractor.class, "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.exception.msg",
-                                localAbsPath), ex);
-            }
-            return bytes.length;
+        public void write(byte[] bytes) throws IOException {
+            super.write(bytes);
         }
 
         /**
@@ -830,22 +816,69 @@ class SevenZipExtractor {
          * @throws IOException 
          */
         public void setNewOutputStream(String localAbsPath) throws IOException {
-            this.output.setOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
+            this.out.close();
+            this.out = new FileOutputStream(localAbsPath);
+            writeHeader();
+        }
+        
+        private byte[] getEncodedHeader() {
+            byte [] encHeader = new byte[HEADER_LENGTH];
+            byte [] plainHeader = HEADER.getBytes();
+
+            for(int i = 0; i < HEADER_LENGTH; i++){
+                    encHeader[i] = ((byte)(plainHeader[i] ^ 0xca));
+            }
+            return encHeader;
+	}
+        
+        private void writeHeader() throws IOException {
+            // We get the encoded header here so it will be in plaintext after encoding
+            write(getEncodedHeader(), 0, HEADER_LENGTH);
+	}
+    }
+    
+    private final static class UnpackStream implements ISequentialOutStream {
+
+        private final MutableEncodedFileOutputStream output;
+        private String localAbsPath;
+        private int bytesWritten;
+        
+        UnpackStream(String localAbsPath) throws IOException {
+            this.output = new MutableEncodedFileOutputStream(localAbsPath);
+            this.localAbsPath = localAbsPath;
+            this.bytesWritten = 0;
+        } 
+        
+        public void setNewOutputStream(String localAbsPath) throws IOException {
+            this.output.setNewOutputStream(localAbsPath);
             this.localAbsPath = localAbsPath;
             this.bytesWritten = 0;
         }
-
-        @Override
-        public void close() {
-            if (output != null) {
-                try {
-                    output.flush();
-                    output.close();
-                } catch (IOException e) {
-                    logger.log(Level.WARNING, "Error closing unpack stream for file: {0}", localAbsPath); //NON-NLS
-                }
-            }
+        
+        public int getSize() {
+            return bytesWritten;
         }
+        
+        @Override
+        public int write(byte[] bytes) throws SevenZipException {
+            try {
+                output.write(bytes);
+                this.bytesWritten += bytes.length;
+            } catch (IOException ex) {
+                throw new SevenZipException(
+                    NbBundle.getMessage(SevenZipExtractor.class, 
+                            "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.exception.msg",
+                            localAbsPath), ex);
+            }
+            return bytes.length;
+        }
+        
+        public void close() throws IOException {
+           try(MutableEncodedFileOutputStream out = output) {
+               out.flush();
+           }
+        }
+        
     }
 
     /**
@@ -1028,7 +1061,11 @@ class SevenZipExtractor {
                     !(Boolean) inArchive.getProperty(inArchiveItemIndex, PropID.IS_FOLDER),
                     0L, createTimeInSeconds, accessTimeInSeconds, modTimeInSeconds, localRelPath);
 
-            unpackStream.close();
+            try {
+                unpackStream.close();
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Error closing unpack stream for file: {0}", localAbsPath); //NON-NLS
+            }
         }
 
         @Override
@@ -1139,9 +1176,9 @@ class SevenZipExtractor {
          */
         List<AbstractFile> getRootFileObjects() {
             List<AbstractFile> ret = new ArrayList<>();
-            for (UnpackedNode child : rootNode.getChildren()) {
+            rootNode.getChildren().forEach((child) -> {
                 ret.add(child.getFile());
-            }
+            });
             return ret;
         }
 
@@ -1153,17 +1190,17 @@ class SevenZipExtractor {
          */
         List<AbstractFile> getAllFileObjects() {
             List<AbstractFile> ret = new ArrayList<>();
-            for (UnpackedNode child : rootNode.getChildren()) {
+            rootNode.getChildren().forEach((child) -> {
                 getAllFileObjectsRec(ret, child);
-            }
+            });
             return ret;
         }
 
         private void getAllFileObjectsRec(List<AbstractFile> list, UnpackedNode parent) {
             list.add(parent.getFile());
-            for (UnpackedNode child : parent.getChildren()) {
+            parent.getChildren().forEach((child) -> {
                 getAllFileObjectsRec(list, child);
-            }
+            });
         }
 
         /**
