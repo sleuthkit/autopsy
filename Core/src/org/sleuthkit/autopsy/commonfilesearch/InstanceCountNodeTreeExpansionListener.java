@@ -41,9 +41,9 @@ final class InstanceCountNodeTreeExpansionListener implements TreeExpansionListe
         Node eventNode = Visualizer.findNode(event.getPath().getLastPathComponent());
         if (eventNode instanceof TableFilterNode) {
             final TableFilterNode tableFilterNode = (TableFilterNode) eventNode;
-            DataResultFilterNode dataResultFilterNode = tableFilterNode.getLookup().lookup(DataResultFilterNode.class);
+            final DataResultFilterNode dataResultFilterNode = tableFilterNode.getLookup().lookup(DataResultFilterNode.class);
             if (dataResultFilterNode != null) {
-                InstanceCountNode instanceCountNode = dataResultFilterNode.getLookup().lookup(InstanceCountNode.class);
+                final InstanceCountNode instanceCountNode = dataResultFilterNode.getLookup().lookup(InstanceCountNode.class);
                 if (instanceCountNode != null) {
                     instanceCountNode.createChildren();
                 }
