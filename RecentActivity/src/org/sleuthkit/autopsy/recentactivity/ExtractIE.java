@@ -487,38 +487,16 @@ class ExtractIE extends Extract {
              */
             if (lineBuff[1].contains("@")) {
                 String url[] = lineBuff[1].split("@", 2);
-                URL urlObject = null;
-                
-                try {
-                    /*
-                     * Attempt to use the left portion of the input for the URL.
-                     */
-                    urlObject = new URL(url[0]);
-                    user = "";
-                    realurl = lineBuff[1].trim();
-                } catch (MalformedURLException ex) {
-                    /*
-                     * Could not create a new URL object from the left portion
-                     * of the input. The right portion will be used instead.
-                     */
-                }
-                
-                if (urlObject == null) {
-                    /*
-                     * The left portion of the input could not be used for the
-                     * URL, so use the right portion instead.
-                     */
-                    user = url[0];
-                    user = user.replace("Visited:", ""); //NON-NLS
-                    user = user.replace(":Host:", ""); //NON-NLS
-                    user = user.replaceAll("(:)(.*?)(:)", "");
-                    user = user.trim();
-                    realurl = url[1];
-                    realurl = realurl.replace("Visited:", ""); //NON-NLS
-                    realurl = realurl.replaceAll(":(.*?):", "");
-                    realurl = realurl.replace(":Host:", ""); //NON-NLS
-                    realurl = realurl.trim();
-                }
+                user = url[0];
+                user = user.replace("Visited:", ""); //NON-NLS
+                user = user.replace(":Host:", ""); //NON-NLS
+                user = user.replaceAll("(:)(.*?)(:)", "");
+                user = user.trim();
+                realurl = url[1];
+                realurl = realurl.replace("Visited:", ""); //NON-NLS
+                realurl = realurl.replaceAll(":(.*?):", "");
+                realurl = realurl.replace(":Host:", ""); //NON-NLS
+                realurl = realurl.trim();
             } else {
                 /*
                  * Use the entire input for the URL.
