@@ -441,7 +441,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void showCasesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showCasesButtonActionPerformed
         store();
-        ShowCasesDialog showCasesDialog = new ShowCasesDialog();
+//        ShowCasesDialog showCasesDialog = new ShowCasesDialog();
+        CaseInfoDialog.displayCaseInfoDialog();
     }//GEN-LAST:event_showCasesButtonActionPerformed
 
     @Override

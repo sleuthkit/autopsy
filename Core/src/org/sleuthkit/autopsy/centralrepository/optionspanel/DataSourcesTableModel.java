@@ -19,28 +19,26 @@
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 
 /**
  * Model for cells to display correlation case information
  */
-class ShowCasesTableModel extends AbstractTableModel {
+class DataSourcesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * list of Eam Cases from central repository.
      */
-    private final List<TableCaseWrapper> eamCases;
+    private final List<CorrelationDataSource> dataSources;
 
-    ShowCasesTableModel() {
-        eamCases = new ArrayList<>();
+    DataSourcesTableModel() {
+        dataSources = new ArrayList<>();
     }
 
     @Override
@@ -64,7 +62,7 @@ class ShowCasesTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return eamCases.size();
+        return dataSources.size();
     }
 
     @Override
@@ -74,15 +72,11 @@ class ShowCasesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (eamCases.isEmpty()) {
+        if (dataSources.isEmpty()) {
             return Bundle.ShowCasesTableModel_noData();
         }
 
         return mapValueById(rowIdx, TableColumns.values()[colIdx]);
-    }
-
-    Object getRow(int rowIdx) {
-        return eamCases.get(rowIdx);
     }
 
     /**
@@ -94,34 +88,16 @@ class ShowCasesTableModel extends AbstractTableModel {
      * @return value in the cell
      */
     private Object mapValueById(int rowIdx, TableColumns colId) {
-        TableCaseWrapper eamCase = eamCases.get(rowIdx);
-        String value = Bundle.ShowCasesTableModel_noData();
+        CorrelationDataSource dataSource = dataSources.get(rowIdx);
+        String value = Bundle.DataSourcesTableModel_noData();
 
         switch (colId) {
-            case CASE_NAME:
-                value = eamCase.getDisplayName();
+            case DATA_SOURCE:
+                value = dataSource.getName();
                 break;
-//            case DATA_SOURCE:
-//                value = eamCase.getDataSources();
-//                break;
-            case CREATION_DATE:
-                value = eamCase.getCreationDate();
+            case DEVICE_ID:
+                value = dataSource.getDeviceID();
                 break;
-//            case CASE_NUMBER:
-//                value = eamCase.getCaseNumber();
-//                break;
-//            case EXAMINER_NAME:
-//                value = eamCase.getExaminerName();
-//                break;
-//            case EXAMINER_EMAIL:
-//                value = eamCase.getExaminerEmail();
-//                break;
-//            case EXAMINER_PHONE:
-//                value = eamCase.getExaminerPhone();
-//                break;
-//            case NOTES:
-//                value = eamCase.getNotes();
-//                break;
             default:
                 break;
         }
@@ -138,31 +114,28 @@ class ShowCasesTableModel extends AbstractTableModel {
      *
      * @param eamCase central repository case to add to the table
      */
-    void addEamCase(CorrelationCase eamCase, List<CorrelationDataSource> dataSourceList) {
-        eamCases.add(new TableCaseWrapper(eamCase, dataSourceList));
+    void addDataSources(List<CorrelationDataSource> dataSourceList) {
+        dataSources.addAll(dataSourceList);
         fireTableDataChanged();
     }
 
-    TableCaseWrapper getEamCase(int listIndex) {
-        return eamCases.get(listIndex);
-    }
-
+    
     void clearTable() {
-        eamCases.clear();
+        dataSources.clear();
         fireTableDataChanged();
     }
 
-    @Messages({"ShowCasesTableModel.case=Case Name",
-        "ShowCasesTableModel.creationDate=Creation Date",
-        "ShowCasesTableModel.noData=No Cases"})
+    @Messages({"DataSourcesTableModel.dataSource=Data Source",
+        "DataSourcesTableModel.deviceId=Device ID",
+        "DataSourcesTableModel.noData=No Cases"})
     /**
      * Enum which lists columns of interest from CorrelationCase.
      */
     private enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        CASE_NAME(Bundle.ShowCasesTableModel_case(), 120),
-        CREATION_DATE(Bundle.ShowCasesTableModel_creationDate(), 120);
+        DATA_SOURCE(Bundle.DataSourcesTableModel_dataSource(), 120),
+        DEVICE_ID(Bundle.DataSourcesTableModel_deviceId(), 120);
 
         private final String columnName;
         private final int columnWidth;
@@ -178,54 +151,6 @@ class ShowCasesTableModel extends AbstractTableModel {
 
         int columnWidth() {
             return columnWidth;
-        }
-    }
-
-    class TableCaseWrapper {
-
-        private final CorrelationCase eamCase;
-        private final List<CorrelationDataSource> dataSources;
-
-        TableCaseWrapper(CorrelationCase correlationCase, List<CorrelationDataSource> dataSourceList) {
-            eamCase = correlationCase;
-            dataSources = dataSourceList;
-        }
-
-        String getDisplayName() {
-            return eamCase.getDisplayName();
-        }
-
-        List<CorrelationDataSource> getDataSources() {
-            return Collections.unmodifiableList(dataSources);
-        }
-
-        String getCreationDate() {
-            return eamCase.getCreationDate();
-        }
-
-        String getOrganizationName() {
-            EamOrganization org = eamCase.getOrg();
-            return org == null ? "" : org.getName();
-        }
-
-        String getCaseNumber() {
-            return eamCase.getCaseNumber();
-        }
-
-        String getExaminerName() {
-            return eamCase.getExaminerName();
-        }
-
-        String getExaminerEmail() {
-            return eamCase.getExaminerEmail();
-        }
-
-        String getNotes() {
-            return eamCase.getNotes();
-        }
-
-        String getExaminerPhone() {
-            return eamCase.getExaminerPhone();
         }
     }
 
