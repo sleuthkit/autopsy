@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Central Repository
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
@@ -17,26 +30,24 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.optionspanel.ShowCasesTableModel.TableCaseWrapper;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.openide.util.NbBundle.Messages;
 
-/**
- *
- * @author wschaefer
- */
-public class CaseInfoDialog extends javax.swing.JDialog {
+
+class CaseDetailsDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
-    private final ShowCasesTableModel tableModel;
-    private final static Logger logger = Logger.getLogger(CaseInfoDialog.class.getName());
+    private final CasesTableModel tableModel;
+    private final static Logger logger = Logger.getLogger(CaseDetailsDialog.class.getName());
 
     /**
      * Creates new form CaseInfoDialog
      */
-    private CaseInfoDialog() {
-        super(WindowManager.getDefault().getMainWindow(),
+    @Messages({"CaseDetailsDialog.title.text=Case Details"})
+    private CaseDetailsDialog() {
+        super(WindowManager.getDefault().getMainWindow(), Bundle.CaseDetailsDialog_title_text(),
                 true);
-        tableModel = new ShowCasesTableModel();
+        tableModel = new CasesTableModel();
         initComponents();
         try {
             EamDb dbManager = EamDb.getInstance();
@@ -64,7 +75,7 @@ public class CaseInfoDialog extends javax.swing.JDialog {
     }
 
     static void displayCaseInfoDialog() {
-        CaseInfoDialog caseInfoDialog = new CaseInfoDialog();
+        CaseDetailsDialog caseInfoDialog = new CaseDetailsDialog();
         caseInfoDialog.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         caseInfoDialog.setVisible(true);
     }
@@ -134,41 +145,46 @@ public class CaseInfoDialog extends javax.swing.JDialog {
         notesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         notesTextArea.setLineWrap(true);
         notesTextArea.setRows(3);
-        notesTextArea.setText(org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.notesTextArea.text")); // NOI18N
+        notesTextArea.setText(org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.notesTextArea.text")); // NOI18N
         notesTextArea.setWrapStyleWord(true);
         notesTextArea.setBorder(null);
         notesScrollPane.setViewportView(notesTextArea);
 
-        org.openide.awt.Mnemonics.setLocalizedText(caseInfoLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.caseInfoLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(caseInfoLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.caseInfoLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(dataSourcesLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.dataSourcesLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourcesLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.dataSourcesLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(notesLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.notesLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(notesLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.notesLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(orgLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.orgLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(orgLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.orgLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(caseNumberLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.caseNumberLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(caseNumberLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.caseNumberLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(examinerEmailLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.examinerEmailLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(examinerEmailLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerEmailLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(examinerNameLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.examinerNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(examinerNameLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerNameLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.examinerPhoneLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerPhoneLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(orgValueLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.orgValueLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(orgValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.orgValueLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(caseNumberValueLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.caseNumberValueLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(caseNumberValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.caseNumberValueLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(examinerNameValueLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.examinerNameValueLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(examinerNameValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerNameValueLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(examinerEmailValueLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.examinerEmailValueLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(examinerEmailValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerEmailValueLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneValueLabel, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.examinerPhoneValueLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerPhoneValueLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.closeButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.closeButton.text")); // NOI18N
         closeButton.setMaximumSize(new java.awt.Dimension(65, 23));
         closeButton.setMinimumSize(new java.awt.Dimension(65, 23));
         closeButton.setPreferredSize(new java.awt.Dimension(65, 23));
+        closeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                closeButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout caseInfoPanelLayout = new javax.swing.GroupLayout(caseInfoPanel);
         caseInfoPanel.setLayout(caseInfoPanelLayout);
@@ -259,8 +275,8 @@ public class CaseInfoDialog extends javax.swing.JDialog {
         casesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         casesScrollPane.setViewportView(casesTable);
         if (casesTable.getColumnModel().getColumnCount() > 0) {
-            casesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.casesTable.columnModel.title0")); // NOI18N
-            casesTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(CaseInfoDialog.class, "CaseInfoDialog.casesTable.columnModel.title1")); // NOI18N
+            casesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.casesTable.columnModel.title0")); // NOI18N
+            casesTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.casesTable.columnModel.title1")); // NOI18N
         }
 
         javax.swing.GroupLayout casesPanelLayout = new javax.swing.GroupLayout(casesPanel);
@@ -294,12 +310,13 @@ public class CaseInfoDialog extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
+        this.dispose();
+    }//GEN-LAST:event_closeButtonActionPerformed
+
     private void updateSelection() {
         if (casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount()) {
-            System.out.println("VALID INDEX");
-            TableCaseWrapper caseWrapper = tableModel.getEamCase(casesTable.getSelectedRow());
-            System.out.println("CASE NAME AGAINL " + caseWrapper.getDisplayName());
-            System.out.println("CASE ORG " + caseWrapper.getOrganizationName());
+            CaseDataSourcesWrapper caseWrapper = tableModel.getEamCase(casesTable.getSelectedRow());
             orgValueLabel.setText(caseWrapper.getOrganizationName());
             caseNumberValueLabel.setText(caseWrapper.getCaseNumber());
             examinerNameValueLabel.setText(caseWrapper.getExaminerName());
@@ -310,7 +327,6 @@ public class CaseInfoDialog extends javax.swing.JDialog {
             dataSourcesModel.addDataSources(caseWrapper.getDataSources());
             dataSourcesTable.setModel(dataSourcesModel);
         } else {
-            System.out.println("INVALID INDEX");
             orgValueLabel.setText("");
             caseNumberValueLabel.setText("");
             examinerNameValueLabel.setText("");

@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 
 /**
@@ -87,6 +86,7 @@ class DataSourcesTableModel extends AbstractTableModel {
      *
      * @return value in the cell
      */
+    @Messages({"DataSourcesTableModel.noData=No Cases"})
     private Object mapValueById(int rowIdx, TableColumns colId) {
         CorrelationDataSource dataSource = dataSources.get(rowIdx);
         String value = Bundle.DataSourcesTableModel_noData();
@@ -126,8 +126,7 @@ class DataSourcesTableModel extends AbstractTableModel {
     }
 
     @Messages({"DataSourcesTableModel.dataSource=Data Source",
-        "DataSourcesTableModel.deviceId=Device ID",
-        "DataSourcesTableModel.noData=No Cases"})
+        "DataSourcesTableModel.deviceId=Device ID"})
     /**
      * Enum which lists columns of interest from CorrelationCase.
      */
