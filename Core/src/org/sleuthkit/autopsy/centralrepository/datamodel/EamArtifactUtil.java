@@ -174,7 +174,7 @@ public class EamArtifactUtil {
             return null;
         }
 
-        if (null != value) {
+        if ((null != value) && (value.isEmpty() == false)) {
             return makeCorrelationAttributeInstanceUsingTypeValue(bbArtifact, correlationType, value);
         } else {
             return null;
