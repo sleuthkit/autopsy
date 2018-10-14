@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.coreutils;
+package org.sleuthkit.autopsy.contentviewers;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Sqlite utility class. Find and copy metafiles, write sqlite abstract files to
  * temp directory, and generate unique temp directory paths.
  */
-public final class SqliteUtil {
+final class SqliteUtil {
 
     private SqliteUtil() {
 
