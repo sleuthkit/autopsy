@@ -124,7 +124,7 @@ class CaseDetailsDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(400, 400));
 
-        casesSplitPane.setDividerLocation(400);
+        casesSplitPane.setDividerLocation(380);
 
         dataSourcesTable.setModel(dataSourcesTableModel);
         dataSourcesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -205,7 +205,7 @@ class CaseDetailsDialog extends javax.swing.JDialog {
                             .addComponent(notesLabel)
                             .addGroup(caseInfoPanelLayout.createSequentialGroup()
                                 .addGap(10, 10, 10)
-                                .addComponent(notesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE))))
+                                .addComponent(notesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 428, Short.MAX_VALUE))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, caseInfoPanelLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -266,7 +266,7 @@ class CaseDetailsDialog extends javax.swing.JDialog {
         casesPanelLayout.setHorizontalGroup(
             casesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(casesPanelLayout.createSequentialGroup()
-                .addComponent(casesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE)
+                .addComponent(casesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
         casesPanelLayout.setVerticalGroup(

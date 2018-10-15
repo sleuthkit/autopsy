@@ -38,7 +38,7 @@
   <SubComponents>
     <Container class="javax.swing.JSplitPane" name="casesSplitPane">
       <Properties>
-        <Property name="dividerLocation" type="int" value="400"/>
+        <Property name="dividerLocation" type="int" value="380"/>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout"/>
@@ -94,7 +94,7 @@
                                   <Component id="notesLabel" min="-2" max="-2" attributes="0"/>
                                   <Group type="102" attributes="0">
                                       <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                                      <Component id="notesScrollPane" pref="408" max="32767" attributes="0"/>
+                                      <Component id="notesScrollPane" pref="428" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -306,7 +306,7 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="casesScrollPane" pref="399" max="32767" attributes="0"/>
+                      <Component id="casesScrollPane" pref="379" max="32767" attributes="0"/>
                       <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                   </Group>
               </Group>
