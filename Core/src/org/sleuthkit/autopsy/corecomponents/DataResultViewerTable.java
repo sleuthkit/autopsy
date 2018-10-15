@@ -46,6 +46,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
@@ -263,6 +264,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         } finally {
             this.setCursor(null);
         }
+    }
+
+    /**
+     * Adds a tree expansion listener to the OutlineView of this tabular results
+     * viewer.
+     *
+     * @param listener The listener
+     */
+    protected void addTreeExpansionListener(TreeExpansionListener listener) {
+        outlineView.addTreeExpansionListener(listener);
     }
 
     /**
@@ -1036,7 +1047,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    protected org.openide.explorer.view.OutlineView outlineView;
+    private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 
 }

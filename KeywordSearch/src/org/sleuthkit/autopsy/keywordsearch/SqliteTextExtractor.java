@@ -33,7 +33,6 @@ import java.util.LinkedList;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.SqliteUtil;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;

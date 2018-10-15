@@ -449,7 +449,7 @@ public class GroupManager {
      *
      * @param dataSource Data source to display or null to display all of them
      */
-    synchronized void setDataSource(DataSource dataSource) {
+    public synchronized void setDataSource(DataSource dataSource) {
         dataSourceProp.set(dataSource);
     }
 
@@ -785,12 +785,12 @@ public class GroupManager {
                     //the current group should not be visible so ...
                     if (isNotEmpty(unSeenGroups)) {
                         //  show then next unseen group 
-                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
+                        controller.advance(GroupViewState.createTile(unSeenGroups.get(0)));
                     } else if (isNotEmpty(analyzedGroups)) {
                         //show the first analyzed group.
-                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
+                        controller.advance(GroupViewState.createTile(analyzedGroups.get(0)));
                     } else { //there are no groups,  clear the group area.
-                        controller.advance(GroupViewState.tile(null));
+                        controller.advance(GroupViewState.createTile(null));
                     }
                 }
             } finally {

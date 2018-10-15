@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
+import org.sleuthkit.autopsy.deletedFiles.DeletedFilePreferences;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -111,11 +112,11 @@ public class DeletedContent implements AutopsyVisitableItem {
         this.skCase = skCase;
         this.datasourceObjId = dsObjId;
     }
-    
+
     long filteringDataSourceObjId() {
         return this.datasourceObjId;
     }
-    
+
     @Override
     public <T> T accept(AutopsyItemVisitor<T> visitor) {
         return visitor.visit(this);
@@ -191,9 +192,10 @@ public class DeletedContent implements AutopsyVisitableItem {
          * fired. Other nodes are listening to this for changes.
          */
         private static final class DeletedContentsChildrenObservable extends Observable {
+
             private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(
-                Case.Events.DATA_SOURCE_ADDED,
-                Case.Events.CURRENT_CASE
+                    Case.Events.DATA_SOURCE_ADDED,
+                    Case.Events.CURRENT_CASE
             );
 
             DeletedContentsChildrenObservable() {
@@ -213,12 +215,11 @@ public class DeletedContent implements AutopsyVisitableItem {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
                     /**
-                     * + // @@@ COULD CHECK If the new file is deleted
-                     * before notifying... Checking for a current case is a
-                     * stop gap measure	+ update(); until a different way of
-                     * handling the closing of cases is worked out.
-                     * Currently, remote events may be received for a case
-                     * that is already closed.
+                     * + // @@@ COULD CHECK If the new file is deleted before
+                     * notifying... Checking for a current case is a stop gap
+                     * measure	+ update(); until a different way of handling the
+                     * closing of cases is worked out. Currently, remote events
+                     * may be received for a case that is already closed.
                      */
                     try {
                         Case.getCurrentCaseThrows();
@@ -234,10 +235,10 @@ public class DeletedContent implements AutopsyVisitableItem {
                         || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                         || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                     /**
-                     * Checking for a current case is a stop gap measure
-                     * until a different way of handling the closing of
-                     * cases is worked out. Currently, remote events may be
-                     * received for a case that is already closed.
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
                      */
                     try {
                         Case.getCurrentCaseThrows();
@@ -282,7 +283,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             // Use version that has observer for updates
             @Deprecated
             DeletedContentNode(SleuthkitCase skCase, DeletedContent.DeletedContentFilter filter, long dsObjId) {
-                super(Children.create(new DeletedContentChildren(filter, skCase, null, dsObjId ), true), Lookups.singleton(filter.getDisplayName()));
+                super(Children.create(new DeletedContentChildren(filter, skCase, null, dsObjId), true), Lookups.singleton(filter.getDisplayName()));
                 this.filter = filter;
                 this.datasourceObjId = dsObjId;
                 init();
@@ -366,7 +367,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             private final SleuthkitCase skCase;
             private final DeletedContent.DeletedContentFilter filter;
             private static final Logger logger = Logger.getLogger(DeletedContentChildren.class.getName());
-            private static final int MAX_OBJECTS = 10001;
+
             private final Observable notifier;
             private final long datasourceObjId;
 
@@ -385,7 +386,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 @Override
                 public void update(Observable o, Object arg) {
                     refresh(true);
-                }                                                 
+                }
             }
 
             @Override
@@ -408,18 +409,19 @@ public class DeletedContent implements AutopsyVisitableItem {
                 + "There are more Deleted Files than can be displayed."
                 + " Only the first {0} Deleted Files will be shown."})
             protected boolean createKeys(List<AbstractFile> list) {
+                DeletedFilePreferences deletedPreferences = DeletedFilePreferences.getDefault();
                 List<AbstractFile> queryList = runFsQuery();
-                if (queryList.size() == MAX_OBJECTS) {
+                if (deletedPreferences.getShouldLimitDeletedFiles() && queryList.size() == deletedPreferences.getDeletedFilesLimit()) {
                     queryList.remove(queryList.size() - 1);
                     // only show the dialog once - not each time we refresh
                     if (maxFilesDialogShown == false) {
                         maxFilesDialogShown = true;
                         SwingUtilities.invokeLater(()
                                 -> JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                                        DeletedContent_createKeys_maxObjects_msg(MAX_OBJECTS - 1))
+                                        DeletedContent_createKeys_maxObjects_msg(deletedPreferences.getDeletedFilesLimit() - 1))
                         );
                     }
-                }
+                } 
                 list.addAll(queryList);
                 return true;
             }
@@ -463,10 +465,12 @@ public class DeletedContent implements AutopsyVisitableItem {
                 }
 
                 if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
-                    query +=  " AND data_source_obj_id = " + filteringDSObjId;
+                    query += " AND data_source_obj_id = " + filteringDSObjId;
                 }
-                
-                query += " LIMIT " + MAX_OBJECTS; //NON-NLS
+                DeletedFilePreferences deletedPreferences = DeletedFilePreferences.getDefault();
+                if (deletedPreferences.getShouldLimitDeletedFiles()) {
+                    query += " LIMIT " + deletedPreferences.getDeletedFilesLimit(); //NON-NLS
+                }
                 return query;
             }
 

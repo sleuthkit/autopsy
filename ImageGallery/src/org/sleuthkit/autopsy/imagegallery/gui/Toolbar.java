@@ -185,6 +185,9 @@ public class Toolbar extends ToolBar {
                 alert.initOwner(getScene().getWindow());
                 GuiUtils.setDialogIcons(alert);
                 if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+                    // Set the datasource selection to 'All', before switching group
+                    controller.getGroupManager().setDataSource(null);
+                    
                     queryInvalidationListener.invalidated(observable);
                 } else {
                     Platform.runLater(() -> groupByBox.getSelectionModel().select(DrawableAttribute.PATH));
