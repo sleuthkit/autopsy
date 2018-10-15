@@ -69,6 +69,7 @@ class ExtractIE extends Extract {
     private final String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private final String JAVA_PATH;
+    private static final String RESOURCE_URL_PREFIX = "res://";
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
@@ -473,8 +474,8 @@ class ExtractIE extends Extract {
 
             String actime = lineBuff[3];
             Long ftime = (long) 0;
-            String user;
-            String realurl;
+            String user = null;
+            String realurl = null;
             String domain;
 
             /*
@@ -494,6 +495,9 @@ class ExtractIE extends Extract {
                 realurl = realurl.replace(":Host:", ""); //NON-NLS
                 realurl = realurl.trim();
             } else {
+                /*
+                 * Use the entire input for the URL.
+                 */
                 user = "";
                 realurl = lineBuff[1].trim();
             }
@@ -532,9 +536,12 @@ class ExtractIE extends Extract {
                                 "ExtractIE.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(),
                                 "ExtractIE.moduleName.text")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), domain));
+                
+                if (isIgnoredUrl(lineBuff[1]) == false) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            NbBundle.getMessage(this.getClass(),
+                                    "ExtractIE.parentModuleName.noSpace"), domain));
+                }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                         NbBundle.getMessage(this.getClass(),
                                 "ExtractIE.parentModuleName.noSpace"), user));
@@ -561,5 +568,27 @@ class ExtractIE extends Extract {
         }
         fileScanner.close();
         return bbartifacts;
+    }
+    
+    /**
+     * Determine if the URL should be ignored.
+     * 
+     * @param url The URL to test.
+     * 
+     * @return True if the URL should be ignored; otherwise false.
+     */
+    private boolean isIgnoredUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return true;
+        }
+        
+        if (url.toLowerCase().startsWith(RESOURCE_URL_PREFIX)) {
+            /*
+             * Ignore URLs that begin with the matched text.
+             */
+            return true;
+        }
+        
+        return false;
     }
 }

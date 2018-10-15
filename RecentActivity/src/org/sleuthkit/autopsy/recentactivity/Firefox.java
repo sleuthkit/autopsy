@@ -54,6 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class Firefox extends Extract {
 
     private static final Logger logger = Logger.getLogger(Firefox.class.getName());
+    private static final String PLACE_URL_PREFIX = "place:";
     private static final String HISTORY_QUERY = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) AS visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0"; //NON-NLS
     private static final String COOKIE_QUERY = "SELECT name,value,host,expiry,(lastAccessed/1000000) AS lastAccessed,(creationTime/1000000) AS creationTime FROM moz_cookies"; //NON-NLS
     private static final String COOKIE_QUERY_V3 = "SELECT name,value,host,expiry,(lastAccessed/1000000) AS lastAccessed FROM moz_cookies"; //NON-NLS
@@ -132,11 +133,13 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                String url = result.get("url").toString();
+                
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
-                        ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
+                        ((url != null) ? url : ""))); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("url").toString() != null) ? EscapeUtil.decodeURL(result.get("url").toString()) : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                         NbBundle.getMessage(this.getClass(),
@@ -154,10 +157,12 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "Firefox.parentModuleName.noSpace"), (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
+                if (isIgnoredUrl(url) == false) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            NbBundle.getMessage(this.getClass(),
+                                    "Firefox.parentModuleName.noSpace"), Util.extractDomain(url))); //NON-NLS
 
+                }
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
@@ -226,12 +231,13 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, BOOKMARK_QUERY);
             logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                String url = result.get("url").toString();
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
-                        ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
+                        ((url != null) ? url : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
@@ -246,10 +252,12 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "Firefox.parentModuleName.noSpace"),
-                        (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
+                if (isIgnoredUrl(url) == false) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            NbBundle.getMessage(this.getClass(),
+                                    "Firefox.parentModuleName.noSpace"),
+                            Util.extractDomain(url))); //NON-NLS
+                }
 
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
                 if (bbart != null) {
@@ -327,12 +335,13 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
             logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                String host = result.get("host").toString();
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
-                        ((result.get("host").toString() != null) ? result.get("host").toString() : ""))); //NON-NLS
+                        ((host != null) ? host : ""))); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
@@ -356,11 +365,13 @@ class Firefox extends Extract {
                                     "Firefox.parentModuleName.noSpace"),
                             (Long.valueOf(result.get("creationTime").toString())))); //NON-NLS
                 }
-                String domain = Util.extractDomain(result.get("host").toString()); //NON-NLS
-                domain = domain.replaceFirst("^\\.+(?!$)", "");
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "Firefox.parentModuleName.noSpace"), domain));
+                if (isIgnoredUrl(host) == false) {
+                    String domain = Util.extractDomain(host); //NON-NLS
+                    domain = domain.replaceFirst("^\\.+(?!$)", "");
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            NbBundle.getMessage(this.getClass(),
+                                    "Firefox.parentModuleName.noSpace"), domain));
+                }
 
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
                 if (bbart != null) {
@@ -442,13 +453,14 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, DOWNLOAD_QUERY);
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                String source = result.get("source").toString();
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
-                        ((result.get("source").toString() != null) ? result.get("source").toString() : ""))); //NON-NLS
+                        source)); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                         NbBundle.getMessage(this.getClass(),
@@ -481,10 +493,12 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "Firefox.parentModuleName.noSpace"),
-                        (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : "")))); //NON-NLS
+                if (isIgnoredUrl(source) == false) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            NbBundle.getMessage(this.getClass(),
+                                    "Firefox.parentModuleName.noSpace"),
+                            Util.extractDomain(source))); //NON-NLS
+                }
 
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                 if (bbart != null) {
@@ -565,13 +579,14 @@ class Firefox extends Extract {
 
             logger.log(Level.INFO, "{0} - Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-
+                String url = result.get("url").toString();
+                
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
-                        ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
+                        url)); //NON-NLS
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", ((result.get("source").toString() != null) ? EscapeUtil.decodeURL(result.get("source").toString()) : "")));
                 //TODO Revisit usage of deprecated constructor as per TSK-583
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
@@ -604,10 +619,12 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "Firefox.parentModuleName.noSpace"),
-                        (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
+                if (isIgnoredUrl(url) == false) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            NbBundle.getMessage(this.getClass(),
+                                    "Firefox.parentModuleName.noSpace"),
+                            Util.extractDomain(url))); //NON-NLS
+                }
 
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                 if (bbart != null) {
@@ -626,5 +643,27 @@ class Firefox extends Extract {
         services.fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
+    }
+    
+    /**
+     * Determine if the URL should be ignored.
+     * 
+     * @param url The URL to test.
+     * 
+     * @return True if the URL should be ignored; otherwise false.
+     */
+    private boolean isIgnoredUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return true;
+        }
+        
+        if (url.toLowerCase().startsWith(PLACE_URL_PREFIX)) {
+            /*
+             * Ignore URLs that begin with the matched text.
+             */
+            return true;
+        }
+        
+        return false;
     }
 }

@@ -107,7 +107,7 @@ abstract class NavPanel<X> extends Tab {
                 .addListener((observable, oldItem, newSelectedItem) -> {
                     Optional.ofNullable(newSelectedItem)
                             .map(getDataItemMapper())
-                            .ifPresent(group -> controller.advance(GroupViewState.tile(group)));
+                            .ifPresent(group -> controller.advance(GroupViewState.createTile(group)));
                 });
     }
 

@@ -44,7 +44,6 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -476,11 +475,13 @@ public class InterestingHits implements AutopsyVisitableItem {
                         BlackboardArtifact art = skCase.getBlackboardArtifact(id);
                         artifactHits.put(id, art);  
                     }
-                    list.add(id);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
                 }
             });
+
+            list.addAll(artifactHits.keySet());
+
             return true;
         }
 
