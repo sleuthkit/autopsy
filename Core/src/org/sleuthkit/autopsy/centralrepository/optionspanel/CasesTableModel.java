@@ -37,6 +37,9 @@ class CasesTableModel extends AbstractTableModel {
      */
     private final List<CaseDataSourcesWrapper> eamCases;
 
+    /**
+     * Model for cells to display correlation case information
+     */
     CasesTableModel() {
         eamCases = new ArrayList<>();
     }
