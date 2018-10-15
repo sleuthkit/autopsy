@@ -15,6 +15,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import org.controlsfx.control.GridView?>
@@ -27,11 +28,18 @@
     </center>
     <bottom>
         <BorderPane BorderPane.alignment="CENTER">
-            <left>
-                <HBox alignment="CENTER_LEFT" spacing="5.0" BorderPane.alignment="TOP_LEFT">
+            <top>
+                <Separator prefWidth="200.0" BorderPane.alignment="CENTER">
+                    <BorderPane.margin>
+                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                    </BorderPane.margin>
+                </Separator>
+            </top>
+         <bottom>
+                <HBox alignment="CENTER_LEFT" spacing="5.0" BorderPane.alignment="CENTER">
                     <children>
-                        <Label fx:id="bottomLabel" text="Group Viewing History: " />
-                        <Button fx:id="backButton" mnemonicParsing="false" text="Back">
+                        <Label fx:id="bottomLabel" text="Group Viewing History: " HBox.hgrow="NEVER" />
+                        <Button fx:id="backButton" mnemonicParsing="false" text="Back" HBox.hgrow="NEVER">
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
@@ -40,7 +48,7 @@
                                 </ImageView>
                             </graphic>
                         </Button>
-                        <Button fx:id="forwardButton" mnemonicParsing="false" text="Forward">
+                        <Button fx:id="forwardButton" mnemonicParsing="false" text="Forward" HBox.hgrow="NEVER">
                             <graphic>
                                 <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                     <image>
@@ -49,22 +57,11 @@
                                 </ImageView>
                             </graphic>
                         </Button>
-                    </children>
-                    <BorderPane.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                    </BorderPane.margin>
-                </HBox>
-            </left>
-            <right>
-                <HBox alignment="CENTER_RIGHT" spacing="5.0" BorderPane.alignment="TOP_RIGHT">
-                    <children>
-                  <CheckBox fx:id="seenByOtherExaminersCheckBox" mnemonicParsing="false" text="Don't show groups seen by other examiners" />
-                  <AnchorPane fx:id="nextButtonPane" BorderPane.alignment="CENTER_RIGHT">
-                     <BorderPane.margin>
-                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                     </BorderPane.margin>
+                  <Region HBox.hgrow="ALWAYS" />
+                  <CheckBox fx:id="seenByOtherExaminersCheckBox" mnemonicParsing="false" text="Don't show groups seen by other examiners" HBox.hgrow="NEVER" />
+                  <AnchorPane fx:id="nextButtonPane" minWidth="50.0" HBox.hgrow="NEVER">
                      <children>
-                              <Button fx:id="nextButton" contentDisplay="RIGHT" minWidth="175.0" mnemonicParsing="false" text="All Groups Gave Been Seen">
+                              <Button fx:id="nextButton" contentDisplay="RIGHT" layoutX="44.0" layoutY="-1.0" mnemonicParsing="false" text="All Groups Gave Been Seen" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                                   <graphic>
                                       <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
                                           <image>
@@ -80,14 +77,7 @@
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                     </BorderPane.margin>
                 </HBox>
-            </right>
-            <top>
-                <Separator prefWidth="200.0" BorderPane.alignment="CENTER">
-                    <BorderPane.margin>
-                        <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                    </BorderPane.margin>
-                </Separator>
-            </top>
+         </bottom>
         </BorderPane>
     </bottom>
     <top>

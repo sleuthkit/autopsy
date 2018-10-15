@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -43,6 +44,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -321,7 +323,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             String queryStr = KEYWORD_HIT_ATTRIBUTES_QUERY;
-            if (UserPreferences.groupItemsInTreeByDatasource()) {
+            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 queryStr +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
             }
             

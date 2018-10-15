@@ -26,6 +26,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -34,6 +35,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -290,10 +292,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<BlackboardArtifact.Type> list) {
-            //TEST COMMENT
             if (skCase != null) {
                 try {
-                    List<BlackboardArtifact.Type> types = (UserPreferences.groupItemsInTreeByDatasource()) ? 
+                    List<BlackboardArtifact.Type> types = Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ? 
                             blackboard.getArtifactTypesInUse(datasourceObjId) :
                             skCase.getArtifactTypesInUse() ;
                     
@@ -358,7 +359,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             //    a performance increase might be had by adding a 
             //    "getBlackboardArtifactCount()" method to skCase
             try {
-                this.childCount = UserPreferences.groupItemsInTreeByDatasource() ? 
+                this.childCount = Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ? 
                         blackboard.getArtifactsCount(type.getTypeID(), datasourceObjId) :
                         skCase.getBlackboardArtifactsTypeCount(type.getTypeID());
             } catch (TskException ex) {
@@ -483,7 +484,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             if (skCase != null) {
                 try {
                     List<BlackboardArtifact> arts = 
-                            UserPreferences.groupItemsInTreeByDatasource() ?
+                            Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ?
                             blackboard.getArtifacts(type.getTypeID(), datasourceObjId) :
                             skCase.getBlackboardArtifacts(type.getTypeID());
                     list.addAll(arts);

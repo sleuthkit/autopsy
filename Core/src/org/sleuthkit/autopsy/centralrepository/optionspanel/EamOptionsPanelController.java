@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Central_Repository_Options",
         iconBase = "org/sleuthkit/autopsy/centralrepository/images/options-icon.png",
-        position = 14,
+        position = 15,
         keywords = "#OptionsCategory_Keywords_Central_Repository_Options",
         keywordsCategory = "CentralRepository")
 public final class EamOptionsPanelController extends OptionsPanelController {

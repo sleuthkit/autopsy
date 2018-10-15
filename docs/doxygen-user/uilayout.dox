@@ -11,6 +11,8 @@ The major areas in the Autopsy User Interface (UI) are:
 - \ref ui_keyword, shown outlined in yellow below
 - \ref ui_status, shown in solid purple below
 
+You can customize how data is shown in the UI through the \ref view_options_page panel.
+
 \image html ui-layout-1.PNG
 
 <br>
@@ -28,7 +30,7 @@ The tree on the left-hand side is where you can browse the files in the image an
 - <b>Tags:</b> Where files and results that have been \ref tagging_page "tagged" are shown
 - <b>Reports:</b> References to reports that you have generated or that ingest modules have created show up here
 
-You can also use the "Group by Data Source" option at the upper left of the tree display to move the views, results, and tags subtrees under their corresponding data sources. This can be helpful on very large cases to reduce the size of each node.
+You can also use the "Group by data source" option available through the \ref view_options_page to move the views, results, and tags subtrees under their corresponding data sources. This can be helpful on very large cases to reduce the size of each node.
 
 \image html ui_layout_group_tree.PNG
 

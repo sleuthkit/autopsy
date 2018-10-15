@@ -164,7 +164,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (!IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
                 throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSolrVersionNotSupported(indexInfo.getSolrVersion()));
             }
-            if (!IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion())) {
+            if (!indexInfo.isCompatible(IndexFinder.getCurrentSchemaVersion())) {
                 throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));
             }
         } catch (NoOpenCoreException ex) {
@@ -249,6 +249,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         textExtractors = new ArrayList<>();
         //order matters, more specific extractors first
         textExtractors.add(new HtmlTextExtractor());
+        //Add sqlite text extractor to be default for sqlite files, since tika stuggles 
+        //with them. See SqliteTextExtractor class for specifics
+        textExtractors.add(new SqliteTextExtractor());
         textExtractors.add(new TikaTextExtractor());
 
         indexer = new Indexer();

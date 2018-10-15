@@ -22,6 +22,7 @@ import com.google.common.eventbus.Subscribe;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import static java.util.Collections.singletonMap;
 import java.util.List;
 import java.util.Objects;
 import static java.util.Objects.isNull;
@@ -112,9 +113,7 @@ public class MetaDataPane extends DrawableUIBase {
         });
 
         copyMenuItem.setAccelerator(COPY_KEY_COMBINATION);
-        copyMenuItem.setOnAction(actionEvent -> {
-            copyValueToClipBoard();
-        });
+        copyMenuItem.setOnAction(actionEvent -> copyValueToClipBoard());
 
         tableView.setContextMenu(contextMenu);
         tableView.setOnKeyPressed((KeyEvent event) -> {
@@ -220,9 +219,6 @@ public class MetaDataPane extends DrawableUIBase {
         return imageBorder;
     }
 
-    /**
-     * {@inheritDoc }
-     */
     @Subscribe
     @Override
     public void handleCategoryChanged(CategoryManager.CategoryChangeEvent evt) {
@@ -256,9 +252,9 @@ public class MetaDataPane extends DrawableUIBase {
     private void copyValueToClipBoard() {
         Pair<DrawableAttribute<?>, Collection<?>> selectedItem = tableView.getSelectionModel().getSelectedItem();
         if (nonNull(selectedItem)) {
-            Clipboard.getSystemClipboard().setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT,
-                    getValueDisplayString(selectedItem)));
+            Clipboard.getSystemClipboard().setContent(
+                    singletonMap(DataFormat.PLAIN_TEXT, getValueDisplayString(selectedItem))
+            );
         }
     }
-
 }

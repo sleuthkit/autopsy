@@ -24,6 +24,8 @@ import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
@@ -82,12 +84,20 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
                 AbstractFilePropertyType.NAME.toString(),
                 NO_DESCR,
                 getName()));
-        //add the cr status property before the propertyMap to ensure it is early in column order
+        
         addScoreProperty(sheetSet, tags);
+        
         //add the comment property before the propertyMap to ensure it is early in column order
-        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+            correlationAttribute = getCorrelationAttributeInstance();
+        }
         addCommentProperty(sheetSet, tags, correlationAttribute);
-        addCountProperty(sheetSet, correlationAttribute);
+        
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+            addCountProperty(sheetSet, correlationAttribute);
+        }
+        
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();
             sheetSet.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
@@ -95,9 +105,6 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         if (directoryBrowseMode) {
             sheetSet.put(new NodeProperty<>(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
         }
-
-        // add tags property to the sheet
-        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

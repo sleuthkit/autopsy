@@ -420,6 +420,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
     data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
     ingest_job_index = line.find('INSERT INTO "ingest_jobs"') > -1 or line.find('INSERT INTO ingest_jobs ') > -1
+    examiners_index = line.find('INSERT INTO "tsk_examiners"') > -1 or line.find('INSERT INTO tsk_examiners ') > -1
     parens = line[line.find('(') + 1 : line.rfind(')')]
     fields_list = parens.replace(" ", "").split(',')
     
@@ -531,6 +532,10 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             fields_list[3] = "0"
             fields_list[4] = "0"
         newLine = ('INSERT INTO "ingest_jobs" VALUES(' + ','.join(fields_list) + ');')
+        return newLine
+    elif examiners_index:
+        fields_list[1] = "{examiner_name}"
+        newLine = ('INSERT INTO "tsk_examiners" VALUES(' + ','.join(fields_list) + ');')
         return newLine
     else:
         return line

@@ -283,7 +283,7 @@ public class CorrelationAttributeInstance implements Serializable {
 
         /**
          *
-         * @param id Unique ID for this Correlation Type
+         * @param typeId Unique ID for this Correlation Type
          * @param displayName Name of this type displayed in the UI.
          * @param dbTableName Central repository db table where data of this
          * type is stored. Must start with a lowercase letter and only contain
@@ -387,7 +387,7 @@ public class CorrelationAttributeInstance implements Serializable {
         }
 
         /**
-         * @param id the typeId to set
+         * @param typeId the typeId to set
          */
         public void setId(int typeId) {
             this.typeId = typeId;

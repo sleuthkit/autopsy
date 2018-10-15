@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.testutils.CaseUtils;
 import org.sleuthkit.autopsy.testutils.IngestUtils;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -123,7 +124,7 @@ class IntraCaseTestUtils {
     }
 
     void createAsCurrentCase() {
-        CaseUtils.createAsCurrentCase(this.caseName);
+        CaseUtils.createAsCurrentCase(this.caseName + "_" + TimeStampUtils.createTimeStamp());
     }
 
     Map<Long, String> getDataSourceMap() throws NoCurrentCaseException, TskCoreException, SQLException {
@@ -132,12 +133,6 @@ class IntraCaseTestUtils {
 
     void tearDown() {
         CaseUtils.closeCurrentCase(false);
-        try {
-            CaseUtils.deleteCaseDir(CASE_DIRECTORY_PATH.toFile());
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-            //does not represent a failure in the common files search feature
-        }
     }
 
     /**

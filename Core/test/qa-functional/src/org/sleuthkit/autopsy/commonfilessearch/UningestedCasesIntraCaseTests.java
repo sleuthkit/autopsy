@@ -64,12 +64,12 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
     
     @Override
     public void setUp(){
-        this.utils.setUp();
+//        this.utils.setUp();
     }
     
     @Override
     public void tearDown(){
-        this.utils.tearDown();
+//        this.utils.tearDown();
     }
 
     /**
@@ -77,38 +77,38 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
      * there are no hashes to match).
      */
     public void testOne() {
-        try {
-            Map<Long, String> dataSources = this.utils.getDataSourceMap();
-
-            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
-            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
-
-            int resultCount = metadata.size();
-            assertEquals(resultCount, 0);
-
-        } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
-        }
+//        try {
+//            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+//
+//            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
+//            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
+//
+//            int resultCount = metadata.size();
+//            assertEquals(resultCount, 0);
+//
+//        } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
+//            Exceptions.printStackTrace(ex);
+//            Assert.fail(ex.getMessage());
+//        }
     }
 
     /**
      * Find all matches on image #1 & all file types. Confirm no matches.
      */
     public void testTwo() {
-        try {
-            Map<Long, String> dataSources = this.utils.getDataSourceMap();
-            Long first = getDataSourceIdByName(SET1, dataSources);
-
-            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false, 0);
-            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
-
-            int resultCount = metadata.size();
-            assertEquals(resultCount, 0);
-
-        } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
-        }
+//        try {
+//            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+//            Long first = getDataSourceIdByName(SET1, dataSources);
+//
+//            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false, 0);
+//            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
+//
+//            int resultCount = metadata.size();
+//            assertEquals(resultCount, 0);
+//
+//        } catch (TskCoreException | NoCurrentCaseException | SQLException ex) {
+//            Exceptions.printStackTrace(ex);
+//            Assert.fail(ex.getMessage());
+//        }
     }
 }

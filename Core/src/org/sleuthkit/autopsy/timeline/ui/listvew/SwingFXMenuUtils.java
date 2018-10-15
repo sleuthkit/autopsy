@@ -31,13 +31,14 @@ import javax.swing.SwingUtilities;
  * Allows creation of JavaFX menus with the same structure as Swing menus and
  * which invoke the same actions.
  */
- class SwingFXMenuUtils {
+class SwingFXMenuUtils {
 
     private SwingFXMenuUtils() {
     }
 
     /**
-     * Factory method that creates a JavaFX MenuItem backed by a swing MenuElement
+     * Factory method that creates a JavaFX MenuItem backed by a swing
+     * MenuElement
      *
      * @param jMenuElement The MenuElement to create a JavaFX menu for.
      *
@@ -113,12 +114,10 @@ import javax.swing.SwingUtilities;
 
                 } else if (menuElement instanceof JPopupMenu) {
                     populateSubMenus(menuElement);
-
                 } else {
                     throw new UnsupportedOperationException("Unown MenuElement subclass: " + menuElement.getClass().getName());
                 }
             }
         }
     }
-
 }

@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.JFrame;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 
@@ -34,7 +33,7 @@ class FileSearchDialog extends javax.swing.JDialog {
      * Creates new form FileSearchDialog
      */
     public FileSearchDialog() {
-        super(new JFrame(NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.frame.title")),
+        super(WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(FileSearchDialog.class, "FileSearchDialog.frame.msg"), true);
         initComponents();
 

@@ -84,9 +84,9 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
 
         ingestMessagesButton.setFocusPainted(false);
         ingestMessagesButton.setContentAreaFilled(false);
-        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25.png"))); //NON-NLS
+        ingestMessagesButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/mail24.png"))); //NON-NLS
         ingestMessagesButton.setRolloverEnabled(true);
-        ingestMessagesButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/eye-bw-25-rollover.png"))); //NON-NLS
+        ingestMessagesButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/ingest/mail24-rollover.png"))); //NON-NLS
         ingestMessagesButton.setToolTipText(
                 NbBundle.getMessage(this.getClass(), "IngestMessagesToolbar.customizeButton.toolTipText"));
         ingestMessagesButton.setBorder(null);
@@ -94,9 +94,9 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
         ingestMessagesButton.setEnabled(false);
         ingestMessagesButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         ingestMessagesButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(38, 24));
-        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(38, 24));
-        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(38, 24));
+        ingestMessagesButton.setMaximumSize(new java.awt.Dimension(52, 24));
+        ingestMessagesButton.setMinimumSize(new java.awt.Dimension(52, 24));
+        ingestMessagesButton.setPreferredSize(new java.awt.Dimension(52, 24));
         ingestMessagesButton.addActionListener((java.awt.event.ActionEvent evt) -> {
             EventQueue.invokeLater(this::showIngestMessages);
         });

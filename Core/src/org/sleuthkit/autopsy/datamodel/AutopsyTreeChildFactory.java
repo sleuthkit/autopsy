@@ -24,10 +24,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -53,10 +55,10 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         public void propertyChange(PropertyChangeEvent evt) {
             String eventType = evt.getPropertyName();
             if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString()) &&
-                UserPreferences.groupItemsInTreeByDatasource()) {
+                Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                     refreshChildren();
-                }
             }
+        }
     };
     
     @Override
@@ -83,7 +85,7 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
            
-            if (UserPreferences.groupItemsInTreeByDatasource()) {
+            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 List<DataSource> dataSources = tskCase.getDataSources();
                 List<DataSourceGrouping> keys = new ArrayList<>();
                 dataSources.forEach((datasource) -> {

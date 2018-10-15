@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.4" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+  <NonVisualComponents>
+    <Container class="javax.swing.JPopupMenu" name="viewPreferencesPopupMenu">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
+        <Property name="useNullLayout" type="boolean" value="true"/>
+      </Layout>
+    </Container>
+  </NonVisualComponents>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -16,18 +24,14 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="treeView" alignment="0" max="32767" attributes="0"/>
-          <Group type="102" alignment="0" attributes="0">
+          <Component id="treeView" max="32767" attributes="0"/>
+          <Group type="102" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="backButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="forwardButton" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="separate" max="-2" attributes="0"/>
-              <Component id="showOnlyCurrentUserTagsCheckbox" max="32767" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="showRejectedCheckBox" min="-2" max="-2" attributes="0"/>
-                  <Component id="groupByDatasourceCheckBox" min="-2" max="-2" attributes="0"/>
-              </Group>
+              <EmptySpace pref="140" max="32767" attributes="0"/>
+              <Component id="openViewPreferencesButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -35,27 +39,14 @@
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
+              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="showRejectedCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="showOnlyCurrentUserTagsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="groupByDatasourceCheckBox" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="forwardButton" max="32767" attributes="1"/>
-                          <Component id="backButton" min="-2" max="-2" attributes="1"/>
-                      </Group>
-                  </Group>
+                  <Component id="openViewPreferencesButton" min="-2" max="-2" attributes="0"/>
+                  <Component id="backButton" min="-2" max="-2" attributes="1"/>
+                  <Component id="forwardButton" min="-2" max="-2" attributes="1"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="treeView" pref="843" max="32767" attributes="0"/>
-              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+              <Component id="treeView" pref="919" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -76,7 +67,7 @@
     <Component class="javax.swing.JButton" name="backButton">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_back_large.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_back.png"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="DirectoryTreeTopComponent.backButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -84,7 +75,7 @@
         <Property name="borderPainted" type="boolean" value="false"/>
         <Property name="contentAreaFilled" type="boolean" value="false"/>
         <Property name="disabledIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_back_disabled_large.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_back_disabled.png"/>
         </Property>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 0, 2, 0]"/>
@@ -96,10 +87,10 @@
           <Dimension value="[5, 5]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[32, 32]"/>
+          <Dimension value="[24, 24]"/>
         </Property>
         <Property name="rolloverIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_back_hover_large.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_back_hover.png"/>
         </Property>
       </Properties>
       <Events>
@@ -109,7 +100,7 @@
     <Component class="javax.swing.JButton" name="forwardButton">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_forward_large.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_forward.png"/>
         </Property>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="DirectoryTreeTopComponent.forwardButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
@@ -117,7 +108,7 @@
         <Property name="borderPainted" type="boolean" value="false"/>
         <Property name="contentAreaFilled" type="boolean" value="false"/>
         <Property name="disabledIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_forward_disabled_large.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_forward_disabled.png"/>
         </Property>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 0, 2, 0]"/>
@@ -129,41 +120,43 @@
           <Dimension value="[5, 5]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[32, 32]"/>
+          <Dimension value="[24, 24]"/>
         </Property>
         <Property name="rolloverIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_forward_hover_large.png"/>
+          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/btn_step_forward_hover.png"/>
         </Property>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="forwardButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JCheckBox" name="showRejectedCheckBox">
+    <Component class="javax.swing.JButton" name="openViewPreferencesButton">
       <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="DirectoryTreeTopComponent.showRejectedCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/org/sleuthkit/autopsy/directorytree/view-preferences-23.png"/>
         </Property>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="groupByDatasourceCheckBox">
-      <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="DirectoryTreeTopComponent.groupByDatasourceCheckBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="DirectoryTreeTopComponent.openViewPreferencesButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.EmptyBorderInfo">
+            <EmptyBorder/>
+          </Border>
+        </Property>
+        <Property name="borderPainted" type="boolean" value="false"/>
+        <Property name="contentAreaFilled" type="boolean" value="false"/>
+        <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[24, 24]"/>
+        </Property>
+        <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[24, 24]"/>
+        </Property>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[24, 24]"/>
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="groupByDatasourceCheckBoxActionPerformed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JCheckBox" name="showOnlyCurrentUserTagsCheckbox">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/directorytree/Bundle.properties" key="DirectoryTreeTopComponent.showOnlyCurrentUserTagsCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showOnlyCurrentUserTagsCheckboxActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openViewPreferencesButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

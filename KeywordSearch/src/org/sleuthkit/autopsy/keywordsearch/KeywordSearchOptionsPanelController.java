@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_KeywordSearchOptions",
         iconBase = "org/sleuthkit/autopsy/keywordsearch/options-icon.png",
-        position = 5,
+        position = 6,
         keywords = "#OptionsCategory_Keywords_KeywordSearchOptions",
         keywordsCategory = "KeywordSearchOptions")
 public final class KeywordSearchOptionsPanelController extends OptionsPanelController {
