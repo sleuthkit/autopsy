@@ -33,7 +33,11 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
 
-
+/**
+ * A dialog which displays cases existing in the central repository and the
+ * central repo information associated with them.
+ *
+ */
 class CaseDetailsDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
@@ -67,13 +71,17 @@ class CaseDetailsDialog extends javax.swing.JDialog {
         casesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting() ) {
+                if (!e.getValueIsAdjusting()) {
                     updateSelection();
                 }
             }
         });
     }
 
+    /**
+     * Create and display the Case Details dialog for the currently enabled
+     * central repository.
+     */
     static void displayCaseInfoDialog() {
         CaseDetailsDialog caseInfoDialog = new CaseDetailsDialog();
         caseInfoDialog.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
@@ -303,6 +311,9 @@ class CaseDetailsDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_closeButtonActionPerformed
 
+    /**
+     * Update the information displayed to reflect the currently selected case.
+     */
     private void updateSelection() {
         if (casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount()) {
             CaseDataSourcesWrapper caseWrapper = tableModel.getEamCase(casesTable.getSelectedRow());
