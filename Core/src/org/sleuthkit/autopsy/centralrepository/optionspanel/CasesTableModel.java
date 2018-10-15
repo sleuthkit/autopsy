@@ -73,7 +73,7 @@ class CasesTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
         if (eamCases.isEmpty()) {
-            return Bundle.ShowCasesTableModel_noData();
+            return Bundle.CasesTableModel_noData();
         }
 
         return mapValueById(rowIdx, TableColumns.values()[colIdx]);
@@ -94,7 +94,7 @@ class CasesTableModel extends AbstractTableModel {
     @Messages({"CasesTableModel.noData=No Cases"})
     private Object mapValueById(int rowIdx, TableColumns colId) {
         CaseDataSourcesWrapper eamCase = eamCases.get(rowIdx);
-        String value = Bundle.ShowCasesTableModel_noData();
+        String value = Bundle.CasesTableModel_noData();
 
         switch (colId) {
             case CASE_NAME:

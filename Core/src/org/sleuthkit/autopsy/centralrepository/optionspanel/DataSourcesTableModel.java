@@ -72,7 +72,7 @@ class DataSourcesTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
         if (dataSources.isEmpty()) {
-            return Bundle.ShowCasesTableModel_noData();
+            return Bundle.CasesTableModel_noData();
         }
 
         return mapValueById(rowIdx, TableColumns.values()[colIdx]);
