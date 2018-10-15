@@ -41,7 +41,8 @@ import org.openide.util.NbBundle.Messages;
 class CaseDetailsDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
-    private final CasesTableModel tableModel;
+    private final CasesTableModel casesTableModel;
+    private final DataSourcesTableModel dataSourcesModel;
     private final static Logger logger = Logger.getLogger(CaseDetailsDialog.class.getName());
 
     /**
@@ -51,7 +52,8 @@ class CaseDetailsDialog extends javax.swing.JDialog {
     private CaseDetailsDialog() {
         super(WindowManager.getDefault().getMainWindow(), Bundle.CaseDetailsDialog_title_text(),
                 true);
-        tableModel = new CasesTableModel();
+        casesTableModel = new CasesTableModel();
+        dataSourcesModel = new DataSourcesTableModel();
         initComponents();
         try {
             EamDb dbManager = EamDb.getInstance();
@@ -63,7 +65,7 @@ class CaseDetailsDialog extends javax.swing.JDialog {
                 dataSourcesByCaseId.put(caseID, dataSourceNames);
             }
             for (CorrelationCase eamCase : dbManager.getCases()) {
-                tableModel.addEamCase(eamCase, dataSourcesByCaseId.getOrDefault(eamCase.getID(), new ArrayList<>()));
+                casesTableModel.addEamCase(eamCase, dataSourcesByCaseId.getOrDefault(eamCase.getID(), new ArrayList<>()));
             }
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error getting list of cases from database.", ex); // NON-NLS
@@ -268,7 +270,7 @@ class CaseDetailsDialog extends javax.swing.JDialog {
 
         casesSplitPane.setRightComponent(caseInfoPanel);
 
-        casesTable.setModel(tableModel);
+        casesTable.setModel(casesTableModel);
         casesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         casesScrollPane.setViewportView(casesTable);
         if (casesTable.getColumnModel().getColumnCount() > 0) {
@@ -315,15 +317,15 @@ class CaseDetailsDialog extends javax.swing.JDialog {
      * Update the information displayed to reflect the currently selected case.
      */
     private void updateSelection() {
+        dataSourcesModel.clearTable();
         if (casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount()) {
-            CaseDataSourcesWrapper caseWrapper = tableModel.getEamCase(casesTable.getSelectedRow());
+            CaseDataSourcesWrapper caseWrapper = casesTableModel.getEamCase(casesTable.getSelectedRow());
             orgValueLabel.setText(caseWrapper.getOrganizationName());
             caseNumberValueLabel.setText(caseWrapper.getCaseNumber());
             examinerNameValueLabel.setText(caseWrapper.getExaminerName());
             examinerPhoneValueLabel.setText(caseWrapper.getExaminerPhone());
             examinerEmailValueLabel.setText(caseWrapper.getExaminerEmail());
             notesTextArea.setText(caseWrapper.getNotes());
-            DataSourcesTableModel dataSourcesModel = new DataSourcesTableModel();
             dataSourcesModel.addDataSources(caseWrapper.getDataSources());
             dataSourcesTable.setModel(dataSourcesModel);
         } else {
@@ -333,7 +335,6 @@ class CaseDetailsDialog extends javax.swing.JDialog {
             examinerPhoneValueLabel.setText("");
             examinerEmailValueLabel.setText("");
             notesTextArea.setText("");
-            dataSourcesTable.setModel(new DataSourcesTableModel());
         }
     }
 

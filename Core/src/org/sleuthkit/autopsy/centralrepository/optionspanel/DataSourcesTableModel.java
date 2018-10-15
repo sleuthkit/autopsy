@@ -25,38 +25,28 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 
 /**
- * Model for cells to display correlation case information
+ * Model for cells to display correlation data source information
  */
 class DataSourcesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * list of Eam Cases from central repository.
+     * A list of correlation data sources from central repository.
      */
     private final List<CorrelationDataSource> dataSources;
 
+    /**
+     * Create a new DataSourcesTableModel, with an initially empty list of data
+     * sources.
+     */
     DataSourcesTableModel() {
         dataSources = new ArrayList<>();
     }
 
     @Override
     public int getColumnCount() {
-        return TableColumns.values().length;
-    }
-
-    /**
-     * Get the preferred width that has been configured for this column.
-     *
-     * A value of 0 means that no preferred width has been defined for this
-     * column.
-     *
-     * @param colIdx Column index
-     *
-     * @return preferred column width >= 0
-     */
-    int getColumnPreferredWidth(int colIdx) {
-        return TableColumns.values()[colIdx].columnWidth();
+        return CasesTableColumns.values().length;
     }
 
     @Override
@@ -66,16 +56,16 @@ class DataSourcesTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int colIdx) {
-        return TableColumns.values()[colIdx].columnName();
+        return CasesTableColumns.values()[colIdx].columnName();
     }
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
         if (dataSources.isEmpty()) {
-            return Bundle.CasesTableModel_noData();
+            return Bundle.DataSourcesTableModel_noData();
         }
 
-        return mapValueById(rowIdx, TableColumns.values()[colIdx]);
+        return mapValueById(rowIdx, CasesTableColumns.values()[colIdx]);
     }
 
     /**
@@ -86,8 +76,8 @@ class DataSourcesTableModel extends AbstractTableModel {
      *
      * @return value in the cell
      */
-    @Messages({"DataSourcesTableModel.noData=No Cases"})
-    private Object mapValueById(int rowIdx, TableColumns colId) {
+    @Messages({"DataSourcesTableModel.noData=No Data Sources"})
+    private Object mapValueById(int rowIdx, CasesTableColumns colId) {
         CorrelationDataSource dataSource = dataSources.get(rowIdx);
         String value = Bundle.DataSourcesTableModel_noData();
 
@@ -110,16 +100,18 @@ class DataSourcesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Add one local central repository case to the table.
+     * Add a list of datasources to the table.
      *
-     * @param eamCase central repository case to add to the table
+     * @param dataSourceList the list of datasources to add to the table
      */
     void addDataSources(List<CorrelationDataSource> dataSourceList) {
         dataSources.addAll(dataSourceList);
         fireTableDataChanged();
     }
 
-    
+    /**
+     * Clear the data sources currently included in the model.
+     */
     void clearTable() {
         dataSources.clear();
         fireTableDataChanged();
@@ -128,28 +120,32 @@ class DataSourcesTableModel extends AbstractTableModel {
     @Messages({"DataSourcesTableModel.dataSource=Data Source",
         "DataSourcesTableModel.deviceId=Device ID"})
     /**
-     * Enum which lists columns of interest from CorrelationCase.
+     * Enum which lists columns of interest from CorrelationDataSource.
      */
-    private enum TableColumns {
+    private enum CasesTableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        DATA_SOURCE(Bundle.DataSourcesTableModel_dataSource(), 120),
-        DEVICE_ID(Bundle.DataSourcesTableModel_deviceId(), 120);
+        DATA_SOURCE(Bundle.DataSourcesTableModel_dataSource()),
+        DEVICE_ID(Bundle.DataSourcesTableModel_deviceId());
 
         private final String columnName;
-        private final int columnWidth;
 
-        TableColumns(String columnName, int columnWidth) {
+        /**
+         * Make a CasesTableColumns enum item.
+         *
+         * @param columnName the name of the column.
+         */
+        CasesTableColumns(String columnName) {
             this.columnName = columnName;
-            this.columnWidth = columnWidth;
         }
 
+        /**
+         * The name displayed in the column header.
+         *
+         * @return the name of the column.
+         */
         String columnName() {
             return columnName;
-        }
-
-        int columnWidth() {
-            return columnWidth;
         }
     }
 

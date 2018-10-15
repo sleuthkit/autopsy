@@ -43,21 +43,7 @@ class CasesTableModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return TableColumns.values().length;
-    }
-
-    /**
-     * Get the preferred width that has been configured for this column.
-     *
-     * A value of 0 means that no preferred width has been defined for this
-     * column.
-     *
-     * @param colIdx Column index
-     *
-     * @return preferred column width >= 0
-     */
-    int getColumnPreferredWidth(int colIdx) {
-        return TableColumns.values()[colIdx].columnWidth();
+        return DataSourceTableColumns.values().length;
     }
 
     @Override
@@ -67,7 +53,7 @@ class CasesTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int colIdx) {
-        return TableColumns.values()[colIdx].columnName();
+        return DataSourceTableColumns.values()[colIdx].columnName();
     }
 
     @Override
@@ -76,11 +62,7 @@ class CasesTableModel extends AbstractTableModel {
             return Bundle.CasesTableModel_noData();
         }
 
-        return mapValueById(rowIdx, TableColumns.values()[colIdx]);
-    }
-
-    Object getRow(int rowIdx) {
-        return eamCases.get(rowIdx);
+        return mapValueById(rowIdx, DataSourceTableColumns.values()[colIdx]);
     }
 
     /**
@@ -92,7 +74,7 @@ class CasesTableModel extends AbstractTableModel {
      * @return value in the cell
      */
     @Messages({"CasesTableModel.noData=No Cases"})
-    private Object mapValueById(int rowIdx, TableColumns colId) {
+    private Object mapValueById(int rowIdx, DataSourceTableColumns colId) {
         CaseDataSourcesWrapper eamCase = eamCases.get(rowIdx);
         String value = Bundle.CasesTableModel_noData();
 
@@ -124,13 +106,17 @@ class CasesTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
+    /**
+     * Get the CaseDataSourcesWrapper for the specified index in the table.
+     *
+     * @param listIndex the idex of the object to get
+     *
+     * @return A caseDataSourcesWrapper containing the CorrelationCase and the
+     *         CorrelationDataSources associated with it for the specified
+     *         index.
+     */
     CaseDataSourcesWrapper getEamCase(int listIndex) {
         return eamCases.get(listIndex);
-    }
-
-    void clearTable() {
-        eamCases.clear();
-        fireTableDataChanged();
     }
 
     /**
@@ -138,26 +124,30 @@ class CasesTableModel extends AbstractTableModel {
      */
     @Messages({"CasesTableModel.case=Case Name",
         "CasesTableModel.creationDate=Creation Date"})
-    private enum TableColumns {
+    private enum DataSourceTableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        CASE_NAME(Bundle.CasesTableModel_case(), 120),
-        CREATION_DATE(Bundle.CasesTableModel_creationDate(), 120);
+        CASE_NAME(Bundle.CasesTableModel_case()),
+        CREATION_DATE(Bundle.CasesTableModel_creationDate());
 
         private final String columnName;
-        private final int columnWidth;
 
-        TableColumns(String columnName, int columnWidth) {
+        /**
+         * Make a DataSourceTableColumns enum item.
+         *
+         * @param columnName the name of the column.s
+         */
+        DataSourceTableColumns(String columnName) {
             this.columnName = columnName;
-            this.columnWidth = columnWidth;
         }
 
+        /**
+         * The name displayed in the column header.
+         *
+         * @return the name of the column.
+         */
         String columnName() {
             return columnName;
-        }
-
-        int columnWidth() {
-            return columnWidth;
         }
     }
 }
