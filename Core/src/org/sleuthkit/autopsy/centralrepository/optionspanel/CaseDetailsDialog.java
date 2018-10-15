@@ -41,8 +41,8 @@ import org.openide.util.NbBundle.Messages;
 class CaseDetailsDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
-    private final CasesTableModel casesTableModel;
-    private final DataSourcesTableModel dataSourcesModel;
+    private final CasesTableModel casesTableModel = new CasesTableModel();
+    private final DataSourcesTableModel dataSourcesTableModel = new DataSourcesTableModel();
     private final static Logger logger = Logger.getLogger(CaseDetailsDialog.class.getName());
 
     /**
@@ -52,8 +52,6 @@ class CaseDetailsDialog extends javax.swing.JDialog {
     private CaseDetailsDialog() {
         super(WindowManager.getDefault().getMainWindow(), Bundle.CaseDetailsDialog_title_text(),
                 true);
-        casesTableModel = new CasesTableModel();
-        dataSourcesModel = new DataSourcesTableModel();
         initComponents();
         try {
             EamDb dbManager = EamDb.getInstance();
@@ -128,22 +126,7 @@ class CaseDetailsDialog extends javax.swing.JDialog {
 
         casesSplitPane.setDividerLocation(400);
 
-        dataSourcesTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Data Source", "Device ID"
-            }
-        ) {
-            Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
-            };
-
-            public Class getColumnClass(int columnIndex) {
-                return types [columnIndex];
-            }
-        });
+        dataSourcesTable.setModel(dataSourcesTableModel);
         dataSourcesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         dataSourcesScrollPane.setViewportView(dataSourcesTable);
 
@@ -222,7 +205,7 @@ class CaseDetailsDialog extends javax.swing.JDialog {
                             .addComponent(notesLabel)
                             .addGroup(caseInfoPanelLayout.createSequentialGroup()
                                 .addGap(10, 10, 10)
-                                .addComponent(notesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE))))
+                                .addComponent(notesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, caseInfoPanelLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -317,7 +300,7 @@ class CaseDetailsDialog extends javax.swing.JDialog {
      * Update the information displayed to reflect the currently selected case.
      */
     private void updateSelection() {
-        dataSourcesModel.clearTable();
+        dataSourcesTableModel.clearTable();
         if (casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount()) {
             CaseDataSourcesWrapper caseWrapper = casesTableModel.getEamCase(casesTable.getSelectedRow());
             orgValueLabel.setText(caseWrapper.getOrganizationName());
@@ -326,8 +309,7 @@ class CaseDetailsDialog extends javax.swing.JDialog {
             examinerPhoneValueLabel.setText(caseWrapper.getExaminerPhone());
             examinerEmailValueLabel.setText(caseWrapper.getExaminerEmail());
             notesTextArea.setText(caseWrapper.getNotes());
-            dataSourcesModel.addDataSources(caseWrapper.getDataSources());
-            dataSourcesTable.setModel(dataSourcesModel);
+            dataSourcesTableModel.addDataSources(caseWrapper.getDataSources());
         } else {
             orgValueLabel.setText("");
             caseNumberValueLabel.setText("");
