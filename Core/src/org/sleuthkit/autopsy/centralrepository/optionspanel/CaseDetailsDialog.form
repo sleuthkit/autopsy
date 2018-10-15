@@ -203,9 +203,6 @@
                     </Property>
                     <Property name="lineWrap" type="boolean" value="true"/>
                     <Property name="rows" type="int" value="3"/>
-                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="CaseDetailsDialog.notesTextArea.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                    </Property>
                     <Property name="wrapStyleWord" type="boolean" value="true"/>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                       <Border info="null"/>
@@ -271,39 +268,14 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="orgValueLabel">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="CaseDetailsDialog.orgValueLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="caseNumberValueLabel">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="CaseDetailsDialog.caseNumberValueLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="examinerNameValueLabel">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="CaseDetailsDialog.examinerNameValueLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="examinerEmailValueLabel">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="CaseDetailsDialog.examinerEmailValueLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="examinerPhoneValueLabel">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="CaseDetailsDialog.examinerPhoneValueLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
             </Component>
             <Component class="javax.swing.JButton" name="closeButton">
               <Properties>

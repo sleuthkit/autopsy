@@ -145,7 +145,6 @@ class CaseDetailsDialog extends javax.swing.JDialog {
         notesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         notesTextArea.setLineWrap(true);
         notesTextArea.setRows(3);
-        notesTextArea.setText(org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.notesTextArea.text")); // NOI18N
         notesTextArea.setWrapStyleWord(true);
         notesTextArea.setBorder(null);
         notesScrollPane.setViewportView(notesTextArea);
@@ -165,16 +164,6 @@ class CaseDetailsDialog extends javax.swing.JDialog {
         org.openide.awt.Mnemonics.setLocalizedText(examinerNameLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerNameLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerPhoneLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(orgValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.orgValueLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(caseNumberValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.caseNumberValueLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(examinerNameValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerNameValueLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(examinerEmailValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerEmailValueLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneValueLabel, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.examinerPhoneValueLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(CaseDetailsDialog.class, "CaseDetailsDialog.closeButton.text")); // NOI18N
         closeButton.setMaximumSize(new java.awt.Dimension(65, 23));
