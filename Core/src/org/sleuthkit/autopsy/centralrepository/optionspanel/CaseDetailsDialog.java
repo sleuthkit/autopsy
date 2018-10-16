@@ -310,7 +310,7 @@ final class CaseDetailsDialog extends javax.swing.JDialog {
     private void updateSelection() {
         dataSourcesTableModel.clearTable();
         if (casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount()) {
-            CaseDataSourcesWrapper caseWrapper = casesTableModel.getEamCase(casesTable.convertRowIndexToView(casesTable.getSelectedRow()));
+            CaseDataSourcesWrapper caseWrapper = casesTableModel.getEamCase(casesTable.convertRowIndexToModel(casesTable.getSelectedRow()));
             orgValueLabel.setText(caseWrapper.getOrganizationName());
             caseNumberValueLabel.setText(caseWrapper.getCaseNumber());
             examinerNameValueLabel.setText(caseWrapper.getExaminerName());
