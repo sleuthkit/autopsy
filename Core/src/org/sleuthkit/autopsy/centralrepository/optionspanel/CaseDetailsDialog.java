@@ -48,6 +48,7 @@ final class CaseDetailsDialog extends javax.swing.JDialog {
     /**
      * Creates new form CaseInfoDialog
      */
+    @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
     @Messages({"CaseDetailsDialog.title.text=Case Details"})
     private CaseDetailsDialog() {
         super(WindowManager.getDefault().getMainWindow(), Bundle.CaseDetailsDialog_title_text(),
@@ -178,8 +179,6 @@ final class CaseDetailsDialog extends javax.swing.JDialog {
                     .addGroup(caseInfoPanelLayout.createSequentialGroup()
                         .addGap(10, 10, 10)
                         .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                    .addComponent(dataSourcesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(caseInfoLabel)
                     .addGroup(caseInfoPanelLayout.createSequentialGroup()
                         .addGap(6, 6, 6)
                         .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -208,7 +207,12 @@ final class CaseDetailsDialog extends javax.swing.JDialog {
                                 .addComponent(notesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 428, Short.MAX_VALUE))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, caseInfoPanelLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(closeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(caseInfoPanelLayout.createSequentialGroup()
+                        .addGroup(caseInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(caseInfoLabel)
+                            .addComponent(dataSourcesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         caseInfoPanelLayout.setVerticalGroup(
