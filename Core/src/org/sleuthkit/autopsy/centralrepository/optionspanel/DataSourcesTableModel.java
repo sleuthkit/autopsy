@@ -117,7 +117,7 @@ class DataSourcesTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    @Messages({"DataSourcesTableModel.dataSource=Data Source",
+    @Messages({"DataSourcesTableModel.dataSource=Data Source Name",
         "DataSourcesTableModel.deviceId=Device ID"})
     /**
      * Enum which lists columns of interest from CorrelationDataSource.
