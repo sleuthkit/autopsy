@@ -19,10 +19,33 @@
 package org.sleuthkit.autopsy.texttranslation;
 
 /**
- * Interface for creating text translators. Implementing classes will be picked
- * up and run by the Text Translation Service.
+ * Provides a system exception for the Text Translation errors
  */
-public interface TextTranslator {
-
-    public String translate(String input) throws TranslationException;
+public class TranslationException extends Exception {
+    
+    /**
+     * Constructs a new exception with null as its message.
+     */
+    public TranslationException() {
+        super();
+    }
+        
+    /**
+     * Constructs a new exception with the specified message.
+     *
+     * @param message The message.
+     */
+    public TranslationException(String message) {
+         super(message);   
+    }
+    
+    /**
+     * Constructs a new exception with the specified message and cause.
+     *
+     * @param message The message.
+     * @param cause   The cause.
+     */
+    public TranslationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
