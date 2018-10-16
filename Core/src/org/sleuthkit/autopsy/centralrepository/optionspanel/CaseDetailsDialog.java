@@ -38,7 +38,7 @@ import org.openide.util.NbBundle.Messages;
  * central repo information associated with them.
  *
  */
-class CaseDetailsDialog extends javax.swing.JDialog {
+final class CaseDetailsDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
     private final CasesTableModel casesTableModel = new CasesTableModel();
