@@ -77,6 +77,8 @@ final class CaseDetailsDialog extends javax.swing.JDialog {
                 }
             }
         });
+        //sort on first column by default
+        casesTable.getRowSorter().toggleSortOrder(0);
     }
 
     /**
@@ -127,6 +129,7 @@ final class CaseDetailsDialog extends javax.swing.JDialog {
 
         casesSplitPane.setDividerLocation(380);
 
+        dataSourcesTable.setAutoCreateRowSorter(true);
         dataSourcesTable.setModel(dataSourcesTableModel);
         dataSourcesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         dataSourcesScrollPane.setViewportView(dataSourcesTable);
@@ -257,6 +260,7 @@ final class CaseDetailsDialog extends javax.swing.JDialog {
 
         casesSplitPane.setRightComponent(caseInfoPanel);
 
+        casesTable.setAutoCreateRowSorter(true);
         casesTable.setModel(casesTableModel);
         casesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         casesScrollPane.setViewportView(casesTable);
@@ -306,7 +310,7 @@ final class CaseDetailsDialog extends javax.swing.JDialog {
     private void updateSelection() {
         dataSourcesTableModel.clearTable();
         if (casesTable.getSelectedRow() >= 0 && casesTable.getSelectedRow() < casesTable.getRowCount()) {
-            CaseDataSourcesWrapper caseWrapper = casesTableModel.getEamCase(casesTable.getSelectedRow());
+            CaseDataSourcesWrapper caseWrapper = casesTableModel.getEamCase(casesTable.convertRowIndexToView(casesTable.getSelectedRow()));
             orgValueLabel.setText(caseWrapper.getOrganizationName());
             caseNumberValueLabel.setText(caseWrapper.getCaseNumber());
             examinerNameValueLabel.setText(caseWrapper.getExaminerName());
