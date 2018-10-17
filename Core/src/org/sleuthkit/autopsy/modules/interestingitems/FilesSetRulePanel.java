@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.awt.event.ActionEvent;
+import java.util.Arrays;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.logging.Level;
@@ -449,7 +450,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                 if (this.fullNameRadioButton.isSelected()) {
                     condition = new FilesSet.Rule.FullNameCondition(this.nameTextField.getText());
                 } else {
-                    condition = new FilesSet.Rule.ExtensionCondition(this.nameTextField.getText());
+                    condition = new FilesSet.Rule.ExtensionCondition(Arrays.asList(this.nameTextField.getText().split(",")));
                 }
             } else {
                 logger.log(Level.SEVERE, "Attempt to get name condition with illegal chars"); // NON-NLS
@@ -782,18 +783,19 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                                         .addComponent(pathSeparatorInfoLabel))
                                     .addGroup(layout.createSequentialGroup()
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(ruleNameTextField)
                                             .addGroup(layout.createSequentialGroup()
                                                 .addComponent(daysIncludedTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(daysIncludedLabel))
-                                            .addComponent(ruleNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
-                                            .addGroup(layout.createSequentialGroup()
-                                                .addComponent(fullNameRadioButton)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(extensionRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(nameRegexCheckbox)))
-                                        .addGap(1, 1, 1))))
+                                                .addComponent(daysIncludedLabel)
+                                                .addGap(0, 0, Short.MAX_VALUE)))
+                                        .addGap(1, 1, 1))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(fullNameRadioButton)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(extensionRadioButton)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(nameRegexCheckbox))))
                             .addComponent(jLabel5)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

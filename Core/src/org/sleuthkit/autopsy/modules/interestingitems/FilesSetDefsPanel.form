@@ -173,7 +173,7 @@
                                       <Component id="deleteRuleButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
-                              <EmptySpace min="24" pref="47" max="32767" attributes="0"/>
+                              <EmptySpace min="24" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>

@@ -648,6 +648,15 @@ public final class FilesSet implements Serializable {
             AbstractTextCondition(Pattern regex) {
                 this.textMatcher = new FilesSet.Rule.RegexMatcher(regex);
             }
+            
+            /**
+             * Construct a case-insensitive multi-value text condition.
+             * 
+             * @param values The list of values in which to look for a match.
+             */
+            AbstractTextCondition(List<String> values) {
+                this.textMatcher = new FilesSet.Rule.CommaSeparatedValuesStringComparisionMatcher(values);
+            }
 
             /**
              * Get the text the condition matches.
@@ -820,11 +829,11 @@ public final class FilesSet implements Serializable {
              *
              * @param extension The file name extension to be matched.
              */
-            public ExtensionCondition(String extension) {
+            public ExtensionCondition(List<String> extensions) {
                 // If there is a leading ".", strip it since 
                 // AbstractFile.getFileNameExtension() returns just the 
                 // extension chars and not the dot.
-                super(extension.startsWith(".") ? extension.substring(1) : extension, false);
+                super(extensions);
             }
 
             /**
@@ -946,6 +955,60 @@ public final class FilesSet implements Serializable {
             public boolean textMatches(String subject) {
                 return pattern.matcher(subject).find();
             }
+        }
+
+        /**
+         * A text matcher that looks for a single case-insensitive string match
+         * in a multi-value list.
+         */
+        private static class CommaSeparatedValuesStringComparisionMatcher implements TextMatcher {
+
+            private static final long serialVersionUID = 1L;
+            private final List<String> valuesToMatch;
+
+            /**
+             * Construct a text matcher that looks for a single case-insensitive
+             * string match in a multi-value list.
+             *
+             * @param valuesToMatch The list of values in which to look for a
+             *                      match.
+             */
+            CommaSeparatedValuesStringComparisionMatcher(List<String> valuesToMatch) {
+                List<String> values = new ArrayList<>(valuesToMatch);
+                for (int i=0; i < values.size(); i++) {
+                    // Remove leading and trailing whitespace.
+                    String tempValue = values.get(i).trim();
+                    
+                    // Strip "." from the start of the extension if it exists.
+                    if (tempValue.startsWith(".")) {
+                        tempValue = tempValue.substring(1);
+                    }
+                    
+                    values.set(i, tempValue);
+                }
+                this.valuesToMatch = values;
+            }
+
+            @Override
+            public String getTextToMatch() {
+                return String.join(",", this.valuesToMatch);
+            }
+
+            @Override
+            public boolean isRegex() {
+                return false;
+            }
+
+            @Override
+            public boolean textMatches(String subject) {
+                for (String value : valuesToMatch) {
+                    if (value.equalsIgnoreCase(subject)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
         }
 
         /**
