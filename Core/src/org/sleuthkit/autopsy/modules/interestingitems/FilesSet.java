@@ -655,7 +655,7 @@ public final class FilesSet implements Serializable {
              * @param values The list of values in which to look for a match.
              */
             AbstractTextCondition(List<String> values) {
-                this.textMatcher = new FilesSet.Rule.CommaSeparatedValuesStringComparisionMatcher(values);
+                this.textMatcher = new FilesSet.Rule.CaseInsensitiveMultiValueStringComparisionMatcher(values);
             }
 
             /**
@@ -961,7 +961,7 @@ public final class FilesSet implements Serializable {
          * A text matcher that looks for a single case-insensitive string match
          * in a multi-value list.
          */
-        private static class CommaSeparatedValuesStringComparisionMatcher implements TextMatcher {
+        private static class CaseInsensitiveMultiValueStringComparisionMatcher implements TextMatcher {
 
             private static final long serialVersionUID = 1L;
             private final List<String> valuesToMatch;
@@ -973,7 +973,7 @@ public final class FilesSet implements Serializable {
              * @param valuesToMatch The list of values in which to look for a
              *                      match.
              */
-            CommaSeparatedValuesStringComparisionMatcher(List<String> valuesToMatch) {
+            CaseInsensitiveMultiValueStringComparisionMatcher(List<String> valuesToMatch) {
                 List<String> values = new ArrayList<>(valuesToMatch);
                 for (int i=0; i < values.size(); i++) {
                     // Remove leading and trailing whitespace.
