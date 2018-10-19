@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.List;
@@ -32,6 +33,7 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TYPE;
@@ -47,6 +49,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         "FilesSetRulePanel.kiloBytes=Kilobytes",
         "FilesSetRulePanel.megaBytes=Megabytes",
         "FilesSetRulePanel.gigaBytes=Gigabytes",
+        "FilesSetRulePanel.nameTextField.fullNameExample=Example: \"file.exe\"",
+        "FilesSetRulePanel.nameTextField.extensionExample=Examples: \"jpg\" or \"jpg,jpeg,gif\"",
         "FilesSetRulePanel.NoConditionError=Must have at least one condition to make a rule.",
         "FilesSetRulePanel.NoMimeTypeError=Please select a valid MIME type.",
         "FilesSetRulePanel.NoNameError=Name cannot be empty",
@@ -63,6 +67,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     private static final List<String> ILLEGAL_FILE_PATH_CHARS = FilesSetsManager.getIllegalFilePathChars();
     private JButton okButton;
     private JButton cancelButton;
+    private TextPrompt nameTextFieldPrompt;
 
     /**
      * Constructs a files set rule panel in create rule mode.
@@ -88,6 +93,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         this.dateCheckActionPerformed(null);
         populateComponentsWithDefaultValues();
         this.setButtons(okButton, cancelButton);
+        
+        updateNameTextFieldPrompt();
     }
 
     /**
@@ -121,6 +128,34 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         populatePathConditionComponents(rule);
         populateDateConditionComponents(rule);
         this.setButtons(okButton, cancelButton);
+        
+        updateNameTextFieldPrompt();
+    }
+    
+    /**
+     * Update the text prompt of the name text field based on the input type
+     * selection.
+     */
+    private void updateNameTextFieldPrompt() {
+        /**
+         * Add text prompt to the text field.
+         */
+        String text;
+        if (fullNameRadioButton.isSelected()) {
+            text = Bundle.FilesSetRulePanel_nameTextField_fullNameExample();
+        } else {
+            text = Bundle.FilesSetRulePanel_nameTextField_extensionExample();
+        }
+        nameTextFieldPrompt = new TextPrompt(text, nameTextField);
+        
+        /**
+         * Sets the foreground color and transparency of the text prompt.
+         */
+        nameTextFieldPrompt.setForeground(Color.LIGHT_GRAY);
+        nameTextFieldPrompt.changeAlpha(0.9f); // Mostly opaque
+        
+        validate();
+        repaint();
     }
 
     /**
@@ -658,10 +693,20 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         nameButtonGroup.add(fullNameRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(fullNameRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.fullNameRadioButton.text")); // NOI18N
         fullNameRadioButton.setEnabled(false);
+        fullNameRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fullNameRadioButtonActionPerformed(evt);
+            }
+        });
 
         nameButtonGroup.add(extensionRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(extensionRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.extensionRadioButton.text")); // NOI18N
         extensionRadioButton.setEnabled(false);
+        extensionRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                extensionRadioButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(nameRegexCheckbox, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.nameRegexCheckbox.text")); // NOI18N
         nameRegexCheckbox.setEnabled(false);
@@ -953,6 +998,14 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         }
         this.setOkButton();
     }//GEN-LAST:event_mimeCheckActionPerformed
+
+    private void extensionRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_extensionRadioButtonActionPerformed
+        updateNameTextFieldPrompt();
+    }//GEN-LAST:event_extensionRadioButtonActionPerformed
+
+    private void fullNameRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullNameRadioButtonActionPerformed
+        updateNameTextFieldPrompt();
+    }//GEN-LAST:event_fullNameRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton allRadioButton;
