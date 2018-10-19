@@ -7,6 +7,8 @@ package org.sleuthkit.autopsy.texttranslation;
 
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.datamodel.AbstractFile;
+
+import org.sleuthkit.autopsy.datamodel.CustomFileProperty;
 /**
  *
  * @author dsmyda

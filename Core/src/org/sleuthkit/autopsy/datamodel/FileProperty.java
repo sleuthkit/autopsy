@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.sleuthkit.autopsy.texttranslation;
+package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.datamodel.AbstractFile;
 

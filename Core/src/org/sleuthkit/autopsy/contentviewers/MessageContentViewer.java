@@ -726,7 +726,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             Set<String> keepProps = new HashSet<>(Arrays.asList("Name" , "S", 
                     "C", "O", "Size", "Mime Type", "Known"));
             
-            //Remove all other proprs except for 
+            //Remove all other props except for the  ones above
             Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
             for(Property<?> p : sheetSet.getProperties()) {
                 if(keepProps.contains(p.getName())){
