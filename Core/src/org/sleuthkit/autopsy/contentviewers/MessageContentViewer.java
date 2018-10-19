@@ -722,17 +722,20 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         @Override
         protected Sheet createSheet() {
-            Sheet sheetSet = super.createSheet();
-            Set<String> keepProps = new HashSet<>(Arrays.asList("Name" , "Size",  "Mime Type", "Known"));
+            Sheet sheet = super.createSheet();
+            Set<String> keepProps = new HashSet<>(Arrays.asList("Name" , "S", 
+                    "C", "O", "Size", "Mime Type", "Known"));
             
-            for(PropertySet p : sheetSet.toArray()) {
+            //Remove all other proprs except for 
+            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
+            for(Property p : sheetSet.getProperties()) {
                 if(keepProps.contains(p.getName())){
                     continue;
                 }
                 sheetSet.remove(p.getName());
             }
 
-            return sheetSet;
+            return sheet;
         }
     }
 }
