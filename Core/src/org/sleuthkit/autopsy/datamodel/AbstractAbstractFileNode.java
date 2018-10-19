@@ -199,7 +199,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String desc = Bundle.AbstractFsContentNode_noDesc_text();
-            FileProperty p  = AbstractFilePropertyType.getPropertyFromDisplayName(entry.getKey());
+            
+            
+            FileProperty p  = getFilePropertyFromDisplayName(entry.getKey());
             if(!p.getDescription(content).isEmpty()) {
                 desc = p.getDescription(content);
             }
@@ -207,6 +209,27 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         
         return sheet;
+    }
+    
+    private FileProperty getFilePropertyFromDisplayName(String displayName) {
+        FileProperty p = AbstractFilePropertyType.getPropertyFromDisplayName(displayName);
+        if(p != null) {
+            return p;
+        } else {
+            Optional<Collection<? extends CustomFileProperty>> customProperties = getCustomProperties();
+            if(customProperties.isPresent()) {
+                for(CustomFileProperty cp : customProperties.get()) {
+                    if (cp.getPropertyName().equals(displayName)) {
+                        return cp;
+                    }
+                }   
+            }
+            return null;
+        }
+    }
+    
+    private static Optional<Collection<? extends CustomFileProperty>> getCustomProperties() {
+        return Optional.ofNullable(Lookup.getDefault().lookupAll(CustomFileProperty.class));
     }
     
     @NbBundle.Messages({"AbstractAbstractFileNode.nameColLbl=Name",
@@ -483,16 +506,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         ArrayList<FileProperty> properties = new ArrayList<>();
         properties.addAll(Arrays.asList(AbstractFilePropertyType.values()));
         
-       /* //Load in our custom properties
-        Optional<Collection<? extends CustomFileProperty>> customProperties = 
-        Optional.ofNullable(Lookup.getDefault().lookupAll(CustomFileProperty.class));
+        //Load in our custom properties
+        Optional<Collection<? extends CustomFileProperty>> customProperties = getCustomProperties();
         if (customProperties.isPresent()) {
-            for(CustomFileProperty p : customProperties.get()) {
+            customProperties.get().forEach((p) -> {
                 //Inject custom properties at the desired column positions
                 //Specified by the custom property itself.
                 properties.add(p.getColumnPosition(), p);
-            }
-        }*/
+            });
+        }
         
         //Skip properties that are disabled, don't add them to the property map!
         properties.stream().filter(p -> !p.isDisabled()).forEach((p) -> {
