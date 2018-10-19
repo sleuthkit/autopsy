@@ -728,7 +728,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             
             //Remove all other proprs except for 
             Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-            for(Property p : sheetSet.getProperties()) {
+            for(Property<?> p : sheetSet.getProperties()) {
                 if(keepProps.contains(p.getName())){
                     continue;
                 }

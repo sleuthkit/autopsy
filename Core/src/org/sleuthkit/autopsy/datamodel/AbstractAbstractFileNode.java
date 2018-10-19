@@ -243,7 +243,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         },
         SCORE(AbstractAbstractFileNode_createSheet_score_name()) {
-            Optional<Pair<String, Score>> result;
+            Optional<Pair<String, Score>> result = Optional.empty();
             
             private void initResult(AbstractFile content) {
                 scoreAndCommentTags = getContentTagsFromDatabase(content);
@@ -267,7 +267,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         },
         COMMENT(AbstractAbstractFileNode_createSheet_comment_name()) {
-            Optional<Pair<String, HasCommentStatus>> result;
+            Optional<Pair<String, HasCommentStatus>> result = Optional.empty();
             
             private void initResult(AbstractFile content) {
                 scoreAndCommentTags = getContentTagsFromDatabase(content);
@@ -298,7 +298,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         },
         COUNT(AbstractAbstractFileNode_createSheet_count_name()) {
-            Optional<Pair<String, Long>> result;
+            Optional<Pair<String, Long>> result = Optional.empty();
             
             private void initResult(AbstractFile content) {
                 result = Optional.of(getCountProperty(correlationAttribute));

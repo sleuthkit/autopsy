@@ -62,12 +62,13 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
     @Override
     @NbBundle.Messages("AbstractFsContentNode.noDesc.text=no description")
     protected Sheet createSheet() {
-        Sheet sheetSet = super.createSheet();
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (directoryBrowseMode) {
             sheetSet.put(new NodeProperty<>(HIDE_PARENT, HIDE_PARENT, HIDE_PARENT, HIDE_PARENT));
         }
 
-        return sheetSet;
+        return sheet;
     }
 
 }
