@@ -21,18 +21,14 @@ package org.sleuthkit.autopsy.datamodel;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.autopsy.texttranslation.FileProperty;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -84,32 +80,26 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-        List<ContentTag> tags = getContentTagsFromDatabase();
         
         sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(),
                         "VirtualDirectoryNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
+        
         if (!this.content.isDataSource()) {
-            addScoreProperty(sheetSet, tags);
-
-            CorrelationAttributeInstance correlationAttribute = null;
-            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-                correlationAttribute = getCorrelationAttributeInstance();
-            }
-            addCommentProperty(sheetSet, tags, correlationAttribute);
-
-            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-                addCountProperty(sheetSet, correlationAttribute);
-            }
             Map<String, Object> map = new LinkedHashMap<>();
             fillPropertyMap(map, getContent());
 
-            final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
             for (Map.Entry<String, Object> entry : map.entrySet()) {
-                sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
+                String desc = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
+                FileProperty p  = AbstractFilePropertyType.getPropertyFromDisplayName(entry.getKey());
+                if(!p.getDescription(content).isEmpty()) {
+                    desc = p.getDescription(content);
+                }
+                sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), desc, entry.getValue()));
             }
+        
         } else {
             sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),

@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
+import org.sleuthkit.autopsy.texttranslation.FileProperty;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ContentTag;
@@ -66,42 +67,6 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
             this.setIconBaseWithExtension(FileNode.getIconForFileType(af));
         }
 
-    }
-
-    @Override
-    protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-        if (sheetSet == null) {
-            sheetSet = Sheet.createPropertiesSet();
-            sheet.put(sheetSet);
-        }
-        List<ContentTag> tags = getContentTagsFromDatabase();
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, getContent());
-
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.name"),
-                NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),
-                NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
-                getName()));
-        
-        addScoreProperty(sheetSet, tags);
-        
-        CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            correlationAttribute = getCorrelationAttributeInstance();
-        }
-        addCommentProperty(sheetSet, tags, correlationAttribute);
-        
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            addCountProperty(sheetSet, correlationAttribute);
-        }
-        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
-        }
-
-        return sheet;
     }
 
     @Override

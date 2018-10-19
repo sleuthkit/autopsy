@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -721,33 +722,17 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         @Override
         protected Sheet createSheet() {
-            Sheet sheet = new Sheet();
-            Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-            if (sheetSet == null) {
-                sheetSet = Sheet.createPropertiesSet();
-                sheet.put(sheetSet);
+            Sheet sheetSet = super.createSheet();
+            Set<String> keepProps = new HashSet<>(Arrays.asList("Name" , "Size",  "Mime Type", "Known"));
+            
+            for(PropertySet p : sheetSet.toArray()) {
+                if(keepProps.contains(p.getName())){
+                    continue;
+                }
+                sheetSet.remove(p.getName());
             }
-            List<ContentTag> tags = getContentTagsFromDatabase();
 
-            AbstractFile file = getContent();
-            sheetSet.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
-            
-            addScoreProperty(sheetSet, tags);
-            
-            CorrelationAttributeInstance correlationAttribute = null;
-            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
-                correlationAttribute = getCorrelationAttributeInstance();
-            }
-            addCommentProperty(sheetSet, tags, correlationAttribute);
-            
-            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
-                addCountProperty(sheetSet, correlationAttribute);
-            }
-            sheetSet.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
-            sheetSet.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
-            sheetSet.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
-
-            return sheet;
+            return sheetSet;
         }
     }
 }
