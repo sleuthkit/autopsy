@@ -496,7 +496,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }*/
         
         //Skip properties that are disabled, don't add them to the property map!
-        properties.stream().filter(p -> p.isDisabled()).forEach((p) -> {
+        properties.stream().filter(p -> !p.isDisabled()).forEach((p) -> {
             map.put(p.getPropertyName(), p.getPropertyValue(content));
         });
     }
