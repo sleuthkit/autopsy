@@ -20,18 +20,19 @@ package org.sleuthkit.autopsy.timeline;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
 import javafx.application.Platform;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 /**
  * Manages listeners and the controller.
- * 
+ *
  */
 public class TimeLineModule {
 
@@ -48,17 +49,17 @@ public class TimeLineModule {
 
     /**
      * Get instance of the controller for the current case
-     * @return
-     * @throws NoCurrentCaseException 
+     *
+     * @return the controller for the current case.
+     *
+     * @throws NoCurrentCaseException If there is no case open.
+     * @throws TskCoreException       If there was a problem accessing the case
+     *                                database.
      */
-    public static TimeLineController getController() throws NoCurrentCaseException {
+    public static TimeLineController getController() throws NoCurrentCaseException, TskCoreException {
         synchronized (controllerLock) {
             if (controller == null) {
-                try {
-                    controller = new TimeLineController(Case.getCurrentCaseThrows());
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    throw new NoCurrentCaseException("Error getting TimeLineController for the current case.", ex);
-                }
+                controller = new TimeLineController(Case.getCurrentCaseThrows());
             }
             return controller;
         }
@@ -84,16 +85,18 @@ public class TimeLineModule {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             try {
-                TimeLineController tlController = getController();
-                tlController.handleCaseEvent(evt);
+                getController().handleCaseEvent(evt);
             } catch (NoCurrentCaseException ex) {
                 // ignore
-                return;
+
+            } catch (TskCoreException ex) {
+                MessageNotifyUtil.Message.error("Error creating timeline controller.");
+                logger.log(Level.SEVERE, "Error creating timeline controller", ex);
             }
 
             if (Case.Events.valueOf(evt.getPropertyName()).equals(CURRENT_CASE)) {
                 // we care only about case closing here
-                if (evt.getNewValue() == null) {   
+                if (evt.getNewValue() == null) {
                     synchronized (controllerLock) {
                         if (controller != null) {
                             controller.shutDownTimeLine();
@@ -113,11 +116,12 @@ public class TimeLineModule {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             try {
-                TimeLineController tlController = getController();
-                tlController.handleIngestModuleEvent(evt);
+                getController().handleIngestModuleEvent(evt);
             } catch (NoCurrentCaseException ex) {
                 // ignore
-                return;
+            } catch (TskCoreException ex) {
+                MessageNotifyUtil.Message.error("Error creating timeline controller.");
+                logger.log(Level.SEVERE, "Error creating timeline controller", ex);
             }
         }
     }

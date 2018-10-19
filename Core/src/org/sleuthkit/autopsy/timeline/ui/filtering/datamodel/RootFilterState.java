@@ -22,7 +22,6 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.python.google.common.collect.Lists;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
@@ -178,10 +177,23 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
         if (getClass() != obj.getClass()) {
             return false;
         }
-        RootFilter activeFilter = getActiveFilter();
-        RootFilter activeFilter1 = ((RootFilterState) obj).getActiveFilter();
 
-        return activeFilter.equals(activeFilter1);
+        RootFilterState otherFilterState = (RootFilterState) obj;
+
+        RootFilter activeFilter = getActiveFilter();
+        RootFilter activeFilter1 = otherFilterState.getActiveFilter();
+
+        if (false == activeFilter.equals(activeFilter1)) {
+            return false;
+        }
+
+        RootFilter filter = getFilter();
+        RootFilter filter1 = otherFilterState.getFilter();
+
+        if (false == filter.equals(filter1)) {
+            return false;
+        }
+        return true;
     }
 
     @Override

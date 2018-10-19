@@ -56,6 +56,7 @@ import org.joda.time.Interval;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -68,6 +69,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -98,9 +100,9 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
  * it needs external synchronization</li>
  * * <li>Since eventsRepository is internally synchronized, only compound
  * access to it needs external synchronization <li>
- * <li>Other state including  mainFrame, viewMode, and the
- * listeners should only be accessed with this object's intrinsic lock held, or
- * on the EDT as indicated.
+ * <li>Other state including mainFrame, viewMode, and the listeners should only
+ * be accessed with this object's intrinsic lock held, or on the EDT as
+ * indicated.
  * </li>
  * </ul>
  */
@@ -188,7 +190,6 @@ public class TimeLineController {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     private TimeLineTopComponent topComponent;
-
 
     @GuardedBy("this")
     private final ReadOnlyObjectWrapper<ViewMode> viewMode = new ReadOnlyObjectWrapper<>(ViewMode.COUNTS);
@@ -282,10 +283,10 @@ public class TimeLineController {
          * TimeLineController. Do we need to do this with datasource or hash hit
          * filters?
          */
-        historyManager.currentState().addListener((ObservableValue<? extends ZoomState> observable, ZoomState oldValue, ZoomState newValue) -> {
-            ZoomState historyManagerParams = newValue;
-            filteredEvents.syncTagsFilter(historyManagerParams.getFilterState());
-            currentParams.set(historyManagerParams);
+        historyManager.currentState().addListener((  observable,   oldState,   newState) -> {
+            ZoomState historyManagerState = newState;
+            filteredEvents.syncTagsFilter(historyManagerState.getFilterState());
+            currentParams.set(historyManagerState);
         });
 
         try {
@@ -709,76 +710,79 @@ public class TimeLineController {
 
     }
 
-
     void handleIngestModuleEvent(PropertyChangeEvent evt) {
-            /**
-             * Checking for a current case is a stop gap measure until a
-             * different way of handling the closing of cases is worked out.
-             * Currently, remote events may be received for a case that is
-             * already closed.
-             */
-            try {
-                Case.getCurrentCaseThrows();
-            } catch (NoCurrentCaseException notUsed) {
-                // Case is closed, do nothing.
-                return;
-            }
-            
-            // ignore remote events.  The node running the ingest should update the Case DB
-            // @@@ We should signal though that there is more data and flush caches...
-            if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
-                return;
-            }
-
-            switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
-                case CONTENT_CHANGED:
-                    // new files were already added to the events table from SleuthkitCase.
-                    break;
-                case DATA_ADDED:
-                    ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                    if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                        executor.submit(() -> filteredEvents.setHashHit(eventData.getArtifacts(), true));
-                    }
-                    break;
-                case FILE_DONE:
-                    /*
-                     * Since the known state or hash hit state may have changed
-                     * invalidate caches.
-                     */
-                    //@@@ This causes HUGE slow downs during ingest when TL is open.  
-                    // executor.submit(filteredEvents::invalidateAllCaches);
-                    
-                    // known state should have been udpated automatically via SleuthkitCase.setKnown();
-                    // hashes should have been updated from event
-            }
+        /**
+         * Checking for a current case is a stop gap measure until a different
+         * way of handling the closing of cases is worked out. Currently, remote
+         * events may be received for a case that is already closed.
+         */
+        try {
+            Case.getCurrentCaseThrows();
+        } catch (NoCurrentCaseException notUsed) {
+            // Case is closed, do nothing.
+            return;
         }
 
-    
-    void handleCaseEvent(PropertyChangeEvent evt) {
-        switch (Case.Events.valueOf(evt.getPropertyName())) {
-                case BLACKBOARD_ARTIFACT_TAG_ADDED:
-                    executor.submit(() -> filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt));
-                    break;
-                case BLACKBOARD_ARTIFACT_TAG_DELETED:
-                    executor.submit(() -> filteredEvents.handleArtifactTagDeleted((BlackBoardArtifactTagDeletedEvent) evt));
-                    break;
-                case CONTENT_TAG_ADDED:
-                    executor.submit(() -> filteredEvents.handleContentTagAdded((ContentTagAddedEvent) evt));
-                    break;
-                case CONTENT_TAG_DELETED:
-                    executor.submit(() -> filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt));
-                    break;
-                case DATA_SOURCE_ADDED:
-                    executor.submit(() -> filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt));
-                    break;
-                case CURRENT_CASE:
-                    //close timeline on case changes.
-                    SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
-                    break;
-                case EVENT_ADDED:
-                    executor.submit(filteredEvents::invalidateAllCaches);
-                    break;
+        // ignore remote events.  The node running the ingest should update the Case DB
+        // @@@ We should signal though that there is more data and flush caches...
+        if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
+            return;
+        }
+
+        switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
+            case CONTENT_CHANGED:
+                // new files were already added to the events table from SleuthkitCase.
+                break;
+            case DATA_ADDED:
+                ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
+                if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                    executor.submit(() -> filteredEvents.setHashHit(eventData.getArtifacts(), true));
+                }
+                break;
+            case FILE_DONE:
+            /*
+             * Since the known state or hash hit state may have changed
+             * invalidate caches.
+             */
+            //@@@ This causes HUGE slow downs during ingest when TL is open.  
+            // executor.submit(filteredEvents::invalidateAllCaches);
+
+            // known state should have been udpated automatically via SleuthkitCase.setKnown();
+            // hashes should have been updated from event
             }
     }
-}
 
+    void handleCaseEvent(PropertyChangeEvent evt) {
+        switch (Case.Events.valueOf(evt.getPropertyName())) {
+            case BLACKBOARD_ARTIFACT_TAG_ADDED:
+                executor.submit(() -> filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt));
+                break;
+            case BLACKBOARD_ARTIFACT_TAG_DELETED:
+                executor.submit(() -> filteredEvents.handleArtifactTagDeleted((BlackBoardArtifactTagDeletedEvent) evt));
+                break;
+            case CONTENT_TAG_ADDED:
+                executor.submit(() -> filteredEvents.handleContentTagAdded((ContentTagAddedEvent) evt));
+                break;
+            case CONTENT_TAG_DELETED:
+                executor.submit(() -> filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt));
+                break;
+            case DATA_SOURCE_ADDED:
+                executor.submit(() -> filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt));
+                break;
+            case CURRENT_CASE:
+                //close timeline on case changes.
+                SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
+                break;
+            case EVENT_ADDED:
+                executor.submit(() -> {
+                    try {
+                        filteredEvents.invalidateAllCaches();
+                    } catch (TskCoreException ex) {
+                        MessageNotifyUtil.Message.error("Error invalidating timeline caches.");
+                        logger.log(Level.SEVERE, "Error invalidating timeline caches.", ex);
+                    }
+                });
+                break;
+        }
+    }
+}
