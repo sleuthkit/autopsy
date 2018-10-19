@@ -36,9 +36,12 @@ public class TextTranslationService {
      *
      * @throws NoServiceProviderException Failed to find a Translation service
      *                                    provider
+     * @throws TranslationException       System exception for classes to use
+     *                                    when specific translation
+     *                                    implementations fail
      */
-    public String translate(String input) throws NoServiceProviderException {
-        Optional<TextTranslator> translator = Optional.of(Lookup.getDefault()
+    public String translate(String input) throws NoServiceProviderException, TranslationException {
+        Optional<TextTranslator> translator = Optional.ofNullable(Lookup.getDefault()
                 .lookup(TextTranslator.class));
         if (translator.isPresent()) {
             return translator.get().translate(input);
