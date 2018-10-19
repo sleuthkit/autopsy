@@ -74,12 +74,9 @@ final public class FilterTreeItem extends TreeItem<FilterState<?>> {
                 }
             });
 
-            compoundFilter.selectedProperty().addListener(new InvalidationListener() {
-                @Override
-                public void invalidated(Observable observable) {
-                    if (compoundFilter.isSelected()) {
-                        setExpanded(true);
-                    }
+            compoundFilter.selectedProperty().addListener( observable -> {
+                if (compoundFilter.isSelected()) {
+                    setExpanded(true);
                 }
             });
         }

@@ -20,8 +20,11 @@ package org.sleuthkit.autopsy.timeline.ui.filtering;
 
 import java.util.Arrays;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
@@ -119,11 +122,18 @@ final public class FilterSetPanel extends BorderPane {
         expansionMap.put(controller.getEventsModel().getFilterState().getFilter(), true);
         expansionMap.put(controller.getEventsModel().getFilterState().getEventTypeFilterState().getFilter(), true);
 
-        this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> applyFilters());
-        this.filteredEvents.descriptionLODProperty().addListener((Observable observable1) -> applyFilters());
-        this.filteredEvents.timeRangeProperty().addListener((Observable observable2) -> applyFilters());
+        InvalidationListener applyFiltersListener = observable -> applyFilters();
 
-        this.filteredEvents.filterProperty().addListener((observable, oldValue, newValue) -> refresh());
+        this.filteredEvents.eventTypeZoomProperty().addListener(applyFiltersListener);
+        this.filteredEvents.descriptionLODProperty().addListener(applyFiltersListener);
+        this.filteredEvents.timeRangeProperty().addListener(applyFiltersListener);
+
+        this.filteredEvents.filterProperty().addListener(new ChangeListener<RootFilterState>() {
+            @Override
+            public void changed(ObservableValue<? extends RootFilterState> observable, RootFilterState oldValue, RootFilterState newValue) {
+                 refresh();
+            }
+        });
         refresh();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
@@ -163,8 +173,9 @@ final public class FilterSetPanel extends BorderPane {
     }
 
     private void refresh() {
+        FilterTreeItem filterTreeItem = new FilterTreeItem(filteredEvents.getFilterState(), expansionMap);
         Platform.runLater(() -> {
-            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.getFilterState().copyOf(), expansionMap));
+            filterTreeTable.setRoot(filterTreeItem);
         });
     }
 
