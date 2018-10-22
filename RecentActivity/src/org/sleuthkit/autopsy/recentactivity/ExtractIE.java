@@ -23,6 +23,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.io.BufferedReader;
 import java.io.File;
@@ -85,14 +86,10 @@ class ExtractIE extends Extract {
     private static final String PARENT_MODULE_NAME
             = NbBundle.getMessage(ExtractIE.class, "ExtractIE.parentModuleName.noSpace");
     private static final String PASCO_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    private static final String JAVA_PATH = PlatformUtil.getJavaPath();
 
     private final String moduleTempResultsDir;
-
-    private final String JAVA_PATH = PlatformUtil.getJavaPath();
-
-    private String PASCO_LIB_PATH;
     private static final String RESOURCE_URL_PREFIX = "res://";
-    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     private Content dataSource;
     private IngestJobContext context;
@@ -473,7 +470,7 @@ class ExtractIE extends Extract {
             while (fileScanner.hasNext()) {
 
                 parseLine(origFile, fileScanner.nextLine()).ifPresent(urlVisit -> {
-                    Collection<BlackboardAttribute> bbattributes = Arrays.asList(
+                    Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(
                             new BlackboardAttribute(
                                     TSK_URL, PARENT_MODULE_NAME,
                                     urlVisit.url),
@@ -491,6 +488,7 @@ class ExtractIE extends Extract {
                             new BlackboardAttribute(
                                     TSK_USER_NAME, PARENT_MODULE_NAME,
                                     urlVisit.user));
+
                     if (isIgnoredUrl(urlVisit.url) == false) {
                         bbattributes.add(new BlackboardAttribute(
                                 TSK_DOMAIN, PARENT_MODULE_NAME,
@@ -605,17 +603,10 @@ class ExtractIE extends Extract {
      * @return True if the URL should be ignored; otherwise false.
      */
     private boolean isIgnoredUrl(String url) {
-        if (url == null || url.isEmpty()) {
-            return true;
-        }
-
-        if (url.toLowerCase().startsWith(RESOURCE_URL_PREFIX)) {
-            /*
-             * Ignore URLs that begin with the matched text.
-             */
-            return true;
-        }
-
-        return false;
+        /*
+         * Ignore blank URLs and URLs that begin with the matched text.
+         */
+        return StringUtils.isBlank(url)
+               || url.toLowerCase().startsWith(RESOURCE_URL_PREFIX);
     }
 }
