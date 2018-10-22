@@ -87,7 +87,12 @@ class ExtractIE extends Extract {
     private static final String PASCO_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
     private final String moduleTempResultsDir;
+
     private final String JAVA_PATH = PlatformUtil.getJavaPath();
+
+    private String PASCO_LIB_PATH;
+    private static final String RESOURCE_URL_PREFIX = "res://";
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     private Content dataSource;
     private IngestJobContext context;
@@ -475,7 +480,7 @@ class ExtractIE extends Extract {
                             new BlackboardAttribute(
                                     TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
                                     urlVisit.time),
-                        //JIRA-2386: why are we adding an attribute that is always blank?
+                            //JIRA-2386: why are we adding an attribute that is always blank?
                             new BlackboardAttribute(
                                     TSK_REFERRER, PARENT_MODULE_NAME,
                                     ""),
@@ -484,11 +489,13 @@ class ExtractIE extends Extract {
                                     TSK_PROG_NAME, PARENT_MODULE_NAME,
                                     getModuleName()),
                             new BlackboardAttribute(
-                                    TSK_DOMAIN, PARENT_MODULE_NAME,
-                                    urlVisit.domain),
-                            new BlackboardAttribute(
                                     TSK_USER_NAME, PARENT_MODULE_NAME,
                                     urlVisit.user));
+                    if (isIgnoredUrl(urlVisit.url) == false) {
+                        bbattributes.add(new BlackboardAttribute(
+                                TSK_DOMAIN, PARENT_MODULE_NAME,
+                                urlVisit.domain));
+                    }
                     try {
                         BlackboardArtifact bbart = origFile.newArtifact(TSK_WEB_HISTORY);
                         bbart.addAttributes(bbattributes);
@@ -537,9 +544,9 @@ class ExtractIE extends Extract {
             logger.log(Level.INFO, "Found unrecognized IE history format."); //NON-NLS
             return Optional.empty();
         }
-
         String user;
         String realurl;
+
 
         /*
          * We've seen two types of lines: URL http://XYZ.com .... URL Visited:
@@ -558,6 +565,7 @@ class ExtractIE extends Extract {
         String domain = Util.extractDomain(realurl);
         String actime = lineBuff[3];
         Long ftime = (long) 0;
+
         if (!actime.isEmpty()) {
             try {
                 Long epochtime = new SimpleDateFormat(PASCO_DATE_FORMAT).parse(actime).getTime();
@@ -587,5 +595,27 @@ class ExtractIE extends Extract {
             this.domain = domain;
             this.time = ftime;
         }
+    }
+
+    /**
+     * Determine if the URL should be ignored.
+     *
+     * @param url The URL to test.
+     *
+     * @return True if the URL should be ignored; otherwise false.
+     */
+    private boolean isIgnoredUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return true;
+        }
+
+        if (url.toLowerCase().startsWith(RESOURCE_URL_PREFIX)) {
+            /*
+             * Ignore URLs that begin with the matched text.
+             */
+            return true;
+        }
+
+        return false;
     }
 }

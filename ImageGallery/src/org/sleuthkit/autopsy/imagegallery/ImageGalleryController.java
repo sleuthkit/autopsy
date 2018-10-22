@@ -136,16 +136,8 @@ public final class ImageGalleryController {
         return thumbnailSizeProp;
     }
 
-    public GroupViewState getViewState() {
-        return historyManager.getCurrentState();
-    }
-
     public ReadOnlyBooleanProperty regroupDisabledProperty() {
         return regroupDisabled.getReadOnlyProperty();
-    }
-
-    public ReadOnlyObjectProperty<GroupViewState> viewStateProperty() {
-        return historyManager.currentState();
     }
 
     public FileIDSelectionModel getSelectionModel() {
@@ -240,24 +232,66 @@ public final class ImageGalleryController {
         dbTaskQueueSize.addListener(obs -> this.updateRegroupDisabled());
 
     }
+    
+    /**
+     * @return Currently displayed group or null if nothing is being displayed
+     */
+    public GroupViewState getViewState() {
+        return historyManager.getCurrentState();
+    }
+    
+    /**
+     * Get observable property of the current group. The UI currently changes
+     * based on this property changing, which happens when other actions and 
+     * threads call advance().
+     * 
+     * @return Currently displayed group (as a property that can be observed)
+     */
+    public ReadOnlyObjectProperty<GroupViewState> viewStateProperty() {
+        return historyManager.currentState();
+    }
 
+    /**
+     * Should the "forward" button on the history be enabled?
+     * @return 
+     */
     public ReadOnlyBooleanProperty getCanAdvance() {
         return historyManager.getCanAdvance();
     }
 
+    /**
+     * Should the "Back" button on the history be enabled?
+     * @return 
+     */
     public ReadOnlyBooleanProperty getCanRetreat() {
         return historyManager.getCanRetreat();
     }
 
+    /**
+     * Display the passed in group.  Causes this group to 
+     * get recorded in the history queue and observers of the 
+     * current state will be notified and update their panels/widgets
+     * appropriately.
+     * 
+     * @param newState 
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     public void advance(GroupViewState newState) {
         historyManager.advance(newState);
     }
 
+    /**
+     * Display the next group in the "forward" history stack
+     * @return 
+     */
     public GroupViewState advance() {
         return historyManager.advance();
     }
 
+    /**
+     * Display the previous group in the "back" history stack
+     * @return 
+     */
     public GroupViewState retreat() {
         return historyManager.retreat();
     }

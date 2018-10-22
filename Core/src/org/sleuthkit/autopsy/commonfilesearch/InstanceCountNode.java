@@ -1,16 +1,16 @@
 /*
- * 
+ *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
  * Node used to indicate the number of matches found with the MD5 children of
  * this Node.
  */
-final public class InstanceCountNode extends DisplayableItemNode {
+public final class InstanceCountNode extends DisplayableItemNode {
 
     private static final Logger logger = Logger.getLogger(InstanceCountNode.class.getName());
 
@@ -74,11 +74,10 @@ final public class InstanceCountNode extends DisplayableItemNode {
     }
 
     /**
-     * Refresh the node, by dynamically loading in the children when called, and
-     * calling the CommonAttributeValueNodeFactory to generate nodes for the 
-     * children in attributeValues.
+     * Creates the Children of this node. By doing this here instead of in the
+     * constructor, lazy creation of the Children is made possible.
      */
-    public void refresh() {
+    void createChildren() {
         attributeValues.displayDelayedMetadata();
         setChildren(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), true));
     }

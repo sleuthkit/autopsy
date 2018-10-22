@@ -421,6 +421,9 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
     ingest_job_index = line.find('INSERT INTO "ingest_jobs"') > -1 or line.find('INSERT INTO ingest_jobs ') > -1
     examiners_index = line.find('INSERT INTO "tsk_examiners"') > -1 or line.find('INSERT INTO tsk_examiners ') > -1
+    ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1
+    ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
+    
     parens = line[line.find('(') + 1 : line.rfind(')')]
     fields_list = parens.replace(" ", "").split(',')
     
@@ -428,6 +431,15 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     if files_index:
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
+    # remove group ID
+    elif ig_groups_index:
+        newLine = ('INSERT INTO "image_gallery_groups" VALUES(' + ', '.join(fields_list[1:]) + ');') 
+        return newLine
+    #remove id field
+    elif ig_groups_seen_index:
+        # Only removing the id field for now. May need to care about group_id, examiner_id and seen fields in future.
+        newLine = ('INSERT INTO "image_gallery_groups_seen" VALUES(' + ', '.join(fields_list[1:]) + ');') 
+        return newLine    
     # remove object ID
     elif path_index:
         obj_id = int(fields_list[0])

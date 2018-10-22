@@ -71,6 +71,7 @@ final class FirefoxExtractor extends Extract {
     private static final String PARENT_MODULE_NAME = NbBundle.getMessage(FirefoxExtractor.class,
             "Firefox.parentModuleName.noSpace");
 
+    private static final String PLACE_URL_PREFIX = "place:";
     private static final String HISTORY_QUERY = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) AS visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0"; //NON-NLS
     private static final String COOKIE_QUERY = "SELECT name,value,host,expiry,(lastAccessed/1000000) AS lastAccessed,(creationTime/1000000) AS creationTime FROM moz_cookies"; //NON-NLS
     private static final String COOKIE_QUERY_V3 = "SELECT name,value,host,expiry,(lastAccessed/1000000) AS lastAccessed FROM moz_cookies"; //NON-NLS
@@ -150,7 +151,6 @@ final class FirefoxExtractor extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
-
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
                                 TSK_URL, PARENT_MODULE_NAME,
@@ -244,6 +244,7 @@ final class FirefoxExtractor extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, BOOKMARK_QUERY);
             logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                String url = result.get("url").toString();
 
                 Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(
                         new BlackboardAttribute(
@@ -342,6 +343,7 @@ final class FirefoxExtractor extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
             logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                String host = result.get("host").toString();
 
                 Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(
                         new BlackboardAttribute(
@@ -447,6 +449,7 @@ final class FirefoxExtractor extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, DOWNLOAD_QUERY);
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                String source = result.get("source").toString();
 
                 Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(
                         new BlackboardAttribute(TSK_URL, PARENT_MODULE_NAME,
@@ -621,5 +624,27 @@ final class FirefoxExtractor extends Extract {
             logger.log(Level.SEVERE, "Error while trying to post Firefox download artifact.", ex); //NON-NLS
             this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getModuleName()));
         }
+    }
+    
+    /**
+     * Determine if the URL should be ignored.
+     * 
+     * @param url The URL to test.
+     * 
+     * @return True if the URL should be ignored; otherwise false.
+     */
+    private boolean isIgnoredUrl(String url) {
+        if (url == null || url.isEmpty()) {
+            return true;
+        }
+        
+        if (url.toLowerCase().startsWith(PLACE_URL_PREFIX)) {
+            /*
+             * Ignore URLs that begin with the matched text.
+             */
+            return true;
+        }
+        
+        return false;
     }
 }

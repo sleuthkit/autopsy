@@ -1,9 +1,39 @@
+---------------- VERSION 4.9.0  --------------
+
+New Features:
+- Removed data from table that are time intensive and can be found in content viewers (such as hash set hits)
+- Added ability to find common items (files, emails, etc.) between current case and past cases using the Central Repository. 
+- Added ability to ignore common items that exist in a large number of cases by using Central Repository data. 
+- Data is validated and normalized before being entered into the Central Repository.
+- Allow users to specify that an ad-hoc keyword search should not be saved to database
+- New “Annotations” content viewer that shows all tags and comments associated with an item
+- Added 2 icons to the table to show the item’s score (if it is notable or suspicious) and if it has a comment. 
+- Added column to the table to show previous number of occurrences. 
+- Tags are now associated with the user (in a multi-user environment) and you can hide other people’s tags
+- New Display options area that unifies various new settings. 
+- Hash sets can be copied into the user’s config folder (AppData), which makes it easier to run Autopsy from a Live Triage USB and not care about what drive letter it gets.
+- Image Gallery stores its groups and seen status in Case DB instead of its own. 
+- Image Gallery works better in multi-user setups and reloads the database when other nodes add data sources.
+- Image Gallery saves which user saw a group and gives user option of seeing only their unseen groups or all unseen groups. 
+- Saves last export location and pre-populates that in the file picker
+- Provide feedback about why some right click options are disabled (ingest is running, not file content, etc.)
+
+Bug Fixes:
+- Substring keyword search is more accurate (now uses regular expression)
+- New text extractor for SQLite that better deals with full text search tables
+- Better deal with Unicode text files that do not have Byte Order Marker
+- Embedded file extractor module is now faster because it uses a different 7ZIP API.
+- Fixed various HTML report bugs
+- Duplicate hash set hits are not created when you run the Hash Ingest Module twice. 
+- Auto ingest (in Experimental) scan times of input folders is faster.
+
+
 ---------------- VERSION 4.8.0  --------------
 New Features:
 - Data Source Grouping:
 -- The case tree view can now be grouped by data source.
 -- Keyword and file search can now be restricted to a data source.
-- Central Repository / Corrrelation:
+- Central Repository / Correlation:
 -- New common files search feature that finds files that exist in multiple devices in the same case. 
 -- The Other Occurrences content viewer now shows matches in the current case (in addition to central repository).
 -- Central repository options panel now shows cases that are in repo.
@@ -31,7 +61,7 @@ New Features:
 - A graph visualization was added to the Communications tool to make it easier to find messages and relationships.
 - A new "Application" content viewer (lower right) that will contain file-type specific viewers (to reduce number of tabs).
 - New viewer for SQLite databases (in Application content viewer)
-- New viewer for binary PLists (in Appilcation content viewer)
+- New viewer for binary PLists (in Application content viewer)
 - L01 files can be imported as data sources.
 - Ingest filters can now use date range conditions for triage. 
 - Passwords to open password protected archive files can be entered (by right clicking on the file).
