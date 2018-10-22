@@ -730,11 +730,11 @@ class ExtractRegistry extends Extract {
                                         try {
                                             Long lastWriteTime = Long.parseLong(artnode.getAttribute("writeTime")); //NON-NLS
                                             lastWriteTime = Long.valueOf(lastWriteTime.toString());
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, parentModuleName, value));
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SSID, parentModuleName, value));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, lastWriteTime));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, adapter));
                                             // Check if there is already an OS_INFO artifact for this file and add to that if possible
-                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_SSID);
+                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_WIFI_NETWORK);
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
                                             this.indexArtifact(bbart);
