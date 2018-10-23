@@ -354,8 +354,6 @@ class ExtractRegistry extends Extract {
             // Read the file in and create a Document and elements
             File regfile = new File(regFilePath);
             fstream = new FileInputStream(regfile);
-            System.out.println("REGFILEPATH: " + regFilePath);
-            System.out.println("REGFILE: " + regFile.getName());
             String regString = new Scanner(fstream, "UTF-8").useDelimiter("\\Z").next(); //NON-NLS
             String startdoc = "<?xml version=\"1.0\"?><document>"; //NON-NLS
             String result = regString.replaceAll("----------------------------------------", "");
@@ -381,7 +379,6 @@ class ExtractRegistry extends Extract {
                 Element tempnode = (Element) children.item(i);
 
                 String dataType = tempnode.getNodeName();
-                System.out.println("DATA TYPE: " + dataType);
                 NodeList timenodes = tempnode.getElementsByTagName("mtime"); //NON-NLS
                 Long mtime = null;
                 if (timenodes.getLength() > 0) {
