@@ -20,7 +20,12 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 
 /**
  * Utility methods for workig with time zones.
@@ -58,6 +63,46 @@ public class TimeZoneUtils {
         }
 
         return result;
+    }
+    
+    /**
+     * Generate a time zone string containing the GMT offset and ID.
+     * 
+     * @param timeZoneId The time zone ID.
+     * 
+     * @return The time zone string.
+     */
+    public static String createTimeZoneString(String timeZoneId) {
+        TimeZone zone = TimeZone.getTimeZone(timeZoneId);
+        int offset = zone.getRawOffset() / 1000;
+        int hour = offset / 3600;
+        int minutes = (offset % 3600) / 60;
+        
+        return String.format("(GMT%+d:%02d) %s", hour, minutes, timeZoneId); //NON-NLS
+    }
+
+    /**
+     * Generates a list of time zones.
+     */
+    public static List<String> createTimeZoneList() {
+        List<String> timeZoneList = new ArrayList<>();
+        
+        // load and add all timezone
+        String[] ids = SimpleTimeZone.getAvailableIDs();
+        for (String id : ids) {
+            /*
+             * DateFormat dfm = new SimpleDateFormat("z");
+             * dfm.setTimeZone(zone); boolean hasDaylight =
+             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
+             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
+             * = hour * -1; String result = first + Integer.toString(mid);
+             * if(hasDaylight){ result = result + second; }
+             * timeZoneComboBox.addItem(item + " (" + result + ")");
+             */
+            timeZoneList.add(createTimeZoneString(id));
+        }
+        
+        return timeZoneList;
     }
 
     /**

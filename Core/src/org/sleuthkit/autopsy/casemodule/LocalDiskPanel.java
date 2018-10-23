@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.Calendar;
+import java.util.List;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.LocalDisk;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 
 /**
@@ -469,26 +471,11 @@ final class LocalDiskPanel extends JPanel {
      * to the local machine time zone.
      */
     public void createTimeZoneList() {
-        // load and add all timezone
-        String[] ids = SimpleTimeZone.getAvailableIDs();
-        for (String id : ids) {
-            TimeZone zone = TimeZone.getTimeZone(id);
-            int offset = zone.getRawOffset() / 1000;
-            int hour = offset / 3600;
-            int minutes = (offset % 3600) / 60;
-            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
-
-            /*
-             * DateFormat dfm = new SimpleDateFormat("z");
-             * dfm.setTimeZone(zone); boolean hasDaylight =
-             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
-             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
-             * = hour * -1; String result = first + Integer.toString(mid);
-             * if(hasDaylight){ result = result + second; }
-             * timeZoneComboBox.addItem(item + " (" + result + ")");
-             */
-            timeZoneComboBox.addItem(item);
+        List<String> timeZoneList = TimeZoneUtils.createTimeZoneList();
+        for (String timeZone : timeZoneList) {
+            timeZoneComboBox.addItem(timeZone);
         }
+        
         // get the current timezone
         TimeZone thisTimeZone = Calendar.getInstance().getTimeZone();
         int thisOffset = thisTimeZone.getRawOffset() / 1000;
@@ -498,7 +485,6 @@ final class LocalDiskPanel extends JPanel {
 
         // set the selected timezone
         timeZoneComboBox.setSelectedItem(formatted);
-
     }
 
     /**
