@@ -1,0 +1,49 @@
+name: mru
+type: format
+description: Most recently used (MRU) formats
+urls: ["https://github.com/libyal/winreg-kb/blob/master/documentation/MRU%20keys.asciidoc"]
+---
+name: byte
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: int32
+type: integer
+attributes:
+  format: signed
+  size: 4
+  units: bytes
+---
+name: wchar16
+type: character
+attributes:
+  size: 2
+  units: bytes
+---
+name: mrulist_entries
+type: sequence
+description: MRUList entries
+element_data_type: uint16
+elements_data_size: data_size
+---
+name: mrulistex_entries
+type: sequence
+description: MRUListEx entries
+element_data_type: int32
+elements_data_size: data_size
+---
+name: utf16le_string
+type: string
+encoding: utf-16-le
+element_data_type: wchar16
+elements_terminator: "\x00\x00"

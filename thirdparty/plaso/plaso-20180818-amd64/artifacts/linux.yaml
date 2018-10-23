@@ -1,0 +1,606 @@
+# Linux specific artifacts.
+
+name: AnacronFiles
+doc: Anacron files.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/anacrontab'
+      - '/etc/cron.daily/*'
+      - '/etc/cron.hourly/*'
+      - '/etc/cron.monthly/*'
+      - '/etc/cron.weekly/*'
+      - '/var/spool/anacron/cron.daily'
+      - '/var/spool/anacron/cron.hourly'
+      - '/var/spool/anacron/cron.monthly'
+      - '/var/spool/anacron/cron.weekly'
+labels: [Configuration Files]
+supported_os: [Linux]
+---
+name: APTSources
+doc: APT package sources list
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/apt/sources.list'
+      - '/etc/apt/sources.list.d/*.list'
+labels: [Configuration Files, System]
+supported_os: [Linux]
+urls: ['http://manpages.ubuntu.com/manpages/trusty/en/man5/sources.list.5.html']
+---
+name: APTTrustKeys
+doc: APT trusted keys
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/apt/trusted.gpg'
+      - '/etc/apt/trusted.gpg.d/*.gpg'
+      - '/etc/apt/trustdb.gpg'
+      - '/usr/share/keyrings/*.gpg'
+labels: [Configuration Files, System]
+supported_os: [Linux]
+urls: ['https://wiki.debian.org/SecureApt']
+---
+name: CronAtAllowDenyFiles
+doc: Files containing users authorised to run cron or at jobs.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/cron.allow'
+      - '/etc/cron.deny'
+      - '/etc/at.allow'
+      - '/etc/at.deny'
+labels: [Configuration Files]
+supported_os: [Linux]
+urls:
+  - http://manpages.ubuntu.com/manpages/saucy/man5/at.allow.5.html
+  - http://manpages.ubuntu.com/manpages/precise/en/man1/crontab.1.html
+---
+name: DebianPackagesLogFiles
+doc: Linux dpkg log files.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/var/log/dpkg.log*'
+      - '/var/log/apt/history.log*'
+labels: [Logs]
+supported_os: [Linux]
+---
+name: DebianPackagesStatus
+doc: Linux dpkg status file.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/lib/dpkg/status']}
+labels: [Software]
+supported_os: [Linux]
+---
+name: DebianVersion
+doc: Debian version information.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/debian_version']}
+provides: [os_release, os_major_version, os_minor_version]
+labels: [Software]
+supported_os: [Linux]
+---
+name: DNSResolvConfFile
+doc: DNS Resolver configuration file.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/resolv.conf']}
+labels: [Configuration Files]
+supported_os: [Linux]
+urls: ['http://man7.org/linux/man-pages/man5/resolv.conf.5.html']
+---
+name: HostAccessPolicyConfiguration
+doc: Linux files related to host access policy configuration.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/hosts.allow'
+      - '/etc/hosts.deny'
+labels: [Configuration Files]
+supported_os: [Linux]
+---
+name: IPTablesRules
+doc: List IPTables rules.
+sources:
+- type: COMMAND
+  attributes:
+    args: ["-L", "-n", "-v"]
+    cmd: /sbin/iptables
+labels: [System]
+supported_os: [Linux]
+---
+name: KernelModules
+doc: Kernel modules to be loaded on boot.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/modules.conf'
+      - '/etc/modprobe.d/*'
+supported_os: [Linux]
+---
+name: LinuxAtJobs
+doc: Linux at jobs.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/spool/at/*']}
+labels: [Configuration Files]
+supported_os: [Linux]
+---
+name: LinuxAuditLogs
+doc: Linux audit log files.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/log/audit/*']}
+labels: [Logs]
+supported_os: [Linux]
+---
+name: LinuxAuthLogs
+doc: Linux auth log files.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/log/auth.log*']}
+labels: [Logs, Authentication]
+supported_os: [Linux]
+---
+name: LinuxCronLogs
+doc: Linux cron log files.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/log/cron.log*']}
+labels: [Logs]
+supported_os: [Linux]
+---
+name: LinuxCronTabs
+doc: Crontab files.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/crontab'
+      - '/etc/cron.d/*'
+      - '/var/spool/cron/**'
+labels: [Configuration Files]
+supported_os: [Linux]
+---
+name: LinuxDaemonLogFiles
+doc: Linux daemon log files.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/log/daemon.log*']}
+labels: [Logs]
+supported_os: [Linux]
+---
+name: LinuxDistributionRelease
+doc: Linux distribution release information of non-LSB compliant systems.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/enterprise-release'
+      - '/etc/oracle-release'
+      - '/etc/redhat-release'
+      - '/etc/system-release'
+provides: [os_release, os_major_version, os_minor_version]
+labels: [Software]
+supported_os: [Linux]
+---
+name: LinuxDSDTTable
+doc: Linux file containing DSDT table.
+sources:
+- type: FILE
+  attributes: {paths: ['/sys/firmware/acpi/tables/DSDT']}
+labels: [System]
+urls: ['https://www.kernel.org/doc/Documentation/acpi/initrd_table_override.txt']
+supported_os: [Linux]
+---
+name: LinuxFstab
+doc: Linux fstab file.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/fstab']}
+labels: [System, Configuration Files]
+supported_os: [Linux]
+urls: ['http://en.wikipedia.org/wiki/Fstab']
+---
+name: LinuxGrubConfiguration
+doc: Linux grub configuration file.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/boot/grub/grub.cfg'
+      - '/boot/grub2/grub.cfg'
+labels: [System, Configuration Files]
+supported_os: [Linux]
+urls: ['https://en.wikipedia.org/wiki/GNU_GRUB']
+---
+name: LinuxHostnameFile
+doc: Linux hostname file.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/hostname']}
+labels: [Configuration Files, System]
+supported_os: [Linux]
+---
+name: LinuxInitrdFiles
+doc: Initrd (initramfs) files in /boot/ executed on startup.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/boot/initramfs*'
+      - '/boot/initrd*'
+labels: [Configuration Files, System]
+supported_os: [Linux]
+urls:
+  - 'http://en.wikipedia.org/wiki/Initrd'
+  - 'https://www.kernel.org/doc/Documentation/initrd.txt'
+---
+name: LinuxIssueFile
+doc: Linux prelogin message and identification (issue) file.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/issue'
+      - '/etc/issue.net'
+labels: [Configuration Files, System]
+supported_os: [Linux]
+urls: ['https://linux.die.net/man/5/issue']
+---
+name: LinuxKernelLogFiles
+doc: Linux kernel log files.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/log/kern.log*']}
+labels: [Logs]
+supported_os: [Linux]
+---
+name: LinuxLastlogFile
+doc: Linux lastlog file.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/log/lastlog']}
+labels: [Logs, Authentication]
+supported_os: [Linux]
+---
+name: LinuxLSBInit
+doc: Linux LSB-style init scripts.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/init.d/*'
+      - '/etc/insserv.conf'
+      - '/etc/insserv.conf.d/**'
+labels: [Configuration Files, System]
+supported_os: [Linux]
+urls: ['https://wiki.debian.org/LSBInitScripts']
+---
+name: LinuxLocalTime
+doc: Local time zone configuation
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/localtime']}
+labels: [System]
+supported_os: [Linux]
+---
+name: LinuxLSBRelease
+doc: Linux Standard Base (LSB) release information
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/lsb-release']}
+provides: [os_release, os_major_version, os_minor_version]
+labels: [Software]
+supported_os: [Linux]
+urls: ['https://linux.die.net/man/1/lsb_release']
+---
+name: LinuxMessagesLogFiles
+doc: Linux messages log files.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/log/messages*']}
+labels: [Logs]
+supported_os: [Linux]
+---
+name: LinuxMountCmd
+doc: Linux output of mount
+sources:
+- type: COMMAND
+  attributes:
+    args: []
+    cmd: /bin/mount
+labels: [System]
+supported_os: [Linux]
+---
+name: LinuxMountInfo
+doc: Linux mount options.
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+      - LinuxFstab
+      - LinuxProcMounts
+labels: [System, Configuration Files]
+supported_os: [Linux]
+---
+name: LinuxPamConfigs
+doc: Configuration files for PAM.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/pam.conf'
+      - '/etc/pam.d'
+      - '/etc/pam.d/*'
+labels: [Authentication, Configuration Files]
+supported_os: [Linux]
+urls: ['http://www.linux-pam.org/']
+---
+name: LinuxPasswdFile
+doc: |
+  Linux passwd file.
+
+  A passwd file consist of colon seperated values in the format:
+  username:password:uid:gid:full name:home directory:shell
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/passwd']}
+labels: [Configuration Files, System]
+supported_os: [Linux]
+---
+name: LinuxRsyslogConfigs
+doc: Linux rsyslog configurations.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/rsyslog.conf'
+      - '/etc/rsyslog.d'
+      - '/etc/rsyslog.d/*'
+labels: [Configuration Files, Logs]
+supported_os: [Linux]
+urls: ['http://www.rsyslog.com/doc/rsyslog_conf.html']
+---
+name: LinuxScheduleFiles
+doc: All Linux job scheduling files.
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+      - AnacronFiles
+      - LinuxCronTabs
+      - LinuxAtJobs
+labels: [Configuration Files]
+supported_os: [Linux]
+---
+name: LinuxServices
+doc: Services running on a Linux system.
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+      - LinuxXinetd
+      - LinuxLSBInit
+      - LinuxSysVInit
+labels: [Configuration Files, System]
+supported_os: [Linux]
+---
+name: LinuxSSDTTables
+doc: Linux files containing SSDT table.
+sources:
+- type: FILE
+  attributes: {paths: ['/sys/firmware/acpi/tables/SSDT*']}
+labels: [System]
+urls: ['https://www.kernel.org/doc/Documentation/acpi/initrd_table_override.txt']
+supported_os: [Linux]
+---
+name: LinuxSysLogFiles
+doc: Linux syslog log files.
+sources:
+- type: FILE
+  attributes: {paths: ['/var/log/syslog.log*']}
+labels: [Logs]
+supported_os: [Linux]
+---
+name: LinuxSyslogNgConfigs
+doc: Linux syslog-ng configurations.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/syslog-ng/syslog-ng.conf'
+      - '/etc/syslog-ng/conf-d/*.conf'
+labels: [Configuration Files, Logs]
+supported_os: [Linux]
+urls: ['http://linux.die.net/man/5/syslog-ng.conf']
+---
+name: LinuxSystemdOSRelease
+doc: Linux systemd /etc/os-release file
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/os-release'
+      - '/usr/lib/os-release'
+provides: [os_release, os_major_version, os_minor_version]
+labels: [Software]
+supported_os: [Linux]
+urls: ['https://www.freedesktop.org/software/systemd/man/os-release.html']
+---
+name: LinuxSysVInit
+doc: Services started by sysv-style init scripts.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/rc*.d'
+      - '/etc/rc*.d/*'
+      - '/etc/rc.d/rc*.d/*'
+      - '/etc/rc.d/init.d/*'
+labels: [Configuration Files, System]
+supported_os: [Linux]
+urls:
+  - 'http://savannah.nongnu.org/projects/sysvinit'
+  - 'http://docs.oracle.com/cd/E37670_01/E41138/html/ol_svcscripts.html'
+---
+name: LinuxTimezoneFile
+doc: Linux timezone file.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/timezone']}
+labels: [Configuration Files, System]
+supported_os: [Linux]
+---
+name: LinuxUtmpFiles
+doc: Linux btmp, utmp and wtmp login record files.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/var/log/btmp'
+      - '/var/log/wtmp'
+      - '/var/run/utmp'
+labels: [Logs, Authentication]
+supported_os: [Linux]
+urls: ['https://github.com/libyal/dtformats/blob/master/documentation/Utmp%20login%20records%20format.asciidoc']
+---
+name: LinuxWtmp
+doc: Linux wtmp login record file
+sources:
+- type: FILE
+  attributes: {paths: ['/var/log/wtmp']}
+labels: [Logs, Authentication]
+provides: [users.username, users.last_logon]
+supported_os: [Linux]
+urls: ['https://github.com/libyal/dtformats/blob/master/documentation/Utmp%20login%20records%20format.asciidoc']
+---
+name: LinuxXinetd
+doc: Linux xinetd configurations.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/xinetd.conf'
+      - '/etc/xinetd.d/**'
+labels: [Configuration Files, System]
+supported_os: [Linux]
+urls: ['http://en.wikipedia.org/wiki/Xinetd']
+---
+name: ListProcessesPsCommand
+doc: Full process listing via the 'ps' command.
+sources:
+- type: COMMAND
+  attributes:
+    args: ['-ef']
+    cmd: /bin/ps
+supported_os: [Linux]
+urls: ['https://gitlab.com/procps-ng/procps']
+---
+name: LoadedKernelModules
+doc: Linux output of lsmod.
+sources:
+- type: COMMAND
+  attributes:
+    args: []
+    cmd: /sbin/lsmod
+supported_os: [Linux]
+---
+name: LoginPolicyConfiguration
+doc: Linux files related to login policy configuration.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/netgroup'
+      - '/etc/nsswitch.conf'
+      - '/etc/passwd'
+      - '/etc/shadow'
+      - '/etc/security/access.conf'
+      - '/root/.k5login'
+labels: [Authentication, Configuration Files]
+supported_os: [Linux]
+---
+name: NetgroupConfiguration
+doc: Linux netgroup configuration.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/netgroup']}
+labels: [Authentication, Configuration Files]
+provides: [users.username]
+supported_os: [Linux]
+---
+name: NtpConfFile
+doc: The configuration file for ntpd. e.g. ntp.conf.
+sources:
+- type: FILE
+  attributes: {paths: ['/etc/ntp.conf']}
+labels: [Configuration Files]
+supported_os: [Linux]
+urls: ['https://www.freebsd.org/cgi/man.cgi?query=ntp.conf&sektion=5']
+---
+name: PCIDevicesInfoFiles
+doc: Info and config files for PCI devices located on the system.
+sources:
+- type: FILE
+  attributes:
+     paths:
+        - '/sys/bus/pci/devices/*/vendor'
+        - '/sys/bus/pci/devices/*/device'
+        - '/sys/bus/pci/devices/*/class'
+        - '/sys/bus/pci/devices/*/config'
+labels: [Configuration Files, System]
+urls:
+  - 'https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-bus-pci'
+  - 'https://www.kernel.org/doc/Documentation/filesystems/sysfs-pci.txt'
+  - 'https://wiki.debian.org/HowToIdentifyADevice/PCI'
+supported_os: [Linux]
+---
+name: SSHHostPubKeys
+doc: SSH host public keys
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/ssh/ssh_host_*_key.pub'
+labels: [Authentication, Configuration Files]
+supported_os: [Linux]
+---
+name: ThumbnailCacheFolder
+doc: Thumbnail cache folder.
+sources:
+- type: FILE
+  attributes: {paths: ['%%users.homedir%%/.thumbnails/**3']}
+labels: [Users]
+supported_os: [Linux]
+---
+name: YumSources
+doc: Yum package sources list
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/etc/yum.conf'
+      - '/etc/yum.repos.d/*.repo'
+labels: [Configuration Files, System]
+supported_os: [Linux]
+urls: ['https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/System_Administrators_Guide/sec-Configuring_Yum_and_Yum_Repositories.html']
+---
+name: ZeitgeistDatabase
+doc: Zeitgeist user activity database.
+sources:
+- type: FILE
+  attributes: {paths: ['%%users.homedir%%/.local/share/zeitgeist/activity.sqlite']}
+labels: [Users, Logs]
+urls: ['http://forensicswiki.org/wiki/Zeitgeist']
+supported_os: [Linux]

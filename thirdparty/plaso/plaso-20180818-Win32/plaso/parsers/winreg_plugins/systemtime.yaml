@@ -1,0 +1,31 @@
+name: systemtime_structure
+type: format
+description: Windows SYSTEMTIME structure
+urls: ["https://msdn.microsoft.com/en-us/library/windows/desktop/ms724950(v=vs.85).aspx"]
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: systemtime
+type: structure
+members:
+- name: year
+  data_type: uint16
+- name: month
+  data_type: uint16
+- name: weekday
+  data_type: uint16
+- name: day_of_month
+  data_type: uint16
+- name: hours
+  data_type: uint16
+- name: minutes
+  data_type: uint16
+- name: seconds
+  data_type: uint16
+- name: milliseconds
+  data_type: uint16

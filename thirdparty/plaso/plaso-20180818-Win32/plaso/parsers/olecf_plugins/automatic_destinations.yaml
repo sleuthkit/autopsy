@@ -1,0 +1,156 @@
+name: automatic_destinations_jump_list
+type: format
+description: Automatic destinations jump list format
+urls: ["https://github.com/libyal/dtformats/blob/master/documentation/Jump%20lists%20format.asciidoc"]
+---
+name: char
+type: character
+attributes:
+  size: 1
+  units: bytes
+---
+name: wchar16
+type: character
+attributes:
+  size: 2
+  units: bytes
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: int32
+type: integer
+attributes:
+  format: signed
+  size: 4
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: float32
+type: floating-point
+attributes:
+  size: 4
+  units: bytes
+---
+name: dest_list_header
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: format_version
+  data_type: uint32
+- name: number_of_entries
+  data_type: uint32
+- name: number_of_pinned_entries
+  data_type: uint32
+- name: unknown1
+  data_type: float32
+- name: last_entry_number
+  data_type: uint32
+- name: unknown2
+  data_type: uint32
+- name: last_revision_number
+  data_type: uint32
+- name: unknown3
+  data_type: uint32
+---
+name: dest_list_entry_v1
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: unknown1
+  data_type: uint64
+- name: droid_volume_identifier
+  type: uuid
+- name: droid_file_identifier
+  type: uuid
+- name: birth_droid_volume_identifier
+  type: uuid
+- name: birth_droid_file_identifier
+  type: uuid
+- name: hostname
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: 16
+- name: entry_number
+  data_type: uint32
+- name: unknown2
+  data_type: uint32
+- name: unknown3
+  data_type: float32
+- name: last_modification_time
+  data_type: uint64
+- name: pin_status
+  data_type: int32
+- name: path_size
+  data_type: uint16
+- name: path
+  type: string
+  encoding: utf-16-le
+  element_data_type: wchar16
+  number_of_elements: dest_list_entry_v1.path_size
+---
+name: dest_list_entry_v3
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: unknown1
+  data_type: uint64
+- name: droid_volume_identifier
+  type: uuid
+- name: droid_file_identifier
+  type: uuid
+- name: birth_droid_volume_identifier
+  type: uuid
+- name: birth_droid_file_identifier
+  type: uuid
+- name: hostname
+  type: string
+  encoding: ascii
+  element_data_type: char
+  elements_data_size: 16
+- name: entry_number
+  data_type: uint32
+- name: unknown2
+  data_type: uint32
+- name: unknown3
+  data_type: float32
+- name: last_modification_time
+  data_type: uint64
+- name: pin_status
+  data_type: int32
+- name: unknown4
+  data_type: int32
+- name: unknown5
+  data_type: uint32
+- name: unknown6
+  data_type: uint64
+- name: path_size
+  data_type: uint16
+- name: path
+  type: string
+  encoding: utf-16-le
+  element_data_type: wchar16
+  number_of_elements: dest_list_entry_v3.path_size
+- name: unknown7
+  data_type: uint32

@@ -1,0 +1,110 @@
+name: recycler
+type: format
+description: Windows Recycler and Recycle.Bin formats
+urls:
+- "https://github.com/libyal/dtformats/blob/master/documentation/Windows%20Recycler%20file%20formats.asciidoc"
+- "https://github.com/libyal/dtformats/blob/master/documentation/Windows%20Recycle.Bin%20file%20formats.asciidoc"
+---
+name: byte
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: wchar16
+type: character
+attributes:
+  size: 2
+  units: bytes
+---
+name: recycler_info2_file_header
+description: Windows Recycler INFO2 file header
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: unknown1
+  data_type: uint32
+- name: number_of_file_entries
+  data_type: uint32
+- name: unknown2
+  data_type: uint32
+- name: file_entry_size
+  data_type: uint32
+- name: unknown3
+  data_type: uint32
+---
+name: recycler_info2_file_entry_utf16le_string
+description: Windows Recycler INFO2 file entry Unicode original filename string
+type: string
+encoding: utf-16-le
+element_data_type: wchar16
+elements_terminator: "\x00\x00"
+---
+name: recycler_info2_file_entry
+description: Windows Recycler INFO2 file entry
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: original_filename
+  type: stream
+  element_data_type: byte
+  elements_data_size: 260
+- name: index
+  data_type: uint32
+- name: drive_number
+  data_type: uint32
+- name: deletion_time
+  data_type: uint64
+- name: original_file_size
+  data_type: uint32
+---
+name: recycle_bin_metadata_file_header
+description: Windows Recycle.Bin metadata ($I) format 1 and 2 file header
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: format_version
+  data_type: uint64
+- name: original_file_size
+  data_type: uint64
+- name: deletion_time
+  data_type: uint64
+---
+name: recycle_bin_metadata_utf16le_string
+description: Windows Recycle.Bin metadata ($I) format 1 original filename string
+type: string
+encoding: utf-16-le
+element_data_type: wchar16
+elements_terminator: "\x00\x00"
+---
+name: recycle_bin_metadata_utf16le_string_with_size
+description: Windows Recycle.Bin metadata ($I) format 2 original filename string
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: number_of_characters
+  data_type: uint32
+- name: string
+  type: string
+  encoding: utf-16-le
+  element_data_type: wchar16
+  number_of_elements: recycle_bin_metadata_utf16le_string_with_size.number_of_characters

@@ -1,0 +1,78 @@
+name: userassist
+type: format
+description: UserAssist format
+urls: ["https://github.com/libyal/winreg-kb/blob/master/documentation/User%20Assist%20keys.asciidoc"]
+---
+name: float32
+type: floating-point
+attributes:
+  size: 4
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: user_assist_entry_v3
+type: structure
+description: UserAssist format version used in Windows 2000, XP, 2003, Vista.
+attributes:
+  byte_order: little-endian
+members:
+- name: unknown1
+  data_type: uint32
+- name: number_of_executions
+  data_type: uint32
+- name: last_execution_time
+  data_type: uint64
+---
+name: user_assist_entry_v5
+type: structure
+description: UserAssist format version used in Windows 2008, 7, 8, 10.
+attributes:
+  byte_order: little-endian
+members:
+- name: unknown1
+  data_type: uint32
+- name: number_of_executions
+  data_type: uint32
+- name: application_focus_count
+  data_type: uint32
+- name: application_focus_duration
+  data_type: uint32
+- name: unknown2
+  data_type: float32
+- name: unknown3
+  data_type: float32
+- name: unknown4
+  data_type: float32
+- name: unknown5
+  data_type: float32
+- name: unknown6
+  data_type: float32
+- name: unknown7
+  data_type: float32
+- name: unknown8
+  data_type: float32
+- name: unknown9
+  data_type: float32
+- name: unknown10
+  data_type: float32
+- name: unknown11
+  data_type: float32
+- name: unknown12
+  data_type: uint32
+- name: last_execution_time
+  data_type: uint64
+- name: unknown13
+  data_type: uint32

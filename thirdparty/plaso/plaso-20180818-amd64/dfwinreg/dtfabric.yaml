@@ -1,0 +1,27 @@
+name: fake
+type: format
+description: Definitions for the fake Windows Registry
+---
+name: int32be
+type: integer
+attributes:
+  byte_order: big-endian
+  format: signed
+  size: 4
+  units: bytes
+---
+name: int32le
+type: integer
+attributes:
+  byte_order: little-endian
+  format: signed
+  size: 4
+  units: bytes
+---
+name: int64le
+type: integer
+attributes:
+  byte_order: little-endian
+  format: signed
+  size: 8
+  units: bytes
