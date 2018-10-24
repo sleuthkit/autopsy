@@ -88,7 +88,7 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
         }
 
         // set the selected timezone
-        timeZoneComboBox.setSelectedItem(TimeZoneUtils.createTimeZoneString(Calendar.getInstance().getTimeZone().getID()));
+        timeZoneComboBox.setSelectedItem(TimeZoneUtils.createTimeZoneString(Calendar.getInstance().getTimeZone()));
     }
     
     /**

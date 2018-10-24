@@ -67,17 +67,16 @@ public class TimeZoneUtils {
     /**
      * Generate a time zone string containing the GMT offset and ID.
      * 
-     * @param timeZoneId The time zone ID.
+     * @param timeZone The time zone.
      * 
      * @return The time zone string.
      */
-    public static String createTimeZoneString(String timeZoneId) {
-        TimeZone zone = TimeZone.getTimeZone(timeZoneId);
-        int offset = zone.getRawOffset() / 1000;
+    public static String createTimeZoneString(TimeZone timeZone) {
+        int offset = timeZone.getRawOffset() / 1000;
         int hour = offset / 3600;
         int minutes = (offset % 3600) / 60;
         
-        return String.format("(GMT%+d:%02d) %s", hour, minutes, timeZoneId); //NON-NLS
+        return String.format("(GMT%+d:%02d) %s", hour, minutes, timeZone.getID()); //NON-NLS
     }
 
     /**
@@ -98,7 +97,7 @@ public class TimeZoneUtils {
              * if(hasDaylight){ result = result + second; }
              * timeZoneComboBox.addItem(item + " (" + result + ")");
              */
-            timeZoneList.add(createTimeZoneString(id));
+            timeZoneList.add(createTimeZoneString(TimeZone.getTimeZone(id)));
         }
         
         return timeZoneList;

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.Objects;
+import java.util.TimeZone;
 import javax.swing.JPanel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -58,7 +59,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         timeZoneList.setEnabled(!useLocalTime);
-        timeZoneList.setSelectedValue(TimeZoneUtils.createTimeZoneString(UserPreferences.getCustomTimeZone()), true);
+        timeZoneList.setSelectedValue(TimeZoneUtils.createTimeZoneString(TimeZone.getTimeZone(UserPreferences.getCustomTimeZone())), true);
         useLocalTimeRadioButton.setSelected(useLocalTime);
         useAnotherTimeRadioButton.setSelected(!useLocalTime);
 

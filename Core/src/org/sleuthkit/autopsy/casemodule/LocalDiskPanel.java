@@ -475,7 +475,7 @@ final class LocalDiskPanel extends JPanel {
         }
 
         // set the selected timezone
-        timeZoneComboBox.setSelectedItem(TimeZoneUtils.createTimeZoneString(Calendar.getInstance().getTimeZone().getID()));
+        timeZoneComboBox.setSelectedItem(TimeZoneUtils.createTimeZoneString(Calendar.getInstance().getTimeZone()));
     }
 
     /**

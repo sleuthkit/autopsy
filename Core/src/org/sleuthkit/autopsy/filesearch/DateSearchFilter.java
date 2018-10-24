@@ -145,7 +145,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
             Set<TimeZone> caseTimeZones = currentCase.getTimeZones();
             for (TimeZone timeZone : caseTimeZones) {
-                timeZones.add(TimeZoneUtils.createTimeZoneString(timeZone.getID()));
+                timeZones.add(TimeZoneUtils.createTimeZoneString(timeZone));
             }
 
             if (caseTimeZones.size() > 0) {
