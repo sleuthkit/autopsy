@@ -698,8 +698,8 @@ public final class DrawableDB {
         // query to find the group id from attribute/value
         return String.format(" SELECT group_id FROM " + GROUPS_TABLENAME
                              + " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d",
-                groupKey.getAttribute().attrName.toString(),
-                groupKey.getValueDisplayName(),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                 (groupKey.getAttribute() == DrawableAttribute.PATH) ? groupKey.getDataSourceObjId() : 0);
     }
 
@@ -776,8 +776,8 @@ public final class DrawableDB {
         // query to find the group id from attribute/value
         String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
                                           + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )",
-                groupKey.getAttribute().attrName.toString(),
-                groupKey.getValueDisplayName(),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
 
         String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, seen ? 1 : 0);
@@ -1408,7 +1408,7 @@ public final class DrawableDB {
         
         try {
             String insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')",
-                    ds_obj_id, value, groupBy.attrName.toString());
+                    ds_obj_id, SleuthkitCase.escapeSingleQuotes(value), SleuthkitCase.escapeSingleQuotes(groupBy.attrName.toString()));
 
             if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
                 insertSQL += " ON CONFLICT DO NOTHING";
