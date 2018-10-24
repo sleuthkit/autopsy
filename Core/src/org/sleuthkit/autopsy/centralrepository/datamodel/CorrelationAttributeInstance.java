@@ -171,7 +171,7 @@ public class CorrelationAttributeInstance implements Serializable {
      * Is this a database instance?
      *
      * @return True if the instance ID is greater or equal to zero; otherwise
-     * false.
+     *         false.
      */
     public boolean isDatabaseInstance() {
         return (ID >= 0);
@@ -234,7 +234,7 @@ public class CorrelationAttributeInstance implements Serializable {
      * as notable and should never be set to KNOWN.
      *
      * @param knownStatus Should be BAD if the item is tagged as notable,
-     * UNKNOWN otherwise
+     *                    UNKNOWN otherwise
      */
     public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;
@@ -246,18 +246,24 @@ public class CorrelationAttributeInstance implements Serializable {
     public static final int EMAIL_TYPE_ID = 2;
     public static final int PHONE_TYPE_ID = 3;
     public static final int USBID_TYPE_ID = 4;
+    public static final int SSID_TYPE_ID = 5;
+    public static final int MAC_TYPE_ID = 6;
+    public static final int IMEI_TYPE_ID = 7;
 
     /**
      * Load the default correlation types
      *
      * @throws EamDbException if the Type's dbTableName has invalid
-     * characters/format
+     *                        characters/format
      */
     @Messages({"CorrelationType.FILES.displayName=Files",
         "CorrelationType.DOMAIN.displayName=Domains",
         "CorrelationType.EMAIL.displayName=Email Addresses",
         "CorrelationType.PHONE.displayName=Phone Numbers",
-        "CorrelationType.USBID.displayName=USB Devices"})
+        "CorrelationType.USBID.displayName=USB Devices",
+        "CorrelationType.SSID.displayName=Wireless Networks",
+        "CorrelationType.MAC.displayName=MAC Address",
+        "CorrelationType.IMEI.displayName=IMEI Number"})
     public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws EamDbException {
         List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
@@ -265,6 +271,9 @@ public class CorrelationAttributeInstance implements Serializable {
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(SSID_TYPE_ID, Bundle.CorrelationType_SSID_displayName(), "wireless_networks", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(MAC_TYPE_ID, Bundle.CorrelationType_MAC_displayName(), "mac_address", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(IMEI_TYPE_ID, Bundle.CorrelationType_IMEI_displayName(), "imei_number", true, true)); // NON-NLS
         return DEFAULT_CORRELATION_TYPES;
     }
 
@@ -283,13 +292,14 @@ public class CorrelationAttributeInstance implements Serializable {
 
         /**
          *
-         * @param typeId Unique ID for this Correlation Type
+         * @param typeId      Unique ID for this Correlation Type
          * @param displayName Name of this type displayed in the UI.
          * @param dbTableName Central repository db table where data of this
-         * type is stored. Must start with a lowercase letter and only contain
-         * lowercase letters, numbers, and '_' characters.
-         * @param supported Is this Type currently supported
-         * @param enabled Is this Type currently enabled.
+         *                    type is stored. Must start with a lowercase letter
+         *                    and only contain lowercase letters, numbers, and
+         *                    '_' characters.
+         * @param supported   Is this Type currently supported
+         * @param enabled     Is this Type currently enabled.
          */
         public Type(int typeId, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             if (dbTableName == null) {
@@ -312,10 +322,11 @@ public class CorrelationAttributeInstance implements Serializable {
          *
          * @param displayName Name of this type displayed in the UI.
          * @param dbTableName Central repository db table where data of this
-         * type is stored Must start with a lowercase letter and only contain
-         * lowercase letters, numbers, and '_' characters.
-         * @param supported Is this Type currently supported
-         * @param enabled Is this Type currently enabled.
+         *                    type is stored Must start with a lowercase letter
+         *                    and only contain lowercase letters, numbers, and
+         *                    '_' characters.
+         * @param supported   Is this Type currently supported
+         * @param enabled     Is this Type currently enabled.
          */
         public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             this(-1, displayName, dbTableName, supported, enabled);
@@ -477,8 +488,8 @@ public class CorrelationAttributeInstance implements Serializable {
          * custom_instances)
          *
          * @param dbTableName the dbTableName to set. Must start with lowercase
-         * letter and can only contain lowercase letters, numbers, and '_'
-         * characters.
+         *                    letter and can only contain lowercase letters,
+         *                    numbers, and '_' characters.
          *
          * @throws EamDbException if dbTableName contains invalid characters
          */

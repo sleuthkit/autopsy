@@ -54,9 +54,9 @@ public class EamArtifactUtil {
      * EamArtifact with a single EamArtifactInstance within. If not, return
      * null.
      *
-     * @param bbArtifact BlackboardArtifact to examine
+     * @param bbArtifact   BlackboardArtifact to examine
      * @param checkEnabled If true, only create a CorrelationAttribute if it is
-     * enabled
+     *                     enabled
      *
      * @return List of EamArtifacts
      */
@@ -93,10 +93,10 @@ public class EamArtifactUtil {
      * based on the data in the blackboard artifact.
      *
      * @param correlationType The Central Repository artifact type to create
-     * @param bbArtifact The blackboard artifact to pull data from
+     * @param bbArtifact      The blackboard artifact to pull data from
      *
      * @return the new EamArtifact, or null if one was not created because
-     * bbArtifact did not contain the needed data
+     *         bbArtifact did not contain the needed data
      */
     private static CorrelationAttributeInstance makeInstanceFromBlackboardArtifact(CorrelationAttributeInstance.Type correlationType,
             BlackboardArtifact bbArtifact) throws EamDbException {
@@ -164,7 +164,16 @@ public class EamArtifactUtil {
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID)).getValueString();
-            }
+            } 
+            else if (correlationType.getId() == CorrelationAttributeInstance.SSID_TYPE_ID
+                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID() == artifactTypeID) {
+                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID)).getValueString();
+            } 
+//            else if (correlationType.getId() == CorrelationAttributeInstance.MAC_TYPE_ID) {
+//                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BSSID)).getValueString();
+//            } else if (correlationType.getId() == CorrelationAttributeInstance.IMEI_TYPE_ID) {
+//                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BSSID)).getValueString();
+//            }
 
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
@@ -185,9 +194,10 @@ public class EamArtifactUtil {
      * Uses the determined type and vallue, then looks up instance details to
      * create proper CorrelationAttributeInstance.
      *
-     * @param bbArtifact the blackboard artifatc
+     * @param bbArtifact      the blackboard artifatc
      * @param correlationType the given type
-     * @param value the artifact value
+     * @param value           the artifact value
+     *
      * @return CorrelationAttributeInstance from details
      */
     private static CorrelationAttributeInstance makeCorrelationAttributeInstanceUsingTypeValue(BlackboardArtifact bbArtifact, CorrelationAttributeInstance.Type correlationType, String value) {
@@ -340,7 +350,7 @@ public class EamArtifactUtil {
      * @param file The file to test
      *
      * @return true if the file should be added to the central repo, false
-     * otherwise
+     *         otherwise
      */
     public static boolean isSupportedAbstractFileType(AbstractFile file) {
         if (file == null) {
