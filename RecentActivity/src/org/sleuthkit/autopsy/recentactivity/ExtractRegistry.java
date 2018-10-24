@@ -551,7 +551,7 @@ class ExtractRegistry extends Extract {
                                 if (name.equals("ComputerName")) { // NON-NLS
                                     compName = value;
                                 } else if (name.equals("Domain")) { // NON-NLS
-                                    domain = value;;
+                                    domain = value;
                                 }
                             }
                         }
@@ -730,7 +730,6 @@ class ExtractRegistry extends Extract {
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SSID, parentModuleName, value));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, lastWriteTime));
                                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, adapter));
-                                            // Check if there is already an OS_INFO artifact for this file and add to that if possible
                                             BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_WIFI_NETWORK);
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search

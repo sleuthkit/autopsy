@@ -1,7 +1,8 @@
 #-----------------------------------------------------------
-# nic2.pl
+# autopsynic2.pl
 # 
 # Change history
+#    20181024 - modifications for outputting into format for Autopsy
 #    20150812 - included updates from Yogesh Khatri
 #    20100401 - created
 #
