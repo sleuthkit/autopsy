@@ -25,6 +25,16 @@ import org.openide.util.Lookup;
  * Service for finding and running TextTranslator implementations
  */
 public class TextTranslationService {
+    
+    private final Optional<TextTranslator> translator;
+       
+    /**
+     * 
+     */
+    public TextTranslationService() {
+        translator = Optional.ofNullable(Lookup.getDefault()
+                .lookup(TextTranslator.class));
+    }
 
     /**
      * Performs a lookup for a TextTranslator service provider and if present,
@@ -41,8 +51,6 @@ public class TextTranslationService {
      *                                    implementations fail
      */
     public String translate(String input) throws NoServiceProviderException, TranslationException {
-        Optional<TextTranslator> translator = Optional.ofNullable(Lookup.getDefault()
-                .lookup(TextTranslator.class));
         if (translator.isPresent()) {
             return translator.get().translate(input);
         }

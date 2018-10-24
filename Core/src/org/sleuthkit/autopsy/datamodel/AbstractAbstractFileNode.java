@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,20 +30,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.TranslationAvailableEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
@@ -69,7 +75,7 @@ import org.sleuthkit.datamodel.TskData;
  * @param <T> type of the AbstractFile to encapsulate
  */
 public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends AbstractContentNode<T> {
-
+    
     private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
     @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
     private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
@@ -183,7 +189,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private void updateSheet() {
         this.setSheet(createSheet());
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
@@ -192,45 +198,23 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-        
+
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, getContent());
-        
+
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             String desc = Bundle.AbstractFsContentNode_noDesc_text();
-            
-            
-            FileProperty p  = getFilePropertyFromDisplayName(entry.getKey());
-            if(!p.getDescription(content).isEmpty()) {
+
+            FileProperty p = AbstractFilePropertyType.getPropertyFromDisplayName(entry.getKey());
+            if (!p.getDescription(content).isEmpty()) {
                 desc = p.getDescription(content);
             }
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), desc, entry.getValue()));
         }
-        
+
         return sheet;
     }
-    
-    private FileProperty getFilePropertyFromDisplayName(String displayName) {
-        FileProperty p = AbstractFilePropertyType.getPropertyFromDisplayName(displayName);
-        if(p != null) {
-            return p;
-        } else {
-            Optional<Collection<? extends CustomFileProperty>> customProperties = getCustomProperties();
-            if(customProperties.isPresent()) {
-                for(CustomFileProperty cp : customProperties.get()) {
-                    if (cp.getPropertyName().equals(displayName)) {
-                        return cp;
-                    }
-                }   
-            }
-            return null;
-        }
-    }
-    
-    private static Optional<Collection<? extends CustomFileProperty>> getCustomProperties() {
-        return Optional.ofNullable(Lookup.getDefault().lookupAll(CustomFileProperty.class));
-    }
-    
+
     @NbBundle.Messages({"AbstractAbstractFileNode.nameColLbl=Name",
         "AbstractAbstractFileNode.createSheet.score.name=S",
         "AbstractAbstractFileNode.createSheet.comment.name=C",
@@ -259,60 +243,64 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
         NAME(AbstractAbstractFileNode_nameColLbl()) {
             @Override
-            public  Object getPropertyValue(AbstractFile content) {
+            public Object getPropertyValue(AbstractFile content) {
                 return getContentDisplayName(content);
             }
         },
         SCORE(AbstractAbstractFileNode_createSheet_score_name()) {
             Optional<Pair<String, Score>> result = Optional.empty();
-            
+
             private void initResult(AbstractFile content) {
                 scoreAndCommentTags = getContentTagsFromDatabase(content);
-                result = Optional.of(getScoreProperty(content, scoreAndCommentTags));   
+                result = Optional.of(getScoreProperty(content, scoreAndCommentTags));
             }
-            
-           @Override
+
+            @Override
             public Object getPropertyValue(AbstractFile content) {
-                if(!this.result.isPresent()){
-                    initResult(content);   
+                if (!this.result.isPresent()) {
+                    initResult(content);
                 }
-                return result.get().getRight();
-            } 
-            
+                Score res = result.get().getRight();
+                result = Optional.empty();
+                return res;
+            }
+
             @Override
             public String getDescription(AbstractFile content) {
-                if(!this.result.isPresent()){
-                   initResult(content);  
+                if (!this.result.isPresent()) {
+                    initResult(content);
                 }
                 return result.get().getLeft();
             }
         },
         COMMENT(AbstractAbstractFileNode_createSheet_comment_name()) {
             Optional<Pair<String, HasCommentStatus>> result = Optional.empty();
-            
+
             private void initResult(AbstractFile content) {
                 scoreAndCommentTags = getContentTagsFromDatabase(content);
                 correlationAttribute = null;
-                if(EamDbUtil.useCentralRepo() && 
-                    !UserPreferences.hideCentralRepoCommentsAndOccurrences()){
+                if (EamDbUtil.useCentralRepo()
+                        && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
                     if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
                         correlationAttribute = getCorrelationAttributeInstance(content);
                     }
-                }  
+                }
                 result = Optional.of(getCommentProperty(scoreAndCommentTags, correlationAttribute));
             }
-            
+
             @Override
             public Object getPropertyValue(AbstractFile content) {
-                if(!this.result.isPresent()){
+                if (!this.result.isPresent()) {
                     initResult(content);
                 }
-                return result.get().getRight();
-            } 
-            
+                HasCommentStatus res = result.get().getRight();
+                result = Optional.empty();
+                return res;
+            }
+
             @Override
             public String getDescription(AbstractFile content) {
-                if(!this.result.isPresent()){
+                if (!this.result.isPresent()) {
                     initResult(content);
                 }
                 return result.get().getLeft();
@@ -320,34 +308,35 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         },
         COUNT(AbstractAbstractFileNode_createSheet_count_name()) {
             Optional<Pair<String, Long>> result = Optional.empty();
-            
+
             private void initResult(AbstractFile content) {
                 result = Optional.of(getCountProperty(correlationAttribute));
             }
-            
-            
+
             @Override
             public Object getPropertyValue(AbstractFile content) {
-                if(!result.isPresent()){
+                if (!result.isPresent()) {
                     initResult(content);
                 }
-                return result.get().getRight();
+                Long res = result.get().getRight();
+                result = Optional.empty();
+                return res;
             }
 
             @Override
             public boolean isDisabled() {
-                return !EamDbUtil.useCentralRepo() || 
-                        UserPreferences.hideCentralRepoCommentsAndOccurrences();
+                return !EamDbUtil.useCentralRepo()
+                        || UserPreferences.hideCentralRepoCommentsAndOccurrences();
             }
 
             @Override
             public String getDescription(AbstractFile content) {
-                if(!result.isPresent()){
+                if (!result.isPresent()) {
                     initResult(content);
                 }
                 return result.get().getLeft();
             }
-            
+
         },
         LOCATION(AbstractAbstractFileNode_locationColLbl()) {
             @Override
@@ -421,49 +410,49 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 return content.getMetaAddr();
             }
         },
-        ATTR_ADDR(AbstractAbstractFileNode_attrAddrColLbl()){
+        ATTR_ADDR(AbstractAbstractFileNode_attrAddrColLbl()) {
             @Override
             public Object getPropertyValue(AbstractFile content) {
                 return content.getAttrType().getValue() + "-" + content.getAttributeId();
             }
         },
-        TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()){
+        TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()) {
             @Override
             public Object getPropertyValue(AbstractFile content) {
                 return content.getDirType().getLabel();
             }
         },
-        TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()){
+        TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()) {
             @Override
             public Object getPropertyValue(AbstractFile content) {
                 return content.getMetaType().toString();
             }
         },
-        KNOWN(AbstractAbstractFileNode_knownColLbl()){
+        KNOWN(AbstractAbstractFileNode_knownColLbl()) {
             @Override
             public Object getPropertyValue(AbstractFile content) {
                 return content.getKnown().getName();
             }
         },
-        MD5HASH(AbstractAbstractFileNode_md5HashColLbl()){
+        MD5HASH(AbstractAbstractFileNode_md5HashColLbl()) {
             @Override
             public Object getPropertyValue(AbstractFile content) {
                 return StringUtils.defaultString(content.getMd5Hash());
             }
         },
-        ObjectID(AbstractAbstractFileNode_objectId()){
+        ObjectID(AbstractAbstractFileNode_objectId()) {
             @Override
             public Object getPropertyValue(AbstractFile content) {
                 return content.getId();
             }
         },
-        MIMETYPE(AbstractAbstractFileNode_mimeType()){
+        MIMETYPE(AbstractAbstractFileNode_mimeType()) {
             @Override
             public Object getPropertyValue(AbstractFile content) {
                 return StringUtils.defaultString(content.getMIMEType());
             }
         },
-        EXTENSION(AbstractAbstractFileNode_extensionColLbl()){
+        EXTENSION(AbstractAbstractFileNode_extensionColLbl()) {
             @Override
             public Object getPropertyValue(AbstractFile content) {
                 return content.getNameExtension();
@@ -482,17 +471,17 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         public String toString() {
             return displayString;
         }
-        
+
         public static FileProperty getPropertyFromDisplayName(String displayName) {
-            for(FileProperty p : AbstractFilePropertyType.values()) {
-                if(p.getPropertyName().equals(displayName)) {
+            for (FileProperty p : AbstractFilePropertyType.values()) {
+                if (p.getPropertyName().equals(displayName)) {
                     return p;
                 }
             }
             return null;
         }
     }
-
+    
     /**
      * Fill map with AbstractFile properties
      *
@@ -501,24 +490,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @param content The content to get properties for.
      */
     static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
-        //Load in our default properties.
-        ArrayList<FileProperty> properties = new ArrayList<>();
-        properties.addAll(Arrays.asList(AbstractFilePropertyType.values()));
-        
-        //Load in our custom properties
-        Optional<Collection<? extends CustomFileProperty>> customProperties = getCustomProperties();
-        if (customProperties.isPresent()) {
-            customProperties.get().forEach((p) -> {
-                //Inject custom properties at the desired column positions
-                //Specified by the custom property itself.
-                properties.add(p.getColumnPosition(), p);
-            });
-        }
-        
-        //Skip properties that are disabled, don't add them to the property map!
-        properties.stream().filter(p -> !p.isDisabled()).forEach((p) -> {
-            map.put(p.getPropertyName(), p.getPropertyValue(content));
-        });
+        Arrays.asList(AbstractFilePropertyType.values())
+                .stream()
+                .filter(p -> !p.isDisabled())
+                .forEach((p) -> map.put(p.getPropertyName(), p.getPropertyValue(content)));
     }
 
     /**
@@ -643,7 +618,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
-        
+
         return Pair.of(description, count);
     }
 
@@ -653,6 +628,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @param sheetSet the modifiable Sheet.Set returned by
      *                 Sheet.get(Sheet.PROPERTIES)
+     *
      * @deprecated
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
@@ -699,6 +675,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @param file The file.
      *
      * @return The CSV list of hash set names.
+     *
      * @deprecated
      */
     @Deprecated
