@@ -22,7 +22,6 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Calendar;
 import java.util.List;
-import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
