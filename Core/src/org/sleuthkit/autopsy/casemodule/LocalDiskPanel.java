@@ -22,7 +22,6 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.Calendar;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -474,16 +473,9 @@ final class LocalDiskPanel extends JPanel {
         for (String timeZone : timeZoneList) {
             timeZoneComboBox.addItem(timeZone);
         }
-        
-        // get the current timezone
-        TimeZone thisTimeZone = Calendar.getInstance().getTimeZone();
-        int thisOffset = thisTimeZone.getRawOffset() / 1000;
-        int thisHour = thisOffset / 3600;
-        int thisMinutes = (thisOffset % 3600) / 60;
-        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID()); //NON-NLS
 
         // set the selected timezone
-        timeZoneComboBox.setSelectedItem(formatted);
+        timeZoneComboBox.setSelectedItem(TimeZoneUtils.createTimeZoneString(Calendar.getInstance().getTimeZone().getID()));
     }
 
     /**
