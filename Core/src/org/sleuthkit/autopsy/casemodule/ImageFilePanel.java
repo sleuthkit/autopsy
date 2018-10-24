@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.casemodule;
 import java.io.File;
 import java.util.Calendar;
 import java.util.List;
-import java.util.SimpleTimeZone;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -39,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 
 /**
  * Panel for adding an image file such as .img, .E0x, .00x, etc. Allows the user
@@ -72,11 +71,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         initComponents();
 
         // Populate the drop down list of time zones
-        for (String id : SimpleTimeZone.getAvailableIDs()) {
-            timeZoneComboBox.addItem(timeZoneToString(TimeZone.getTimeZone(id)));
-        }
-        // set the selected timezone to the current timezone
-        timeZoneComboBox.setSelectedItem(timeZoneToString(Calendar.getInstance().getTimeZone()));
+        createTimeZoneList();
 
         // Populate the drop down list of sector size options
         for (String choice : SECTOR_SIZE_CHOICES) {
@@ -93,6 +88,20 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         if (fileChooserFilters.isEmpty() == false) {
             fileChooser.setFileFilter(fileChooserFilters.get(0));
         }
+    }
+
+    /**
+     * Creates the drop down list for the time zones and defaults the selection
+     * to the local machine time zone.
+     */
+    private void createTimeZoneList() {
+        List<String> timeZoneList = TimeZoneUtils.createTimeZoneList();
+        for (String timeZone : timeZoneList) {
+            timeZoneComboBox.addItem(timeZone);
+        }
+
+        // set the selected timezone
+        timeZoneComboBox.setSelectedItem(TimeZoneUtils.createTimeZoneString(Calendar.getInstance().getTimeZone().getID()));
     }
 
     /**
@@ -346,21 +355,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         if (StringUtils.isNotBlank(lastImagePath)) {
             setContentPath(lastImagePath);
         }
-    }
-
-    /**
-     * Get a string representation of a TimeZone for use in the drop down list.
-     *
-     * @param zone The TimeZone to make a string for
-     *
-     * @return A string representation of a TimeZone for use in the drop down
-     *         list.
-     */
-    static private String timeZoneToString(TimeZone zone) {
-        int offset = zone.getRawOffset() / 1000;
-        int hour = offset / 3600;
-        int minutes = (offset % 3600) / 60;
-        return String.format("(GMT%+d:%02d) %s", hour, minutes, zone.getID()); //NON-NLS
     }
 
     @Override
