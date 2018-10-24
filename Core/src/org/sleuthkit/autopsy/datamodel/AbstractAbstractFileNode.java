@@ -20,35 +20,27 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
-import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import org.sleuthkit.autopsy.casemodule.events.TranslationAvailableEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
@@ -249,6 +241,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         },
         SCORE(AbstractAbstractFileNode_createSheet_score_name()) {
             Optional<Pair<String, Score>> result = Optional.empty();
+            List<ContentTag> scoreAndCommentTags;
+            CorrelationAttributeInstance correlationAttribute;
 
             private void initResult(AbstractFile content) {
                 scoreAndCommentTags = getContentTagsFromDatabase(content);
@@ -275,6 +269,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         },
         COMMENT(AbstractAbstractFileNode_createSheet_comment_name()) {
             Optional<Pair<String, HasCommentStatus>> result = Optional.empty();
+            List<ContentTag> scoreAndCommentTags;
+            CorrelationAttributeInstance correlationAttribute;
 
             private void initResult(AbstractFile content) {
                 scoreAndCommentTags = getContentTagsFromDatabase(content);
@@ -308,8 +304,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         },
         COUNT(AbstractAbstractFileNode_createSheet_count_name()) {
             Optional<Pair<String, Long>> result = Optional.empty();
+            List<ContentTag> scoreAndCommentTags;
+            CorrelationAttributeInstance correlationAttribute;
 
             private void initResult(AbstractFile content) {
+                correlationAttribute = getCorrelationAttributeInstance(content);
                 result = Optional.of(getCountProperty(correlationAttribute));
             }
 
@@ -459,8 +458,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         };
 
-        private static List<ContentTag> scoreAndCommentTags;
-        private static CorrelationAttributeInstance correlationAttribute;
         final private String displayString;
 
         private AbstractFilePropertyType(String displayString) {
