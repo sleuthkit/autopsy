@@ -242,7 +242,9 @@ final class InterCaseSearchResultsProcessor {
             // we don't *have* all the information for the rows in the CR,
             //  so we need to consult the present case via the SleuthkitCase object
             // Later, when the FileInstanceNode is built. Therefore, build node generators for now.
-            AbstractCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType);
+            CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType);
+            CorrelationAttributeInstance corrAttr = findSingleCorrelationAttribute(resultId);
+            searchResult.setCurrentAttributeInst(corrAttr);
             commonAttributeValue.addInstance(searchResult);
         }
 
