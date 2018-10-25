@@ -275,11 +275,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         if (tts.hasProvider()) {
             //Seperate out the base and ext from the contents file name.
             String base = FilenameUtils.getBaseName(this.content.getName());
-            String ext = FilenameUtils.getExtension(this.content.getName());
 
             //Send only the base file name to be translated. Once the translation comes
             //back fire a PropertyChangeEvent on this nodes PropertyChangeListener.
-            tts.translateAsynchronously(base, new TranslateFileNameCallback(ext, weakPcl));
+            tts.translateAsynchronously(base, new TranslateFileNameCallback(this.content, weakPcl));
         }
 
         //In the mean time, return a blank translation.
@@ -518,11 +517,13 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private class TranslateFileNameCallback implements TranslationCallback {
         //Seperate out the base and ext from the contents file name.
         private final String ext;
+        private final String originalFileName;
         
         private final PropertyChangeListener listener;
         
-        public TranslateFileNameCallback(String ext, PropertyChangeListener listener) {
-            this.ext = ext;
+        public TranslateFileNameCallback(AbstractFile file, PropertyChangeListener listener) {
+            this.ext = FilenameUtils.getExtension(content.getName());
+            this.originalFileName = content.getName();
             this.listener = listener;
         }
 
@@ -554,18 +555,18 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
 
         /**
-         * Do nothing on a translation exception, the column will remain empty 
+         * Do nothing on a translation exception except log, the column will remain empty 
          * and there is nothing we can do as a fallback.
          * 
          * @param ex Exception caught while translating.
          */
         @Override
         public void onTranslationException(TranslationException ex) {
-            //Do nothing
+            logger.log(Level.WARNING, "Could not successfully translate file name " + originalFileName, ex);
         }
 
         /**
-         * Do nothing on a no service provider exception, in this implemention we
+         * Do nothing on a no service provider exception except log, in this implemention we
          * are only calling for translation to be done if we know that a TextTranslator 
          * service provider is already defined.
          * 
@@ -573,7 +574,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
          */
         @Override
         public void onNoServiceProviderException(NoServiceProviderException ex) {
-            //Do nothing
+            logger.log(Level.WARNING, "Translate unsuccessful because no TextTranslator "
+                    + "implementation was provided.", ex);
         }
     }
 }
