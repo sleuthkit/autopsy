@@ -19,24 +19,29 @@
 package org.sleuthkit.autopsy.texttranslation;
 
 /**
- * Provides a way for translation results to be processed when they are 
- * 
+ * This callback interface will be used by TextTranslationService when doing 
+ * translations on background tasks. When the translation is done, it's result will
+ * be delegated to one of the following methods. It can either be successful or fail with
+ * exceptions.
  */
 public interface TranslationCallback {
     
     /**
+     * Provides a method to handle the translation result
      * 
-     * @param translation 
+     * @param translation result of calling TextTranslationService.
      */
     public void onTranslationResult(String translation);
     
     /**
+     * Provides a way to handle Translation Exceptions.
      * 
      * @param ex 
      */
     public void onTranslationException(TranslationException ex);
     
     /**
+     * Provides a way to handle NoServiceProviderExceptions.
      * 
      * @param ex 
      */

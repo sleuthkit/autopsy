@@ -46,6 +46,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         initComponents();
         this.immediateUpdates = immediateUpdates;
         
+        //If there is not Text Translator implementation, then hide these buttons
+        //from the user.
         TextTranslationService tts = new TextTranslationService();
         if(!tts.hasProvider()) {
             translatedNamesButton.setVisible(false);

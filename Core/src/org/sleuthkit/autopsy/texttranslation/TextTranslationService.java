@@ -31,7 +31,7 @@ import org.openide.util.Lookup;
 public class TextTranslationService {
 
     private final static Optional<TextTranslator> translator;
-    
+
     private static ExecutorService pool;
     private final static Integer MAX_POOL_SIZE = 10;
 
@@ -42,8 +42,8 @@ public class TextTranslationService {
     }
 
     /**
-     * Performs a lookup for a TextTranslator service provider and if present,
-     * will use this provider to run translation on the input.
+     * Translates the input string using whichever TextTranslator Service Provider 
+     * was found during lookup.
      *
      * @param input Input string to be translated
      *
@@ -64,23 +64,28 @@ public class TextTranslationService {
     }
 
     /**
-     * Allows the translation task to happen asynchronously, promising to use
-     * the TranslationCallback methods when the translation is complete.
+     * Makes the call to translate(String) happen asynchronously on a background
+     * thread. When it is done, it will use the appropriate TranslationCallback
+     * method.
      *
-     * @param input
-     * @param tcb
+     * @param input String to be translated
+     * @param tcb   Interface for handling the translation result or any
+     *              exceptions thrown while running translate.
+     *
      */
     public void translateAsynchronously(String input, TranslationCallback tcb) {
-        if(translator.isPresent()) {
+        if (translator.isPresent()) {
             //Delay thread pool initialization until an asynchronous task is first called.
             //That way we don't have threads sitting parked in the background for no reason.
             if (pool == null) {
                 ThreadFactory translationFactory = new ThreadFactoryBuilder()
-                    .setNameFormat("translation-thread-%d")
-                    .build();
+                        .setNameFormat("translation-thread-%d")
+                        .build();
                 pool = Executors.newFixedThreadPool(MAX_POOL_SIZE, translationFactory);
             }
-            
+
+            //Submit the task to the pool, calling the appropriate method depending 
+            //on the result of the translate operation.
             pool.submit(() -> {
                 try {
                     String translation = translate(input);
@@ -91,17 +96,17 @@ public class TextTranslationService {
                     tcb.onTranslationException(ex);
                 }
             });
-        } 
-        
+        }
+
         tcb.onNoServiceProviderException(new NoServiceProviderException(
                 "Could not find a TextTranslator service provider"));
     }
 
     /**
-     * Returns if a TextTranslator lookup successfully found an implementing 
+     * Returns if a TextTranslator lookup successfully found an implementing
      * class.
      *
-     * @return
+     * @return 
      */
     public boolean hasProvider() {
         return translator.isPresent();
