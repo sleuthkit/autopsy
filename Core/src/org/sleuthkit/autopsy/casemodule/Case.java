@@ -1475,7 +1475,7 @@ public class Case {
     public void notifyAddingDataSource(UUID eventId) {
         eventPublisher.publish(new AddingDataSourceEvent(eventId));
     }
-
+    
     /**
      * Notifies case event subscribers that a data source failed to be added to
      * the case.

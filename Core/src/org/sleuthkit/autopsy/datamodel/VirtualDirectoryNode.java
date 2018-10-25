@@ -32,6 +32,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
+import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -92,6 +95,12 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
         if (!this.content.isDataSource()) {
+            TextTranslationService tts = new TextTranslationService();
+            if(tts.hasProvider() && UserPreferences.displayTranslationFileNames()) {
+                String translation = getTranslatedSourceName(tts);
+                sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
+            }
+            
             addScoreProperty(sheetSet, tags);
 
             CorrelationAttributeInstance correlationAttribute = null;

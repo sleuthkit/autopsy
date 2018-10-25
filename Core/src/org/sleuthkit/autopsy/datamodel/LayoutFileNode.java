@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
@@ -38,6 +39,9 @@ import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
+import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LayoutFile;
@@ -93,6 +97,12 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
                 getName()));
+        
+        TextTranslationService tts = new TextTranslationService();
+        if(tts.hasProvider() && UserPreferences.displayTranslationFileNames()) {
+            String translation = getTranslatedSourceName(tts);
+            sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
+        }
         
         addScoreProperty(sheetSet, tags);
         

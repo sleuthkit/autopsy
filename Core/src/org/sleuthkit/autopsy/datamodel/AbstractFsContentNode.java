@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
 
@@ -84,6 +85,12 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
                 AbstractFilePropertyType.NAME.toString(),
                 NO_DESCR,
                 getName()));
+        
+        TextTranslationService tts = new TextTranslationService();
+        if(UserPreferences.displayTranslationFileNames()) {
+            String translation = getTranslatedSourceName(tts);
+            sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
+        }
         
         addScoreProperty(sheetSet, tags);
         

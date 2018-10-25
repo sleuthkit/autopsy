@@ -339,6 +339,7 @@
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
                 <package>org.sleuthkit.autopsy.tabulardatareader</package>
+                <package>org.sleuthkit.autopsy.texttranslation</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>

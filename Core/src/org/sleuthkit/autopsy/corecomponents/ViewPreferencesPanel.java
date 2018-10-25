@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.deletedFiles.DeletedFilePreferences;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 
 /**
  * Panel for configuring view preferences.
@@ -44,6 +45,12 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     public ViewPreferencesPanel(boolean immediateUpdates) {
         initComponents();
         this.immediateUpdates = immediateUpdates;
+        
+        TextTranslationService translationService = new TextTranslationService();
+        if(!translationService.hasProvider()) {
+            translatedNamesButton.setVisible(false);
+            fileDisplayLabel.setVisible(false);
+        }
     }
 
     @Override
@@ -67,6 +74,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         commentsOccurencesColumnsCheckbox.setSelected(UserPreferences.hideCentralRepoCommentsAndOccurrences());
 
         deletedFilesLimitCheckbox.setSelected(DeletedFilePreferences.getDefault().getShouldLimitDeletedFiles());
+        translatedNamesButton.setSelected(UserPreferences.displayTranslationFileNames());
 
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
@@ -90,6 +98,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCheckbox.isSelected());
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
         UserPreferences.setHideCentralRepoCommentsAndOccurrences(commentsOccurencesColumnsCheckbox.isSelected());
+        UserPreferences.setDisplayTranslationFileNames(translatedNamesButton.isSelected());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -142,6 +151,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         centralRepoLabel = new javax.swing.JLabel();
         deletedFilesLimitCheckbox = new javax.swing.JCheckBox();
         deletedFilesLimitLabel = new javax.swing.JLabel();
+        translatedNamesButton = new javax.swing.JRadioButton();
+        fileDisplayLabel = new javax.swing.JLabel();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -244,6 +255,15 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(deletedFilesLimitLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.deletedFilesLimitLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(translatedNamesButton, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.translatedNamesButton.text")); // NOI18N
+        translatedNamesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                translatedNamesButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(fileDisplayLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.fileDisplayLabel.text")); // NOI18N
+
         javax.swing.GroupLayout globalSettingsPanelLayout = new javax.swing.GroupLayout(globalSettingsPanel);
         globalSettingsPanel.setLayout(globalSettingsPanelLayout);
         globalSettingsPanelLayout.setHorizontalGroup(
@@ -259,6 +279,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                             .addComponent(deletedFilesLimitCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(centralRepoLabel)
+                            .addComponent(deletedFilesLimitLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(hideKnownFilesLabel)
@@ -274,9 +296,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                             .addGap(10, 10, 10)
                                             .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                                 .addComponent(dataSourcesHideKnownCheckbox)
-                                                .addComponent(viewsHideKnownCheckbox)))))
+                                                .addComponent(viewsHideKnownCheckbox))))
+                                    .addComponent(hideOtherUsersTagsLabel))
                                 .addGap(18, 18, 18)
                                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(fileDisplayLabel)
                                     .addComponent(displayTimeLabel)
                                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                         .addGap(10, 10, 10)
@@ -284,11 +308,9 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                             .addComponent(keepCurrentViewerRadioButton)
                                             .addComponent(useBestViewerRadioButton)
                                             .addComponent(useGMTTimeRadioButton)
-                                            .addComponent(useLocalTimeRadioButton)))
-                                    .addComponent(selectFileLabel)))
-                            .addComponent(hideOtherUsersTagsLabel)
-                            .addComponent(centralRepoLabel)
-                            .addComponent(deletedFilesLimitLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                            .addComponent(useLocalTimeRadioButton)
+                                            .addComponent(translatedNamesButton)))
+                                    .addComponent(selectFileLabel))))
                         .addGap(0, 10, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -322,9 +344,13 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(useGMTTimeRadioButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(hideOtherUsersTagsLabel)
+                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(hideOtherUsersTagsLabel)
+                    .addComponent(fileDisplayLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(hideOtherUsersTagsCheckbox)
+                .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(hideOtherUsersTagsCheckbox)
+                    .addComponent(translatedNamesButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(centralRepoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -535,6 +561,14 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_deletedFilesLimitCheckboxActionPerformed
 
+    private void translatedNamesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_translatedNamesButtonActionPerformed
+        if (immediateUpdates) {
+            UserPreferences.setDisplayTranslationFileNames(translatedNamesButton.isSelected());
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_translatedNamesButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel centralRepoLabel;
@@ -546,6 +580,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JCheckBox deletedFilesLimitCheckbox;
     private javax.swing.JLabel deletedFilesLimitLabel;
     private javax.swing.JLabel displayTimeLabel;
+    private javax.swing.JLabel fileDisplayLabel;
     private javax.swing.JPanel globalSettingsPanel;
     private javax.swing.JCheckBox groupByDataSourceCheckbox;
     private javax.swing.JLabel hideKnownFilesLabel;
@@ -555,6 +590,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel hideSlackFilesLabel;
     private javax.swing.JRadioButton keepCurrentViewerRadioButton;
     private javax.swing.JLabel selectFileLabel;
+    private javax.swing.JRadioButton translatedNamesButton;
     private javax.swing.JRadioButton useBestViewerRadioButton;
     private javax.swing.JRadioButton useGMTTimeRadioButton;
     private javax.swing.JRadioButton useLocalTimeRadioButton;

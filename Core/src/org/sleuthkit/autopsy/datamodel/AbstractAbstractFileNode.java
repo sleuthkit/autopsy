@@ -48,8 +48,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
+import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
+import org.sleuthkit.autopsy.texttranslation.TranslationCallback;
+import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -70,6 +75,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
+    
+    private String translateFileName = null;
 
     /**
      * @param abstractFile file to wrap
@@ -161,6 +168,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (event.getContentID() == content.getId()) {
                 updateSheet();
             }
+        } else if (eventType.equals("TRANSLATION_AVAILABLE")) {
+            setTranslatedSourceName((String) evt.getNewValue());
+            updateSheet();
         }
     };
 
@@ -234,7 +244,39 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             return displayString;
         }
     }
+    
+    public void setTranslatedSourceName(String translation) {
+        translateFileName = translation;
+    }
+    
+    public String getTranslatedSourceName(TextTranslationService tts) {
+        if(translateFileName == null) {
+            if(tts.hasProvider()) {
+                tts.translate(this.content.getName(), new TranslationCallback() {
+                    @Override
+                    public void onTranslation(String translation) {
+                        //Talk directy to the nodes PCL, to update when ready. 
+                        weakPcl.propertyChange(new PropertyChangeEvent(
+                            AutopsyEvent.SourceType.LOCAL.toString(), 
+                            "TRANSLATION_AVAILABLE", "", translation));
+                    }
 
+                    @Override
+                    public void onTranslationException(TranslationException ex) {
+                        
+                    }
+
+                    @Override
+                    public void onNoServiceProviderException(NoServiceProviderException ex) {
+                        //Do nothing.
+                    }  
+                });
+            }
+            return "";
+        }
+        return translateFileName;
+    }
+    
     /**
      * Fill map with AbstractFile properties
      *

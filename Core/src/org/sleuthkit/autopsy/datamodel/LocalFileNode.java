@@ -42,6 +42,9 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
+import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
+import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
+import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ContentTag;
@@ -84,6 +87,19 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
                 getName()));
+        
+        TextTranslationService tts = new TextTranslationService();
+        if(tts.hasProvider() && UserPreferences.displayTranslationFileNames()) {
+            String translation = "";
+            try {
+                translation = tts.translate(this.content.getName());    
+            } catch (NoServiceProviderException ex) {
+                //Do nothing, can't happen due to call for hasProvider(). 
+            } catch (TranslationException ex) {
+                System.out.println(ex);
+            }
+            sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
+        }
         
         addScoreProperty(sheetSet, tags);
         
