@@ -266,14 +266,23 @@ public class GroupManager {
             try {
                 Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
                 getDrawableDB().markGroupSeen(group.getGroupKey(), seen, examiner.getId());
-                group.setSeen(seen);
-                updateUnSeenGroups(group);
+                // only update and reshuffle if its new results
+                if (group.isSeen() != seen) {
+                    group.setSeen(seen);
+                    updateUnSeenGroups(group);
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
             }
         });
     }
 
+    /**
+     * Update unseenGroups list accordingly based on the current status
+     * of 'group'. Removes it if it is seen or adds it if it is unseen.
+     * 
+     * @param group 
+     */
     synchronized private void updateUnSeenGroups(DrawableGroup group) {
         if (group.isSeen()) {
             unSeenGroups.removeAll(group);
