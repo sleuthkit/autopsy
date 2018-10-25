@@ -792,20 +792,16 @@ public final class ImageGalleryController {
             if (known) {
                 taskDB.removeFile(f.getId(), tr);  //remove known files
             } else {
-                try {
-                    // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
-                    if (null == f.getMIMEType()) {
-                        // set to false to force the DB to be marked as stale
-                        this.setTaskCompletionStatus(false);
-                    } //supported mimetype => analyzed
-                    else if (FileTypeUtils.hasDrawableMIMEType(f)) {
-                        taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
-                    } //unsupported mimtype => analyzed but shouldn't include
-                    else {
-                        taskDB.removeFile(f.getId(), tr);
-                    }
-                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                    throw new TskCoreException("Failed to initialize FileTypeDetector.", ex);
+                // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
+                if (null == f.getMIMEType()) {
+                    // set to false to force the DB to be marked as stale
+                    this.setTaskCompletionStatus(false);
+                } //supported mimetype => analyzed
+                else if (FileTypeUtils.hasDrawableMIMEType(f)) {
+                    taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
+                } //unsupported mimtype => analyzed but shouldn't include
+                else {
+                    taskDB.removeFile(f.getId(), tr);
                 }
             }
         }
