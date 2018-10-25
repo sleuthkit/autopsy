@@ -98,9 +98,12 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
                 getName()));
         
+        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.noDescr.text");
+        
         if(UserPreferences.displayTranslationFileNames()) {
             String translation = getTranslatedFileName();
-            sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
+            sheetSet.put(new NodeProperty<>(Bundle.AbstractAbstractFileNode_translateFileName(), 
+                    Bundle.AbstractAbstractFileNode_translateFileName(), NO_DESCR, translation));
         }
         
         addScoreProperty(sheetSet, tags);
@@ -114,7 +117,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
-        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.noDescr.text");
+        
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }

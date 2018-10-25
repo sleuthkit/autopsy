@@ -88,7 +88,8 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
 
         if(UserPreferences.displayTranslationFileNames()) {
             String translation = getTranslatedFileName();
-            sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
+            sheetSet.put(new NodeProperty<>(Bundle.AbstractAbstractFileNode_translateFileName(), 
+                    Bundle.AbstractAbstractFileNode_translateFileName(), NO_DESCR, translation));
         }
         
         addScoreProperty(sheetSet, tags);

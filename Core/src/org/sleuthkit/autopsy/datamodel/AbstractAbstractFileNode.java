@@ -194,6 +194,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     @NbBundle.Messages({"AbstractAbstractFileNode.nameColLbl=Name",
+        "AbstractAbstractFileNode.translateFileName=Translated Name",
         "AbstractAbstractFileNode.locationColLbl=Location",
         "AbstractAbstractFileNode.modifiedTimeColLbl=Modified Time",
         "AbstractAbstractFileNode.changeTimeColLbl=Change Time",
@@ -515,7 +516,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * can call these methods when an asynchronous translation task is complete.
      */
     private class TranslateFileNameCallback implements TranslationCallback {
-        //Seperate out the base and ext from the contents file name.
         private final String ext;
         private final String originalFileName;
         

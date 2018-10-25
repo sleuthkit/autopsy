@@ -42,9 +42,6 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
-import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
-import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
-import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.ContentTag;
@@ -88,9 +85,11 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
                 getName()));
         
+        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
         if(UserPreferences.displayTranslationFileNames()) {
             String translation = getTranslatedFileName();
-            sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
+            sheetSet.put(new NodeProperty<>(Bundle.AbstractAbstractFileNode_translateFileName(), 
+                    Bundle.AbstractAbstractFileNode_translateFileName(), NO_DESCR, translation));
         }
         
         addScoreProperty(sheetSet, tags);
@@ -104,7 +103,6 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
-        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
