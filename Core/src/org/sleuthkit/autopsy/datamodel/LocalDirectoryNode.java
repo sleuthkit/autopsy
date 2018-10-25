@@ -69,9 +69,8 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
                 Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
         
-        TextTranslationService tts = new TextTranslationService();
-        if(tts.hasProvider() && UserPreferences.displayTranslationFileNames()) {
-            String translation = getTranslatedSourceName(tts);
+        if(UserPreferences.displayTranslationFileNames()) {
+            String translation = getTranslatedFileName();
             sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
         }
         

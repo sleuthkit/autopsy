@@ -18,28 +18,25 @@
  */
 package org.sleuthkit.autopsy.texttranslation;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import org.openide.util.Lookup;
 
 /**
  * Service for finding and running TextTranslator implementations
  */
 public class TextTranslationService {
+
+    private final static Optional<TextTranslator> translator;
     
-    private final Optional<TextTranslator> translator;
-    private final static ExecutorService pool;
+    private static ExecutorService pool;
     private final static Integer MAX_POOL_SIZE = 10;
-    
+
     static {
-        pool = Executors.newFixedThreadPool(MAX_POOL_SIZE);   
-    }
-       
-    /**
-     * 
-     */
-    public TextTranslationService() {
+        //Perform look up for Text Translation implementations
         translator = Optional.ofNullable(Lookup.getDefault()
                 .lookup(TextTranslator.class));
     }
@@ -65,23 +62,46 @@ public class TextTranslationService {
         throw new NoServiceProviderException(
                 "Could not find a TextTranslator service provider");
     }
-    
-    public void translate(String input, TranslationCallback tcb) {
-        pool.submit(() -> {
-            try {
-                String translation = translate(input);
-                tcb.onTranslation(translation);
-            } catch (NoServiceProviderException ex) {
-                tcb.onNoServiceProviderException(ex);
-            } catch (TranslationException ex) {
-                tcb.onTranslationException(ex);
-            }
-        });
-    }
-    
+
     /**
-     * 
-     * @return 
+     * Allows the translation task to happen asynchronously, promising to use
+     * the TranslationCallback methods when the translation is complete.
+     *
+     * @param input
+     * @param tcb
+     */
+    public void translateAsynchronously(String input, TranslationCallback tcb) {
+        if(translator.isPresent()) {
+            //Delay thread pool initialization until an asynchronous task is first called.
+            //That way we don't have threads sitting parked in the background for no reason.
+            if (pool == null) {
+                ThreadFactory translationFactory = new ThreadFactoryBuilder()
+                    .setNameFormat("translation-thread-%d")
+                    .build();
+                pool = Executors.newFixedThreadPool(MAX_POOL_SIZE, translationFactory);
+            }
+            
+            pool.submit(() -> {
+                try {
+                    String translation = translate(input);
+                    tcb.onTranslationResult(translation);
+                } catch (NoServiceProviderException ex) {
+                    tcb.onNoServiceProviderException(ex);
+                } catch (TranslationException ex) {
+                    tcb.onTranslationException(ex);
+                }
+            });
+        } 
+        
+        tcb.onNoServiceProviderException(new NoServiceProviderException(
+                "Could not find a TextTranslator service provider"));
+    }
+
+    /**
+     * Returns if a TextTranslator lookup successfully found an implementing 
+     * class.
+     *
+     * @return
      */
     public boolean hasProvider() {
         return translator.isPresent();

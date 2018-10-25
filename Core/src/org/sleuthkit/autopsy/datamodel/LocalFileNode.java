@@ -88,16 +88,8 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
                 getName()));
         
-        TextTranslationService tts = new TextTranslationService();
-        if(tts.hasProvider() && UserPreferences.displayTranslationFileNames()) {
-            String translation = "";
-            try {
-                translation = tts.translate(this.content.getName());    
-            } catch (NoServiceProviderException ex) {
-                //Do nothing, can't happen due to call for hasProvider(). 
-            } catch (TranslationException ex) {
-                System.out.println(ex);
-            }
+        if(UserPreferences.displayTranslationFileNames()) {
+            String translation = getTranslatedFileName();
             sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
         }
         

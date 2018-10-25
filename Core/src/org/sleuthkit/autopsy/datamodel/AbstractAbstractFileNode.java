@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
@@ -72,11 +73,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
     @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
     private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
+    
+    private static final String TRANSLATION_AVAILABLE_EVENT = "TRANSLATION_AVAILABLE";
+    private static final String NO_TRANSLATION = "";
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
-    
-    private String translateFileName = null;
+
+    private String translatedFileName;
 
     /**
      * @param abstractFile file to wrap
@@ -92,6 +96,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 IngestManager.getInstance().addIngestModuleEventListener(weakPcl);
             }
         }
+        translatedFileName = null;
         // Listen for case events so that we can detect when the case is closed
         // or when tags are added.
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
@@ -168,8 +173,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (event.getContentID() == content.getId()) {
                 updateSheet();
             }
-        } else if (eventType.equals("TRANSLATION_AVAILABLE")) {
-            setTranslatedSourceName((String) evt.getNewValue());
+        } else if (eventType.equals(TRANSLATION_AVAILABLE_EVENT)) {
+            this.translatedFileName = (String) evt.getNewValue();
             updateSheet();
         }
     };
@@ -244,39 +249,43 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             return displayString;
         }
     }
-    
-    public void setTranslatedSourceName(String translation) {
-        translateFileName = translation;
-    }
-    
-    public String getTranslatedSourceName(TextTranslationService tts) {
-        if(translateFileName == null) {
-            if(tts.hasProvider()) {
-                tts.translate(this.content.getName(), new TranslationCallback() {
-                    @Override
-                    public void onTranslation(String translation) {
-                        //Talk directy to the nodes PCL, to update when ready. 
-                        weakPcl.propertyChange(new PropertyChangeEvent(
-                            AutopsyEvent.SourceType.LOCAL.toString(), 
-                            "TRANSLATION_AVAILABLE", "", translation));
-                    }
 
-                    @Override
-                    public void onTranslationException(TranslationException ex) {
-                        
-                    }
-
-                    @Override
-                    public void onNoServiceProviderException(NoServiceProviderException ex) {
-                        //Do nothing.
-                    }  
-                });
-            }
-            return "";
+    /**
+     * Attempts translation on the file name by kicking off a background task to do the
+     * translation. Once the background task is done, it will fire a PropertyChangeEvent,
+     * which will force this node to refresh itself, thus updating its translated name
+     * column.
+     *
+     * @return The file names translation.
+     */
+    protected String getTranslatedFileName() {
+        //If already in complete English, don't translate.
+        if (this.content.getName().matches("^\\p{ASCII}+$")) {
+            return NO_TRANSLATION;
         }
-        return translateFileName;
+        
+        //If we already have a translation use that one.
+        if (translatedFileName != null) {
+            return translatedFileName;
+        }
+
+        //If not, lets fire off a background translation that will update the UI
+        //when it is done.
+        TextTranslationService tts = new TextTranslationService();
+        if (tts.hasProvider()) {
+            //Seperate out the base and ext from the contents file name.
+            String base = FilenameUtils.getBaseName(this.content.getName());
+            String ext = FilenameUtils.getExtension(this.content.getName());
+
+            //Send only the base file name to be translated. Once the translation comes
+            //back fire a PropertyChangeEvent on this nodes PropertyChangeListener.
+            tts.translateAsynchronously(base, new TranslateFileNameCallback(ext, weakPcl));
+        }
+
+        //In the mean time, return a blank translation.
+        return NO_TRANSLATION;
     }
-    
+
     /**
      * Fill map with AbstractFile properties
      *
@@ -431,7 +440,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
-        
+
         sheetSet.put(
                 new NodeProperty<>(Bundle.AbstractAbstractFileNode_createSheet_count_name(), Bundle.AbstractAbstractFileNode_createSheet_count_displayName(), description, count));
     }
@@ -442,6 +451,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @param sheetSet the modifiable Sheet.Set returned by
      *                 Sheet.get(Sheet.PROPERTIES)
+     *
      * @deprecated
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
@@ -488,6 +498,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @param file The file.
      *
      * @return The CSV list of hash set names.
+     *
      * @deprecated
      */
     @Deprecated
@@ -497,6 +508,72 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.WARNING, "Error getting hashset hits: ", tskCoreException); //NON-NLS
             return "";
+        }
+    }
+    
+    /**
+     * Implements the TranslationCallback interface so that the TextTranslationService
+     * can call these methods when an asynchronous translation task is complete.
+     */
+    private class TranslateFileNameCallback implements TranslationCallback {
+        //Seperate out the base and ext from the contents file name.
+        private final String ext;
+        
+        private final PropertyChangeListener listener;
+        
+        public TranslateFileNameCallback(String ext, PropertyChangeListener listener) {
+            this.ext = ext;
+            this.listener = listener;
+        }
+
+        /**
+         * Fires a PropertyChangeEvent on this nodes PropertyChangeListener 
+         * when the translation is finished. Reconstruct the file name so we 
+         * can properly display the translation.
+         * 
+         * @param translation Result from the translation job submitted to 
+         * Text translation service.
+         */
+        @Override
+        public void onTranslationResult(String translation) {
+            //If we have no extension, then we shouldn't add the .
+            String extensionDelimiter = (ext.isEmpty()) ? "" : ".";
+
+            //Talk directly to this nodes pcl, fire an update when the translation
+            //is complete. 
+            if (translation.isEmpty()) {
+                listener.propertyChange(new PropertyChangeEvent(
+                        AutopsyEvent.SourceType.LOCAL.toString(),
+                        TRANSLATION_AVAILABLE_EVENT, null, translation));
+            } else {
+                listener.propertyChange(new PropertyChangeEvent(
+                        AutopsyEvent.SourceType.LOCAL.toString(),
+                        TRANSLATION_AVAILABLE_EVENT, null, 
+                        translation + extensionDelimiter + ext));
+            }
+        }
+
+        /**
+         * Do nothing on a translation exception, the column will remain empty 
+         * and there is nothing we can do as a fallback.
+         * 
+         * @param ex Exception caught while translating.
+         */
+        @Override
+        public void onTranslationException(TranslationException ex) {
+            //Do nothing
+        }
+
+        /**
+         * Do nothing on a no service provider exception, in this implemention we
+         * are only calling for translation to be done if we know that a TextTranslator 
+         * service provider is already defined.
+         * 
+         * @param ex 
+         */
+        @Override
+        public void onNoServiceProviderException(NoServiceProviderException ex) {
+            //Do nothing
         }
     }
 }

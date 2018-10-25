@@ -95,9 +95,8 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
         if (!this.content.isDataSource()) {
-            TextTranslationService tts = new TextTranslationService();
-            if(tts.hasProvider() && UserPreferences.displayTranslationFileNames()) {
-                String translation = getTranslatedSourceName(tts);
+            if(UserPreferences.displayTranslationFileNames()) {
+                String translation = getTranslatedFileName();
                 sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
             }
             

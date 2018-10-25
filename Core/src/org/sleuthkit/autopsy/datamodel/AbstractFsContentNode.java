@@ -85,10 +85,9 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
                 AbstractFilePropertyType.NAME.toString(),
                 NO_DESCR,
                 getName()));
-        
-        TextTranslationService tts = new TextTranslationService();
+
         if(UserPreferences.displayTranslationFileNames()) {
-            String translation = getTranslatedSourceName(tts);
+            String translation = getTranslatedFileName();
             sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
         }
         

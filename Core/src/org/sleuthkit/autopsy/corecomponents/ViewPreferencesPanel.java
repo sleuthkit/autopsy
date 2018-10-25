@@ -46,8 +46,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         initComponents();
         this.immediateUpdates = immediateUpdates;
         
-        TextTranslationService translationService = new TextTranslationService();
-        if(!translationService.hasProvider()) {
+        TextTranslationService tts = new TextTranslationService();
+        if(!tts.hasProvider()) {
             translatedNamesButton.setVisible(false);
             fileDisplayLabel.setVisible(false);
         }

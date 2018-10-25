@@ -98,9 +98,8 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.desc"),
                 getName()));
         
-        TextTranslationService tts = new TextTranslationService();
-        if(tts.hasProvider() && UserPreferences.displayTranslationFileNames()) {
-            String translation = getTranslatedSourceName(tts);
+        if(UserPreferences.displayTranslationFileNames()) {
+            String translation = getTranslatedFileName();
             sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
         }
         

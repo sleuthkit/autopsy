@@ -26,11 +26,4 @@ public interface TextTranslator {
 
     public String translate(String input) throws TranslationException;
     
-    public default String[] translate(String[] inputs) throws TranslationException {
-        String[] outputs = new String[inputs.length];
-        for(int i = 0; i < inputs.length; i++) {
-            outputs[i] = translate(inputs[i]);
-        }
-        return outputs;
-    }
 }
