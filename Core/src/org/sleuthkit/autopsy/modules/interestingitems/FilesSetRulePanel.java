@@ -435,7 +435,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         if (!this.nameTextField.getText().isEmpty()) {
             if (this.nameRegexCheckbox.isSelected()) {
                 try {
-                    Pattern pattern = Pattern.compile(this.nameTextField.getText());
+                    Pattern pattern = Pattern.compile(this.nameTextField.getText(), Pattern.CASE_INSENSITIVE);
                     if (this.fullNameRadioButton.isSelected()) {
                         condition = new FilesSet.Rule.FullNameCondition(pattern);
                     } else {
@@ -520,7 +520,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         if (!this.pathTextField.getText().isEmpty()) {
             if (this.pathRegexCheckBox.isSelected()) {
                 try {
-                    condition = new FilesSet.Rule.ParentPathCondition(Pattern.compile(this.pathTextField.getText()));
+                    condition = new FilesSet.Rule.ParentPathCondition(Pattern.compile(this.pathTextField.getText(), Pattern.CASE_INSENSITIVE));
                 } catch (PatternSyntaxException ex) {
                     logger.log(Level.SEVERE, "Attempt to get malformed path condition", ex); // NON-NLS
                     throw new IllegalStateException("The files set rule panel path condition is not in a valid state"); // NON-NLS
