@@ -369,7 +369,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDat
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) {
         List<String> filePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
-        run(deviceId, deviceId, filePaths, progressMonitor, callBack);
+        run(deviceId, "", filePaths, progressMonitor, callBack);
     }
 
     /**
