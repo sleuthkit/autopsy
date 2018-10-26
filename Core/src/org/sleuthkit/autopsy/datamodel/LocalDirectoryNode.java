@@ -26,9 +26,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
-import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
-import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LocalDirectory;
 

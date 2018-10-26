@@ -31,19 +31,19 @@ public interface TranslationCallback {
      * 
      * @param translation result of calling TextTranslationService.
      */
-    public void onTranslationResult(String translation);
+    void onTranslationResult(String translation);
     
     /**
      * Provides a way to handle Translation Exceptions.
      * 
-     * @param ex 
+     * @param noTranslationEx
      */
-    public void onTranslationException(TranslationException ex);
+    void onTranslationException(TranslationException noTranslationEx);
     
     /**
      * Provides a way to handle NoServiceProviderExceptions.
      * 
-     * @param ex 
+     * @param noServiceEx
      */
-    public void onNoServiceProviderException(NoServiceProviderException ex);
+    void onNoServiceProviderException(NoServiceProviderException noServiceEx);
 }

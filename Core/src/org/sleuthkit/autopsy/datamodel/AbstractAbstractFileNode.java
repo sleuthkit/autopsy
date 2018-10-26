@@ -561,8 +561,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
          * @param ex Exception caught while translating.
          */
         @Override
-        public void onTranslationException(TranslationException ex) {
-            logger.log(Level.WARNING, "Could not successfully translate file name " + originalFileName, ex);
+        public void onTranslationException(TranslationException noTranslationEx) {
+            logger.log(Level.WARNING, "Could not successfully translate file name " + originalFileName, noTranslationEx);
         }
 
         /**
@@ -573,9 +573,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
          * @param ex 
          */
         @Override
-        public void onNoServiceProviderException(NoServiceProviderException ex) {
+        public void onNoServiceProviderException(NoServiceProviderException noServiceEx) {
             logger.log(Level.WARNING, "Translate unsuccessful because no TextTranslator "
-                    + "implementation was provided.", ex);
+                    + "implementation was provided.", noServiceEx);
         }
     }
 }

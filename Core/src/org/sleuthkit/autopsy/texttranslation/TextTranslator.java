@@ -24,6 +24,6 @@ package org.sleuthkit.autopsy.texttranslation;
  */
 public interface TextTranslator {
 
-    public String translate(String input) throws TranslationException;
+    String translate(String input) throws TranslationException;
     
 }
