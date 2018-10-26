@@ -48,7 +48,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         
         //If there is not Text Translator implementation, then hide these buttons
         //from the user.
-        TextTranslationService tts = new TextTranslationService();
+        TextTranslationService tts = TextTranslationService.getInstance();
         if(!tts.hasProvider()) {
             translatedNamesButton.setVisible(false);
             fileDisplayLabel.setVisible(false);

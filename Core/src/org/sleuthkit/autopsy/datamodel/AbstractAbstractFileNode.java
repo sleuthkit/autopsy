@@ -272,7 +272,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
         //If not, lets fire off a background translation that will update the UI
         //when it is done.
-        TextTranslationService tts = new TextTranslationService();
+        TextTranslationService tts = TextTranslationService.getInstance();
         if (tts.hasProvider()) {
             //Seperate out the base and ext from the contents file name.
             String base = FilenameUtils.getBaseName(this.content.getName());

@@ -29,16 +29,23 @@ import org.openide.util.Lookup;
  * Service for finding and running TextTranslator implementations
  */
 public class TextTranslationService {
+    
+    private final static TextTranslationService tts = new TextTranslationService();
 
-    private final static Optional<TextTranslator> translator;
+    private final Optional<TextTranslator> translator;
 
     private static ExecutorService pool;
     private final static Integer MAX_POOL_SIZE = 10;
-
-    static {
-        //Perform look up for Text Translation implementations
+    
+    private TextTranslationService(){
+        //Perform look up for Text Translation implementations ONLY ONCE during 
+        //class loading.
         translator = Optional.ofNullable(Lookup.getDefault()
                 .lookup(TextTranslator.class));
+    }
+    
+    public static TextTranslationService getInstance() {
+        return tts;
     }
 
     /**
