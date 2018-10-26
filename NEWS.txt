@@ -1,4 +1,10 @@
 ---------------- VERSION 4.9.0  --------------
+Bug Fixes:
+- Fixed possible ingest deadlock from Image Gallery database inserts
+- Image Gallery does not need lock on Case DB during pre-population, which makes UI more responsive
+- Other misc Image Gallery fixes
+
+---------------- VERSION 4.9.0  --------------
 
 New Features:
 - Removed data from table that are time intensive and can be found in content viewers (such as hash set hits)
