@@ -180,6 +180,15 @@ class SevenZipExtractor {
      * @return true if potential zip bomb, false otherwise
      */
     private boolean isZipBombArchiveItemCheck(AbstractFile archiveFile, ISevenZipInArchive inArchive, int inArchiveItemIndex, ConcurrentHashMap<Long, Archive> depthMap, String escapedFilePath) {
+        //If a file is corrupted as a result of reconstructing it from unallocated space, then
+        //7zip does a poor job estimating the original uncompressed file size. 
+        //As a result, many corrupted files have wonky compression ratios and could flood the UI
+        //with false zip bomb notifications. The decision was made to skip compression ratio checks 
+        //for unallocated zip files. Instead, we let the depth be an indicator of a zip bomb.
+        if(archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
+            return false;
+        }
+        
         try {
             final Long archiveItemSize = (Long) inArchive.getProperty(
                     inArchiveItemIndex, PropID.SIZE);
