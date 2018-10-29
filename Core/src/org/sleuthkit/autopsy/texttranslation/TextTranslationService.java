@@ -28,7 +28,7 @@ import org.openide.util.Lookup;
 /**
  * Service for finding and running TextTranslator implementations
  */
-public class TextTranslationService {
+public final class TextTranslationService {
     
     private final static TextTranslationService tts = new TextTranslationService();
 

@@ -66,9 +66,11 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
                 Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
         
+        final String NO_DESCR = Bundle.LocalDirectoryNode_createSheet_noDesc();
         if(UserPreferences.displayTranslationFileNames()) {
             String translation = getTranslatedFileName();
-            sheetSet.put(new NodeProperty<>("Translated Name", "Translated Name", "", translation));
+            sheetSet.put(new NodeProperty<>(Bundle.AbstractAbstractFileNode_translateFileName(), 
+                    Bundle.AbstractAbstractFileNode_translateFileName(), NO_DESCR, translation));
         }
         
         addScoreProperty(sheetSet, tags);
@@ -87,7 +89,6 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, getContent());
 
-        final String NO_DESCR = Bundle.LocalDirectoryNode_createSheet_noDesc();
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
