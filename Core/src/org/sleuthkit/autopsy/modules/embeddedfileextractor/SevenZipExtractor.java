@@ -549,7 +549,6 @@ class SevenZipExtractor {
                 inArchive = SevenZip.openInArchive(options, stream, password);
             }
             numItems = inArchive.getNumberOfItems();
-            logger.log(Level.INFO, "Count of items in archive: {0}: {1}", new Object[]{escapedArchiveFilePath, numItems}); //NON-NLS
             progress.start(numItems);
             progressStarted = true;
             
