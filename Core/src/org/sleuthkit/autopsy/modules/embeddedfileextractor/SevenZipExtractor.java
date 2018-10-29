@@ -800,12 +800,7 @@ class SevenZipExtractor {
         MutableEncodedFileOutputStream(String localAbsPath) throws IOException {
             super(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
         }
-
-        @Override
-        public void write(byte[] bytes) throws IOException {
-            super.write(bytes);
-        }
-
+        
         /**
          * Update the OutputStream to point to a new File. This method mutates the state so
          * that there is no overhead of creating a new object and buffer. Additionally, the 
@@ -837,6 +832,14 @@ class SevenZipExtractor {
 	}
     }
     
+    /**
+     * UnpackStream used by the SevenZipBindings to do archive extraction. A memory
+     * leak exists in the SevenZip library that will not let go of the Streams until
+     * the entire archive extraction is complete. So, to compensate this UnpackStream
+     * uses a MutableEncodedFileOutputStream, which supports setting a new disk 
+     * location for the contents to be written to (as opposed to creating a new steam
+     * for each file).
+     */
     private final static class UnpackStream implements ISequentialOutStream {
 
         private final MutableEncodedFileOutputStream output;
