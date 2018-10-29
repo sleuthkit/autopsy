@@ -35,8 +35,9 @@ import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
  * Settings for the Postgres implementation of the Central Repository database
- * 
- * NOTE: This is public scope because the options panel calls it directly to set/get
+ *
+ * NOTE: This is public scope because the options panel calls it directly to
+ * set/get
  */
 public final class PostgresEamDbSettings {
 
@@ -266,7 +267,7 @@ public final class PostgresEamDbSettings {
         return true;
 
     }
-    
+
     public boolean deleteDatabase() {
         Connection conn = getEphemeralConnection(true);
         if (null == conn) {
@@ -391,26 +392,13 @@ public final class PostgresEamDbSettings {
         createCorrelationTypesTable.append("CONSTRAINT correlation_types_names UNIQUE (display_name, db_table_name)");
         createCorrelationTypesTable.append(")");
 
-        // Each "%s" will be replaced with the relevant TYPE_instances table name.
-        StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
-        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
-        createArtifactInstancesTableTemplate.append("id SERIAL PRIMARY KEY,");
-        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("value text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("comment text,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (data_source_id, value, file_path),");
-        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
-        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
-        createArtifactInstancesTableTemplate.append(")");
+        String createArtifactInstancesTableTemplate = getCreateArtifactInstancesTableTemplate();
 
-        // Each "%s" will be replaced with the relevant TYPE_instances table name.
-        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
-        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
-        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
-        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
+        String instancesIdx1 = getAddCaseIdIndexTemplate();
+        String instancesIdx2 = getAddDataSourceIdIndexTemplate();
+
+        String instancesIdx3 = getAddValueIndexTemplate();
+        String instancesIdx4 = getAddKnownStatusIndexTemplate();
 
         StringBuilder createDbInfoTable = new StringBuilder();
         createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
@@ -447,14 +435,14 @@ public final class PostgresEamDbSettings {
 
             // Create a separate instance and reference table for each correlation type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
-            
+
             String reference_type_dbname;
             String instance_type_dbname;
             for (CorrelationAttributeInstance.Type type : DEFAULT_CORRELATION_TYPES) {
                 reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
                 instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
-                
-                stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), instance_type_dbname, instance_type_dbname));
+
+                stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx1, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx2, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx3, instance_type_dbname, instance_type_dbname));
@@ -465,7 +453,7 @@ public final class PostgresEamDbSettings {
                     stmt.execute(String.format(createReferenceTypesTableTemplate.toString(), reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx1, reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx2, reference_type_dbname, reference_type_dbname));
-                }                
+                }
             }
 
         } catch (SQLException ex) {
@@ -478,6 +466,44 @@ public final class PostgresEamDbSettings {
             EamDbUtil.closeConnection(conn);
         }
         return true;
+    }
+
+    static String getCreateArtifactInstancesTableTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
+        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
+        createArtifactInstancesTableTemplate.append("id SERIAL PRIMARY KEY,");
+        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("value text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("comment text,");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (data_source_id, value, file_path),");
+        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
+        createArtifactInstancesTableTemplate.append(")");
+        return createArtifactInstancesTableTemplate.toString();
+    }
+
+    static String getAddCaseIdIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
+    }
+
+    static String getAddDataSourceIdIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
+    }
+
+    static String getAddValueIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
+    }
+
+    static String getAddKnownStatusIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
     }
 
     public boolean insertDefaultDatabaseContent() {

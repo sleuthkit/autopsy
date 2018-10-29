@@ -35,8 +35,9 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Settings for the sqlite implementation of the Central Repository database
- * 
- * NOTE: This is public scope because the options panel calls it directly to set/get 
+ *
+ * NOTE: This is public scope because the options panel calls it directly to
+ * set/get
  */
 public final class SqliteEamDbSettings {
 
@@ -95,7 +96,7 @@ public final class SqliteEamDbSettings {
         ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.dbDirectory", getDbDirectory()); // NON-NLS
         ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
     }
-    
+
     /**
      * Verify that the db file exists.
      *
@@ -103,11 +104,11 @@ public final class SqliteEamDbSettings {
      */
     public boolean dbFileExists() {
         File dbFile = new File(getFileNameWithPath());
-        if(! dbFile.exists()){
+        if (!dbFile.exists()) {
             return false;
         }
         // It's unlikely, but make sure the file isn't actually a directory
-        return ( ! dbFile.isDirectory());
+        return (!dbFile.isDirectory());
     }
 
     /**
@@ -148,10 +149,11 @@ public final class SqliteEamDbSettings {
 
         return true;
     }
-    
+
     /**
      * Delete the database
-     * @return 
+     *
+     * @return
      */
     public boolean deleteDatabase() {
         File dbFile = new File(this.getFileNameWithPath());
@@ -333,26 +335,13 @@ public final class SqliteEamDbSettings {
         createCorrelationTypesTable.append("CONSTRAINT correlation_types_names UNIQUE (display_name, db_table_name)");
         createCorrelationTypesTable.append(")");
 
-        // Each "%s" will be replaced with the relevant TYPE_instances table name.
-        StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
-        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
-        createArtifactInstancesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
-        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("value text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("comment text,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path) ON CONFLICT IGNORE,");
-        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
-        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
-        createArtifactInstancesTableTemplate.append(")");
+        String createArtifactInstancesTableTemplate = getCreateArtifactInstancesTableTemplate();
 
-        // Each "%s" will be replaced with the relevant TYPE_instances table name.
-        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
-        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
-        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
-        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
+        String instancesIdx1 = getAddCaseIdIndexTemplate();
+        String instancesIdx2 = getAddDataSourceIdIndexTemplate();
+
+        String instancesIdx3 = getAddValueIndexTemplate();
+        String instancesIdx4 = getAddKnownStatusIndexTemplate();
 
         StringBuilder createDbInfoTable = new StringBuilder();
         createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
@@ -402,7 +391,7 @@ public final class SqliteEamDbSettings {
                 reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
                 instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
 
-                stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx1, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx2, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx3, instance_type_dbname, instance_type_dbname));
@@ -425,6 +414,44 @@ public final class SqliteEamDbSettings {
             EamDbUtil.closeConnection(conn);
         }
         return true;
+    }
+
+    static String getCreateArtifactInstancesTableTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
+        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
+        createArtifactInstancesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
+        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("value text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("comment text,");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path) ON CONFLICT IGNORE,");
+        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
+        createArtifactInstancesTableTemplate.append(")");
+        return createArtifactInstancesTableTemplate.toString();
+    }
+
+    static String getAddCaseIdIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
+    }
+
+    static String getAddDataSourceIdIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
+    }
+
+    static String getAddValueIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
+    }
+
+    static String getAddKnownStatusIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
     }
 
     public boolean insertDefaultDatabaseContent() {
@@ -489,8 +516,6 @@ public final class SqliteEamDbSettings {
             throw new EamDbException("Invalid bulk threshold."); // NON-NLS
         }
     }
-
-
 
     /**
      * @return the dbDirectory

@@ -3085,6 +3085,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         ResultSet resultSet = null;
         Statement statement = null;
+        PreparedStatement preparedStatement = null;
         Connection conn = null;
         try {
 
@@ -3131,7 +3132,52 @@ abstract class AbstractSqlEamDb implements EamDb {
                 // regardless of whether this succeeds.
                 EamDbUtil.insertDefaultOrganization(conn);
             }
+            if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
+                //update central repository to be able to store new correlation attributes 
+                EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+                final String addSsidTableTemplate;
+                final String addCaseIdIndexTemplate;
+                final String addDataSourceIdIndexTemplate;
+                final String addValueIndexTemplate;
+                final String addKnownStatusIndexTemplate;
+                switch (selectedPlatform) {
+                    case POSTGRESQL:
+                        //create table  //settings.getStatementTemplate then statement.execute here with the added table
+                        //add correlation attr to correlation_attrs table
+                        addSsidTableTemplate = PostgresEamDbSettings.getCreateArtifactInstancesTableTemplate();
+                        addCaseIdIndexTemplate = PostgresEamDbSettings.getAddCaseIdIndexTemplate();
+                        addDataSourceIdIndexTemplate = PostgresEamDbSettings.getAddDataSourceIdIndexTemplate();
+                        addValueIndexTemplate = PostgresEamDbSettings.getAddValueIndexTemplate();
+                        addKnownStatusIndexTemplate = PostgresEamDbSettings.getAddKnownStatusIndexTemplate();
+                        break;
+                    case SQLITE:
+                        addSsidTableTemplate = SqliteEamDbSettings.getCreateArtifactInstancesTableTemplate();
+                        addCaseIdIndexTemplate = SqliteEamDbSettings.getAddCaseIdIndexTemplate();
+                        addDataSourceIdIndexTemplate = SqliteEamDbSettings.getAddDataSourceIdIndexTemplate();
+                        addValueIndexTemplate = SqliteEamDbSettings.getAddValueIndexTemplate();
+                        addKnownStatusIndexTemplate = SqliteEamDbSettings.getAddKnownStatusIndexTemplate();
+                        break;
+                    default:
+                        throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
+                }
+                final String wirelessNetworsDbTableName = "wireless_networks";
+                final String wirelessNetworksTableInstanceName = wirelessNetworsDbTableName + "_instances";
+                final String addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
+                preparedStatement = conn.prepareStatement(addAttributeSql);
+                preparedStatement.setInt(1, CorrelationAttributeInstance.SSID_TYPE_ID);
+                preparedStatement.setString(2, Bundle.CorrelationType_SSID_displayName());
+                preparedStatement.setString(3, wirelessNetworsDbTableName);
+                preparedStatement.setInt(4, 1);
+                preparedStatement.setInt(5, 1);
+                preparedStatement.execute();
 
+                statement.execute(String.format(addSsidTableTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
+                statement.execute(String.format(addCaseIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
+                statement.execute(String.format(addDataSourceIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
+                statement.execute(String.format(addValueIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
+                statement.execute(String.format(addKnownStatusIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
+
+            }
             if (!updateSchemaVersion(conn)) {
                 throw new EamDbException("Error updating schema version");
             }
@@ -3149,6 +3195,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw ex;
         } finally {
             EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeStatement(statement);
             EamDbUtil.closeConnection(conn);
         }
