@@ -46,7 +46,7 @@ class DataSourcesTableModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return CasesTableColumns.values().length;
+        return DataSourcesTableColumns.values().length;
     }
 
     @Override
@@ -56,7 +56,7 @@ class DataSourcesTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int colIdx) {
-        return CasesTableColumns.values()[colIdx].columnName();
+        return DataSourcesTableColumns.values()[colIdx].columnName();
     }
 
     @Override
@@ -65,7 +65,7 @@ class DataSourcesTableModel extends AbstractTableModel {
             return Bundle.DataSourcesTableModel_noData();
         }
 
-        return mapValueById(rowIdx, CasesTableColumns.values()[colIdx]);
+        return mapValueById(rowIdx, DataSourcesTableColumns.values()[colIdx]);
     }
 
     /**
@@ -77,7 +77,7 @@ class DataSourcesTableModel extends AbstractTableModel {
      * @return value in the cell
      */
     @Messages({"DataSourcesTableModel.noData=No Data Sources"})
-    private Object mapValueById(int rowIdx, CasesTableColumns colId) {
+    private Object mapValueById(int rowIdx, DataSourcesTableColumns colId) {
         CorrelationDataSource dataSource = dataSources.get(rowIdx);
         String value = Bundle.DataSourcesTableModel_noData();
 
@@ -122,7 +122,7 @@ class DataSourcesTableModel extends AbstractTableModel {
     /**
      * Enum which lists columns of interest from CorrelationDataSource.
      */
-    private enum CasesTableColumns {
+    private enum DataSourcesTableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
         DATA_SOURCE(Bundle.DataSourcesTableModel_dataSource()),
@@ -135,7 +135,7 @@ class DataSourcesTableModel extends AbstractTableModel {
          *
          * @param columnName the name of the column.
          */
-        CasesTableColumns(String columnName) {
+        DataSourcesTableColumns(String columnName) {
             this.columnName = columnName;
         }
 

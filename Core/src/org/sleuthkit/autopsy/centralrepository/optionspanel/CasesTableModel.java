@@ -46,7 +46,7 @@ class CasesTableModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return DataSourceTableColumns.values().length;
+        return CaseTableColumns.values().length;
     }
 
     @Override
@@ -56,7 +56,7 @@ class CasesTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int colIdx) {
-        return DataSourceTableColumns.values()[colIdx].columnName();
+        return CaseTableColumns.values()[colIdx].columnName();
     }
 
     @Override
@@ -65,7 +65,7 @@ class CasesTableModel extends AbstractTableModel {
             return Bundle.CasesTableModel_noData();
         }
 
-        return mapValueById(rowIdx, DataSourceTableColumns.values()[colIdx]);
+        return mapValueById(rowIdx, CaseTableColumns.values()[colIdx]);
     }
 
     /**
@@ -77,7 +77,7 @@ class CasesTableModel extends AbstractTableModel {
      * @return value in the cell
      */
     @Messages({"CasesTableModel.noData=No Cases"})
-    private Object mapValueById(int rowIdx, DataSourceTableColumns colId) {
+    private Object mapValueById(int rowIdx, CaseTableColumns colId) {
         CaseDataSourcesWrapper eamCase = eamCases.get(rowIdx);
         String value = Bundle.CasesTableModel_noData();
 
@@ -127,7 +127,7 @@ class CasesTableModel extends AbstractTableModel {
      */
     @Messages({"CasesTableModel.case=Case Name",
         "CasesTableModel.creationDate=Creation Date"})
-    private enum DataSourceTableColumns {
+    private enum CaseTableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
         CASE_NAME(Bundle.CasesTableModel_case()),
@@ -140,7 +140,7 @@ class CasesTableModel extends AbstractTableModel {
          *
          * @param columnName the name of the column.s
          */
-        DataSourceTableColumns(String columnName) {
+        CaseTableColumns(String columnName) {
             this.columnName = columnName;
         }
 
