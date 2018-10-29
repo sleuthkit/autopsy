@@ -38,20 +38,20 @@ import org.openide.util.NbBundle.Messages;
  * central repo information associated with them.
  *
  */
-final class CaseManagerDialog extends javax.swing.JDialog {
+final class ManageCasesDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
     private final CasesTableModel casesTableModel = new CasesTableModel();
     private final DataSourcesTableModel dataSourcesTableModel = new DataSourcesTableModel();
-    private final static Logger logger = Logger.getLogger(CaseManagerDialog.class.getName());
+    private final static Logger logger = Logger.getLogger(ManageCasesDialog.class.getName());
 
     /**
-     * Creates new form CaseManagerDialog
+     * Creates new form ManageCasesDialog
      */
     @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-    @Messages({"CaseManagerDialog.title.text=Case Manager"})
-    private CaseManagerDialog() {
-        super(WindowManager.getDefault().getMainWindow(), Bundle.CaseManagerDialog_title_text(),
+    @Messages({"ManageCasesDialog.title.text=Manage Cases"})
+    private ManageCasesDialog() {
+        super(WindowManager.getDefault().getMainWindow(), Bundle.ManageCasesDialog_title_text(),
                 true);
         initComponents();
         try {
@@ -83,11 +83,11 @@ final class CaseManagerDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Create and display the Case Manager dialog for the currently enabled
+     * Create and display the Manage Cases dialog for the currently enabled
      * central repository.
      */
-    static void displayCaseManagerDialog() {
-        CaseManagerDialog caseInfoDialog = new CaseManagerDialog();
+    static void displayManageCasesDialog() {
+        ManageCasesDialog caseInfoDialog = new ManageCasesDialog();
         caseInfoDialog.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         caseInfoDialog.setVisible(true);
     }
@@ -147,23 +147,23 @@ final class CaseManagerDialog extends javax.swing.JDialog {
         notesTextArea.setBorder(null);
         notesScrollPane.setViewportView(notesTextArea);
 
-        org.openide.awt.Mnemonics.setLocalizedText(caseInfoLabel, org.openide.util.NbBundle.getMessage(CaseManagerDialog.class, "CaseManagerDialog.caseInfoLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(caseInfoLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.caseInfoLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(dataSourcesLabel, org.openide.util.NbBundle.getMessage(CaseManagerDialog.class, "CaseManagerDialog.dataSourcesLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourcesLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.dataSourcesLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(notesLabel, org.openide.util.NbBundle.getMessage(CaseManagerDialog.class, "CaseManagerDialog.notesLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(notesLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.notesLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(orgLabel, org.openide.util.NbBundle.getMessage(CaseManagerDialog.class, "CaseManagerDialog.orgLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(orgLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.orgLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(caseNumberLabel, org.openide.util.NbBundle.getMessage(CaseManagerDialog.class, "CaseManagerDialog.caseNumberLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(caseNumberLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.caseNumberLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(examinerEmailLabel, org.openide.util.NbBundle.getMessage(CaseManagerDialog.class, "CaseManagerDialog.examinerEmailLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(examinerEmailLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.examinerEmailLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(examinerNameLabel, org.openide.util.NbBundle.getMessage(CaseManagerDialog.class, "CaseManagerDialog.examinerNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(examinerNameLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.examinerNameLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneLabel, org.openide.util.NbBundle.getMessage(CaseManagerDialog.class, "CaseManagerDialog.examinerPhoneLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(examinerPhoneLabel, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.examinerPhoneLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(CaseManagerDialog.class, "CaseManagerDialog.closeButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(ManageCasesDialog.class, "ManageCasesDialog.closeButton.text")); // NOI18N
         closeButton.setMaximumSize(new java.awt.Dimension(65, 23));
         closeButton.setMinimumSize(new java.awt.Dimension(65, 23));
         closeButton.setPreferredSize(new java.awt.Dimension(65, 23));
