@@ -159,7 +159,6 @@ public class EamArtifactUtil {
                         return null;
                     }
                 }
-
             } else if (correlationType.getId() == CorrelationAttributeInstance.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
@@ -169,12 +168,6 @@ public class EamArtifactUtil {
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID() == artifactTypeID) {
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID)).getValueString();
             } 
-//            else if (correlationType.getId() == CorrelationAttributeInstance.MAC_TYPE_ID) {
-//                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BSSID)).getValueString();
-//            } else if (correlationType.getId() == CorrelationAttributeInstance.IMEI_TYPE_ID) {
-//                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_BSSID)).getValueString();
-//            }
-
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
             return null;

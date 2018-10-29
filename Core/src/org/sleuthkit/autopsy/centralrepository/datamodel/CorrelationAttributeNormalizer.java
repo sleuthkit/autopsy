@@ -64,8 +64,6 @@ final public class CorrelationAttributeNormalizer {
             case CorrelationAttributeInstance.USBID_TYPE_ID:
                 return normalizeUsbId(data);
             case CorrelationAttributeInstance.SSID_TYPE_ID:
-            case CorrelationAttributeInstance.MAC_TYPE_ID:
-            case CorrelationAttributeInstance.IMEI_TYPE_ID:
                 return data;
             default:
                 final String errorMessage = String.format(
