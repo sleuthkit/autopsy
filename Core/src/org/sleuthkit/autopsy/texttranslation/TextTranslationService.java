@@ -18,27 +18,41 @@
  */
 package org.sleuthkit.autopsy.texttranslation;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+
 import org.openide.util.Lookup;
 
 /**
- * Service for finding and running TextTranslator implementations
+ * Performs a lookup for a TextTranslator service provider and if present,
+ * will use this provider to run translation on the input.
  */
-public class TextTranslationService {
+public final class TextTranslationService {
     
+    private final static TextTranslationService tts = new TextTranslationService();
+
     private final Optional<TextTranslator> translator;
-       
-    /**
-     * 
-     */
-    public TextTranslationService() {
+
+    private static ExecutorService pool;
+    private final static Integer MAX_POOL_SIZE = 10;
+    
+    private TextTranslationService(){
+        //Perform look up for Text Translation implementations ONLY ONCE during 
+        //class loading.
         translator = Optional.ofNullable(Lookup.getDefault()
                 .lookup(TextTranslator.class));
     }
+    
+    public static TextTranslationService getInstance() {
+        return tts;
+    }
 
     /**
-     * Performs a lookup for a TextTranslator service provider and if present,
-     * will use this provider to run translation on the input.
+     * Translates the input string using whichever TextTranslator Service Provider 
+     * was found during lookup.
      *
      * @param input Input string to be translated
      *
@@ -59,13 +73,51 @@ public class TextTranslationService {
     }
 
     /**
-     * Exception to indicate that no Service Provider could be found during the
-     * Lookup action.
+     * Makes the call to translate(String) happen asynchronously on a background
+     * thread. When it is done, it will use the appropriate TranslationCallback
+     * method.
+     *
+     * @param input String to be translated
+     * @param tcb   Interface for handling the translation result or any
+     *              exceptions thrown while running translate.
+     *
      */
-    public class NoServiceProviderException extends Exception {
+    public void translateAsynchronously(String input, TranslationCallback tcb) {
+        if (translator.isPresent()) {
+            //Delay thread pool initialization until an asynchronous task is first called.
+            //That way we don't have threads sitting parked in the background for no reason.
+            if (pool == null) {
+                ThreadFactory translationFactory = new ThreadFactoryBuilder()
+                        .setNameFormat("translation-thread-%d")
+                        .build();
+                pool = Executors.newFixedThreadPool(MAX_POOL_SIZE, translationFactory);
+            }
 
-        public NoServiceProviderException(String msg) {
-            super(msg);
+            //Submit the task to the pool, calling the appropriate method depending 
+            //on the result of the translate operation.
+            pool.submit(() -> {
+                try {
+                    String translation = translate(input);
+                    tcb.onTranslationResult(translation);
+                } catch (NoServiceProviderException ex) {
+                    tcb.onNoServiceProviderException(ex);
+                } catch (TranslationException ex) {
+                    tcb.onTranslationException(ex);
+                }
+            });
         }
+
+        tcb.onNoServiceProviderException(new NoServiceProviderException(
+                "Could not find a TextTranslator service provider"));
+    }
+
+    /**
+     * Returns if a TextTranslator lookup successfully found an implementing
+     * class.
+     *
+     * @return 
+     */
+    public boolean hasProvider() {
+        return translator.isPresent();
     }
 }

@@ -72,7 +72,8 @@ public final class UserPreferences {
     public static final String GROUP_ITEMS_IN_TREE_BY_DATASOURCE = "GroupItemsInTreeByDataSource"; //NON-NLS
     public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
     public static final String HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES = "HideCentralRepoCommentsAndOccurrences";
-
+    public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
+    
     // Prevent instantiation.
     private UserPreferences() {
     }
@@ -243,6 +244,14 @@ public final class UserPreferences {
      */
     public static void setHideCentralRepoCommentsAndOccurrences(boolean value) {
         preferences.putBoolean(HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES, value);
+    }
+    
+    public static void setDisplayTranslationFileNames(boolean value) {
+        preferences.putBoolean(DISPLAY_TRANSLATED_NAMES, value);
+    }
+    
+    public static boolean displayTranslationFileNames() {
+        return preferences.getBoolean(DISPLAY_TRANSLATED_NAMES, false);
     }
 
     /**

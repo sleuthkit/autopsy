@@ -92,6 +92,8 @@
                               </Group>
                               <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="centralRepoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="deletedFilesLimitLabel" alignment="0" min="-2" pref="215" max="-2" attributes="0"/>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Group type="103" groupAlignment="0" attributes="0">
                                               <Component id="hideKnownFilesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -114,9 +116,11 @@
                                                       </Group>
                                                   </Group>
                                               </Group>
+                                              <Component id="hideOtherUsersTagsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                           </Group>
                                           <EmptySpace type="separate" max="-2" attributes="0"/>
                                           <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="fileDisplayLabel" min="-2" max="-2" attributes="0"/>
                                               <Component id="displayTimeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                               <Group type="102" alignment="0" attributes="0">
                                                   <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
@@ -125,14 +129,12 @@
                                                       <Component id="useBestViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                                       <Component id="useGMTTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                                       <Component id="useLocalTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="translatedNamesButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                               </Group>
                                               <Component id="selectFileLabel" min="-2" max="-2" attributes="0"/>
                                           </Group>
                                       </Group>
-                                      <Component id="hideOtherUsersTagsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="centralRepoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="deletedFilesLimitLabel" alignment="0" min="-2" pref="215" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace min="0" pref="10" max="32767" attributes="0"/>
                               </Group>
@@ -174,9 +176,15 @@
                               </Group>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="hideOtherUsersTagsLabel" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="fileDisplayLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="hideOtherUsersTagsLabel" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="hideOtherUsersTagsCheckbox" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="hideOtherUsersTagsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="translatedNamesButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="centralRepoLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
@@ -353,6 +361,23 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.deletedFilesLimitLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JRadioButton" name="translatedNamesButton">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.translatedNamesButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="translatedNamesButtonActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="fileDisplayLabel">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.fileDisplayLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>

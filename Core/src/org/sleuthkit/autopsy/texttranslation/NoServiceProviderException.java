@@ -19,11 +19,12 @@
 package org.sleuthkit.autopsy.texttranslation;
 
 /**
- * Interface for creating text translators. Implementing classes will be picked
- * up and run by the Text Translation Service.
+ * Exception to indicate that no Service Provider could be found during the
+ * Lookup action.
  */
-public interface TextTranslator {
+public class NoServiceProviderException extends Exception {
 
-    String translate(String input) throws TranslationException;
-    
+    public NoServiceProviderException(String msg) {
+        super(msg);
+    }
 }

@@ -69,7 +69,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         }
     }
 
-    @Override
     public <T> T accept(ContentNodeVisitor<T> visitor) {
         return visitor.visit(this);
     }
