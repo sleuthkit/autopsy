@@ -88,9 +88,8 @@ public class TimeZoneUtils {
         /*
          * Create a list of time zones.
          */
-        List<TimeZone> timeZoneList = new ArrayList<>(); //DLG: NEW!
+        List<TimeZone> timeZoneList = new ArrayList<>();
         
-        // load and add all timezone
         String[] ids = SimpleTimeZone.getAvailableIDs();
         for (String id : ids) {
             /*
