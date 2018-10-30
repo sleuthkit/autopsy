@@ -67,7 +67,7 @@ import org.sleuthkit.datamodel.TskData;
  * @param <T> type of the AbstractFile to encapsulate
  */
 public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends AbstractContentNode<T> {
-    
+
     private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
     @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
     private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
@@ -268,38 +268,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         },
         COMMENT(AbstractAbstractFileNode_createSheet_comment_name()) {
-            Optional<Pair<String, HasCommentStatus>> result = Optional.empty();
-            List<ContentTag> scoreAndCommentTags;
-            CorrelationAttributeInstance correlationAttribute;
-
-            private void initResult(AbstractFile content) {
-                scoreAndCommentTags = getContentTagsFromDatabase(content);
-                correlationAttribute = null;
-                if (EamDbUtil.useCentralRepo()
-                        && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-                    if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-                        correlationAttribute = getCorrelationAttributeInstance(content);
-                    }
-                }
-                result = Optional.of(getCommentProperty(scoreAndCommentTags, correlationAttribute));
-            }
-
             @Override
             public Object getPropertyValue(AbstractFile content) {
-                if (!this.result.isPresent()) {
-                    initResult(content);
+                List<ContentTag> scoreAndCommentTags = getContentTagsFromDatabase(content);
+                CorrelationAttributeInstance correlationAttribute = null;
+                if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+                    correlationAttribute = getCorrelationAttributeInstance(content);
                 }
-                HasCommentStatus res = result.get().getRight();
-                result = Optional.empty();
-                return res;
-            }
-
-            @Override
-            public String getDescription(AbstractFile content) {
-                if (!this.result.isPresent()) {
-                    initResult(content);
-                }
-                return result.get().getLeft();
+                return getCommentProperty(scoreAndCommentTags, correlationAttribute);
             }
         },
         COUNT(AbstractAbstractFileNode_createSheet_count_name()) {
@@ -324,8 +300,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
             @Override
             public boolean isDisabled() {
-                return !EamDbUtil.useCentralRepo()
-                        || UserPreferences.hideCentralRepoCommentsAndOccurrences();
+                return UserPreferences.hideCentralRepoCommentsAndOccurrences()
+                        || !EamDbUtil.useCentralRepo();
             }
 
             @Override
@@ -335,7 +311,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 }
                 return result.get().getLeft();
             }
-
         },
         LOCATION(AbstractAbstractFileNode_locationColLbl()) {
             @Override
@@ -469,7 +444,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             return displayString;
         }
 
-        public static FileProperty getPropertyFromDisplayName(String displayName) {
+        static FileProperty getPropertyFromDisplayName(String displayName) {
             for (FileProperty p : AbstractFilePropertyType.values()) {
                 if (p.getPropertyName().equals(displayName)) {
                     return p;
@@ -478,7 +453,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             return null;
         }
     }
-    
+
     /**
      * Fill map with AbstractFile properties
      *
@@ -528,7 +503,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
-    private static Pair<String, HasCommentStatus> getCommentProperty(List<ContentTag> tags, CorrelationAttributeInstance attribute) {
+    private static HasCommentStatus getCommentProperty(List<ContentTag> tags, CorrelationAttributeInstance attribute) {
 
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
 
@@ -546,7 +521,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 status = HasCommentStatus.CR_COMMENT;
             }
         }
-        return Pair.of(NO_DESCR, status);
+        return status;
     }
 
     /**

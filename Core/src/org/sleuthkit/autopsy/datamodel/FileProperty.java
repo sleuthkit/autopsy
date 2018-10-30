@@ -11,19 +11,21 @@ import org.sleuthkit.datamodel.AbstractFile;
  *
  * @author dsmyda
  */
-public interface FileProperty {
+
+//No modifier means its is only package usable (not part of public api)
+interface FileProperty {
     /**
      * 
      * @param content
      * @return 
      */
-    public Object getPropertyValue(AbstractFile content);
+    Object getPropertyValue(AbstractFile content);
     
     /**
      * 
      * @return 
      */
-    public default String getPropertyName(){
+    default String getPropertyName(){
         return this.toString();
     }
     
@@ -31,7 +33,7 @@ public interface FileProperty {
      * 
      * @return 
      */
-    public default boolean isDisabled() {
+    default boolean isDisabled() {
         return false;
     }
     
@@ -40,7 +42,7 @@ public interface FileProperty {
      * @param content
      * @return 
      */
-    public default String getDescription(AbstractFile content) {
+    default String getDescription(AbstractFile content) {
         return "";
     }
 }
