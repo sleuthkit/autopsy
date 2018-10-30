@@ -3136,6 +3136,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 // regardless of whether this succeeds.
                 EamDbUtil.insertDefaultOrganization(conn);
             }
+            //Update to 1.2
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
                 //update central repository to be able to store new correlation attributes 
                 EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
