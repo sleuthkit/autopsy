@@ -3121,7 +3121,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 return;
             }
             if (dbSchemaVersion.compareTo(CURRENT_DB_SCHEMA_VERSION) > 0) {
-                logger.log(Level.INFO, "Central Repository is of newer version than software creates")
+                logger.log(Level.INFO, "Central Repository is of newer version than software creates");
                 return;
             }
             
