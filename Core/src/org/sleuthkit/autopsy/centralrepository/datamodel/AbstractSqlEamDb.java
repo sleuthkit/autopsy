@@ -3120,7 +3120,11 @@ abstract class AbstractSqlEamDb implements EamDb {
                 logger.log(Level.INFO, "Central Repository is up to date");
                 return;
             }
-
+            if (dbSchemaVersion.compareTo(CURRENT_DB_SCHEMA_VERSION) > 0) {
+                logger.log(Level.INFO, "Central Repository is of newer version than software creates")
+                return;
+            }
+            
             // Update from 1.0 to 1.1
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
