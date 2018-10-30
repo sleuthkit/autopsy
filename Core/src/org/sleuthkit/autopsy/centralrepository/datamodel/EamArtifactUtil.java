@@ -163,11 +163,10 @@ public class EamArtifactUtil {
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID)).getValueString();
-            } 
-            else if (correlationType.getId() == CorrelationAttributeInstance.SSID_TYPE_ID
+            } else if (correlationType.getId() == CorrelationAttributeInstance.SSID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID() == artifactTypeID) {
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID)).getValueString();
-            } 
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
             return null;
@@ -187,7 +186,7 @@ public class EamArtifactUtil {
      * Uses the determined type and vallue, then looks up instance details to
      * create proper CorrelationAttributeInstance.
      *
-     * @param bbArtifact      the blackboard artifatc
+     * @param bbArtifact      the blackboard artifact
      * @param correlationType the given type
      * @param value           the artifact value
      *

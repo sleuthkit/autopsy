@@ -3140,10 +3140,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                 final String addDataSourceIdIndexTemplate;
                 final String addValueIndexTemplate;
                 final String addKnownStatusIndexTemplate;
+                //get the data base specific code for creating a new _instance table
                 switch (selectedPlatform) {
                     case POSTGRESQL:
-                        //create table  //settings.getStatementTemplate then statement.execute here with the added table
-                        //add correlation attr to correlation_attrs table
                         addSsidTableTemplate = PostgresEamDbSettings.getCreateArtifactInstancesTableTemplate();
                         addCaseIdIndexTemplate = PostgresEamDbSettings.getAddCaseIdIndexTemplate();
                         addDataSourceIdIndexTemplate = PostgresEamDbSettings.getAddDataSourceIdIndexTemplate();
@@ -3162,6 +3161,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 }
                 final String wirelessNetworsDbTableName = "wireless_networks";
                 final String wirelessNetworksTableInstanceName = wirelessNetworsDbTableName + "_instances";
+                //add the wireless_networks attribute to the correlation_types table
                 final String addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
                 preparedStatement = conn.prepareStatement(addAttributeSql);
                 preparedStatement.setInt(1, CorrelationAttributeInstance.SSID_TYPE_ID);
@@ -3171,6 +3171,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setInt(5, 1);
                 preparedStatement.execute();
 
+                //create a new wireless_networks_instances table and add indexes for its columns
                 statement.execute(String.format(addSsidTableTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addCaseIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addDataSourceIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));

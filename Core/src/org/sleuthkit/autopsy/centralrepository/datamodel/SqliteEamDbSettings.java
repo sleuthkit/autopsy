@@ -415,7 +415,14 @@ public final class SqliteEamDbSettings {
         }
         return true;
     }
-
+    
+    /**
+     * Get the template String for creating a new _instances table in a Sqlite
+     * central repository. %s will exist in the template where the name of the
+     * new table will be addedd.
+     *
+     * @return a String which is a template for cretating a new _instances table
+     */
     static String getCreateArtifactInstancesTableTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
         StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
@@ -434,21 +441,53 @@ public final class SqliteEamDbSettings {
         return createArtifactInstancesTableTemplate.toString();
     }
 
+    /**
+     * Get the template for creating an index on the case_id column of an
+     * instance table. %s will exist in the template where the name of the new
+     * table will be addedd.
+     *
+     * @return a String which is a template for adding an index to the case_id
+     *         column of a _instances table
+     */
     static String getAddCaseIdIndexTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
         return "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
     }
 
+    /**
+     * Get the template for creating an index on the data_source_id column of an
+     * instance table. %s will exist in the template where the name of the new
+     * table will be addedd.
+     *
+     * @return a String which is a template for adding an index to the
+     *         data_source_id column of a _instances table
+     */
     static String getAddDataSourceIdIndexTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
         return "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
     }
 
+    /**
+     * Get the template for creating an index on the value column of an instance
+     * table. %s will exist in the template where the name of the new table will
+     * be addedd.
+     *
+     * @return a String which is a template for adding an index to the value
+     *         column of a _instances table
+     */
     static String getAddValueIndexTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
         return "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
     }
 
+    /**
+     * Get the template for creating an index on the known_status column of an
+     * instance table. %s will exist in the template where the name of the new
+     * table will be addedd.
+     *
+     * @return a String which is a template for adding an index to the
+     *         known_status column of a _instances table
+     */
     static String getAddKnownStatusIndexTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
         return "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
