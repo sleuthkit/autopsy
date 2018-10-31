@@ -29,6 +29,8 @@
 
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
         <dependency conf="core->default" org="com.googlecode.plist" name="dd-plist" rev="1.20"/>
+		
+		<dependency conf="core->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.9.7"/>
          
         <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         

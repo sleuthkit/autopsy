@@ -25,10 +25,15 @@ package org.sleuthkit.autopsy.report;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
-
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -50,7 +55,10 @@ class ReportCaseUco implements GeneralReportModule {
     private SleuthkitCase skCase;
 
     private String reportPath;
-
+    
+    private JsonFactory jsonGeneratorFactory;
+    private JsonGenerator masterCatalog;
+    
     // Hidden constructor for the report
     private ReportCaseUco() {
     }
@@ -82,7 +90,21 @@ class ReportCaseUco implements GeneralReportModule {
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
+        
+        // Create the JSON generator
+        jsonGeneratorFactory = new JsonFactory();
+        jsonGeneratorFactory.setRootValueSeparator("\r\n");
         reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
+        Path catalogPath = Paths.get(reportPath);
+        try {
+            Files.createDirectories(catalogPath.getParent());
+            java.io.File catalogFile = catalogPath.toFile();
+            masterCatalog = jsonGeneratorFactory.createGenerator(catalogFile, JsonEncoding.UTF8);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error while initializing CASE/UCO report", ex); //NON-NLS
+            // ELTODO what else needs to be done here?
+            return;
+        }
         
         skCase = currentCase.getSleuthkitCase();
 
@@ -103,7 +125,7 @@ class ReportCaseUco implements GeneralReportModule {
 
             int size = fs.size();
             progressPanel.setMaximumProgress(size / 100);
-
+            
             BufferedWriter out = null;
             try {
                 // MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime
@@ -123,38 +145,10 @@ class ReportCaseUco implements GeneralReportModule {
                         count = 0;
                     }
 
-                    if (file.getMd5Hash() != null) {
-                        out.write(file.getMd5Hash());
-                    }
-                    out.write("|");
-                    if (file.getUniquePath() != null) {
-                        out.write(file.getUniquePath());
-                    }
-                    out.write("|");
-                    out.write(Long.toString(file.getMetaAddr()));
-                    out.write("|");
-                    String modeString = file.getModesAsString();
-                    if (modeString != null) {
-                        out.write(modeString);
-                    }
-                    out.write("|");
-                    out.write(Long.toString(file.getUid()));
-                    out.write("|");
-                    out.write(Long.toString(file.getGid()));
-                    out.write("|");
-                    out.write(Long.toString(file.getSize()));
-                    out.write("|");
-                    out.write(Long.toString(file.getAtime()));
-                    out.write("|");
-                    out.write(Long.toString(file.getMtime()));
-                    out.write("|");
-                    out.write(Long.toString(file.getCtime()));
-                    out.write("|");
-                    out.write(Long.toString(file.getCrtime()));
-                    out.write("\n");
+
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write the temp body file report.", ex); //NON-NLS
+                logger.log(Level.WARNING, "Could not write the temp CASE/UCO report.", ex); //NON-NLS
             } finally {
                 try {
                     if (out != null) {
