@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javax.swing.SwingUtilities;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -99,7 +100,7 @@ public class TimeLineModule {
                 if (evt.getNewValue() == null) {
                     synchronized (controllerLock) {
                         if (controller != null) {
-                            controller.shutDownTimeLine();
+                            SwingUtilities.invokeLater(controller::shutDownTimeLine);
                         }
                         controller = null;
                     }

@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;

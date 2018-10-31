@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
 
 /**
  */
-public class RootFilterState implements FilterState<RootFilter>, CompoundFilterState< TimelineFilter, RootFilter> {
+public class RootFilterState implements CompoundFilterState< TimelineFilter, RootFilter> {
 
     private final CompoundFilterState<TypeFilter, TypeFilter> typeFilterState;
     private final DefaultFilterState<HideKnownFilter> knownFilterState;
@@ -75,10 +75,12 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
         this.hashHitsFilterState = hashHitsFilterState;
         this.dataSourcesFilterState = dataSourcesFilterState;
         subFilterStates.addAll(
-                knownFilterState, textFilterState,
+                knownFilterState,
+                textFilterState,
                 tagsFilterState,
                 hashHitsFilterState,
-                dataSourcesFilterState, typeFilterState);
+                dataSourcesFilterState,
+                typeFilterState);
     }
 
     /**
