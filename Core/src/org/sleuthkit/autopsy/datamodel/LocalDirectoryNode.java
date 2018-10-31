@@ -69,12 +69,12 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
         addScoreProperty(sheetSet, tags);
         
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
         
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
         // At present, a LocalDirectory will never be a datasource - the top level of a logical

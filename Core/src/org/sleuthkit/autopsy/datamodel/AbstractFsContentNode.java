@@ -89,12 +89,12 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         
         //add the comment property before the propertyMap to ensure it is early in column order
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
         
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
         

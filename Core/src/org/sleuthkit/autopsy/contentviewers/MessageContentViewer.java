@@ -735,12 +735,12 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
             addScoreProperty(sheetSet, tags);
             
             CorrelationAttributeInstance correlationAttribute = null;
-            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+            if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
                 correlationAttribute = getCorrelationAttributeInstance();
             }
             addCommentProperty(sheetSet, tags, correlationAttribute);
             
-            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+            if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
                 addCountProperty(sheetSet, correlationAttribute);
             }
             sheetSet.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));

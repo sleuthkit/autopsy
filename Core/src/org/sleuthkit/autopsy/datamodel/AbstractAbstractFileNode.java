@@ -369,25 +369,30 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     @NbBundle.Messages({"AbstractAbstractFileNode.createSheet.count.name=O",
         "AbstractAbstractFileNode.createSheet.count.displayName=O",
-        "AbstractAbstractFileNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated",
+        "AbstractAbstractFileNode.createSheet.count.errorGettingCount.description=Unable to get count",
         "AbstractAbstractFileNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated",
         "# {0} - occuranceCount",
         "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
     protected final void addCountProperty(Sheet.Set sheetSet, CorrelationAttributeInstance attribute) {
+         if (attribute == null) {
+            return; //central repository was not enabled if the correlation attribute is null so this column will not be added
+        }
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
-        String description = Bundle.AbstractAbstractFileNode_createSheet_count_noCentralRepo_description();
+        String description;
         try {
             //don't perform the query if there is no correlation value
-            if (attribute != null && StringUtils.isNotBlank(attribute.getCorrelationValue())) {
+            if (StringUtils.isNotBlank(attribute.getCorrelationValue())) {
                 count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(attribute.getCorrelationType(), attribute.getCorrelationValue());
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_description(count);
-            } else if (attribute != null) {
+            } else {
                 description = Bundle.AbstractAbstractFileNode_createSheet_count_hashLookupNotRun_description();
             }
         } catch (EamDbException ex) {
             logger.log(Level.WARNING, "Error getting count of datasources with correlation attribute", ex);
+            description = Bundle.AbstractAbstractFileNode_createSheet_count_errorGettingCount_description();
         } catch (CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
+            description = Bundle.AbstractAbstractFileNode_createSheet_count_errorGettingCount_description();
         }
         
         sheetSet.put(
