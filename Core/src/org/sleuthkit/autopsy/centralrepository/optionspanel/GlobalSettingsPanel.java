@@ -120,6 +120,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         bnManageTypes = new javax.swing.JButton();
         correlationPropertiesScrollPane = new javax.swing.JScrollPane();
         correlationPropertiesTextArea = new javax.swing.JTextArea();
+        flagTaggedNotableItemsCheckbox = new javax.swing.JCheckBox();
         organizationPanel = new javax.swing.JPanel();
         manageOrganizationButton = new javax.swing.JButton();
         organizationScrollPane = new javax.swing.JScrollPane();
@@ -222,12 +223,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         correlationPropertiesTextArea.setColumns(20);
         correlationPropertiesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         correlationPropertiesTextArea.setLineWrap(true);
-        correlationPropertiesTextArea.setRows(2);
+        correlationPropertiesTextArea.setRows(1);
         correlationPropertiesTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.correlationPropertiesTextArea.text")); // NOI18N
         correlationPropertiesTextArea.setToolTipText("");
         correlationPropertiesTextArea.setWrapStyleWord(true);
         correlationPropertiesTextArea.setBorder(null);
         correlationPropertiesScrollPane.setViewportView(correlationPropertiesTextArea);
+
+        org.openide.awt.Mnemonics.setLocalizedText(flagTaggedNotableItemsCheckbox, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.flagTaggedNotableItemsCheckbox.text")); // NOI18N
 
         javax.swing.GroupLayout pnCorrelationPropertiesLayout = new javax.swing.GroupLayout(pnCorrelationProperties);
         pnCorrelationProperties.setLayout(pnCorrelationPropertiesLayout);
@@ -236,17 +239,21 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(correlationPropertiesScrollPane)
                     .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
-                        .addComponent(bnManageTypes)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 497, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(flagTaggedNotableItemsCheckbox))
+                    .addComponent(bnManageTypes))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pnCorrelationPropertiesLayout.setVerticalGroup(
             pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnCorrelationPropertiesLayout.createSequentialGroup()
-                .addGap(7, 7, 7)
-                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(flagTaggedNotableItemsCheckbox))
+                    .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnManageTypes)
                 .addGap(8, 8, 8))
@@ -281,7 +288,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(organizationPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(organizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(organizationScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 992, Short.MAX_VALUE)
+                    .addComponent(organizationScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 980, Short.MAX_VALUE)
                     .addGroup(organizationPanelLayout.createSequentialGroup()
                         .addComponent(manageOrganizationButton)
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -382,13 +389,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addComponent(ingestRunningWarningLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(organizationPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(casesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -451,6 +458,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         enableAllSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         cbUseCentralRepo.setSelected(EamDbUtil.useCentralRepo()); // NON-NLS
+        flagTaggedNotableItemsCheckbox.setSelected(EamDbUtil.flagNotableItems());
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
@@ -480,6 +488,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     @Override
     public void store() { // Click OK or Apply on Options Panel
         EamDbUtil.setUseCentralRepo(cbUseCentralRepo.isSelected());
+        EamDbUtil.setFlagNotableItems(flagTaggedNotableItemsCheckbox.isSelected());
     }
 
     /**
@@ -625,6 +634,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         showCasesButton.setEnabled(enable && !ingestRunning);
         casesPanel.setEnabled(enable && !ingestRunning);
         casesTextArea.setEnabled(enable && !ingestRunning);
+        flagTaggedNotableItemsCheckbox.setEnabled(enable && !ingestRunning);
         return true;
     }
 
@@ -637,6 +647,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JCheckBox cbUseCentralRepo;
     private javax.swing.JScrollPane correlationPropertiesScrollPane;
     private javax.swing.JTextArea correlationPropertiesTextArea;
+    private javax.swing.JCheckBox flagTaggedNotableItemsCheckbox;
     private javax.swing.JLabel ingestRunningWarningLabel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;

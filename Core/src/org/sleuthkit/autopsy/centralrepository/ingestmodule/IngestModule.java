@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -71,7 +72,6 @@ final class IngestModule implements FileIngestModule {
     private CorrelationDataSource eamDataSource;
     private Blackboard blackboard;
     private CorrelationAttributeInstance.Type filesType;
-
     private final boolean flagTaggedNotableItems;
 
     /**
@@ -79,8 +79,8 @@ final class IngestModule implements FileIngestModule {
      *
      * @param settings The ingest settings for the module instance.
      */
-    IngestModule(IngestSettings settings) {
-        flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
+    IngestModule() {
+        flagTaggedNotableItems = EamDbUtil.flagNotableItems();
     }
 
     @Override
@@ -214,9 +214,8 @@ final class IngestModule implements FileIngestModule {
 
         /*
          * Tell the IngestEventsListener to flag notable items based on the
-         * current module's configuration. This is a work around for the lack of
-         * an artifacts pipeline. Note that this can be changed by another
-         * module instance. All modules are affected by the value. While not
+         * global setting. This is a work around for the lack of
+         * an artifacts pipeline. All modules are affected by the value. While not
          * ideal, this will be good enough until a better solution can be
          * posited.
          *
