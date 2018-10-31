@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
 
 /**
  */
-public class RootFilterState implements FilterState<RootFilter>, CompoundFilterState< TimelineFilter, RootFilter> {
+public class RootFilterState implements CompoundFilterState< TimelineFilter, RootFilter> {
 
     private final CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState;
     private final DefaultFilterState<HideKnownFilter> knownFilterState;

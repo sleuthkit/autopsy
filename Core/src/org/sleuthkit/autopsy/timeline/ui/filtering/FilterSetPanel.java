@@ -124,14 +124,14 @@ final public class FilterSetPanel extends BorderPane {
 
         InvalidationListener applyFiltersListener = observable -> applyFilters();
 
-        this.filteredEvents.eventTypeZoomProperty().addListener(applyFiltersListener);
-        this.filteredEvents.descriptionLODProperty().addListener(applyFiltersListener);
-        this.filteredEvents.timeRangeProperty().addListener(applyFiltersListener);
+        filteredEvents.eventTypeZoomProperty().addListener(applyFiltersListener);
+        filteredEvents.descriptionLODProperty().addListener(applyFiltersListener);
+        filteredEvents.timeRangeProperty().addListener(applyFiltersListener);
 
-        this.filteredEvents.filterProperty().addListener(new ChangeListener<RootFilterState>() {
+        filteredEvents.filterProperty().addListener(new InvalidationListener() {
             @Override
-            public void changed(ObservableValue<? extends RootFilterState> observable, RootFilterState oldValue, RootFilterState newValue) {
-                 refresh();
+            public void invalidated(Observable observable) {
+                  refresh();
             }
         });
         refresh();
@@ -173,7 +173,7 @@ final public class FilterSetPanel extends BorderPane {
     }
 
     private void refresh() {
-        FilterTreeItem filterTreeItem = new FilterTreeItem(filteredEvents.getFilterState(), expansionMap);
+        FilterTreeItem filterTreeItem = new FilterTreeItem(filteredEvents.getFilterState().copyOf(), expansionMap);
         Platform.runLater(() -> {
             filterTreeTable.setRoot(filterTreeItem);
         });
@@ -181,7 +181,7 @@ final public class FilterSetPanel extends BorderPane {
 
     private void applyFilters() {
         Platform.runLater(() -> {
-            controller.pushFilters(((RootFilterState) filterTreeTable.getRoot().getValue()));
+            controller.pushFilters(((RootFilterState) filterTreeTable.getRoot().getValue().copyOf()));
         });
     }
 

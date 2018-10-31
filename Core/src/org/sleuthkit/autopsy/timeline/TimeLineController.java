@@ -572,9 +572,9 @@ public class TimeLineController {
     synchronized public void pushFilters(RootFilterState filter) {
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
         if (currentZoom == null) {
-            advance(InitialZoomState.withFilterState(filter.copyOf()));
+            advance(InitialZoomState.withFilterState(filter));
         } else if (currentZoom.hasFilterState(filter) == false) {
-            advance(currentZoom.withFilterState(filter.copyOf()));
+            advance(currentZoom.withFilterState(filter));
         }
     }
 

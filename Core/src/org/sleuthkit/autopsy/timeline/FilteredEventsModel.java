@@ -161,7 +161,7 @@ public final class FilteredEventsModel {
 
         datasourcesMap.addListener((MapChangeListener.Change<? extends Long, ? extends DataSource> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded().getName(), change.getKey());
-            RootFilterState rootFilter = filterProperty().get();
+            RootFilterState rootFilter = filterProperty().get().copyOf();
             rootFilter.getDataSourcesFilterState().getFilter().addSubFilter(dataSourceFilter);
             requestedFilter.set(rootFilter);
         });
@@ -184,7 +184,7 @@ public final class FilteredEventsModel {
             if (zoomState != null) {
                 synchronized (FilteredEventsModel.this) {
                     requestedTypeZoom.set(zoomState.getTypeZoomLevel());
-                    requestedFilter.set(zoomState.getFilterState().copyOf());
+                    requestedFilter.set(zoomState.getFilterState());
                     requestedTimeRange.set(zoomState.getTimeRange());
                     requestedLOD.set(zoomState.getDescriptionLOD());
                 }
@@ -251,9 +251,10 @@ public final class FilteredEventsModel {
     synchronized private void populateFilterData() throws TskCoreException {
         SleuthkitCase skCase = autoCase.getSleuthkitCase();
         hashSets.addAll(eventManager.getHashSetNames());
+        Set<Long> dataSourceIDs = eventManager.getDataSourceIDs();
 
         //because there is no way to remove a datasource we only add to this map.
-        for (Long id : eventManager.getDataSourceIDs()) {
+        for (Long id : dataSourceIDs) {
             try {
                 if (datasourcesMap.containsKey(id) == false) {
                     datasourcesMap.put(id, skCase.getDataSource(id));
