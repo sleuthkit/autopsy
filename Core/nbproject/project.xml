@@ -338,10 +338,6 @@
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
-<<<<<<< HEAD
-=======
-                <package>org.sleuthkit.autopsy.tabulardatareader</package>
->>>>>>> 4316-text-translation-service
                 <package>org.sleuthkit.autopsy.texttranslation</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>

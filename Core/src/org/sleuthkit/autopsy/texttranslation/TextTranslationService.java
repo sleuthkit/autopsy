@@ -18,11 +18,7 @@
  */
 package org.sleuthkit.autopsy.texttranslation;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import org.openide.util.Lookup;
 
@@ -35,9 +31,6 @@ public final class TextTranslationService {
     private final static TextTranslationService tts = new TextTranslationService();
 
     private final Optional<TextTranslator> translator;
-
-    private static ExecutorService pool;
-    private final static Integer MAX_POOL_SIZE = 10;
     
     private TextTranslationService(){
         //Perform look up for Text Translation implementations ONLY ONCE during 
@@ -70,45 +63,6 @@ public final class TextTranslationService {
         }
         throw new NoServiceProviderException(
                 "Could not find a TextTranslator service provider");
-    }
-
-    /**
-     * Makes the call to translate(String) happen asynchronously on a background
-     * thread. When it is done, it will use the appropriate TranslationCallback
-     * method.
-     *
-     * @param input String to be translated
-     * @param tcb   Interface for handling the translation result or any
-     *              exceptions thrown while running translate.
-     *
-     */
-    public void translateAsynchronously(String input, TranslationCallback tcb) {
-        if (translator.isPresent()) {
-            //Delay thread pool initialization until an asynchronous task is first called.
-            //That way we don't have threads sitting parked in the background for no reason.
-            if (pool == null) {
-                ThreadFactory translationFactory = new ThreadFactoryBuilder()
-                        .setNameFormat("translation-thread-%d")
-                        .build();
-                pool = Executors.newFixedThreadPool(MAX_POOL_SIZE, translationFactory);
-            }
-
-            //Submit the task to the pool, calling the appropriate method depending 
-            //on the result of the translate operation.
-            pool.submit(() -> {
-                try {
-                    String translation = translate(input);
-                    tcb.onTranslationResult(translation);
-                } catch (NoServiceProviderException ex) {
-                    tcb.onNoServiceProviderException(ex);
-                } catch (TranslationException ex) {
-                    tcb.onTranslationException(ex);
-                }
-            });
-        }
-
-        tcb.onNoServiceProviderException(new NoServiceProviderException(
-                "Could not find a TextTranslator service provider"));
     }
 
     /**

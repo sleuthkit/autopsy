@@ -5,36 +5,19 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.datamodel.AbstractFile;
-
 /**
  *
  * @author dsmyda
  */
 
 //No modifier means its is only package usable (not part of public api)
-interface FileProperty {
-    /**
-     * 
-     * @param content
-     * @return 
-     */
-    Object getPropertyValue(AbstractFile content);
+abstract class FileProperty {
     
-    /**
-     * 
-     * @return 
-     */
-    default String getPropertyName(){
-        return this.toString();
-    }
+    private String description = "";
+    private final String PROPERTY_NAME;
     
-    /**
-     * 
-     * @return 
-     */
-    default boolean isDisabled() {
-        return false;
+    public FileProperty(String propertyName) {
+        PROPERTY_NAME = propertyName;
     }
     
     /**
@@ -42,7 +25,36 @@ interface FileProperty {
      * @param content
      * @return 
      */
-    default String getDescription(AbstractFile content) {
-        return "";
+    public abstract Object getPropertyValue();
+    
+    /**
+     * 
+     * @return 
+     */
+    public String getPropertyName(){
+        return PROPERTY_NAME;
+    }
+    /**
+     * 
+     * @return 
+     */
+    public boolean isEnabled() {
+        return true;
+    }
+    
+    /*
+     * 
+     */
+    protected void setDescription(String description) {
+        this.description = description;
+    }
+    
+    /**
+     * 
+     * @param content
+     * @return 
+     */
+    public String getDescription() {
+        return description;
     }
 }

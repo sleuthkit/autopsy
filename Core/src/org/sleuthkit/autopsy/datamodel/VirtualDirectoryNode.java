@@ -73,33 +73,18 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
         "VirtualDirectoryNode.createSheet.deviceId.displayName=Device ID",
         "VirtualDirectoryNode.createSheet.deviceId.desc=Device ID of the image"})
     protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-        if (sheetSet == null) {
-            sheetSet = Sheet.createPropertiesSet();
+        //Do a special strategy for virtual directories..
+        if(this.content.isDataSource()){
+            Sheet sheet = getBlankSheet();
+            Sheet.Set sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
-        }
-        
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
+            
+            sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(),
                         "VirtualDirectoryNode.createSheet.name.displayName"),
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
         
-        if (!this.content.isDataSource()) {
-            Map<String, Object> map = new LinkedHashMap<>();
-            fillPropertyMap(map, getContent());
-
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                String desc = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
-                FileProperty p  = AbstractFilePropertyType.getPropertyFromDisplayName(entry.getKey());
-                if(!p.getDescription(content).isEmpty()) {
-                    desc = p.getDescription(content);
-                }
-                sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), desc, entry.getValue()));
-            }
-        
-        } else {
             sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),
                     Bundle.VirtualDirectoryNode_createSheet_type_desc(),
@@ -133,7 +118,8 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
 
         }
 
-        return sheet;
+        //Otherwise default to the AAFN createSheet method.
+        return super.createSheet();
     }
 
     @Override

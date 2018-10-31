@@ -106,10 +106,6 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 
-    void fillPropertyMap(Map<String, Object> map) {
-        AbstractAbstractFileNode.fillPropertyMap(map, getContent());
-    }
-
     @Override
     public String getItemType() {
         return getClass().getName();

@@ -21,13 +21,12 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
@@ -52,13 +51,13 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
+import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
-import org.sleuthkit.autopsy.texttranslation.TranslationCallback;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -77,14 +76,17 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
     @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
     private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
-    
+
     private static final String TRANSLATION_AVAILABLE_EVENT = "TRANSLATION_AVAILABLE";
     private static final String NO_TRANSLATION = "";
 
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
 
-    private String translatedFileName;
+    private volatile String translatedFileName;
+
+    private static final ExecutorService pool;
+    private static final Integer MAX_POOL_SIZE = 10;
 
     /**
      * @param abstractFile file to wrap
@@ -104,6 +106,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         // Listen for case events so that we can detect when the case is closed
         // or when tags are added.
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
+    }
+
+    static {
+        pool = Executors.newFixedThreadPool(MAX_POOL_SIZE);
     }
 
     /**
@@ -192,6 +198,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * unregistering of the listener in removeListeners() below.
      */
     private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+    
+    Sheet getBlankSheet() {
+        return super.createSheet();
+    }
 
     private void updateSheet() {
         this.setSheet(createSheet());
@@ -200,33 +210,30 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
-        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-        if (sheetSet == null) {
-            sheetSet = Sheet.createPropertiesSet();
-            sheet.put(sheetSet);
-        }
+        Sheet.Set sheetSet = Sheet.createPropertiesSet();
+        sheet.put(sheetSet);
+        
+        List<FileProperty> properties = getProperties();
 
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, getContent());
-
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String desc = Bundle.AbstractFsContentNode_noDesc_text();
-
-            FileProperty p = AbstractFilePropertyType.getPropertyFromDisplayName(entry.getKey());
-            if (!p.getDescription(content).isEmpty()) {
-                desc = p.getDescription(content);
+        //Add only the enabled properties to the sheet!
+        for (FileProperty property : properties) {
+            if (property.isEnabled()) {
+                sheetSet.put(new NodeProperty<>(
+                        property.getPropertyName(),
+                        property.getPropertyName(),
+                        property.getDescription(),
+                        property.getPropertyValue()));
             }
-            sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), desc, entry.getValue()));
         }
 
         return sheet;
     }
 
     @NbBundle.Messages({"AbstractAbstractFileNode.nameColLbl=Name",
+        "AbstractAbstractFileNode.translateFileName=Translated Name",
         "AbstractAbstractFileNode.createSheet.score.name=S",
         "AbstractAbstractFileNode.createSheet.comment.name=C",
         "AbstractAbstractFileNode.createSheet.count.name=O",
-        "AbstractAbstractFileNode.translateFileName=Translated Name",
         "AbstractAbstractFileNode.locationColLbl=Location",
         "AbstractAbstractFileNode.modifiedTimeColLbl=Modified Time",
         "AbstractAbstractFileNode.changeTimeColLbl=Change Time",
@@ -247,207 +254,33 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.objectId=Object ID",
         "AbstractAbstractFileNode.mimeType=MIME Type",
         "AbstractAbstractFileNode.extensionColLbl=Extension"})
-    public enum AbstractFilePropertyType implements FileProperty {
+    public enum AbstractFilePropertyType {
 
-        NAME(AbstractAbstractFileNode_nameColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return getContentDisplayName(content);
-            }
-        },
-        SCORE(AbstractAbstractFileNode_createSheet_score_name()) {
-            Optional<Pair<String, Score>> result = Optional.empty();
-            List<ContentTag> scoreAndCommentTags;
-            CorrelationAttributeInstance correlationAttribute;
-
-            private void initResult(AbstractFile content) {
-                scoreAndCommentTags = getContentTagsFromDatabase(content);
-                result = Optional.of(getScoreProperty(content, scoreAndCommentTags));
-            }
-
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                if (!this.result.isPresent()) {
-                    initResult(content);
-                }
-                Score res = result.get().getRight();
-                result = Optional.empty();
-                return res;
-            }
-
-            @Override
-            public String getDescription(AbstractFile content) {
-                if (!this.result.isPresent()) {
-                    initResult(content);
-                }
-                return result.get().getLeft();
-            }
-        },
-        COMMENT(AbstractAbstractFileNode_createSheet_comment_name()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                List<ContentTag> scoreAndCommentTags = getContentTagsFromDatabase(content);
-                CorrelationAttributeInstance correlationAttribute = null;
-                if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-                    correlationAttribute = getCorrelationAttributeInstance(content);
-                }
-                return getCommentProperty(scoreAndCommentTags, correlationAttribute);
-            }
-        },
-        COUNT(AbstractAbstractFileNode_createSheet_count_name()) {
-            Optional<Pair<String, Long>> result = Optional.empty();
-            List<ContentTag> scoreAndCommentTags;
-            CorrelationAttributeInstance correlationAttribute;
-
-            private void initResult(AbstractFile content) {
-                correlationAttribute = getCorrelationAttributeInstance(content);
-                result = Optional.of(getCountProperty(correlationAttribute));
-            }
-
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                if (!result.isPresent()) {
-                    initResult(content);
-                }
-                Long res = result.get().getRight();
-                result = Optional.empty();
-                return res;
-            }
-
-            @Override
-            public boolean isDisabled() {
-                return UserPreferences.hideCentralRepoCommentsAndOccurrences()
-                        || !EamDbUtil.useCentralRepo();
-            }
-
-            @Override
-            public String getDescription(AbstractFile content) {
-                if (!result.isPresent()) {
-                    initResult(content);
-                }
-                return result.get().getLeft();
-            }
-        },
-        LOCATION(AbstractAbstractFileNode_locationColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return getContentPath(content);
-            }
-        },
-        MOD_TIME(AbstractAbstractFileNode_modifiedTimeColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return ContentUtils.getStringTime(content.getMtime(), content);
-            }
-        },
-        CHANGED_TIME(AbstractAbstractFileNode_changeTimeColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return ContentUtils.getStringTime(content.getCtime(), content);
-            }
-        },
-        ACCESS_TIME(AbstractAbstractFileNode_accessTimeColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return ContentUtils.getStringTime(content.getAtime(), content);
-            }
-        },
-        CREATED_TIME(AbstractAbstractFileNode_createdTimeColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return ContentUtils.getStringTime(content.getCrtime(), content);
-            }
-        },
-        SIZE(AbstractAbstractFileNode_sizeColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getSize();
-            }
-        },
-        FLAGS_DIR(AbstractAbstractFileNode_flagsDirColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getDirFlagAsString();
-            }
-        },
-        FLAGS_META(AbstractAbstractFileNode_flagsMetaColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getMetaFlagsAsString();
-            }
-        },
-        MODE(AbstractAbstractFileNode_modeColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getModesAsString();
-            }
-        },
-        USER_ID(AbstractAbstractFileNode_useridColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getUid();
-            }
-        },
-        GROUP_ID(AbstractAbstractFileNode_groupidColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getGid();
-            }
-        },
-        META_ADDR(AbstractAbstractFileNode_metaAddrColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getMetaAddr();
-            }
-        },
-        ATTR_ADDR(AbstractAbstractFileNode_attrAddrColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getAttrType().getValue() + "-" + content.getAttributeId();
-            }
-        },
-        TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getDirType().getLabel();
-            }
-        },
-        TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getMetaType().toString();
-            }
-        },
-        KNOWN(AbstractAbstractFileNode_knownColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getKnown().getName();
-            }
-        },
-        MD5HASH(AbstractAbstractFileNode_md5HashColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return StringUtils.defaultString(content.getMd5Hash());
-            }
-        },
-        ObjectID(AbstractAbstractFileNode_objectId()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getId();
-            }
-        },
-        MIMETYPE(AbstractAbstractFileNode_mimeType()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return StringUtils.defaultString(content.getMIMEType());
-            }
-        },
-        EXTENSION(AbstractAbstractFileNode_extensionColLbl()) {
-            @Override
-            public Object getPropertyValue(AbstractFile content) {
-                return content.getNameExtension();
-            }
-        };
+        NAME(AbstractAbstractFileNode_nameColLbl()),
+        TRANSLATION(AbstractAbstractFileNode_translateFileName()),
+        SCORE(AbstractAbstractFileNode_createSheet_score_name()),
+        COMMENT(AbstractAbstractFileNode_createSheet_comment_name()),
+        OCCURRENCES(AbstractAbstractFileNode_createSheet_count_name()),
+        LOCATION(AbstractAbstractFileNode_locationColLbl()),
+        MOD_TIME(AbstractAbstractFileNode_modifiedTimeColLbl()),
+        CHANGED_TIME(AbstractAbstractFileNode_changeTimeColLbl()),
+        ACCESS_TIME(AbstractAbstractFileNode_accessTimeColLbl()),
+        CREATED_TIME(AbstractAbstractFileNode_createdTimeColLbl()),
+        SIZE(AbstractAbstractFileNode_sizeColLbl()),
+        FLAGS_DIR(AbstractAbstractFileNode_flagsDirColLbl()),
+        FLAGS_META(AbstractAbstractFileNode_flagsMetaColLbl()),
+        MODE(AbstractAbstractFileNode_modeColLbl()),
+        USER_ID(AbstractAbstractFileNode_useridColLbl()),
+        GROUP_ID(AbstractAbstractFileNode_groupidColLbl()),
+        META_ADDR(AbstractAbstractFileNode_metaAddrColLbl()),
+        ATTR_ADDR(AbstractAbstractFileNode_attrAddrColLbl()),
+        TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()),
+        TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()),
+        KNOWN(AbstractAbstractFileNode_knownColLbl()),
+        MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
+        ObjectID(AbstractAbstractFileNode_objectId()),
+        MIMETYPE(AbstractAbstractFileNode_mimeType()),
+        EXTENSION(AbstractAbstractFileNode_extensionColLbl());
 
         final private String displayString;
 
@@ -459,31 +292,22 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         public String toString() {
             return displayString;
         }
-
-        static FileProperty getPropertyFromDisplayName(String displayName) {
-            for (FileProperty p : AbstractFilePropertyType.values()) {
-                if (p.getPropertyName().equals(displayName)) {
-                    return p;
-                }
-            }
-            return null;
-        }
     }
 
     /**
-     * Attempts translation on the file name by kicking off a background task to do the
-     * translation. Once the background task is done, it will fire a PropertyChangeEvent,
-     * which will force this node to refresh itself, thus updating its translated name
-     * column.
+     * Attempts translation on the file name by kicking off a background task to
+     * do the translation. Once the background task is done, it will fire a
+     * PropertyChangeEvent, which will force this node to refresh itself, thus
+     * updating its translated name column.
      *
      * @return The file names translation.
      */
-    protected String getTranslatedFileName() {
+    private String getTranslatedFileName(AbstractFile content) {
         //If already in complete English, don't translate.
-        if (this.content.getName().matches("^\\p{ASCII}+$")) {
+        if (content.getName().matches("^\\p{ASCII}+$")) {
             return NO_TRANSLATION;
         }
-        
+
         //If we already have a translation use that one.
         if (translatedFileName != null) {
             return translatedFileName;
@@ -494,29 +318,221 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         TextTranslationService tts = TextTranslationService.getInstance();
         if (tts.hasProvider()) {
             //Seperate out the base and ext from the contents file name.
-            String base = FilenameUtils.getBaseName(this.content.getName());
+            String base = FilenameUtils.getBaseName(content.getName());
 
             //Send only the base file name to be translated. Once the translation comes
             //back fire a PropertyChangeEvent on this nodes PropertyChangeListener.
-            tts.translateAsynchronously(base, new TranslateFileNameCallback(this.content, weakPcl));
+            pool.submit(() -> {
+                try {
+                    String translation = tts.translate(base);
+                    String ext = FilenameUtils.getExtension(content.getName());
+
+                    //If we have no extension, then we shouldn't add the .
+                    String extensionDelimiter = (ext.isEmpty()) ? "" : ".";
+
+                    //Talk directly to this nodes pcl, fire an update when the translation
+                    //is complete. 
+                    if (!translation.isEmpty()) {
+                        weakPcl.propertyChange(new PropertyChangeEvent(
+                                AutopsyEvent.SourceType.LOCAL.toString(),
+                                TRANSLATION_AVAILABLE_EVENT, null,
+                                translation + extensionDelimiter + ext));
+                    }
+                } catch (NoServiceProviderException noServiceEx) {
+                    logger.log(Level.WARNING, "Translate unsuccessful because no TextTranslator "
+                            + "implementation was provided.", noServiceEx);
+                } catch (TranslationException noTranslationEx) {
+                    logger.log(Level.WARNING, "Could not successfully translate file name "
+                            + content.getName(), noTranslationEx);
+                }
+            });
         }
 
         //In the mean time, return a blank translation.
         return NO_TRANSLATION;
     }
-
+    
     /**
-     * Fill map with AbstractFile properties
      *
-     * @param map     map with preserved ordering, where property names/values
-     *                are put
-     * @param content The content to get properties for.
+     * @return
      */
-    static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
-        Arrays.asList(AbstractFilePropertyType.values())
-                .stream()
-                .filter(p -> !p.isDisabled())
-                .forEach((p) -> map.put(p.getPropertyName(), p.getPropertyValue(content)));
+    List<FileProperty> getProperties() {
+        ArrayList<FileProperty> properties = new ArrayList<>();
+
+        properties.add(new FileProperty(NAME.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return getContentDisplayName(content);
+            }
+        });
+        properties.add(new FileProperty(TRANSLATION.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return getTranslatedFileName(content);
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return UserPreferences.displayTranslationFileNames();
+            }
+        });
+
+        List<ContentTag> tags = getContentTagsFromDatabase(content);
+        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+        properties.add(new FileProperty(SCORE.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                Pair<String, Score> result = getScoreProperty(content, tags);
+                setDescription(result.getLeft());
+                return result.getRight();
+            }
+        });
+        properties.add(new FileProperty(COMMENT.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return getCommentProperty(tags, correlationAttribute);
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return !UserPreferences.hideCentralRepoCommentsAndOccurrences();
+            }
+        });
+        properties.add(new FileProperty(OCCURRENCES.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                Pair<String, Long> result = getCountProperty(correlationAttribute);
+                setDescription(result.getLeft());
+                return result.getRight();
+            }
+
+            @Override
+            public boolean isEnabled() {
+                return !UserPreferences.hideCentralRepoCommentsAndOccurrences();
+            }
+        });
+        properties.add(new FileProperty(LOCATION.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return getContentPath(content);
+            }
+        });
+        properties.add(new FileProperty(MOD_TIME.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return ContentUtils.getStringTime(content.getMtime(), content);
+            }
+        });
+        properties.add(new FileProperty(CHANGED_TIME.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return ContentUtils.getStringTime(content.getCtime(), content);
+            }
+        });
+        properties.add(new FileProperty(ACCESS_TIME.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return ContentUtils.getStringTime(content.getAtime(), content);
+            }
+        });
+        properties.add(new FileProperty(CREATED_TIME.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return ContentUtils.getStringTime(content.getCrtime(), content);
+            }
+        });
+        properties.add(new FileProperty(SIZE.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getSize();
+            }
+        });
+        properties.add(new FileProperty(FLAGS_DIR.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getDirFlagAsString();
+            }
+        });
+        properties.add(new FileProperty(FLAGS_META.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getMetaFlagsAsString();
+            }
+        });
+        properties.add(new FileProperty(MODE.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getModesAsString();
+            }
+        });
+        properties.add(new FileProperty(USER_ID.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getUid();
+            }
+        });
+        properties.add(new FileProperty(GROUP_ID.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getGid();
+            }
+        });
+        properties.add(new FileProperty(META_ADDR.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getMetaAddr();
+            }
+        });
+        properties.add(new FileProperty(ATTR_ADDR.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getAttrType().getValue() + "-" + content.getAttributeId();
+            }
+        });
+        properties.add(new FileProperty(TYPE_DIR.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getDirType().getLabel();
+            }
+        });
+        properties.add(new FileProperty(TYPE_META.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getMetaType().toString();
+            }
+        });
+        properties.add(new FileProperty(KNOWN.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getKnown().getName();
+            }
+        });
+        properties.add(new FileProperty(MD5HASH.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return StringUtils.defaultString(content.getMd5Hash());
+            }
+        });
+        properties.add(new FileProperty(ObjectID.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getId();
+            }
+        });
+        properties.add(new FileProperty(MIMETYPE.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return StringUtils.defaultString(content.getMIMEType());
+            }
+        });
+        properties.add(new FileProperty(EXTENSION.toString()) {
+            @Override
+            public Object getPropertyValue() {
+                return content.getNameExtension();
+            }
+        });
+
+        return properties;
     }
 
     /**
@@ -524,7 +540,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @return a list of tags that are associated with the file
      */
-    private static List<ContentTag> getContentTagsFromDatabase(AbstractFile content) {
+    private List<ContentTag> getContentTagsFromDatabase(AbstractFile content) {
         List<ContentTag> tags = new ArrayList<>();
         try {
             tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(content));
@@ -534,7 +550,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         return tags;
     }
 
-    private static CorrelationAttributeInstance getCorrelationAttributeInstance(AbstractFile content) {
+    private CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance correlationAttribute = null;
         if (EamDbUtil.useCentralRepo()) {
             correlationAttribute = EamArtifactUtil.getInstanceFromContent(content);
@@ -554,7 +570,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
-    private static HasCommentStatus getCommentProperty(List<ContentTag> tags, CorrelationAttributeInstance attribute) {
+    private HasCommentStatus getCommentProperty(List<ContentTag> tags, CorrelationAttributeInstance attribute) {
 
         HasCommentStatus status = tags.size() > 0 ? HasCommentStatus.TAG_NO_COMMENT : HasCommentStatus.NO_COMMENT;
 
@@ -712,70 +728,34 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
     
     /**
-     * Implements the TranslationCallback interface so that the TextTranslationService
-     * can call these methods when an asynchronous translation task is complete.
+     * Fill map with AbstractFile properties
+     *
+     * @param map     map with preserved ordering, where property names/values
+     *                are put
+     * @param content The content to get properties for.
      */
-    private class TranslateFileNameCallback implements TranslationCallback {
-        private final String ext;
-        private final String originalFileName;
-        
-        private final PropertyChangeListener listener;
-        
-        public TranslateFileNameCallback(AbstractFile file, PropertyChangeListener listener) {
-            this.ext = FilenameUtils.getExtension(content.getName());
-            this.originalFileName = content.getName();
-            this.listener = listener;
-        }
-
-        /**
-         * Fires a PropertyChangeEvent on this nodes PropertyChangeListener 
-         * when the translation is finished. Reconstruct the file name so we 
-         * can properly display the translation.
-         * 
-         * @param translation Result from the translation job submitted to 
-         * Text translation service.
-         */
-        @Override
-        public void onTranslationResult(String translation) {
-            //If we have no extension, then we shouldn't add the .
-            String extensionDelimiter = (ext.isEmpty()) ? "" : ".";
-
-            //Talk directly to this nodes pcl, fire an update when the translation
-            //is complete. 
-            if (translation.isEmpty()) {
-                listener.propertyChange(new PropertyChangeEvent(
-                        AutopsyEvent.SourceType.LOCAL.toString(),
-                        TRANSLATION_AVAILABLE_EVENT, null, translation));
-            } else {
-                listener.propertyChange(new PropertyChangeEvent(
-                        AutopsyEvent.SourceType.LOCAL.toString(),
-                        TRANSLATION_AVAILABLE_EVENT, null, 
-                        translation + extensionDelimiter + ext));
-            }
-        }
-
-        /**
-         * Do nothing on a translation exception except log, the column will remain empty 
-         * and there is nothing we can do as a fallback.
-         * 
-         * @param ex Exception caught while translating.
-         */
-        @Override
-        public void onTranslationException(TranslationException noTranslationEx) {
-            logger.log(Level.WARNING, "Could not successfully translate file name " + originalFileName, noTranslationEx);
-        }
-
-        /**
-         * Do nothing on a no service provider exception except log, in this implemention we
-         * are only calling for translation to be done if we know that a TextTranslator 
-         * service provider is already defined.
-         * 
-         * @param ex 
-         */
-        @Override
-        public void onNoServiceProviderException(NoServiceProviderException noServiceEx) {
-            logger.log(Level.WARNING, "Translate unsuccessful because no TextTranslator "
-                    + "implementation was provided.", noServiceEx);
-        }
+    @Deprecated
+    static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
+        map.put(NAME.toString(), getContentDisplayName(content));
+        map.put(LOCATION.toString(), getContentPath(content));
+        map.put(MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
+        map.put(CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
+        map.put(ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));
+        map.put(CREATED_TIME.toString(), ContentUtils.getStringTime(content.getCrtime(), content));
+        map.put(SIZE.toString(), content.getSize());
+        map.put(FLAGS_DIR.toString(), content.getDirFlagAsString());
+        map.put(FLAGS_META.toString(), content.getMetaFlagsAsString());
+        map.put(MODE.toString(), content.getModesAsString());
+        map.put(USER_ID.toString(), content.getUid());
+        map.put(GROUP_ID.toString(), content.getGid());
+        map.put(META_ADDR.toString(), content.getMetaAddr());
+        map.put(ATTR_ADDR.toString(), content.getAttrType().getValue() + "-" + content.getAttributeId());
+        map.put(TYPE_DIR.toString(), content.getDirType().getLabel());
+        map.put(TYPE_META.toString(), content.getMetaType().toString());
+        map.put(KNOWN.toString(), content.getKnown().getName());
+        map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
+        map.put(ObjectID.toString(), content.getId());
+        map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
+        map.put(EXTENSION.toString(), content.getNameExtension());
     }
 }

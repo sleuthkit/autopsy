@@ -37,60 +37,6 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
 
     }
 
-    @Override
-<<<<<<< HEAD
-=======
-    @NbBundle.Messages({
-        "LocalDirectoryNode.createSheet.name.name=Name",
-        "LocalDirectoryNode.createSheet.name.displayName=Name",
-        "LocalDirectoryNode.createSheet.name.desc=no description",
-        "LocalDirectoryNode.createSheet.noDesc=no description"})
-    protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-        if (sheetSet == null) {
-            sheetSet = Sheet.createPropertiesSet();
-            sheet.put(sheetSet);
-        }
-
-        List<ContentTag> tags = getContentTagsFromDatabase();
-        sheetSet.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_name_name(),
-                Bundle.LocalDirectoryNode_createSheet_name_displayName(),
-                Bundle.LocalDirectoryNode_createSheet_name_desc(),
-                getName()));
-        
-        final String NO_DESCR = Bundle.LocalDirectoryNode_createSheet_noDesc();
-        if(UserPreferences.displayTranslationFileNames()) {
-            String translation = getTranslatedFileName();
-            sheetSet.put(new NodeProperty<>(Bundle.AbstractAbstractFileNode_translateFileName(), 
-                    Bundle.AbstractAbstractFileNode_translateFileName(), NO_DESCR, translation));
-        }
-        
-        addScoreProperty(sheetSet, tags);
-        
-        CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            correlationAttribute = getCorrelationAttributeInstance();
-        }
-        addCommentProperty(sheetSet, tags, correlationAttribute);
-        
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            addCountProperty(sheetSet, correlationAttribute);
-        }
-        // At present, a LocalDirectory will never be a datasource - the top level of a logical
-        // file set is a VirtualDirectory
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, getContent());
-
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
-        }
-
-        return sheet;
-    }
-
-    @Override
->>>>>>> 4316-text-translation-service
     public <T> T accept(ContentNodeVisitor<T> visitor) {
         return visitor.visit(this);
     }
