@@ -47,7 +47,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 
 /**
@@ -197,8 +196,8 @@ public class IngestEventsListener {
                 }
                 switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                     case DATA_ADDED: {
-                        //if ingest isn't running read the flag notable items global setting otherwise use the value that existed when ingest was started
-                        boolean flagNotable = IngestManager.getInstance().isIngestRunning() ? isFlagNotableItems() : EamDbUtil.flagNotableItems();
+                        //if ingest isn't running create the interesting items 
+                        boolean flagNotable = IngestManager.getInstance().isIngestRunning() ? isFlagNotableItems() : true;
                         jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable));
                         break;
                     }

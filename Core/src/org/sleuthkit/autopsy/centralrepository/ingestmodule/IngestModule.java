@@ -79,8 +79,8 @@ final class IngestModule implements FileIngestModule {
      *
      * @param settings The ingest settings for the module instance.
      */
-    IngestModule() {
-        flagTaggedNotableItems = EamDbUtil.flagNotableItems();
+    IngestModule(IngestSettings settings) {
+        flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
     }
 
     @Override
@@ -214,8 +214,9 @@ final class IngestModule implements FileIngestModule {
 
         /*
          * Tell the IngestEventsListener to flag notable items based on the
-         * global setting. This is a work around for the lack of
-         * an artifacts pipeline. All modules are affected by the value. While not
+         * current module's configuration. This is a work around for the lack of
+         * an artifacts pipeline. Note that this can be changed by another
+         * module instance. All modules are affected by the value. While not
          * ideal, this will be good enough until a better solution can be
          * posited.
          *

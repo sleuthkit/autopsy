@@ -120,8 +120,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         bnManageTypes = new javax.swing.JButton();
         correlationPropertiesScrollPane = new javax.swing.JScrollPane();
         correlationPropertiesTextArea = new javax.swing.JTextArea();
-        flagTaggedNotableItemsCheckbox = new javax.swing.JCheckBox();
-        generateInterestingItemsLabel = new javax.swing.JLabel();
         organizationPanel = new javax.swing.JPanel();
         manageOrganizationButton = new javax.swing.JButton();
         organizationScrollPane = new javax.swing.JScrollPane();
@@ -231,10 +229,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         correlationPropertiesTextArea.setBorder(null);
         correlationPropertiesScrollPane.setViewportView(correlationPropertiesTextArea);
 
-        org.openide.awt.Mnemonics.setLocalizedText(flagTaggedNotableItemsCheckbox, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.flagTaggedNotableItemsCheckbox.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(generateInterestingItemsLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.generateInterestingItemsLabel.text")); // NOI18N
-
         javax.swing.GroupLayout pnCorrelationPropertiesLayout = new javax.swing.GroupLayout(pnCorrelationProperties);
         pnCorrelationProperties.setLayout(pnCorrelationPropertiesLayout);
         pnCorrelationPropertiesLayout.setHorizontalGroup(
@@ -242,16 +236,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(bnManageTypes)
-                    .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 468, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
-                        .addGap(29, 29, 29)
-                        .addComponent(flagTaggedNotableItemsCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 246, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addComponent(generateInterestingItemsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(247, Short.MAX_VALUE))
+                        .addComponent(bnManageTypes)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(correlationPropertiesScrollPane))
+                .addContainerGap())
         );
         pnCorrelationPropertiesLayout.setVerticalGroup(
             pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -260,11 +249,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnManageTypes)
                 .addGap(8, 8, 8))
-            .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
-                .addComponent(generateInterestingItemsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(flagTaggedNotableItemsCheckbox)
-                .addGap(0, 0, 0))
         );
 
         organizationPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.organizationPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
@@ -381,7 +365,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 844, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 974, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -466,7 +450,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         enableAllSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         cbUseCentralRepo.setSelected(EamDbUtil.useCentralRepo()); // NON-NLS
-        flagTaggedNotableItemsCheckbox.setSelected(EamDbUtil.flagNotableItems());
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
@@ -496,7 +479,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     @Override
     public void store() { // Click OK or Apply on Options Panel
         EamDbUtil.setUseCentralRepo(cbUseCentralRepo.isSelected());
-        EamDbUtil.setFlagNotableItems(flagTaggedNotableItemsCheckbox.isSelected());
     }
 
     /**
@@ -642,8 +624,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         showCasesButton.setEnabled(enable && !ingestRunning);
         casesPanel.setEnabled(enable && !ingestRunning);
         casesTextArea.setEnabled(enable && !ingestRunning);
-        flagTaggedNotableItemsCheckbox.setEnabled(enable && !ingestRunning);
-        generateInterestingItemsLabel.setEnabled(enable & !ingestRunning);
         return true;
     }
 
@@ -656,8 +636,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JCheckBox cbUseCentralRepo;
     private javax.swing.JScrollPane correlationPropertiesScrollPane;
     private javax.swing.JTextArea correlationPropertiesTextArea;
-    private javax.swing.JCheckBox flagTaggedNotableItemsCheckbox;
-    private javax.swing.JLabel generateInterestingItemsLabel;
     private javax.swing.JLabel ingestRunningWarningLabel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
