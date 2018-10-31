@@ -83,7 +83,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
 
-    private volatile String translatedFileName;
+    private volatile List<FileProperty> currentProperties;
 
     private static final ExecutorService pool;
     private static final Integer MAX_POOL_SIZE = 10;
@@ -102,7 +102,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 IngestManager.getInstance().addIngestModuleEventListener(weakPcl);
             }
         }
-        translatedFileName = null;
         // Listen for case events so that we can detect when the case is closed
         // or when tags are added.
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
@@ -130,6 +129,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private void removeListeners() {
         IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
         Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
+    }
+    
+    //Events signals to indicate the background tasks have completed processing.
+    private enum NodeSpecificEvents {
+        TRANSLATION_AVAILABLE_EVENT,
+        SCORE_AVAILABLE_EVENT,
+        COMMENT_AVAILABLE_EVENT,
+        OCCURRENCES_AVAILABLE_EVENT;
     }
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -183,9 +190,46 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (event.getContentID() == content.getId()) {
                 updateSheet();
             }
-        } else if (eventType.equals(TRANSLATION_AVAILABLE_EVENT)) {
-            this.translatedFileName = (String) evt.getNewValue();
-            updateSheet();
+        } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE_EVENT.toString())) {
+            updateProperty(TRANSLATION.toString(), new FileProperty(TRANSLATION.toString()) {
+                @Override
+                public Object getPropertyValue() {
+                    return evt.getNewValue();
+                }
+            });
+        } else if(eventType.equals(NodeSpecificEvents.SCORE_AVAILABLE_EVENT.toString())) {
+            Pair<Score, String> scoreAndDescription = (Pair) evt.getNewValue();
+            updateProperty(SCORE.toString(), new FileProperty(SCORE.toString()) {
+                @Override
+                public Object getPropertyValue() {
+                    return scoreAndDescription.getLeft();
+                }
+                
+                @Override
+                public String getDescription() {
+                    return scoreAndDescription.getRight();
+                }
+            });
+        } else if(eventType.equals(NodeSpecificEvents.COMMENT_AVAILABLE_EVENT.toString())) {
+            updateProperty(COMMENT.toString(), new FileProperty(COMMENT.toString()) {
+                @Override
+                public Object getPropertyValue() {
+                    return evt.getNewValue();
+                }
+            });
+        } else if(eventType.equals(NodeSpecificEvents.OCCURRENCES_AVAILABLE_EVENT.toString())) {
+            Pair<Long, String> countAndDescription = (Pair) evt.getNewValue();
+            updateProperty(OCCURRENCES.toString(), new FileProperty(OCCURRENCES.toString()) {
+                @Override
+                public Object getPropertyValue() {
+                    return countAndDescription.getLeft();
+                }
+                
+                @Override
+                public String getDescription() {
+                    return countAndDescription.getRight();
+                }
+            });
         }
     };
 
@@ -202,8 +246,39 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     Sheet getBlankSheet() {
         return super.createSheet();
     }
+    
+    private synchronized void updateProperty(String propName, FileProperty newProp) {
+        for(int i = 0; i < currentProperties.size(); i++) {
+            FileProperty property = currentProperties.get(i);
+            if(property.getPropertyName().equals(propName)) {
+                currentProperties.set(i, newProp);
+            }
+        }
+        
+        Sheet sheet = super.createSheet();
+        Sheet.Set sheetSet = Sheet.createPropertiesSet();
+        sheet.put(sheetSet);
+        
+        for (FileProperty property : currentProperties) {
+            if (property.isEnabled()) {
+                sheetSet.put(new NodeProperty<>(
+                        property.getPropertyName(),
+                        property.getPropertyName(),
+                        property.getDescription(),
+                        property.getPropertyValue()));
+            }
+        }
+        
+        this.setSheet(sheet);
+    }
 
-    private void updateSheet() {
+    //Race condition if not synchronized. The main thread could be updating the 
+    //sheet with blank properties, if a background task is complete, it may finish
+    //the updateSheet() call before the main thread. If that's the case, main thread's 
+    //sheet will be the one to 'win' the UI and we will see stale data. Problem
+    //for multi-user cases if both the CR comment is updated from elsewhere and the background
+    //task is completed and also trying to update.
+    private synchronized void updateSheet() {
         this.setSheet(createSheet());
     }
 
@@ -213,10 +288,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         Sheet.Set sheetSet = Sheet.createPropertiesSet();
         sheet.put(sheetSet);
         
-        List<FileProperty> properties = getProperties();
+        //This will fire off fresh background tasks.
+        List<FileProperty> newProperties = getProperties();
+        currentProperties = newProperties;
 
         //Add only the enabled properties to the sheet!
-        for (FileProperty property : properties) {
+        for (FileProperty property : newProperties) {
             if (property.isEnabled()) {
                 sheetSet.put(new NodeProperty<>(
                         property.getPropertyName(),
@@ -302,50 +379,38 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @return The file names translation.
      */
-    private String getTranslatedFileName(AbstractFile content) {
+    private String getTranslatedFileName() {
         //If already in complete English, don't translate.
         if (content.getName().matches("^\\p{ASCII}+$")) {
             return NO_TRANSLATION;
         }
 
-        //If we already have a translation use that one.
-        if (translatedFileName != null) {
-            return translatedFileName;
-        }
-
-        //If not, lets fire off a background translation that will update the UI
+        //Lets fire off a background translation that will update the UI
         //when it is done.
         TextTranslationService tts = TextTranslationService.getInstance();
         if (tts.hasProvider()) {
             //Seperate out the base and ext from the contents file name.
             String base = FilenameUtils.getBaseName(content.getName());
 
-            //Send only the base file name to be translated. Once the translation comes
-            //back fire a PropertyChangeEvent on this nodes PropertyChangeListener.
-            pool.submit(() -> {
-                try {
-                    String translation = tts.translate(base);
-                    String ext = FilenameUtils.getExtension(content.getName());
+            try {
+                String translation = tts.translate(base);
+                String ext = FilenameUtils.getExtension(content.getName());
 
-                    //If we have no extension, then we shouldn't add the .
-                    String extensionDelimiter = (ext.isEmpty()) ? "" : ".";
+                //If we have no extension, then we shouldn't add the .
+                String extensionDelimiter = (ext.isEmpty()) ? "" : ".";
 
-                    //Talk directly to this nodes pcl, fire an update when the translation
-                    //is complete. 
-                    if (!translation.isEmpty()) {
-                        weakPcl.propertyChange(new PropertyChangeEvent(
-                                AutopsyEvent.SourceType.LOCAL.toString(),
-                                TRANSLATION_AVAILABLE_EVENT, null,
-                                translation + extensionDelimiter + ext));
-                    }
-                } catch (NoServiceProviderException noServiceEx) {
-                    logger.log(Level.WARNING, "Translate unsuccessful because no TextTranslator "
-                            + "implementation was provided.", noServiceEx);
-                } catch (TranslationException noTranslationEx) {
-                    logger.log(Level.WARNING, "Could not successfully translate file name "
-                            + content.getName(), noTranslationEx);
+                //Talk directly to this nodes pcl, fire an update when the translation
+                //is complete. 
+                if (!translation.isEmpty()) {
+                    return translation + extensionDelimiter + ext;
                 }
-            });
+            } catch (NoServiceProviderException noServiceEx) {
+                logger.log(Level.WARNING, "Translate unsuccessful because no TextTranslator "
+                        + "implementation was provided.", noServiceEx);
+            } catch (TranslationException noTranslationEx) {
+                logger.log(Level.WARNING, "Could not successfully translate file name "
+                        + content.getName(), noTranslationEx);
+            }
         }
 
         //In the mean time, return a blank translation.
@@ -353,8 +418,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
     
     /**
-     *
-     * @return
+     * Creates a list of properties for this file node. Each property has it's own
+     * strategy for getting it's value, it's own description, name, and ability to be 
+     * disabled. The FileProperty abstract class provides a wrapper for all 
+     * of these characteristics. Additionally, with a return value of a list, any 
+     * children classes of this node may reorder or omit any of these properties as 
+     * they see fit for their use case.
+     * 
+     * @return List of file properties associated with this file nodes content.
      */
     List<FileProperty> getProperties() {
         ArrayList<FileProperty> properties = new ArrayList<>();
@@ -368,7 +439,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         properties.add(new FileProperty(TRANSLATION.toString()) {
             @Override
             public Object getPropertyValue() {
-                return getTranslatedFileName(content);
+                pool.submit(() -> {
+                    weakPcl.propertyChange(new PropertyChangeEvent(
+                            AutopsyEvent.SourceType.LOCAL.toString(),
+                            NodeSpecificEvents.TRANSLATION_AVAILABLE_EVENT.toString(),
+                            null,
+                            getTranslatedFileName()));
+                });
+                return "";
             }
 
             @Override
@@ -382,15 +460,30 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         properties.add(new FileProperty(SCORE.toString()) {
             @Override
             public Object getPropertyValue() {
-                Pair<String, Score> result = getScoreProperty(content, tags);
-                setDescription(result.getLeft());
-                return result.getRight();
+                pool.submit(() -> {
+                    List<ContentTag> tags = getContentTagsFromDatabase(content);
+                    weakPcl.propertyChange(new PropertyChangeEvent(
+                            AutopsyEvent.SourceType.LOCAL.toString(),
+                            NodeSpecificEvents.SCORE_AVAILABLE_EVENT.toString(),
+                            null,
+                            getScorePropertyAndDescription(tags)));
+                });
+                return "";
             }
         });
         properties.add(new FileProperty(COMMENT.toString()) {
             @Override
             public Object getPropertyValue() {
-                return getCommentProperty(tags, correlationAttribute);
+                pool.submit(() -> {
+                    List<ContentTag> tags = getContentTagsFromDatabase(content);
+                    CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+                    weakPcl.propertyChange(new PropertyChangeEvent(
+                            AutopsyEvent.SourceType.LOCAL.toString(),
+                            NodeSpecificEvents.COMMENT_AVAILABLE_EVENT.toString(),
+                            null,
+                            getCommentProperty(tags, correlationAttribute)));
+                });
+                return "";
             }
 
             @Override
@@ -401,9 +494,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         properties.add(new FileProperty(OCCURRENCES.toString()) {
             @Override
             public Object getPropertyValue() {
-                Pair<String, Long> result = getCountProperty(correlationAttribute);
-                setDescription(result.getLeft());
-                return result.getRight();
+                pool.submit(() -> {
+                    CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+                    weakPcl.propertyChange(new PropertyChangeEvent(
+                            AutopsyEvent.SourceType.LOCAL.toString(),
+                            NodeSpecificEvents.OCCURRENCES_AVAILABLE_EVENT.toString(),
+                            null,
+                            getCountPropertyAndDescription(correlationAttribute)));
+                });
+                return "";
             }
 
             @Override
@@ -606,9 +705,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.taggedFile.description=File has been tagged.",
         "AbstractAbstractFileNode.createSheet.notableTaggedFile.description=File tagged with notable tag.",
         "AbstractAbstractFileNode.createSheet.noScore.description=No score"})
-    private static Pair<String, Score> getScoreProperty(AbstractFile content, List<ContentTag> tags) {
+    private Pair<Score, String> getScorePropertyAndDescription(List<ContentTag> tags) {
         Score score = Score.NO_SCORE;
-        String description = Bundle.AbstractAbstractFileNode_createSheet_noScore_description();
+        String description = "";
         if (content.getKnown() == TskData.FileKnown.BAD) {
             score = Score.NOTABLE_SCORE;
             description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
@@ -632,7 +731,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 }
             }
         }
-        return Pair.of(description, score);
+        return Pair.of(score, description);
     }
 
     @NbBundle.Messages({
@@ -641,7 +740,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.count.hashLookupNotRun.description=Hash lookup had not been run on this file when the column was populated",
         "# {0} - occuranceCount",
         "AbstractAbstractFileNode.createSheet.count.description=There were {0} datasource(s) found with occurances of the correlation value"})
-    private static Pair<String, Long> getCountProperty(CorrelationAttributeInstance attribute) {
+    private static Pair<Long, String> getCountPropertyAndDescription(CorrelationAttributeInstance attribute) {
         Long count = -1L;  //The column renderer will not display negative values, negative value used when count unavailble to preserve sorting
         String description = Bundle.AbstractAbstractFileNode_createSheet_count_noCentralRepo_description();
         try {
@@ -658,7 +757,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             logger.log(Level.WARNING, "Unable to normalize data to get count of datasources with correlation attribute", ex);
         }
 
-        return Pair.of(description, count);
+        return Pair.of(count, description);
     }
 
     /**
