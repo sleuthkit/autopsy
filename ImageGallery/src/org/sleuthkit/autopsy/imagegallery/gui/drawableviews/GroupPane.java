@@ -21,12 +21,12 @@ package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
+import static com.google.common.collect.Lists.transform;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.Arrays;
+import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,6 +35,7 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.IntStream;
 import javafx.animation.Interpolator;
@@ -135,7 +136,10 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
+import static org.sleuthkit.autopsy.imagegallery.gui.GuiUtils.createAutoAssigningMenuItem;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
+import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -254,7 +258,7 @@ public class GroupPane extends BorderPane {
     private final ReadOnlyObjectWrapper<DrawableGroup> grouping = new ReadOnlyObjectWrapper<>();
 
     /**
-     * map from fileIDs to their assigned cells in the tile view. This is used
+     * Map from fileIDs to their assigned cells in the tile view. This is used
      * to determine whether fileIDs are visible or are offscreen. No entry
      * indicates the given fileID is not displayed on screen. DrawableCells are
      * responsible for adding and removing themselves from this map.
@@ -371,7 +375,7 @@ public class GroupPane extends BorderPane {
             case FIVE:
                 return cat5Toggle;
             default:
-                throw new IllegalArgumentException(category.name());
+                throw new UnsupportedOperationException("Unknown category: " + category.name());
         }
     }
 
@@ -425,51 +429,41 @@ public class GroupPane extends BorderPane {
         DoubleBinding cellSize = controller.thumbnailSizeProperty().add(75);
         gridView.cellHeightProperty().bind(cellSize);
         gridView.cellWidthProperty().bind(cellSize);
-        gridView.setCellFactory((GridView<Long> param) -> new DrawableCell());
+        gridView.setCellFactory(param -> new DrawableCell());
 
         BooleanBinding isSelectionEmpty = Bindings.isEmpty(selectionModel.getSelected());
         catSelectedSplitMenu.disableProperty().bind(isSelectionEmpty);
         tagSelectedSplitMenu.disableProperty().bind(isSelectionEmpty);
 
-        TagSelectedFilesAction followUpSelectedAction = new TagSelectedFilesAction(controller.getTagsManager().getFollowUpTagName(), controller); //NON-NLS
-        Platform.runLater(() -> {
-            tagSelectedSplitMenu.setText(followUpSelectedAction.getText());
-            tagSelectedSplitMenu.setGraphic(followUpSelectedAction.getGraphic());
-            tagSelectedSplitMenu.setOnAction(followUpSelectedAction);
-            tagSelectedSplitMenu.showingProperty().addListener(showing -> {
-                if (tagSelectedSplitMenu.isShowing()) {
+        addFXCallback(exec.submit(() -> controller.getTagsManager().getFollowUpTagName()),
+                followUpTagName -> {
+                    //on fx thread
+                    TagSelectedFilesAction followUpSelectedAction = new TagSelectedFilesAction(followUpTagName, controller);
+                    tagSelectedSplitMenu.setText(followUpSelectedAction.getText());
+                    tagSelectedSplitMenu.setGraphic(followUpSelectedAction.getGraphic());
+                    tagSelectedSplitMenu.setOnAction(followUpSelectedAction);
+                },
+                throwable -> logger.log(Level.SEVERE, "Error getting tag names.", throwable));
 
-                    ListenableFuture<List<MenuItem>> getTagsFuture = exec.submit(()
-                            -> Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
-                                    tagName -> GuiUtils.createAutoAssigningMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller))));
-                    Futures.addCallback(getTagsFuture, new FutureCallback<List<MenuItem>>() {
-                        @Override
-                        public void onSuccess(List<MenuItem> result) {
-                            tagSelectedSplitMenu.getItems().setAll(result);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable throwable) {
-                            logger.log(Level.SEVERE, "Error getting tag names.", throwable);
-                        }
-                    }, Platform::runLater);
-                }
-            });
-        });
-
+        addFXCallback(exec.submit(() -> controller.getTagsManager().getNonCategoryTagNames()),
+                tagNames -> {
+                    //on fx thread
+                    List<MenuItem> menuItems = transform(tagNames,
+                            tagName -> createAutoAssigningMenuItem(tagSelectedSplitMenu, new TagSelectedFilesAction(tagName, controller)));
+                    tagSelectedSplitMenu.getItems().setAll(menuItems);
+                },
+                throwable -> logger.log(Level.SEVERE, "Error getting tag names.", throwable)//NON-NLS
+        );
         CategorizeSelectedFilesAction cat5SelectedAction = new CategorizeSelectedFilesAction(DhsImageCategory.FIVE, controller);
 
         catSelectedSplitMenu.setOnAction(cat5SelectedAction);
 
         catSelectedSplitMenu.setText(cat5SelectedAction.getText());
         catSelectedSplitMenu.setGraphic(cat5SelectedAction.getGraphic());
-        catSelectedSplitMenu.showingProperty().addListener(showing -> {
-            if (catSelectedSplitMenu.isShowing()) {
-                List<MenuItem> categoryMenues = Lists.transform(Arrays.asList(DhsImageCategory.values()),
-                        cat -> GuiUtils.createAutoAssigningMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(cat, controller)));
-                catSelectedSplitMenu.getItems().setAll(categoryMenues);
-            }
-        });
+
+        List<MenuItem> categoryMenues = transform(asList(DhsImageCategory.values()),
+                cat -> createAutoAssigningMenuItem(catSelectedSplitMenu, new CategorizeSelectedFilesAction(cat, controller)));
+        catSelectedSplitMenu.getItems().setAll(categoryMenues);
 
         slideShowToggle.getStyleClass().remove("radio-button");
         slideShowToggle.getStyleClass().add("toggle-button");
@@ -548,6 +542,7 @@ public class GroupPane extends BorderPane {
         });
 
         setViewState(controller.viewStateProperty().get());
+
     }
 
     //TODO: make sure we are testing complete visability not just bounds intersection
@@ -626,7 +621,7 @@ public class GroupPane extends BorderPane {
 
             Platform.runLater(() -> {
                 gridView.getItems().setAll(Collections.emptyList());
-                setCenter(null);
+                setCenter(new Label("No group selected"));
                 slideShowToggle.setDisable(true);
                 groupLabel.setText("");
                 resetScrollBar();
@@ -649,14 +644,19 @@ public class GroupPane extends BorderPane {
 
             Platform.runLater(() -> {
                 gridView.getItems().setAll(getGroup().getFileIDs());
-                slideShowToggle.setDisable(gridView.getItems().isEmpty());
+                boolean empty = gridView.getItems().isEmpty();
+                slideShowToggle.setDisable(empty);
+
                 groupLabel.setText(header);
                 resetScrollBar();
-                if (newViewState.getMode() == GroupViewMode.TILE) {
+                if (empty) {
+                    setCenter(new Label("There are no files in the selected group."));
+                } else if (newViewState.getMode() == GroupViewMode.TILE) {
                     activateTileViewer();
                 } else {
                     activateSlideShowViewer(newViewState.getSlideShowfileID().orElse(null));
                 }
+
             });
         }
     }
@@ -675,7 +675,6 @@ public class GroupPane extends BorderPane {
     }
 
     void makeSelection(Boolean shiftDown, Long newFileID) {
-
         if (shiftDown) {
             //TODO: do more hear to implement slicker multiselect
             int endIndex = grouping.get().getFileIDs().indexOf(newFileID);
@@ -688,7 +687,6 @@ public class GroupPane extends BorderPane {
         } else {
             selectionAnchorIndex = null;
             selectionModel.clearAndSelect(newFileID);
-
         }
     }
 

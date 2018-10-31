@@ -74,7 +74,8 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
 
         hash = 79 * hash + Objects.hashCode(this.val);
         hash = 79 * hash + Objects.hashCode(this.attr);
-        hash = 79 * hash + Objects.hashCode(this.dataSource);
+        if (this.dataSource != null) 
+            hash = 79 * hash + (int)this.dataSource.getId(); 
 
         return hash;
     }
@@ -98,7 +99,17 @@ public class GroupKey<T extends Comparable<T>> implements Comparable<GroupKey<T>
         if (!Objects.equals(this.attr, other.attr)) {
             return false;
         }
-        return Objects.equals(this.dataSource, other.dataSource);
+        // Check datasource, if available
+        if (this.dataSource != null && other.dataSource != null) {
+             return this.dataSource.getId() == other.dataSource.getId();
+        } else if (this.dataSource == null && other.dataSource == null) {
+            // neither group has a datasource
+            return true;
+        } else {
+             // one group has a datasource, other doesn't
+            return false;
+        }
+       
     }
 
     @Override

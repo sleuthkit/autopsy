@@ -55,8 +55,6 @@ public class EamArtifactUtil {
      * null.
      *
      * @param bbArtifact BlackboardArtifact to examine
-     * @param addInstanceDetails If true, add instance details from bbArtifact
-     * into the returned structure
      * @param checkEnabled If true, only create a CorrelationAttribute if it is
      * enabled
      *
@@ -129,7 +127,10 @@ public class EamArtifactUtil {
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() == artifactTypeID)) {
 
                 // Lower-case this to normalize domains
-                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN)).getValueString();
+                BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
+                if (attribute != null) {
+                    value = attribute.getValueString();
+                }
             } else if (correlationType.getId() == CorrelationAttributeInstance.PHONE_TYPE_ID
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID() == artifactTypeID
@@ -173,7 +174,7 @@ public class EamArtifactUtil {
             return null;
         }
 
-        if (null != value) {
+        if ((null != value) && (value.isEmpty() == false)) {
             return makeCorrelationAttributeInstanceUsingTypeValue(bbArtifact, correlationType, value);
         } else {
             return null;

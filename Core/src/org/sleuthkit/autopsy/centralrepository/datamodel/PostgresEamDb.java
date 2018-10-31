@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,6 +78,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
                     connectionPool.close();
                     connectionPool = null; // force it to be re-created on next connect()
                 }
+                clearCaches();
             }
         } catch (SQLException ex) {
             throw new EamDbException("Failed to close existing database connections.", ex); // NON-NLS

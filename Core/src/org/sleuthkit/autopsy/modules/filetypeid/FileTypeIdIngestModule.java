@@ -103,7 +103,7 @@ public class FileTypeIdIngestModule implements FileIngestModule {
             String mimeType = fileTypeDetector.getMIMEType(file);
             file.setMIMEType(mimeType);
             FileType fileType = detectUserDefinedFileType(file);
-            if (fileType != null && fileType.createInterestingFileHit()) {
+            if (fileType != null && fileType.shouldCreateInterestingFileHit()) {
                 createInterestingFileHit(file, fileType);
             }
             addToTotals(jobId, (System.currentTimeMillis() - startTime));

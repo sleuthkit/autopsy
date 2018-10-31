@@ -41,7 +41,11 @@ import org.sleuthkit.autopsy.imagegallery.gui.SortChooser;
 
 /**
  * Base class for Tabs in the left hand Navigation/Context area.
+ *
+ * @param <X> The type of the model objects backing this view.
  */
+@NbBundle.Messages({
+    "NavPanel.placeHolder.text=There are no groups."})
 abstract class NavPanel<X> extends Tab {
 
     @FXML
@@ -103,7 +107,7 @@ abstract class NavPanel<X> extends Tab {
                 .addListener((observable, oldItem, newSelectedItem) -> {
                     Optional.ofNullable(newSelectedItem)
                             .map(getDataItemMapper())
-                            .ifPresent(group -> controller.advance(GroupViewState.tile(group)));
+                            .ifPresent(group -> controller.advance(GroupViewState.createTile(group)));
                 });
     }
 
@@ -123,10 +127,12 @@ abstract class NavPanel<X> extends Tab {
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     Comparator<DrawableGroup> getComparator() {
-        Comparator<DrawableGroup> comparator = sortChooser.getComparator();
-        return (sortChooser.getSortOrder() == SortOrder.ASCENDING)
+        GroupComparators<?> comparator = sortChooser.getComparator();
+        Comparator<DrawableGroup> comparator2 = (sortChooser.getSortOrder() == SortOrder.ASCENDING)
                 ? comparator
                 : comparator.reversed();
+
+        return comparator.isOrderReveresed() ? comparator2.reversed() : comparator2;
     }
 
     /**

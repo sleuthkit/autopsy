@@ -29,6 +29,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -90,10 +92,17 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
                 NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
         if (!this.content.isDataSource()) {
-            CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
             addScoreProperty(sheetSet, tags);
+
+            CorrelationAttributeInstance correlationAttribute = null;
+            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+                correlationAttribute = getCorrelationAttributeInstance();
+            }
             addCommentProperty(sheetSet, tags, correlationAttribute);
-            addCountProperty(sheetSet, correlationAttribute);
+
+            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+                addCountProperty(sheetSet, correlationAttribute);
+            }
             Map<String, Object> map = new LinkedHashMap<>();
             fillPropertyMap(map, getContent());
 
@@ -101,7 +110,6 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }
-            addTagProperty(sheetSet, tags);
         } else {
             sheetSet.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),

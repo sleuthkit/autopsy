@@ -32,7 +32,7 @@ import org.openide.util.Lookup;
         iconBase = "org/sleuthkit/autopsy/images/interesting_item_32x32.png",
         keywords = "#OptionsCategory_Keywords_InterestingItemDefinitions",
         keywordsCategory = "InterestingItemDefinitions",
-        position = 10
+        position = 11
 )
 public final class InterestingItemDefsOptionsPanelController extends OptionsPanelController {
 

@@ -87,6 +87,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Provides an abstraction layer on top of DrawableDB ( and to some extent
@@ -120,13 +121,21 @@ public class GroupManager {
     private final Map<GroupKey<?>, DrawableGroup> groupMap = new HashMap<>();
 
     /*
-     * --- current grouping/sorting attributes ---
+     * --- current grouping/sorting attributes --- all guarded by GroupManager
+     * intrisic lock, aka 'this'
      */
     @GuardedBy("this") //NOPMD
     private final ReadOnlyObjectWrapper< GroupSortBy> sortByProp = new ReadOnlyObjectWrapper<>(GroupSortBy.PRIORITY);
     private final ReadOnlyObjectWrapper< DrawableAttribute<?>> groupByProp = new ReadOnlyObjectWrapper<>(DrawableAttribute.PATH);
     private final ReadOnlyObjectWrapper<SortOrder> sortOrderProp = new ReadOnlyObjectWrapper<>(SortOrder.ASCENDING);
     private final ReadOnlyObjectWrapper<DataSource> dataSourceProp = new ReadOnlyObjectWrapper<>(null);//null indicates all datasources
+    /**
+     * Is the GroupManager operating in 'collaborative mode': In collaborative
+     * mode, groups seen by ANY examiner are considered seen. When NOT in
+     * collaborative mode, groups seen by other examiners, are NOT considered
+     * seen.
+     */
+    @GuardedBy("this") //NOPMD
     private final ReadOnlyBooleanWrapper collaborativeModeProp = new ReadOnlyBooleanWrapper(false);
 
     private final GroupingService regrouper;
@@ -163,10 +172,17 @@ public class GroupManager {
      *         a part of.
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
-    synchronized public Set<GroupKey<?>> getGroupKeysForFile(DrawableFile file) {
+    synchronized public Set<GroupKey<?>> getGroupKeysForCurrentGroupBy(DrawableFile file) throws TskCoreException, TskDataException {
         Set<GroupKey<?>> resultSet = new HashSet<>();
         for (Comparable<?> val : getGroupBy().getValue(file)) {
-            if (getGroupBy() == DrawableAttribute.TAGS) {
+
+            if (getGroupBy() == DrawableAttribute.PATH) {
+                // verify this file is in a data source being displayed
+                if ((getDataSource() == null) || (file.getDataSource().equals(getDataSource()))) {
+                    resultSet.add(new GroupKey(getGroupBy(), val, file.getDataSource()));
+                }
+            } else if (getGroupBy() == DrawableAttribute.TAGS) {
+                //don't show groups for the categories when grouped by tags.
                 if (CategoryManager.isNotCategoryTagName((TagName) val)) {
                     resultSet.add(new GroupKey(getGroupBy(), val, getDataSource()));
                 }
@@ -186,12 +202,13 @@ public class GroupManager {
      * @return A set of GroupKeys representing the group(s) the given file is a
      *         part of
      */
-    synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
+    synchronized public Set<GroupKey<?>> getGroupKeysForCurrentGroupBy(Long fileID) {
         try {
             DrawableFile file = getDrawableDB().getFileFromID(fileID);
-            return getGroupKeysForFile(file);
-        } catch (TskCoreException ex) {
-            Logger.getLogger(GroupManager.class.getName()).log(Level.SEVERE, "failed to load file with id: " + fileID + " from database", ex); //NON-NLS
+            return getGroupKeysForCurrentGroupBy(file);
+
+        } catch (TskCoreException | TskDataException ex) {
+            logger.log(Level.SEVERE, "Failed to get group keys for file with ID " + fileID, ex); //NON-NLS
         }
         return Collections.emptySet();
     }
@@ -225,9 +242,8 @@ public class GroupManager {
     }
 
     public boolean isRegrouping() {
-        Worker.State state = regrouper.getState();
         return Arrays.asList(Worker.State.READY, Worker.State.RUNNING, Worker.State.SCHEDULED)
-                .contains(state);
+                .contains(regrouper.getState());
     }
 
     public ReadOnlyObjectProperty<Worker.State> reGroupingState() {
@@ -286,17 +302,19 @@ public class GroupManager {
                 group.removeFile(fileID);
 
                 // If we're grouping by category, we don't want to remove empty groups.
-                if (groupKey.getAttribute() != DrawableAttribute.CATEGORY
-                    && group.getFileIDs().isEmpty()) {
-                    if (analyzedGroups.contains(group)) {
-                        analyzedGroups.remove(group);
-                        sortAnalyzedGroups();
-                    }
-                    if (unSeenGroups.contains(group)) {
-                        unSeenGroups.remove(group);
-                        sortUnseenGroups();
-                    }
+                if (group.getFileIDs().isEmpty()) {
+                    markGroupSeen(group, true);
+                    if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
+                        if (analyzedGroups.contains(group)) {
+                            analyzedGroups.remove(group);
+                            sortAnalyzedGroups();
+                        }
 
+                        if (unSeenGroups.contains(group)) {
+                            unSeenGroups.remove(group);
+                            sortUnseenGroups();
+                        }
+                    }
                 }
                 return group;
             }
@@ -419,11 +437,19 @@ public class GroupManager {
         return sortOrderProp.getReadOnlyProperty();
     }
 
+    /**
+     *
+     * @return null if all data sources are being displayed
+     */
     public synchronized DataSource getDataSource() {
         return dataSourceProp.get();
     }
 
-    synchronized void setDataSource(DataSource dataSource) {
+    /**
+     *
+     * @param dataSource Data source to display or null to display all of them
+     */
+    public synchronized void setDataSource(DataSource dataSource) {
         dataSourceProp.set(dataSource);
     }
 
@@ -447,7 +473,8 @@ public class GroupManager {
         if (!Case.isCaseOpen()) {
             return;
         }
-
+        setSortBy(sortBy);
+        setSortOrder(sortOrder);
         //only re-query the db if the data source or group by attribute changed or it is forced
         if (dataSource != getDataSource()
             || groupBy != getGroupBy()
@@ -455,13 +482,11 @@ public class GroupManager {
 
             setDataSource(dataSource);
             setGroupBy(groupBy);
-            setSortBy(sortBy);
-            setSortOrder(sortOrder);
+
             Platform.runLater(regrouper::restart);
         } else {
             // resort the list of groups
-            setSortBy(sortBy);
-            setSortOrder(sortOrder);
+
             sortAnalyzedGroups();
             sortUnseenGroups();
         }
@@ -491,31 +516,48 @@ public class GroupManager {
         }
     }
 
+    /**
+     * Adds an analyzed file to a group and marks the group as analyzed if the
+     * entire group is now analyzed.
+     *
+     * @param group    Group being added to (will be null if a group has not yet
+     *                 been created)
+     * @param groupKey Group type/value
+     * @param fileID
+     */
     @SuppressWarnings("AssignmentToMethodParameter")
     synchronized private void addFileToGroup(DrawableGroup group, final GroupKey<?> groupKey, final long fileID) {
+
+        // NOTE: We assume that it has already been determined that GroupKey can be displayed based on Data Source filters
         if (group == null) {
             //if there wasn't already a group check if there should be one now
+            // path group, for example, only gets created when all files are analyzed
             group = popuplateIfAnalyzed(groupKey, null);
-        }
-        if (group != null) {
+        } else {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             group.addFile(fileID);
         }
+        // reset the seen status for the group
+        markGroupSeen(group, false);
     }
 
     @Subscribe
     synchronized public void handleTagDeleted(ContentTagDeletedEvent evt) {
         GroupKey<?> groupKey = null;
         final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
-        final TagName tagName = deletedTagInfo.getName();
-        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(tagName)) {
-            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(tagName), getDataSource());
-        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(tagName)) {
-            groupKey = new GroupKey<>(DrawableAttribute.TAGS, tagName, getDataSource());
+        final TagName deletedTagName = deletedTagInfo.getName();
+        if (getGroupBy() == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(deletedTagName)) {
+            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(deletedTagName), null);
+        } else if (getGroupBy() == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(deletedTagName)) {
+            groupKey = new GroupKey<>(DrawableAttribute.TAGS, deletedTagName, null);
         }
         if (groupKey != null) {
             final long fileID = deletedTagInfo.getContentID();
             DrawableGroup g = removeFromGroup(groupKey, fileID);
+
+            if (controller.getCategoryManager().getTagName(DhsImageCategory.ZERO).equals(deletedTagName) == false) {
+                addFileToGroup(null, new GroupKey<>(DrawableAttribute.CATEGORY, DhsImageCategory.ZERO, null), fileID);
+            }
         }
     }
 
@@ -524,7 +566,7 @@ public class GroupManager {
 
         for (final long fileId : removedFileIDs) {
             //get grouping(s) this file would be in
-            Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
+            Set<GroupKey<?>> groupsForFile = getGroupKeysForCurrentGroupBy(fileId);
 
             for (GroupKey<?> gk : groupsForFile) {
                 removeFromGroup(gk, fileId);
@@ -545,12 +587,13 @@ public class GroupManager {
          * groups( if we are grouping by say make or model) -jm
          */
         for (long fileId : updatedFileIDs) {
+            // reset the hash cache
+            controller.getHashSetManager().invalidateHashSetsCacheForFile(fileId);
 
-            controller.getHashSetManager().invalidateHashSetsForFile(fileId);
-
-            //get grouping(s) this file would be in
-            Set<GroupKey<?>> groupsForFile = getGroupKeysForFileID(fileId);
+            // Update the current groups (if it is visible)
+            Set<GroupKey<?>> groupsForFile = getGroupKeysForCurrentGroupBy(fileId);
             for (GroupKey<?> gk : groupsForFile) {
+                // see if a group has been created yet for the key
                 DrawableGroup g = getGroupForKey(gk);
                 addFileToGroup(g, gk, fileId);
             }
@@ -560,6 +603,11 @@ public class GroupManager {
         controller.getCategoryManager().fireChange(updatedFileIDs, null);
     }
 
+    /**
+     * If the group is analyzed (or other criteria based on grouping) and should
+     * be shown to the user, then add it to the appropriate data structures so
+     * that it can be viewed.
+     */
     synchronized private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
         /*
          * If this method call is part of a ReGroupTask and that task is
@@ -569,44 +617,45 @@ public class GroupManager {
          * user picked a different group by attribute, while the current task
          * was still running)
          */
-        if (isNull(task) || task.isCancelled() == false) {
+        if (isNull(task) == false && task.isCancelled() == true) {
+            return null;
+        }
 
-            /*
-             * For attributes other than path we can't be sure a group is fully
-             * analyzed because we don't know all the files that will be a part
-             * of that group. just show them no matter what.
-             */
-            if (groupKey.getAttribute() != DrawableAttribute.PATH
-                || getDrawableDB().isGroupAnalyzed(groupKey)) {
-                try {
-                    Set<Long> fileIDs = getFileIDsInGroup(groupKey);
-                    if (Objects.nonNull(fileIDs)) {
+        /*
+         * For attributes other than path we can't be sure a group is fully
+         * analyzed because we don't know all the files that will be a part of
+         * that group. just show them no matter what.
+         */
+        if (groupKey.getAttribute() != DrawableAttribute.PATH
+            || getDrawableDB().isGroupAnalyzed(groupKey)) {
+            try {
+                Set<Long> fileIDs = getFileIDsInGroup(groupKey);
+                if (Objects.nonNull(fileIDs)) {
 
-                        long examinerID = collaborativeModeProp.get() ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId();
-                        final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examinerID);
-                        DrawableGroup group;
+                    long examinerID = collaborativeModeProp.get() ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId();
+                    final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examinerID);
+                    DrawableGroup group;
 
-                        if (groupMap.containsKey(groupKey)) {
-                            group = groupMap.get(groupKey);
-                            group.setFiles(fileIDs);
-                            group.setSeen(groupSeen);
-                        } else {
-                            group = new DrawableGroup(groupKey, fileIDs, groupSeen);
-                            controller.getCategoryManager().registerListener(group);
-                            groupMap.put(groupKey, group);
-                        }
-
-                        if (analyzedGroups.contains(group) == false) {
-                            analyzedGroups.add(group);
-                            sortAnalyzedGroups();
-                        }
-                        updateUnSeenGroups(group);
-
-                        return group;
+                    if (groupMap.containsKey(groupKey)) {
+                        group = groupMap.get(groupKey);
+                        group.setFiles(fileIDs);
+                        group.setSeen(groupSeen);
+                    } else {
+                        group = new DrawableGroup(groupKey, fileIDs, groupSeen);
+                        controller.getCategoryManager().registerListener(group);
+                        groupMap.put(groupKey, group);
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
+
+                    if (analyzedGroups.contains(group) == false) {
+                        analyzedGroups.add(group);
+                        sortAnalyzedGroups();
+                    }
+                    updateUnSeenGroups(group);
+
+                    return group;
                 }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
             }
         }
 
@@ -656,6 +705,7 @@ public class GroupManager {
             }
         });
         sortUnseenGroups();
+
     }
 
     /**
@@ -708,15 +758,15 @@ public class GroupManager {
                 groupProgress.switchToDeterminate(valsByDataSource.entries().size());
                 int p = 0;
                 // For each key value, partially create the group and add it to the list.
-                for (final Map.Entry<DataSource, AttrValType> val : valsByDataSource.entries()) {
+                for (final Map.Entry<DataSource, AttrValType> valForDataSource : valsByDataSource.entries()) {
                     if (isCancelled()) {
                         return null;
                     }
                     p++;
-                    updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val.getValue()));
+                    updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), valForDataSource.getValue()));
                     updateProgress(p, valsByDataSource.size());
-                    groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
-                    popuplateIfAnalyzed(new GroupKey<>(groupBy, val.getValue(), val.getKey()), this);
+                    groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), valForDataSource), p);
+                    popuplateIfAnalyzed(new GroupKey<>(groupBy, valForDataSource.getValue(), valForDataSource.getKey()), this);
                 }
 
                 Optional<DrawableGroup> viewedGroup
@@ -724,44 +774,23 @@ public class GroupManager {
                                 .flatMap(GroupViewState::getGroup);
                 Optional<GroupKey<?>> viewedKey = viewedGroup.map(DrawableGroup::getGroupKey);
                 DataSource dataSourceOfCurrentGroup
-                        = viewedKey.flatMap(GroupKey::getDataSource)
-                                .orElse(null);
+                        = viewedKey.flatMap(GroupKey::getDataSource).orElse(null);
                 DrawableAttribute attributeOfCurrentGroup
-                        = viewedKey.map(GroupKey::getAttribute)
-                                .orElse(null);
-                /* if no group or if groupbies are different or if data source
-                 * != null and does not equal group */
-                if (viewedGroup.isPresent() == false) {
+                        = viewedKey.map(GroupKey::getAttribute).orElse(null);
+
+                if (viewedGroup.isPresent() == false //if no group was being viewed,
+                    || (dataSource != null && notEqual(dataSourceOfCurrentGroup, dataSource)) //or the datasource of the viewed group is wrong,
+                    || groupBy != attributeOfCurrentGroup) { // or the groupBy attribute is wrong...
 
                     //the current group should not be visible so ...
-                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group 
-                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
+                    if (isNotEmpty(unSeenGroups)) {
+                        //  show then next unseen group 
+                        controller.advance(GroupViewState.createTile(unSeenGroups.get(0)));
                     } else if (isNotEmpty(analyzedGroups)) {
                         //show the first analyzed group.
-                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
+                        controller.advance(GroupViewState.createTile(analyzedGroups.get(0)));
                     } else { //there are no groups,  clear the group area.
-                        controller.advance(GroupViewState.tile(null));
-                    }
-                } else if ((getDataSource() != null && notEqual(dataSourceOfCurrentGroup, getDataSource()))) {
-
-                    //the current group should not be visible so ...
-                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
-                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
-                    } else if (isNotEmpty(analyzedGroups)) {
-                        //show the first analyzed group.
-                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
-                    } else { //there are no groups,  clear the group area.
-                        controller.advance(GroupViewState.tile(null));
-                    }
-                } else if (getGroupBy() != attributeOfCurrentGroup) {
-                    //the current group should not be visible so ...
-                    if (isNotEmpty(unSeenGroups)) {//  show then next unseen group
-                        controller.advance(GroupViewState.tile(unSeenGroups.get(0)));
-                    } else if (isNotEmpty(analyzedGroups)) {
-                        //show the first analyzed group.
-                        controller.advance(GroupViewState.tile(analyzedGroups.get(0)));
-                    } else { //there are no groups,  clear the group area.
-                        controller.advance(GroupViewState.tile(null));
+                        controller.advance(GroupViewState.createTile(null));
                     }
                 }
             } finally {
@@ -790,7 +819,8 @@ public class GroupManager {
          *
          * @param groupBy
          *
-         * @return
+         * @return map of data source (or null if group by attribute ignores
+         *         data sources) to list of unique group values
          */
         public Multimap<DataSource, AttrValType> findValuesForAttribute() {
 
@@ -874,6 +904,7 @@ public class GroupManager {
      */
     private DrawableDB getDrawableDB() {
         return controller.getDatabase();
+
     }
 
     class GroupingService extends Service< Void> {

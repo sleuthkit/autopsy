@@ -82,8 +82,12 @@ class Util {
         }
     }
 
-    public static String getBaseDomain(String url) {
+    /**
         //JIRA-2384: There is no utility in apache or guave to do this for us?
+     * @param url
+     * @return empty string if no domain could be found
+     */
+    private static String getBaseDomain(String url) {
         //strip protocol
         String cleanUrl = url.replaceFirst(".*:\\/\\/", "");
 
@@ -106,10 +110,21 @@ class Util {
                 hostB.append(".");
             }
         }
-
-        return hostB.toString();
+        
+        
+        String base = hostB.toString();
+        // verify there are no special characters in there
+        if (base.matches(".*[~`!@#$%^&\\*\\(\\)\\+={}\\[\\];:\\?<>,/ ].*")) {
+            return "";
+        }
+        return base;
     }
 
+    /**
+     * 
+     * @param value
+     * @return empty string if no domain name was found
+     */
     public static String extractDomain(String value) {
 
         //JIRA-2384: There is no utility in apache or guave to do this for us?

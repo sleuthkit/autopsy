@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -41,8 +42,8 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -132,7 +133,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                     + "attribute_type_id=" + setNameId //NON-NLS
                     + " AND blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id" //NON-NLS
                     + " AND blackboard_artifacts.artifact_type_id=" + artId; //NON-NLS
-            if (UserPreferences.groupItemsInTreeByDatasource()) {
+            if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 query +=  "  AND blackboard_artifacts.data_source_obj_id = " + datasourceObjId;
             }
 
@@ -474,11 +475,13 @@ public class InterestingHits implements AutopsyVisitableItem {
                         BlackboardArtifact art = skCase.getBlackboardArtifact(id);
                         artifactHits.put(id, art);  
                     }
-                    list.add(id);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
                 }
             });
+
+            list.addAll(artifactHits.keySet());
+
             return true;
         }
 

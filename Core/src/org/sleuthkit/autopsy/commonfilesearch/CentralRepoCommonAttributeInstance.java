@@ -1,16 +1,16 @@
 /*
- * 
+ *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,8 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -31,6 +30,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -45,17 +45,15 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
     private final Integer crFileId;
     private CorrelationAttributeInstance currentAttribute;
     private final CorrelationAttributeInstance.Type correlationType;
-    private final Map<String, Long> dataSourceNameToIdMap;
 
-    CentralRepoCommonAttributeInstance(Integer attrInstId, Map<Long, String> dataSourceIdToNameMap, CorrelationAttributeInstance.Type correlationType) {
+    CentralRepoCommonAttributeInstance(Integer attrInstId, CorrelationAttributeInstance.Type correlationType) {
         super();
         this.crFileId = attrInstId;
-        this.dataSourceNameToIdMap = invertMap(dataSourceIdToNameMap);
         this.correlationType = correlationType;
     }
-    
+
     @Override
-    public CorrelationAttributeInstance.Type getCorrelationAttributeInstanceType(){
+    public CorrelationAttributeInstance.Type getCorrelationAttributeInstanceType() {
         return this.correlationType;
     }
 
@@ -71,22 +69,35 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
             final CorrelationAttributeInstance currentAttributeInstance = this.currentAttribute;
 
-            String currentFullPath = currentAttributeInstance.getFilePath();
-            String currentDataSource = currentAttributeInstance.getCorrelationDataSource().getName();
+            try {
+                String currentFullPath = currentAttributeInstance.getFilePath();
+                currentCase = Case.getCurrentCaseThrows();
 
-            if (this.dataSourceNameToIdMap.containsKey(currentDataSource)) {
-                Long dataSourceObjectId = this.dataSourceNameToIdMap.get(currentDataSource);
-
-                try {
-                    currentCase = Case.getCurrentCaseThrows();
+                // Only attempt to make the abstract file if the attribute is from the current case
+                if (currentCase.getName().equals(currentAttributeInstance.getCorrelationCase().getCaseUUID())) {
 
                     SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
+                    // Find the correct data source
+                    Optional<DataSource> dataSource = tskDb.getDataSources().stream()
+                            .filter(p -> p.getDeviceId().equals(currentAttribute.getCorrelationDataSource().getDeviceID()))
+                            .findFirst();
+                    if (!dataSource.isPresent()) {
+                        LOGGER.log(Level.WARNING, String.format("Unable to find data source with device ID %s in the current case", currentAttribute.getCorrelationDataSource().getDeviceID()));
+                        return null;
+                    }
+
                     File fileFromPath = new File(currentFullPath);
                     String fileName = fileFromPath.getName();
-                    String parentPath = (fileFromPath.getParent() + File.separator).replace("\\", "/");
 
-                    final String whereClause = String.format("lower(name) = '%s' AND md5 = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, currentAttribute.getCorrelationValue(), parentPath, dataSourceObjectId);
+                    // Create the parent path. Make sure not to add a separator if there is already one there.
+                    String parentPath = fileFromPath.getParent();
+                    if (!parentPath.endsWith(File.separator)) {
+                        parentPath += File.separator;
+                    }
+                    parentPath = parentPath.replace("\\", "/");
+
+                    final String whereClause = String.format("lower(name) = '%s' AND md5 = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, currentAttribute.getCorrelationValue(), parentPath, dataSource.get().getId());
                     List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(whereClause);
 
                     if (potentialAbstractFiles.isEmpty()) {
@@ -97,46 +108,31 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                     } else {
                         return potentialAbstractFiles.get(0);
                     }
-
-                } catch (TskCoreException | NoCurrentCaseException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{currentFullPath}), ex);
+                } else {
                     return null;
                 }
-            } else {
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{currentAttributeInstance.getFilePath()}), ex);
                 return null;
             }
+
         }
         return null;
     }
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-
         // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
-        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(correlationType);
-        CorrelationAttributeInstance corrAttr = eamDbAttrInst.findSingleCorrelationAttribute(crFileId);
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
-
         try {
-            this.setCurrentAttributeInst(corrAttr);
-
             AbstractFile abstractFileForAttributeInstance = this.getAbstractFile();
-            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createNode(corrAttr, abstractFileForAttributeInstance, currCaseDbName);
+            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createNode(currentAttribute, abstractFileForAttributeInstance, currCaseDbName);
             attrInstNodeList.add(generatedInstNode);
-
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Unable to get DataSource for record with md5: %s.  Node not created.", new Object[]{corrAttr.getCorrelationValue()}), ex);
+            LOGGER.log(Level.SEVERE, String.format("Unable to get DataSource for record with md5: %s.  Node not created.", new Object[]{currentAttribute.getCorrelationValue()}), ex);
         }
 
         return attrInstNodeList.toArray(new DisplayableItemNode[attrInstNodeList.size()]);
-    }
-
-    private Map<String, Long> invertMap(Map<Long, String> dataSourceIdToNameMap) {
-        HashMap<String, Long> invertedMap = new HashMap<>();
-        for (Map.Entry<Long, String> entry : dataSourceIdToNameMap.entrySet()) {
-            invertedMap.put(entry.getValue(), entry.getKey());
-        }
-        return invertedMap;
     }
 }

@@ -24,6 +24,8 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -68,10 +70,18 @@ final class RelationshipNode extends BlackboardArtifactNode {
         }
 
         sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName()));
-        CorrelationAttributeInstance correlationAttribute = getCorrelationAttributeInstance();
+        
         addScoreProperty(sheetSet, tags);
+        
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+            correlationAttribute = getCorrelationAttributeInstance();
+        }
         addCommentProperty(sheetSet, tags, correlationAttribute);
-        addCountProperty(sheetSet, correlationAttribute);
+        
+        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+            addCountProperty(sheetSet, correlationAttribute);
+        }
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(getArtifact().getArtifactTypeID());
         if (null != fromID) {
@@ -120,7 +130,6 @@ final class RelationshipNode extends BlackboardArtifactNode {
                     break;
             }
         }
-        addTagProperty(sheetSet, tags);
 
         return sheet;
     }

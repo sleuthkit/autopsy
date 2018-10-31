@@ -27,6 +27,7 @@ import javafx.application.Platform;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -39,9 +40,13 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestManager.IngestJobEvent;
+import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.FILE_DONE;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -57,14 +62,10 @@ public class ImageGalleryModule {
     private static final Object controllerLock = new Object();
     private static ImageGalleryController controller;
 
-    public static ImageGalleryController getController() throws NoCurrentCaseException {
+    public static ImageGalleryController getController() throws TskCoreException, NoCurrentCaseException {
         synchronized (controllerLock) {
             if (controller == null) {
-                try {
-                    controller = new ImageGalleryController(Case.getCurrentCaseThrows());
-                } catch (NoCurrentCaseException | TskCoreException ex) {
-                    throw new NoCurrentCaseException("Error getting ImageGalleryController for the current case.", ex);
-                }
+                controller = new ImageGalleryController(Case.getCurrentCaseThrows());
             }
             return controller;
         }
@@ -121,17 +122,6 @@ public class ImageGalleryModule {
         }
     }
 
-    /** is the drawable db out of date for the given case
-     *
-     * @param c
-     *
-     * @return true if the drawable db is out of date for the given case, false
-     *         otherwise
-     */
-    public static boolean isDrawableDBStale(Case c) throws TskCoreException {
-        return new ImageGalleryController(c).isDataSourcesTableStale();
-    }
-
     /**
      * Is the given file 'supported' and not 'known'(nsrl hash hit). If so we
      * should include it in {@link DrawableDB} and UI
@@ -140,6 +130,9 @@ public class ImageGalleryModule {
      *
      * @return true if the given {@link AbstractFile} is "drawable" and not
      *         'known', else false
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException
      */
     public static boolean isDrawableAndNotKnown(AbstractFile abstractFile) throws FileTypeDetector.FileTypeDetectorInitException {
         return (abstractFile.getKnown() != TskData.FileKnown.KNOWN) && FileTypeUtils.isDrawable(abstractFile);
@@ -161,45 +154,78 @@ public class ImageGalleryModule {
                 IngestManager.getInstance().removeIngestModuleEventListener(this);
                 return;
             }
-
-            if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) != FILE_DONE) {
-                return;
-            }
-            // getOldValue has fileID getNewValue has  Abstractfile
-            AbstractFile file = (AbstractFile) evt.getNewValue();
-            if (false == file.isFile()) {
-                return;
-            }
+            
             /* only process individual files in realtime on the node that is
              * running the ingest. on a remote node, image files are processed
              * enblock when ingest is complete */
             if (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL) {
                 return;
             }
-
+            
+            // Bail out if the case is closed
             try {
-                ImageGalleryController con = getController();
-                if (con.isListeningEnabled()) {
-                    try {
-                        if (isDrawableAndNotKnown(file)) {
-                            //this file should be included and we don't already know about it from hash sets (NSRL)
-                            con.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
-                        } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
-                            /* Doing this check results in fewer tasks queued
-                             * up, and faster completion of db update. This file
-                             * would have gotten scooped up in initial grab, but
-                             * actually we don't need it */
-                            con.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
-                        }
-
-                    } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                        logger.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error("Image Gallery Error",
-                                "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
-                    }
+                if (controller == null || Case.getCurrentCaseThrows() == null) {
+                    return;
                 }
             } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                return;
+            }
+
+            if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == FILE_DONE) {
+
+                // getOldValue has fileID getNewValue has  Abstractfile
+                AbstractFile file = (AbstractFile) evt.getNewValue();
+                if (false == file.isFile()) {
+                    return;
+                }
+
+                try {
+                    ImageGalleryController con = getController();
+                    if (con.isListeningEnabled()) {
+                        try {
+                            // Update the entry if it is a picture and not in NSRL
+                            if (isDrawableAndNotKnown(file)) {
+                                con.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
+                            } 
+                            // Remove it from the DB if it is no longer relevant, but had the correct extension
+                            else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
+                                /* Doing this check results in fewer tasks queued
+                                 * up, and faster completion of db update. This file
+                                 * would have gotten scooped up in initial grab, but
+                                 * actually we don't need it */
+                                con.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
+                            }
+                        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                            logger.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
+                            MessageNotifyUtil.Notify.error("Image Gallery Error",
+                                    "Unable to determine if file is drawable and not known.  Not making any changes to DB.  See the logs for details.");
+                        }
+                    }
+                } catch (NoCurrentCaseException ex) {
+                    logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
+                }
+            }
+            else if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == DATA_ADDED) {
+                ModuleDataEvent mde = (ModuleDataEvent)evt.getOldValue();
+                
+                if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+                    DrawableDB drawableDB = controller.getDatabase();
+                    if (mde.getArtifacts() != null) {
+                        for (BlackboardArtifact art : mde.getArtifacts()) {
+                            drawableDB.addExifCache(art.getObjectID());
+                        }
+                    }
+                }
+                else if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                    DrawableDB drawableDB = controller.getDatabase();
+                    if (mde.getArtifacts() != null) {
+                        for (BlackboardArtifact art : mde.getArtifacts()) {
+                            drawableDB.addHashSetCache(art.getObjectID());
+                        }
+                    }
+                }
             }
         }
     }
@@ -225,6 +251,9 @@ public class ImageGalleryModule {
                 con = getController();
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
+                return;
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
                 return;
             }
             switch (Case.Events.valueOf(evt.getPropertyName())) {
@@ -259,7 +288,14 @@ public class ImageGalleryModule {
                     break;
                 case CONTENT_TAG_ADDED:
                     final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                    if (con.getDatabase().isInDB(tagAddedEvent.getAddedTag().getContent().getId())) {
+                    
+                    long objId = tagAddedEvent.getAddedTag().getContent().getId();
+                    
+                    // update the cache
+                    DrawableDB drawableDB = controller.getDatabase();
+                    drawableDB.addTagCache(objId);
+                    
+                    if (con.getDatabase().isInDB(objId)) {
                         con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
                     }
                     break;
@@ -296,31 +332,32 @@ public class ImageGalleryModule {
             }
             // A remote node added a new data source and just finished ingest on it.
             //drawable db is stale, and if ImageGallery is open, ask user what to do
-            ImageGalleryController con;
+
             try {
-                con = getController();
+                ImageGalleryController con = getController();
+                con.setStale(true);
+                if (con.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
+                    SwingUtilities.invokeLater(() -> {
+                        int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
+                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
+                                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+
+                        switch (showAnswer) {
+                            case JOptionPane.YES_OPTION:
+                                con.rebuildDB();
+                                break;
+                            case JOptionPane.NO_OPTION:
+                            case JOptionPane.CANCEL_OPTION:
+                            default:
+                                break; //do nothing
+                        }
+                    });
+                }
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
-                return;
-            }
-            con.setStale(true);
-            if (con.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
-                SwingUtilities.invokeLater(() -> {
-                    int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
-                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
-                            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                    switch (showAnswer) {
-                        case JOptionPane.YES_OPTION:
-                            con.rebuildDB();
-                            break;
-                        case JOptionPane.NO_OPTION:
-                        case JOptionPane.CANCEL_OPTION:
-                        default:
-                            break; //do nothing
-                    }
-                });
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
             }
         }
     }
