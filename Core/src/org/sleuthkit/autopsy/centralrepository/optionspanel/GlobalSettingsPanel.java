@@ -121,6 +121,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         correlationPropertiesScrollPane = new javax.swing.JScrollPane();
         correlationPropertiesTextArea = new javax.swing.JTextArea();
         flagTaggedNotableItemsCheckbox = new javax.swing.JCheckBox();
+        generateInterestingItemsLabel = new javax.swing.JLabel();
         organizationPanel = new javax.swing.JPanel();
         manageOrganizationButton = new javax.swing.JButton();
         organizationScrollPane = new javax.swing.JScrollPane();
@@ -232,6 +233,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
         org.openide.awt.Mnemonics.setLocalizedText(flagTaggedNotableItemsCheckbox, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.flagTaggedNotableItemsCheckbox.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(generateInterestingItemsLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.generateInterestingItemsLabel.text")); // NOI18N
+
         javax.swing.GroupLayout pnCorrelationPropertiesLayout = new javax.swing.GroupLayout(pnCorrelationProperties);
         pnCorrelationProperties.setLayout(pnCorrelationPropertiesLayout);
         pnCorrelationPropertiesLayout.setHorizontalGroup(
@@ -239,24 +242,29 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(bnManageTypes)
+                    .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 468, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
-                        .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 497, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(flagTaggedNotableItemsCheckbox))
-                    .addComponent(bnManageTypes))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(29, 29, 29)
+                        .addComponent(flagTaggedNotableItemsCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 246, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addComponent(generateInterestingItemsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(247, Short.MAX_VALUE))
         );
         pnCorrelationPropertiesLayout.setVerticalGroup(
             pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnCorrelationPropertiesLayout.createSequentialGroup()
-                .addGroup(pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(flagTaggedNotableItemsCheckbox))
-                    .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE))
+                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnManageTypes)
                 .addGap(8, 8, 8))
+            .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
+                .addComponent(generateInterestingItemsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(flagTaggedNotableItemsCheckbox)
+                .addGap(0, 0, 0))
         );
 
         organizationPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.organizationPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
@@ -288,7 +296,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(organizationPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(organizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(organizationScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 980, Short.MAX_VALUE)
+                    .addComponent(organizationScrollPane)
                     .addGroup(organizationPanelLayout.createSequentialGroup()
                         .addComponent(manageOrganizationButton)
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -363,7 +371,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lbCentralRepository, javax.swing.GroupLayout.DEFAULT_SIZE, 1022, Short.MAX_VALUE)
+            .addComponent(lbCentralRepository, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -635,6 +643,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         casesPanel.setEnabled(enable && !ingestRunning);
         casesTextArea.setEnabled(enable && !ingestRunning);
         flagTaggedNotableItemsCheckbox.setEnabled(enable && !ingestRunning);
+        generateInterestingItemsLabel.setEnabled(enable & !ingestRunning);
         return true;
     }
 
@@ -648,6 +657,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JScrollPane correlationPropertiesScrollPane;
     private javax.swing.JTextArea correlationPropertiesTextArea;
     private javax.swing.JCheckBox flagTaggedNotableItemsCheckbox;
+    private javax.swing.JLabel generateInterestingItemsLabel;
     private javax.swing.JLabel ingestRunningWarningLabel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
