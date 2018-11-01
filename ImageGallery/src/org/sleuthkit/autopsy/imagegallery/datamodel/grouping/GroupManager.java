@@ -266,14 +266,23 @@ public class GroupManager {
             try {
                 Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
                 getDrawableDB().markGroupSeen(group.getGroupKey(), seen, examiner.getId());
-                group.setSeen(seen);
-                updateUnSeenGroups(group);
+                // only update and reshuffle if its new results
+                if (group.isSeen() != seen) {
+                    group.setSeen(seen);
+                    updateUnSeenGroups(group);
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
             }
         });
     }
 
+    /**
+     * Update unseenGroups list accordingly based on the current status
+     * of 'group'. Removes it if it is seen or adds it if it is unseen.
+     * 
+     * @param group 
+     */
     synchronized private void updateUnSeenGroups(DrawableGroup group) {
         if (group.isSeen()) {
             unSeenGroups.removeAll(group);
@@ -530,15 +539,18 @@ public class GroupManager {
 
         // NOTE: We assume that it has already been determined that GroupKey can be displayed based on Data Source filters
         if (group == null) {
-            //if there wasn't already a group check if there should be one now
-            // path group, for example, only gets created when all files are analyzed
+            //if there wasn't already a DrawableGroup, then check if this group is now 
+            // in an appropriate state to get one made.  
+            // Path group, for example, only gets a DrawableGroup created when all files are analyzed
             group = popuplateIfAnalyzed(groupKey, null);
         } else {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             group.addFile(fileID);
         }
         // reset the seen status for the group
-        markGroupSeen(group, false);
+        if (group != null) {
+            markGroupSeen(group, false);
+        }
     }
 
     @Subscribe
@@ -607,6 +619,8 @@ public class GroupManager {
      * If the group is analyzed (or other criteria based on grouping) and should
      * be shown to the user, then add it to the appropriate data structures so
      * that it can be viewed.
+     * 
+     * @returns null if Group is not ready to be viewed
      */
     synchronized private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
         /*

@@ -696,8 +696,16 @@ public final class ImageGalleryController {
                 // Cycle through all of the files returned and call processFile on each
                 //do in transaction
                 drawableDbTransaction = taskDB.beginTransaction();
-                caseDbTransaction = tskCase.beginTransaction();
+                
+                /* We are going to periodically commit the CaseDB transaction and sleep so
+                 * that the user can have Autopsy do other stuff while these bulk tasks are ongoing.
+                 */
+                int caseDbCounter = 0;
                 for (final AbstractFile f : files) {
+                    if (caseDbTransaction == null) {
+                        caseDbTransaction = tskCase.beginTransaction();
+                    }
+                    
                     if (isCancelled() || Thread.interrupted()) {
                         logger.log(Level.WARNING, "Task cancelled or interrupted: not all contents may be transfered to drawable database."); //NON-NLS
                         taskCompletionStatus = false;
@@ -712,6 +720,14 @@ public final class ImageGalleryController {
                     progressHandle.progress(f.getName(), workDone);
                     updateProgress(workDone - 1 / (double) files.size());
                     updateMessage(f.getName());
+                    
+                    // Periodically, commit the transaction (which frees the lock) and sleep
+                    // to allow other threads to get some work done in CaseDB
+                    if ((++caseDbCounter % 200) == 0) {
+                        caseDbTransaction.commit();
+                        caseDbTransaction = null;
+                        Thread.sleep(500); // 1/2 second
+                    }
                 }
 
                 progressHandle.finish();
@@ -720,13 +736,16 @@ public final class ImageGalleryController {
                 updateProgress(1.0);
 
                 progressHandle.start();
-                caseDbTransaction.commit();
-                caseDbTransaction = null;
+                if (caseDbTransaction != null) {
+                    caseDbTransaction.commit();
+                    caseDbTransaction = null;
+                }
+                
                 // pass true so that groupmanager is notified of the changes
                 taskDB.commitTransaction(drawableDbTransaction, true);
                 drawableDbTransaction = null;
 
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException  | InterruptedException ex) {
                 progressHandle.progress(Bundle.BulkTask_stopCopy_status());
                 logger.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
                 MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());
@@ -792,20 +811,16 @@ public final class ImageGalleryController {
             if (known) {
                 taskDB.removeFile(f.getId(), tr);  //remove known files
             } else {
-                try {
-                    // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
-                    if (null == f.getMIMEType()) {
-                        // set to false to force the DB to be marked as stale
-                        this.setTaskCompletionStatus(false);
-                    } //supported mimetype => analyzed
-                    else if (FileTypeUtils.hasDrawableMIMEType(f)) {
-                        taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
-                    } //unsupported mimtype => analyzed but shouldn't include
-                    else {
-                        taskDB.removeFile(f.getId(), tr);
-                    }
-                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                    throw new TskCoreException("Failed to initialize FileTypeDetector.", ex);
+                // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
+                if (null == f.getMIMEType()) {
+                    // set to false to force the DB to be marked as stale
+                    this.setTaskCompletionStatus(false);
+                } //supported mimetype => analyzed
+                else if (FileTypeUtils.hasDrawableMIMEType(f)) {
+                    taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
+                } //unsupported mimtype => analyzed but shouldn't include
+                else {
+                    taskDB.removeFile(f.getId(), tr);
                 }
             }
         }
@@ -840,7 +855,7 @@ public final class ImageGalleryController {
 
         @Override
         void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) {
-            taskDB.insertFile(DrawableFile.create(f, false, false), tr, caseDBTransaction);
+            taskDB.insertBasicFileData(DrawableFile.create(f, false, false), tr, caseDBTransaction);
         }
 
         @Override
