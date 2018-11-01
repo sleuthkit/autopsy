@@ -128,7 +128,7 @@ class ExtractIE extends Extract {
             Long datetime = fav.getCrtime();
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
-            String domain = Util.extractDomain(url);
+            String domain = extractDomain(url);
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
@@ -243,7 +243,7 @@ class ExtractIE extends Extract {
             Long datetime = cookiesFile.getCrtime();
             String tempDate = datetime.toString();
             datetime = Long.valueOf(tempDate);
-            String domain = Util.extractDomain(url);
+            String domain = extractDomain(url);
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
@@ -492,7 +492,7 @@ class ExtractIE extends Extract {
                 /*
                  * Verify the left portion of the URL is valid.
                  */
-                domain = Util.extractDomain(url[0]);
+                domain = extractDomain(url[0]);
                 
                 if (domain != null && domain.isEmpty() == false) {
                     /*
@@ -514,14 +514,14 @@ class ExtractIE extends Extract {
                     realurl = realurl.replaceAll(":(.*?):", "");
                     realurl = realurl.replace(":Host:", ""); //NON-NLS
                     realurl = realurl.trim();
-                    domain = Util.extractDomain(realurl);
+                    domain = extractDomain(realurl);
                 }
             } else {
                 /*
                  * Use the entire input for the URL.
                  */
                 realurl = lineBuff[1].trim();
-                domain = Util.extractDomain(realurl);
+                domain = extractDomain(realurl);
             }
 
             if (!actime.isEmpty()) {
