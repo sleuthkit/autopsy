@@ -32,16 +32,13 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import javafx.beans.Observable;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
-import javafx.collections.SetChangeListener;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -153,26 +150,19 @@ public final class FilteredEventsModel {
         minCache = CacheBuilder.newBuilder()
                 .build(new CacheLoaderImpl<>(ignored -> eventManager.getMinTime()));
 
-        datasourcesMap.addListener((MapChangeListener.Change<? extends Long, ? extends DataSource> change) -> {
-            DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded().getName(), change.getKey());
+        InvalidationListener filterSyncListener = observable -> {
             RootFilterState rootFilter = filterProperty().get().copyOf();
-            rootFilter.getDataSourcesFilterState().getFilter().addSubFilter(dataSourceFilter);
+            syncFilters(rootFilter);
             requestedFilter.set(rootFilter);
-        });
-        getHashSets().addListener((SetChangeListener.Change< ? extends String> change) -> {
-            HashSetFilter hashSetFilter = new HashSetFilter(change.getElementAdded());
-            RootFilterState rootFilter = filterProperty().get();
-            rootFilter.getHashHitsFilterState().getFilter().addSubFilter(hashSetFilter);
-            requestedFilter.set(rootFilter);
-        });
-        getTagNames().addListener((ListChangeListener.Change<? extends TagName> change) -> {
-            RootFilterState rootFilter = filterProperty().get();
-            syncTagsFilter(rootFilter);
-            requestedFilter.set(rootFilter);
-        });
+        };
+
+        datasourcesMap.addListener(filterSyncListener);
+        getHashSets().addListener(filterSyncListener);
+        getTagNames().addListener(filterSyncListener);
+
         requestedFilter.set(getDefaultFilter());
 
-        requestedZoomState.addListener((Observable observable) -> {
+        requestedZoomState.addListener(observable -> {
             final ZoomState zoomState = requestedZoomState.get();
 
             if (zoomState != null) {
@@ -271,19 +261,31 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * "sync" the given tags filter with the tagnames in use: Disable filters
-     * for tags that are not in use in the case, and add new filters for tags
-     * that don't have them. New filters are selected by default.
+     * "sync" the given root filter with the state of the casee: Disable filters
+     * for tags that are not in use in the case, and add new filters for tags,
+     * hashsets, and datasources. that don't have them. New filters are selected
+     * by default.
      *
      * @param rootFilter the filter state to modify so it is consistent with the
      *                   tags in use in the case
      */
-    public void syncTagsFilter(RootFilterState rootFilter) {
+    public void syncFilters(RootFilterState rootFilter) {
+        TagsFilter tagsFilter = rootFilter.getTagsFilterState().getFilter();
         for (TagName tagName : tagNames) {
-            rootFilter.getTagsFilterState().getFilter().addSubFilter(new TagNameFilter(tagName));
+            tagsFilter.addSubFilter(new TagNameFilter(tagName));
         }
-        for (FilterState<? extends TagNameFilter> filterState : rootFilter.getTagsFilterState().getSubFilterStates()) {
-            filterState.setDisabled(tagNames.contains(filterState.getFilter().getTagName()) == false);
+        for (FilterState<? extends TagNameFilter> tagFilterState : rootFilter.getTagsFilterState().getSubFilterStates()) {
+            tagFilterState.setDisabled(tagNames.contains(tagFilterState.getFilter().getTagName()) == false);
+        }
+
+        DataSourcesFilter dataSourcesFilter = rootFilter.getDataSourcesFilterState().getFilter();
+        for (Map.Entry<Long, DataSource> entry : datasourcesMap.entrySet()) {
+            dataSourcesFilter.addSubFilter(new DataSourceFilter(entry.getValue().getName(), entry.getKey()));
+        }
+
+        HashHitsFilter hashSetsFilter = rootFilter.getHashHitsFilterState().getFilter();
+        for (String hashSet : getHashSets()) {
+            hashSetsFilter.addSubFilter(new HashSetFilter(hashSet));
         }
     }
 

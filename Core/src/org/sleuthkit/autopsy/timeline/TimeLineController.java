@@ -285,7 +285,7 @@ public class TimeLineController {
          */
         historyManager.currentState().addListener((  observable,   oldState,   newState) -> {
             ZoomState historyManagerState = newState;
-            filteredEvents.syncTagsFilter(historyManagerState.getFilterState());
+            filteredEvents.syncFilters(historyManagerState.getFilterState());
             currentParams.set(historyManagerState);
         });
 

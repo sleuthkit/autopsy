@@ -21,10 +21,8 @@ package org.sleuthkit.autopsy.timeline.ui.filtering;
 import java.util.Arrays;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.binding.BooleanBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
@@ -46,6 +44,7 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.CompoundFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
@@ -119,8 +118,8 @@ final public class FilterSetPanel extends BorderPane {
         legendColumn.setCellFactory(col -> new LegendCell(this.controller));
 
         //type is the only filter expanded initialy
-        expansionMap.put(controller.getEventsModel().getFilterState().getFilter(), true);
-        expansionMap.put(controller.getEventsModel().getFilterState().getTypeFilterState().getFilter(), true);
+        expansionMap.put(filteredEvents.getFilterState().getFilter(), true);
+        expansionMap.put(filteredEvents.getFilterState().getTypeFilterState().getFilter(), true);
 
         InvalidationListener applyFiltersListener = observable -> applyFilters();
 
@@ -128,12 +127,7 @@ final public class FilterSetPanel extends BorderPane {
         filteredEvents.descriptionLODProperty().addListener(applyFiltersListener);
         filteredEvents.timeRangeProperty().addListener(applyFiltersListener);
 
-        filteredEvents.filterProperty().addListener(new InvalidationListener() {
-            @Override
-            public void invalidated(Observable observable) {
-                  refresh();
-            }
-        });
+        filteredEvents.filterProperty().addListener(observable -> refresh());
         refresh();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
@@ -173,7 +167,7 @@ final public class FilterSetPanel extends BorderPane {
     }
 
     private void refresh() {
-        FilterTreeItem filterTreeItem = new FilterTreeItem(filteredEvents.getFilterState().copyOf(), expansionMap);
+        FilterTreeItem filterTreeItem = new FilterTreeItem(filteredEvents.filterProperty().getValue(), expansionMap);
         Platform.runLater(() -> {
             filterTreeTable.setRoot(filterTreeItem);
         });
