@@ -115,7 +115,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             } catch (SQLException | TskCoreException | NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Failed to get device id for the following image: " + this.content.getId(), ex);
             }
-
+            return sheet;
         }
 
         //Otherwise default to the AAFN createSheet method.
