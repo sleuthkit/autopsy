@@ -54,16 +54,16 @@ class SCOAndTranslationTask implements Runnable {
             AbstractFile content = weakContentRef.get();
             
             //Long DB queries
-            List<ContentTag> tags = PropertyUtil.getContentTagsFromDatabase(content);
+            List<ContentTag> tags = SCOAndTranslationUtil.getContentTagsFromDatabase(content);
             CorrelationAttributeInstance attribute = 
-                    PropertyUtil.getCorrelationAttributeInstance(content);
+                    SCOAndTranslationUtil.getCorrelationAttributeInstance(content);
 
             Pair<DataResultViewerTable.Score, String> scoreAndDescription = 
-                    PropertyUtil.getScorePropertyAndDescription(content, tags);
+                    SCOAndTranslationUtil.getScorePropertyAndDescription(content, tags);
             DataResultViewerTable.HasCommentStatus comment = 
-                    PropertyUtil.getCommentProperty(tags, attribute);
+                    SCOAndTranslationUtil.getCommentProperty(tags, attribute);
             Pair<Long, String> countAndDescription = 
-                    PropertyUtil.getCountPropertyAndDescription(attribute);
+                    SCOAndTranslationUtil.getCountPropertyAndDescription(attribute);
 
             //Load the results from the SCO column operations into a wrapper object to be passed
             //back to the listener so that the node can internally update it's propertySheet.
@@ -85,10 +85,10 @@ class SCOAndTranslationTask implements Runnable {
             //Updating of this column is significantly lower priority than 
             //getting results to the SCO columns!
             listener.propertyChange(new PropertyChangeEvent(
-                    AutopsyEvent.SourceType.LOCAL.toString(),
-                    AbstractAbstractFileNode.NodeSpecificEvents.TRANSLATION_AVAILABLE.toString(),
-                    null,
-                    PropertyUtil.getTranslatedFileName(content)));
+                AutopsyEvent.SourceType.LOCAL.toString(),
+                AbstractAbstractFileNode.NodeSpecificEvents.TRANSLATION_AVAILABLE.toString(),
+                null,
+                SCOAndTranslationUtil.getTranslatedFileName(content)));
         } catch (NullPointerException ex) {
            //If we are here, that means our weakPcl or content pointer has gone stale (aka
            //has been garbage collected). There's no recovery. Netbeans has 

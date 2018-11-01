@@ -19,55 +19,27 @@
 package org.sleuthkit.autopsy.datamodel;
 
 /**
- *
- * @author dsmyda
+ * Wraps a NodeProperty to extend its capability to also hold
  */
 
 //No modifier means its is only package usable (not part of public api)
-abstract class FileProperty {
+class FileProperty {
     
-    private String description = "";
-    private final String PROPERTY_NAME;
+    private final NodeProperty prop;
     
-    public FileProperty(String propertyName) {
-        PROPERTY_NAME = propertyName;
+    public FileProperty(NodeProperty prop) {
+        this.prop = prop;
     }
     
-    /**
-     * 
-     * @param content
-     * @return 
-     */
-    public abstract Object getPropertyValue();
-    
-    /**
-     * 
-     * @return 
-     */
-    public String getPropertyName(){
-        return PROPERTY_NAME;
+    public NodeProperty getProperty() {
+        return prop;
     }
+    
     /**
      * 
      * @return 
      */
     public boolean isEnabled() {
         return true;
-    }
-    
-    /*
-     * 
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
-    
-    /**
-     * 
-     * @param content
-     * @return 
-     */
-    public String getDescription() {
-        return description;
     }
 }

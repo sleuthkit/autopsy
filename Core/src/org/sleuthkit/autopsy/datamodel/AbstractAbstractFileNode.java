@@ -171,28 +171,21 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 //No need to do any asynchrony around these events, they are so infrequent
                 //and user driven that we can just keep a simple blocking approach, where we
                 //go out to the database ourselves!
-                List<ContentTag> tags = PropertyUtil.getContentTagsFromDatabase(content);
-                
-                updateProperty(new FileProperty(SCORE.toString()) {
-                    Pair<Score, String> scorePropertyAndDescription
-                            = PropertyUtil.getScorePropertyAndDescription(content, tags);
-
-                    @Override
-                    public Object getPropertyValue() {
-                        return scorePropertyAndDescription.getLeft();
-                    }
-
-                    @Override
-                    public String getDescription() {
-                        return scorePropertyAndDescription.getRight();
-                    }
-                }, new FileProperty(COMMENT.toString()) {
-                    @Override
-                    public Object getPropertyValue() {
-                        //Null out the correlation attribute because we are only 
-                        //concerned with changes to the content tag, not the CR!
-                        return PropertyUtil.getCommentProperty(tags, null);
-                    }
+                List<ContentTag> tags = SCOAndTranslationUtil.getContentTagsFromDatabase(content);
+                Pair<Score, String> scorePropertyAndDescription
+                        = SCOAndTranslationUtil.getScorePropertyAndDescription(content, tags);
+                updateProperty(new FileProperty(
+                        new NodeProperty<>(
+                                SCORE.toString(),
+                                SCORE.toString(),
+                                scorePropertyAndDescription.getRight(),
+                                scorePropertyAndDescription.getLeft())),
+                        new FileProperty(
+                                new NodeProperty<>(
+                                        COMMENT.toString(),
+                                        COMMENT.toString(),
+                                        NO_DESCR,
+                                        SCOAndTranslationUtil.getCommentProperty(tags, null))) {
                 });
             }
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
@@ -201,28 +194,21 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 //No need to do any asynchrony around these events, they are so infrequent
                 //and user driven that we can just keep a simple blocking approach, where we
                 //go out to the database ourselves!
-                List<ContentTag> tags = PropertyUtil.getContentTagsFromDatabase(content);
-                
-                updateProperty(new FileProperty(SCORE.toString()) {
-                    Pair<Score, String> scorePropertyAndDescription
-                            = PropertyUtil.getScorePropertyAndDescription(content, tags);
-
-                    @Override
-                    public Object getPropertyValue() {
-                        return scorePropertyAndDescription.getLeft();
-                    }
-
-                    @Override
-                    public String getDescription() {
-                        return scorePropertyAndDescription.getRight();
-                    }
-                }, new FileProperty(COMMENT.toString()) {
-                    @Override
-                    public Object getPropertyValue() {
-                        //Null out the correlation attribute because we are only 
-                        //concerned with changes to the content tag, not the CR!
-                        return PropertyUtil.getCommentProperty(tags, null);
-                    }
+                List<ContentTag> tags = SCOAndTranslationUtil.getContentTagsFromDatabase(content);
+                Pair<Score, String> scorePropertyAndDescription
+                        = SCOAndTranslationUtil.getScorePropertyAndDescription(content, tags);
+                updateProperty(new FileProperty(
+                        new NodeProperty<>(
+                                SCORE.toString(),
+                                SCORE.toString(),
+                                scorePropertyAndDescription.getRight(),
+                                scorePropertyAndDescription.getLeft())),
+                        new FileProperty(
+                                new NodeProperty<>(
+                                        COMMENT.toString(),
+                                        COMMENT.toString(),
+                                        NO_DESCR,
+                                        SCOAndTranslationUtil.getCommentProperty(tags, null))) {
                 });
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
@@ -231,68 +217,71 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 //No need to do any asynchrony around these events, they are so infrequent
                 //and user driven that we can just keep a simple blocking approach, where we
                 //go out to the database ourselves!
-                updateProperty(new FileProperty(COMMENT.toString()) {
-                    @Override
-                    public Object getPropertyValue() {
-                        List<ContentTag> tags = PropertyUtil.getContentTagsFromDatabase(content);
-                        CorrelationAttributeInstance attribute = PropertyUtil.getCorrelationAttributeInstance(content);
-                        return PropertyUtil.getCommentProperty(tags, attribute);
-                    }
+                List<ContentTag> tags = SCOAndTranslationUtil.getContentTagsFromDatabase(content);
+                CorrelationAttributeInstance attribute = 
+                    SCOAndTranslationUtil.getCorrelationAttributeInstance(content);
+                updateProperty(new FileProperty(
+                        new NodeProperty<>(
+                                COMMENT.toString(),
+                                COMMENT.toString(),
+                                NO_DESCR,
+                                SCOAndTranslationUtil.getCommentProperty(tags, attribute))) {
                 });
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
-            updateProperty(new FileProperty(TRANSLATION.toString()) {
+            updateProperty(new FileProperty(
+                    new NodeProperty<>(TRANSLATION.toString(),
+                            TRANSLATION.toString(),
+                            NO_DESCR,
+                            evt.getNewValue())) {
                 @Override
-                public Object getPropertyValue() {
-                    return evt.getNewValue();
+                public boolean isEnabled() {
+                    return UserPreferences.displayTranslationFileNames();
                 }
             });
         } else if (eventType.equals(NodeSpecificEvents.DABABASE_CONTENT_AVAILABLE.toString())) {
             SCOResults results = (SCOResults) evt.getNewValue();
-            updateProperty(new FileProperty(SCORE.toString()) {
-                @Override
-                public Object getPropertyValue() {
-                    return results.getScore();
-                }
-
-                @Override
-                public String getDescription() {
-                    return results.getScoreDescription();
-                }
-            }, new FileProperty(COMMENT.toString()) {
-                @Override
-                public Object getPropertyValue() {
-                    return results.getComment();
-                }
-            }, new FileProperty(OCCURRENCES.toString()) {
-                @Override
-                public Object getPropertyValue() {
-                    return results.getCount();
-                }
-
-                @Override
-                public String getDescription() {
-                    return results.getCountDescription();
-                }
+            updateProperty(new FileProperty(
+                    new NodeProperty<>(
+                            SCORE.toString(),
+                            SCORE.toString(),
+                            results.getScoreDescription(),
+                            results.getScore())),
+                    new FileProperty(
+                            new NodeProperty<>(
+                                    COMMENT.toString(),
+                                    COMMENT.toString(),
+                                    NO_DESCR,
+                                    results.getComment())),
+                    new FileProperty(
+                            new NodeProperty<>(
+                                    OCCURRENCES.toString(),
+                                    OCCURRENCES.toString(),
+                                    results.getCountDescription(),
+                                    results.getCount())) {
+                            @Override
+                            public boolean isEnabled() {
+                                return !UserPreferences.hideCentralRepoCommentsAndOccurrences();
+                            }
             });
         }
     };
-
-    /**
-     * We pass a weak reference wrapper around the listener to the event
-     * publisher. This allows Netbeans to delete the node when the user
-     * navigates to another part of the tree (previously, nodes were not being
-     * deleted because the event publisher was holding onto a strong reference
-     * to the listener. We need to hold onto the weak reference here to support
-     * unregistering of the listener in removeListeners() below.
-     */
+            /**
+             * We pass a weak reference wrapper around the listener to the event
+             * publisher. This allows Netbeans to delete the node when the user
+             * navigates to another part of the tree (previously, nodes were not
+             * being deleted because the event publisher was holding onto a
+             * strong reference to the listener. We need to hold onto the weak
+             * reference here to support unregistering of the listener in
+             * removeListeners() below.
+             */
     private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
     /**
-     * Returns a blank sheet to the caller, useful for giving subclasses the 
+     * Returns a blank sheet to the caller, useful for giving subclasses the
      * ability to override createSheet() with their own implementation.
-     * 
-     * @return 
+     *
+     * @return
      */
     protected Sheet getBlankSheet() {
         return super.createSheet();
@@ -305,9 +294,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * add their own (or omit some!) properties and we will not accidentally
      * disrupt their UI.
      *
-     * Race condition if not synchronized. Only one update should be applied at a time.
-     * The timing of currSheetSet.getProperties() could result in wrong/stale data
-     * being shown!
+     * Race condition if not synchronized. Only one update should be applied at
+     * a time. The timing of currSheetSet.getProperties() could result in
+     * wrong/stale data being shown!
      *
      * @param newProps New file property instances to be updated in the current
      *                 sheet.
@@ -322,12 +311,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
         for (int i = 0; i < currProps.length; i++) {
             for (FileProperty property : newProps) {
-                if (currProps[i].getName().equals(property.getPropertyName())) {
-                    currProps[i] = new NodeProperty<>(
-                            property.getPropertyName(),
-                            property.getPropertyName(),
-                            property.getDescription(),
-                            property.getPropertyValue());
+                if (currProps[i].getName().equals(property.getProperty().getName()) && property.isEnabled()) {
+                    currProps[i] = property.getProperty();
                 }
             }
         }
@@ -340,9 +325,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     /*
-     * This is called when the node is first initialized. Any new updates or changes 
-     * happen by directly manipulating the sheet. That means we can fire off background
-     * events everytime this method is called and not worry about duplicated jobs!
+     * This is called when the node is first initialized. Any new updates or
+     * changes happen by directly manipulating the sheet. That means we can fire
+     * off background events everytime this method is called and not worry about
+     * duplicated jobs!
      */
     @Override
     protected synchronized Sheet createSheet() {
@@ -356,11 +342,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         //Add only the enabled properties to the sheet!
         for (FileProperty property : newProperties) {
             if (property.isEnabled()) {
-                sheetSet.put(new NodeProperty<>(
-                        property.getPropertyName(),
-                        property.getPropertyName(),
-                        property.getDescription(),
-                        property.getPropertyValue()));
+                sheetSet.put(property.getProperty());
             }
         }
 
@@ -444,183 +426,176 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     List<FileProperty> getProperties() {
         List<FileProperty> properties = new ArrayList<>();
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        NAME.toString(),
+                        NAME.toString(),
+                        NO_DESCR,
+                        getContentDisplayName(content))));
 
-        properties.add(new FileProperty(NAME.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return getContentDisplayName(content);
-            }
-        });
-        
         //Initialize dummy place holder properties! These obviously do no work
         //to get their property values, but at the bottom we kick off a background
         //task that promises to update these values.
         final String NO_OP = "";
-        properties.add(new FileProperty(TRANSLATION.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return NO_OP;
-            }
-
+        properties.add(new FileProperty(
+                new NodeProperty<>(TRANSLATION.toString(),
+                        TRANSLATION.toString(),
+                        NO_DESCR,
+                        NO_OP)) {
             @Override
             public boolean isEnabled() {
                 return UserPreferences.displayTranslationFileNames();
             }
         });
-
-        properties.add(new FileProperty(SCORE.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return NO_OP;
-            }
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        SCORE.toString(),
+                        SCORE.toString(),
+                        NO_DESCR,
+                        NO_OP)));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        COMMENT.toString(),
+                        COMMENT.toString(),
+                        NO_DESCR,
+                        NO_OP)) {
         });
-        properties.add(new FileProperty(COMMENT.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return NO_OP;
-            }
 
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        OCCURRENCES.toString(),
+                        OCCURRENCES.toString(),
+                        NO_DESCR,
+                        NO_OP)) {
             @Override
             public boolean isEnabled() {
                 return !UserPreferences.hideCentralRepoCommentsAndOccurrences();
             }
         });
-        properties.add(new FileProperty(OCCURRENCES.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return NO_OP;
-            }
-
-            @Override
-            public boolean isEnabled() {
-                return !UserPreferences.hideCentralRepoCommentsAndOccurrences();
-            }
-        });
-        properties.add(new FileProperty(LOCATION.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return getContentPath(content);
-            }
-        });
-        properties.add(new FileProperty(MOD_TIME.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return ContentUtils.getStringTime(content.getMtime(), content);
-            }
-        });
-        properties.add(new FileProperty(CHANGED_TIME.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return ContentUtils.getStringTime(content.getCtime(), content);
-            }
-        });
-        properties.add(new FileProperty(ACCESS_TIME.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return ContentUtils.getStringTime(content.getAtime(), content);
-            }
-        });
-        properties.add(new FileProperty(CREATED_TIME.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return ContentUtils.getStringTime(content.getCrtime(), content);
-            }
-        });
-        properties.add(new FileProperty(SIZE.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getSize();
-            }
-        });
-        properties.add(new FileProperty(FLAGS_DIR.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getDirFlagAsString();
-            }
-        });
-        properties.add(new FileProperty(FLAGS_META.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getMetaFlagsAsString();
-            }
-        });
-        properties.add(new FileProperty(MODE.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getModesAsString();
-            }
-        });
-        properties.add(new FileProperty(USER_ID.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getUid();
-            }
-        });
-        properties.add(new FileProperty(GROUP_ID.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getGid();
-            }
-        });
-        properties.add(new FileProperty(META_ADDR.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getMetaAddr();
-            }
-        });
-        properties.add(new FileProperty(ATTR_ADDR.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getAttrType().getValue() + "-" + content.getAttributeId();
-            }
-        });
-        properties.add(new FileProperty(TYPE_DIR.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getDirType().getLabel();
-            }
-        });
-        properties.add(new FileProperty(TYPE_META.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getMetaType().toString();
-            }
-        });
-        properties.add(new FileProperty(KNOWN.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getKnown().getName();
-            }
-        });
-        properties.add(new FileProperty(MD5HASH.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return StringUtils.defaultString(content.getMd5Hash());
-            }
-        });
-        properties.add(new FileProperty(ObjectID.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getId();
-            }
-        });
-        properties.add(new FileProperty(MIMETYPE.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return StringUtils.defaultString(content.getMIMEType());
-            }
-        });
-        properties.add(new FileProperty(EXTENSION.toString()) {
-            @Override
-            public Object getPropertyValue() {
-                return content.getNameExtension();
-            }
-        });
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        LOCATION.toString(),
+                        LOCATION.toString(),
+                        NO_DESCR,
+                        getContentPath(content))));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        MOD_TIME.toString(),
+                        MOD_TIME.toString(),
+                        NO_DESCR,
+                        ContentUtils.getStringTime(content.getMtime(), content))));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        CHANGED_TIME.toString(),
+                        CHANGED_TIME.toString(),
+                        NO_DESCR,
+                        ContentUtils.getStringTime(content.getCtime(), content))));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        ACCESS_TIME.toString(),
+                        ACCESS_TIME.toString(),
+                        NO_DESCR,
+                        ContentUtils.getStringTime(content.getAtime(), content))));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        CREATED_TIME.toString(),
+                        CREATED_TIME.toString(),
+                        NO_DESCR,
+                        ContentUtils.getStringTime(content.getCrtime(), content))));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        SIZE.toString(),
+                        SIZE.toString(),
+                        NO_DESCR,
+                        StringUtils.defaultString(content.getMIMEType()))));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        FLAGS_DIR.toString(),
+                        FLAGS_DIR.toString(),
+                        NO_DESCR,
+                        content.getSize())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        FLAGS_META.toString(),
+                        FLAGS_META.toString(),
+                        NO_DESCR,
+                        content.getMetaFlagsAsString())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        MODE.toString(),
+                        MODE.toString(),
+                        NO_DESCR,
+                        content.getModesAsString())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        USER_ID.toString(),
+                        USER_ID.toString(),
+                        NO_DESCR,
+                        content.getUid())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        GROUP_ID.toString(),
+                        GROUP_ID.toString(),
+                        NO_DESCR,
+                        content.getGid())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        META_ADDR.toString(),
+                        META_ADDR.toString(),
+                        NO_DESCR,
+                        content.getMetaAddr())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        ATTR_ADDR.toString(),
+                        ATTR_ADDR.toString(),
+                        NO_DESCR,
+                        content.getAttrType().getValue() + "-" + content.getAttributeId())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        TYPE_DIR.toString(),
+                        TYPE_DIR.toString(),
+                        NO_DESCR,
+                        content.getDirType().getLabel())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        TYPE_META.toString(),
+                        TYPE_META.toString(),
+                        NO_DESCR,
+                        content.getMetaType().toString())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        KNOWN.toString(),
+                        KNOWN.toString(),
+                        NO_DESCR,
+                        content.getKnown().getName())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        MD5HASH.toString(),
+                        MD5HASH.toString(),
+                        NO_DESCR,
+                        StringUtils.defaultString(content.getMd5Hash()))));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        ObjectID.toString(),
+                        ObjectID.toString(),
+                        NO_DESCR,
+                        content.getId())));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        MIMETYPE.toString(),
+                        MIMETYPE.toString(),
+                        NO_DESCR,
+                        StringUtils.defaultString(content.getMIMEType()))));
+        properties.add(new FileProperty(
+                new NodeProperty<>(
+                        EXTENSION.toString(),
+                        EXTENSION.toString(),
+                        NO_DESCR,
+                        content.getNameExtension())));
 
         //Submit the database queries ASAP! We want updated SCO columns
         //without blocking the UI as soon as we can get it! Keep all weak references
-        //so this task doesn't block the ability of this node to be GC'd. Handle potentially
-        //null reference values in the Task!
+        //so this task doesn't block the ability of this node to be GC'd.
         pool.submit(new SCOAndTranslationTask(new WeakReference<>(content), weakPcl));
         return properties;
     }

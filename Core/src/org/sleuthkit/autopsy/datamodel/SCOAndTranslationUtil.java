@@ -45,13 +45,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
- * @author dsmyda
+ * 
  */
-class PropertyUtil {
+class SCOAndTranslationUtil {
     
     private static final String NO_TRANSLATION = "";
-    private static final Logger logger = Logger.getLogger(PropertyUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(SCOAndTranslationUtil.class.getName());
     
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.count.displayName=O",
