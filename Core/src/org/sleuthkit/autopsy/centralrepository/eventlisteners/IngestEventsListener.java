@@ -196,8 +196,8 @@ public class IngestEventsListener {
                 }
                 switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                     case DATA_ADDED: {
-                        //if ingest isn't running create the interesting items 
-                        boolean flagNotable = IngestManager.getInstance().isIngestRunning() ? isFlagNotableItems() : true;
+                        //if ingest isn't running create the interesting items otherwise use the ingest module setting to determine if we create interesting items
+                        boolean flagNotable = !IngestManager.getInstance().isIngestRunning() || isFlagNotableItems();
                         jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable));
                         break;
                     }
