@@ -108,7 +108,7 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
     }
 
     private void addSubFilterState(FilterState<SubFilterType> newFilterModel) {
-        subFilterStates.add(newFilterModel);
+        getSubFilterStates().add(newFilterModel);
         newFilterModel.selectedProperty().addListener(selectedProperty -> {
             //set this compound filter model  selected af any of the subfilters are selected.
             setSelected(getSubFilterStates().stream().anyMatch(FilterState::isSelected));

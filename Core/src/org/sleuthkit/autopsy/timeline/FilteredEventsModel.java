@@ -23,6 +23,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.EventBus;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -88,7 +89,6 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
-
 
 /**
  * This class acts as the model for a TimelineView
@@ -192,7 +192,7 @@ public final class FilteredEventsModel {
      * the EvenType of the level specified in the zoomState
      *
      * @param zoomState The params that control what events to count and how to
-     *               organize the returned map
+     *                  organize the returned map
      *
      * @return a map from event type( of the requested level) to event counts
      *
@@ -285,7 +285,6 @@ public final class FilteredEventsModel {
             filterState.setDisabled(tagNames.contains(filterState.getFilter().getTagName()) == false);
         }
     }
-  
 
     /**
      * Get a read only view of the time range currently in view.
@@ -407,13 +406,13 @@ public final class FilteredEventsModel {
     public List<Long> getEventIDs(Interval timeRange, TimelineFilter filter) throws TskCoreException {
 
         final Interval overlap;
-        final RootFilterState intersect;
+        RootFilterState intersection;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
-            intersect = getFilterState().copyOf();
+            intersection = getFilterState().intersect(filter);
         }
-        intersect.getFilter().getSubFilters().add(filter);
-        return eventManager.getEventIDs(overlap, intersect.getActiveFilter());
+
+        return eventManager.getEventIDs(overlap, intersection.getActiveFilter());
     }
 
     /**

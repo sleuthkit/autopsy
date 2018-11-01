@@ -22,7 +22,9 @@ import java.util.Collections;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import org.python.google.common.collect.Lists;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
@@ -83,6 +85,33 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
                 dataSourcesFilterState, typeFilterState);
     }
 
+    /**
+     * Get a new root filter that intersects the given filter with this one.
+     *
+     * @param otherFilter
+     *
+     * @return A new RootFilter model that intersects the given filter with this
+     *         one.
+     */
+    public RootFilterState intersect(TimelineFilter otherFilter) {
+        RootFilterState copyOf = copyOf();
+        copyOf.addSubFilterState(otherFilter);
+        return copyOf;
+    }
+
+    private void addSubFilterState(TimelineFilter subFilter) {
+
+        if (subFilter instanceof TimelineFilter.CompoundFilter<?>) {
+            CompoundFilterStateImpl<? extends TimelineFilter, ? extends TimelineFilter.CompoundFilter<? extends TimelineFilter>> compoundFilterStateImpl = new CompoundFilterStateImpl<>((TimelineFilter.CompoundFilter<?>) subFilter);
+            getSubFilterStates().add(compoundFilterStateImpl);
+            compoundFilterStateImpl.setSelected(Boolean.TRUE);
+        } else {
+            DefaultFilterState<TimelineFilter> defaultFilterState = new DefaultFilterState<>(subFilter);
+            getSubFilterStates().add(defaultFilterState);
+            defaultFilterState.setSelected(Boolean.TRUE);
+        }
+    }
+
     @Override
     public RootFilterState copyOf() {
         return new RootFilterState(getFilter().copyOf(),
@@ -126,7 +155,7 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
                 textFilterState.getActiveFilter(),
                 typeFilterState.getActiveFilter(),
                 dataSourcesFilterState.getActiveFilter(),
-                Collections.emptySet());
+                Lists.transform(subFilterStates, FilterState::getActiveFilter));
     }
 
     @SuppressWarnings("rawtypes")

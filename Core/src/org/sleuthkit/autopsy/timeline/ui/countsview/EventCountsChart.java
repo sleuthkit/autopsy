@@ -286,8 +286,7 @@ final class EventCountsChart extends StackedBarChart<String, Number> implements 
      * stacked bar chart.
      *
      * Concurrency Policy: This only accesses immutable state or javafx nodes
-     * (from the jfx thread) and the internally synchronized
-     * {@link TimeLineController}
+     * (from the jfx thread) and the internally synchronized TimeLineController
      *
      * TODO: review for thread safety -jm
      */
