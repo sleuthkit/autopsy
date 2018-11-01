@@ -43,11 +43,6 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType e
     CompoundFilterStateImpl(FilterType filter) {
         super(filter);
         filter.getSubFilters().forEach(this::addStateForSubFilter);
-        filter.getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
-            while (change.next()) {
-                change.getAddedSubList().forEach(CompoundFilterStateImpl.this::addStateForSubFilter);
-            }
-        });
 
         configureListeners();
     }
@@ -69,6 +64,13 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType e
     }
 
     private void configureListeners() {
+        //Add a new subfilterstate whenever the underlying subfilters change.
+        getFilter().getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
+            while (change.next()) {
+                change.getAddedSubList().forEach(this::addStateForSubFilter);
+            }
+        });
+
         /*
          * enforce the following relationship between a compound filter and its
          * subfilters: if a compound filter's active property changes, disable
@@ -81,7 +83,6 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType e
                 subFilterStates.forEach(subFilterState -> subFilterState.setSelected(true));
             }
         });
-
     }
 
     /**
@@ -97,7 +98,6 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType e
 
     @SuppressWarnings("unchecked")
     private void addStateForSubFilter(SubFilterType subFilter) {
-
         if (subFilter instanceof CompoundFilter<?>) {
             addSubFilterState((FilterState<SubFilterType>) new CompoundFilterStateImpl<>((CompoundFilter<?>) subFilter));
         } else {
@@ -120,7 +120,6 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType e
 
     @Override
     public CompoundFilterStateImpl<SubFilterType, FilterType> copyOf() {
-
         @SuppressWarnings("unchecked")
         CompoundFilterStateImpl<SubFilterType, FilterType> copy
                 = new CompoundFilterStateImpl<>((FilterType) getFilter().copyOf(),
