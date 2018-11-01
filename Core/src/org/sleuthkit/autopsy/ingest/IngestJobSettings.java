@@ -491,12 +491,14 @@ public final class IngestJobSettings {
         String moduleSettingsFilePath = getModuleSettingsFilePath(factory);
         File settingsFile = new File(moduleSettingsFilePath);
         if (settingsFile.exists()) {
-            try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
-                settings = (IngestModuleIngestJobSettings) in.readObject();
-            } catch (IOException | ClassNotFoundException ex) {
-                String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS                 
-                logger.log(Level.WARNING, warning, ex);
-                this.warnings.add(warning);
+            if (!isPythonModuleSettingsFile(moduleSettingsFilePath)) {
+                try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(settingsFile.getAbsolutePath()))) {
+                    settings = (IngestModuleIngestJobSettings) in.readObject();
+                } catch (IOException | ClassNotFoundException ex) {
+                    String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS                 
+                    logger.log(Level.WARNING, warning, ex);
+                    this.warnings.add(warning);
+                }
             }
         }
         if (settings == null) {
