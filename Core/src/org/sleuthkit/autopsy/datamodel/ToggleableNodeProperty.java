@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.datamodel;
 /**
  * Adds the functionality of enabling and disabling a NodeProperty (column in the UI).
  */
-class ToggleableNodeProperty extends NodeProperty {
+class ToggleableNodeProperty extends NodeProperty<Object> {
 
     /**
      * Wraps the super constructor. In our use cases, we want the name and display
