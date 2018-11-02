@@ -77,6 +77,7 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
         Sheet sheet = super.createSheet();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         Set<String> keepProps = new HashSet<>(Arrays.asList(
+                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.nameColLbl"),
                 NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.score.name"), 
                 NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.comment.name"), 
                 NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.count.name"), 
