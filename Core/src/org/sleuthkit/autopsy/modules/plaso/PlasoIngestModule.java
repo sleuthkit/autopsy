@@ -69,29 +69,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private static final String PLASO32 = "plaso//plaso-20180818-win32";
     private static final String LOG2TIMELINE_EXECUTABLE = "Log2timeline.exe";
     private static final String PSORT_EXECUTABLE = "psort.exe";
-    /* 
-     * The parser list does everything except filestat.  This list is version specific, when plaso is updated this list will have to be
-     * reviewed and updated accordingly.
-    */
-    private static final String LOG2TIMELINE_PARSERS = "amcache,android_app_usage,asl_log,bash,bencode,binary_cookies,bsm_log,chrome_cache,chrome_preferences,"
-                                                       + "cups_ipp,custom_destinations,dockerjson,dpkg,esedb,firefox_cache,firefox_cache2,fsevents,gdrive_synclog,"
-                                                       + "java_idx,lnk,mac_appfirewall_log,mac_keychain,mac_securityd,mactime,macwifi,mcafee_protection,msiecf,"
-                                                       + "olecf,openxml,opera_global,opera_typed_history,pe,plist,pls_recall,popularity_contest,prefetch,recycle_bin,"
-                                                       + "recycle_bin_info2,rplog,sccm,selinux,skydrive_log,skydrive_log_old,sophos_av,sqlite,symantec_scanlog,"
-                                                       + "syslog,trendmicro_url,trendmicro_vd,usnjrnl,utmp,utmpx,winevt,winevtx,winfirewall,winiis,winjob,winreg,"
-                                                       + "xchatlog,xchatscrollback,zsh_extended_history,bencode_transmission,bencode_utorrent,file_history,msie_webcache,"
-                                                       + "srum,olecf_automatic_destinations,olecf_default,olecf_document_summary,olecf_summary,airport,apple_id,"
-                                                       + "ipod_device,macosx_bluetooth,macosx_install_history,macuser,maxos_software_update,plist_default,safari_history,"
-                                                       + "spotlight,spotlight_volume,time_machine,android_calls,android_sms,android_webview,android_webviewcache,"
-                                                       + "appusage,chrome_27_history,chrome_8_history,chrome_cookies,chrome_extension_activity,firefox_cookies,"
-                                                       + "firefox_downloads,firefox_history,google_drive,hangouts_messages,imessage,kik_messenger,kodi,ls_quarantine,"
-                                                       + "mac_document_versions,mackeeper_cache,safari_history,skype,twitter_ios,windows_timeline,zeitgeist,cron,ssh,"
-                                                       + "appcompatcache,bagmru,ccleaner,explorer_mountpoints2,explorer_programscache,microsoft_office_mru,microsoft_outlook_mru,"
-                                                       + "mrulist_shell_item_list,mrulist_string,mrulistex_shell_item_list,mrulistex_string,mrulistex_string_and_shell_item,"
-                                                       + "mrulistex_string_and_shell_item_list,msie_zone,mstsc_rdp,mstsc_rdp_mru,network_drives,networks,userassist,"
-                                                       + "windows_boot_execute,windows_boot_verify,windows_run,windows_sam_users,windows_services,windows_shutdown,"
-                                                       + "windows_task_cache,windows_timezone,windows_typed_urls,windows_usb_devices,windows_usbstor_devices,windows_version,"
-                                                       + "winlogon,winrar_mru,winreg_default";
 
     private final Case currentCase = Case.getCurrentCase();
     private final FileManager fileManager = currentCase.getServices().getFileManager();
@@ -224,8 +201,6 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 "--hashers",
                 "none",
                 "--no_dependencies_check",
-                "--parsers",
-                LOG2TIMELINE_PARSERS,
                 moduleOutputPath + File.separator + PLASO,
                 imageName
         );
