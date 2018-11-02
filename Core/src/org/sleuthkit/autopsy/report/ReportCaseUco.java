@@ -34,6 +34,7 @@ import javax.swing.JPanel;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -58,6 +59,7 @@ class ReportCaseUco implements GeneralReportModule {
     
     private JsonFactory jsonGeneratorFactory;
     private JsonGenerator masterCatalog;
+    private static final String REPORT_FILE_NAME = "CaseUco.txt";
     
     // Hidden constructor for the report
     private ReportCaseUco() {
@@ -95,13 +97,11 @@ class ReportCaseUco implements GeneralReportModule {
         jsonGeneratorFactory = new JsonFactory();
         jsonGeneratorFactory.setRootValueSeparator("\r\n");
         reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
-        Path catalogPath = Paths.get(reportPath);
+        java.io.File reportFile = Paths.get(reportPath).toFile();
         try {
-            Files.createDirectories(catalogPath.getParent());
-            java.io.File catalogFile = catalogPath.toFile();
-            masterCatalog = jsonGeneratorFactory.createGenerator(catalogFile, JsonEncoding.UTF8);
+            Files.createDirectories(Paths.get(reportFile.getParent()));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error while initializing CASE/UCO report", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Unable to create directory for CASE/UCO report", ex); //NON-NLS
             // ELTODO what else needs to be done here?
             return;
         }
@@ -122,53 +122,39 @@ class ReportCaseUco implements GeneralReportModule {
             if (IngestManager.getInstance().isIngestRunning()) {
                 ingestwarning = NbBundle.getMessage(this.getClass(), "ReportCaseUco.ingestWarning.text");
             }
+            // ELTODO what to do with this warning?
 
             int size = fs.size();
             progressPanel.setMaximumProgress(size / 100);
             
-            BufferedWriter out = null;
-            try {
-                // MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime
-                out = new BufferedWriter(new FileWriter(reportPath, true));
-                out.write(ingestwarning);
-                // Loop files and write info to report
-                int count = 0;
-                for (AbstractFile file : fs) {
-                    if (progressPanel.getStatus() == ReportStatus.CANCELED) {
-                        break;
-                    }
-                    if (count++ == 100) {
-                        progressPanel.increment();
-                        progressPanel.updateStatusLabel(
-                                NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.processing",
-                                        file.getName()));
-                        count = 0;
-                    }
+            masterCatalog = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
 
-
+            // Loop files and write info to report
+            int count = 0;
+            for (AbstractFile file : fs) {
+                if (progressPanel.getStatus() == ReportStatus.CANCELED) {
+                    break;
                 }
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not write the temp CASE/UCO report.", ex); //NON-NLS
-            } finally {
-                try {
-                    if (out != null) {
-                        out.flush();
-                        out.close();
-                        Case.getCurrentCaseThrows().addReport(reportPath,
-                                NbBundle.getMessage(this.getClass(),
-                                        "ReportCaseUco.generateReport.srcModuleName.text"), "");
-
-                    }
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not flush and close the BufferedWriter.", ex); //NON-NLS
-                } catch (TskCoreException | NoCurrentCaseException ex) {
-                    String errorMessage = String.format("Error adding %s to case as a report", reportPath); //NON-NLS
-                    logger.log(Level.SEVERE, errorMessage, ex);
+                if (count++ == 100) {
+                    progressPanel.increment();
+                    progressPanel.updateStatusLabel(
+                            NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.processing",
+                                    file.getName()));
+                    count = 0;
                 }
+
             }
             progressPanel.complete(ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get the unique path.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to get the unique path.", ex); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Failed to create JSON output for the CASE/UCO report", ex); //NON-NLS
+        } finally {
+            try {
+                masterCatalog.close();
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Failed to close JSON output file", ex); //NON-NLS
+            }
         }
     }
 
@@ -180,7 +166,7 @@ class ReportCaseUco implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return NbBundle.getMessage(this.getClass(), "ReportCaseUco.getFilePath.text");
+        return REPORT_FILE_NAME;
     }
 
     @Override
