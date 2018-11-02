@@ -401,12 +401,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     /**
-     * Creates a list of properties for this file node. Each property has its
-     * own strategy for producing a value, its own description, name, and
-     * ability to be disabled. The ToggleableNodeProperty abstract class
-     * provides a wrapper for all of these characteristics. Additionally, with a
-     * return value of a list, any children classes of this node may reorder or
-     * omit any of these properties as they see fit for their use case.
+     * Creates a list of properties for this file node. ToggleableNodeProperty 
+     * is a subclass of NodeProperty, with the added functionality of being able to be
+     * enabled and disabled. Disabled properties don't get added to the sheet! 
+     * Additionally, with a return value of a list, any children classes of this 
+     * node may reorder or omit any of these properties as they see fit for their use case.
      *
      * @return List of file properties associated with this file node's content.
      */

@@ -45,7 +45,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * 
+ * Utility class for getting common data about an AbstractFile, such as content tags
+ * correlation attributes, content paths and SCO values, to name a few.
  */
 class FileNodeUtil {
     
