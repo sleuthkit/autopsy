@@ -54,16 +54,16 @@ class SCOAndTranslationTask implements Runnable {
             AbstractFile content = weakContentRef.get();
             
             //Long DB queries
-            List<ContentTag> tags = SCOAndTranslationUtil.getContentTagsFromDatabase(content);
+            List<ContentTag> tags = FileNodeUtil.getContentTagsFromDatabase(content);
             CorrelationAttributeInstance attribute = 
-                    SCOAndTranslationUtil.getCorrelationAttributeInstance(content);
+                    FileNodeUtil.getCorrelationAttributeInstance(content);
 
             Pair<DataResultViewerTable.Score, String> scoreAndDescription = 
-                    SCOAndTranslationUtil.getScorePropertyAndDescription(content, tags);
+                    FileNodeUtil.getScorePropertyAndDescription(content, tags);
             DataResultViewerTable.HasCommentStatus comment = 
-                    SCOAndTranslationUtil.getCommentProperty(tags, attribute);
+                    FileNodeUtil.getCommentProperty(tags, attribute);
             Pair<Long, String> countAndDescription = 
-                    SCOAndTranslationUtil.getCountPropertyAndDescription(attribute);
+                    FileNodeUtil.getCountPropertyAndDescription(attribute);
 
             //Load the results from the SCO column operations into a wrapper object to be passed
             //back to the listener so that the node can internally update it's propertySheet.
@@ -88,7 +88,7 @@ class SCOAndTranslationTask implements Runnable {
                 AutopsyEvent.SourceType.LOCAL.toString(),
                 AbstractAbstractFileNode.NodeSpecificEvents.TRANSLATION_AVAILABLE.toString(),
                 null,
-                SCOAndTranslationUtil.getTranslatedFileName(content)));
+                FileNodeUtil.getTranslatedFileName(content)));
         } catch (NullPointerException ex) {
            //If we are here, that means our weakPcl or content pointer has gone stale (aka
            //has been garbage collected). There's no recovery. Netbeans has 

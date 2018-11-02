@@ -47,10 +47,10 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * 
  */
-class SCOAndTranslationUtil {
+class FileNodeUtil {
     
     private static final String NO_TRANSLATION = "";
-    private static final Logger logger = Logger.getLogger(SCOAndTranslationUtil.class.getName());
+    private static final Logger logger = Logger.getLogger(FileNodeUtil.class.getName());
     
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.count.displayName=O",
@@ -217,5 +217,27 @@ class SCOAndTranslationUtil {
             attribute = EamArtifactUtil.getInstanceFromContent(content);
         }
         return attribute;
+    }
+    
+    static String getContentPath(AbstractFile file) {
+        try {
+            return file.getUniquePath();
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + file, ex); //NON-NLS
+            return "";            //NON-NLS
+        }
+    }
+
+    static String getContentDisplayName(AbstractFile file) {
+        String name = file.getName();
+        switch (name) {
+            case "..":
+                return DirectoryNode.DOTDOTDIR;
+
+            case ".":
+                return DirectoryNode.DOTDIR;
+            default:
+                return name;
+        }
     }
 }

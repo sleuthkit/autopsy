@@ -22,7 +22,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -171,21 +174,18 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 //No need to do any asynchrony around these events, they are so infrequent
                 //and user driven that we can just keep a simple blocking approach, where we
                 //go out to the database ourselves!
-                List<ContentTag> tags = SCOAndTranslationUtil.getContentTagsFromDatabase(content);
+                List<ContentTag> tags = FileNodeUtil.getContentTagsFromDatabase(content);
                 Pair<Score, String> scorePropertyAndDescription
-                        = SCOAndTranslationUtil.getScorePropertyAndDescription(content, tags);
-                updateProperty(new FileProperty(
-                        new NodeProperty<>(
-                                SCORE.toString(),
+                        = FileNodeUtil.getScorePropertyAndDescription(content, tags);
+                updateProperty(
+                        new ToggleableNodeProperty(
                                 SCORE.toString(),
                                 scorePropertyAndDescription.getRight(),
-                                scorePropertyAndDescription.getLeft())),
-                        new FileProperty(
-                                new NodeProperty<>(
-                                        COMMENT.toString(),
-                                        COMMENT.toString(),
-                                        NO_DESCR,
-                                        SCOAndTranslationUtil.getCommentProperty(tags, null))) {
+                                scorePropertyAndDescription.getLeft()),
+                        new ToggleableNodeProperty(
+                                COMMENT.toString(),
+                                NO_DESCR,
+                                FileNodeUtil.getCommentProperty(tags, null)) {
                 });
             }
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
@@ -194,22 +194,19 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 //No need to do any asynchrony around these events, they are so infrequent
                 //and user driven that we can just keep a simple blocking approach, where we
                 //go out to the database ourselves!
-                List<ContentTag> tags = SCOAndTranslationUtil.getContentTagsFromDatabase(content);
+                List<ContentTag> tags = FileNodeUtil.getContentTagsFromDatabase(content);
                 Pair<Score, String> scorePropertyAndDescription
-                        = SCOAndTranslationUtil.getScorePropertyAndDescription(content, tags);
-                updateProperty(new FileProperty(
-                        new NodeProperty<>(
-                                SCORE.toString(),
+                        = FileNodeUtil.getScorePropertyAndDescription(content, tags);
+                updateProperty(
+                        new ToggleableNodeProperty(
                                 SCORE.toString(),
                                 scorePropertyAndDescription.getRight(),
-                                scorePropertyAndDescription.getLeft())),
-                        new FileProperty(
-                                new NodeProperty<>(
-                                        COMMENT.toString(),
-                                        COMMENT.toString(),
-                                        NO_DESCR,
-                                        SCOAndTranslationUtil.getCommentProperty(tags, null))) {
-                });
+                                scorePropertyAndDescription.getLeft()),
+                        new ToggleableNodeProperty(
+                                COMMENT.toString(),
+                                NO_DESCR,
+                                FileNodeUtil.getCommentProperty(tags, null))
+                );
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
             CommentChangedEvent event = (CommentChangedEvent) evt;
@@ -217,23 +214,21 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 //No need to do any asynchrony around these events, they are so infrequent
                 //and user driven that we can just keep a simple blocking approach, where we
                 //go out to the database ourselves!
-                List<ContentTag> tags = SCOAndTranslationUtil.getContentTagsFromDatabase(content);
-                CorrelationAttributeInstance attribute = 
-                    SCOAndTranslationUtil.getCorrelationAttributeInstance(content);
-                updateProperty(new FileProperty(
-                        new NodeProperty<>(
-                                COMMENT.toString(),
+                List<ContentTag> tags = FileNodeUtil.getContentTagsFromDatabase(content);
+                CorrelationAttributeInstance attribute
+                        = FileNodeUtil.getCorrelationAttributeInstance(content);
+                updateProperty(
+                        new ToggleableNodeProperty(
                                 COMMENT.toString(),
                                 NO_DESCR,
-                                SCOAndTranslationUtil.getCommentProperty(tags, attribute))) {
-                });
+                                FileNodeUtil.getCommentProperty(tags, attribute)));
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
-            updateProperty(new FileProperty(
-                    new NodeProperty<>(TRANSLATION.toString(),
+            updateProperty(
+                    new ToggleableNodeProperty(
                             TRANSLATION.toString(),
                             NO_DESCR,
-                            evt.getNewValue())) {
+                            evt.getNewValue()) {
                 @Override
                 public boolean isEnabled() {
                     return UserPreferences.displayTranslationFileNames();
@@ -241,40 +236,34 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             });
         } else if (eventType.equals(NodeSpecificEvents.DABABASE_CONTENT_AVAILABLE.toString())) {
             SCOResults results = (SCOResults) evt.getNewValue();
-            updateProperty(new FileProperty(
-                    new NodeProperty<>(
-                            SCORE.toString(),
+            updateProperty(
+                    new ToggleableNodeProperty(
                             SCORE.toString(),
                             results.getScoreDescription(),
-                            results.getScore())),
-                    new FileProperty(
-                            new NodeProperty<>(
-                                    COMMENT.toString(),
-                                    COMMENT.toString(),
-                                    NO_DESCR,
-                                    results.getComment())),
-                    new FileProperty(
-                            new NodeProperty<>(
-                                    OCCURRENCES.toString(),
-                                    OCCURRENCES.toString(),
-                                    results.getCountDescription(),
-                                    results.getCount())) {
-                            @Override
-                            public boolean isEnabled() {
-                                return !UserPreferences.hideCentralRepoCommentsAndOccurrences();
-                            }
+                            results.getScore()),
+                    new ToggleableNodeProperty(
+                            COMMENT.toString(),
+                            NO_DESCR,
+                            results.getComment()),
+                    new ToggleableNodeProperty(
+                            OCCURRENCES.toString(),
+                            results.getCountDescription(),
+                            results.getCount()) {
+                        @Override
+                        public boolean isEnabled() {
+                            return !UserPreferences.hideCentralRepoCommentsAndOccurrences();
+                        }
             });
         }
     };
-            /**
-             * We pass a weak reference wrapper around the listener to the event
-             * publisher. This allows Netbeans to delete the node when the user
-             * navigates to another part of the tree (previously, nodes were not
-             * being deleted because the event publisher was holding onto a
-             * strong reference to the listener. We need to hold onto the weak
-             * reference here to support unregistering of the listener in
-             * removeListeners() below.
-             */
+    /**
+     * We pass a weak reference wrapper around the listener to the event
+     * publisher. This allows Netbeans to delete the node when the user
+     * navigates to another part of the tree (previously, nodes were not being
+     * deleted because the event publisher was holding onto a strong reference
+     * to the listener. We need to hold onto the weak reference here to support
+     * unregistering of the listener in removeListeners() below.
+     */
     private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
     /**
@@ -301,19 +290,24 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @param newProps New file property instances to be updated in the current
      *                 sheet.
      */
-    private synchronized void updateProperty(FileProperty... newProps) {
+    private synchronized void updateProperty(ToggleableNodeProperty... newProps) {
 
         //Refresh ONLY those properties in the sheet currently. Subclasses may have 
         //only added a subset of our properties or their own props! Let's keep their UI correct.
         Sheet currSheet = this.getSheet();
         Sheet.Set currSheetSet = currSheet.get(Sheet.PROPERTIES);
         Property<?>[] currProps = currSheetSet.getProperties();
+        
+        Map<String, ToggleableNodeProperty> newPropsMap = new HashMap<>();
+        for(ToggleableNodeProperty property: newProps) {
+            newPropsMap.put(property.getName(), property);
+        }
 
         for (int i = 0; i < currProps.length; i++) {
-            for (FileProperty property : newProps) {
-                if (currProps[i].getName().equals(property.getProperty().getName()) && property.isEnabled()) {
-                    currProps[i] = property.getProperty();
-                }
+            String currentPropertyName = currProps[i].getName();
+            if (newPropsMap.containsKey(currentPropertyName) && 
+                    newPropsMap.get(currentPropertyName).isEnabled()) {
+                currProps[i] = newPropsMap.get(currentPropertyName);
             }
         }
 
@@ -337,12 +331,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         sheet.put(sheetSet);
 
         //This will fire off fresh background tasks.
-        List<FileProperty> newProperties = getProperties();
+        List<ToggleableNodeProperty> newProperties = getProperties();
 
         //Add only the enabled properties to the sheet!
-        for (FileProperty property : newProperties) {
+        for (ToggleableNodeProperty property : newProperties) {
             if (property.isEnabled()) {
-                sheetSet.put(property.getProperty());
+                sheetSet.put(property);
             }
         }
 
@@ -417,181 +411,132 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     /**
      * Creates a list of properties for this file node. Each property has its
      * own strategy for producing a value, its own description, name, and
-     * ability to be disabled. The FileProperty abstract class provides a
-     * wrapper for all of these characteristics. Additionally, with a return
-     * value of a list, any children classes of this node may reorder or omit
-     * any of these properties as they see fit for their use case.
+     * ability to be disabled. The ToggleableNodeProperty abstract class
+     * provides a wrapper for all of these characteristics. Additionally, with a
+     * return value of a list, any children classes of this node may reorder or
+     * omit any of these properties as they see fit for their use case.
      *
      * @return List of file properties associated with this file node's content.
      */
-    List<FileProperty> getProperties() {
-        List<FileProperty> properties = new ArrayList<>();
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        NAME.toString(),
-                        NAME.toString(),
-                        NO_DESCR,
-                        getContentDisplayName(content))));
+    List<ToggleableNodeProperty> getProperties() {
+        List<ToggleableNodeProperty> properties = new ArrayList<>();
+        properties.add(new ToggleableNodeProperty(
+                NAME.toString(),
+                NO_DESCR,
+                FileNodeUtil.getContentDisplayName(content)));
 
         //Initialize dummy place holder properties! These obviously do no work
         //to get their property values, but at the bottom we kick off a background
         //task that promises to update these values.
         final String NO_OP = "";
-        properties.add(new FileProperty(
-                new NodeProperty<>(TRANSLATION.toString(),
-                        TRANSLATION.toString(),
-                        NO_DESCR,
-                        NO_OP)) {
+        properties.add(new ToggleableNodeProperty(
+                TRANSLATION.toString(),
+                NO_DESCR,
+                NO_OP) {
             @Override
             public boolean isEnabled() {
                 return UserPreferences.displayTranslationFileNames();
             }
         });
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        SCORE.toString(),
-                        SCORE.toString(),
-                        NO_DESCR,
-                        NO_OP)));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        COMMENT.toString(),
-                        COMMENT.toString(),
-                        NO_DESCR,
-                        NO_OP)) {
+        properties.add(new ToggleableNodeProperty(
+                SCORE.toString(),
+                NO_DESCR,
+                NO_OP));
+        properties.add(new ToggleableNodeProperty(
+                COMMENT.toString(),
+                NO_DESCR,
+                NO_OP) {
         });
 
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        OCCURRENCES.toString(),
-                        OCCURRENCES.toString(),
-                        NO_DESCR,
-                        NO_OP)) {
+        properties.add(new ToggleableNodeProperty(
+                OCCURRENCES.toString(),
+                NO_DESCR,
+                NO_OP) {
             @Override
             public boolean isEnabled() {
                 return !UserPreferences.hideCentralRepoCommentsAndOccurrences();
             }
         });
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        LOCATION.toString(),
-                        LOCATION.toString(),
-                        NO_DESCR,
-                        getContentPath(content))));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        MOD_TIME.toString(),
-                        MOD_TIME.toString(),
-                        NO_DESCR,
-                        ContentUtils.getStringTime(content.getMtime(), content))));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        CHANGED_TIME.toString(),
-                        CHANGED_TIME.toString(),
-                        NO_DESCR,
-                        ContentUtils.getStringTime(content.getCtime(), content))));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        ACCESS_TIME.toString(),
-                        ACCESS_TIME.toString(),
-                        NO_DESCR,
-                        ContentUtils.getStringTime(content.getAtime(), content))));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        CREATED_TIME.toString(),
-                        CREATED_TIME.toString(),
-                        NO_DESCR,
-                        ContentUtils.getStringTime(content.getCrtime(), content))));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        SIZE.toString(),
-                        SIZE.toString(),
-                        NO_DESCR,
-                        StringUtils.defaultString(content.getMIMEType()))));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        FLAGS_DIR.toString(),
-                        FLAGS_DIR.toString(),
-                        NO_DESCR,
-                        content.getSize())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        FLAGS_META.toString(),
-                        FLAGS_META.toString(),
-                        NO_DESCR,
-                        content.getMetaFlagsAsString())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        MODE.toString(),
-                        MODE.toString(),
-                        NO_DESCR,
-                        content.getModesAsString())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        USER_ID.toString(),
-                        USER_ID.toString(),
-                        NO_DESCR,
-                        content.getUid())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        GROUP_ID.toString(),
-                        GROUP_ID.toString(),
-                        NO_DESCR,
-                        content.getGid())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        META_ADDR.toString(),
-                        META_ADDR.toString(),
-                        NO_DESCR,
-                        content.getMetaAddr())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        ATTR_ADDR.toString(),
-                        ATTR_ADDR.toString(),
-                        NO_DESCR,
-                        content.getAttrType().getValue() + "-" + content.getAttributeId())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        TYPE_DIR.toString(),
-                        TYPE_DIR.toString(),
-                        NO_DESCR,
-                        content.getDirType().getLabel())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        TYPE_META.toString(),
-                        TYPE_META.toString(),
-                        NO_DESCR,
-                        content.getMetaType().toString())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        KNOWN.toString(),
-                        KNOWN.toString(),
-                        NO_DESCR,
-                        content.getKnown().getName())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        MD5HASH.toString(),
-                        MD5HASH.toString(),
-                        NO_DESCR,
-                        StringUtils.defaultString(content.getMd5Hash()))));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        ObjectID.toString(),
-                        ObjectID.toString(),
-                        NO_DESCR,
-                        content.getId())));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        MIMETYPE.toString(),
-                        MIMETYPE.toString(),
-                        NO_DESCR,
-                        StringUtils.defaultString(content.getMIMEType()))));
-        properties.add(new FileProperty(
-                new NodeProperty<>(
-                        EXTENSION.toString(),
-                        EXTENSION.toString(),
-                        NO_DESCR,
-                        content.getNameExtension())));
+        properties.add(new ToggleableNodeProperty(
+                LOCATION.toString(),
+                NO_DESCR,
+                FileNodeUtil.getContentPath(content)));
+        properties.add(new ToggleableNodeProperty(
+                MOD_TIME.toString(),
+                NO_DESCR,
+                ContentUtils.getStringTime(content.getMtime(), content)));
+        properties.add(new ToggleableNodeProperty(
+                CHANGED_TIME.toString(),
+                NO_DESCR,
+                ContentUtils.getStringTime(content.getCtime(), content)));
+        properties.add(new ToggleableNodeProperty(
+                ACCESS_TIME.toString(),
+                NO_DESCR,
+                ContentUtils.getStringTime(content.getAtime(), content)));
+        properties.add(new ToggleableNodeProperty(
+                CREATED_TIME.toString(),
+                NO_DESCR,
+                ContentUtils.getStringTime(content.getCrtime(), content)));
+        properties.add(new ToggleableNodeProperty(
+                SIZE.toString(),
+                NO_DESCR,
+                StringUtils.defaultString(content.getMIMEType())));
+        properties.add(new ToggleableNodeProperty(
+                FLAGS_DIR.toString(),
+                NO_DESCR,
+                content.getSize()));
+        properties.add(new ToggleableNodeProperty(
+                FLAGS_META.toString(),
+                NO_DESCR,
+                content.getMetaFlagsAsString()));
+        properties.add(new ToggleableNodeProperty(
+                MODE.toString(),
+                NO_DESCR,
+                content.getModesAsString()));
+        properties.add(new ToggleableNodeProperty(
+                USER_ID.toString(),
+                NO_DESCR,
+                content.getUid()));
+        properties.add(new ToggleableNodeProperty(
+                GROUP_ID.toString(),
+                NO_DESCR,
+                content.getGid()));
+        properties.add(new ToggleableNodeProperty(
+                META_ADDR.toString(),
+                NO_DESCR,
+                content.getMetaAddr()));
+        properties.add(new ToggleableNodeProperty(
+                ATTR_ADDR.toString(),
+                NO_DESCR,
+                content.getAttrType().getValue() + "-" + content.getAttributeId()));
+        properties.add(new ToggleableNodeProperty(
+                TYPE_DIR.toString(),
+                NO_DESCR,
+                content.getDirType().getLabel()));
+        properties.add(new ToggleableNodeProperty(
+                TYPE_META.toString(),
+                NO_DESCR,
+                content.getMetaType().toString()));
+        properties.add(new ToggleableNodeProperty(
+                KNOWN.toString(),
+                NO_DESCR,
+                content.getKnown().getName()));
+        properties.add(new ToggleableNodeProperty(
+                MD5HASH.toString(),
+                NO_DESCR,
+                StringUtils.defaultString(content.getMd5Hash())));
+        properties.add(new ToggleableNodeProperty(
+                ObjectID.toString(),
+                NO_DESCR,
+                content.getId()));
+        properties.add(new ToggleableNodeProperty(
+                MIMETYPE.toString(),
+                NO_DESCR,
+                StringUtils.defaultString(content.getMIMEType())));
+        properties.add(new ToggleableNodeProperty(
+                EXTENSION.toString(),
+                NO_DESCR,
+                content.getNameExtension()));
 
         //Submit the database queries ASAP! We want updated SCO columns
         //without blocking the UI as soon as we can get it! Keep all weak references
@@ -624,28 +569,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                         .collect(Collectors.joining(", "))));
     }
 
-    private static String getContentPath(AbstractFile file) {
-        try {
-            return file.getUniquePath();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on " + file, ex); //NON-NLS
-            return "";            //NON-NLS
-        }
-    }
-
-    static String getContentDisplayName(AbstractFile file) {
-        String name = file.getName();
-        switch (name) {
-            case "..":
-                return DirectoryNode.DOTDOTDIR;
-
-            case ".":
-                return DirectoryNode.DOTDIR;
-            default:
-                return name;
-        }
-    }
-
     /**
      * Gets a comma-separated values list of the names of the hash sets
      * currently identified as including a given file.
@@ -675,8 +598,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     @Deprecated
     static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
-        map.put(NAME.toString(), getContentDisplayName(content));
-        map.put(LOCATION.toString(), getContentPath(content));
+        map.put(NAME.toString(), FileNodeUtil.getContentDisplayName(content));
+        map.put(LOCATION.toString(), FileNodeUtil.getContentPath(content));
         map.put(MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
         map.put(CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
         map.put(ACCESS_TIME.toString(), ContentUtils.getStringTime(content.getAtime(), content));

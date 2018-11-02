@@ -19,25 +19,27 @@
 package org.sleuthkit.autopsy.datamodel;
 
 /**
- * Wraps a NodeProperty to extend its capability to also hold
+ * Adds the functionality of enabling and disabling a NodeProperty (column in the UI).
  */
+class ToggleableNodeProperty extends NodeProperty {
 
-//No modifier means its is only package usable (not part of public api)
-class FileProperty {
-    
-    private final NodeProperty prop;
-    
-    public FileProperty(NodeProperty prop) {
-        this.prop = prop;
-    }
-    
-    public NodeProperty getProperty() {
-        return prop;
+    /**
+     * Wraps the super constructor. In our use cases, we want the name and display
+     * name of the column to be the exact same, so to avoid redundancy we accept the name
+     * just once and  pass it twice to the NodeProperty.
+     * 
+     * @param name Name of the property to be displayed
+     * @param desc Description of the property when hovering over the column
+     * @param value Value to be displayed in that column
+     */
+    public ToggleableNodeProperty(String name, String desc, Object value) {
+        super(name, name, desc, value);
     }
     
     /**
      * 
-     * @return 
+     * 
+     * @return boolean denoting the availiability of this property. True by default.
      */
     public boolean isEnabled() {
         return true;
