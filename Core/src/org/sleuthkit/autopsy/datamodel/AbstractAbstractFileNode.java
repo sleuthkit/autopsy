@@ -406,6 +406,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * enabled and disabled. Disabled properties don't get added to the sheet! 
      * Additionally, with a return value of a list, any children classes of this 
      * node may reorder or omit any of these properties as they see fit for their use case.
+     * 
+     * Note: subclasses that use this, please synchronize your createSheet method, so that the 
+     * updates don't come in while you haven't finished creating your sheet.
      *
      * @return List of file properties associated with this file node's content.
      */
