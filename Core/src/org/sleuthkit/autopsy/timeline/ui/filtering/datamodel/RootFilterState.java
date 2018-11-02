@@ -22,6 +22,8 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.apache.commons.lang3.ObjectUtils;
+import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
@@ -185,24 +187,19 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
         RootFilter activeFilter = getActiveFilter();
         RootFilter activeFilter1 = otherFilterState.getActiveFilter();
 
-        if (false == activeFilter.equals(activeFilter1)) {
+        if (notEqual(activeFilter, activeFilter1)) {
             return false;
         }
 
         RootFilter filter = getFilter();
         RootFilter filter1 = otherFilterState.getFilter();
 
-        if (false == filter.equals(filter1)) {
-            return false;
-        }
-        return true;
+        return filter.equals(filter1);
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-
-        return hash;
+        return 7;
     }
 
     @Override

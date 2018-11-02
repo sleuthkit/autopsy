@@ -28,6 +28,14 @@ import javafx.collections.ObservableList;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.CompoundFilter;
 
+/**
+ *
+ * Defualt implementation of CompoundFilterState
+ *
+ * @param <SubFilterType> The type of the subfilters in the underlying
+ *                        CompoundFilter
+ * @param <FilterType>    The type of the underlying CompoundFilter
+ */
 class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType extends CompoundFilter<SubFilterType>>
         extends DefaultFilterState<FilterType>
         implements CompoundFilterState<SubFilterType, FilterType> {
