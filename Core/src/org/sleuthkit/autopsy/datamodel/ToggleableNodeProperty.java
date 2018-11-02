@@ -37,7 +37,8 @@ class ToggleableNodeProperty extends NodeProperty {
     }
     
     /**
-     * 
+     * Allows a property to be either enabled or disabled. When creating a sheet,
+     * this method is used to filter out from displaying in the UI.
      * 
      * @return boolean denoting the availiability of this property. True by default.
      */

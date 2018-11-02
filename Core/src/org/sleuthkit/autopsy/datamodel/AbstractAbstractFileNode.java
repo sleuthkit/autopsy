@@ -22,10 +22,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -177,6 +175,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 List<ContentTag> tags = FileNodeUtil.getContentTagsFromDatabase(content);
                 Pair<Score, String> scorePropertyAndDescription
                         = FileNodeUtil.getScorePropertyAndDescription(content, tags);
+                CorrelationAttributeInstance attribute = 
+                    FileNodeUtil.getCorrelationAttributeInstance(content);
                 updateProperty(
                         new ToggleableNodeProperty(
                                 SCORE.toString(),
@@ -185,7 +185,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                         new ToggleableNodeProperty(
                                 COMMENT.toString(),
                                 NO_DESCR,
-                                FileNodeUtil.getCommentProperty(tags, null)) {
+                                FileNodeUtil.getCommentProperty(tags, attribute)) {
                 });
             }
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
@@ -197,6 +197,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 List<ContentTag> tags = FileNodeUtil.getContentTagsFromDatabase(content);
                 Pair<Score, String> scorePropertyAndDescription
                         = FileNodeUtil.getScorePropertyAndDescription(content, tags);
+                CorrelationAttributeInstance attribute = 
+                    FileNodeUtil.getCorrelationAttributeInstance(content);
                 updateProperty(
                         new ToggleableNodeProperty(
                                 SCORE.toString(),
@@ -205,7 +207,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                         new ToggleableNodeProperty(
                                 COMMENT.toString(),
                                 NO_DESCR,
-                                FileNodeUtil.getCommentProperty(tags, null))
+                                FileNodeUtil.getCommentProperty(tags, attribute))
                 );
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
