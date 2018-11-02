@@ -187,10 +187,10 @@ class FileNodeUtil {
                 }
             } catch (NoServiceProviderException noServiceEx) {
                 logger.log(Level.WARNING, "Translate unsuccessful because no TextTranslator "
-                        + "implementation was provided.", noServiceEx);
+                        + "implementation was provided.", noServiceEx.getMessage());
             } catch (TranslationException noTranslationEx) {
                 logger.log(Level.WARNING, "Could not successfully translate file name "
-                        + content.getName(), noTranslationEx);
+                        + content.getName(), noTranslationEx.getMessage());
             }
         }
 
