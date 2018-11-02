@@ -18,14 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
-import java.util.Collections;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import org.python.google.common.collect.Lists;
-import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
