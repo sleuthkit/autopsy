@@ -397,6 +397,13 @@
                 <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+<<<<<<< HEAD
+=======
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+>>>>>>> 99cef00b523307020a96d534d4cded3cf14eae98
                 <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
