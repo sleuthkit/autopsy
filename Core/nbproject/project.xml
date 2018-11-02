@@ -338,7 +338,6 @@
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
-                <package>org.sleuthkit.autopsy.tabulardatareader</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>
@@ -356,6 +355,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-transports-http-3.0.16.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/cxf-rt-transports-http-3.0.16.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-validator-1.6.jar</runtime-relative-path>
@@ -394,10 +397,6 @@
                 <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
@@ -432,6 +431,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/curator-client-2.8.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-core-2.9.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-frontend-jaxrs-3.0.16.jar</runtime-relative-path>
