@@ -22,18 +22,16 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -110,13 +108,16 @@ class ReportCaseUco implements GeneralReportModule {
 
         // Run query to get all files
         try {
+            masterCatalog = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
+            
             // exclude non-fs files/dirs and . and .. files
-            final String query = "type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
+            final String query = "select obj_id, name, size, ctime, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
                     + " AND name != '.' AND name != '..'"; //NON-NLS
 
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.loading"));
-            List<AbstractFile> fs = skCase.findAllFilesWhere(query);
 
+            SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(query);
+            ResultSet resultSet = queryResult.getResultSet();
             // Check if ingest has finished
             String ingestwarning = "";
             if (IngestManager.getInstance().isIngestRunning()) {
@@ -124,24 +125,38 @@ class ReportCaseUco implements GeneralReportModule {
             }
             // ELTODO what to do with this warning?
 
-            int size = fs.size();
-            progressPanel.setMaximumProgress(size / 100);
+            int numFiles = 1000; // ELTODO resultSet.size();
+            progressPanel.setMaximumProgress(numFiles / 100);
             
-            masterCatalog = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
-
             // Loop files and write info to report
             int count = 0;
-            for (AbstractFile file : fs) {
+            while (resultSet.next()) {
+
                 if (progressPanel.getStatus() == ReportStatus.CANCELED) {
                     break;
                 }
-                if (count++ == 100) {
+                
+                Long objectId = resultSet.getLong(1);
+                String dataSourceName = resultSet.getString(2);
+                long size = resultSet.getLong("size");
+                long ctime = resultSet.getLong("ctime");
+                long crtime = resultSet.getLong("crtime");
+                long atime = resultSet.getLong("atime");
+                long mtime = resultSet.getLong("mtime");
+                String md5Hash = resultSet.getString("md5"); 
+                String parent_path = resultSet.getString("parent_path"); 
+                String mime_type = resultSet.getString("mime_type"); 
+                String extension = resultSet.getString("extension");
+                
+                addFile(objectId, dataSourceName, parent_path, md5Hash, mime_type, masterCatalog);
+                
+                /* ELTODO if (count++ == 100) {
                     progressPanel.increment();
                     progressPanel.updateStatusLabel(
                             NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.processing",
                                     file.getName()));
                     count = 0;
-                }
+                }*/
 
             }
             progressPanel.complete(ReportStatus.COMPLETE);
@@ -149,6 +164,8 @@ class ReportCaseUco implements GeneralReportModule {
             logger.log(Level.SEVERE, "Failed to get the unique path.", ex); //NON-NLS
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to create JSON output for the CASE/UCO report", ex); //NON-NLS
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "Unable to read result set", ex); //NON-NLS
         } finally {
             try {
                 masterCatalog.close();
@@ -158,9 +175,26 @@ class ReportCaseUco implements GeneralReportModule {
         }
     }
 
+    private void addFile(Long objectId, String dataSourceName, String parent_path, String md5Hash, String mime_type, JsonGenerator catalog) throws IOException {
+        catalog.writeStartObject();
+        catalog.writeStringField("@id", "file-"+objectId);
+        catalog.writeStringField("@type", "Trace");
+        catalog.writeFieldName("propertyBundle");
+        catalog.writeStartArray();
+        catalog.writeStartObject();
+        catalog.writeStringField("@type", "File");
+        catalog.writeStringField("fileName", dataSourceName);
+        catalog.writeStringField("filePath", parent_path);
+        
+        catalog.writeEndObject();
+        catalog.writeEndArray();
+        catalog.writeEndObject();
+    }
+
     @Override
     public String getName() {
-        String name = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getName.text");
+        //String name = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getName.text");
+        String name = "CASE/UCO";
         return name;
     }
 
@@ -171,7 +205,8 @@ class ReportCaseUco implements GeneralReportModule {
 
     @Override
     public String getDescription() {
-        String desc = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getDesc.text");
+        //String desc = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getDesc.text");
+        String desc = "CASE/UCO Report";
         return desc;
     }
 
