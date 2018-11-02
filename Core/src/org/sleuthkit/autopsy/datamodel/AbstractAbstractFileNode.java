@@ -269,16 +269,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
     /**
-     * Returns a blank sheet to the caller, useful for giving subclasses the
-     * ability to override createSheet() with their own implementation.
-     *
-     * @return
-     */
-    protected Sheet getBlankSheet() {
-        return super.createSheet();
-    }
-
-    /**
      * Updates the values of the properties in the current property sheet with
      * the new properties being passed in! Only if that property exists in the
      * current sheet will it be applied. That way, we allow for subclasses to
@@ -328,7 +318,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     @Override
     protected synchronized Sheet createSheet() {
-        Sheet sheet = getBlankSheet();
+        Sheet sheet = new Sheet();
         Sheet.Set sheetSet = Sheet.createPropertiesSet();
         sheet.put(sheetSet);
 

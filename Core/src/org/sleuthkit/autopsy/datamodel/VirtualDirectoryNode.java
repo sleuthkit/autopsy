@@ -75,7 +75,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
     protected Sheet createSheet() {
         //Do a special strategy for virtual directories..
         if(this.content.isDataSource()){
-            Sheet sheet = getBlankSheet();
+            Sheet sheet = new Sheet();
             Sheet.Set sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
             
