@@ -91,15 +91,14 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
  * Forwards interpreted user gestures form views to model. Provides model to
- * view. Is entry point for timeline module.
+ * view.
  *
  * Concurrency Policy:<ul>
  * <li>Since filteredEvents is internally synchronized, only compound access to
  * it needs external synchronization</li>
- * * <li>Since eventsRepository is internally synchronized, only compound
- * access to it needs external synchronization <li>
- * <li>Other state including mainFrame, viewMode, and the listeners should only
- * be accessed with this object's intrinsic lock held, or on the EDT as
+ *
+ * <li>Other state including topComponent, viewMode, and the listeners should
+ * only be accessed with this object's intrinsic lock held, or on the EDT as
  * indicated.
  * </li>
  * </ul>
@@ -129,16 +128,12 @@ public class TimeLineController {
     }
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-
     private final ReadOnlyListWrapper<Task<?>> tasks = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
-
     private final ReadOnlyDoubleWrapper taskProgress = new ReadOnlyDoubleWrapper(-1);
-
     private final ReadOnlyStringWrapper taskMessage = new ReadOnlyStringWrapper();
-
     private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
-
     private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper();
+
     private final EventBus eventbus = new EventBus("TimeLineController_EventBus");
 
     /**
@@ -750,6 +745,7 @@ public class TimeLineController {
             }
     }
 
+    @SuppressWarnings("fallthrough")
     void handleCaseEvent(PropertyChangeEvent evt) {
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case BLACKBOARD_ARTIFACT_TAG_ADDED:
@@ -764,9 +760,6 @@ public class TimeLineController {
             case CONTENT_TAG_DELETED:
                 executor.submit(() -> filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt));
                 break;
-            case DATA_SOURCE_ADDED:
-                executor.submit(() -> filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt));
-                break;
             case CURRENT_CASE:
                 //close timeline on case changes.
                 SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
@@ -780,6 +773,9 @@ public class TimeLineController {
                         logger.log(Level.SEVERE, "Error invalidating timeline caches.", ex);
                     }
                 });
+            //intentional fall through
+            case DATA_SOURCE_ADDED:
+                filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
                 break;
         }
     }
