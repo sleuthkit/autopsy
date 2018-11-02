@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -74,14 +76,16 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-        Set<String> keepProps = new HashSet<>(Arrays.asList("S", 
-                    "C", "O", "Mime Type"));
+        Set<String> keepProps = new HashSet<>(Arrays.asList(
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.score.name"), 
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.comment.name"), 
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.count.name"), 
+                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.mimeType")));
         
         for(Property<?> p : sheetSet.getProperties()) {
-            if(keepProps.contains(p.getName())){
-                continue;
+            if(!keepProps.contains(p.getName())){
+                sheetSet.remove(p.getName());
             }
-            sheetSet.remove(p.getName());
         }
         final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
         
