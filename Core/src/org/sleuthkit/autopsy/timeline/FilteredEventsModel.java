@@ -246,7 +246,7 @@ public final class FilteredEventsModel {
         //because there is no way to remove a datasource we only add to this map.
         for (Long id : dataSourceIDs) {
             try {
-                if (datasourcesMap.containsKey(id) == false) {
+                if (datasourcesMap.get(id) == null) {
                     datasourcesMap.put(id, skCase.getDataSource(id));
                 }
             } catch (TskDataException ex) {
@@ -663,7 +663,7 @@ public final class FilteredEventsModel {
         return updatedEventIDs;
     }
 
-    synchronized void invalidateAllCaches() throws TskCoreException {
+    synchronized protected void invalidateAllCaches() throws TskCoreException {
         minCache.invalidateAll();
         maxCache.invalidateAll();
         idToEventCache.invalidateAll();
