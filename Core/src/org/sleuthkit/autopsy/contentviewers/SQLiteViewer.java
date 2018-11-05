@@ -443,7 +443,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 exportCsvButton.setEnabled(false);
                 nextPageButton.setEnabled(false);
                 
-                //Execute a dummy SELECT * statement so that the metadata reflects
+                //Execute a dummy SELECT * statement so that the metadata
                 //contains all column names
                 Map<String, Object> columnRow;
                 try (ResultSet metaDataResultSet = statement.executeQuery(
