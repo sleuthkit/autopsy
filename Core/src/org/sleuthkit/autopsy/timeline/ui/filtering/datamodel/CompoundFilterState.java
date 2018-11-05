@@ -33,9 +33,9 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.CompoundFilter;
  */
 public interface CompoundFilterState<SubFilterType extends TimelineFilter, C extends CompoundFilter<SubFilterType>> extends FilterState<C> {
 
-    ObservableList<? extends FilterState< ? extends SubFilterType>> getSubFilterStates();
+    ObservableList<? extends FilterState<? extends SubFilterType>> getSubFilterStates();
 
     @Override
     public CompoundFilterState<SubFilterType, C> copyOf();
 
-}
+ }
