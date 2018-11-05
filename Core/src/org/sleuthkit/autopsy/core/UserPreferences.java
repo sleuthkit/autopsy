@@ -46,7 +46,7 @@ public final class UserPreferences {
     public static final String HIDE_SLACK_FILES_IN_DATA_SRCS_TREE = "HideSlackFilesInDataSourcesTree"; //NON-NLS 
     public static final String HIDE_SLACK_FILES_IN_VIEWS_TREE = "HideSlackFilesInViewsTree"; //NON-NLS 
     public static final String DISPLAY_TIMES_IN_LOCAL_TIME = "DisplayTimesInLocalTime"; //NON-NLS
-    public static final String CUSTOM_TIME_ZONE = "CustomTimeZone"; //NON-NLS
+    public static final String TIME_ZONE_FOR_DISPLAYS = "CustomTimeZone"; //NON-NLS
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
     public static final String IS_MULTI_USER_MODE_ENABLED = "IsMultiUserModeEnabled"; //NON-NLS
     public static final String EXTERNAL_DATABASE_HOSTNAME_OR_IP = "ExternalDatabaseHostnameOrIp"; //NON-NLS
@@ -184,12 +184,12 @@ public final class UserPreferences {
         preferences.putBoolean(DISPLAY_TIMES_IN_LOCAL_TIME, value);
     }
     
-    public static String getCustomTimeZone() {
-        return preferences.get(CUSTOM_TIME_ZONE, TimeZone.GMT_ZONE.getID());
+    public static String getTimeZoneForDisplays() {
+        return preferences.get(TIME_ZONE_FOR_DISPLAYS, TimeZone.GMT_ZONE.getID());
     }
     
-    public static void setCustomTimeZone(String timeZone) {
-        preferences.put(CUSTOM_TIME_ZONE, timeZone);
+    public static void setTimeZoneForDisplays(String timeZone) {
+        preferences.put(TIME_ZONE_FOR_DISPLAYS, timeZone);
     }
 
     public static int numberOfFileIngestThreads() {

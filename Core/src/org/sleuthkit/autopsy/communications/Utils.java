@@ -35,7 +35,7 @@ class Utils {
 
     static ZoneId getUserPreferredZoneId() {
         ZoneId zone = UserPreferences.displayTimesInLocalTime() ?
-                ZoneOffset.systemDefault() : TimeZone.getTimeZone(UserPreferences.getCustomTimeZone()).toZoneId();
+                ZoneOffset.systemDefault() : TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays()).toZoneId();
         return zone;
     }
 

@@ -59,7 +59,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         timeZoneList.setEnabled(!useLocalTime);
-        timeZoneList.setSelectedValue(TimeZoneUtils.createTimeZoneString(TimeZone.getTimeZone(UserPreferences.getCustomTimeZone())), true);
+        timeZoneList.setSelectedValue(TimeZoneUtils.createTimeZoneString(TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays())), true);
         useLocalTimeRadioButton.setSelected(useLocalTime);
         useAnotherTimeRadioButton.setSelected(!useLocalTime);
 
@@ -91,7 +91,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setKeepPreferredContentViewer(keepCurrentViewerRadioButton.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRadioButton.isSelected());
         if (useAnotherTimeRadioButton.isSelected()) {
-            UserPreferences.setCustomTimeZone(timeZoneList.getSelectedValue().substring(11).trim());
+            UserPreferences.setTimeZoneForDisplays(timeZoneList.getSelectedValue().substring(11).trim());
         }
         UserPreferences.setHideKnownFilesInDataSourcesTree(dataSourcesHideKnownCheckbox.isSelected());
         UserPreferences.setHideKnownFilesInViewsTree(viewsHideKnownCheckbox.isSelected());
@@ -569,7 +569,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
     private void timeZoneListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_timeZoneListValueChanged
         if (immediateUpdates && useAnotherTimeRadioButton.isSelected()) {
-            UserPreferences.setCustomTimeZone(timeZoneList.getSelectedValue().substring(11).trim());
+            UserPreferences.setTimeZoneForDisplays(timeZoneList.getSelectedValue().substring(11).trim());
         } else {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }

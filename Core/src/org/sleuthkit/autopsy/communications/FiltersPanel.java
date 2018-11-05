@@ -125,7 +125,7 @@ final public class FiltersPanel extends JPanel {
         updateFilters(true);
         UserPreferences.addChangeListener(preferenceChangeEvent -> {
             if (preferenceChangeEvent.getKey().equals(UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME) ||
-                    preferenceChangeEvent.getKey().equals(UserPreferences.CUSTOM_TIME_ZONE)) {
+                    preferenceChangeEvent.getKey().equals(UserPreferences.TIME_ZONE_FOR_DISPLAYS)) {
                 updateTimeZone();
             }
         });
