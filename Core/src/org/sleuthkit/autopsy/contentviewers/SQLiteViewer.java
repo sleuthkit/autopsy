@@ -443,11 +443,13 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 exportCsvButton.setEnabled(false);
                 nextPageButton.setEnabled(false);
                 
-                //Execute a dummy SELECT * statement so that we know what 
-                //column names exist in the schema, even if the table is empty..
+                //Execute a dummy SELECT * statement so that the metadata reflects
+                //contains all column names
                 Map<String, Object> columnRow;
                 try (ResultSet metaDataResultSet = statement.executeQuery(
                         "SELECT * FROM " + "\"" + tableName + "\"")) {
+                    //Column names are not found in the metadata of the result set
+                    //above.
                     ResultSetMetaData metaData = metaDataResultSet.getMetaData();
                     columnRow = new LinkedHashMap<>();
                     for(int i = 1; i < metaData.getColumnCount(); i++){
