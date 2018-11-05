@@ -30,6 +30,8 @@ import javax.swing.JPanel;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.openide.util.NbBundle;
@@ -51,11 +53,7 @@ class ReportCaseUco implements GeneralReportModule {
 
     private Case currentCase;
     private SleuthkitCase skCase;
-
-    private String reportPath;
     
-    private JsonFactory jsonGeneratorFactory;
-    private JsonGenerator masterCatalog;
     private static final String REPORT_FILE_NAME = "CaseUco.txt";
     
     // Hidden constructor for the report
@@ -91,9 +89,8 @@ class ReportCaseUco implements GeneralReportModule {
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.initializing"));
         
         // Create the JSON generator
-        jsonGeneratorFactory = new JsonFactory();
-        jsonGeneratorFactory.setRootValueSeparator("\r\n");
-        reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
+        JsonFactory jsonGeneratorFactory = new JsonFactory();
+        String reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
         java.io.File reportFile = Paths.get(reportPath).toFile();
         try {
             Files.createDirectories(Paths.get(reportFile.getParent()));
@@ -106,8 +103,11 @@ class ReportCaseUco implements GeneralReportModule {
         skCase = currentCase.getSleuthkitCase();
 
         // Run query to get all files
+        JsonGenerator jsonGenerator = null;
         try {
-            masterCatalog = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
+            jsonGenerator = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
+            // instert \n after each field for more readable formatting
+            jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
             
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
             // exclude non-fs files/dirs and . and .. files
@@ -148,7 +148,7 @@ class ReportCaseUco implements GeneralReportModule {
                 String mime_type = resultSet.getString("mime_type"); 
                 String extension = resultSet.getString("extension");
                 
-                addFile(objectId, dataSourceName, parent_path, md5Hash, mime_type, masterCatalog);
+                addFile(objectId, dataSourceName, parent_path, md5Hash, mime_type, jsonGenerator);
                 
                 /* ELTODO if (count++ == 100) {
                     progressPanel.increment();
@@ -167,10 +167,13 @@ class ReportCaseUco implements GeneralReportModule {
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Unable to read result set", ex); //NON-NLS
         } finally {
-            try {
-                masterCatalog.close();
-            } catch (IOException ex) {
-                logger.log(Level.WARNING, "Failed to close JSON output file", ex); //NON-NLS
+            if (jsonGenerator != null) {
+                try {
+                    jsonGenerator.close();
+                    jsonGenerator = null;
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Failed to close JSON output file", ex); //NON-NLS
+                }
             }
         }
     }
