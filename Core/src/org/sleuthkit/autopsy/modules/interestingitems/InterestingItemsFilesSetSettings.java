@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -280,7 +281,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
                 if (elem.getTagName().equals(NAME_RULE_TAG)) {
                     nameCondition = new FilesSet.Rule.FullNameCondition(content);
                 } else if (elem.getTagName().equals(EXTENSION_RULE_TAG)) {
-                    nameCondition = new FilesSet.Rule.ExtensionCondition(content);
+                    nameCondition = new FilesSet.Rule.ExtensionCondition(Arrays.asList(content.split(",")));
                 }
             }
         }
