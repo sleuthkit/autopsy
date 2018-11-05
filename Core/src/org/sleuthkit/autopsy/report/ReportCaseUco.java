@@ -34,10 +34,13 @@ import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.*;
@@ -104,6 +107,7 @@ class ReportCaseUco implements GeneralReportModule {
 
         // Run query to get all files
         JsonGenerator jsonGenerator = null;
+        SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
         try {
             jsonGenerator = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
             // instert \n after each field for more readable formatting
@@ -111,8 +115,7 @@ class ReportCaseUco implements GeneralReportModule {
             
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
             // exclude non-fs files/dirs and . and .. files
-            final String query = "select obj_id, name, size, ctime, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
-                    + " AND name != '.' AND name != '..'"; //NON-NLS
+            final String query = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where name != '.' AND name != '..'"; //NON-NLS
 
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.loading"));
 
@@ -137,18 +140,17 @@ class ReportCaseUco implements GeneralReportModule {
                 }
                 
                 Long objectId = resultSet.getLong(1);
-                String dataSourceName = resultSet.getString(2);
+                String fileName = resultSet.getString(2);
                 long size = resultSet.getLong("size");
-                long ctime = resultSet.getLong("ctime");
-                long crtime = resultSet.getLong("crtime");
-                long atime = resultSet.getLong("atime");
-                long mtime = resultSet.getLong("mtime");
+                String crtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("crtime"), timeZone);
+                String atime = ContentUtils.getStringTimeISO8601(resultSet.getLong("atime"), timeZone);
+                String mtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("mtime"), timeZone);
                 String md5Hash = resultSet.getString("md5"); 
                 String parent_path = resultSet.getString("parent_path"); 
                 String mime_type = resultSet.getString("mime_type"); 
                 String extension = resultSet.getString("extension");
                 
-                addFile(objectId, dataSourceName, parent_path, md5Hash, mime_type, jsonGenerator);
+                addFile(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator);
                 
                 /* ELTODO if (count++ == 100) {
                     progressPanel.increment();
@@ -178,18 +180,42 @@ class ReportCaseUco implements GeneralReportModule {
         }
     }
 
-    private void addFile(Long objectId, String dataSourceName, String parent_path, String md5Hash, String mime_type, JsonGenerator catalog) throws IOException {
+    private void addFile(Long objectId, String fileName, String parent_path, String md5Hash, String mime_type, long size, String ctime, 
+            String atime, String mtime, String extension, JsonGenerator catalog) throws IOException {
+        
         catalog.writeStartObject();
         catalog.writeStringField("@id", "file-"+objectId);
         catalog.writeStringField("@type", "Trace");
+        
         catalog.writeFieldName("propertyBundle");
         catalog.writeStartArray();
+        
         catalog.writeStartObject();
         catalog.writeStringField("@type", "File");
-        catalog.writeStringField("fileName", dataSourceName);
+        catalog.writeStringField("createdTime", ctime);
+        catalog.writeStringField("accessedTime", atime);
+        catalog.writeStringField("modifiedTime", mtime);
+        catalog.writeStringField("extension", extension);
+        catalog.writeStringField("fileName", fileName);
         catalog.writeStringField("filePath", parent_path);
-        
+        catalog.writeStringField("sizeInBytes", Long.toString(size));        
         catalog.writeEndObject();
+        
+        catalog.writeStartObject();
+        catalog.writeStringField("@type", "ContentData");
+        catalog.writeStringField("sizeInBytes", Long.toString(size));
+        catalog.writeStringField("mimeType", mime_type);
+        catalog.writeFieldName("hash");
+        catalog.writeStartArray();
+        catalog.writeStartObject();
+        catalog.writeStringField("@type", "Hash");
+        catalog.writeStringField("hashMethod", "SHA256");
+        catalog.writeStringField("hashValue", md5Hash);
+        catalog.writeEndObject();
+        catalog.writeEndArray();
+
+        catalog.writeEndObject();
+        
         catalog.writeEndArray();
         catalog.writeEndObject();
     }
