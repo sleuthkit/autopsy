@@ -32,7 +32,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -89,7 +88,7 @@ class ReportCaseUco implements GeneralReportModule {
         }
         progressPanel.setIndeterminate(false);
         progressPanel.start();
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
+        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.initializing"));
         
         // Create the JSON generator
         jsonGeneratorFactory = new JsonFactory();
@@ -110,6 +109,7 @@ class ReportCaseUco implements GeneralReportModule {
         try {
             masterCatalog = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
             
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
             // exclude non-fs files/dirs and . and .. files
             final String query = "select obj_id, name, size, ctime, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where type = " + TskData.TSK_DB_FILES_TYPE_ENUM.FS.getFileType() //NON-NLS
                     + " AND name != '.' AND name != '..'"; //NON-NLS
