@@ -65,8 +65,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private static final String MODULE_NAME = PlasoModuleFactory.getModuleName();
 
     private static final String PLASO = "plaso";
-    private static final String PLASO64 = "plaso//plaso-20180127-amd64";
-    private static final String PLASO32 = "plaso//plaso-20180127-win32";
+    private static final String PLASO64 = "plaso//plaso-20180818-amd64";
+    private static final String PLASO32 = "plaso//plaso-20180818-win32";
     private static final String LOG2TIMELINE_EXECUTABLE = "Log2timeline.exe";
     private static final String PSORT_EXECUTABLE = "psort.exe";
 
@@ -200,6 +200,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 "1",
                 "--hashers",
                 "none",
+                "--no_dependencies_check",
                 moduleOutputPath + File.separator + PLASO,
                 imageName
         );

@@ -1,0 +1,52 @@
+name: task_cache
+type: format
+description: Task Scheduler Cache format
+urls: ["https://github.com/libyal/winreg-kb/blob/master/documentation/Task%20Scheduler%20Keys.asciidoc"]
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: dynamic_info_record
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: unknown1
+  data_type: uint32
+- name: last_registered_time
+  data_type: uint64
+- name: launch_time
+  data_type: uint64
+- name: unknown2
+  data_type: uint32
+- name: unknown3
+  data_type: uint32
+---
+name: dynamic_info2_record
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: unknown1
+  data_type: uint32
+- name: last_registered_time
+  data_type: uint64
+- name: launch_time
+  data_type: uint64
+- name: unknown2
+  data_type: uint32
+- name: unknown3
+  data_type: uint32
+- name: unknown_time
+  data_type: uint64

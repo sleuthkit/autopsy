@@ -1,0 +1,111 @@
+name: binarycookies
+type: format
+description: Safari cookies file format
+urls: ["https://github.com/libyal/dtformats/blob/master/documentation/Safari%20Cookies.asciidoc"]
+---
+name: byte
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint32be
+type: integer
+attributes:
+  byte_order: big-endian
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: float64
+type: floating-point
+attributes:
+  size: 8
+  units: bytes
+---
+name: cstring
+type: string
+encoding: ascii
+element_data_type: byte
+elements_terminator: "\x00"
+---
+name: binarycookies_file_header
+type: structure
+attributes:
+  byte_order: big-endian
+members:
+- name: signature
+  type: stream
+  element_data_type: byte
+  number_of_elements: 4
+- name: number_of_pages
+  data_type: uint32
+---
+name: binarycookies_page_sizes
+type: sequence
+element_data_type: uint32be
+number_of_elements: binarycookies_file_header.number_of_pages
+---
+name: binarycookies_page_header
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: signature
+  data_type: uint32
+- name: number_of_records
+  data_type: uint32
+- name: offsets
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: binarycookies_page_header.number_of_records
+---
+name: binarycookies_record_header
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: size
+  data_type: uint32
+- name: unknown1
+  data_type: uint32
+- name: flags
+  data_type: uint32
+- name: unknown2
+  data_type: uint32
+- name: url_offset
+  data_type: uint32
+- name: name_offset
+  data_type: uint32
+- name: path_offset
+  data_type: uint32
+- name: value_offset
+  data_type: uint32
+- name: unknown3
+  data_type: uint64
+- name: expiration_time
+  data_type: float64
+- name: creation_time
+  data_type: float64

@@ -1,0 +1,198 @@
+name: cpio
+type: format
+description: Copy in and out (CPIO) archive format
+urls: ["https://people.freebsd.org/~kientzle/libarchive/man/cpio.5.txt"]
+---
+name: byte
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: uint32
+type: structure
+members:
+- name: upper
+  data_type: uint16
+- name: lower
+  data_type: uint16
+---
+name: cpio_binary_big_endian_file_entry
+type: structure
+description: big-endian CPIO file entry
+attributes:
+  byte_order: big-endian
+members:
+- name: signature
+  data_type: uint16
+- name: device_number
+  data_type: uint16
+- name: inode_number
+  data_type: uint16
+- name: mode
+  data_type: uint16
+- name: user_identifier
+  data_type: uint16
+- name: group_identifier
+  data_type: uint16
+- name: number_of_links
+  data_type: uint16
+- name: special_device_number
+  data_type: uint16
+- name: modification_time
+  data_type: uint32
+- name: path_size
+  data_type: uint16
+- name: file_size
+  data_type: uint32
+---
+name: cpio_binary_little_endian_file_entry
+type: structure
+description: little-endian CPIO file entry
+attributes:
+  byte_order: little-endian
+members:
+- name: signature
+  data_type: uint16
+- name: device_number
+  data_type: uint16
+- name: inode_number
+  data_type: uint16
+- name: mode
+  data_type: uint16
+- name: user_identifier
+  data_type: uint16
+- name: group_identifier
+  data_type: uint16
+- name: number_of_links
+  data_type: uint16
+- name: special_device_number
+  data_type: uint16
+- name: modification_time
+  data_type: uint32
+- name: path_size
+  data_type: uint16
+- name: file_size
+  data_type: uint32
+---
+name: cpio_portable_ascii_file_entry
+type: structure
+description: portable ASCII CPIO file entry
+attributes:
+  byte_order: little-endian
+members:
+- name: signature
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: device_number
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: inode_number
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: mode
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: user_identifier
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: group_identifier
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: number_of_links
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: special_device_number
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: modification_time
+  type: stream
+  element_data_type: byte
+  number_of_elements: 11
+- name: path_size
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: file_size
+  type: stream
+  element_data_type: byte
+  number_of_elements: 11
+---
+name: cpio_new_ascii_file_entry
+type: structure
+description: new ASCII CPIO file entry
+attributes:
+  byte_order: little-endian
+members:
+- name: signature
+  type: stream
+  element_data_type: byte
+  number_of_elements: 6
+- name: inode_number
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: mode
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: user_identifier
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: group_identifier
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: number_of_links
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: modification_time
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: file_size
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: device_major_number
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: device_minor_number
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: special_device_major_number
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: special_device_minor_number
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: path_size
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8
+- name: checksum
+  type: stream
+  element_data_type: byte
+  number_of_elements: 8

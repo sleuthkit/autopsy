@@ -1,0 +1,192 @@
+name: chrome_cache
+type: format
+description: Google Chrome/Chromium cache file format
+urls: ["https://github.com/libyal/dtformats/blob/master/documentation/Chrome%20Cache%20file%20format.asciidoc"]
+---
+name: byte
+type: integer
+attributes:
+  format: unsigned
+  size: 1
+  units: bytes
+---
+name: uint16
+type: integer
+attributes:
+  format: unsigned
+  size: 2
+  units: bytes
+---
+name: uint32
+type: integer
+attributes:
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint32le
+type: integer
+attributes:
+  byte_order: little-endian
+  format: unsigned
+  size: 4
+  units: bytes
+---
+name: uint64
+type: integer
+attributes:
+  format: unsigned
+  size: 8
+  units: bytes
+---
+name: chrome_cache_data_block_file_header
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: signature
+  data_type: uint32
+- name: minor_version
+  data_type: uint16
+- name: major_version
+  data_type: uint16
+- name: file_number
+  data_type: uint16
+- name: next_file_number
+  data_type: uint16
+- name: block_size
+  data_type: uint32
+- name: number_of_entries
+  data_type: uint32
+- name: maximum_number_of_entries
+  data_type: uint32
+- name: empty
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 4
+- name: hints
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 4
+- name: updating
+  data_type: uint32
+- name: user
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 5
+- name: allocation_bitmap
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 2028
+---
+name: chrome_cache_entry
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: hash
+  data_type: uint32
+- name: next_address
+  data_type: uint32
+- name: rankings_node_address
+  data_type: uint32
+- name: reuse_count
+  data_type: uint32
+- name: refetch_count
+  data_type: uint32
+- name: state
+  data_type: uint32
+- name: creation_time
+  data_type: uint64
+- name: key_size
+  data_type: uint32
+- name: long_key_address
+  data_type: uint32
+- name: data_stream_sizes
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 4
+- name: data_stream_addresses
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 4
+- name: flags
+  data_type: uint32
+- name: unknown1
+  type: sequence
+  element_data_type: byte
+  number_of_elements: 16
+- name: self_hash
+  data_type: uint32
+- name: key
+  type: sequence
+  element_data_type: byte
+  number_of_elements: 160
+---
+name: chrome_cache_index_file_header
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: signature
+  data_type: uint32
+- name: minor_version
+  data_type: uint16
+- name: major_version
+  data_type: uint16
+- name: number_of_entries
+  data_type: uint32
+- name: stored_data_size
+  data_type: uint32
+- name: last_created_file_number
+  data_type: uint32
+- name: unknown1
+  data_type: uint32
+- name: unknown2
+  data_type: uint32
+- name: table_size
+  data_type: uint32
+- name: unknown3
+  data_type: uint32
+- name: unknown4
+  data_type: uint32
+- name: creation_time
+  data_type: uint64
+- name: unknown5
+  type: sequence
+  element_data_type: byte
+  number_of_elements: 208
+---
+name: chrome_cache_index_file_lru_data
+type: structure
+attributes:
+  byte_order: little-endian
+members:
+- name: unknown1
+  type: sequence
+  element_data_type: byte
+  number_of_elements: 8
+- name: filled_flag
+  data_type: uint32
+- name: sizes
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 5
+- name: head_addresses
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 5
+- name: tail_addresses
+  type: sequence
+  element_data_type: uint32
+  number_of_elements: 5
+- name: transaction_address
+  data_type: uint32
+- name: operation
+  data_type: uint32
+- name: operation_list
+  data_type: uint32
+- name: unknown2
+  type: sequence
+  element_data_type: byte
+  number_of_elements: 28
