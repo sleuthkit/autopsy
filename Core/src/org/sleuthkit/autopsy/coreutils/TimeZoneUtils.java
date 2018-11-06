@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,11 @@ package org.sleuthkit.autopsy.coreutils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.List;
+import java.util.SimpleTimeZone;
+import java.util.TimeZone;
 
 /**
  * Utility methods for workig with time zones.
@@ -58,6 +62,45 @@ public class TimeZoneUtils {
         }
 
         return result;
+    }
+    
+    /**
+     * Generate a time zone string containing the GMT offset and ID.
+     * 
+     * @param timeZone The time zone.
+     * 
+     * @return The time zone string.
+     */
+    public static String createTimeZoneString(TimeZone timeZone) {
+        int offset = timeZone.getRawOffset() / 1000;
+        int hour = offset / 3600;
+        int minutes = (offset % 3600) / 60;
+        
+        return String.format("(GMT%+d:%02d) %s", hour, minutes, timeZone.getID()); //NON-NLS
+    }
+
+    /**
+     * Generates a list of time zones.
+     */
+    public static List<String> createTimeZoneList() {
+        List<String> timeZoneList = new ArrayList<>();
+        
+        // load and add all timezone
+        String[] ids = SimpleTimeZone.getAvailableIDs();
+        for (String id : ids) {
+            /*
+             * DateFormat dfm = new SimpleDateFormat("z");
+             * dfm.setTimeZone(zone); boolean hasDaylight =
+             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
+             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
+             * = hour * -1; String result = first + Integer.toString(mid);
+             * if(hasDaylight){ result = result + second; }
+             * timeZoneComboBox.addItem(item + " (" + result + ")");
+             */
+            timeZoneList.add(createTimeZoneString(TimeZone.getTimeZone(id)));
+        }
+        
+        return timeZoneList;
     }
 
     /**
