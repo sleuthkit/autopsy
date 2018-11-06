@@ -54,12 +54,12 @@ public class SQLiteTableStream implements AutoCloseable {
 
         private final AbstractFile file;
         private Consumer<ResultSetMetaData> onMetaDataAction;
-        private Consumer<ResultState<String>> onStringAction;
-        private Consumer<ResultState<Long>> onLongAction;
-        private Consumer<ResultState<Integer>> onIntegerAction;
-        private Consumer<ResultState<Double>> onFloatAction;
-        private Consumer<ResultState<byte[]>> onBlobAction;
-        private Consumer<ResultState<Object>> forAllAction;
+        private Consumer<State<String>> onStringAction;
+        private Consumer<State<Long>> onLongAction;
+        private Consumer<State<Integer>> onIntegerAction;
+        private Consumer<State<Double>> onFloatAction;
+        private Consumer<State<byte[]>> onBlobAction;
+        private Consumer<State<Object>> forAllAction;
 
         /**
          * Creates a SQLiteTableReaderBuilder for this abstract file.
@@ -91,7 +91,7 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public Builder onString(Consumer<ResultState<String>> action) {
+        public Builder onString(Consumer<State<String>> action) {
             this.onStringAction = action;
             return this;
         }
@@ -104,7 +104,7 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public Builder onInteger(Consumer<ResultState<Integer>> action) {
+        public Builder onInteger(Consumer<State<Integer>> action) {
             this.onIntegerAction = action;
             return this;
         }
@@ -117,7 +117,7 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public Builder onFloat(Consumer<ResultState<Double>> action) {
+        public Builder onFloat(Consumer<State<Double>> action) {
             this.onFloatAction = action;
             return this;
         }
@@ -127,7 +127,7 @@ public class SQLiteTableStream implements AutoCloseable {
          * @param action
          * @return 
          */
-        public Builder onLong(Consumer<ResultState<Long>> action) {
+        public Builder onLong(Consumer<State<Long>> action) {
             this.onLongAction = action;
             return this;
         }
@@ -137,7 +137,7 @@ public class SQLiteTableStream implements AutoCloseable {
          * @param action
          * @return 
          */
-        public Builder onBlob(Consumer<ResultState<byte[]>> action) {
+        public Builder onBlob(Consumer<State<byte[]>> action) {
             this.onBlobAction = action;
             return this;
         }
@@ -149,7 +149,7 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public Builder forAll(Consumer<ResultState<Object>> action) {
+        public Builder forAll(Consumer<State<Object>> action) {
             this.forAllAction = action;
             return this;
         }
@@ -181,12 +181,12 @@ public class SQLiteTableStream implements AutoCloseable {
     private ResultSet queryResults;
 
     private final Consumer<ResultSetMetaData> onMetaDataAction;
-    private final Consumer<ResultState<String>> onStringAction;
-    private final Consumer<ResultState<Long>> onLongAction;
-    private final Consumer<ResultState<Integer>> onIntegerAction;
-    private final Consumer<ResultState<Double>> onFloatAction;
-    private final Consumer<ResultState<byte[]>> onBlobAction;
-    private final Consumer<ResultState<Object>> forAllAction;
+    private final Consumer<State<String>> onStringAction;
+    private final Consumer<State<Long>> onLongAction;
+    private final Consumer<State<Integer>> onIntegerAction;
+    private final Consumer<State<Double>> onFloatAction;
+    private final Consumer<State<byte[]>> onBlobAction;
+    private final Consumer<State<Object>> forAllAction;
 
     //Iteration state variables
     private Integer currColumnCount;
@@ -194,6 +194,7 @@ public class SQLiteTableStream implements AutoCloseable {
 
     private boolean isFinished;
     private boolean hasOpened;
+    private String prevTableName;
     
     private final BooleanSupplier alwaysFalseCondition = () -> {return false;};
 
@@ -203,12 +204,12 @@ public class SQLiteTableStream implements AutoCloseable {
      */
     private SQLiteTableStream(AbstractFile file,
             Consumer<ResultSetMetaData> metaDataAction,
-            Consumer<ResultState<String>> stringAction,
-            Consumer<ResultState<Integer>> integerAction,
-            Consumer<ResultState<Long>> longAction,
-            Consumer<ResultState<Double>> floatAction,
-            Consumer<ResultState<byte[]>> blobAction,
-            Consumer<ResultState<Object>> forAllAction) {
+            Consumer<State<String>> stringAction,
+            Consumer<State<Integer>> integerAction,
+            Consumer<State<Long>> longAction,
+            Consumer<State<Double>> floatAction,
+            Consumer<State<byte[]>> blobAction,
+            Consumer<State<Object>> forAllAction) {
 
         this.onMetaDataAction = checkNonNull(metaDataAction);
         this.onStringAction = checkNonNull(stringAction);
@@ -320,7 +321,19 @@ public class SQLiteTableStream implements AutoCloseable {
      *
      */
     public void read(String tableName, BooleanSupplier condition) throws AutopsySQLiteException {
-        readHelper("SELECT * FROM \"" + tableName + "\"", condition);
+        if(Objects.nonNull(prevTableName)) {
+            if(prevTableName.equals(tableName)) {
+                readHelper("SELECT * FROM \"" + tableName + "\"", condition);
+            } else {
+                prevTableName = tableName;
+                closeResultSet();
+                readHelper("SELECT * FROM \"" + tableName + "\"", condition);
+            }
+        } else {
+            prevTableName = tableName;
+            closeResultSet();
+            readHelper("SELECT * FROM \"" + tableName + "\"", condition);
+        }
     }
 
     /**
@@ -336,13 +349,13 @@ public class SQLiteTableStream implements AutoCloseable {
         try {
             if(!hasOpened) {
                 openResultSet(query);
+                ResultSetMetaData metaData = queryResults.getMetaData();
+                this.onMetaDataAction.accept(metaData);
             }
             
             isFinished = false;
             
             ResultSetMetaData metaData = queryResults.getMetaData();
-            this.onMetaDataAction.accept(metaData);
-            
             int columnCount = metaData.getColumnCount();
             
             while (unfinishedRowState || queryResults.next()) {
@@ -360,38 +373,38 @@ public class SQLiteTableStream implements AutoCloseable {
                     //getObject automatically instiantiates the correct java data type
                     Object item = queryResults.getObject(currColumnCount);
                     if(item instanceof String) {
-                        this.onStringAction.accept(new ResultState<>(
+                        this.onStringAction.accept(new State<>(
                                 (String) item, 
                                 metaData.getColumnName(currColumnCount), 
                                 currColumnCount)
                         );
                     } else if(item instanceof Integer) {
-                        this.onIntegerAction.accept(new ResultState<>(
+                        this.onIntegerAction.accept(new State<>(
                                 (Integer) item, 
                                 metaData.getColumnName(currColumnCount), 
                                 currColumnCount)
                         );
                     } else if(item instanceof Double) {
-                        this.onFloatAction.accept(new ResultState<>(
+                        this.onFloatAction.accept(new State<>(
                                 (Double) item, 
                                 metaData.getColumnName(currColumnCount), 
                                 currColumnCount)
                         );
                     } else if(item instanceof Long) {
-                        this.onLongAction.accept(new ResultState<>(
+                        this.onLongAction.accept(new State<>(
                                 (Long) item, 
                                 metaData.getColumnName(currColumnCount), 
                                 currColumnCount)
                         );
                     } else if(item instanceof byte[]) {
-                        this.onBlobAction.accept(new ResultState<>(
+                        this.onBlobAction.accept(new State<>(
                                 (byte[]) item, 
                                 metaData.getColumnName(currColumnCount), 
                                 currColumnCount)
                         );
                     }
                     
-                    this.forAllAction.accept(new ResultState<>(
+                    this.forAllAction.accept(new State<>(
                                 (Object) item, 
                                 metaData.getColumnName(currColumnCount), 
                                 currColumnCount)
@@ -404,6 +417,8 @@ public class SQLiteTableStream implements AutoCloseable {
             isFinished = true;
             closeResultSet();
         } catch (SQLException ex) {
+            closeResultSet();
+            isFinished = true;
             throw new AutopsySQLiteException(ex);
         }
     }
@@ -510,7 +525,6 @@ public class SQLiteTableStream implements AutoCloseable {
         
         try {    
             statement = conn.prepareStatement(query);
-            // statement.setFetchSize(300);
             
             queryResults = statement.executeQuery();
             hasOpened = true;
@@ -575,12 +589,12 @@ public class SQLiteTableStream implements AutoCloseable {
      * 
      * @param <T> 
      */
-    public class ResultState<T> {
+    public class State<T> {
         private final T value;
         private final String columnName;
         private final int columnIndex;
         
-        private ResultState(T value, String columnName, int columnIndex) {
+        private State(T value, String columnName, int columnIndex) {
             this.value = value;
             this.columnName = columnName;
             this.columnIndex = columnIndex;
