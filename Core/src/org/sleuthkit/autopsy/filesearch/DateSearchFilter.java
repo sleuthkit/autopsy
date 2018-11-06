@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.SimpleTimeZone;
@@ -44,6 +43,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 
 /**
  * Filters file date properties (modified/created/etc.. times)
@@ -144,30 +144,15 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
             Case currentCase = Case.getCurrentCaseThrows(); // get the most updated case
 
             Set<TimeZone> caseTimeZones = currentCase.getTimeZones();
-            Iterator<TimeZone> iterator = caseTimeZones.iterator();
-            while (iterator.hasNext()) {
-                TimeZone zone = iterator.next();
-                int offset = zone.getRawOffset() / 1000;
-                int hour = offset / 3600;
-                int minutes = (offset % 3600) / 60;
-                String item = String.format("(GMT%+d:%02d) %s", hour, minutes, zone.getID()); //NON-NLS
-                timeZones.add(item);
+            for (TimeZone timeZone : caseTimeZones) {
+                timeZones.add(TimeZoneUtils.createTimeZoneString(timeZone));
             }
 
             if (caseTimeZones.size() > 0) {
                 timeZones.add(SEPARATOR);
             }
 
-            // load and add all timezone
-            String[] ids = SimpleTimeZone.getAvailableIDs();
-            for (String id : ids) {
-                TimeZone zone = TimeZone.getTimeZone(id);
-                int offset = zone.getRawOffset() / 1000;
-                int hour = offset / 3600;
-                int minutes = (offset % 3600) / 60;
-                String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
-                timeZones.add(item);
-            }
+            timeZones.addAll(TimeZoneUtils.createTimeZoneList());
         } catch (NoCurrentCaseException ex) {
             // No current case.
         }
