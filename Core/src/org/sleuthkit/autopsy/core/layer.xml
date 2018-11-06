@@ -337,9 +337,9 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.modules.stix.STIXReportModule.getDefault"/>
             <attr name="position" intvalue="910"/>
         </file>
-        <file name="org-sleuthkit-autopsy-report-ReportCaseUco.instance">
+        <file name="org-sleuthkit-autopsy-modules-case_uco-ReportCaseUco.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.report.GeneralReportModule"/>
-            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.report.ReportCaseUco.getDefault"/>
+            <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.modules.case_uco.ReportCaseUco.getDefault"/>
             <attr name="position" intvalue="911"/>
         </file>       
         <!--<folder name="JavaHelp">
