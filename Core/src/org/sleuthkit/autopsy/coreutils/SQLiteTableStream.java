@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.sleuthkit.autopsy.core;
+package org.sleuthkit.autopsy.coreutils;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author dsmyda
  */
-public class SQLiteTableReader implements AutoCloseable {
+public class SQLiteTableStream implements AutoCloseable {
 
     /**
      * 
@@ -54,12 +54,12 @@ public class SQLiteTableReader implements AutoCloseable {
 
         private final AbstractFile file;
         private Consumer<ResultSetMetaData> onMetaDataAction;
-        private Consumer<String> onStringAction;
-        private Consumer<Long> onLongAction;
-        private Consumer<Integer> onIntegerAction;
-        private Consumer<Double> onFloatAction;
-        private Consumer<byte[]> onBlobAction;
-        private Consumer<Object> forAllAction;
+        private Consumer<ResultState<String>> onStringAction;
+        private Consumer<ResultState<Long>> onLongAction;
+        private Consumer<ResultState<Integer>> onIntegerAction;
+        private Consumer<ResultState<Double>> onFloatAction;
+        private Consumer<ResultState<byte[]>> onBlobAction;
+        private Consumer<ResultState<Object>> forAllAction;
 
         /**
          * Creates a SQLiteTableReaderBuilder for this abstract file.
@@ -91,7 +91,7 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return
          */
-        public Builder onString(Consumer<String> action) {
+        public Builder onString(Consumer<ResultState<String>> action) {
             this.onStringAction = action;
             return this;
         }
@@ -104,7 +104,7 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return
          */
-        public Builder onInteger(Consumer<Integer> action) {
+        public Builder onInteger(Consumer<ResultState<Integer>> action) {
             this.onIntegerAction = action;
             return this;
         }
@@ -117,7 +117,7 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return
          */
-        public Builder onFloat(Consumer<Double> action) {
+        public Builder onFloat(Consumer<ResultState<Double>> action) {
             this.onFloatAction = action;
             return this;
         }
@@ -127,7 +127,7 @@ public class SQLiteTableReader implements AutoCloseable {
          * @param action
          * @return 
          */
-        public Builder onLong(Consumer<Long> action) {
+        public Builder onLong(Consumer<ResultState<Long>> action) {
             this.onLongAction = action;
             return this;
         }
@@ -137,7 +137,7 @@ public class SQLiteTableReader implements AutoCloseable {
          * @param action
          * @return 
          */
-        public Builder onBlob(Consumer<byte[]> action) {
+        public Builder onBlob(Consumer<ResultState<byte[]>> action) {
             this.onBlobAction = action;
             return this;
         }
@@ -149,7 +149,7 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return
          */
-        public Builder forAll(Consumer<Object> action) {
+        public Builder forAll(Consumer<ResultState<Object>> action) {
             this.forAllAction = action;
             return this;
         }
@@ -160,8 +160,8 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return
          */
-        public SQLiteTableReader build() {
-            return new SQLiteTableReader(
+        public SQLiteTableStream build() {
+            return new SQLiteTableStream(
                     file,
                     onMetaDataAction,
                     onStringAction,
@@ -181,12 +181,12 @@ public class SQLiteTableReader implements AutoCloseable {
     private ResultSet queryResults;
 
     private final Consumer<ResultSetMetaData> onMetaDataAction;
-    private final Consumer<String> onStringAction;
-    private final Consumer<Integer> onIntegerAction;
-    private final Consumer<Long> onLongAction;
-    private final Consumer<Double> onFloatAction;
-    private final Consumer<byte[]> onBlobAction;
-    private final Consumer<Object> forAllAction;
+    private final Consumer<ResultState<String>> onStringAction;
+    private final Consumer<ResultState<Long>> onLongAction;
+    private final Consumer<ResultState<Integer>> onIntegerAction;
+    private final Consumer<ResultState<Double>> onFloatAction;
+    private final Consumer<ResultState<byte[]>> onBlobAction;
+    private final Consumer<ResultState<Object>> forAllAction;
 
     //Iteration state variables
     private Integer currColumnCount;
@@ -201,14 +201,14 @@ public class SQLiteTableReader implements AutoCloseable {
      * Initialize a new table stream given the parameters passed in from the
      * StreamBuilder above.
      */
-    private SQLiteTableReader(AbstractFile file,
+    private SQLiteTableStream(AbstractFile file,
             Consumer<ResultSetMetaData> metaDataAction,
-            Consumer<String> stringAction,
-            Consumer<Integer> integerAction,
-            Consumer<Long> longAction,
-            Consumer<Double> floatAction,
-            Consumer<byte[]> blobAction,
-            Consumer<Object> forAllAction) {
+            Consumer<ResultState<String>> stringAction,
+            Consumer<ResultState<Integer>> integerAction,
+            Consumer<ResultState<Long>> longAction,
+            Consumer<ResultState<Double>> floatAction,
+            Consumer<ResultState<byte[]>> blobAction,
+            Consumer<ResultState<Object>> forAllAction) {
 
         this.onMetaDataAction = checkNonNull(metaDataAction);
         this.onStringAction = checkNonNull(stringAction);
@@ -220,13 +220,7 @@ public class SQLiteTableReader implements AutoCloseable {
 
         this.file = file;
     }
-
-    /**
-     * 
-     * @param <T>
-     * @param action
-     * @return 
-     */
+    
     private <T> Consumer<T> checkNonNull(Consumer<T> action) {
         if (Objects.nonNull(action)) {
             return action;
@@ -241,7 +235,7 @@ public class SQLiteTableReader implements AutoCloseable {
      * Get table names from database
      *
      * @return
-     * @throws org.sleuthkit.autopsy.core.AutopsySQLiteException
+     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
      *
      */
     public List<String> getTableNames() throws AutopsySQLiteException {
@@ -266,7 +260,7 @@ public class SQLiteTableReader implements AutoCloseable {
      * 
      * @param tableName
      * @return
-     * @throws org.sleuthkit.autopsy.core.AutopsySQLiteException 
+     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
      */
     public int getRowCount(String tableName) throws AutopsySQLiteException {
         ensureOpen();
@@ -279,11 +273,23 @@ public class SQLiteTableReader implements AutoCloseable {
             throw new AutopsySQLiteException(ex);
         }
     }
+    
+    public int getColumnCount(String tableName) throws AutopsySQLiteException {
+        ensureOpen();
+        
+        try (ResultSet columnCount = conn.createStatement()
+                .executeQuery("SELECT * FROM " + 
+                        "\"" + tableName + "\"")) {
+            return columnCount.getMetaData().getColumnCount();
+        } catch (SQLException ex) {
+            throw new AutopsySQLiteException(ex);
+        }
+    }
 
     /**
      * 
      * @param tableName
-     * @throws org.sleuthkit.autopsy.core.AutopsySQLiteException
+     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
      */
     public void read(String tableName) throws AutopsySQLiteException {
         readHelper("SELECT * FROM \"" + tableName +"\"", alwaysFalseCondition);
@@ -296,7 +302,7 @@ public class SQLiteTableReader implements AutoCloseable {
      * @param tableName
      * @param limit
      * @param offset
-     * @throws org.sleuthkit.autopsy.core.AutopsySQLiteException
+     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
      *
      */
     public void read(String tableName, int limit, int offset) throws AutopsySQLiteException {
@@ -310,7 +316,7 @@ public class SQLiteTableReader implements AutoCloseable {
      *
      * @param tableName
      * @param condition
-     * @throws org.sleuthkit.autopsy.core.AutopsySQLiteException
+     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
      *
      */
     public void read(String tableName, BooleanSupplier condition) throws AutopsySQLiteException {
@@ -351,20 +357,45 @@ public class SQLiteTableReader implements AutoCloseable {
                         return;
                     }
                     
+                    //getObject automatically instiantiates the correct java data type
                     Object item = queryResults.getObject(currColumnCount);
                     if(item instanceof String) {
-                        this.onStringAction.accept((String) item);
+                        this.onStringAction.accept(new ResultState<>(
+                                (String) item, 
+                                metaData.getColumnName(currColumnCount), 
+                                currColumnCount)
+                        );
                     } else if(item instanceof Integer) {
-                        this.onIntegerAction.accept((Integer) item);
+                        this.onIntegerAction.accept(new ResultState<>(
+                                (Integer) item, 
+                                metaData.getColumnName(currColumnCount), 
+                                currColumnCount)
+                        );
                     } else if(item instanceof Double) {
-                        this.onFloatAction.accept((Double) item);
+                        this.onFloatAction.accept(new ResultState<>(
+                                (Double) item, 
+                                metaData.getColumnName(currColumnCount), 
+                                currColumnCount)
+                        );
                     } else if(item instanceof Long) {
-                        this.onLongAction.accept((Long) item);
+                        this.onLongAction.accept(new ResultState<>(
+                                (Long) item, 
+                                metaData.getColumnName(currColumnCount), 
+                                currColumnCount)
+                        );
                     } else if(item instanceof byte[]) {
-                        this.onBlobAction.accept((byte[]) item);
+                        this.onBlobAction.accept(new ResultState<>(
+                                (byte[]) item, 
+                                metaData.getColumnName(currColumnCount), 
+                                currColumnCount)
+                        );
                     }
                     
-                    this.forAllAction.accept(item);
+                    this.forAllAction.accept(new ResultState<>(
+                                (Object) item, 
+                                metaData.getColumnName(currColumnCount), 
+                                currColumnCount)
+                        );
                 }
                 
                 unfinishedRowState = false;
@@ -384,10 +415,12 @@ public class SQLiteTableReader implements AutoCloseable {
     private void ensureOpen() throws AutopsySQLiteException {
         if (Objects.isNull(conn)) {
             try {
+                Class.forName("org.sqlite.JDBC"); //NON-NLS  
                 String localDiskPath = writeAbstractFileToLocalDisk(file, file.getId());
                 findAndCopySQLiteMetaFile(file);
                 conn = DriverManager.getConnection("jdbc:sqlite:" + localDiskPath);
-            } catch (NoCurrentCaseException | TskCoreException | IOException | SQLException ex) {
+            } catch (NoCurrentCaseException | TskCoreException | IOException | 
+                    ClassNotFoundException | SQLException ex) {
                 throw new AutopsySQLiteException(ex);
             }
         }
@@ -536,5 +569,33 @@ public class SQLiteTableReader implements AutoCloseable {
     public void finalize() throws Throwable {
         super.finalize();
         close();
+    }
+    
+    /**
+     * 
+     * @param <T> 
+     */
+    public class ResultState<T> {
+        private final T value;
+        private final String columnName;
+        private final int columnIndex;
+        
+        private ResultState(T value, String columnName, int columnIndex) {
+            this.value = value;
+            this.columnName = columnName;
+            this.columnIndex = columnIndex;
+        }
+        
+        public T getValue() {
+            return value;
+        }
+        
+        public String getColumnName() {
+            return columnName;
+        }
+        
+        public Integer getIndex() {
+            return columnIndex;
+        }
     }
 }
