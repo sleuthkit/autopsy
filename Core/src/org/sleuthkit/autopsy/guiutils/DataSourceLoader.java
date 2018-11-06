@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.commonfilesearch;
+package org.sleuthkit.autopsy.guiutils;
 
 import java.io.File;
 import java.sql.ResultSet;
