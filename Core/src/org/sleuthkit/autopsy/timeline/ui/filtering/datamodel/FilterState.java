@@ -23,9 +23,9 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
- * 
+ * The state of a filter: selected, disabled, active, etc.
  *
- * @param <FilterType>
+ * @param <FilterType> The type of filter this is the state for.
  */
 public interface FilterState<FilterType extends TimelineFilter> {
 
