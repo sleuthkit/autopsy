@@ -55,9 +55,6 @@ class ReportCaseUco implements GeneralReportModule {
     private static final Logger logger = Logger.getLogger(ReportCaseUco.class.getName());
     private static ReportCaseUco instance = null;
     private ReportCaseUcoConfigPanel configPanel;
-
-    private Case currentCase;
-    private SleuthkitCase skCase;
     
     private static final String REPORT_FILE_NAME = "CaseUco.txt";
     
@@ -82,19 +79,33 @@ class ReportCaseUco implements GeneralReportModule {
     @Override
     @SuppressWarnings("deprecation")
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
-        // Start the progress bar and setup the report
+
+        if (configPanel == null) {
+            logger.log(Level.SEVERE, "CASE/UCO settings panel has not been initialized"); //NON-NLS
+            // ELTODO
+            return;            
+        }
+        
+        Long selectedDataSourceId = configPanel.getSelectedDataSourceId();
+        if (selectedDataSourceId == ReportCaseUcoConfigPanel.NO_DATA_SOURCE_SELECTED) {
+            logger.log(Level.SEVERE, "No data source selected for CASE/UCO report"); //NON-NLS
+            // ELTODO
+            return;
+        } 
+        
+        Case currentCase;
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             return;
         }
+        
+        // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.initializing"));
-        
-        Long selectedDataSourceId = configPanel.getSelectedDataSourceId();
-        
+              
         // Create the JSON generator
         JsonFactory jsonGeneratorFactory = new JsonFactory();
         String reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
@@ -107,9 +118,14 @@ class ReportCaseUco implements GeneralReportModule {
             return;
         }
         
-        skCase = currentCase.getSleuthkitCase();
+        // Check if ingest has finished
+        if (IngestManager.getInstance().isIngestRunning()) {
+            String ingestwarning = NbBundle.getMessage(this.getClass(), "ReportCaseUco.ingestWarning.text");
+            // ELTODO what to do with this warning?
+        }
 
-        // Run query to get all files
+        SleuthkitCase skCase = currentCase.getSleuthkitCase();
+
         JsonGenerator jsonGenerator = null;
         SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
         try {
@@ -118,7 +134,8 @@ class ReportCaseUco implements GeneralReportModule {
             jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
             
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
-            // exclude non-fs files/dirs and . and .. files
+            
+            // Run query to get all files, exclude directories
             final String query = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
                     + "data_source_obj_id = " + Long.toString(selectedDataSourceId)
                     + " AND ((meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
@@ -129,18 +146,10 @@ class ReportCaseUco implements GeneralReportModule {
 
             SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(query);
             ResultSet resultSet = queryResult.getResultSet();
-            // Check if ingest has finished
-            String ingestwarning = "";
-            if (IngestManager.getInstance().isIngestRunning()) {
-                ingestwarning = NbBundle.getMessage(this.getClass(), "ReportCaseUco.ingestWarning.text");
-            }
-            // ELTODO what to do with this warning?
 
-            int numFiles = 1000; // ELTODO resultSet.size();
-            progressPanel.setMaximumProgress(numFiles / 100);
+            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.processing"));
             
             // Loop files and write info to report
-            int count = 0;
             while (resultSet.next()) {
 
                 if (progressPanel.getStatus() == ReportStatus.CANCELED) {
@@ -159,19 +168,10 @@ class ReportCaseUco implements GeneralReportModule {
                 String extension = resultSet.getString("extension");
                 
                 addFile(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator);
-                
-                /* ELTODO if (count++ == 100) {
-                    progressPanel.increment();
-                    progressPanel.updateStatusLabel(
-                            NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.processing",
-                                    file.getName()));
-                    count = 0;
-                }*/
-
             }
             progressPanel.complete(ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get the unique path.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to create JSON output for the CASE/UCO report", ex); //NON-NLS
         } catch (SQLException ex) {
@@ -247,7 +247,12 @@ class ReportCaseUco implements GeneralReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
-        configPanel = new ReportCaseUcoConfigPanel();
+        try {
+            configPanel = new ReportCaseUcoConfigPanel();
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+            logger.log(Level.SEVERE, "Failed to initialize CASE/UCO settings panel", ex); //NON-NLS
+            configPanel = null;
+        }
         return configPanel;
     }
 }

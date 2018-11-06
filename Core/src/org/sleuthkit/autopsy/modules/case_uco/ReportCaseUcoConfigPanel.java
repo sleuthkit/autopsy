@@ -20,20 +20,17 @@
 package org.sleuthkit.autopsy.modules.case_uco;
 
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.ComboBoxModel;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.guiutils.DataSourceLoader;
 import org.sleuthkit.autopsy.guiutils.DataSourceComboBoxModel;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * UI controls for Common Files Search scenario where the user intends to find
- * common files between datasources. It is an inner panel which provides the
- * ability to select all datasources or a single datasource from a dropdown list
+ * UI controls for CASE/UCO report. It is a panel which provides the
+ * ability to select a single datasource from a dropdown list
  * of sources in the current case.
  */
 final class ReportCaseUcoConfigPanel extends javax.swing.JPanel {
@@ -41,34 +38,24 @@ final class ReportCaseUcoConfigPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     static final long NO_DATA_SOURCE_SELECTED = -1;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
-    private Map<Long, String> dataSourceMap;
+    private final Map<Long, String> dataSourceMap;
     private final DataSourceLoader dataSourceLoader;
 
     /**
-     * Creates new form IntraCasePanel
+     * Creates new form ReportCaseUcoConfigPanel
      */
-    ReportCaseUcoConfigPanel() {
+    ReportCaseUcoConfigPanel() throws NoCurrentCaseException, TskCoreException, SQLException {
         initComponents();
         this.dataSourceLoader = new DataSourceLoader();
-        try {
-            this.dataSourceMap = dataSourceLoader.getDataSourceMap();
-        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
-            Exceptions.printStackTrace(ex);
-            this.dataSourceMap = new HashMap<>();
-            selectDataSourceComboBox.setEnabled(false);
-            return;
-        }
+        this.dataSourceMap = dataSourceLoader.getDataSourceMap();
         
         String[] dataSourcesNames = new String[dataSourceMap.size()];
         if (dataSourcesNames.length > 0) {
             dataSourcesNames = dataSourceMap.values().toArray(dataSourcesNames);
             setDatasourceComboboxModel(new DataSourceComboBoxModel(dataSourcesNames));
-            //setDataSourceMap(dataSourceMap);
             
             selectDataSourceComboBox.setEnabled(true);
-            if (selectDataSourceComboBox.isEnabled()) {
-                selectDataSourceComboBox.setSelectedIndex(0);
-            }
+            selectDataSourceComboBox.setSelectedIndex(0);
         }
     }
 
@@ -142,16 +129,5 @@ final class ReportCaseUcoConfigPanel extends javax.swing.JPanel {
     void setDatasourceComboboxModel(DataSourceComboBoxModel dataSourceComboBoxModel) {
         this.dataSourcesList = dataSourceComboBoxModel;
         this.selectDataSourceComboBox.setModel(dataSourcesList);
-    }
-
-    /**
-     * Update the map of datasources that this panel allows the user to select
-     * from
-     *
-     * @param dataSourceMap A map of datasources
-     */
-    void setDataSourceMap(Map<Long, String> dataSourceMap) {
-        this.dataSourceMap.clear();
-        this.dataSourceMap.putAll(dataSourceMap);
     }
 }
