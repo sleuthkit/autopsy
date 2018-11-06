@@ -85,13 +85,12 @@ public class ListViewModel {
         }
 
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
-        final boolean needsTags = filterState.hasActiveTagsFilters();
-        final boolean needsHashSets = filterState.hasActiveHashFilters();
+       
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         final String querySql = "SELECT full_description, time, file_obj_id, "
                                 + dbUtils.csvAggFunction("CAST(tsk_events.event_id AS VARCHAR)") + " AS eventIDs, "
                                 + dbUtils.csvAggFunction("CAST(sub_type AS VARCHAR)") + " AS eventTypes"
-                                + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets)
+                                + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(filterState.getActiveFilter())
                                 + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + eventManager.getSQLWhere(filterState.getActiveFilter())
                                 + " GROUP BY time, full_description, file_obj_id ORDER BY time ASC, full_description";
 

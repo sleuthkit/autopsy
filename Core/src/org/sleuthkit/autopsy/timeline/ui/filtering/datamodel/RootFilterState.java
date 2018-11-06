@@ -26,23 +26,26 @@ import org.python.google.common.collect.Lists;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.HashHitsFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.HashSetFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
 
 /**
  */
 public class RootFilterState implements FilterState<RootFilter>, CompoundFilterState< TimelineFilter, RootFilter> {
 
-    private final CompoundFilterState<TypeFilter, TypeFilter> typeFilterState;
+    private final CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState;
     private final DefaultFilterState<HideKnownFilter> knownFilterState;
     private final DefaultFilterState<TextFilter> textFilterState;
     private final TagsFilterState tagsFilterState;
     private final CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState;
     private final CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState;
+    private final CompoundFilterState<TimelineFilter.FileTypeFilter, TimelineFilter.FileTypesFilter> fileTypesFilterState;
 
     private static final ReadOnlyBooleanProperty ALWAYS_TRUE = new ReadOnlyBooleanWrapper(true).getReadOnlyProperty();
     private final static ReadOnlyBooleanProperty ALWAYS_FALSE = new ReadOnlyBooleanWrapper(false).getReadOnlyProperty();
@@ -52,34 +55,40 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
 
     public RootFilterState(RootFilter delegate) {
         this(delegate,
-                new CompoundFilterStateImpl<>(delegate.getTypeFilter()),
+                new CompoundFilterStateImpl<>(delegate.getEventTypeFilter()),
                 new DefaultFilterState<>(delegate.getKnownFilter()),
                 new DefaultFilterState<>(delegate.getTextFilter()),
                 new TagsFilterState(delegate.getTagsFilter()),
                 new CompoundFilterStateImpl<>(delegate.getHashHitsFilter()),
-                new CompoundFilterStateImpl<>(delegate.getDataSourcesFilter())
+                new CompoundFilterStateImpl<>(delegate.getDataSourcesFilter()),
+                new CompoundFilterStateImpl<>(delegate.getFileTypesFilter())
         );
     }
 
     private RootFilterState(RootFilter delegate,
-                            CompoundFilterState<TypeFilter, TypeFilter> typeFilterState,
+                            CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState,
                             DefaultFilterState<HideKnownFilter> knownFilterState,
                             DefaultFilterState<TextFilter> textFilterState,
                             TagsFilterState tagsFilterState,
                             CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState,
-                            CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState) {
+                            CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState,
+                            CompoundFilterState<FileTypeFilter, FileTypesFilter> fileTypesFilterState) {
         this.delegate = delegate;
-        this.typeFilterState = typeFilterState;
+        this.eventTypeFilterState = eventTypeFilterState;
         this.knownFilterState = knownFilterState;
         this.textFilterState = textFilterState;
         this.tagsFilterState = tagsFilterState;
         this.hashHitsFilterState = hashHitsFilterState;
         this.dataSourcesFilterState = dataSourcesFilterState;
+        this.fileTypesFilterState = fileTypesFilterState;
         subFilterStates.addAll(
-                knownFilterState, textFilterState,
+                knownFilterState,
+                textFilterState,
                 tagsFilterState,
                 hashHitsFilterState,
-                dataSourcesFilterState, typeFilterState);
+                dataSourcesFilterState,
+                fileTypesFilterState,
+                 eventTypeFilterState);
     }
 
     /**
@@ -112,16 +121,18 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
     @Override
     public RootFilterState copyOf() {
         return new RootFilterState(getFilter().copyOf(),
-                getTypeFilterState().copyOf(),
+                getEventTypeFilterState().copyOf(),
                 getKnownFilterState().copyOf(),
                 getTextFilterState().copyOf(),
                 getTagsFilterState().copyOf(),
                 getHashHitsFilterState().copyOf(),
-                getDataSourcesFilterState().copyOf());
+                getDataSourcesFilterState().copyOf(),
+                getFileTypesFilterState().copyOf()
+        );
     }
 
-    public CompoundFilterState<TypeFilter, TypeFilter> getTypeFilterState() {
-        return typeFilterState;
+    public CompoundFilterState<EventTypeFilter, EventTypeFilter> getEventTypeFilterState() {
+        return eventTypeFilterState;
     }
 
     public DefaultFilterState<HideKnownFilter> getKnownFilterState() {
@@ -144,14 +155,19 @@ public class RootFilterState implements FilterState<RootFilter>, CompoundFilterS
         return dataSourcesFilterState;
     }
 
+    public CompoundFilterState<FileTypeFilter, FileTypesFilter> getFileTypesFilterState() {
+        return fileTypesFilterState;
+    }
+
     @Override
     public RootFilter getActiveFilter() {
         return new RootFilter(knownFilterState.getActiveFilter(),
                 tagsFilterState.getActiveFilter(),
                 hashHitsFilterState.getActiveFilter(),
                 textFilterState.getActiveFilter(),
-                typeFilterState.getActiveFilter(),
+                eventTypeFilterState.getActiveFilter(),
                 dataSourcesFilterState.getActiveFilter(),
+                fileTypesFilterState.getActiveFilter(),
                 Lists.transform(subFilterStates, FilterState::getActiveFilter));
     }
 

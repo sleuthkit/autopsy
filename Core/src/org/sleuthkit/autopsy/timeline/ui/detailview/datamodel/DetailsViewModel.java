@@ -157,15 +157,14 @@ final public class DetailsViewModel {
         String descriptionColumn = eventManager.getDescriptionColumn(descriptionLOD);
         final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
         String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
-        final boolean needsTags = filterState.hasActiveTagsFilters();
-        final boolean needsHashSets = filterState.hasActiveHashFilters();
+      
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         String querySql = "SELECT " + formatTimeFunctionHelper(rangeInfo.getPeriodSize().toChronoUnit(), timeZone) + " AS interval, " // NON-NLS
                           + dbUtils.csvAggFunction("tsk_events.event_id") + " as event_ids, " //NON-NLS
                           + dbUtils.csvAggFunction("CASE WHEN hash_hit = 1 THEN tsk_events.event_id ELSE NULL END") + " as hash_hits, " //NON-NLS
                           + dbUtils.csvAggFunction("CASE WHEN tagged = 1 THEN tsk_events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
                           + " min(time) AS minTime, max(time) AS maxTime,  " + typeColumn + ", " + descriptionColumn // NON-NLS
-                          + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(needsTags, needsHashSets) // NON-NLS
+                          + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(filterState.getActiveFilter()) // NON-NLS
                           + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(filterState.getActiveFilter()) // NON-NLS
                           + " GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
                           + " ORDER BY min(time)"; // NON-NLS

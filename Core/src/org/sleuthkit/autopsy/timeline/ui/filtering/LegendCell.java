@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
 
 /**
  * A TreeTableCell that shows an icon and color corresponding to the represented
@@ -67,8 +67,8 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
         } else {
 
             //TODO: make some subclasses rather than use this if else chain.
-            if (item.getFilter() instanceof TypeFilter) {
-                TypeFilter filter = (TypeFilter) item.getFilter();
+            if (item.getFilter() instanceof EventTypeFilter) {
+                EventTypeFilter filter = (EventTypeFilter) item.getFilter();
                 Rectangle rect = new Rectangle(20, 20);
 
                 rect.setArcHeight(5);
@@ -104,7 +104,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
         }
     }
 
-    private void setLegendColor(TypeFilter filter, Rectangle rect, EventTypeZoomLevel eventTypeZoom) {
+    private void setLegendColor(EventTypeFilter filter, Rectangle rect, EventTypeZoomLevel eventTypeZoom) {
         //only show legend color if filter is of the same zoomlevel as requested in filteredEvents
         if (eventTypeZoom.equals(filter.getEventType().getZoomLevel())) {
             Platform.runLater(() -> {

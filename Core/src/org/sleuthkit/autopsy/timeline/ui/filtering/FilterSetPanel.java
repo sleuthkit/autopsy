@@ -117,7 +117,7 @@ final public class FilterSetPanel extends BorderPane {
 
         //type is the only filter expanded initialy
         expansionMap.put(controller.getEventsModel().getFilterState().getFilter(), true);
-        expansionMap.put(controller.getEventsModel().getFilterState().getTypeFilterState().getFilter(), true);
+        expansionMap.put(controller.getEventsModel().getFilterState().getEventTypeFilterState().getFilter(), true);
 
         this.filteredEvents.eventTypeZoomProperty().addListener((Observable observable) -> applyFilters());
         this.filteredEvents.descriptionLODProperty().addListener((Observable observable1) -> applyFilters());

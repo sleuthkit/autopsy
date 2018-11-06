@@ -86,7 +86,7 @@ import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
 
 /**
  * Controller in the MVC design along with FilteredEventsModel TimeLineView.
@@ -607,7 +607,7 @@ public class TimeLineController {
             @Override
             protected Collection< Long> call() throws Exception {
                 synchronized (TimeLineController.this) {
-                    return filteredEvents.getEventIDs(timeRange, new TypeFilter(type));
+                    return filteredEvents.getEventIDs(timeRange, new EventTypeFilter(type));
                 }
             }
 

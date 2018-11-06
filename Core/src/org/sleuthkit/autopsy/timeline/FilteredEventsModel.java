@@ -20,8 +20,13 @@ package org.sleuthkit.autopsy.timeline;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multimap;
 import com.google.common.eventbus.EventBus;
+import com.google.common.net.MediaType;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,8 +47,10 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -87,7 +94,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
 
 /**
  * This class acts as the model for a TimelineView
@@ -129,6 +136,7 @@ public final class FilteredEventsModel {
     private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
+    private final ObservableMap< MediaType, Long> fileTypesMap = FXCollections.observableHashMap();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
 
     public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomState> currentStateProperty) throws TskCoreException {
@@ -227,6 +235,10 @@ public final class FilteredEventsModel {
         return hashSets;
     }
 
+    private ObservableMap<MediaType, Long> getMediaTypes() {
+        return fileTypesMap;
+    }
+
     public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter, DateTimeZone timeZone) throws TskCoreException {
         return eventManager.getSpanningInterval(timeRange, filter, timeZone);
     }
@@ -266,6 +278,22 @@ public final class FilteredEventsModel {
 
         //should this only be tags applied to files or event bearing artifacts?
         tagNames.setAll(skCase.getTagNamesInUse());
+
+        
+        //TODO: limit this to files that have events derived from them.
+        try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery("SELECT mime_type , COUNT(mime_type) FROM  tsk_files GROUP BY mime_type");
+                ResultSet results = executeQuery.getResultSet();) {
+            while (results.next()) {
+                String mimeType = results.getString("mime_type");
+                if (StringUtils.isNotBlank(mimeType)) {
+                    String[] splitMime = mimeType.split("/");
+                    fileTypesMap.put(MediaType.create(splitMime[0], splitMime[1]), results.getLong("COUNT(mime_type)"));
+                }
+            }
+        } catch (SQLException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        ;
     }
 
     /**
@@ -283,6 +311,7 @@ public final class FilteredEventsModel {
         for (FilterState<? extends TagNameFilter> filterState : rootFilter.getTagsFilterState().getSubFilterStates()) {
             filterState.setDisabled(tagNames.contains(filterState.getFilter().getTagName()) == false);
         }
+
     }
 
     /**
@@ -361,12 +390,23 @@ public final class FilteredEventsModel {
             TagNameFilter tagNameFilter = new TagNameFilter(tagName);
             tagsFilter.addSubFilter(tagNameFilter);
         });
+
+        Multimap<String, String> mimeTypesMap = HashMultimap.create();
+        getMediaTypes().forEach((fileType, count) -> mimeTypesMap.put(fileType.type(), fileType.subtype()));
+
+        TimelineFilter.FileTypesFilter fileTypesFilter = new TimelineFilter.FileTypesFilter();
+        mimeTypesMap.asMap().forEach((type, subTypes) -> {
+            TimelineFilter.FileTypeFilter fileTypeFilter = new TimelineFilter.FileTypeFilter(type);
+            subTypes.forEach(subType -> fileTypeFilter.addSubFilter(new TimelineFilter.FileSubTypeFilter(type, subType)));
+            fileTypesFilter.addSubFilter(fileTypeFilter);
+        });
         return new RootFilterState(new RootFilter(new HideKnownFilter(),
                 tagsFilter,
                 hashHitsFilter,
                 new TextFilter(),
-                new TypeFilter(EventType.ROOT_EVENT_TYPE),
+                new EventTypeFilter(EventType.ROOT_EVENT_TYPE),
                 dataSourcesFilter,
+                fileTypesFilter,
                 Collections.emptySet()));
     }
 
@@ -444,6 +484,8 @@ public final class FilteredEventsModel {
     /**
      * @return The smallest interval spanning all the events from the
      *         repository, ignoring any filters or requested ranges.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Interval getSpanningInterval() throws TskCoreException {
         return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000);
@@ -460,6 +502,8 @@ public final class FilteredEventsModel {
      * @return the time (in seconds from unix epoch) of the absolutely first
      *         event available from the repository, ignoring any filters or
      *         requested ranges
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Long getMinTime() throws TskCoreException {
         try {
@@ -473,6 +517,8 @@ public final class FilteredEventsModel {
      * @return the time (in seconds from unix epoch) of the absolutely last
      *         event available from the repository, ignoring any filters or
      *         requested ranges
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Long getMaxTime() throws TskCoreException {
         try {
@@ -617,6 +663,8 @@ public final class FilteredEventsModel {
     /**
      * (Re)Post an AutopsyEvent received from another event distribution system
      * locally to all registered subscribers.
+     *
+     * @param event The event to re-post.
      */
     public void postAutopsyEventLocally(AutopsyEvent event) {
         eventbus.post(event);
