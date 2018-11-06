@@ -115,7 +115,10 @@ class ReportCaseUco implements GeneralReportModule {
             
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
             // exclude non-fs files/dirs and . and .. files
-            final String query = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where name != '.' AND name != '..'"; //NON-NLS
+            final String query = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
+                    + "(meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
+                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
+                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue() + ")"; //NON-NLS
 
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.loading"));
 
@@ -172,7 +175,7 @@ class ReportCaseUco implements GeneralReportModule {
             if (jsonGenerator != null) {
                 try {
                     jsonGenerator.close();
-                    jsonGenerator = null;
+                    // ELTODO investigate database closing issue
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Failed to close JSON output file", ex); //NON-NLS
                 }
@@ -222,8 +225,7 @@ class ReportCaseUco implements GeneralReportModule {
 
     @Override
     public String getName() {
-        //String name = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getName.text");
-        String name = "CASE/UCO";
+        String name = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getName.text");
         return name;
     }
 
@@ -234,8 +236,7 @@ class ReportCaseUco implements GeneralReportModule {
 
     @Override
     public String getDescription() {
-        //String desc = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getDesc.text");
-        String desc = "CASE/UCO Report";
+        String desc = NbBundle.getMessage(this.getClass(), "ReportCaseUco.getDesc.text");
         return desc;
     }
 
