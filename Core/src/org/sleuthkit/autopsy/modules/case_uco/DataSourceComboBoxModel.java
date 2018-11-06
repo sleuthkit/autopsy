@@ -26,7 +26,7 @@ import javax.swing.event.ListDataListener;
 /**
  * Encapsulates meta data needed to populate the data source selection drop down menu
  */ 
-public class DataSourceComboBoxModel extends AbstractListModel<String> implements ComboBoxModel<String> {
+class DataSourceComboBoxModel extends AbstractListModel<String> implements ComboBoxModel<String> {
 
     private static final long serialVersionUID = 1L;
     private final String[] dataSourceList;

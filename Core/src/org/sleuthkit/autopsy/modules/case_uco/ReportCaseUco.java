@@ -93,6 +93,8 @@ class ReportCaseUco implements GeneralReportModule {
         progressPanel.start();
         progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.initializing"));
         
+        Long selectedDataSourceId = configPanel.getSelectedDataSourceId();
+        
         // Create the JSON generator
         JsonFactory jsonGeneratorFactory = new JsonFactory();
         String reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
@@ -118,9 +120,10 @@ class ReportCaseUco implements GeneralReportModule {
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
             // exclude non-fs files/dirs and . and .. files
             final String query = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
-                    + "(meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
+                    + "data_source_obj_id = " + Long.toString(selectedDataSourceId)
+                    + " AND ((meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
                     + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
-                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue() + ")"; //NON-NLS
+                    + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue() + "))"; //NON-NLS
 
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.loading"));
 

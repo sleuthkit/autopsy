@@ -19,13 +19,15 @@
  */
 package org.sleuthkit.autopsy.modules.case_uco;
 
-import java.util.Collections;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Observable;
-import java.util.Observer;
 import javax.swing.ComboBoxModel;
+import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * UI controls for Common Files Search scenario where the user intends to find
@@ -33,49 +35,40 @@ import javax.swing.ComboBoxModel;
  * ability to select all datasources or a single datasource from a dropdown list
  * of sources in the current case.
  */
-public final class ReportCaseUcoConfigPanel extends javax.swing.JPanel {
+final class ReportCaseUcoConfigPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     static final long NO_DATA_SOURCE_SELECTED = -1;
-    private final Observable fileTypeFilterObservable;
     private ComboBoxModel<String> dataSourcesList = new DataSourceComboBoxModel();
-    private final Map<Long, String> dataSourceMap;
+    private Map<Long, String> dataSourceMap;
+    private final DataSourceLoader dataSourceLoader;
 
     /**
      * Creates new form IntraCasePanel
      */
-    public ReportCaseUcoConfigPanel() {
+    ReportCaseUcoConfigPanel() {
         initComponents();
-        this.dataSourceMap = new HashMap<>();
-        fileTypeFilterObservable = new Observable() {
-            @Override
-            public void notifyObservers() {
-                //set changed before notify observers
-                //we want this observerable to always cause the observer to update when notified
-                this.setChanged();
-                super.notifyObservers();
+        this.dataSourceLoader = new DataSourceLoader();
+        try {
+            this.dataSourceMap = dataSourceLoader.getDataSourceMap();
+        } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
+            Exceptions.printStackTrace(ex);
+            this.dataSourceMap = new HashMap<>();
+            selectDataSourceComboBox.setEnabled(false);
+            return;
+        }
+        
+        String[] dataSourcesNames = new String[dataSourceMap.size()];
+        if (dataSourcesNames.length > 0) {
+            dataSourcesNames = dataSourceMap.values().toArray(dataSourcesNames);
+            setDatasourceComboboxModel(new DataSourceComboBoxModel(dataSourcesNames));
+            //setDataSourceMap(dataSourceMap);
+            
+            selectDataSourceComboBox.setEnabled(true);
+            if (selectDataSourceComboBox.isEnabled()) {
+                selectDataSourceComboBox.setSelectedIndex(0);
             }
-        };
-    }
-
-    /**
-     * Add an Observer to the Observable portion of this panel so that it can be
-     * notified of changes to this panel.
-     *
-     * @param observer the object which is observing this panel
-     */
-    void addObserver(Observer observer) {
-        fileTypeFilterObservable.addObserver(observer);
-    }
-
-    /**
-     * Get the map of datasources which was used to populate the combo box on
-     * this panel.
-     *
-     * @return an unmodifiable copy of the map of datasources
-     */
-    Map<Long, String> getDataSourceMap() {
-        return Collections.unmodifiableMap(this.dataSourceMap);
+        }
     }
 
     /**
@@ -130,7 +123,7 @@ public final class ReportCaseUcoConfigPanel extends javax.swing.JPanel {
                 .addComponent(jLabelSelectDataSource)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(selectDataSourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(172, 172, 172))
+                .addContainerGap(130, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
