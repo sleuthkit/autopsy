@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.nio.BufferUnderflowException;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -319,7 +320,12 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
                     DatabaseBuilder databaseBuilder = new DatabaseBuilder();
                     databaseBuilder.setChannel(memFileChannel);
                     databaseBuilder.setCodecProvider(codecProvider);
-                    Database accessDatabase = databaseBuilder.open();
+                    Database accessDatabase;
+                    try {
+                        accessDatabase = databaseBuilder.open();
+                    } catch (IOException | BufferUnderflowException | IndexOutOfBoundsException ignored) {
+                        return passwordProtected; 
+                    }
                     /*
                      * No exception has been thrown at this point, so the file
                      * is either a JET database, or an unprotected ACE database.

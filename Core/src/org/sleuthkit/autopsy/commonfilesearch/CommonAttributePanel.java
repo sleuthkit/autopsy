@@ -258,7 +258,6 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 }
                 metadata = builder.findMatches();
                 this.tabTitle = builder.getTabTitle();
-
                 return metadata;
             }
 
