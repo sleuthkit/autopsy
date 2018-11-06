@@ -48,7 +48,6 @@ public class CorrelationAttributeInstance implements Serializable {
     private String filePath;
     private String comment;
     private TskData.FileKnown knownStatus;
-    private long objectId;
 
     public CorrelationAttributeInstance(
             CorrelationAttributeInstance.Type correlationType,
@@ -59,16 +58,6 @@ public class CorrelationAttributeInstance implements Serializable {
             String comment,
             TskData.FileKnown knownStatus) throws EamDbException, CorrelationAttributeNormalizationException {
         this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus);
-    }
-
-    /**
-     * NOTE: Only used for when EamDB is NOT enabled.
-     *
-     * @param aType CorrelationAttributeInstance.Type
-     * @param value correlation value
-     */
-    public CorrelationAttributeInstance(Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(aType, value, -1, null, null, "", "", TskData.FileKnown.UNKNOWN);
     }
 
     CorrelationAttributeInstance(
