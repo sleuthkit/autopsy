@@ -20,7 +20,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.report;
+package org.sleuthkit.autopsy.modules.case_uco;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,13 +35,14 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.SimpleTimeZone;
-import java.util.TimeZone;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.report.GeneralReportModule;
+import org.sleuthkit.autopsy.report.ReportProgressPanel;
 import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.*;
 
@@ -53,6 +54,7 @@ class ReportCaseUco implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportCaseUco.class.getName());
     private static ReportCaseUco instance = null;
+    private ReportCaseUcoConfigPanel configPanel;
 
     private Case currentCase;
     private SleuthkitCase skCase;
@@ -242,6 +244,7 @@ class ReportCaseUco implements GeneralReportModule {
 
     @Override
     public JPanel getConfigurationPanel() {
-        return null; // No configuration panel
+        configPanel = new ReportCaseUcoConfigPanel();
+        return configPanel;
     }
 }
