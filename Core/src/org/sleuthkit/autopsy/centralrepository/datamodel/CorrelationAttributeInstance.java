@@ -120,25 +120,10 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     /**
-     * @param correlationValue the correlationValue to set
-     */
-    public void setCorrelationValue(String correlationValue) {
-        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
-        this.correlationValue = correlationValue.toLowerCase();
-    }
-
-    /**
      * @return the correlation Type
      */
     public Type getCorrelationType() {
         return correlationType;
-    }
-
-    /**
-     * @param correlationType the correlation Type to set
-     */
-    public void setCorrelationType(Type correlationType) {
-        this.correlationType = correlationType;
     }
 
     /**
@@ -212,6 +197,16 @@ public class CorrelationAttributeInstance implements Serializable {
      */
     public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;
+    }
+
+    /**
+     * Get the objectId of the file associated with the correlation attribute or
+     * NULL if the objectId is not available.
+     *
+     * @return the objectId of the file
+     */
+    public Long getFileObjectId() {
+        return objectId;
     }
 
     // Type ID's for Default Correlation Types
