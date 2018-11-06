@@ -2960,14 +2960,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                     resultSet.getString("poc_phone"));
         }
 
-        CorrelationCase eamCase = new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name"));
-        eamCase.setOrg(eamOrg);
-        eamCase.setCreationDate(resultSet.getString("creation_date"));
-        eamCase.setCaseNumber(resultSet.getString("case_number"));
-        eamCase.setExaminerName(resultSet.getString("examiner_name"));
-        eamCase.setExaminerEmail(resultSet.getString("examiner_email"));
-        eamCase.setExaminerPhone(resultSet.getString("examiner_phone"));
-        eamCase.setNotes(resultSet.getString("notes"));
+        CorrelationCase eamCase = new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), eamOrg, resultSet.getString("case_name"), 
+                resultSet.getString("creation_date"), resultSet.getString("case_number"), resultSet.getString("examiner_name"), 
+                resultSet.getString("examiner_email"), resultSet.getString("examiner_phone"), resultSet.getString("notes"));
+
 
         return eamCase;
     }
@@ -3017,7 +3013,6 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (null == resultSet) {
             return null;
         }
-        // @@@ We should have data source ID in the previous query instead of passing -1 into the below constructor
         return new CorrelationAttributeInstance(
                 aType,
                 resultSet.getString("value"),

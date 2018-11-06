@@ -25,9 +25,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SimpleTimeZone;
 import java.util.SortedSet;
-import java.util.TimeZone;
 import java.util.TreeSet;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -43,6 +41,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
+import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class MemoryDSInputPanel extends JPanel implements DocumentListener {
@@ -132,26 +131,13 @@ final class MemoryDSInputPanel extends JPanel implements DocumentListener {
      * machine time zone to be selected.
      */
     private void createTimeZoneList() {
-        // load and add all timezone
-        String[] ids = SimpleTimeZone.getAvailableIDs();
-        for (String id : ids) {
-            TimeZone zone = TimeZone.getTimeZone(id);
-            int offset = zone.getRawOffset() / 1000;
-            int hour = offset / 3600;
-            int minutes = (offset % 3600) / 60;
-            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
-
-            timeZoneComboBox.addItem(item);
+        List<String> timeZoneList = TimeZoneUtils.createTimeZoneList();
+        for (String timeZone : timeZoneList) {
+            timeZoneComboBox.addItem(timeZone);
         }
-        // get the current timezone
-        TimeZone thisTimeZone = Calendar.getInstance().getTimeZone();
-        int thisOffset = thisTimeZone.getRawOffset() / 1000;
-        int thisHour = thisOffset / 3600;
-        int thisMinutes = (thisOffset % 3600) / 60;
-        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID());
 
         // set the selected timezone
-        timeZoneComboBox.setSelectedItem(formatted);
+        timeZoneComboBox.setSelectedItem(TimeZoneUtils.createTimeZoneString(Calendar.getInstance().getTimeZone()));
     }
 
     
