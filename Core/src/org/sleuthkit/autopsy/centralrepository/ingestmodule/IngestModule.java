@@ -152,8 +152,7 @@ final class IngestModule implements FileIngestModule {
         // insert this file into the central repository
         try {
             CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
-                    md5,
-                    filesType,
+                                        filesType, md5,
                     eamCase,
                     eamDataSource,
                     abstractFile.getParentPath() + abstractFile.getName(),

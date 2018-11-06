@@ -208,8 +208,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                         if (attributeType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
                             CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                             instancesList.add(new CorrelationAttributeInstance(
-                                    md5,
-                                    attributeType,
+                                                                        attributeType, md5,
                                     correlationCase,
                                     CorrelationDataSource.fromTSKDataSource(correlationCase, sourceFile.getDataSource()),
                                     sourceFile.getParentPath() + sourceFile.getName(),

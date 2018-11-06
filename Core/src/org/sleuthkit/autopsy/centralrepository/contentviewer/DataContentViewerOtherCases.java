@@ -430,8 +430,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             CorrelationCase corCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                             try {
                                 ret.add(new CorrelationAttributeInstance(
-                                        md5,
-                                        aType,
+                                                                                aType, md5,
                                         corCase,
                                         CorrelationDataSource.fromTSKDataSource(corCase, file.getDataSource()),
                                         file.getParentPath() + file.getName(),
@@ -458,8 +457,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                     .filter(attrType -> attrType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID)
                                     .findAny()
                                     .get();
-
-                    ret.add(new CorrelationAttributeInstance(fileAttributeType, md5));
+                    //The Central Repository is not enabled
+                    ret.add(new CorrelationAttributeInstance(fileAttributeType, md5, null, null, "", "", TskData.FileKnown.UNKNOWN));
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
                 } catch (CorrelationAttributeNormalizationException ex) {
