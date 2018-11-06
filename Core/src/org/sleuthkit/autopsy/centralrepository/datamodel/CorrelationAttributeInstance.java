@@ -48,6 +48,7 @@ public class CorrelationAttributeInstance implements Serializable {
     private String filePath;
     private String comment;
     private TskData.FileKnown knownStatus;
+    private Long objectId;
 
     public CorrelationAttributeInstance(
             CorrelationAttributeInstance.Type correlationType,
@@ -56,8 +57,9 @@ public class CorrelationAttributeInstance implements Serializable {
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
-            TskData.FileKnown knownStatus) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus);
+            TskData.FileKnown knownStatus,
+            long fileObjectId) throws EamDbException, CorrelationAttributeNormalizationException {
+        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus, fileObjectId);
     }
 
     CorrelationAttributeInstance(
@@ -68,7 +70,8 @@ public class CorrelationAttributeInstance implements Serializable {
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
-            TskData.FileKnown knownStatus
+            TskData.FileKnown knownStatus,
+            Long fileObjectId
     ) throws EamDbException, CorrelationAttributeNormalizationException {
         if (filePath == null) {
             throw new EamDbException("file path is null");
@@ -83,6 +86,7 @@ public class CorrelationAttributeInstance implements Serializable {
         this.filePath = filePath.toLowerCase();
         this.comment = comment;
         this.knownStatus = knownStatus;
+        this.objectId = fileObjectId;
     }
 
     public Boolean equals(CorrelationAttributeInstance otherInstance) {

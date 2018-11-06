@@ -900,6 +900,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".id,"
                 + tableName
                 + ".value,"
+                + tableName
+                + ".object_id,"
                 + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
@@ -963,6 +965,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".id, "
                 + tableName
                 + ".value,"
+                + tableName
+                + ".object_id,"
                 + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
@@ -1455,6 +1459,68 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
+            CorrelationDataSource correlationDataSource, long objectID) throws EamDbException, CorrelationAttributeNormalizationException {
+
+        if (correlationCase == null) {
+            throw new EamDbException("Correlation case is null");
+        }
+
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        CorrelationAttributeInstance correlationAttributeInstance = null;
+
+        try {
+
+            String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
+            String sql
+                    = "SELECT id, value, file_path, known_status, comment FROM "
+                    + tableName
+                    + " WHERE case_id=?"
+                    + " AND object_id=?";
+
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setInt(1, correlationCase.getID());
+            preparedStatement.setInt(2, (int) objectID);
+            resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                int instanceId = resultSet.getInt(1);
+                String value = resultSet.getString(2);
+                String filePath = resultSet.getString(3);
+                int knownStatus = resultSet.getInt(4);
+                String comment = resultSet.getString(5);
+
+                correlationAttributeInstance = new CorrelationAttributeInstance(type, value,
+                        instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus), objectID);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return correlationAttributeInstance;
+    }
+
+    /**
+     * Find a correlation attribute in the Central Repository database given the
+     * instance type, case, data source, value, and file path.
+     *
+     * @param type                  The type of instance.
+     * @param correlationCase       The case tied to the instance.
+     * @param correlationDataSource The data source tied to the instance.
+     * @param value                 The value tied to the instance.
+     * @param filePath              The file path tied to the instance.
+     *
+     * @return The correlation attribute if it exists; otherwise null.
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CorrelationAttributeNormalizationException {
 
         if (correlationCase == null) {
@@ -1495,9 +1561,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                 int instanceId = resultSet.getInt(1);
                 int knownStatus = resultSet.getInt(2);
                 String comment = resultSet.getString(3);
-
+                //null objectId used because we only fall back to using this method when objec
                 correlationAttributeInstance = new CorrelationAttributeInstance(type, value,
-                        instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus));
+                        instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus), null);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
@@ -1637,6 +1703,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".id, "
                 + tableName
                 + ".value, "
+                + tableName
+                + ".object_id,"
                 + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
@@ -1694,7 +1762,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
-                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value FROM "
+                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, object_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -2960,10 +3028,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                     resultSet.getString("poc_phone"));
         }
 
-        CorrelationCase eamCase = new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), eamOrg, resultSet.getString("case_name"), 
-                resultSet.getString("creation_date"), resultSet.getString("case_number"), resultSet.getString("examiner_name"), 
+        CorrelationCase eamCase = new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), eamOrg, resultSet.getString("case_name"),
+                resultSet.getString("creation_date"), resultSet.getString("case_number"), resultSet.getString("examiner_name"),
                 resultSet.getString("examiner_email"), resultSet.getString("examiner_phone"), resultSet.getString("notes"));
-
 
         return eamCase;
     }
@@ -3021,8 +3088,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                 new CorrelationDataSource(resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
-                TskData.FileKnown.valueOf(resultSet.getByte("known_status"))
-        );
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
+                resultSet.getLong("object_id"));
     }
 
     private EamOrganization getEamOrganizationFromResultSet(ResultSet resultSet) throws SQLException {
@@ -3119,7 +3186,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 logger.log(Level.INFO, "Central Repository is of newer version than software creates");
                 return;
             }
-            
+
             // Update from 1.0 to 1.1
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
@@ -3133,13 +3200,15 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
             //Update to 1.2
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
-                //update central repository to be able to store new correlation attributes 
+
                 EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+                final String addObjectIdColumnTemplate = "ALTER TABLE %s ADD COLUMN object_id INTEGER;";
                 final String addSsidTableTemplate;
                 final String addCaseIdIndexTemplate;
                 final String addDataSourceIdIndexTemplate;
                 final String addValueIndexTemplate;
                 final String addKnownStatusIndexTemplate;
+                final String addObjectIdIndexTemplate;
                 //get the data base specific code for creating a new _instance table
                 switch (selectedPlatform) {
                     case POSTGRESQL:
@@ -3148,6 +3217,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         addDataSourceIdIndexTemplate = PostgresEamDbSettings.getAddDataSourceIdIndexTemplate();
                         addValueIndexTemplate = PostgresEamDbSettings.getAddValueIndexTemplate();
                         addKnownStatusIndexTemplate = PostgresEamDbSettings.getAddKnownStatusIndexTemplate();
+                        addObjectIdIndexTemplate = PostgresEamDbSettings.getAddObjectIdIndexTemplate();
                         break;
                     case SQLITE:
                         addSsidTableTemplate = SqliteEamDbSettings.getCreateArtifactInstancesTableTemplate();
@@ -3155,10 +3225,19 @@ abstract class AbstractSqlEamDb implements EamDb {
                         addDataSourceIdIndexTemplate = SqliteEamDbSettings.getAddDataSourceIdIndexTemplate();
                         addValueIndexTemplate = SqliteEamDbSettings.getAddValueIndexTemplate();
                         addKnownStatusIndexTemplate = SqliteEamDbSettings.getAddKnownStatusIndexTemplate();
+                        addObjectIdIndexTemplate = SqliteEamDbSettings.getAddObjectIdIndexTemplate();
                         break;
                     default:
                         throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
                 }
+                String instance_type_dbname;
+                //add object_id column to existing _instances tables
+                for (CorrelationAttributeInstance.Type type : CorrelationAttributeInstance.getDefaultCorrelationTypes()) {
+                    instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
+                    statement.execute(String.format(addObjectIdColumnTemplate, instance_type_dbname)); //NON-NLS
+                    statement.execute(String.format(addObjectIdIndexTemplate, instance_type_dbname, instance_type_dbname));
+                }
+                //update central repository to be able to store new correlation attributes 
                 final String wirelessNetworsDbTableName = "wireless_networks";
                 final String wirelessNetworksTableInstanceName = wirelessNetworsDbTableName + "_instances";
                 //add the wireless_networks attribute to the correlation_types table
@@ -3177,6 +3256,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute(String.format(addDataSourceIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addValueIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addKnownStatusIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
+                statement.execute(String.format(addObjectIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
 
             }
             if (!updateSchemaVersion(conn)) {

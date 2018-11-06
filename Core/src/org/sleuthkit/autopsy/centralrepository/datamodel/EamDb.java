@@ -355,11 +355,16 @@ public interface EamDb {
      *
      * @return The correlation attribute if it exists; otherwise null.
      *
+     * @deprecated - included to support Central Reposities version 1,1 and older
      * @throws EamDbException
      */
+    @Deprecated 
     CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CorrelationAttributeNormalizationException;
 
+    
+    CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
+            CorrelationDataSource correlationDataSource, long objectID) throws EamDbException, CorrelationAttributeNormalizationException;
     /**
      * Sets an eamArtifact instance to the given known status. If eamArtifact
      * exists, it is updated. If eamArtifact does not exist nothing happens

@@ -213,8 +213,8 @@ public class EamArtifactUtil {
                     CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
                     bbSourceFile.getParentPath() + bbSourceFile.getName(),
                     "",
-                    TskData.FileKnown.UNKNOWN
-            );
+                    TskData.FileKnown.UNKNOWN,
+                    bbSourceFile.getId());
 
         } catch (TskCoreException | EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
@@ -232,7 +232,7 @@ public class EamArtifactUtil {
      *
      * @return The new CorrelationAttribute, or null if retrieval failed.
      */
-    public static CorrelationAttributeInstance getInstanceFromContent(Content content) {
+    public static CorrelationAttributeInstance getInstanceFromContent2(Content content) {
 
         if (!(content instanceof AbstractFile)) {
             return null;
@@ -282,6 +282,70 @@ public class EamArtifactUtil {
     }
 
     /**
+     * Retrieve CorrelationAttribute from the given Content.
+     *
+     * @param content The content object
+     *
+     * @return The new CorrelationAttribute, or null if retrieval failed.
+     */
+    public static CorrelationAttributeInstance getInstanceFromContent(Content content) {
+
+        if (!(content instanceof AbstractFile)) {
+            return null;
+        }
+
+        final AbstractFile file = (AbstractFile) content;
+
+        if (!isSupportedAbstractFileType(file)) {
+            return null;
+        }
+
+        CorrelationAttributeInstance.Type type;
+        CorrelationCase correlationCase;
+        CorrelationDataSource correlationDataSource;
+
+        try {
+            type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
+            correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
+            if (null == correlationCase) {
+                //if the correlationCase is not in the Central repo then attributes generated in relation to it will not be
+                return null;
+            }
+            correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
+        } catch (TskCoreException | EamDbException ex) {
+            logger.log(Level.SEVERE, "Error retrieving correlation attribute.", ex);
+            return null;
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Case is closed.", ex);
+            return null;
+        }
+
+        CorrelationAttributeInstance correlationAttributeInstance;
+        try {
+            correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, content.getId());
+        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+            logger.log(Level.WARNING, String.format(
+                    "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
+                    content.getName(), content.getId(), ex.getMessage()));
+            return null;
+        }
+        if (correlationAttributeInstance == null) {
+            String value = file.getMd5Hash();
+            String filePath = (file.getParentPath() + file.getName()).toLowerCase();
+            try {
+                correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
+            } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.WARNING, String.format(
+                        "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
+                        content.getName(), content.getId(), ex.getMessage()));
+                return null;
+            }
+        }
+
+        return correlationAttributeInstance;
+    }
+
+    /**
      * Create an EamArtifact from the given Content. Will return null if an
      * artifact can not be created - this is not necessarily an error case, it
      * just means an artifact can't be made. If creation fails due to an error
@@ -319,6 +383,7 @@ public class EamArtifactUtil {
             if (null == correlationCase) {
                 correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
+
             return new CorrelationAttributeInstance(
                     filesType,
                     af.getMd5Hash(),
@@ -326,7 +391,8 @@ public class EamArtifactUtil {
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
                     af.getParentPath() + af.getName(),
                     "",
-                    TskData.FileKnown.UNKNOWN);
+                    TskData.FileKnown.UNKNOWN,
+                    af.getId());
 
         } catch (TskCoreException | EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error making correlation attribute.", ex);

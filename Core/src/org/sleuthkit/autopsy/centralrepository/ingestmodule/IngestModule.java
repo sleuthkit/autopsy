@@ -152,13 +152,14 @@ final class IngestModule implements FileIngestModule {
         // insert this file into the central repository
         try {
             CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
-                                        filesType, md5,
+                    filesType, 
+                    md5,
                     eamCase,
                     eamDataSource,
                     abstractFile.getParentPath() + abstractFile.getName(),
                     null,
                     TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
-            );
+,                   abstractFile.getId());
             dbManager.addAttributeInstanceBulk(cefi);
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
