@@ -269,8 +269,7 @@ class MSOfficeEmbeddedContentExtractor {
             HWPFDocument doc = new HWPFDocument(new ReadContentInputStream(af));
             PicturesTable pictureTable = doc.getPicturesTable();
             listOfAllPictures = pictureTable.getAllPictures();
-        } catch (IOException | IllegalArgumentException
-                | IndexOutOfBoundsException | NullPointerException ex) {
+        } catch (Exception ex) {
             // IOException:
             // Thrown when the document has issues being read.
 
@@ -286,10 +285,9 @@ class MSOfficeEmbeddedContentExtractor {
             // These get thrown in certain images. The reason is unknown. It is
             // likely due to problems with the file formats that POI is poorly
             // handling.
-            return null;
-        } catch (Throwable ex) {
-            // instantiating POI containers throw RuntimeExceptions
-            LOGGER.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
+            
+            //Any runtime exception escaping 
+            LOGGER.log(Level.WARNING, "Word document container could not be initialized. Reason: {0}", ex.getMessage()); //NON-NLS
             return null;
         }
 
@@ -333,8 +331,7 @@ class MSOfficeEmbeddedContentExtractor {
         try {
             HSLFSlideShow ppt = new HSLFSlideShow(new ReadContentInputStream(af));
             listOfAllPictures = ppt.getPictureData();
-        } catch (IOException | IllegalArgumentException
-                | IndexOutOfBoundsException ex) {
+        } catch (Exception ex) {
             // IllegalArgumentException:
             // This will catch OldFileFormatException, which is thrown when the
             // document version is unsupported. The IllegalArgumentException may
@@ -346,10 +343,7 @@ class MSOfficeEmbeddedContentExtractor {
             // This gets thrown in certain images. The reason is unknown. It is
             // likely due to problems with the file formats that POI is poorly
             // handling.
-            return null;
-        } catch (Throwable ex) {
-            // instantiating POI containers throw RuntimeExceptions
-            LOGGER.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
+            LOGGER.log(Level.WARNING, "PPT container could not be initialized. Reason: {0}", ex.getMessage()); //NON-NLS
             return null;
         }
 
@@ -422,9 +416,7 @@ class MSOfficeEmbeddedContentExtractor {
         try {
             Workbook xls = new HSSFWorkbook(new ReadContentInputStream(af));
             listOfAllPictures = xls.getAllPictures();
-        } catch (IOException | LeftoverDataException
-                | RecordFormatException | IllegalArgumentException
-                | IndexOutOfBoundsException ex) {
+        } catch (Exception ex) {
             // IllegalArgumentException:
             // This will catch OldFileFormatException, which is thrown when the
             // document version is unsupported. The IllegalArgumentException may
@@ -443,10 +435,7 @@ class MSOfficeEmbeddedContentExtractor {
             // These get thrown in certain images. The reason is unknown. It is
             // likely due to problems with the file formats that POI is poorly
             // handling.
-            return null;
-        } catch (Throwable ex) {
-            // instantiating POI containers throw RuntimeExceptions
-            LOGGER.log(Level.SEVERE, String.format("%s%s", NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()), af.getName()), ex); //NON-NLS
+            LOGGER.log(Level.WARNING, "Excel (.xls) document container could not be initialized. Reason: {0}", ex.getMessage()); //NON-NLS
             return null;
         }
 
