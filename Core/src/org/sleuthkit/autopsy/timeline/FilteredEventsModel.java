@@ -37,6 +37,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -53,6 +55,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
@@ -118,6 +121,49 @@ public final class FilteredEventsModel {
 
     private static final Logger logger = Logger.getLogger(FilteredEventsModel.class.getName());
 
+    private static final Set<MediaType> MEDIA_MIME_TYPES = Stream.of(
+            "image/*",
+            "video/*",
+            "audio/*",
+            "application/vnd.ms-asf", //NON-NLS
+            "application/vnd.rn-realmedia", //NON-NLS
+            "application/x-shockwave-flash" //NON-NLS 
+    ).map(MediaType::parse).collect(Collectors.toSet());
+
+    private static final Set<MediaType> EXECUTABLE_MIME_TYPES = Stream.of(
+            "application/x-bat",
+            "application/x-dosexec",
+            "application/vnd.microsoft.portable-executable",
+            "application/x-msdownload",
+            "application/exe",
+            "application/x-exe",
+            "application/dos-exe",
+            "vms/exe",
+            "application/x-winexe",
+            "application/msdos-windows",
+            "application/x-msdos-program"
+    ).map(MediaType::parse).collect(Collectors.toSet());
+
+    private static final Set<MediaType> DOCUMENT_MIME_TYPES = Stream.of(
+            "text/*", //NON-NLS
+            "application/rtf", //NON-NLS
+            "application/pdf", //NON-NLS
+            "application/json", //NON-NLS
+            "application/javascript", //NON-NLS
+            "application/xml", //NON-NLS
+            "application/x-msoffice", //NON-NLS
+            "application/x-ooxml", //NON-NLS
+            "application/msword", //NON-NLS
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
+            "application/vnd.ms-powerpoint", //NON-NLS
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
+            "application/vnd.ms-excel", //NON-NLS
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
+            "application/vnd.oasis.opendocument.presentation", //NON-NLS
+            "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
+            "application/vnd.oasis.opendocument.text" //NON-NLS
+    ).map(MediaType::parse).collect(Collectors.toSet());
+
     private final TimelineManager eventManager;
 
     private final Case autoCase;
@@ -137,7 +183,6 @@ public final class FilteredEventsModel {
     private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
-    private final ObservableMap< MediaType, Long> fileTypesMap = FXCollections.observableHashMap();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
 
     public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomState> currentStateProperty) throws TskCoreException {
@@ -236,10 +281,6 @@ public final class FilteredEventsModel {
         return hashSets;
     }
 
-    private ObservableMap<MediaType, Long> getMediaTypes() {
-        return fileTypesMap;
-    }
-
     public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter, DateTimeZone timeZone) throws TskCoreException {
         return eventManager.getSpanningInterval(timeRange, filter, timeZone);
     }
@@ -279,20 +320,6 @@ public final class FilteredEventsModel {
 
         //should this only be tags applied to files or event bearing artifacts?
         tagNames.setAll(skCase.getTagNamesInUse());
-
-        //TODO: limit this to files that have events derived from them.
-        try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery("SELECT mime_type , COUNT(mime_type) FROM  tsk_files GROUP BY mime_type");
-                ResultSet results = executeQuery.getResultSet();) {
-            while (results.next()) {
-                String mimeType = results.getString("mime_type");
-                if (StringUtils.isNotBlank(mimeType)) {
-                    String[] splitMime = mimeType.split("/");
-                    fileTypesMap.put(MediaType.create(splitMime[0], splitMime[1]), results.getLong("COUNT(mime_type)"));
-                }
-            }
-        } catch (SQLException ex) {
-            Exceptions.printStackTrace(ex);
-        }
     }
 
     /**
@@ -390,15 +417,12 @@ public final class FilteredEventsModel {
             tagsFilter.addSubFilter(tagNameFilter);
         });
 
-        Multimap<String, String> mimeTypesMap = HashMultimap.create();
-        getMediaTypes().forEach((fileType, count) -> mimeTypesMap.put(fileType.type(), fileType.subtype()));
-
         TimelineFilter.FileTypesFilter fileTypesFilter = new TimelineFilter.FileTypesFilter();
-        mimeTypesMap.asMap().forEach((type, subTypes) -> {
-            TimelineFilter.FileTypeFilter fileTypeFilter = new TimelineFilter.FileTypeFilter(type);
-            subTypes.forEach(subType -> fileTypeFilter.addSubFilter(new TimelineFilter.FileSubTypeFilter(type, subType)));
-            fileTypesFilter.addSubFilter(fileTypeFilter);
-        });
+
+        fileTypesFilter.addSubFilter(new TimelineFilter.FileTypeFilter("Media", MEDIA_MIME_TYPES));
+        fileTypesFilter.addSubFilter(new TimelineFilter.FileTypeFilter("Documents", DOCUMENT_MIME_TYPES));
+        fileTypesFilter.addSubFilter(new TimelineFilter.FileTypeFilter("Executables", EXECUTABLE_MIME_TYPES));
+
         return new RootFilterState(new RootFilter(new HideKnownFilter(),
                 tagsFilter,
                 hashHitsFilter,
@@ -407,6 +431,10 @@ public final class FilteredEventsModel {
                 dataSourcesFilter,
                 fileTypesFilter,
                 Collections.emptySet()));
+    }
+
+    enum FileType {
+        DOCUMENT, EXECUTABLE, MULTIMEDIA, OTHER;
     }
 
     public Interval getBoundingEventsInterval(DateTimeZone timeZone) throws TskCoreException {
