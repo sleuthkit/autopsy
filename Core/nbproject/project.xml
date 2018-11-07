@@ -341,8 +341,8 @@
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/jackcess-2.1.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackcess-2.1.8.jar</binary-origin>
+                <runtime-relative-path>ext/jackcess-2.2.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-2.2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/zookeeper-3.4.6.jar</runtime-relative-path>
@@ -485,8 +485,8 @@
                 <binary-origin>release\modules\ext\commons-pool2-2.4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackcess-encrypt-2.1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackcess-encrypt-2.1.2.jar</binary-origin>
+                <runtime-relative-path>ext/jackcess-encrypt-2.1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-encrypt-2.1.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jsoup-1.10.3.jar</runtime-relative-path>

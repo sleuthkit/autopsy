@@ -424,7 +424,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
         try (Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(
-                    "SELECT count (*) as count FROM " + "\"" + tableName + "\"")) { //NON-NLS{
+                    "SELECT count (*) as count FROM " + "\"" + tableName + "\"")) { //NON-NLS
 
             numRows = resultSet.getInt("count");
             numEntriesField.setText(numRows + " entries");
@@ -442,9 +442,23 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             } else {
                 exportCsvButton.setEnabled(false);
                 nextPageButton.setEnabled(false);
-                selectedTableView.setupTable(Collections.emptyList());
-            }
-            
+                
+                //Execute a dummy SELECT * statement so that the metadata
+                //contains all column names
+                Map<String, Object> columnRow;
+                try (ResultSet metaDataResultSet = statement.executeQuery(
+                        "SELECT * FROM " + "\"" + tableName + "\"")) {
+                    //Column names are not found in the metadata of the result set
+                    //above.
+                    ResultSetMetaData metaData = metaDataResultSet.getMetaData();
+                    columnRow = new LinkedHashMap<>();
+                    for(int i = 1; i < metaData.getColumnCount(); i++){
+                        columnRow.put(metaData.getColumnName(i),  "");
+                    }
+                }
+                
+                selectedTableView.setupTable(Collections.singletonList(columnRow));
+            }     
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, String.format("Failed to load table %s from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_selectTable_errorText(tableName));
