@@ -2960,10 +2960,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                     resultSet.getString("poc_phone"));
         }
 
-        CorrelationCase eamCase = new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), eamOrg, resultSet.getString("case_name"), 
-                resultSet.getString("creation_date"), resultSet.getString("case_number"), resultSet.getString("examiner_name"), 
+        CorrelationCase eamCase = new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), eamOrg, resultSet.getString("case_name"),
+                resultSet.getString("creation_date"), resultSet.getString("case_number"), resultSet.getString("examiner_name"),
                 resultSet.getString("examiner_email"), resultSet.getString("examiner_phone"), resultSet.getString("notes"));
-
 
         return eamCase;
     }
@@ -3119,7 +3118,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 logger.log(Level.INFO, "Central Repository is of newer version than software creates");
                 return;
             }
-            
+
             // Update from 1.0 to 1.1
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
@@ -3140,9 +3139,11 @@ abstract class AbstractSqlEamDb implements EamDb {
                 final String addDataSourceIdIndexTemplate;
                 final String addValueIndexTemplate;
                 final String addKnownStatusIndexTemplate;
+                final String addAttributeSql;
                 //get the data base specific code for creating a new _instance table
                 switch (selectedPlatform) {
                     case POSTGRESQL:
+                        addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();
                         addSsidTableTemplate = PostgresEamDbSettings.getCreateArtifactInstancesTableTemplate();
                         addCaseIdIndexTemplate = PostgresEamDbSettings.getAddCaseIdIndexTemplate();
                         addDataSourceIdIndexTemplate = PostgresEamDbSettings.getAddDataSourceIdIndexTemplate();
@@ -3150,6 +3151,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         addKnownStatusIndexTemplate = PostgresEamDbSettings.getAddKnownStatusIndexTemplate();
                         break;
                     case SQLITE:
+                        addAttributeSql = "INSERT OR IGNORE INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
                         addSsidTableTemplate = SqliteEamDbSettings.getCreateArtifactInstancesTableTemplate();
                         addCaseIdIndexTemplate = SqliteEamDbSettings.getAddCaseIdIndexTemplate();
                         addDataSourceIdIndexTemplate = SqliteEamDbSettings.getAddDataSourceIdIndexTemplate();
@@ -3162,7 +3164,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 final String wirelessNetworsDbTableName = "wireless_networks";
                 final String wirelessNetworksTableInstanceName = wirelessNetworsDbTableName + "_instances";
                 //add the wireless_networks attribute to the correlation_types table
-                final String addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
                 preparedStatement = conn.prepareStatement(addAttributeSql);
                 preparedStatement.setInt(1, CorrelationAttributeInstance.SSID_TYPE_ID);
                 preparedStatement.setString(2, Bundle.CorrelationType_SSID_displayName());
