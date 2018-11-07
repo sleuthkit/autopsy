@@ -48,6 +48,7 @@ import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
 import org.apache.commons.lang3.StringUtils;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.Exceptions;
@@ -279,7 +280,6 @@ public final class FilteredEventsModel {
         //should this only be tags applied to files or event bearing artifacts?
         tagNames.setAll(skCase.getTagNamesInUse());
 
-        
         //TODO: limit this to files that have events derived from them.
         try (SleuthkitCase.CaseDbQuery executeQuery = skCase.executeQuery("SELECT mime_type , COUNT(mime_type) FROM  tsk_files GROUP BY mime_type");
                 ResultSet results = executeQuery.getResultSet();) {
@@ -293,7 +293,6 @@ public final class FilteredEventsModel {
         } catch (SQLException ex) {
             Exceptions.printStackTrace(ex);
         }
-        ;
     }
 
     /**
@@ -745,7 +744,7 @@ public final class FilteredEventsModel {
      */
     public static <X> List<X> unGroupConcat(String groupConcat, CheckedFunction<String, X, TskCoreException> mapper) throws TskCoreException {
 
-        if (org.apache.commons.lang3.StringUtils.isBlank(groupConcat)) {
+        if (isBlank(groupConcat)) {
             return Collections.emptyList();
         }
 
