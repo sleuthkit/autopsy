@@ -511,13 +511,13 @@ final public class ViewFrame extends BorderPane {
      * NOTE: This ViewFrame must be registered with the filteredEventsModel's
      * EventBus in order for this handler to be invoked.
      *
-     * @param event The DataSourceAnalysisCompletedEvent to handle.
+     * @param event The CacheInvalidatedEvent to handle.
      */
     @Subscribe
     @NbBundle.Messages({
         "# {0} - datasource name",
         "ViewFrame.notification.analysisComplete=The event data has changed, the visualization may be out of date."})
-    public void handleEventAdded(FilteredEventsModel.CacheInvalidatedEvent event) {
+    public void handleCacheInvalidated(FilteredEventsModel.CacheInvalidatedEvent event) {
         Platform.runLater(() -> {
             if (hostedView.needsRefresh() == false) {
                 hostedView.setNeedsRefresh();
