@@ -116,6 +116,15 @@ public class TimeLineController {
 
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
+    private final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+    private final ReadOnlyListWrapper<Task<?>> tasks = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
+    private final ReadOnlyDoubleWrapper taskProgress = new ReadOnlyDoubleWrapper(-1);
+    private final ReadOnlyStringWrapper taskMessage = new ReadOnlyStringWrapper();
+    private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
+    private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper();
+
+    private final EventBus eventbus = new EventBus("TimeLineController_EventBus");
+
     public static ZoneId getTimeZoneID() {
         return timeZone.get().toZoneId();
     }
@@ -131,15 +140,6 @@ public class TimeLineController {
     public static ReadOnlyObjectProperty<TimeZone> getTimeZone() {
         return timeZone.getReadOnlyProperty();
     }
-
-    private final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-    private final ReadOnlyListWrapper<Task<?>> tasks = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
-    private final ReadOnlyDoubleWrapper taskProgress = new ReadOnlyDoubleWrapper(-1);
-    private final ReadOnlyStringWrapper taskMessage = new ReadOnlyStringWrapper();
-    private final ReadOnlyStringWrapper taskTitle = new ReadOnlyStringWrapper();
-    private final ReadOnlyStringWrapper statusMessage = new ReadOnlyStringWrapper();
-
-    private final EventBus eventbus = new EventBus("TimeLineController_EventBus");
 
     /**
      * Status is a string that will be displayed in the status bar as a kind of
