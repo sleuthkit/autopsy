@@ -119,6 +119,7 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType e
             //set this compound filter state selected af any of the subfilters are selected.
             setSelected(subFilterStates.stream().anyMatch(FilterState::isSelected));
         });
+        newSubFilterState.setDisabled(isActive() ==false);
     }
 
     @Override
