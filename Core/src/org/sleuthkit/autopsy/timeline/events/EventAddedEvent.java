@@ -26,7 +26,15 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
  */
 public class EventAddedEvent extends AutopsyEvent {
 
+    private final Long eventID;
+
+    
     public EventAddedEvent(org.sleuthkit.datamodel.TimelineManager.EventAddedEvent event) {
         super(Case.Events.EVENT_ADDED.name(), null, event.getEvent());
+        eventID = event.getEvent().getEventID();
+    }
+
+    public Long getEventID() {
+        return eventID;
     }
 }

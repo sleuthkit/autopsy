@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -39,7 +40,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
-import static org.apache.commons.lang3.StringUtils.isBlank;
+import org.apache.commons.collections4.CollectionUtils;
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -663,15 +665,22 @@ public final class FilteredEventsModel {
         return updatedEventIDs;
     }
 
-    synchronized protected void invalidateAllCaches() throws TskCoreException {
+    /**
+     * Invalidate the timeline caches for the given event IDs. Also forces the
+     * filter values to be updated with any new values from the case data.( data
+     * sources, tags, etc)
+     *
+     * @param updatedEventIDs A collection of the event IDs whose cached event
+     *                        objects should be invalidated. Can be null or an
+     *                        empty sett to invalidate the general caches, such
+     *                        as min/max time, or the counts per event type.
+     *
+     * @throws TskCoreException
+     */
+    public synchronized void invalidateCaches(Collection<Long> updatedEventIDs) throws TskCoreException {
         minCache.invalidateAll();
         maxCache.invalidateAll();
-        idToEventCache.invalidateAll();
-        invalidateCaches(Collections.emptyList());
-    }
-
-    synchronized private void invalidateCaches(Collection<Long> updatedEventIDs) throws TskCoreException {
-        idToEventCache.invalidateAll(updatedEventIDs);
+        idToEventCache.invalidateAll(emptyIfNull(updatedEventIDs));
         eventCountsCache.invalidateAll();
 
         populateFilterData();

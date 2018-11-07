@@ -19,14 +19,18 @@
 package org.sleuthkit.autopsy.timeline;
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.beans.PropertyChangeEvent;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Collections;
+import static java.util.Collections.singleton;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -72,6 +76,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
@@ -127,7 +132,7 @@ public class TimeLineController {
         return timeZone.getReadOnlyProperty();
     }
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
     private final ReadOnlyListWrapper<Task<?>> tasks = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
     private final ReadOnlyDoubleWrapper taskProgress = new ReadOnlyDoubleWrapper(-1);
     private final ReadOnlyStringWrapper taskMessage = new ReadOnlyStringWrapper();
@@ -659,6 +664,7 @@ public class TimeLineController {
                 taskTitle.bind(task.titleProperty());
                 switch (task.getState()) {
                     case READY:
+                        //TODO: Check future result for errors....
                         executor.submit(task);
                         break;
                     case SCHEDULED:
@@ -729,7 +735,9 @@ public class TimeLineController {
             case DATA_ADDED:
                 ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                 if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                    executor.submit(() -> filteredEvents.setHashHit(eventData.getArtifacts(), true));
+                    logFutureException(executor.submit(() -> filteredEvents.setHashHit(eventData.getArtifacts(), true)),
+                            "Error executing task in response to DATA_ADDED event.",
+                            "Error executing response to new data.");
                 }
                 break;
             case FILE_DONE:
@@ -745,38 +753,53 @@ public class TimeLineController {
             }
     }
 
-    @SuppressWarnings("fallthrough")
     void handleCaseEvent(PropertyChangeEvent evt) {
+
+        ListenableFuture<?> future = Futures.immediateFuture(null);
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case BLACKBOARD_ARTIFACT_TAG_ADDED:
-                executor.submit(() -> filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt));
+                future = executor.submit(() -> filteredEvents.handleArtifactTagAdded((BlackBoardArtifactTagAddedEvent) evt));
                 break;
             case BLACKBOARD_ARTIFACT_TAG_DELETED:
-                executor.submit(() -> filteredEvents.handleArtifactTagDeleted((BlackBoardArtifactTagDeletedEvent) evt));
+                future = executor.submit(() -> filteredEvents.handleArtifactTagDeleted((BlackBoardArtifactTagDeletedEvent) evt));
                 break;
             case CONTENT_TAG_ADDED:
-                executor.submit(() -> filteredEvents.handleContentTagAdded((ContentTagAddedEvent) evt));
+                future = executor.submit(() -> filteredEvents.handleContentTagAdded((ContentTagAddedEvent) evt));
                 break;
             case CONTENT_TAG_DELETED:
-                executor.submit(() -> filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt));
+                future = executor.submit(() -> filteredEvents.handleContentTagDeleted((ContentTagDeletedEvent) evt));
                 break;
             case CURRENT_CASE:
                 //close timeline on case changes.
                 SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
                 break;
-            case EVENT_ADDED:
-                executor.submit(() -> {
-                    try {
-                        filteredEvents.invalidateAllCaches();
-                    } catch (TskCoreException ex) {
-                        MessageNotifyUtil.Message.error("Error invalidating timeline caches.");
-                        logger.log(Level.SEVERE, "Error invalidating timeline caches.", ex);
-                    }
-                });
-            //intentional fall through
             case DATA_SOURCE_ADDED:
-                filteredEvents.postAutopsyEventLocally((AutopsyEvent) evt);
+                future = executor.submit(() -> {
+                    filteredEvents.invalidateCaches(null);
+                    return null;
+                });
+                break;
+            case EVENT_ADDED:
+                future = executor.submit(() -> {
+                    filteredEvents.invalidateCaches(singleton(((EventAddedEvent) evt).getEventID()));
+                    return null;
+
+                });
                 break;
         }
+        logFutureException(future,
+                "Error executing task in response to " + evt.getPropertyName() + " event.",
+                "Error executing task in response to case event.");
+    }
+
+    private void logFutureException(ListenableFuture<?> future, String errorLogMessage, String errorUserMessage) {
+        future.addListener(() -> {
+            try {
+                future.get();
+            } catch (InterruptedException | ExecutionException ex) {
+                logger.log(Level.SEVERE, errorLogMessage, ex);
+                MessageNotifyUtil.Message.error(errorUserMessage);
+            }
+        }, MoreExecutors.directExecutor());
     }
 }
