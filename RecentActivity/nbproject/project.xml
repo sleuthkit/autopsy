@@ -64,9 +64,7 @@
                     </run-dependency>
                 </dependency>
             </module-dependencies>
-            <public-packages>
-                <package>org.sleuthkit.autopsy.recentactivity</package>
-            </public-packages>
+            <public-packages/>
             <class-path-extension>
                 <runtime-relative-path>ext/gson-2.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gson-2.1.jar</binary-origin>
