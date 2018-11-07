@@ -9,13 +9,13 @@ package org.sleuthkit.autopsy.coreutils;
  *
  * @author dsmyda
  */
-public class AutopsySQLiteException extends Exception {
+public class SQLiteTableReaderException extends Exception {
     
-    public AutopsySQLiteException(String msg, Throwable ex) {
+    public SQLiteTableReaderException(String msg, Throwable ex) {
         super(msg, ex);
     }
     
-    public AutopsySQLiteException(Throwable ex) {
+    public SQLiteTableReaderException(Throwable ex) {
         super(ex);
     }
 }

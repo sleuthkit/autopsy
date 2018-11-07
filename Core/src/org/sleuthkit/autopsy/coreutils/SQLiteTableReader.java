@@ -181,9 +181,9 @@ public class SQLiteTableReader implements AutoCloseable {
     private final Consumer<Object> forAllAction;
 
     //Iteration state variables
-    private Integer currRowColumnIndex = 1;
-    private boolean unfinishedRowState = false;
-    private Integer columnNameIndex = 1;
+    private Integer currRowColumnIndex;
+    private boolean unfinishedRowState;
+    private Integer columnNameIndex;
     private Integer currentColumnCount;
     private ResultSetMetaData currentMetadata;
 
@@ -224,10 +224,10 @@ public class SQLiteTableReader implements AutoCloseable {
      * Get table names from database
      *
      * @return
-     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
+     * @throws org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException
      *
      */
-    public List<String> getTableNames() throws AutopsySQLiteException {
+    public List<String> getTableNames() throws SQLiteTableReaderException {
         ensureOpen();
         
         List<String> tableNames = new ArrayList<>();
@@ -239,7 +239,7 @@ public class SQLiteTableReader implements AutoCloseable {
                 tableNames.add(tableNameResult.getString("name")); //NON-NLS
             }
         } catch (SQLException ex) {
-            throw new AutopsySQLiteException(ex);
+            throw new SQLiteTableReaderException(ex);
         }
 
         return tableNames;
@@ -249,9 +249,9 @@ public class SQLiteTableReader implements AutoCloseable {
      * 
      * @param tableName
      * @return
-     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
+     * @throws org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException
      */
-    public int getRowCount(String tableName) throws AutopsySQLiteException {
+    public int getRowCount(String tableName) throws SQLiteTableReaderException {
         ensureOpen();
         
         try (ResultSet countResult = conn.createStatement()
@@ -259,11 +259,11 @@ public class SQLiteTableReader implements AutoCloseable {
                         "\"" + tableName + "\"")) {
             return countResult.getInt("count");
         } catch (SQLException ex) {
-            throw new AutopsySQLiteException(ex);
+            throw new SQLiteTableReaderException(ex);
         }
     }
     
-    public int getColumnCount(String tableName) throws AutopsySQLiteException {
+    public int getColumnCount(String tableName) throws SQLiteTableReaderException {
         ensureOpen();
         
         try (ResultSet columnCount = conn.createStatement()
@@ -271,16 +271,16 @@ public class SQLiteTableReader implements AutoCloseable {
                         "\"" + tableName + "\"")) {
             return columnCount.getMetaData().getColumnCount();
         } catch (SQLException ex) {
-            throw new AutopsySQLiteException(ex);
+            throw new SQLiteTableReaderException(ex);
         }
     }
 
     /**
      * 
      * @param tableName
-     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
+     * @throws org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException
      */
-    public void read(String tableName) throws AutopsySQLiteException {
+    public void read(String tableName) throws SQLiteTableReaderException {
         readHelper("SELECT * FROM \"" + tableName +"\"", alwaysFalseCondition);
     }
 
@@ -291,10 +291,10 @@ public class SQLiteTableReader implements AutoCloseable {
      * @param tableName
      * @param limit
      * @param offset
-     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
+     * @throws org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException
      *
      */
-    public void read(String tableName, int limit, int offset) throws AutopsySQLiteException {
+    public void read(String tableName, int limit, int offset) throws SQLiteTableReaderException {
         readHelper("SELECT * FROM \"" + tableName +"\" LIMIT " + limit
                 + " OFFSET " + offset, alwaysFalseCondition);
     }
@@ -305,10 +305,10 @@ public class SQLiteTableReader implements AutoCloseable {
      *
      * @param tableName
      * @param condition
-     * @throws org.sleuthkit.autopsy.coreutils.AutopsySQLiteException
+     * @throws org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException
      *
      */
-    public void read(String tableName, BooleanSupplier condition) throws AutopsySQLiteException {
+    public void read(String tableName, BooleanSupplier condition) throws SQLiteTableReaderException {
         if(Objects.nonNull(prevTableName) && prevTableName.equals(tableName)) {
             readHelper("SELECT * FROM \"" + tableName + "\"", condition);
         } else {
@@ -327,12 +327,13 @@ public class SQLiteTableReader implements AutoCloseable {
      *
      * @throws org.sleuthkit.autopsy.core.AutopsySQLiteException
      */
-    private void readHelper(String query, BooleanSupplier condition) throws AutopsySQLiteException {
+    private void readHelper(String query, BooleanSupplier condition) throws SQLiteTableReaderException {
         try {
             if(!hasOpened) {
                 openResultSet(query);
                 currentMetadata = queryResults.getMetaData();
                 currentColumnCount = currentMetadata.getColumnCount();
+                columnNameIndex = 1;
             }
             
             isFinished = false;
@@ -367,7 +368,7 @@ public class SQLiteTableReader implements AutoCloseable {
                         this.onBlobAction.accept((byte[]) item);
                     }
                     
-                    this.forAllAction.accept((Object) item);
+                    this.forAllAction.accept(item);
                 }
                 
                 unfinishedRowState = false;
@@ -378,7 +379,7 @@ public class SQLiteTableReader implements AutoCloseable {
         } catch (SQLException ex) {
             closeResultSet();
             isFinished = true;
-            throw new AutopsySQLiteException(ex);
+            throw new SQLiteTableReaderException(ex);
         }
     }
 
@@ -386,7 +387,7 @@ public class SQLiteTableReader implements AutoCloseable {
      * 
      * @throws org.sleuthkit.autopsy.core.AutopsySQLiteException
      */
-    private void ensureOpen() throws AutopsySQLiteException {
+    private void ensureOpen() throws SQLiteTableReaderException {
         if (Objects.isNull(conn)) {
             try {
                 Class.forName("org.sqlite.JDBC"); //NON-NLS  
@@ -395,7 +396,7 @@ public class SQLiteTableReader implements AutoCloseable {
                 conn = DriverManager.getConnection("jdbc:sqlite:" + localDiskPath);
             } catch (NoCurrentCaseException | TskCoreException | IOException | 
                     ClassNotFoundException | SQLException ex) {
-                throw new AutopsySQLiteException(ex);
+                throw new SQLiteTableReaderException(ex);
             }
         }
     }
@@ -479,7 +480,7 @@ public class SQLiteTableReader implements AutoCloseable {
      * @param query
      * @throws SQLException 
      */
-    private void openResultSet(String query) throws AutopsySQLiteException {
+    private void openResultSet(String query) throws SQLiteTableReaderException {
         ensureOpen();
         
         try {    
@@ -488,7 +489,7 @@ public class SQLiteTableReader implements AutoCloseable {
             queryResults = statement.executeQuery();
             hasOpened = true;
         } catch (SQLException ex) {
-            throw new AutopsySQLiteException(ex);
+            throw new SQLiteTableReaderException(ex);
         }
     }
 
