@@ -110,6 +110,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         furtherDescriptionArea.setRows(5);
         furtherDescriptionArea.setText(NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.furtherDescriptionArea.text")); // NOI18N
         furtherDescriptionArea.setWrapStyleWord(true);
+        furtherDescriptionArea.setOpaque(false);
         furtherDescriptionArea.setPreferredSize(new java.awt.Dimension(378, 74));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);

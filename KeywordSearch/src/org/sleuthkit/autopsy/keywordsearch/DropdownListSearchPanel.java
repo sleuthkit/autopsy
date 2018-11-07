@@ -216,6 +216,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
 
         leftPane.setFont(leftPane.getFont().deriveFont(leftPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         leftPane.setMinimumSize(new java.awt.Dimension(150, 23));
+        leftPane.setOpaque(false);
 
         listsTable.setBackground(new java.awt.Color(240, 240, 240));
         listsTable.setFont(listsTable.getFont().deriveFont(listsTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
@@ -228,6 +229,7 @@ class DropdownListSearchPanel extends AdHocSearchPanel {
         jSplitPane1.setLeftComponent(leftPane);
 
         rightPane.setFont(rightPane.getFont().deriveFont(rightPane.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        rightPane.setOpaque(false);
 
         keywordsTable.setBackground(new java.awt.Color(240, 240, 240));
         keywordsTable.setFont(keywordsTable.getFont().deriveFont(keywordsTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));

@@ -329,6 +329,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         taNotesText.setWrapStyleWord(true);
         taNotesText.setBorder(null);
         taNotesText.setFocusable(false);
+        taNotesText.setOpaque(false);
         caseNotesScrollPane.setViewportView(taNotesText);
 
         lbExaminerEmailLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbExaminerEmailLabel.text")); // NOI18N
