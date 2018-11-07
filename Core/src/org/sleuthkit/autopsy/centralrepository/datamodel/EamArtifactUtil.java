@@ -232,62 +232,6 @@ public class EamArtifactUtil {
      *
      * @return The new CorrelationAttribute, or null if retrieval failed.
      */
-    public static CorrelationAttributeInstance getInstanceFromContent2(Content content) {
-
-        if (!(content instanceof AbstractFile)) {
-            return null;
-        }
-
-        final AbstractFile file = (AbstractFile) content;
-
-        if (!isSupportedAbstractFileType(file)) {
-            return null;
-        }
-
-        CorrelationAttributeInstance.Type type;
-        CorrelationCase correlationCase;
-        CorrelationDataSource correlationDataSource;
-        String value;
-        String filePath;
-
-        try {
-            type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
-            correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-            if (null == correlationCase) {
-                //if the correlationCase is not in the Central repo then attributes generated in relation to it will not be
-                return null;
-            }
-            correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
-            value = file.getMd5Hash();
-            filePath = (file.getParentPath() + file.getName()).toLowerCase();
-        } catch (TskCoreException | EamDbException ex) {
-            logger.log(Level.SEVERE, "Error retrieving correlation attribute.", ex);
-            return null;
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Case is closed.", ex);
-            return null;
-        }
-
-        CorrelationAttributeInstance correlationAttributeInstance;
-        try {
-            correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
-        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.WARNING, String.format(
-                    "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
-                    content.getName(), content.getId(), ex.getMessage()));
-            return null;
-        }
-
-        return correlationAttributeInstance;
-    }
-
-    /**
-     * Retrieve CorrelationAttribute from the given Content.
-     *
-     * @param content The content object
-     *
-     * @return The new CorrelationAttribute, or null if retrieval failed.
-     */
     public static CorrelationAttributeInstance getInstanceFromContent(Content content) {
 
         if (!(content instanceof AbstractFile)) {
@@ -322,7 +266,7 @@ public class EamArtifactUtil {
 
         CorrelationAttributeInstance correlationAttributeInstance;
         try {
-            correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, content.getId());
+            correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, file.getId());
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, String.format(
                     "Correlation attribute could not be retrieved for '%s' (id=%d): %s",

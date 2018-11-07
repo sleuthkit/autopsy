@@ -808,9 +808,9 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql
                 = "INSERT INTO "
                 + tableName
-                + "(case_id, data_source_id, value, file_path, known_status, comment) "
+                + "(case_id, data_source_id, value, file_path, known_status, comment, object_id) "
                 + "VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), "
-                + "(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?) "
+                + "(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?, ?) "
                 + getConflictClause();
 
         try {
@@ -824,12 +824,14 @@ abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setString(4, eamArtifact.getCorrelationValue());
                 preparedStatement.setString(5, eamArtifact.getFilePath().toLowerCase());
                 preparedStatement.setByte(6, eamArtifact.getKnownStatus().getFileKnownValue());
+                
                 if ("".equals(eamArtifact.getComment())) {
                     preparedStatement.setNull(7, Types.INTEGER);
                 } else {
                     preparedStatement.setString(7, eamArtifact.getComment());
                 }
-
+                preparedStatement.setLong(8, eamArtifact.getFileObjectId());
+                
                 preparedStatement.executeUpdate();
             }
 
@@ -1233,9 +1235,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                     String sql
                             = "INSERT INTO "
                             + tableName
-                            + " (case_id, data_source_id, value, file_path, known_status, comment) "
+                            + " (case_id, data_source_id, value, file_path, known_status, comment, object_id) "
                             + "VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), "
-                            + "(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?) "
+                            + "(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?, ?) "
                             + getConflictClause();
 
                     bulkPs = conn.prepareStatement(sql);
@@ -1279,6 +1281,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                                 } else {
                                     bulkPs.setString(7, eamArtifact.getComment());
                                 }
+                                bulkPs.setLong(8, eamArtifact.getFileObjectId());
                                 bulkPs.addBatch();
                             } else {
                                 logger.log(Level.WARNING, ("Artifact value too long for central repository."
