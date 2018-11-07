@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author dsmyda
  */
-public class SQLiteTableStream implements AutoCloseable {
+public class SQLiteTableReader implements AutoCloseable {
 
     /**
      * 
@@ -53,13 +53,14 @@ public class SQLiteTableStream implements AutoCloseable {
     public static class Builder {
 
         private final AbstractFile file;
-        private Consumer<ResultSetMetaData> onMetaDataAction;
-        private Consumer<State<String>> onStringAction;
-        private Consumer<State<Long>> onLongAction;
-        private Consumer<State<Integer>> onIntegerAction;
-        private Consumer<State<Double>> onFloatAction;
-        private Consumer<State<byte[]>> onBlobAction;
-        private Consumer<State<Object>> forAllAction;
+        private Consumer<String> onColumnNameAction;
+        
+        private Consumer<String> onStringAction;
+        private Consumer<Long> onLongAction;
+        private Consumer<Integer> onIntegerAction;
+        private Consumer<Double> onFloatAction;
+        private Consumer<byte[]> onBlobAction;
+        private Consumer<Object> forAllAction;
 
         /**
          * Creates a SQLiteTableReaderBuilder for this abstract file.
@@ -78,8 +79,8 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public Builder onMetadata(Consumer<ResultSetMetaData> action) {
-            this.onMetaDataAction = action;
+        public Builder onColumnNames(Consumer<String> action) {
+            this.onColumnNameAction = action;
             return this;
         }
 
@@ -91,7 +92,7 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public Builder onString(Consumer<State<String>> action) {
+        public Builder onString(Consumer<String> action) {
             this.onStringAction = action;
             return this;
         }
@@ -104,7 +105,7 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public Builder onInteger(Consumer<State<Integer>> action) {
+        public Builder onInteger(Consumer<Integer> action) {
             this.onIntegerAction = action;
             return this;
         }
@@ -117,7 +118,7 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public Builder onFloat(Consumer<State<Double>> action) {
+        public Builder onFloat(Consumer<Double> action) {
             this.onFloatAction = action;
             return this;
         }
@@ -127,7 +128,7 @@ public class SQLiteTableStream implements AutoCloseable {
          * @param action
          * @return 
          */
-        public Builder onLong(Consumer<State<Long>> action) {
+        public Builder onLong(Consumer<Long> action) {
             this.onLongAction = action;
             return this;
         }
@@ -137,7 +138,7 @@ public class SQLiteTableStream implements AutoCloseable {
          * @param action
          * @return 
          */
-        public Builder onBlob(Consumer<State<byte[]>> action) {
+        public Builder onBlob(Consumer<byte[]> action) {
             this.onBlobAction = action;
             return this;
         }
@@ -149,7 +150,7 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public Builder forAll(Consumer<State<Object>> action) {
+        public Builder forAll(Consumer<Object> action) {
             this.forAllAction = action;
             return this;
         }
@@ -160,17 +161,8 @@ public class SQLiteTableStream implements AutoCloseable {
          *
          * @return
          */
-        public SQLiteTableStream build() {
-            return new SQLiteTableStream(
-                    file,
-                    onMetaDataAction,
-                    onStringAction,
-                    onIntegerAction,
-                    onLongAction,
-                    onFloatAction,
-                    onBlobAction,
-                    forAllAction
-            );
+        public SQLiteTableReader build() {
+            return new SQLiteTableReader(this);
         }
     }
 
@@ -180,17 +172,20 @@ public class SQLiteTableStream implements AutoCloseable {
     private PreparedStatement statement;
     private ResultSet queryResults;
 
-    private final Consumer<ResultSetMetaData> onMetaDataAction;
-    private final Consumer<State<String>> onStringAction;
-    private final Consumer<State<Long>> onLongAction;
-    private final Consumer<State<Integer>> onIntegerAction;
-    private final Consumer<State<Double>> onFloatAction;
-    private final Consumer<State<byte[]>> onBlobAction;
-    private final Consumer<State<Object>> forAllAction;
+    private final Consumer<String> onColumnNameAction;
+    private final Consumer<String> onStringAction;
+    private final Consumer<Long> onLongAction;
+    private final Consumer<Integer> onIntegerAction;
+    private final Consumer<Double> onFloatAction;
+    private final Consumer<byte[]> onBlobAction;
+    private final Consumer<Object> forAllAction;
 
     //Iteration state variables
-    private Integer currColumnCount;
+    private Integer currRowColumnIndex = 1;
     private boolean unfinishedRowState = false;
+    private Integer columnNameIndex = 1;
+    private Integer currentColumnCount;
+    private ResultSetMetaData currentMetadata;
 
     private boolean isFinished;
     private boolean hasOpened;
@@ -202,27 +197,20 @@ public class SQLiteTableStream implements AutoCloseable {
      * Initialize a new table stream given the parameters passed in from the
      * StreamBuilder above.
      */
-    private SQLiteTableStream(AbstractFile file,
-            Consumer<ResultSetMetaData> metaDataAction,
-            Consumer<State<String>> stringAction,
-            Consumer<State<Integer>> integerAction,
-            Consumer<State<Long>> longAction,
-            Consumer<State<Double>> floatAction,
-            Consumer<State<byte[]>> blobAction,
-            Consumer<State<Object>> forAllAction) {
+    private SQLiteTableReader(Builder builder) {
 
-        this.onMetaDataAction = checkNonNull(metaDataAction);
-        this.onStringAction = checkNonNull(stringAction);
-        this.onIntegerAction = checkNonNull(integerAction);
-        this.onLongAction = checkNonNull(longAction);
-        this.onFloatAction = checkNonNull(floatAction);
-        this.onBlobAction = checkNonNull(blobAction);
-        this.forAllAction = checkNonNull(forAllAction);
+        this.onColumnNameAction = nonNullValue(builder.onColumnNameAction);
+        this.onStringAction = nonNullValue(builder.onStringAction);
+        this.onIntegerAction = nonNullValue(builder.onIntegerAction);
+        this.onLongAction = nonNullValue(builder.onLongAction);
+        this.onFloatAction = nonNullValue(builder.onFloatAction);
+        this.onBlobAction = nonNullValue(builder.onBlobAction);
+        this.forAllAction = nonNullValue(builder.forAllAction);
 
-        this.file = file;
+        this.file = builder.file;
     }
     
-    private <T> Consumer<T> checkNonNull(Consumer<T> action) {
+    private <T> Consumer<T> nonNullValue(Consumer<T> action) {
         if (Objects.nonNull(action)) {
             return action;
         }
@@ -321,14 +309,8 @@ public class SQLiteTableStream implements AutoCloseable {
      *
      */
     public void read(String tableName, BooleanSupplier condition) throws AutopsySQLiteException {
-        if(Objects.nonNull(prevTableName)) {
-            if(prevTableName.equals(tableName)) {
-                readHelper("SELECT * FROM \"" + tableName + "\"", condition);
-            } else {
-                prevTableName = tableName;
-                closeResultSet();
-                readHelper("SELECT * FROM \"" + tableName + "\"", condition);
-            }
+        if(Objects.nonNull(prevTableName) && prevTableName.equals(tableName)) {
+            readHelper("SELECT * FROM \"" + tableName + "\"", condition);
         } else {
             prevTableName = tableName;
             closeResultSet();
@@ -349,21 +331,22 @@ public class SQLiteTableStream implements AutoCloseable {
         try {
             if(!hasOpened) {
                 openResultSet(query);
-                ResultSetMetaData metaData = queryResults.getMetaData();
-                this.onMetaDataAction.accept(metaData);
+                currentMetadata = queryResults.getMetaData();
+                currentColumnCount = currentMetadata.getColumnCount();
             }
             
             isFinished = false;
             
-            ResultSetMetaData metaData = queryResults.getMetaData();
-            int columnCount = metaData.getColumnCount();
+            for(; columnNameIndex <= currentColumnCount; columnNameIndex++) {
+                this.onColumnNameAction.accept(currentMetadata.getColumnName(columnNameIndex));
+            }
             
             while (unfinishedRowState || queryResults.next()) {
                 if (!unfinishedRowState) {
-                    currColumnCount = 1;
+                    currRowColumnIndex = 1;
                 }
                 
-                for (; currColumnCount <= columnCount; currColumnCount++) {
+                for (; currRowColumnIndex <= currentColumnCount; currRowColumnIndex++) {
                     
                     if (condition.getAsBoolean()) {
                         unfinishedRowState = true;
@@ -371,44 +354,20 @@ public class SQLiteTableStream implements AutoCloseable {
                     }
                     
                     //getObject automatically instiantiates the correct java data type
-                    Object item = queryResults.getObject(currColumnCount);
+                    Object item = queryResults.getObject(currRowColumnIndex);
                     if(item instanceof String) {
-                        this.onStringAction.accept(new State<>(
-                                (String) item, 
-                                metaData.getColumnName(currColumnCount), 
-                                currColumnCount)
-                        );
+                        this.onStringAction.accept((String) item);
                     } else if(item instanceof Integer) {
-                        this.onIntegerAction.accept(new State<>(
-                                (Integer) item, 
-                                metaData.getColumnName(currColumnCount), 
-                                currColumnCount)
-                        );
+                        this.onIntegerAction.accept((Integer) item);
                     } else if(item instanceof Double) {
-                        this.onFloatAction.accept(new State<>(
-                                (Double) item, 
-                                metaData.getColumnName(currColumnCount), 
-                                currColumnCount)
-                        );
+                        this.onFloatAction.accept((Double) item);
                     } else if(item instanceof Long) {
-                        this.onLongAction.accept(new State<>(
-                                (Long) item, 
-                                metaData.getColumnName(currColumnCount), 
-                                currColumnCount)
-                        );
+                        this.onLongAction.accept((Long) item);
                     } else if(item instanceof byte[]) {
-                        this.onBlobAction.accept(new State<>(
-                                (byte[]) item, 
-                                metaData.getColumnName(currColumnCount), 
-                                currColumnCount)
-                        );
+                        this.onBlobAction.accept((byte[]) item);
                     }
                     
-                    this.forAllAction.accept(new State<>(
-                                (Object) item, 
-                                metaData.getColumnName(currColumnCount), 
-                                currColumnCount)
-                        );
+                    this.forAllAction.accept((Object) item);
                 }
                 
                 unfinishedRowState = false;
@@ -583,33 +542,5 @@ public class SQLiteTableStream implements AutoCloseable {
     public void finalize() throws Throwable {
         super.finalize();
         close();
-    }
-    
-    /**
-     * 
-     * @param <T> 
-     */
-    public class State<T> {
-        private final T value;
-        private final String columnName;
-        private final int columnIndex;
-        
-        private State(T value, String columnName, int columnIndex) {
-            this.value = value;
-            this.columnName = columnName;
-            this.columnIndex = columnIndex;
-        }
-        
-        public T getValue() {
-            return value;
-        }
-        
-        public String getColumnName() {
-            return columnName;
-        }
-        
-        public Integer getIndex() {
-            return columnIndex;
-        }
     }
 }
