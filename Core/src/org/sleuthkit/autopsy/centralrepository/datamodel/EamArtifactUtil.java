@@ -273,6 +273,7 @@ public class EamArtifactUtil {
                     content.getName(), content.getId(), ex.getMessage()));
             return null;
         }
+        //if there was no correlation attribute found for the item using object_id then check for attributes added with schema 1,1 which lack object_id  
         if (correlationAttributeInstance == null) {
             String value = file.getMd5Hash();
             String filePath = (file.getParentPath() + file.getName()).toLowerCase();
