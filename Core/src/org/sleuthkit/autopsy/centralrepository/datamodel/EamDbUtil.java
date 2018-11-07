@@ -39,7 +39,6 @@ public class EamDbUtil {
     private final static Logger LOGGER = Logger.getLogger(EamDbUtil.class.getName());
     private static final String CENTRAL_REPO_NAME = "CentralRepository";
     private static final String CENTRAL_REPO_USE_KEY = "db.useCentralRepo";
-    private static final String CENTRAL_REPO_FLAG_ITEMS_KEY = "db.flagNotableItems";
     private static final String DEFAULT_ORG_NAME = "Not Specified";
 
     /**
@@ -193,9 +192,9 @@ public class EamDbUtil {
     }
 
     /**
-     * Upgrade the current central reposity to the newest version. If the
-     * upgrade fails, the central repository will be disabled and the current
-     * settings will be cleared.
+     * Upgrade the current central reposity to the newest version. If the upgrade
+     * fails, the central repository will be disabled and the current settings
+     * will be cleared.
      *
      * @return true if the upgrade succeeds, false otherwise.
      */
@@ -203,7 +202,7 @@ public class EamDbUtil {
         if (!EamDb.isEnabled()) {
             return true;
         }
-
+        
         CoordinationService.Lock lock = null;
         try {
             EamDb db = EamDb.getInstance();
@@ -219,23 +218,23 @@ public class EamDbUtil {
             LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
 
             // Disable the central repo and clear the current settings.
-            try {
+            try{
                 if (null != EamDb.getInstance()) {
                     EamDb.getInstance().shutdownConnections();
                 }
-            } catch (EamDbException ex2) {
+            } catch (EamDbException ex2){
                 LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex);
-            }
+            } 
             setUseCentralRepo(false);
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
             EamDbPlatformEnum.saveSelectedPlatform();
-
+            
             return false;
         } finally {
-            if (lock != null) {
-                try {
+            if(lock != null){
+                try{
                     lock.release();
-                } catch (CoordinationServiceException ex) {
+                } catch (CoordinationServiceException ex){
                     LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
                 }
             }
@@ -256,7 +255,6 @@ public class EamDbUtil {
      * Check whether the given org is the default organization.
      *
      * @param org
-     *
      * @return true if it is the default org, false otherwise
      */
     public static boolean isDefaultOrg(EamOrganization org) {
@@ -267,7 +265,6 @@ public class EamDbUtil {
      * Add the default organization to the database
      *
      * @param conn
-     *
      * @return true if successful, false otherwise
      */
     static boolean insertDefaultOrganization(Connection conn) {
@@ -298,7 +295,7 @@ public class EamDbUtil {
      * If the Central Repos use has been enabled.
      *
      * @return true if the Central Repo may be configured, false if it should
-     *         not be able to be
+     * not be able to be
      */
     public static boolean useCentralRepo() {
         return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
@@ -309,38 +306,10 @@ public class EamDbUtil {
      * configured.
      *
      * @param centralRepoCheckBoxIsSelected - true if the central repo can be
-     *                                      used
+     * used
      */
     public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected) {
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));
-    }
-
-    /**
-     * If items previously tagged as notable should be flagged after adding them
-     * to the Central Repo.
-     *
-     * @return true if the previously tagged as notable items should be flagged,
-     *         false if previously tagged as notable items should not be flagged
-     */
-    public static boolean flagNotableItems() {
-        String flagNotableItems = ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_FLAG_ITEMS_KEY);
-        if (flagNotableItems == null){ //getConfigSetting can return null if the setting did not exist
-            setFlagNotableItems(true);
-            return true;
-        }
-        return Boolean.parseBoolean(flagNotableItems);
-    }
-
-    /**
-     * Saves the setting for whether items previously tagged as notable should
-     * be flagged after adding them to the Central Repo.
-     *
-     * @param flagNotableItems - true if the previously tagged as notable items
-     *                         should be flagged, false if previously tagged as
-     *                         notable items should not be flagged
-     */
-    public static void setFlagNotableItems(boolean flagNotableItems) {
-        ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_FLAG_ITEMS_KEY, Boolean.toString(flagNotableItems));
     }
 
     /**
@@ -396,7 +365,7 @@ public class EamDbUtil {
      * Close the prepared statement.
      *
      * @param preparedStatement The prepared statement to be closed.
-     *
+     * 
      * @deprecated Use closeStatement() instead.
      *
      * @throws EamDbException
