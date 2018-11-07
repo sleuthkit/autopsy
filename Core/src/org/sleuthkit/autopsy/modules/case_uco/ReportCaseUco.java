@@ -133,10 +133,13 @@ class ReportCaseUco implements GeneralReportModule {
             // instert \n after each field for more readable formatting
             jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
             
+            // create CASE/UCO data source entry
+            String dataSourceRelationshipName = getDataSourceInfo(selectedDataSourceId, skCase, jsonGenerator);
+            
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
             
-            // Run query to get all files, exclude directories
-            final String query = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
+            // Run getAllFilesQuery to get all files, exclude directories
+            final String getAllFilesQuery = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
                     + "data_source_obj_id = " + Long.toString(selectedDataSourceId)
                     + " AND ((meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
                     + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
@@ -144,7 +147,7 @@ class ReportCaseUco implements GeneralReportModule {
 
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.loading"));
 
-            SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(query);
+            SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getAllFilesQuery);
             ResultSet resultSet = queryResult.getResultSet();
 
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.processing"));
@@ -167,7 +170,7 @@ class ReportCaseUco implements GeneralReportModule {
                 String mime_type = resultSet.getString("mime_type"); 
                 String extension = resultSet.getString("extension");
                 
-                addFile(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator);
+                saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator);
             }
             progressPanel.complete(ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
@@ -187,8 +190,75 @@ class ReportCaseUco implements GeneralReportModule {
             }
         }
     }
+    
+    private String getDataSourceInfo(Long selectedDataSourceId, SleuthkitCase skCase, JsonGenerator jsonGenerator) throws TskCoreException, SQLException, IOException {
+        
+        String getImageDataSourceQuery = "select size from tsk_image_info where obj_id = " + selectedDataSourceId;
+        SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getImageDataSourceQuery);
+        ResultSet resultSet = queryResult.getResultSet();
+        Long imageSize = (long) 0;
+        String imageName = "";
+        boolean isImageDataSource = false;
+        // check if we got a result
+        while (resultSet.next()) {
+            // we got a result so the data source was an image data source
+            imageSize = resultSet.getLong(1);
+            isImageDataSource = true;
+            break;
+        }
+        
+        if (isImageDataSource) {
+            // get path to image file
+            String getPathToDataSourceQuery = "select name from tsk_image_names where obj_id = " + selectedDataSourceId;
+            queryResult = skCase.executeQuery(getPathToDataSourceQuery);
+            resultSet = queryResult.getResultSet();
+            while (resultSet.next()) {
+                imageName = resultSet.getString(1);
+                break;
+            }
+        } else {
+            // logical file data source
+            String getLogicalDataSourceQuery = "select name from tsk_files where obj_id = " + selectedDataSourceId;
+            queryResult = skCase.executeQuery(getLogicalDataSourceQuery);
+            resultSet = queryResult.getResultSet();
+            while (resultSet.next()) {
+                imageName = resultSet.getString(1);
+                break;
+            }
+        }
 
-    private void addFile(Long objectId, String fileName, String parent_path, String md5Hash, String mime_type, long size, String ctime, 
+        return saveDataSourceInCaseUcoFormat(jsonGenerator, imageName, imageSize, selectedDataSourceId);
+    }
+    
+    private String saveDataSourceInCaseUcoFormat(JsonGenerator catalog, String imageName, Long imageSize, Long selectedDataSourceId) throws IOException {
+        
+        String dataSourceTraceId = "data-source-"+selectedDataSourceId;
+        catalog.writeStartObject();
+        catalog.writeStringField("@id", dataSourceTraceId);
+        catalog.writeStringField("@type", "Trace");
+        
+        catalog.writeFieldName("propertyBundle");
+        catalog.writeStartArray();
+        
+        catalog.writeStartObject();
+        catalog.writeStringField("@type", "File");
+        catalog.writeStringField("filePath", imageName);
+        catalog.writeEndObject();
+        
+        if (imageSize > 0) {
+            catalog.writeStartObject();
+            catalog.writeStringField("@type", "ContentData");
+            catalog.writeStringField("sizeInBytes", Long.toString(imageSize));
+            catalog.writeEndObject();
+        }
+        
+        catalog.writeEndArray();
+        catalog.writeEndObject();
+        
+        return dataSourceTraceId;
+    }
+
+    private void saveFileInCaseUcoFormat(Long objectId, String fileName, String parent_path, String md5Hash, String mime_type, long size, String ctime, 
             String atime, String mtime, String extension, JsonGenerator catalog) throws IOException {
         
         catalog.writeStartObject();
@@ -251,6 +321,7 @@ class ReportCaseUco implements GeneralReportModule {
             configPanel = new ReportCaseUcoConfigPanel();
         } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Failed to initialize CASE/UCO settings panel", ex); //NON-NLS
+            // ELTODO display error
             configPanel = null;
         }
         return configPanel;
