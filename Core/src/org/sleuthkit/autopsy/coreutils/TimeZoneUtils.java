@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.coreutils;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.SimpleTimeZone;
@@ -45,7 +47,7 @@ public class TimeZoneUtils {
         java.util.TimeZone zone = java.util.TimeZone.getTimeZone(timeZoneId);
         int offset = zone.getRawOffset() / 1000;
         int hour = offset / 3600;
-        int min = (offset % 3600) / 60;
+        int min = Math.abs((offset % 3600) / 60);
 
         DateFormat dfm = new SimpleDateFormat("z");
         dfm.setTimeZone(zone);
@@ -74,7 +76,7 @@ public class TimeZoneUtils {
     public static String createTimeZoneString(TimeZone timeZone) {
         int offset = timeZone.getRawOffset() / 1000;
         int hour = offset / 3600;
-        int minutes = (offset % 3600) / 60;
+        int minutes = Math.abs((offset % 3600) / 60);
         
         return String.format("(GMT%+d:%02d) %s", hour, minutes, timeZone.getID()); //NON-NLS
     }
@@ -83,9 +85,11 @@ public class TimeZoneUtils {
      * Generates a list of time zones.
      */
     public static List<String> createTimeZoneList() {
-        List<String> timeZoneList = new ArrayList<>();
+        /*
+         * Create a list of time zones.
+         */
+        List<TimeZone> timeZoneList = new ArrayList<>();
         
-        // load and add all timezone
         String[] ids = SimpleTimeZone.getAvailableIDs();
         for (String id : ids) {
             /*
@@ -97,10 +101,36 @@ public class TimeZoneUtils {
              * if(hasDaylight){ result = result + second; }
              * timeZoneComboBox.addItem(item + " (" + result + ")");
              */
-            timeZoneList.add(createTimeZoneString(TimeZone.getTimeZone(id)));
+            timeZoneList.add(TimeZone.getTimeZone(id));
         }
         
-        return timeZoneList;
+        /*
+         * Sort the list of time zones first by offset, then by ID.
+         */
+        Collections.sort(timeZoneList, new Comparator<TimeZone>(){
+            @Override
+            public int compare(TimeZone o1, TimeZone o2){
+                int offsetDelta = Integer.compare(o1.getRawOffset(), o2.getRawOffset());
+                
+                if (offsetDelta == 0) {
+                    return o1.getID().compareToIgnoreCase(o2.getID());
+                }
+                
+                return offsetDelta;
+            }
+        });
+        
+        /*
+         * Create a list of Strings encompassing both the GMT offset and the
+         * time zone ID.
+         */
+        List<String> outputList = new ArrayList<>();
+        
+        for (TimeZone timeZone : timeZoneList) {
+            outputList.add(createTimeZoneString(timeZone));
+        }
+        
+        return outputList;
     }
 
     /**

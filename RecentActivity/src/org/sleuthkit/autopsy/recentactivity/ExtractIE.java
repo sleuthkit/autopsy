@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -609,6 +610,6 @@ class ExtractIE extends Extract {
             return null;
         }
         
-        return Util.extractDomain(url);
+        return NetworkUtils.extractDomain(url);
     }
 }
