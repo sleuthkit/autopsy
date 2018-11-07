@@ -57,6 +57,7 @@ class ReportCaseUco implements GeneralReportModule {
     private ReportCaseUcoConfigPanel configPanel;
     
     private static final String REPORT_FILE_NAME = "CaseUco.txt";
+    private static final String SEPARATOR = java.io.File.separator;
     
     // Hidden constructor for the report
     private ReportCaseUco() {
@@ -134,7 +135,7 @@ class ReportCaseUco implements GeneralReportModule {
             jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
             
             // create CASE/UCO data source entry
-            String dataSourceRelationshipName = getDataSourceInfo(selectedDataSourceId, skCase, jsonGenerator);
+            String dataSourceTraceId = getDataSourceInfo(selectedDataSourceId, skCase, jsonGenerator);
             
             progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
             
@@ -170,7 +171,7 @@ class ReportCaseUco implements GeneralReportModule {
                 String mime_type = resultSet.getString("mime_type"); 
                 String extension = resultSet.getString("extension");
                 
-                saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator);
+                saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
             }
             progressPanel.complete(ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
@@ -213,7 +214,7 @@ class ReportCaseUco implements GeneralReportModule {
             queryResult = skCase.executeQuery(getPathToDataSourceQuery);
             resultSet = queryResult.getResultSet();
             while (resultSet.next()) {
-                imageName = resultSet.getString(1);
+                imageName = resultSet.getString(1); // ELTODO remove double slashes
                 break;
             }
         } else {
@@ -232,6 +233,7 @@ class ReportCaseUco implements GeneralReportModule {
     
     private String saveDataSourceInCaseUcoFormat(JsonGenerator catalog, String imageName, Long imageSize, Long selectedDataSourceId) throws IOException {
         
+        // create a "trace" entry for the data source
         String dataSourceTraceId = "data-source-"+selectedDataSourceId;
         catalog.writeStartObject();
         catalog.writeStringField("@id", dataSourceTraceId);
@@ -259,10 +261,13 @@ class ReportCaseUco implements GeneralReportModule {
     }
 
     private void saveFileInCaseUcoFormat(Long objectId, String fileName, String parent_path, String md5Hash, String mime_type, long size, String ctime, 
-            String atime, String mtime, String extension, JsonGenerator catalog) throws IOException {
+            String atime, String mtime, String extension, JsonGenerator catalog, String dataSourceTraceId) throws IOException {
         
+        String fileTraceId = "file-" + objectId;
+        
+        // create a "trace" entry for the file
         catalog.writeStartObject();
-        catalog.writeStringField("@id", "file-"+objectId);
+        catalog.writeStringField("@id", fileTraceId);
         catalog.writeStringField("@type", "Trace");
         
         catalog.writeFieldName("propertyBundle");
@@ -273,28 +278,59 @@ class ReportCaseUco implements GeneralReportModule {
         catalog.writeStringField("createdTime", ctime);
         catalog.writeStringField("accessedTime", atime);
         catalog.writeStringField("modifiedTime", mtime);
-        catalog.writeStringField("extension", extension);
+        if (extension != null) {
+            catalog.writeStringField("extension", extension);
+        }
         catalog.writeStringField("fileName", fileName);
-        catalog.writeStringField("filePath", parent_path);
+        if (parent_path != null) {
+            catalog.writeStringField("filePath", parent_path + fileName);
+        }
         catalog.writeStringField("sizeInBytes", Long.toString(size));        
         catalog.writeEndObject();
         
         catalog.writeStartObject();
         catalog.writeStringField("@type", "ContentData");
         catalog.writeStringField("sizeInBytes", Long.toString(size));
-        catalog.writeStringField("mimeType", mime_type);
-        catalog.writeFieldName("hash");
-        catalog.writeStartArray();
-        catalog.writeStartObject();
-        catalog.writeStringField("@type", "Hash");
-        catalog.writeStringField("hashMethod", "SHA256");
-        catalog.writeStringField("hashValue", md5Hash);
-        catalog.writeEndObject();
-        catalog.writeEndArray();
+        if (mime_type != null) {
+            catalog.writeStringField("mimeType", mime_type);
+        }
+        if (md5Hash != null) {
+            catalog.writeFieldName("hash");
+            catalog.writeStartArray();
+            catalog.writeStartObject();
+            catalog.writeStringField("@type", "Hash");
+            catalog.writeStringField("hashMethod", "SHA256");
+            catalog.writeStringField("hashValue", md5Hash);
+            catalog.writeEndObject();
+            catalog.writeEndArray();
+        }
 
         catalog.writeEndObject();
         
         catalog.writeEndArray();
+        catalog.writeEndObject();
+        
+        // create a "relationship" entry between the file and the data source
+        catalog.writeStartObject();
+        catalog.writeStringField("@id", "relationship-" + objectId);
+        catalog.writeStringField("@type", "Relationship");
+        catalog.writeStringField("source", fileTraceId);
+        catalog.writeStringField("target", dataSourceTraceId);
+        catalog.writeStringField("kindOfRelationshipe", "contained-within");
+        catalog.writeBooleanField("isDirectional", true);
+        
+        catalog.writeFieldName("propertyBundle");
+        catalog.writeStartArray();        
+        catalog.writeStartObject();
+        catalog.writeStringField("@type", "PathRelation");
+        if (parent_path != null) {
+            catalog.writeStringField("path", parent_path + fileName);
+        } else {
+            catalog.writeStringField("path", fileName);
+        }
+        catalog.writeEndObject();        
+        catalog.writeEndArray();
+        
         catalog.writeEndObject();
     }
 
