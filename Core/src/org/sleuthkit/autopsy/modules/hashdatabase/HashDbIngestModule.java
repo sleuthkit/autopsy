@@ -229,7 +229,9 @@ public class HashDbIngestModule implements FileIngestModule {
                 services.postMessage(IngestMessage.createErrorMessage(
                         HashLookupModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(), "HashDbIngestModule.fileReadErrorMsg", name),
-                        NbBundle.getMessage(this.getClass(), "HashDbIngestModule.calcHashValueErr", name)));
+                        NbBundle.getMessage(this.getClass(), "HashDbIngestModule.calcHashValueErr", 
+                                file.getParentPath() + file.getName(), 
+                                file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC)?"Allocated File" : "Deleted File")));
                 return ProcessResult.ERROR;
             }
         }
