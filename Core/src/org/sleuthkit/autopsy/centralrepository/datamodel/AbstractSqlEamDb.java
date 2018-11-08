@@ -824,14 +824,14 @@ abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setString(4, eamArtifact.getCorrelationValue());
                 preparedStatement.setString(5, eamArtifact.getFilePath().toLowerCase());
                 preparedStatement.setByte(6, eamArtifact.getKnownStatus().getFileKnownValue());
-                
+
                 if ("".equals(eamArtifact.getComment())) {
                     preparedStatement.setNull(7, Types.INTEGER);
                 } else {
                     preparedStatement.setString(7, eamArtifact.getComment());
                 }
                 preparedStatement.setLong(8, eamArtifact.getFileObjectId());
-                
+
                 preparedStatement.executeUpdate();
             }
 
@@ -1453,7 +1453,8 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @param type                  The type of instance.
      * @param correlationCase       The case tied to the instance.
      * @param correlationDataSource The data source tied to the instance.
-     * @param objectID              The object id of the file tied to the instance.
+     * @param objectID              The object id of the file tied to the
+     *                              instance.
      *
      * @return The correlation attribute if it exists; otherwise null.
      *
@@ -3140,6 +3141,18 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Determine if a specific column already exists in a specific table
+     *
+     * @param tableName  the table to check for the specified column
+     * @param columnName the name of the column to check for
+     *
+     * @return true if the column exists, false if the column does not exist
+     *
+     * @throws EamDbException
+     */
+    abstract boolean doesColumnExist(Connection conn, String tableName, String columnName) throws SQLException;
+
+    /**
      * Upgrade the schema of the database (if needed)
      *
      * @throws EamDbException
@@ -3239,7 +3252,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                 //add object_id column to existing _instances tables
                 for (CorrelationAttributeInstance.Type type : CorrelationAttributeInstance.getDefaultCorrelationTypes()) {
                     instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
-                    statement.execute(String.format(addObjectIdColumnTemplate, instance_type_dbname)); //NON-NLS
+                    if (!doesColumnExist(conn, instance_type_dbname, "object_id")) {
+                        statement.execute(String.format(addObjectIdColumnTemplate, instance_type_dbname)); //NON-NLS
+                    }
                     statement.execute(String.format(addObjectIdIndexTemplate, instance_type_dbname, instance_type_dbname));
                 }
                 //update central repository to be able to store new correlation attributes 
