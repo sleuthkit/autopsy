@@ -191,7 +191,7 @@ public class SQLiteTableReader implements AutoCloseable {
     private boolean hasOpened;
     private String prevTableName;
     
-    private final BooleanSupplier alwaysFalseCondition = () -> {return false;};
+    private final BooleanSupplier alwaysFalseCondition = () -> false;
 
     /**
      * Initialize a new table stream given the parameters passed in from the
@@ -217,7 +217,7 @@ public class SQLiteTableReader implements AutoCloseable {
 
         //No-op lambda, keep from NPE or having to check during iteration 
         //if action == null.
-        return (NO_OP) -> {};
+        return NO_OP -> {};
     }
 
     /**

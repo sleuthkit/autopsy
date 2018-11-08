@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
@@ -25,7 +25,6 @@ class SqliteTextExtractor extends ContentTextExtractor {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
-    private static final CharSequence EMPTY_CHARACTER_SEQUENCE = "";
 
     @Override
     boolean isContentTypeSpecific() {
@@ -56,7 +55,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
     }
 
     /**
-     * Returns an input stream that will read from a sqlite database.
+     * Returns a stream that will read from a sqlite database.
      *
      * @param source Content file
      *
@@ -70,7 +69,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
         //Firewall for any content that is not an AbstractFile
         if (!AbstractFile.class.isInstance(source)) {
             try {
-                return CharSource.wrap(EMPTY_CHARACTER_SEQUENCE).openStream();
+                return CharSource.wrap("").openStream();
             } catch (IOException ex) {
                 throw new TextExtractorException("", ex);
             }
@@ -79,65 +78,140 @@ class SqliteTextExtractor extends ContentTextExtractor {
         return new SQLiteStreamReader((AbstractFile) source);
     }
 
+    /**
+     * Produces a continuous stream of characters from a database file. To
+     * achieve this, all table names are queues up and a SQLiteTableReader is
+     * used to do the actual queries and table iteration.
+     */
     public class SQLiteStreamReader extends Reader {
 
         private final SQLiteTableReader reader;
+        private final AbstractFile file;
+        
         private Iterator<String> tableNames;
         private String currentTableName;
 
         private char[] buf;
-        private UnfinishedState unfinishedRead;
-        private int rowIndex;
-        private int columnCount;
+        private ExcessBytes leftOvers;
         private int totalColumns;
 
         private int bufIndex;
 
+        /**
+         * Creates a new reader for the sqlite file. This table reader class
+         * will iterate through a table row by row and pass the values to
+         * different functions based on data type. Here we define what to do on
+         * the column names and we define what to do for all data types.
+         *
+         * @param file Sqlite file
+         */
         public SQLiteStreamReader(AbstractFile file) {
+            this.file = file;
             reader = new SQLiteTableReader.Builder(file)
-                    .onColumnNames((columnName) -> {
-                        if(columnCount == 0) {
-                            fillBuffer("\n"+currentTableName + "\n\n\t");
-                        }
-                        columnCount++;
-                        
-                        fillBuffer(columnName + ((columnCount == totalColumns) ? "\n" :" "));
-                    })
-                    .forAll((Object o) -> {
-                        rowIndex++;
-                        //Ignore blobs
-                        String objectStr = (o instanceof byte[]) ? "" : Objects.toString(o, "");
-                        
-                        if(rowIndex > 1 && rowIndex < totalColumns) {
-                            objectStr += " ";
-                        } if(rowIndex == 1){
-                            objectStr = "\t" + objectStr + " ";
-                        } if(rowIndex == totalColumns) {
-                            objectStr += "\n";
-                        }
-                       
-                        fillBuffer(objectStr);
-                        rowIndex = rowIndex % totalColumns;
-                    }).build();
+                    .onColumnNames(getColumnNameStrategy())
+                    .forAll(getForAllStrategy()).build();
         }
 
+        /**
+         * On every item in the database we want to do the following series of
+         * steps: 1) Get it's string representation (ignore blobs with empty
+         * string). 2) Format it based on its positioning in the row. 3) Write
+         * it to buffer
+         *
+         * rowIndex is purely for keeping track of where the object is in the
+         * table, hence the bounds checking with the mod function.
+         *
+         * @return Our consumer class defined to do the steps above.
+         */
+        private Consumer<Object> getForAllStrategy() {
+            return new Consumer<Object>() {
+                private int rowIndex = 0;
+
+                @Override
+                public void accept(Object t) {
+                    rowIndex++;
+                    //Ignore blobs
+                    String objectStr = (t instanceof byte[]) ? "" : Objects.toString(t, "");
+
+                    if (rowIndex > 1 && rowIndex < totalColumns) {
+                        objectStr += " ";
+                    }
+                    if (rowIndex == 1) {
+                        objectStr = "\t" + objectStr + " ";
+                    }
+                    if (rowIndex == totalColumns) {
+                        objectStr += "\n";
+                    }
+
+                    fillBuffer(objectStr);
+                    rowIndex = rowIndex % totalColumns;
+                }
+            };
+        }
+
+        /**
+         * On every column name in the header do the following series of steps:
+         * 1) Write the tableName before the header. 2) Format the column name
+         * based on row positioning 3) Reset the count if we are at the end,
+         * that way if we want to read multiple tables we can do so without
+         * having to build new consumers.
+         *
+         * columnIndex is purely for keeping track of where the column name is
+         * in the table, hence the bounds checking with the mod function.
+         *
+         * @return Our consumer class defined to do the steps above.
+         */
+        private Consumer<String> getColumnNameStrategy() {
+            return new Consumer<String>() {
+                private int columnIndex = 0;
+
+                @Override
+                public void accept(String columnName) {
+                    if (columnIndex == 0) {
+                        fillBuffer("\n" + currentTableName + "\n\n\t");
+                    }
+                    columnIndex++;
+
+                    fillBuffer(columnName + ((columnIndex == totalColumns) ? "\n" : " "));
+
+                    //Reset the columnCount to 0 for next table read
+                    columnIndex = columnIndex % totalColumns;
+                }
+            };
+        }
+
+        /**
+         * This functions writes the string representation of a database value
+         * into the read buffer. If the buffer becomes full, we save the extra
+         * characters and hold on to them until the next call to read().
+         *
+         * @param val Formatted database value string
+         */
         private void fillBuffer(String val) {
             for (int i = 0; i < val.length(); i++) {
                 if (bufIndex != buf.length) {
                     buf[bufIndex++] = val.charAt(i);
                 } else {
-                    unfinishedRead = new UnfinishedState(val, i);
+                    leftOvers = new ExcessBytes(val, i);
                     break;
                 }
             }
         }
 
+        /**
+         * Reads database values into the buffer. This function is responsible for 
+         * getting the next table in the queue, initiating calls to the SQLiteTableReader,
+         * and filling in any excess bytes that are lingering from the previous call.
+         *
+         * @throws IOException
+         */
         @Override
         public int read(char[] cbuf, int off, int len) throws IOException {
             buf = cbuf;
 
             bufIndex = off;
 
+            //Lazily wait to get table names until first call to read.
             if (Objects.isNull(tableNames)) {
                 try {
                     tableNames = reader.getTableNames().iterator();
@@ -147,24 +221,25 @@ class SqliteTextExtractor extends ContentTextExtractor {
                 }
             }
 
-            if (Objects.nonNull(unfinishedRead) && !unfinishedRead.isFinished()) {
-                bufIndex += unfinishedRead.read(cbuf, off, len);
+            //If there are excess bytes from last read, then copy thoses in.
+            if (Objects.nonNull(leftOvers) && !leftOvers.isFinished()) {
+                bufIndex += leftOvers.read(cbuf, off, len);
             }
 
-            //while buffer is not full!
+            //Keep grabbing table names from the queue and reading them until
+            //our buffer is full.
             while (bufIndex != len) {
                 if (Objects.isNull(currentTableName) || reader.isFinished()) {
                     if (tableNames.hasNext()) {
                         currentTableName = tableNames.next();
-                        rowIndex = 0;
-                        columnCount = 0;
                         try {
                             totalColumns = reader.getColumnCount(currentTableName);
-                            reader.read(currentTableName, () -> {
-                                return bufIndex == len;
-                            });
+                            reader.read(currentTableName, () -> bufIndex == len);
                         } catch (SQLiteTableReaderException ex) {
-                            Exceptions.printStackTrace(ex);
+                            logger.log(Level.WARNING, String.format(
+                                "Error attempting to read file table: [%s]" //NON-NLS
+                                + " for file: [%s] (id=%d).", currentTableName, //NON-NLS
+                                file.getName(), file.getId()), ex.getMessage());
                         }
                     } else {
                         if (bufIndex == off) {
@@ -174,11 +249,12 @@ class SqliteTextExtractor extends ContentTextExtractor {
                     }
                 } else {
                     try {
-                        reader.read(currentTableName, () -> {
-                            return bufIndex == len;
-                        });
+                        reader.read(currentTableName, () -> bufIndex == len);
                     } catch (SQLiteTableReaderException ex) {
-                        Exceptions.printStackTrace(ex);
+                        logger.log(Level.WARNING, String.format(
+                                "Error attempting to read file table: [%s]" //NON-NLS
+                                + " for file: [%s] (id=%d).", currentTableName, //NON-NLS
+                                file.getName(), file.getId()), ex.getMessage());
                     }
                 }
             }
@@ -192,18 +268,15 @@ class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Wrapper for an unfinished read during the previous chunker call. So,
-         * for example, the buffer passed to read() fills and we are left with
-         * only a partially read entity. One of these objects will encapsulate
-         * its state so that it can pick up where we left off on the next call
-         * to read().
+         * Wrapper that holds the excess bytes that were left over from the previous
+         * call to read().
          */
-        private class UnfinishedState {
+        private class ExcessBytes {
 
             private final String entity;
             private Integer pointer;
 
-            public UnfinishedState(String entity, Integer pointer) {
+            public ExcessBytes(String entity, Integer pointer) {
                 this.entity = entity;
                 this.pointer = pointer;
             }
@@ -212,6 +285,16 @@ class SqliteTextExtractor extends ContentTextExtractor {
                 return entity.length() == pointer;
             }
 
+            /**
+             * Copies the excess bytes this instance is holding onto into the
+             * buffer.
+             *
+             * @param buf buffer to write into
+             * @param off index in buffer to start the write
+             * @param len length of the write
+             *
+             * @return number of characters read into the buffer
+             */
             public int read(char[] buf, int off, int len) {
                 for (int i = off; i < len; i++) {
                     if (isFinished()) {
