@@ -56,9 +56,9 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
     private final boolean computeHashes;
     private final boolean verifyHashes;
     
-    private final List<MessageDigest> messageDigests = new ArrayList<>();
+    //private final List<MessageDigest> messageDigests = new ArrayList<>();
+    private final List<HashStruct> hashInfo = new ArrayList<>();
     
-    private MessageDigest messageDigest;
     private boolean verified = false;
     private String calculatedHash = "";
     private String storedHash = "";
@@ -83,14 +83,23 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         if (!(computeHashes || verifyHashes)) {
             throw new IngestModuleException(Bundle.E01VerifyIngestModule_startup_noCheckboxesSelected());
         }
+    }
+    
+    // MOVE AND RENAME THIS
+    private class HashStruct {
+        HashType type;
+        MessageDigest digest;
+        String storedHash;
+        String calculatedHash;
         
-        try {
-            messageDigest = MessageDigest.getInstance("MD5"); //NON-NLS
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IngestModuleException(Bundle.UnableToCalculateHashes(), ex);
+        HashStruct(HashType type, String storedHash) {
+            this.type = type;
+            this.storedHash = storedHash;
         }
         
-        
+        void setMessageDigest(MessageDigest digest) {
+            this.digest = digest;
+        }
     }
     
     @NbBundle.Messages({
@@ -99,7 +108,14 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         "# {0} - imageName",
         "E01VerifyIngestModule.process.skipVerify=Not verifying existing hashes for {0} since the option was disabled",
         "# {0} - hashName",
-        "E01VerifyIngestModule.process.hashAlgorithmError=Error creating message digest for {0} algorithm"
+        "E01VerifyIngestModule.process.hashAlgorithmError=Error creating message digest for {0} algorithm",
+        "# {0} - hashName",
+        "# {1} - hashValue",
+        "E01VerifyIngestModule.process.hashMatch={0} hash verified: {1} ",
+        "# {0} - hashName",
+        "# {1} - calculatedHashValue",
+        "# {2} - storedHashValue",
+        "E01VerifyIngestModule.process.hashNonMatch={0} hash not verified - calculated hash: {1}  stored hash: {2}",
     })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
@@ -115,26 +131,40 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             return ProcessResult.OK;
         }
         Image img = (Image) dataSource;
+
+        // Make sure the image size we have is not zero
+        long size = img.getSize();
+        if (size == 0) {
+            logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName); //NON-NLS
+            services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                            "EwfVerifyIngestModule.process.errGetSizeOfImg",
+                            imgName)));
+        }
         
         // Determine which mode we're in. 
         // - If there are any preset hashes, then we'll verify them (assuming the verify checkbox is selected)
         // - Otherwise we'll calculate and store all three hashes (assuming the compute checkbox is selected)
         
         // First get a list of all stored hash types
-        List<HashType> hashesToCalculate = new ArrayList<>();
+        //List<HashType> hashesToCalculate = new ArrayList<>();
         if (img.getMd5() != null && ! img.getMd5().isEmpty()) {
-            hashesToCalculate.add(HashType.MD5);
+            //hashesToCalculate.add(HashType.MD5);
+            hashInfo.add(new HashStruct(HashType.MD5, img.getMd5()));
         }
         if (img.getSha1() != null && ! img.getSha1().isEmpty()) {
-            hashesToCalculate.add(HashType.SHA1);
+            //hashesToCalculate.add(HashType.SHA1);
+            hashInfo.add(new HashStruct(HashType.SHA1, img.getSha1()));
         }
         if (img.getSha256() != null && ! img.getSha256().isEmpty()) {
-            hashesToCalculate.add(HashType.SHA256);
+            //hashesToCalculate.add(HashType.SHA256);
+            hashInfo.add(new HashStruct(HashType.SHA256, img.getSha256()));
         }
         
         // Figure out which mode we should be in
         Mode mode;
-        if (hashesToCalculate.isEmpty()) {
+        //if (hashesToCalculate.isEmpty()) {
+        if (hashInfo.isEmpty()) {
             mode = Mode.COMPUTE;
         } else {
             mode = Mode.VERIFY;
@@ -156,19 +186,108 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         // If we're in compute mode (i.e., the hash list is empty), add all hash algorithms
         // to the list.
         if (mode.equals(Mode.COMPUTE)) {
-            hashesToCalculate.addAll(Arrays.asList(HashType.values()));
+            //hashesToCalculate.addAll(Arrays.asList(HashType.values()));
+            for(HashType type : HashType.values()) {
+                hashInfo.add(new HashStruct(type, ""));
+            }
         }
         
         // Set up the digests
-        for (HashType hashType:hashesToCalculate) {
+        //for (HashType hashType:hashesToCalculate) {
+        for (HashStruct struct:hashInfo) {
             try {
-                messageDigest = MessageDigest.getInstance(hashType.getName()); //NON-NLS
+                //messageDigests.add(MessageDigest.getInstance(hashType.getName())); //NON-NLS
+                struct.setMessageDigest(MessageDigest.getInstance(struct.type.getName()));
             } catch (NoSuchAlgorithmException ex) {
-                String msg = Bundle.E01VerifyIngestModule_process_hashAlgorithmError(hashType.getName());
+                String msg = Bundle.E01VerifyIngestModule_process_hashAlgorithmError(struct.type.getName());
                 services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return ProcessResult.ERROR;
             }
+        }
+        
+        // Libewf uses a chunk size of 64 times the sector size, which is the
+        // motivation for using it here. For other images it shouldn't matter,
+        // so they can use this chunk size as well.
+        long chunkSize = 64 * img.getSsize();
+        chunkSize = (chunkSize == 0) ? DEFAULT_CHUNK_SIZE : chunkSize;
+
+        // Casting to double to capture decimals
+        int totalChunks = (int) Math.ceil((double) size / (double) chunkSize);
+        logger.log(Level.INFO, "Total chunks = {0}", totalChunks); //NON-NLS
+
+        // Set up the progress bar
+        statusHelper.switchToDeterminate(totalChunks);
+        
+        // Read in byte size chunks and update the hash value with the data.
+        byte[] data = new byte[(int) chunkSize];
+        int read;
+        for (int i = 0; i < totalChunks; i++) {
+            if (context.dataSourceIngestIsCancelled()) {
+                return ProcessResult.OK;
+            }
+            try {
+                read = img.read(data, i * chunkSize, chunkSize);
+            } catch (TskCoreException ex) {
+                String msg = NbBundle.getMessage(this.getClass(),
+                        "EwfVerifyIngestModule.process.errReadImgAtChunk", imgName, i);
+                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
+                logger.log(Level.SEVERE, msg, ex);
+                return ProcessResult.ERROR;
+            }
+
+            // Only update with the read bytes.
+            if (read == chunkSize) {
+                for (HashStruct struct:hashInfo) {
+                    struct.digest.update(data);
+                }
+            } else {
+                byte[] subData = Arrays.copyOfRange(data, 0, read);
+                for (HashStruct struct:hashInfo) {
+                    struct.digest.update(subData);
+                }
+            }
+            statusHelper.progress(i);
+        }
+        
+        // Produce the final hashes
+        for(HashStruct struct:hashInfo) {
+            struct.calculatedHash = DatatypeConverter.printHexBinary(struct.digest.digest()).toLowerCase();
+            logger.log(Level.INFO, "Hash calculated from {0}: {1}", new Object[]{imgName, struct.calculatedHash}); //NON-NLS
+        }
+        
+        if (mode.equals(Mode.VERIFY)) {
+            // Check that each hash matches
+            boolean verified = true;
+            String detailedResults = NbBundle
+                .getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verifyResultsHeader", imgName);
+            String hashResults = "";
+            
+            for (HashStruct struct:hashInfo) {
+                if (struct.storedHash.equals(struct.calculatedHash)) {
+                    hashResults += Bundle.E01VerifyIngestModule_process_hashMatch(struct.type.name, struct.storedHash);
+                } else {
+                    verified = false;
+                    hashResults += Bundle.E01VerifyIngestModule_process_hashNonMatch(struct.type.name, struct.calculatedHash, struct.storedHash);
+                }
+                
+            }
+            
+            String verificationResultStr;
+            if (verified) {
+                verificationResultStr = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verified");
+            } else {
+                verificationResultStr = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.notVerified");
+            }
+            
+            detailedResults += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.resultLi", verificationResultStr);
+            detailedResults += hashResults;
+
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(), imgName + verificationResultStr, detailedResults));
+        
+        } else {
+            // Store the hashes in the database
+            // TO DO
         }
         
         return ProcessResult.OK;
@@ -255,16 +374,16 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
 
             // Only update with the read bytes.
             if (read == chunkSize) {
-                messageDigest.update(data);
+                //messageDigest.update(data);
             } else {
                 byte[] subData = Arrays.copyOfRange(data, 0, read);
-                messageDigest.update(subData);
+                //messageDigest.update(subData);
             }
             statusHelper.progress(i);
         }
 
         // Finish generating the hash and get it as a string value
-        calculatedHash = DatatypeConverter.printHexBinary(messageDigest.digest()).toLowerCase();
+        //calculatedHash = DatatypeConverter.printHexBinary(messageDigest.digest()).toLowerCase();
         verified = calculatedHash.equals(storedHash);
         logger.log(Level.INFO, "Hash calculated from {0}: {1}", new Object[]{imgName, calculatedHash}); //NON-NLS
 
