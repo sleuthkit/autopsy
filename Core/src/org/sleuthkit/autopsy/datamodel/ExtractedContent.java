@@ -156,6 +156,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return filePath + "drive_network.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_FACE_DETECTED.getTypeID()) {
             return filePath + "face.png"; //NON-NLS
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {
+            return filePath + "network-wifi.png"; //NON-NLS
         }
         return filePath + "artifact-icon.png"; //NON-NLS
     }
