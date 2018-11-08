@@ -165,7 +165,7 @@ class ReportCaseUco implements GeneralReportModule {
 
             SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getAllFilesQuery);
             ResultSet resultSet = queryResult.getResultSet();
-
+            
             progressPanel.updateStatusLabel(Bundle.ReportCaseUco_processing());
             
             // Loop files and write info to CASE/UCO report
@@ -188,6 +188,7 @@ class ReportCaseUco implements GeneralReportModule {
                 
                 saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
             }
+            queryResult.close();
             progressPanel.complete(ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
@@ -268,6 +269,7 @@ class ReportCaseUco implements GeneralReportModule {
             isImageDataSource = true;
             break;
         }
+        queryResult.close();
         
         if (isImageDataSource) {
             // get caseDirPath to image file
@@ -278,6 +280,7 @@ class ReportCaseUco implements GeneralReportModule {
                 imageName = resultSet.getString(1);
                 break;
             }
+            queryResult.close();
         } else {
             // logical file data source
             String getLogicalDataSourceQuery = "select name from tsk_files where obj_id = " + selectedDataSourceId;
@@ -287,6 +290,7 @@ class ReportCaseUco implements GeneralReportModule {
                 imageName = resultSet.getString(1);
                 break;
             }
+            queryResult.close();
         }
 
         return saveDataSourceInCaseUcoFormat(jsonGenerator, imageName, imageSize, selectedDataSourceId, caseTraceId);
