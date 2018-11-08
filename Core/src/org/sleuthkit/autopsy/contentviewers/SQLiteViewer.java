@@ -408,7 +408,9 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 selectedTableView.setupTable(Collections.emptyList());
             }
         } catch (SQLiteTableReaderException ex) {
-            logger.log(Level.WARNING, String.format("Failed to load table %s from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), sqliteDbFile.getId()), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Failed to load table %s " //NON-NLS
+                    + "from DB file '%s' (objId=%d)", tableName, sqliteDbFile.getName(), //NON-NLS
+                    sqliteDbFile.getId()), ex.getMessage());
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_selectTable_errorText(tableName));
         }
     }
@@ -430,7 +432,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         } catch (SQLiteTableReaderException ex) {
             logger.log(Level.WARNING, String.format("Failed to read table %s from DB file '%s' " //NON-NLS
                     + "(objId=%d) starting at row [%d] and limit [%d]", //NON-NLS
-                    tableName, sqliteDbFile.getName(), sqliteDbFile.getId(), startRow - 1, numRowsToRead), ex.getMessage());
+                    tableName, sqliteDbFile.getName(), sqliteDbFile.getId(), 
+                    startRow - 1, numRowsToRead), ex.getMessage());
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_readTable_errorText(tableName));
         }
     }
