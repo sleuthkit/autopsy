@@ -432,7 +432,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         } catch (SQLiteTableReaderException ex) {
             logger.log(Level.WARNING, String.format("Failed to read table %s from DB file '%s' " //NON-NLS
                     + "(objId=%d) starting at row [%d] and limit [%d]", //NON-NLS
-                    tableName, sqliteDbFile.getName(), sqliteDbFile.getId(), 
+                    tableName, sqliteDbFile.getName(), sqliteDbFile.getId(),
                     startRow - 1, numRowsToRead), ex.getMessage());
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_readTable_errorText(tableName));
         }
@@ -476,6 +476,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
                 row.put(currentTableHeader.get(rowIndex - 1), objectStr);
 
+                //If we have built up a full database row, then add it to our page
+                //of rows to be displayed in the UI.
                 if (rowIndex == currentTableHeader.size()) {
                     pageOfTableRows.add(row);
                     row = new LinkedHashMap<>();
@@ -532,12 +534,12 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             public void accept(String columnName) {
                 columnIndex++;
 
+                //Format the value to adhere to the format of a CSV file
                 if (columnIndex == 1) {
                     columnName = "\"" + columnName + "\"";
                 } else {
                     columnName = ",\"" + columnName + "\"";
                 }
-
                 if (columnIndex == totalColumnCount) {
                     columnName += "\n";
                 }
