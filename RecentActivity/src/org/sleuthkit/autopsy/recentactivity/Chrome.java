@@ -184,7 +184,7 @@ final class Chrome extends Extract {
                                 getModuleName()),
                         new BlackboardAttribute(
                                 TSK_DOMAIN, PARENT_MODULE_NAME,
-                                Util.extractDomain(Objects.toString(result.get("url"), "")))); //NON-NLS
+                                NetworkUtils.extractDomain(Objects.toString(result.get("url"), "")))); //NON-NLS
                 try {
                     BlackboardArtifact bbart = historyFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                     bbart.addAttributes(bbattributes);
@@ -508,7 +508,7 @@ final class Chrome extends Extract {
                                 (Long.valueOf(result.get("start_time").toString()) / 1000000) - SECONDS_SINCE_JAN_1_1601), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DOMAIN, PARENT_MODULE_NAME,
-                                Util.extractDomain(Objects.toString(result.get("url"), ""))), //NON-NLS
+                                NetworkUtils.extractDomain(Objects.toString(result.get("url"), ""))), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_PROG_NAME, PARENT_MODULE_NAME,
                                 getModuleName())
@@ -610,7 +610,7 @@ final class Chrome extends Extract {
                                 getModuleName()),
                         new BlackboardAttribute(
                                 TSK_URL_DECODED, PARENT_MODULE_NAME,
-                                Util.extractDomain(Objects.toString(result.get("origin_url"), ""))), //NON-NLS
+                                NetworkUtils.extractDomain(Objects.toString(result.get("origin_url"), ""))), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_USER_NAME, PARENT_MODULE_NAME,
                                 Objects.toString(result.get("username_value"), "").replaceAll("'", "''")), //NON-NLS

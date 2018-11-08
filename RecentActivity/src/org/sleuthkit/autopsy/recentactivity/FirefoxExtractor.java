@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -172,7 +173,7 @@ final class FirefoxExtractor extends Extract {
                 if (isIgnoredUrl(url) == false) {
                     bbattributes.add(new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(url)));
+                            NetworkUtils.extractDomain(url)));
                 }
                 try {
                     BlackboardArtifact bbart = historyFile.newArtifact(TSK_WEB_HISTORY);
@@ -264,7 +265,7 @@ final class FirefoxExtractor extends Extract {
                 if (isIgnoredUrl(url) == false) {
                     bbattributes.add(new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(url))); 
+                            NetworkUtils.extractDomain(url))); 
                 }
                 Long createdTime = Long.valueOf(result.get("dateAdded").toString());
                 if (createdTime > 0) { //NON-NLS
@@ -372,7 +373,7 @@ final class FirefoxExtractor extends Extract {
                 if (isIgnoredUrl(host) == false) {
                     bbattributes.add(new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(host.replaceFirst("^\\.+(?!$)", ""))));//NON-NLS 
+                            NetworkUtils.extractDomain(host.replaceFirst("^\\.+(?!$)", ""))));//NON-NLS 
                 }
                 if (checkColumn) {
                     bbattributes.add(new BlackboardAttribute(
@@ -470,7 +471,7 @@ final class FirefoxExtractor extends Extract {
 
                 if (isIgnoredUrl(sourceURL) == false) {
                     bbattributes.add(new BlackboardAttribute(TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(sourceURL)));
+                            NetworkUtils.extractDomain(sourceURL)));
                 }
                 String target = result.get("target").toString(); //NON-NLS
 
@@ -590,7 +591,7 @@ final class FirefoxExtractor extends Extract {
 
                 if (isIgnoredUrl(url) == false) {
                     bbattributes.add(new BlackboardAttribute(TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(url)));
+                            NetworkUtils.extractDomain(url)));
                 }
                 String target = result.get("target").toString(); //NON-NLS
 
