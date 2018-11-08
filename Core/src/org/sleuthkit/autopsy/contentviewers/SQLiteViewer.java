@@ -435,8 +435,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             //were a brand new table.
             if (!tableName.equals(prevTableName)) {
                 prevTableName = tableName;
-                currentTableHeader = new ArrayList<>();
             }
+            currentTableHeader = new ArrayList<>();
             viewReader.read(tableName, numRowsToRead, startRow - 1);
             selectedTableView.setupTable(pageOfTableRows);
             pageOfTableRows = new ArrayList<>();
