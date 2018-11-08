@@ -406,6 +406,7 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
                 exportCsvButton.setEnabled(false);
                 nextPageButton.setEnabled(false);
 
+                currentTableHeader = new ArrayList<>();
                 viewReader.read(tableName);
                 Map<String, Object> columnRow = new LinkedHashMap<>();
                 for(int i = 0; i< currentTableHeader.size(); i++){
