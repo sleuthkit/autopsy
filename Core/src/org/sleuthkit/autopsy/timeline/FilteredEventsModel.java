@@ -20,13 +20,8 @@ package org.sleuthkit.autopsy.timeline;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multimap;
 import com.google.common.eventbus.EventBus;
-import com.google.common.net.MediaType;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,8 +32,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -49,13 +42,10 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
-import org.apache.commons.lang3.StringUtils;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
-import org.python.google.common.collect.ImmutableSet;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
@@ -73,6 +63,7 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
+import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -91,6 +82,8 @@ import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.HashHitsFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.HashSetFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
@@ -98,7 +91,6 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
 
 /**
  * This class acts as the model for a TimelineView
@@ -112,57 +104,14 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
  * as to avoid unnecessary db calls through the TimelineManager -jm
  *
  * Concurrency Policy: TimelineManager is internally synchronized, so methods
- * that only access the repo atomically do not need further synchronization. All
- * other member state variables should only be accessed with intrinsic lock of
- * containing FilteredEventsModel held.
+ * that only access the TimelineManager atomically do not need further
+ * synchronization. All other member state variables should only be accessed
+ * with intrinsic lock of containing FilteredEventsModel held.
  *
  */
 public final class FilteredEventsModel {
 
     private static final Logger logger = Logger.getLogger(FilteredEventsModel.class.getName());
-
-    private static final Set<MediaType> MEDIA_MIME_TYPES = Stream.of(
-            "image/*",
-            "video/*",
-            "audio/*",
-            "application/vnd.ms-asf", //NON-NLS
-            "application/vnd.rn-realmedia", //NON-NLS
-            "application/x-shockwave-flash" //NON-NLS 
-    ).map(MediaType::parse).collect(Collectors.toSet());
-
-    private static final Set<MediaType> EXECUTABLE_MIME_TYPES = Stream.of(
-            "application/x-bat",
-            "application/x-dosexec",
-            "application/vnd.microsoft.portable-executable",
-            "application/x-msdownload",
-            "application/exe",
-            "application/x-exe",
-            "application/dos-exe",
-            "vms/exe",
-            "application/x-winexe",
-            "application/msdos-windows",
-            "application/x-msdos-program"
-    ).map(MediaType::parse).collect(Collectors.toSet());
-
-    private static final Set<MediaType> DOCUMENT_MIME_TYPES = Stream.of(
-            "text/*", //NON-NLS
-            "application/rtf", //NON-NLS
-            "application/pdf", //NON-NLS
-            "application/json", //NON-NLS
-            "application/javascript", //NON-NLS
-            "application/xml", //NON-NLS
-            "application/x-msoffice", //NON-NLS
-            "application/x-ooxml", //NON-NLS
-            "application/msword", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
-            "application/vnd.ms-powerpoint", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
-            "application/vnd.ms-excel", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
-            "application/vnd.oasis.opendocument.presentation", //NON-NLS
-            "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
-            "application/vnd.oasis.opendocument.text" //NON-NLS
-    ).map(MediaType::parse).collect(Collectors.toSet());
 
     private final TimelineManager eventManager;
 
@@ -175,15 +124,18 @@ public final class FilteredEventsModel {
     private final ReadOnlyObjectWrapper<ZoomState> requestedZoomState = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
     private final ReadOnlyObjectWrapper< DescriptionLoD> requestedLOD = new ReadOnlyObjectWrapper<>(DescriptionLoD.SHORT);
+    // end Filter and zoome state
 
-    //caches
+    //caches 
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
     private final LoadingCache<Long, TimelineEvent> idToEventCache;
     private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
+    /** Map from datasource id to datasource name. */
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
+    // end caches
 
     public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomState> currentStateProperty) throws TskCoreException {
         this.autoCase = autoCase;
@@ -205,19 +157,19 @@ public final class FilteredEventsModel {
         minCache = CacheBuilder.newBuilder()
                 .build(new CacheLoaderImpl<>(ignored -> eventManager.getMinTime()));
 
-        getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
+        datasourcesMap.addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
             RootFilterState rootFilter = filterProperty().get();
             rootFilter.getDataSourcesFilterState().getFilter().getSubFilters().add(dataSourceFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
-        getHashSets().addListener((SetChangeListener.Change< ? extends String> change) -> {
+        hashSets.addListener((SetChangeListener.Change< ? extends String> change) -> {
             HashSetFilter hashSetFilter = new HashSetFilter(change.getElementAdded());
             RootFilterState rootFilter = filterProperty().get();
             rootFilter.getHashHitsFilterState().getFilter().getSubFilters().add(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
-        getTagNames().addListener((ListChangeListener.Change<? extends TagName> change) -> {
+        tagNames.addListener((ListChangeListener.Change<? extends TagName> change) -> {
             RootFilterState rootFilter = filterProperty().get();
             syncTagsFilter(rootFilter);
             requestedFilter.set(rootFilter.copyOf());
@@ -269,18 +221,6 @@ public final class FilteredEventsModel {
         return autoCase.getSleuthkitCase();
     }
 
-    public ObservableList<TagName> getTagNames() {
-        return tagNames;
-    }
-
-    synchronized public ObservableMap<Long, String> getDatasourcesMap() {
-        return datasourcesMap;
-    }
-
-    synchronized public ObservableSet< String> getHashSets() {
-        return hashSets;
-    }
-
     public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter, DateTimeZone timeZone) throws TskCoreException {
         return eventManager.getSpanningInterval(timeRange, filter, timeZone);
     }
@@ -327,14 +267,14 @@ public final class FilteredEventsModel {
      * for tags that are not in use in the case, and add new filters for tags
      * that don't have them. New filters are selected by default.
      *
-     * @param rootFilter the filter state to modify so it is consistent with the
-     *                   tags in use in the case
+     * @param rootFilterState the filter state to modify so it is consistent
+     *                        with the tags in use in the case
      */
-    public void syncTagsFilter(RootFilterState rootFilter) {
-        for (TagName tagName : tagNames) {
-            rootFilter.getTagsFilterState().getFilter().addSubFilter(new TagNameFilter(tagName));
-        }
-        for (FilterState<? extends TagNameFilter> filterState : rootFilter.getTagsFilterState().getSubFilterStates()) {
+    public void syncTagsFilter(RootFilterState rootFilterState) {
+        tagNames.forEach((tagName) -> {
+            rootFilterState.getTagsFilterState().getFilter().addSubFilter(new TagNameFilter(tagName));
+        });
+        for (FilterState<? extends TagNameFilter> filterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
             filterState.setDisabled(tagNames.contains(filterState.getFilter().getTagName()) == false);
         }
 
@@ -397,31 +337,19 @@ public final class FilteredEventsModel {
     /**
      * @return the default filter used at startup
      */
-    public RootFilterState getDefaultFilter() {
+    public synchronized RootFilterState getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
-
-        getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> entry) -> {
-            DataSourceFilter dataSourceFilter = new DataSourceFilter(entry.getValue(), entry.getKey());
-            dataSourcesFilter.addSubFilter(dataSourceFilter);
-        });
+        datasourcesMap.entrySet().forEach(dataSourceEntry
+                -> dataSourcesFilter.addSubFilter(new DataSourceFilter(dataSourceEntry.getValue(), dataSourceEntry.getKey()))
+        );
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
-        getHashSets().forEach(hashSetName -> {
-            HashSetFilter hashSetFilter = new HashSetFilter(hashSetName);
-            hashHitsFilter.addSubFilter(hashSetFilter);
-        });
+        hashSets.stream().map(HashSetFilter::new).forEach(hashHitsFilter::addSubFilter);
 
         TagsFilter tagsFilter = new TagsFilter();
-        getTagNames().stream().forEach(tagName -> {
-            TagNameFilter tagNameFilter = new TagNameFilter(tagName);
-            tagsFilter.addSubFilter(tagNameFilter);
-        });
+        tagNames.stream().map(TagNameFilter::new).forEach(tagsFilter::addSubFilter);
 
-        TimelineFilter.FileTypesFilter fileTypesFilter = new TimelineFilter.FileTypesFilter();
-
-        fileTypesFilter.addSubFilter(new TimelineFilter.FileTypeFilter("Media", MEDIA_MIME_TYPES));
-        fileTypesFilter.addSubFilter(new TimelineFilter.FileTypeFilter("Documents", DOCUMENT_MIME_TYPES));
-        fileTypesFilter.addSubFilter(new TimelineFilter.FileTypeFilter("Executables", EXECUTABLE_MIME_TYPES));
+        FileTypesFilter fileTypesFilter = FilterUtils.createDefaultFileTypesFilter();
 
         return new RootFilterState(new RootFilter(new HideKnownFilter(),
                 tagsFilter,
@@ -431,10 +359,6 @@ public final class FilteredEventsModel {
                 dataSourcesFilter,
                 fileTypesFilter,
                 Collections.emptySet()));
-    }
-
-    enum FileType {
-        DOCUMENT, EXECUTABLE, MULTIMEDIA, OTHER;
     }
 
     public Interval getBoundingEventsInterval(DateTimeZone timeZone) throws TskCoreException {
@@ -464,6 +388,8 @@ public final class FilteredEventsModel {
      * @param eventIDsWithTags the event ids to get the tag counts map for
      *
      * @return a map from tagname displayname to count of applications
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) throws TskCoreException {
         return eventManager.getTagCountsByTagName(eventIDsWithTags);
@@ -482,7 +408,7 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * return the number of events that pass the requested filter and are within
+     * Return the number of events that pass the requested filter and are within
      * the given time range.
      *
      * NOTE: this method does not change the requested time range
@@ -509,8 +435,8 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * @return The smallest interval spanning all the events from the
-     *         repository, ignoring any filters or requested ranges.
+     * @return The smallest interval spanning all the events from the case,
+     *         ignoring any filters or requested ranges.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
@@ -519,7 +445,13 @@ public final class FilteredEventsModel {
     }
 
     /**
+     * Get the smallest interval spanning all the given events.
+     *
+     * @param eventIDs The IDs of the events to get a spanning interval arround.
+     *
      * @return the smallest interval spanning all the given events
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Interval getSpanningInterval(Collection<Long> eventIDs) throws TskCoreException {
         return eventManager.getSpanningInterval(eventIDs);
@@ -609,6 +541,8 @@ public final class FilteredEventsModel {
      *
      * @return A List of event IDs for the events that are derived from the
      *         given file.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
         return eventManager.getEventIDsForFile(file, includeDerivedArtifacts);
@@ -622,6 +556,8 @@ public final class FilteredEventsModel {
      *
      * @return A List of event IDs for the events that are derived from the
      *         given artifact.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) throws TskCoreException {
         return eventManager.getEventIDsForArtifact(artifact);
@@ -769,6 +705,8 @@ public final class FilteredEventsModel {
      *
      * @return a Set of X, each element mapped from one element of the original
      *         comma delimited string
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public static <X> List<X> unGroupConcat(String groupConcat, CheckedFunction<String, X, TskCoreException> mapper) throws TskCoreException {
 
