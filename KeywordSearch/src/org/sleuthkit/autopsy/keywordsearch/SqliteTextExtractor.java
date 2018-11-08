@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
@@ -282,7 +283,12 @@ class SqliteTextExtractor extends ContentTextExtractor {
 
         @Override
         public void close() throws IOException {
-            reader.close();
+            try {
+                reader.close();
+            } catch (SQLiteTableReaderException ex) {
+                //Done reading, but couldn't close the resources. Nothing we can 
+                //do as a recovery.
+            }
         }
 
         /**
