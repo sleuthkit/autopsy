@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -62,12 +63,14 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private SQLiteTableReader viewReader;
 
-    private Map<String, Object> rowMap = new LinkedHashMap<>();
-    private List<Map<String, Object>> chunk = new ArrayList<>();
+    private Map<String, Object> row = new LinkedHashMap<>();
+    private List<Map<String, Object>> pageOfTableRows = new ArrayList<>();
+    private List<String> currentTableHeader = new ArrayList<>();
+    private String prevTableName;
 
     private int numRows;    // num of rows in the selected table
     private int currPage = 0; // curr page of rows being displayed
-    
+
     /**
      * Constructs a file content viewer for SQLite database files.
      */
@@ -340,9 +343,11 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         tablesDropdownList.setEnabled(true);
         tablesDropdownList.removeAllItems();
         numEntriesField.setText("");
+
         viewReader.close();
-        rowMap = new LinkedHashMap<>();
-        chunk = new ArrayList<>();
+        row = new LinkedHashMap<>();
+        pageOfTableRows = new ArrayList<>();
+        currentTableHeader = new ArrayList<>();
         viewReader = null;
         sqliteDbFile = null;
     }
@@ -408,19 +413,20 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         }
     }
 
-    private String prevTableName;
     @NbBundle.Messages({"# {0} - tableName",
         "SQLiteViewer.readTable.errorText=Error getting rows for table: {0}"})
     private void readTable(String tableName, int startRow, int numRowsToRead) {
         try {
-            if(!tableName.equals(prevTableName)) {
+            //If the table name has changed, then clear our table header. SQLiteTableReader
+            //will also detect the table name has changed and begin reading it as if it
+            //were a brand new table.
+            if (!tableName.equals(prevTableName)) {
                 prevTableName = tableName;
-                header = new ArrayList<>();
-                rowIndex = 0;
+                currentTableHeader = new ArrayList<>();
             }
             viewReader.read(tableName, numRowsToRead, startRow - 1);
-            selectedTableView.setupTable(chunk);
-            chunk = new ArrayList<>();
+            selectedTableView.setupTable(pageOfTableRows);
+            pageOfTableRows = new ArrayList<>();
         } catch (SQLiteTableReaderException ex) {
             logger.log(Level.WARNING, String.format("Failed to read table %s from DB file '%s' " //NON-NLS
                     + "(objId=%d) starting at row [%d] and limit [%d]", //NON-NLS
@@ -429,86 +435,170 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         }
     }
 
-    List<String> header;
-    private int rowIndex;
+    /**
+     * Creates a new SQLiteTableReader. This class will iterate through the
+     * table row by row and pass each value to the correct function based on its
+     * data type. For our use, we want to define an action when encountering
+     * column names and an action for all other data types.
+     */
     private void initReader() {
         viewReader = new SQLiteTableReader.Builder(sqliteDbFile)
                 .onColumnNames((columnName) -> {
-                    header.add(columnName);
+                    currentTableHeader.add(columnName);
                 })
-                .forAll((Object o) -> {
-                    rowIndex++;
-                    String objectStr = (o instanceof byte[]) ? "BLOB Data not shown" : Objects.toString(o, "");
-
-                    rowMap.put(header.get(rowIndex - 1), objectStr);
-                    //If this result is at the end of a row, then add it to the 
-                    //chunk!
-                    if (rowIndex == header.size()) {
-                        chunk.add(rowMap);
-                        rowMap = new LinkedHashMap<>();
-                    }
-                    rowIndex %= header.size();
-                }).build();
+                .forAll(getForAllStrategy()).build();
     }
 
-    private int csvRowIndex;
-    private int columnCount;
-    private boolean afterHeader;
-    
+    /**
+     * For every database value we encounter on our read of the table do the
+     * following: 1) Get the string representation of the value 2) Collect the
+     * values until we have a full database row. 3) If we have the full row,
+     * write it to the UI.
+     *
+     * rowIndex is purely for indicating if we have read the full row.
+     *
+     * @return Consumer that will perform the actions above. When the
+     *         SQLiteTableReader is reading, values will be passed to this
+     *         consumer.
+     */
+    private Consumer<Object> getForAllStrategy() {
+        return new Consumer<Object>() {
+            private int rowIndex = 0;
+
+            @Override
+            public void accept(Object t) {
+                rowIndex++;
+                String objectStr = (t instanceof byte[]) ? "BLOB Data not shown"
+                        : Objects.toString(t, "");
+
+                row.put(currentTableHeader.get(rowIndex - 1), objectStr);
+
+                if (rowIndex == currentTableHeader.size()) {
+                    pageOfTableRows.add(row);
+                    row = new LinkedHashMap<>();
+                }
+                rowIndex %= currentTableHeader.size();
+            }
+
+        };
+    }
+
+    private int totalColumnCount;
+
     @NbBundle.Messages({"SQLiteViewer.exportTableToCsv.write.errText=Failed to export table content to csv file.",
         "SQLiteViewer.exportTableToCsv.FileName=File name: ",
         "SQLiteViewer.exportTableToCsv.TableName=Table name: "
     })
     private void exportTableToCsv(File file) {
-        csvRowIndex = 0;
-        columnCount = 0;
-        afterHeader = true;
         File csvFile = new File(file.toString() + ".csv");
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
         try (FileOutputStream out = new FileOutputStream(csvFile, false)) {
             try (SQLiteTableReader sqliteStream = new SQLiteTableReader.Builder(sqliteDbFile)
-                    .onColumnNames((columnName) -> {
-                        columnCount++;
-                        try {
-                            if(columnCount == 1) {
-                                columnName = "\"" + columnName + "\"";
-                            } else  {
-                                columnName = ",\"" + columnName + "\"";
-                            }
-                            out.write(columnName.getBytes());
-                        } catch (IOException ex) {
-
-                        }
-                    }).forAll((Object o) -> {
-                        csvRowIndex++;
-                        String objectStr = (o instanceof byte[]) ? "BLOB Data not shown" : Objects.toString(o, "");
-                        objectStr = "\"" + objectStr + "\"";
-                                
-                        if (csvRowIndex > 1) {
-                            objectStr = "," + objectStr;
-                        } if(csvRowIndex == columnCount) {
-                            objectStr += "\n";
-                        }
-                        
-                        if(afterHeader) {
-                            objectStr = "\n" + objectStr;
-                            afterHeader = false;
-                        }
-                        
-                        try {
-                            out.write(objectStr.getBytes());
-                        } catch (IOException ex) {
-                            
-                        }
-                        csvRowIndex = csvRowIndex % columnCount;
-                    }).build()) {
+                    .onColumnNames(getColumnNameCSVStrategy(out))
+                    .forAll(getForAllCSVStrategy(out)).build()) {
+                totalColumnCount = sqliteStream.getColumnCount(tableName);
                 sqliteStream.read(tableName);
             }
-        } catch (IOException | SQLiteTableReaderException ex) {
+        } catch (IOException | SQLiteTableReaderException | RuntimeException ex) {
             logger.log(Level.WARNING, String.format("Failed to export table [%s]"
                     + " to CSV in sqlite file '%s' (objId=%d)", tableName, sqliteDbFile.getName(),
                     sqliteDbFile.getId()), ex.getMessage()); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.SQLiteViewer_exportTableToCsv_write_errText());
         }
+    }
+
+    /**
+     * For every column name we encounter on our read of the table do the
+     * following: 1) Format the name so that it is comma seperated 2) Write the
+     * value to the output stream.
+     *
+     * columnIndex is purely for keeping track of where the column name is in
+     * the table so the value can be correctly formatted.
+     *
+     * @param out Output stream that this database table is being written to.
+     *
+     * @return Consumer that will perform the actions above. When the
+     *         SQLiteTableReader is reading, values will be passed to this
+     *         consumer.
+     */
+    private Consumer<String> getColumnNameCSVStrategy(FileOutputStream out) {
+        return new Consumer<String>() {
+            private int columnIndex = 0;
+
+            @Override
+            public void accept(String columnName) {
+                columnIndex++;
+
+                if (columnIndex == 1) {
+                    columnName = "\"" + columnName + "\"";
+                } else {
+                    columnName = ",\"" + columnName + "\"";
+                }
+
+                if (columnIndex == totalColumnCount) {
+                    columnName += "\n";
+                }
+
+                try {
+                    out.write(columnName.getBytes());
+                } catch (IOException ex) {
+                    /*
+                     * If we can no longer write to the output stream, toss a
+                     * runtime exception to get out of iteration. We explicitly
+                     * catch this in exportTableToCsv() above.
+                     */
+                    throw new RuntimeException(ex);
+                }
+            }
+        };
+    }
+
+    /**
+     * For every database value we encounter on our read of the table do the
+     * following: 1) Get the string representation of the value 2) Format it so
+     * that it adheres to the CSV format. 3) Write it to the output file.
+     *
+     * rowIndex is purely for keeping track of positioning of the database value
+     * in the row, so that it can be properly formatted.
+     *
+     * @param out Output file
+     *
+     * @return Consumer that will perform the actions above. When the
+     *         SQLiteTableReader is reading, values will be passed to this
+     *         consumer.
+     */
+    private Consumer<Object> getForAllCSVStrategy(FileOutputStream out) {
+        return new Consumer<Object>() {
+            private int rowIndex = 0;
+
+            @Override
+            public void accept(Object tableValue) {
+                rowIndex++;
+                //Substitute string representation of blob with placeholder text.
+                //Automatically wrap the value in quotes in case it contains commas.
+                String objectStr = (tableValue instanceof byte[])
+                        ? "BLOB Data not shown" : Objects.toString(tableValue, "");
+                objectStr = "\"" + objectStr + "\"";
+
+                if (rowIndex > 1) {
+                    objectStr = "," + objectStr;
+                }
+                if (rowIndex == totalColumnCount) {
+                    objectStr += "\n";
+                }
+
+                try {
+                    out.write(objectStr.getBytes());
+                } catch (IOException ex) {
+                    /*
+                     * If we can no longer write to the output stream, toss a
+                     * runtime exception to get out of iteration. We explicitly
+                     * catch this in exportTableToCsv() above.
+                     */
+                    throw new RuntimeException(ex);
+                }
+                rowIndex = rowIndex % totalColumnCount;
+            }
+        };
     }
 }
