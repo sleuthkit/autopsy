@@ -39,6 +39,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
@@ -56,8 +57,7 @@ class ReportCaseUco implements GeneralReportModule {
     private static ReportCaseUco instance = null;
     private ReportCaseUcoConfigPanel configPanel;
     
-    private static final String REPORT_FILE_NAME = "CaseUco.txt";
-    private static final String SEPARATOR = java.io.File.separator;
+    private static final String REPORT_FILE_NAME = "CaseUco.json";
     
     // Hidden constructor for the report
     private ReportCaseUco() {
@@ -77,20 +77,30 @@ class ReportCaseUco implements GeneralReportModule {
      * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
+    @NbBundle.Messages({
+        "ReportCaseUco.notInitialized=CASE/UCO settings panel has not been initialized",
+        "ReportCaseUco.noDataSourceSelected=No data source selected for CASE/UCO report",
+        "ReportCaseUco.noCaseOpen=Unable to open currect case",
+        "ReportCaseUco.unableToCreateDirectories=Unable to create directory for CASE/UCO report",
+        "ReportCaseUco.initializing=Creating directories...",
+        "ReportCaseUco.querying=Querying files...",
+        "ReportCaseUco.ingestWarning=Warning, this report will be created before ingest services completed\\!",
+        "ReportCaseUco.processing=Saving files in CASE/UCO format..."
+    })
     @Override
     @SuppressWarnings("deprecation")
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
 
         if (configPanel == null) {
             logger.log(Level.SEVERE, "CASE/UCO settings panel has not been initialized"); //NON-NLS
-            // ELTODO
+            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_notInitialized());
             return;            
         }
         
         Long selectedDataSourceId = configPanel.getSelectedDataSourceId();
         if (selectedDataSourceId == ReportCaseUcoConfigPanel.NO_DATA_SOURCE_SELECTED) {
             logger.log(Level.SEVERE, "No data source selected for CASE/UCO report"); //NON-NLS
-            // ELTODO
+            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_noDataSourceSelected());
             return;
         } 
         
@@ -99,13 +109,14 @@ class ReportCaseUco implements GeneralReportModule {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_noCaseOpen());
             return;
         }
         
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
-        progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.initializing"));
+        progressPanel.updateStatusLabel(Bundle.ReportCaseUco_initializing());
               
         // Create the JSON generator
         JsonFactory jsonGeneratorFactory = new JsonFactory();
@@ -115,14 +126,14 @@ class ReportCaseUco implements GeneralReportModule {
             Files.createDirectories(Paths.get(reportFile.getParent()));
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to create directory for CASE/UCO report", ex); //NON-NLS
-            // ELTODO what else needs to be done here?
+            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_unableToCreateDirectories());
             return;
         }
         
         // Check if ingest has finished
         if (IngestManager.getInstance().isIngestRunning()) {
-            String ingestwarning = NbBundle.getMessage(this.getClass(), "ReportCaseUco.ingestWarning.text");
-            // ELTODO what to do with this warning?
+            MessageNotifyUtil.Message.warn(Bundle.ReportCaseUco_ingestWarning());
+            // ELTODO exit?
         }
 
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
@@ -134,10 +145,10 @@ class ReportCaseUco implements GeneralReportModule {
             // instert \n after each field for more readable formatting
             jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
             
+            progressPanel.updateStatusLabel(Bundle.ReportCaseUco_querying());
+            
             // create CASE/UCO data source entry
             String dataSourceTraceId = getDataSourceInfo(selectedDataSourceId, skCase, jsonGenerator);
-            
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.querying"));
             
             // Run getAllFilesQuery to get all files, exclude directories
             final String getAllFilesQuery = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
@@ -146,14 +157,13 @@ class ReportCaseUco implements GeneralReportModule {
                     + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
                     + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue() + "))"; //NON-NLS
 
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.loading"));
-
             SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getAllFilesQuery);
             ResultSet resultSet = queryResult.getResultSet();
 
-            progressPanel.updateStatusLabel(NbBundle.getMessage(this.getClass(), "ReportCaseUco.progress.processing"));
+            progressPanel.updateStatusLabel(Bundle.ReportCaseUco_processing());
             
             // Loop files and write info to report
+            int count = 0;
             while (resultSet.next()) {
 
                 if (progressPanel.getStatus() == ReportStatus.CANCELED) {
@@ -172,8 +182,10 @@ class ReportCaseUco implements GeneralReportModule {
                 String extension = resultSet.getString("extension");
                 
                 saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
+                count++;
             }
             progressPanel.complete(ReportStatus.COMPLETE);
+            logger.log(Level.INFO, "ELDEBUG Number of files saved {0}", count); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
         } catch (IOException ex) {
@@ -285,12 +297,12 @@ class ReportCaseUco implements GeneralReportModule {
         if (parent_path != null) {
             catalog.writeStringField("filePath", parent_path + fileName);
         }
+        catalog.writeBooleanField("isDirectory", false);
         catalog.writeStringField("sizeInBytes", Long.toString(size));        
         catalog.writeEndObject();
         
         catalog.writeStartObject();
         catalog.writeStringField("@type", "ContentData");
-        catalog.writeStringField("sizeInBytes", Long.toString(size));
         if (mime_type != null) {
             catalog.writeStringField("mimeType", mime_type);
         }
@@ -304,6 +316,7 @@ class ReportCaseUco implements GeneralReportModule {
             catalog.writeEndObject();
             catalog.writeEndArray();
         }
+        catalog.writeStringField("sizeInBytes", Long.toString(size));
 
         catalog.writeEndObject();
         
@@ -357,7 +370,7 @@ class ReportCaseUco implements GeneralReportModule {
             configPanel = new ReportCaseUcoConfigPanel();
         } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
             logger.log(Level.SEVERE, "Failed to initialize CASE/UCO settings panel", ex); //NON-NLS
-            // ELTODO display error
+            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_notInitialized());
             configPanel = null;
         }
         return configPanel;
