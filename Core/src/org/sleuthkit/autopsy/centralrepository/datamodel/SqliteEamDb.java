@@ -1172,7 +1172,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
 
     @Override
     boolean doesColumnExist(Connection conn, String tableName, String columnName) throws SQLException {
-        final String tableInfoQueryTemplate = "PRAGMA table_info(%s)";
+        final String tableInfoQueryTemplate = "PRAGMA table_info(%s)";  //NON-NLS
         ResultSet resultSet;
         Statement statement = conn.createStatement();
         boolean columnExists = false;
