@@ -374,7 +374,9 @@ class ExtractRegistry extends Extract {
             // Add all "usb" dataType nodes to collection of BlackboardArtifacts 
             // that we will submit in a ModuleDataEvent for additional processing.
             Collection<BlackboardArtifact> usbBBartifacts = new ArrayList<>();
-
+            // Add all "ssid" dataType nodes to collection of BlackboardArtifacts 
+            // that we will submit in a ModuleDataEvent for additional processing.
+            Collection<BlackboardArtifact> wifiBBartifacts = new ArrayList<>();
             for (int i = 0; i < len; i++) {
                 Element tempnode = (Element) children.item(i);
 
@@ -734,6 +736,7 @@ class ExtractRegistry extends Extract {
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
                                             this.indexArtifact(bbart);
+                                            wifiBBartifacts.add(bbart);
                                         } catch (TskCoreException ex) {
                                             logger.log(Level.SEVERE, "Error adding SSID artifact to blackboard."); //NON-NLS
                                         }
@@ -755,6 +758,9 @@ class ExtractRegistry extends Extract {
             } // for
             if (!usbBBartifacts.isEmpty()) {
                 IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, usbBBartifacts));
+            }
+            if (!wifiBBartifacts.isEmpty()){
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK, wifiBBartifacts));
             }
             return true;
         } catch (FileNotFoundException ex) {

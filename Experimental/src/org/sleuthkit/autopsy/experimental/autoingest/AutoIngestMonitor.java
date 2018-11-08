@@ -45,6 +45,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.ProcessingStatus;
@@ -666,43 +667,73 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
      * @return A result code indicating success, partial success, or failure.
      */
     CaseDeletionResult deleteCase(AutoIngestJob job) {
+        String caseName = job.getManifest().getCaseName();
+        Path caseDirectoryPath = job.getCaseDirectoryPath();
+        Path metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         synchronized (jobsLock) {
-            String caseName = job.getManifest().getCaseName();
-            Path metadataFilePath = job.getCaseDirectoryPath().resolve(caseName + CaseMetadata.getFileExtension());
-
+            stopWatch.stop();
+            LOGGER.log(Level.INFO, String.format("Used %d s to acquire jobsLock (Java monitor in AutoIngestMonitor class) for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName, caseDirectoryPath));
+            stopWatch.reset();
+            stopWatch.start();
             try {
                 CaseMetadata metadata = new CaseMetadata(metadataFilePath);
+                stopWatch.stop();
+                LOGGER.log(Level.INFO, String.format("Used %d s to read case metadata for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName, caseDirectoryPath));
+                stopWatch.reset();
+                stopWatch.start();
                 Case.deleteCase(metadata);
-
             } catch (CaseMetadata.CaseMetadataException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Failed to get case metadata file %s for case %s at %s", metadataFilePath.toString(), caseName, job.getCaseDirectoryPath().toString()), ex);
+                LOGGER.log(Level.SEVERE, String.format("Failed to read case metadata file %s for case %s at %s", metadataFilePath, caseName, caseDirectoryPath), ex);
+                stopWatch.stop();
+                LOGGER.log(Level.INFO, String.format("Used %d s to fail to read case metadata file %s for case %s at %s", stopWatch.getElapsedTimeSecs(), metadataFilePath, caseName, caseDirectoryPath));
                 return CaseDeletionResult.FAILED;
             } catch (CaseActionException ex) {
-                LOGGER.log(Level.SEVERE, String.format("Failed to physically delete case %s at %s", caseName, job.getCaseDirectoryPath().toString()), ex);
+                LOGGER.log(Level.SEVERE, String.format("Failed to delete case %s at %s", caseName, caseDirectoryPath), ex);
                 return CaseDeletionResult.FAILED;
             }
 
             // Update the state of completed jobs associated with this case to indicate
             // that the case has been deleted
-            for (AutoIngestJob completedJob : getCompletedJobs()) {
+            stopWatch.reset();
+            stopWatch.start();
+            List<AutoIngestJob> completedJobs = getCompletedJobs();
+            stopWatch.stop();
+            LOGGER.log(Level.INFO, String.format("Used %d s to get completed jobs listing for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName, caseDirectoryPath));
+            stopWatch.reset();
+            stopWatch.start();
+            for (AutoIngestJob completedJob : completedJobs) {
                 if (caseName.equals(completedJob.getManifest().getCaseName())) {
                     try {
                         completedJob.setProcessingStatus(DELETED);
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(completedJob);
                         coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, completedJob.getManifest().getFilePath().toString(), nodeData.toArray());
                     } catch (CoordinationServiceException | InterruptedException ex) {
-                        LOGGER.log(Level.SEVERE, String.format("Failed to update completed job node data for %s when deleting case %s", completedJob.getManifest().getFilePath().toString(), caseName), ex);
+                        LOGGER.log(Level.SEVERE, String.format("Failed to update completed job node data for %s when deleting case %s at %s", completedJob.getManifest().getFilePath(), caseName, caseDirectoryPath), ex);
+                        stopWatch.stop();
+                        LOGGER.log(Level.INFO, String.format("Used %d s to fail to update job node data for completed jobs for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName, caseDirectoryPath));
                         return CaseDeletionResult.PARTIALLY_DELETED;
                     }
                 }
             }
+            stopWatch.stop();
+            LOGGER.log(Level.INFO, String.format("Used %d s to update job node data for completed jobs for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName, caseDirectoryPath));
 
             // Remove jobs associated with this case from the completed jobs collection.
-            jobsSnapshot.completedJobs.removeIf((AutoIngestJob completedJob)
+            stopWatch.reset();
+            stopWatch.start();
+            completedJobs.removeIf((AutoIngestJob completedJob)
                     -> completedJob.getManifest().getCaseName().equals(caseName));
+            stopWatch.stop();
+            LOGGER.log(Level.INFO, String.format("Used %d s to remove completed jobs for case %s at %s from current jobs snapshot", stopWatch.getElapsedTimeSecs(), caseName, caseDirectoryPath));
 
             // Publish a message to update auto ingest nodes.
+            stopWatch.reset();
+            stopWatch.start();
             eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
+            stopWatch.stop();
+            LOGGER.log(Level.INFO, String.format("Used %d s to publish job deletion event for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName,caseDirectoryPath));
         }
 
         return CaseDeletionResult.FULLY_DELETED;

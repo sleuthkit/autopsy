@@ -71,7 +71,6 @@ final class IngestModule implements FileIngestModule {
     private CorrelationDataSource eamDataSource;
     private Blackboard blackboard;
     private CorrelationAttributeInstance.Type filesType;
-
     private final boolean flagTaggedNotableItems;
 
     /**
