@@ -955,7 +955,7 @@ class SevenZipExtractor {
                 }
             } catch (IOException ex) {
                 logger.log(Level.WARNING, String.format("Error opening or setting new stream " //NON-NLS
-                        + "for archive file at %s", localAbsPath), ex); //NON-NLS
+                        + "for archive file at %s", localAbsPath), ex.getMessage()); //NON-NLS
                 return null;
             }
 
