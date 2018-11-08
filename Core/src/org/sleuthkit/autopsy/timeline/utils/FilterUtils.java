@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
@@ -34,26 +35,26 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
 public final class FilterUtils {
 
     private static final Set<MediaType> MEDIA_MIME_TYPES = Stream.of(
-            "image/*",
-            "video/*",
-            "audio/*",
+            "image/*",//NON-NLS
+            "video/*",//NON-NLS
+            "audio/*",//NON-NLS
             "application/vnd.ms-asf", //NON-NLS
             "application/vnd.rn-realmedia", //NON-NLS
             "application/x-shockwave-flash" //NON-NLS 
     ).map(MediaType::parse).collect(Collectors.toSet());
 
     private static final Set<MediaType> EXECUTABLE_MIME_TYPES = Stream.of(
-            "application/x-bat",
-            "application/x-dosexec",
-            "application/vnd.microsoft.portable-executable",
-            "application/x-msdownload",
-            "application/exe",
-            "application/x-exe",
-            "application/dos-exe",
-            "vms/exe",
-            "application/x-winexe",
-            "application/msdos-windows",
-            "application/x-msdos-program"
+            "application/x-bat",//NON-NLS
+            "application/x-dosexec",//NON-NLS
+            "application/vnd.microsoft.portable-executable",//NON-NLS
+            "application/x-msdownload",//NON-NLS
+            "application/exe",//NON-NLS
+            "application/x-exe",//NON-NLS
+            "application/dos-exe",//NON-NLS
+            "vms/exe",//NON-NLS
+            "application/x-winexe",//NON-NLS
+            "application/msdos-windows",//NON-NLS
+            "application/x-msdos-program"//NON-NLS
     ).map(MediaType::parse).collect(Collectors.toSet());
 
     private static final Set<MediaType> DOCUMENT_MIME_TYPES = Stream.of(
@@ -87,17 +88,32 @@ public final class FilterUtils {
     private FilterUtils() {
     }
 
+    /**
+     * Create a new FileTypesFilter with the default FileTypeFilters for Media,
+     * Documents, Executables, and Other.
+     *
+     * @return The new FileTypesFilter.
+     */
+    @NbBundle.Messages({
+        "FilterUtils.mediaFilter.displayName=Media",
+        "FilterUtils.documentsFilter.displayName=Documents",
+        "FilterUtils.executablesFilter.displayName=Executables",
+        "FilterUtils.otherFilter.displayName=Other"})
     public static FileTypesFilter createDefaultFileTypesFilter() {
         FileTypesFilter fileTypesFilter = new FileTypesFilter();
 
-        fileTypesFilter.addSubFilter(new FileTypeFilter("Media", MEDIA_MIME_TYPES));
-        fileTypesFilter.addSubFilter(new FileTypeFilter("Documents", DOCUMENT_MIME_TYPES));
-        fileTypesFilter.addSubFilter(new FileTypeFilter("Executables", EXECUTABLE_MIME_TYPES));
-        fileTypesFilter.addSubFilter(new InverseFileTypeFilter("Other", NON_OTHER_MIME_TYPES));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(Bundle.FilterUtils_mediaFilter_displayName(), MEDIA_MIME_TYPES));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(Bundle.FilterUtils_documentsFilter_displayName(), DOCUMENT_MIME_TYPES));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(Bundle.FilterUtils_executablesFilter_displayName(), EXECUTABLE_MIME_TYPES));
+        fileTypesFilter.addSubFilter(new InverseFileTypeFilter(Bundle.FilterUtils_otherFilter_displayName(), NON_OTHER_MIME_TYPES));
 
         return fileTypesFilter;
     }
 
+    /**
+     * Subclass of FileTypeFilter that excludes rather than includes the given
+     * MediaTypes.
+     */
     private static class InverseFileTypeFilter extends FileTypeFilter {
 
         InverseFileTypeFilter(String displayName, Collection<MediaType> mediaTypes) {
@@ -111,7 +127,7 @@ public final class FilterUtils {
 
         @Override
         protected String getSQLWhere(TimelineManager manager) {
-            return " NOT " + super.getSQLWhere(manager) ;
+            return " NOT " + super.getSQLWhere(manager);
         }
     }
 }
