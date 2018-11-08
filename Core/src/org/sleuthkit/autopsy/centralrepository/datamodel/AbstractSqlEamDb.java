@@ -1448,13 +1448,12 @@ abstract class AbstractSqlEamDb implements EamDb {
 
     /**
      * Find a correlation attribute in the Central Repository database given the
-     * instance type, case, data source, value, and file path.
+     * instance type, case, data source, object id.
      *
      * @param type                  The type of instance.
      * @param correlationCase       The case tied to the instance.
      * @param correlationDataSource The data source tied to the instance.
-     * @param value                 The value tied to the instance.
-     * @param filePath              The file path tied to the instance.
+     * @param objectID              The object id of the file tied to the instance.
      *
      * @return The correlation attribute if it exists; otherwise null.
      *
