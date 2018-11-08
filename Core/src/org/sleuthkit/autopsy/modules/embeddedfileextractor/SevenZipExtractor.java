@@ -785,51 +785,6 @@ class SevenZipExtractor {
                 .mapToInt(Integer::intValue)
                 .toArray();
     }
-
-    /**
-     * Stream used to unpack the archive item to local file. This will be used when 
-     * the 7ZIP bindings call getStream() on the StandardIArchiveExtractCallback.
-     */
-    private final static class MutableEncodedFileOutputStream extends EncodedFileOutputStream 
-            implements AutoCloseable {
-        
-        private static final int HEADER_LENGTH = 32;
-        private static final String HEADER = "TSK_CONTAINER_XOR1_xxxxxxxxxxxxx";
-
-        MutableEncodedFileOutputStream(String localAbsPath) throws IOException {
-            super(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
-        }
-        
-        /**
-         * Update the OutputStream to point to a new File. This method mutates the state so
-         * that there is no overhead of creating a new object and buffer. Additionally, the 
-         * 7zip binding has a memory leak, so this prevents multiple streams from being created
-         * and never GC'd since the 7zip lib never frees a reference to them.
-         * 
-         * @param localAbsPath Path to local file
-         * @throws IOException 
-         */
-        public void setNewOutputStream(String localAbsPath) throws IOException {
-            this.out.close();
-            this.out = new FileOutputStream(localAbsPath);
-            writeHeader();
-        }
-        
-        private byte[] getEncodedHeader() {
-            byte [] encHeader = new byte[HEADER_LENGTH];
-            byte [] plainHeader = HEADER.getBytes();
-
-            for(int i = 0; i < HEADER_LENGTH; i++){
-                    encHeader[i] = ((byte)(plainHeader[i] ^ 0xca));
-            }
-            return encHeader;
-	}
-        
-        private void writeHeader() throws IOException {
-            // We get the encoded header here so it will be in plaintext after encoding
-            write(getEncodedHeader(), 0, HEADER_LENGTH);
-	}
-    }
     
     /**
      * UnpackStream used by the SevenZipBindings to do archive extraction. A memory
@@ -841,18 +796,18 @@ class SevenZipExtractor {
      */
     private final static class UnpackStream implements ISequentialOutStream {
 
-        private final MutableEncodedFileOutputStream output;
+        private EncodedFileOutputStream output;
         private String localAbsPath;
         private int bytesWritten;
         
         UnpackStream(String localAbsPath) throws IOException {
-            this.output = new MutableEncodedFileOutputStream(localAbsPath);
+            this.output = new EncodedFileOutputStream(localAbsPath);
             this.localAbsPath = localAbsPath;
             this.bytesWritten = 0;
         } 
         
         public void setNewOutputStream(String localAbsPath) throws IOException {
-            this.output.setNewOutputStream(localAbsPath);
+            this.output = new EncodedFileOutputStream(localAbsPath);
             this.localAbsPath = localAbsPath;
             this.bytesWritten = 0;
         }
@@ -876,7 +831,7 @@ class SevenZipExtractor {
         }
         
         public void close() throws IOException {
-           try(MutableEncodedFileOutputStream out = output) {
+           try(EncodedFileOutputStream out = output) {
                out.flush();
            }
         }
