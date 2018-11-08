@@ -23,6 +23,8 @@
         <dependency conf="core->default" org="com.adobe.xmp" name="xmpcore" rev="5.1.2"/>
         <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.4.6"/>
 
+        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess" rev="2.2.0"/>
+        <dependency conf="core->default" org="com.healthmarketscience.jackcess" name="jackcess-encrypt" rev="2.1.4"/>
         
         <dependency conf="core->default" org="org.apache.commons" name="commons-dbcp2" rev="2.1.1"/>
         <dependency conf="core->default" org="org.apache.commons" name="commons-pool2" rev="2.4.2"/>

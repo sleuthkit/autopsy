@@ -405,7 +405,13 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
             } else {
                 exportCsvButton.setEnabled(false);
                 nextPageButton.setEnabled(false);
-                selectedTableView.setupTable(Collections.emptyList());
+
+                viewReader.read(tableName);
+                Map<String, Object> columnRow = new LinkedHashMap<>();
+                for(int i = 0; i< currentTableHeader.size(); i++){
+                  columnRow.put(currentTableHeader.get(i), "");
+                }
+                selectedTableView.setupTable(Collections.singletonList(columnRow));
             }
         } catch (SQLiteTableReaderException ex) {
             logger.log(Level.WARNING, String.format("Failed to load table %s " //NON-NLS
