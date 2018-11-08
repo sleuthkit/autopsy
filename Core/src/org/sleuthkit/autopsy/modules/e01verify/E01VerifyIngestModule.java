@@ -20,10 +20,12 @@ package org.sleuthkit.autopsy.modules.e01verify;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import javax.xml.bind.DatatypeConverter;
-import org.openide.util.NbBundle;
-import org.python.bouncycastle.util.Arrays;
+//import org.python.bouncycastle.util.Arrays;
+import java.util.Arrays;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -51,31 +53,128 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getInstance();
 
+    private final boolean computeHashes;
+    private final boolean verifyHashes;
+    
+    private final List<MessageDigest> messageDigests = new ArrayList<>();
+    
     private MessageDigest messageDigest;
     private boolean verified = false;
     private String calculatedHash = "";
     private String storedHash = "";
     private IngestJobContext context;
-
-    E01VerifyIngestModule() {
+    
+    E01VerifyIngestModule(IngestSettings settings) {
+        computeHashes = settings.shouldComputeHashes();
+        verifyHashes = settings.shouldVerifyHashes();
     }
 
+    @NbBundle.Messages({
+        "E01VerifyIngestModule.startup.noCheckboxesSelected=At least one of the checkboxes must be selected"
+    })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         verified = false;
         storedHash = "";
         calculatedHash = "";
-
+        
+        // It's an error if the module is run without either option selected
+        if (!(computeHashes || verifyHashes)) {
+            throw new IngestModuleException(Bundle.E01VerifyIngestModule_startup_noCheckboxesSelected());
+        }
+        
         try {
             messageDigest = MessageDigest.getInstance("MD5"); //NON-NLS
         } catch (NoSuchAlgorithmException ex) {
             throw new IngestModuleException(Bundle.UnableToCalculateHashes(), ex);
         }
+        
+        
     }
-
+    
+    @NbBundle.Messages({
+        "# {0} - imageName",
+        "E01VerifyIngestModule.process.skipCompute=Not computing new hashes for {0} since the option was disabled",
+        "# {0} - imageName",
+        "E01VerifyIngestModule.process.skipVerify=Not verifying existing hashes for {0} since the option was disabled",
+        "# {0} - hashName",
+        "E01VerifyIngestModule.process.hashAlgorithmError=Error creating message digest for {0} algorithm"
+    })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
+        String imgName = dataSource.getName();
+
+        // Skip non-images
+        if (!(dataSource instanceof Image)) {
+            logger.log(Level.INFO, "Skipping non-image {0}", imgName); //NON-NLS
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(),
+                            "EwfVerifyIngestModule.process.skipNonEwf",
+                            imgName)));
+            return ProcessResult.OK;
+        }
+        Image img = (Image) dataSource;
+        
+        // Determine which mode we're in. 
+        // - If there are any preset hashes, then we'll verify them (assuming the verify checkbox is selected)
+        // - Otherwise we'll calculate and store all three hashes (assuming the compute checkbox is selected)
+        
+        // First get a list of all stored hash types
+        List<HashType> hashesToCalculate = new ArrayList<>();
+        if (img.getMd5() != null && ! img.getMd5().isEmpty()) {
+            hashesToCalculate.add(HashType.MD5);
+        }
+        if (img.getSha1() != null && ! img.getSha1().isEmpty()) {
+            hashesToCalculate.add(HashType.SHA1);
+        }
+        if (img.getSha256() != null && ! img.getSha256().isEmpty()) {
+            hashesToCalculate.add(HashType.SHA256);
+        }
+        
+        // Figure out which mode we should be in
+        Mode mode;
+        if (hashesToCalculate.isEmpty()) {
+            mode = Mode.COMPUTE;
+        } else {
+            mode = Mode.VERIFY;
+        }
+        
+        // If that mode was not enabled by the user, exit
+        if (mode.equals(Mode.COMPUTE) && ! this.computeHashes) {
+            logger.log(Level.INFO, "Not computing hashes for {0} since the option was disabled", imgName); //NON-NLS
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+                    Bundle.E01VerifyIngestModule_process_skipCompute(imgName)));
+            return ProcessResult.OK;
+        } else if (mode.equals(Mode.VERIFY) && ! this.verifyHashes) {
+            logger.log(Level.INFO, "Not verifying hashes for {0} since the option was disabled", imgName); //NON-NLS
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+                    Bundle.E01VerifyIngestModule_process_skipVerify(imgName)));
+            return ProcessResult.OK;
+        }
+        
+        // If we're in compute mode (i.e., the hash list is empty), add all hash algorithms
+        // to the list.
+        if (mode.equals(Mode.COMPUTE)) {
+            hashesToCalculate.addAll(Arrays.asList(HashType.values()));
+        }
+        
+        // Set up the digests
+        for (HashType hashType:hashesToCalculate) {
+            try {
+                messageDigest = MessageDigest.getInstance(hashType.getName()); //NON-NLS
+            } catch (NoSuchAlgorithmException ex) {
+                String msg = Bundle.E01VerifyIngestModule_process_hashAlgorithmError(hashType.getName());
+                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
+                logger.log(Level.SEVERE, msg, ex);
+                return ProcessResult.ERROR;
+            }
+        }
+        
+        return ProcessResult.OK;
+    }
+
+    public ProcessResult process2(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         String imgName = dataSource.getName();
 
         // Skip non-images
@@ -185,5 +284,26 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         logger.log(Level.INFO, "{0}{1}", new Object[]{imgName, msg});
 
         return ProcessResult.OK;
+    }
+    
+    private enum Mode {
+        COMPUTE,
+        VERIFY;
+    }
+    
+    private enum HashType {
+        MD5("MD5"), 
+        SHA1("SHA-1"),
+        SHA256("SHA-256");
+        
+        private final String name; // This should be the string expected by MessageDigest
+        
+        HashType(String name) {
+            this.name = name;
+        }
+        
+        String getName() {
+            return name;
+        }
     }
 }

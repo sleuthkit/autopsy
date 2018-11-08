@@ -128,6 +128,12 @@ public class ImageNode extends AbstractContentNode<Image> {
         "ImageNode.createSheet.md5.name=MD5 Hash",
         "ImageNode.createSheet.md5.displayName=MD5 Hash",
         "ImageNode.createSheet.md5.desc=MD5 Hash of the image",
+        "ImageNode.createSheet.sha1.name=SHA1 Hash",
+        "ImageNode.createSheet.sha1.displayName=SHA1 Hash",
+        "ImageNode.createSheet.sha1.desc=SHA1 Hash of the image", 
+        "ImageNode.createSheet.sha256.name=SHA256 Hash",
+        "ImageNode.createSheet.sha256.displayName=SHA256 Hash",
+        "ImageNode.createSheet.sha256.desc=SHA256 Hash of the image",       
         "ImageNode.createSheet.timezone.name=Timezone",
         "ImageNode.createSheet.timezone.displayName=Timezone",
         "ImageNode.createSheet.timezone.desc=Timezone of the image",
@@ -165,6 +171,16 @@ public class ImageNode extends AbstractContentNode<Image> {
                 Bundle.ImageNode_createSheet_md5_displayName(),
                 Bundle.ImageNode_createSheet_md5_desc(),
                 this.content.getMd5()));
+        
+        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_sha1_name(),
+                Bundle.ImageNode_createSheet_sha1_displayName(),
+                Bundle.ImageNode_createSheet_sha1_desc(),
+                this.content.getSha1()));
+        
+        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_sha256_name(),
+                Bundle.ImageNode_createSheet_sha256_displayName(),
+                Bundle.ImageNode_createSheet_sha256_desc(),
+                this.content.getSha256()));
 
         sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_timezone_name(),
                 Bundle.ImageNode_createSheet_timezone_displayName(),

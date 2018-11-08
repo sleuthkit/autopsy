@@ -25,6 +25,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.ingest.NoIngestModuleIngestJobSettings;
 
 /**
  * An factory that creates data source ingest modules that verify the integrity
@@ -60,7 +62,42 @@ public class E01VerifierModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new E01VerifyIngestModule();
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
+        if (settings instanceof IngestSettings) {
+            return new E01VerifyIngestModule((IngestSettings) settings);
+        }
+        /*
+         * Compatibility check for older versions.
+         */
+        if (settings instanceof NoIngestModuleIngestJobSettings) {
+            return new E01VerifyIngestModule(new IngestSettings());
+        }
+        
+        throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
     }
+    
+    @Override
+    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
+        return new IngestSettings();
+    }
+
+    @Override
+    public boolean hasIngestJobSettingsPanel() {
+        return true;
+    }
+
+    @Override
+    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
+        if (settings instanceof IngestSettings) {
+            return new IngestSettingsPanel((IngestSettings) settings);
+        }
+        /*
+         * Compatibility check for older versions.
+         */
+        if (settings instanceof NoIngestModuleIngestJobSettings) {
+            return new IngestSettingsPanel(new IngestSettings());
+        }
+        
+        throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
+    }    
 }
