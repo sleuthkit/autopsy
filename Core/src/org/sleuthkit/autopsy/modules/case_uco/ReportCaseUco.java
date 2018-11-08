@@ -104,16 +104,6 @@ class ReportCaseUco implements GeneralReportModule {
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_noDataSourceSelected());
             progressPanel.complete(ReportStatus.ERROR);
             return;
-        } 
-        
-        Case currentCase;
-        try {
-            currentCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_noCaseOpen());
-            progressPanel.complete(ReportStatus.ERROR);
-            return;
         }
         
         // Start the progress bar and setup the report
@@ -139,7 +129,6 @@ class ReportCaseUco implements GeneralReportModule {
             MessageNotifyUtil.Message.warn(Bundle.ReportCaseUco_ingestWarning());
         }
 
-        SleuthkitCase skCase = currentCase.getSleuthkitCase();
 
         JsonGenerator jsonGenerator = null;
         SimpleTimeZone timeZone = new SimpleTimeZone(0, "GMT");
@@ -147,6 +136,8 @@ class ReportCaseUco implements GeneralReportModule {
             jsonGenerator = jsonGeneratorFactory.createGenerator(reportFile, JsonEncoding.UTF8);
             // instert \n after each field for more readable formatting
             jsonGenerator.setPrettyPrinter(new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter("  ", "\n")));
+            
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             
             progressPanel.updateStatusLabel(Bundle.ReportCaseUco_querying());
             
@@ -162,33 +153,33 @@ class ReportCaseUco implements GeneralReportModule {
                     + " AND ((meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_UNDEF.getValue()
                     + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()
                     + ") OR (meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue() + "))"; //NON-NLS
-
-            SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getAllFilesQuery);
-            ResultSet resultSet = queryResult.getResultSet();
             
-            progressPanel.updateStatusLabel(Bundle.ReportCaseUco_processing());
-            
-            // Loop files and write info to CASE/UCO report
-            while (resultSet.next()) {
-
-                if (progressPanel.getStatus() == ReportStatus.CANCELED) {
-                    break;
+            try (SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getAllFilesQuery)) {
+                ResultSet resultSet = queryResult.getResultSet();
+                
+                progressPanel.updateStatusLabel(Bundle.ReportCaseUco_processing());
+                
+                // Loop files and write info to CASE/UCO report
+                while (resultSet.next()) {
+                    
+                    if (progressPanel.getStatus() == ReportStatus.CANCELED) {
+                        break;
+                    }
+                    
+                    Long objectId = resultSet.getLong(1);
+                    String fileName = resultSet.getString(2);
+                    long size = resultSet.getLong("size");
+                    String crtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("crtime"), timeZone);
+                    String atime = ContentUtils.getStringTimeISO8601(resultSet.getLong("atime"), timeZone);
+                    String mtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("mtime"), timeZone);
+                    String md5Hash = resultSet.getString("md5");
+                    String parent_path = resultSet.getString("parent_path");
+                    String mime_type = resultSet.getString("mime_type");
+                    String extension = resultSet.getString("extension");
+                    
+                    saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
                 }
-                
-                Long objectId = resultSet.getLong(1);
-                String fileName = resultSet.getString(2);
-                long size = resultSet.getLong("size");
-                String crtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("crtime"), timeZone);
-                String atime = ContentUtils.getStringTimeISO8601(resultSet.getLong("atime"), timeZone);
-                String mtime = ContentUtils.getStringTimeISO8601(resultSet.getLong("mtime"), timeZone);
-                String md5Hash = resultSet.getString("md5"); 
-                String parent_path = resultSet.getString("parent_path"); 
-                String mime_type = resultSet.getString("mime_type"); 
-                String extension = resultSet.getString("extension");
-                
-                saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
             }
-            queryResult.close();
             progressPanel.complete(ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
@@ -255,42 +246,42 @@ class ReportCaseUco implements GeneralReportModule {
     }
     
     private String saveDataSourceInfo(Long selectedDataSourceId, String caseTraceId, SleuthkitCase skCase, JsonGenerator jsonGenerator) throws TskCoreException, SQLException, IOException {
-        
-        String getImageDataSourceQuery = "select size from tsk_image_info where obj_id = " + selectedDataSourceId;
-        SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getImageDataSourceQuery);
-        ResultSet resultSet = queryResult.getResultSet();
+            
         Long imageSize = (long) 0;
-        String imageName = "";
-        boolean isImageDataSource = false;
-        // check if we got a result
-        while (resultSet.next()) {
-            // we got a result so the data source was an image data source
-            imageSize = resultSet.getLong(1);
-            isImageDataSource = true;
-            break;
+        String imageName = "";        
+        boolean isImageDataSource = false;        
+        String getImageDataSourceQuery = "select size from tsk_image_info where obj_id = " + selectedDataSourceId;
+        try (SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getImageDataSourceQuery)) {
+            ResultSet resultSet = queryResult.getResultSet();
+            // check if we got a result
+            while (resultSet.next()) {
+                // we got a result so the data source was an image data source
+                imageSize = resultSet.getLong(1);
+                isImageDataSource = true;
+                break;
+            }
         }
-        queryResult.close();
         
         if (isImageDataSource) {
             // get caseDirPath to image file
             String getPathToDataSourceQuery = "select name from tsk_image_names where obj_id = " + selectedDataSourceId;
-            queryResult = skCase.executeQuery(getPathToDataSourceQuery);
-            resultSet = queryResult.getResultSet();
-            while (resultSet.next()) {
-                imageName = resultSet.getString(1);
-                break;
+            try (SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getPathToDataSourceQuery)) {
+                ResultSet resultSet = queryResult.getResultSet();
+                while (resultSet.next()) {
+                    imageName = resultSet.getString(1);
+                    break;
+                }
             }
-            queryResult.close();
         } else {
             // logical file data source
             String getLogicalDataSourceQuery = "select name from tsk_files where obj_id = " + selectedDataSourceId;
-            queryResult = skCase.executeQuery(getLogicalDataSourceQuery);
-            resultSet = queryResult.getResultSet();
-            while (resultSet.next()) {
-                imageName = resultSet.getString(1);
-                break;
+            try (SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getLogicalDataSourceQuery)) {
+                ResultSet resultSet = queryResult.getResultSet();
+                while (resultSet.next()) {
+                    imageName = resultSet.getString(1);
+                    break;
+                }
             }
-            queryResult.close();
         }
 
         return saveDataSourceInCaseUcoFormat(jsonGenerator, imageName, imageSize, selectedDataSourceId, caseTraceId);
