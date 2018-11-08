@@ -478,6 +478,7 @@ public class SQLiteTableReader implements AutoCloseable {
      * directory.
      *
      * @param file AbstractFile from the data source
+     * @param id The input files id value
      *
      * @return The path of the file on disk
      *
