@@ -420,6 +420,10 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
     data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
     ingest_job_index = line.find('INSERT INTO "ingest_jobs"') > -1 or line.find('INSERT INTO ingest_jobs ') > -1
+    examiners_index = line.find('INSERT INTO "tsk_examiners"') > -1 or line.find('INSERT INTO tsk_examiners ') > -1
+    ig_groups_index = line.find('INSERT INTO "image_gallery_groups"') > -1 or line.find('INSERT INTO image_gallery_groups ') > -1
+    ig_groups_seen_index = line.find('INSERT INTO "image_gallery_groups_seen"') > -1 or line.find('INSERT INTO image_gallery_groups_seen ') > -1
+    
     parens = line[line.find('(') + 1 : line.rfind(')')]
     fields_list = parens.replace(" ", "").split(',')
     
@@ -427,6 +431,15 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     if files_index:
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
+    # remove group ID
+    elif ig_groups_index:
+        newLine = ('INSERT INTO "image_gallery_groups" VALUES(' + ', '.join(fields_list[1:]) + ');') 
+        return newLine
+    #remove id field
+    elif ig_groups_seen_index:
+        # Only removing the id and group_id fields for now. May need to care about examiner_id and seen fields in future.
+        newLine = ('INSERT INTO "image_gallery_groups_seen" VALUES(' + ', '.join(fields_list[2:]) + ');') 
+        return newLine    
     # remove object ID
     elif path_index:
         obj_id = int(fields_list[0])
@@ -531,6 +544,10 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             fields_list[3] = "0"
             fields_list[4] = "0"
         newLine = ('INSERT INTO "ingest_jobs" VALUES(' + ','.join(fields_list) + ');')
+        return newLine
+    elif examiners_index:
+        fields_list[1] = "{examiner_name}"
+        newLine = ('INSERT INTO "tsk_examiners" VALUES(' + ','.join(fields_list) + ');')
         return newLine
     else:
         return line

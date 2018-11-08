@@ -80,12 +80,11 @@ class ExtractRegistry extends Extract {
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
     private final List<String> rrCmd = new ArrayList<>();
-    private final List<String> rrFullCmd= new ArrayList<>();
-    
+    private final List<String> rrFullCmd = new ArrayList<>();
 
     ExtractRegistry() throws IngestModuleException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractRegistry.moduleName.text");
-        
+
         final File rrRoot = InstalledFileLocator.getDefault().locate("rr", ExtractRegistry.class.getPackage().getName(), false); //NON-NLS
         if (rrRoot == null) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
@@ -104,25 +103,25 @@ class ExtractRegistry extends Extract {
         RR_PATH = rrHome.resolve(executableToRun).toString();
         rrFullHome = rrFullRoot.toPath();
         RR_FULL_PATH = rrFullHome.resolve(executableToRun).toString();
-        
+
         if (!(new File(RR_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
         if (!(new File(RR_FULL_PATH).exists())) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
-        if(PlatformUtil.isWindowsOS()){
+        if (PlatformUtil.isWindowsOS()) {
             rrCmd.add(RR_PATH);
             rrFullCmd.add(RR_FULL_PATH);
-        }else{
+        } else {
             String perl;
             File usrBin = new File("/usr/bin/perl");
             File usrLocalBin = new File("/usr/local/bin/perl");
-            if(usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()){
+            if (usrBin.canExecute() && usrBin.exists() && !usrBin.isDirectory()) {
                 perl = "/usr/bin/perl";
-            }else if(usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()){
+            } else if (usrLocalBin.canExecute() && usrLocalBin.exists() && !usrLocalBin.isDirectory()) {
                 perl = "/usr/local/bin/perl";
-            }else{
+            } else {
                 throw new IngestModuleException("perl not found in your system");
             }
             rrCmd.add(perl);
@@ -131,6 +130,7 @@ class ExtractRegistry extends Extract {
             rrFullCmd.add(RR_FULL_PATH);
         }
     }
+
     /**
      * Search for the registry hives on the system.
      */
@@ -318,7 +318,7 @@ class ExtractRegistry extends Extract {
     private void executeRegRipper(List<String> regRipperPath, Path regRipperHomeDir, String hiveFilePath, String hiveFileType, String outputFile, String errFile) {
         try {
             List<String> commandLine = new ArrayList<>();
-            for(String cmd: regRipperPath){
+            for (String cmd : regRipperPath) {
                 commandLine.add(cmd);
             }
             commandLine.add("-r"); //NON-NLS
@@ -354,7 +354,6 @@ class ExtractRegistry extends Extract {
             // Read the file in and create a Document and elements
             File regfile = new File(regFilePath);
             fstream = new FileInputStream(regfile);
-
             String regString = new Scanner(fstream, "UTF-8").useDelimiter("\\Z").next(); //NON-NLS
             String startdoc = "<?xml version=\"1.0\"?><document>"; //NON-NLS
             String result = regString.replaceAll("----------------------------------------", "");
@@ -380,7 +379,6 @@ class ExtractRegistry extends Extract {
                 Element tempnode = (Element) children.item(i);
 
                 String dataType = tempnode.getNodeName();
-
                 NodeList timenodes = tempnode.getElementsByTagName("mtime"); //NON-NLS
                 Long mtime = null;
                 if (timenodes.getLength() > 0) {
@@ -724,7 +722,22 @@ class ExtractRegistry extends Extract {
                                             logger.log(Level.SEVERE, "Error adding network artifact to blackboard."); //NON-NLS
                                         }
                                         break;
-
+                                    case "SSID": // NON-NLS
+                                        String adapter = artnode.getAttribute("adapter"); //NON-NLS
+                                        try {
+                                            Long lastWriteTime = Long.parseLong(artnode.getAttribute("writeTime")); //NON-NLS
+                                            lastWriteTime = Long.valueOf(lastWriteTime.toString());
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SSID, parentModuleName, value));
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME, parentModuleName, lastWriteTime));
+                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_ID, parentModuleName, adapter));
+                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_WIFI_NETWORK);
+                                            bbart.addAttributes(bbattributes);
+                                            // index the artifact for keyword search
+                                            this.indexArtifact(bbart);
+                                        } catch (TskCoreException ex) {
+                                            logger.log(Level.SEVERE, "Error adding SSID artifact to blackboard."); //NON-NLS
+                                        }
+                                        break;
                                     case "shellfolders": // NON-NLS
                                         // The User Shell Folders subkey stores the paths to Windows Explorer folders for the current user of the computer
                                         // (https://technet.microsoft.com/en-us/library/Cc962613.aspx).

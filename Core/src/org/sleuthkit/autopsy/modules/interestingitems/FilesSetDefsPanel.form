@@ -29,7 +29,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
+          <Component id="jScrollPane1" alignment="0" pref="800" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -173,7 +173,7 @@
                                       <Component id="deleteRuleButton" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
-                              <EmptySpace min="24" pref="47" max="32767" attributes="0"/>
+                              <EmptySpace min="24" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>

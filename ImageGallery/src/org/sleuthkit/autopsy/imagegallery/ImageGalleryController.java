@@ -67,7 +67,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -136,16 +135,8 @@ public final class ImageGalleryController {
         return thumbnailSizeProp;
     }
 
-    public GroupViewState getViewState() {
-        return historyManager.getCurrentState();
-    }
-
     public ReadOnlyBooleanProperty regroupDisabledProperty() {
         return regroupDisabled.getReadOnlyProperty();
-    }
-
-    public ReadOnlyObjectProperty<GroupViewState> viewStateProperty() {
-        return historyManager.currentState();
     }
 
     public FileIDSelectionModel getSelectionModel() {
@@ -241,23 +232,68 @@ public final class ImageGalleryController {
 
     }
 
+    /**
+     * @return Currently displayed group or null if nothing is being displayed
+     */
+    public GroupViewState getViewState() {
+        return historyManager.getCurrentState();
+    }
+
+    /**
+     * Get observable property of the current group. The UI currently changes
+     * based on this property changing, which happens when other actions and
+     * threads call advance().
+     *
+     * @return Currently displayed group (as a property that can be observed)
+     */
+    public ReadOnlyObjectProperty<GroupViewState> viewStateProperty() {
+        return historyManager.currentState();
+    }
+
+    /**
+     * Should the "forward" button on the history be enabled?
+     *
+     * @return
+     */
     public ReadOnlyBooleanProperty getCanAdvance() {
         return historyManager.getCanAdvance();
     }
 
+    /**
+     * Should the "Back" button on the history be enabled?
+     *
+     * @return
+     */
     public ReadOnlyBooleanProperty getCanRetreat() {
         return historyManager.getCanRetreat();
     }
 
+    /**
+     * Display the passed in group. Causes this group to get recorded in the
+     * history queue and observers of the current state will be notified and
+     * update their panels/widgets appropriately.
+     *
+     * @param newState
+     */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     public void advance(GroupViewState newState) {
         historyManager.advance(newState);
     }
 
+    /**
+     * Display the next group in the "forward" history stack
+     *
+     * @return
+     */
     public GroupViewState advance() {
         return historyManager.advance();
     }
 
+    /**
+     * Display the previous group in the "back" history stack
+     *
+     * @return
+     */
     public GroupViewState retreat() {
         return historyManager.retreat();
     }
@@ -397,10 +433,6 @@ public final class ImageGalleryController {
 
     public DrawableFile getFileFromID(Long fileID) throws TskCoreException {
         return drawableDB.getFileFromID(fileID);
-    }
-
-    public ReadOnlyDoubleProperty regroupProgress() {
-        return groupManager.regroupProgress();
     }
 
     public HashSetManager getHashSetManager() {
@@ -662,8 +694,17 @@ public final class ImageGalleryController {
                 // Cycle through all of the files returned and call processFile on each
                 //do in transaction
                 drawableDbTransaction = taskDB.beginTransaction();
-                caseDbTransaction = tskCase.beginTransaction();
+
+                /* We are going to periodically commit the CaseDB transaction
+                 * and sleep so that the user can have Autopsy do other stuff
+                 * while these bulk tasks are ongoing.
+                 */
+                int caseDbCounter = 0;
                 for (final AbstractFile f : files) {
+                    if (caseDbTransaction == null) {
+                        caseDbTransaction = tskCase.beginTransaction();
+                    }
+
                     if (isCancelled() || Thread.interrupted()) {
                         logger.log(Level.WARNING, "Task cancelled or interrupted: not all contents may be transfered to drawable database."); //NON-NLS
                         taskCompletionStatus = false;
@@ -678,6 +719,14 @@ public final class ImageGalleryController {
                     progressHandle.progress(f.getName(), workDone);
                     updateProgress(workDone - 1 / (double) files.size());
                     updateMessage(f.getName());
+
+                    // Periodically, commit the transaction (which frees the lock) and sleep
+                    // to allow other threads to get some work done in CaseDB
+                    if ((++caseDbCounter % 200) == 0) {
+                        caseDbTransaction.commit();
+                        caseDbTransaction = null;
+                        Thread.sleep(500); // 1/2 second
+                    }
                 }
 
                 progressHandle.finish();
@@ -686,11 +735,22 @@ public final class ImageGalleryController {
                 updateProgress(1.0);
 
                 progressHandle.start();
-                caseDbTransaction.commit();
+                if (caseDbTransaction != null) {
+                    caseDbTransaction.commit();
+                    caseDbTransaction = null;
+                }
+
                 // pass true so that groupmanager is notified of the changes
                 taskDB.commitTransaction(drawableDbTransaction, true);
+                drawableDbTransaction = null;
 
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | InterruptedException ex) {
+                progressHandle.progress(Bundle.BulkTask_stopCopy_status());
+                logger.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
+                MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());
+                cleanup(false);
+                return;
+            } finally {
                 if (null != drawableDbTransaction) {
                     taskDB.rollbackTransaction(drawableDbTransaction);
                 }
@@ -701,13 +761,6 @@ public final class ImageGalleryController {
                         logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2); //NON-NLS
                     }
                 }
-
-                progressHandle.progress(Bundle.BulkTask_stopCopy_status());
-                logger.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
-                MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());
-                cleanup(false);
-                return;
-            } finally {
                 progressHandle.finish();
                 if (taskCompletionStatus) {
                     taskDB.insertOrUpdateDataSource(dataSourceObjId, DrawableDB.DrawableDbBuildStatusEnum.COMPLETE);
@@ -757,20 +810,16 @@ public final class ImageGalleryController {
             if (known) {
                 taskDB.removeFile(f.getId(), tr);  //remove known files
             } else {
-                try {
-                    // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
-                    if (null == f.getMIMEType()) {
-                        // set to false to force the DB to be marked as stale
-                        this.setTaskCompletionStatus(false);
-                    } //supported mimetype => analyzed
-                    else if (FileTypeUtils.hasDrawableMIMEType(f)) {
-                        taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
-                    } //unsupported mimtype => analyzed but shouldn't include
-                    else {
-                        taskDB.removeFile(f.getId(), tr);
-                    }
-                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                    throw new TskCoreException("Failed to initialize FileTypeDetector.", ex);
+                // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
+                if (null == f.getMIMEType()) {
+                    // set to false to force the DB to be marked as stale
+                    this.setTaskCompletionStatus(false);
+                } //supported mimetype => analyzed
+                else if (FileTypeUtils.hasDrawableMIMEType(f)) {
+                    taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
+                } //unsupported mimtype => analyzed but shouldn't include
+                else {
+                    taskDB.removeFile(f.getId(), tr);
                 }
             }
         }
@@ -805,7 +854,7 @@ public final class ImageGalleryController {
 
         @Override
         void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) {
-            taskDB.insertFile(DrawableFile.create(f, false, false), tr, caseDBTransaction);
+            taskDB.insertBasicFileData(DrawableFile.create(f, false, false), tr, caseDBTransaction);
         }
 
         @Override

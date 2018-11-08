@@ -74,6 +74,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupSortBy;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
+import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -184,6 +185,9 @@ public class Toolbar extends ToolBar {
                 alert.initOwner(getScene().getWindow());
                 GuiUtils.setDialogIcons(alert);
                 if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+                    // Set the datasource selection to 'All', before switching group
+                    controller.getGroupManager().setDataSource(null);
+                    
                     queryInvalidationListener.invalidated(observable);
                 } else {
                     Platform.runLater(() -> groupByBox.getSelectionModel().select(DrawableAttribute.PATH));
@@ -255,6 +259,7 @@ public class Toolbar extends ToolBar {
                 evt -> {
                     Platform.runLater(() -> {
                         Optional<DataSource> selectedItem = dataSourceSelectionModel.getSelectedItem();
+                        //restore selection once the sync is done.
                         syncDataSources().addListener(() -> dataSourceSelectionModel.select(selectedItem), Platform::runLater);
                     });
                 });
@@ -269,33 +274,30 @@ public class Toolbar extends ToolBar {
     }
 
     private void initTagMenuButton() {
-        ListenableFuture<TagGroupAction> future = exec.submit(() -> new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller));
-        Futures.addCallback(future, new FutureCallback<TagGroupAction>() {
-            @Override
-            public void onSuccess(TagGroupAction followUpGroupAction) {
-                tagGroupMenuButton.setOnAction(followUpGroupAction);
-                tagGroupMenuButton.setText(followUpGroupAction.getText());
-                tagGroupMenuButton.setGraphic(followUpGroupAction.getGraphic());
-            }
-
-            @Override
-            public void onFailure(Throwable throwable) {
-                /*
-                 * The problem appears to be a timing issue where a case is
-                 * closed before this initialization is completed, which It
-                 * appears to be harmless, so we are temporarily changing this
-                 * log message to a WARNING.
-                 *
-                 * TODO (JIRA-3010): SEVERE error logged by image Gallery UI
-                 */
-                if (Case.isCaseOpen()) {
-                    logger.log(Level.WARNING, "Could not create Follow Up tag menu item", throwable); //NON-NLS
-                } else {
-                    // don't add stack trace to log because it makes looking for real errors harder
-                    logger.log(Level.INFO, "Unable to get tag name. Case is closed."); //NON-NLS
+        addFXCallback(exec.submit(() -> new TagGroupAction(controller.getTagsManager().getFollowUpTagName(), controller)),
+                followUpGroupAction -> {
+                    //on fx thread
+                    tagGroupMenuButton.setOnAction(followUpGroupAction);
+                    tagGroupMenuButton.setText(followUpGroupAction.getText());
+                    tagGroupMenuButton.setGraphic(followUpGroupAction.getGraphic());
+                },
+                throwable -> {
+                    /*
+                     * The problem appears to be a timing issue where a case is
+                     * closed before this initialization is completed, which It
+                     * appears to be harmless, so we are temporarily changing
+                     * this log message to a WARNING.
+                     *
+                     * TODO (JIRA-3010): SEVERE error logged by image Gallery UI
+                     */
+                    if (Case.isCaseOpen()) {
+                        logger.log(Level.WARNING, "Could not create Follow Up tag menu item", throwable); //NON-NLS
+                    } else {
+                        // don't add stack trace to log because it makes looking for real errors harder
+                        logger.log(Level.INFO, "Unable to get tag name. Case is closed."); //NON-NLS
+                    }
                 }
-            }
-        }, Platform::runLater);
+        );
 
         tagGroupMenuButton.showingProperty().addListener(showing -> {
             if (tagGroupMenuButton.isShowing()) {
@@ -303,24 +305,18 @@ public class Toolbar extends ToolBar {
                     return Lists.transform(controller.getTagsManager().getNonCategoryTagNames(),
                             tagName -> GuiUtils.createAutoAssigningMenuItem(tagGroupMenuButton, new TagGroupAction(tagName, controller)));
                 });
-                Futures.addCallback(getTagsFuture, new FutureCallback<List<MenuItem>>() {
-                    @Override
-                    public void onSuccess(List<MenuItem> result) {
-                        tagGroupMenuButton.getItems().setAll(result);
-                    }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        logger.log(Level.SEVERE, "Error getting non-gategory tag names.", t);
-                    }
-                }, Platform::runLater);
+                addFXCallback(getTagsFuture,
+                        menuItems -> tagGroupMenuButton.getItems().setAll(menuItems),
+                        throwable -> logger.log(Level.SEVERE, "Error getting non-gategory tag names.", throwable)
+                );
             }
         });
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     private ListenableFuture<List<DataSource>> syncDataSources() {
-        ListenableFuture<List<DataSource>> future = exec.submit(() -> {
+        ListenableFuture<List<DataSource>> dataSourcesFuture = exec.submit(() -> {
             List<DataSource> dataSourcesInCase = controller.getSleuthKitCase().getDataSources();
             synchronized (dataSourcesViewable) {
                 dataSourcesViewable.clear();
@@ -331,22 +327,18 @@ public class Toolbar extends ToolBar {
             }
             return dataSourcesInCase;
         });
-        Futures.addCallback(future, new FutureCallback<List<DataSource>>() {
-            @Override
-            public void onSuccess(List<DataSource> result) {
-                List<Optional<DataSource>> newDataSources = new ArrayList<>();
-                newDataSources.add(Optional.empty());
-                result.forEach(dataSource -> newDataSources.add(Optional.of(dataSource)));
-                dataSources.setAll(newDataSources);
-            }
+        addFXCallback(dataSourcesFuture,
+                result -> {
+                    //on fx thread
+                    List<Optional<DataSource>> newDataSources = new ArrayList<>(Lists.transform(result, Optional::of));
+                    newDataSources.add(0, Optional.empty());
+                    dataSources.setAll(newDataSources);
+                },
+                throwable -> logger.log(Level.SEVERE, "Unable to get datasources for current case.", throwable) //NON-NLS
 
-            @Override
-            public void onFailure(Throwable t) {
-                logger.log(Level.SEVERE, "Unable to get datasources for current case.", t); //NON-NLS
-            }
-        }, Platform::runLater);
+        );
 
-        return future;
+        return dataSourcesFuture;
     }
 
     /**
@@ -384,8 +376,7 @@ public class Toolbar extends ToolBar {
      *                     selection.
      */
     private void syncGroupControlsEnabledState(GroupViewState newViewState) {
-        boolean noGroupSelected = (null == newViewState)
-                                  || (null == newViewState.getGroup());
+        boolean noGroupSelected = (null == newViewState) || (null == newViewState.getGroup());
         Platform.runLater(() -> {
             tagGroupMenuButton.setDisable(noGroupSelected);
             catGroupMenuButton.setDisable(noGroupSelected);
@@ -402,7 +393,5 @@ public class Toolbar extends ToolBar {
     public Toolbar(ImageGalleryController controller) {
         this.controller = controller;
         FXMLConstructor.construct(this, "Toolbar.fxml"); //NON-NLS
-
     }
-
 }

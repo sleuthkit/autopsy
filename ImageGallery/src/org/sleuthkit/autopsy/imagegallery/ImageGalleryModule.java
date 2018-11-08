@@ -154,14 +154,14 @@ public class ImageGalleryModule {
                 IngestManager.getInstance().removeIngestModuleEventListener(this);
                 return;
             }
-            
+
             /* only process individual files in realtime on the node that is
              * running the ingest. on a remote node, image files are processed
              * enblock when ingest is complete */
             if (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL) {
                 return;
             }
-            
+
             // Bail out if the case is closed
             try {
                 if (controller == null || Case.getCurrentCaseThrows() == null) {
@@ -203,23 +203,27 @@ public class ImageGalleryModule {
                     }
                 } catch (NoCurrentCaseException ex) {
                     logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex); //NON-NLS
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
                 }
             }
             else if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == DATA_ADDED) {
-                ModuleDataEvent mde = (ModuleDataEvent)evt.getOldValue();
-                
+                ModuleDataEvent mde = (ModuleDataEvent) evt.getOldValue();
+
                 if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
                     DrawableDB drawableDB = controller.getDatabase();
-                    for (BlackboardArtifact art : mde.getArtifacts()) {
-                        drawableDB.addExifCache(art.getObjectID());
+                    if (mde.getArtifacts() != null) {
+                        for (BlackboardArtifact art : mde.getArtifacts()) {
+                            drawableDB.addExifCache(art.getObjectID());
+                        }
                     }
                 }
                 else if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                     DrawableDB drawableDB = controller.getDatabase();
-                    for (BlackboardArtifact art : mde.getArtifacts()) {
-                        drawableDB.addHashSetCache(art.getObjectID());
+                    if (mde.getArtifacts() != null) {
+                        for (BlackboardArtifact art : mde.getArtifacts()) {
+                            drawableDB.addHashSetCache(art.getObjectID());
+                        }
                     }
                 }
             }
@@ -284,13 +288,13 @@ public class ImageGalleryModule {
                     break;
                 case CONTENT_TAG_ADDED:
                     final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                    
+
                     long objId = tagAddedEvent.getAddedTag().getContent().getId();
-                    
+
                     // update the cache
                     DrawableDB drawableDB = controller.getDatabase();
                     drawableDB.addTagCache(objId);
-                    
+
                     if (con.getDatabase().isInDB(objId)) {
                         con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
                     }
@@ -332,21 +336,23 @@ public class ImageGalleryModule {
             try {
                 ImageGalleryController con = getController();
                 con.setStale(true);
-                if (con.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
+                if (con.isListeningEnabled()) {
                     SwingUtilities.invokeLater(() -> {
-                        int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
-                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
-                                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+                        if (ImageGalleryTopComponent.isImageGalleryOpen()) {
+                            int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
+                                    Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                                    Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
+                                    JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
-                        switch (showAnswer) {
-                            case JOptionPane.YES_OPTION:
-                                con.rebuildDB();
-                                break;
-                            case JOptionPane.NO_OPTION:
-                            case JOptionPane.CANCEL_OPTION:
-                            default:
-                                break; //do nothing
+                            switch (showAnswer) {
+                                case JOptionPane.YES_OPTION:
+                                    con.rebuildDB();
+                                    break;
+                                case JOptionPane.NO_OPTION:
+                                case JOptionPane.CANCEL_OPTION:
+                                default:
+                                    break; //do nothing
+                            }
                         }
                     });
                 }

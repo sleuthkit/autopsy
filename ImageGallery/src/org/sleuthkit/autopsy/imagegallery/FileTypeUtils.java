@@ -219,8 +219,13 @@ public enum FileTypeUtils {
      *         type. False if a non image/video mimetype. empty Optional if a
      *         mimetype could not be detected.
      */
-    static boolean hasDrawableMIMEType(AbstractFile file) throws FileTypeDetector.FileTypeDetectorInitException {
-        String mimeType = getFileTypeDetector().getMIMEType(file).toLowerCase();
+    static boolean hasDrawableMIMEType(AbstractFile file) {
+        String mimeType = file.getMIMEType();
+        if (mimeType == null) {
+            return false;
+        }
+        
+        mimeType = mimeType.toLowerCase();
         return isDrawableMimeType(mimeType) || (mimeType.equals("audio/x-aiff") && "tiff".equalsIgnoreCase(file.getNameExtension()));
     }
 
@@ -234,13 +239,13 @@ public enum FileTypeUtils {
      *         available, a video extension.
      */
     public static boolean hasVideoMIMEType(AbstractFile file) {
-        try {
-            String mimeType = getFileTypeDetector().getMIMEType(file).toLowerCase();
-            return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType);
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            LOGGER.log(Level.SEVERE, "Error determining MIME type of " + getContentPathSafe(file), ex);
+        String mimeType = file.getMIMEType();       
+        if (mimeType == null) {
             return false;
         }
+        
+        mimeType = mimeType.toLowerCase();
+        return mimeType.startsWith("video/") || videoMimeTypes.contains(mimeType);
     }
 
     /**

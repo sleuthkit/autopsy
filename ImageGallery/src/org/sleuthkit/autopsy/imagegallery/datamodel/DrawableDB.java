@@ -110,6 +110,8 @@ public final class DrawableDB {
 
     private final PreparedStatement insertHashHitStmt;
 
+    private final PreparedStatement removeHashHitStmt;
+
     private final PreparedStatement updateDataSourceStmt;
 
     private final PreparedStatement updateFileStmt;
@@ -263,6 +265,7 @@ public final class DrawableDB {
             selectHashSetStmt = prepareStatement("SELECT hash_set_id FROM hash_sets WHERE hash_set_name = ?"); //NON-NLS
 
             insertHashHitStmt = prepareStatement("INSERT OR IGNORE INTO hash_set_hits (hash_set_id, obj_id) VALUES (?,?)"); //NON-NLS
+            removeHashHitStmt = prepareStatement("DELETE FROM hash_set_hits WHERE obj_id = ?"); //NON-NLS
 
             CaseDbTransaction caseDbTransaction = null;
             try {
@@ -271,7 +274,9 @@ public final class DrawableDB {
                     insertGroup(cat.getDisplayName(), DrawableAttribute.CATEGORY, caseDbTransaction);
                 }
                 caseDbTransaction.commit();
-            } catch (TskCoreException ex) {
+                caseDbTransaction = null;
+            } 
+            finally {
                 if (null != caseDbTransaction) {
                     try {
                         caseDbTransaction.rollback();
@@ -279,7 +284,6 @@ public final class DrawableDB {
                         logger.log(Level.SEVERE, "Error in trying to rollback transaction", ex2);
                     }
                 }
-                throw ex;
             }
 
             initializeImageList();
@@ -694,8 +698,8 @@ public final class DrawableDB {
         // query to find the group id from attribute/value
         return String.format(" SELECT group_id FROM " + GROUPS_TABLENAME
                              + " WHERE attribute = \'%s\' AND value = \'%s\' AND data_source_obj_id = %d",
-                groupKey.getAttribute().attrName.toString(),
-                groupKey.getValueDisplayName(),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                 (groupKey.getAttribute() == DrawableAttribute.PATH) ? groupKey.getDataSourceObjId() : 0);
     }
 
@@ -772,8 +776,8 @@ public final class DrawableDB {
         // query to find the group id from attribute/value
         String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
                                           + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )",
-                groupKey.getAttribute().attrName.toString(),
-                groupKey.getValueDisplayName(),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
 
         String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, seen ? 1 : 0);
@@ -802,9 +806,14 @@ public final class DrawableDB {
             caseDbTransaction = tskCase.beginTransaction();
             updateFile(f, trans, caseDbTransaction);
             caseDbTransaction.commit();
+            caseDbTransaction = null;
             commitTransaction(trans, true);
+            trans = null;
 
         } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error updating file", ex); //NON-NLS
+        }
+        finally {
             if (null != caseDbTransaction) {
                 try {
                     caseDbTransaction.rollback();
@@ -815,17 +824,30 @@ public final class DrawableDB {
             if (null != trans) {
                 rollbackTransaction(trans);
             }
-            logger.log(Level.SEVERE, "Error updating file", ex); //NON-NLS
         }
 
     }
 
-    public void insertFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
-        insertOrUpdateFile(f, tr, insertFileStmt, caseDbTransaction);
+    /**
+     * Insert basic file data (no groups) into the DB during pre-population phase
+     * @param f
+     * @param tr
+     * @param caseDbTransaction 
+     */
+    public void insertBasicFileData(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+        insertOrUpdateFile(f, tr, caseDbTransaction, false);
     }
 
+    /**
+     * Update an existing entry (or make a new one) into the DB that includes group information. 
+     * Called when a file has been analyzed or during a bulk rebuild
+     * 
+     * @param f
+     * @param tr
+     * @param caseDbTransaction 
+     */
     public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
-        insertOrUpdateFile(f, tr, updateFileStmt, caseDbTransaction);
+        insertOrUpdateFile(f, tr, caseDbTransaction, true);
     }
     
     
@@ -956,12 +978,22 @@ public final class DrawableDB {
      *
      * @param f    The file to insert.
      * @param tr   a transaction to use, must not be null
-     * @param stmt the statement that does the actual inserting
+     * @param caseDbTransaction
+     * @param addGroups True if groups for file should be inserted into db too
      */
-    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull PreparedStatement stmt, @Nonnull CaseDbTransaction caseDbTransaction) {
+    private void insertOrUpdateFile(DrawableFile f, @Nonnull DrawableTransaction tr, @Nonnull CaseDbTransaction caseDbTransaction, boolean addGroups) {
 
+        PreparedStatement stmt;
+                
         if (tr.isClosed()) {
             throw new IllegalArgumentException("can't update database with closed transaction");
+        }
+        
+        // assume that we are doing an update if we are adding groups - i.e. not pre-populating
+        if (addGroups) {
+            stmt = updateFileStmt;
+        } else {
+            stmt = insertFileStmt;
         }
         
         // get data from caches. Default to true and force the DB lookup if we don't have caches
@@ -974,6 +1006,13 @@ public final class DrawableDB {
                 hasHashSet = hasHashCache.contains(f.getId());
                 hasTag = hasTagCache.contains(f.getId());
             }
+        }
+        
+        // if we are going to just add basic data, then mark flags that we do not have metadata to prevent lookups
+        if (addGroups == false) {
+            hasExif = false;
+            hasHashSet = false;
+            hasTag = false;
         }
 
         dbWriteLock();
@@ -998,51 +1037,55 @@ public final class DrawableDB {
             // Update the list of file IDs in memory
             addImageFileToList(f.getId());
 
-            // Update the hash set tables
-            if (hasHashSet) {
-                try {
-                    for (String name : f.getHashSetNames()) {
+            // update the groups if we are not doing pre-populating
+            if (addGroups) {
+            
+                // Update the hash set tables
+                if (hasHashSet) {
+                    try {
+                        for (String name : f.getHashSetNames()) {
 
-                        // "insert or ignore into hash_sets (hash_set_name)  values (?)"
-                        insertHashSetStmt.setString(1, name);
-                        insertHashSetStmt.executeUpdate();
+                            // "insert or ignore into hash_sets (hash_set_name)  values (?)"
+                            insertHashSetStmt.setString(1, name);
+                            insertHashSetStmt.executeUpdate();
 
-                        //TODO: use nested select to get hash_set_id rather than seperate statement/query
-                        //"select hash_set_id from hash_sets where hash_set_name = ?"
-                        selectHashSetStmt.setString(1, name);
-                        try (ResultSet rs = selectHashSetStmt.executeQuery()) {
-                            while (rs.next()) {
-                                int hashsetID = rs.getInt("hash_set_id"); //NON-NLS
-                                //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
-                                insertHashHitStmt.setInt(1, hashsetID);
-                                insertHashHitStmt.setLong(2, f.getId());
-                                insertHashHitStmt.executeUpdate();
-                                break;
+                            //TODO: use nested select to get hash_set_id rather than seperate statement/query
+                            //"select hash_set_id from hash_sets where hash_set_name = ?"
+                            selectHashSetStmt.setString(1, name);
+                            try (ResultSet rs = selectHashSetStmt.executeQuery()) {
+                                while (rs.next()) {
+                                    int hashsetID = rs.getInt("hash_set_id"); //NON-NLS
+                                    //"insert or ignore into hash_set_hits (hash_set_id, obj_id) values (?,?)";
+                                    insertHashHitStmt.setInt(1, hashsetID);
+                                    insertHashHitStmt.setLong(2, f.getId());
+                                    insertHashHitStmt.executeUpdate();
+                                    break;
+                                }
                             }
                         }
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex); //NON-NLS
                     }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "failed to insert/update hash hits for file" + f.getContentPathSafe(), ex); //NON-NLS
                 }
-            }
 
-            //and update all groups this file is in
-            for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
-                // skip attributes that we do not have data for
-                if ((attr == DrawableAttribute.TAGS) && (hasTag == false)) {
-                    continue;
-                }
-                else if ((attr == DrawableAttribute.MAKE || attr == DrawableAttribute.MODEL) && (hasExif == false)) {
-                    continue;
-                }
-                Collection<? extends Comparable<?>> vals = attr.getValue(f);
-                for (Comparable<?> val : vals) {
-                    if (null != val) {
-                        if (attr == DrawableAttribute.PATH) {
-                            insertGroup(f.getAbstractFile().getDataSource().getId(), val.toString(), attr, caseDbTransaction);
-                        }
-                        else {
-                            insertGroup(val.toString(), attr, caseDbTransaction);
+                //and update all groups this file is in
+                for (DrawableAttribute<?> attr : DrawableAttribute.getGroupableAttrs()) {
+                    // skip attributes that we do not have data for
+                    if ((attr == DrawableAttribute.TAGS) && (hasTag == false)) {
+                        continue;
+                    }
+                    else if ((attr == DrawableAttribute.MAKE || attr == DrawableAttribute.MODEL) && (hasExif == false)) {
+                        continue;
+                    }
+                    Collection<? extends Comparable<?>> vals = attr.getValue(f);
+                    for (Comparable<?> val : vals) {
+                        if ((null != val) && (val.toString().isEmpty() == false)) {
+                            if (attr == DrawableAttribute.PATH) {
+                                insertGroup(f.getAbstractFile().getDataSource().getId(), val.toString(), attr, caseDbTransaction);
+                            }
+                            else {
+                                insertGroup(val.toString(), attr, caseDbTransaction);
+                            }
                         }
                     }
                 }
@@ -1400,10 +1443,10 @@ public final class DrawableDB {
         
         try {
             String insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')",
-                    ds_obj_id, value, groupBy.attrName.toString());
+                    ds_obj_id, SleuthkitCase.escapeSingleQuotes(value), SleuthkitCase.escapeSingleQuotes(groupBy.attrName.toString()));
 
             if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
-                insertSQL += "ON CONFLICT DO NOTHING";
+                insertSQL += " ON CONFLICT DO NOTHING";
             }
             tskCase.getCaseDbAccessManager().insert(GROUPS_TABLENAME, insertSQL, caseDbTransaction);
             groupCache.put(cacheKey, Boolean.TRUE);
@@ -1512,12 +1555,15 @@ public final class DrawableDB {
             // Update the list of file IDs in memory
             removeImageFileFromList(id);
 
+            //"delete from hash_set_hits where (obj_id = " + id + ")"
+            removeHashHitStmt.setLong(1, id);
+            removeHashHitStmt.executeUpdate();
+            
             //"delete from drawable_files where (obj_id = " + id + ")"
             removeFileStmt.setLong(1, id);
             removeFileStmt.executeUpdate();
             tr.addRemovedFile(id);
 
-            //TODO: delete from hash_set_hits table also...
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "failed to delete row for obj_id = " + id, ex); //NON-NLS
         } finally {
