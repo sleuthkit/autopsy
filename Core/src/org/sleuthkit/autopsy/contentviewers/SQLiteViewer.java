@@ -344,7 +344,11 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         tablesDropdownList.removeAllItems();
         numEntriesField.setText("");
 
-        viewReader.close();
+        try {
+            viewReader.close();
+        } catch (SQLiteTableReaderException ex) {
+            //Could not successfully close the reader, nothing we can do to recover.
+        }
         row = new LinkedHashMap<>();
         pageOfTableRows = new ArrayList<>();
         currentTableHeader = new ArrayList<>();
