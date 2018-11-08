@@ -809,13 +809,14 @@ class SevenZipExtractor {
         private int bytesWritten;
         
         UnpackStream(String localAbsPath) throws IOException {
-            this.output = new EncodedFileOutputStream(localAbsPath);
+            this.output = new EncodedFileOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
             this.localAbsPath = localAbsPath;
             this.bytesWritten = 0;
         } 
         
         public void setNewOutputStream(String localAbsPath) throws IOException {
-            this.output = new EncodedFileOutputStream(localAbsPath);
+            this.output.close();
+            this.output = new EncodedFileOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
             this.localAbsPath = localAbsPath;
             this.bytesWritten = 0;
         }
