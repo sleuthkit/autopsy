@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.*;
 
 /**
  * ReportCaseUco generates a report in the CASE/UCO format. It saves basic
- * file info like full path, name, MIME type, times, and hash.
+ file info like full caseDirPath, name, MIME type, times, and hash.
  */
 class ReportCaseUco implements GeneralReportModule {
 
@@ -74,7 +74,7 @@ class ReportCaseUco implements GeneralReportModule {
     /**
      * Generates a CASE/UCO format report.
      *
-     * @param baseReportDir path to save the report
+     * @param baseReportDir caseDirPath to save the report
      * @param progressPanel panel to update the report's progress
      */
     @NbBundle.Messages({
@@ -94,6 +94,7 @@ class ReportCaseUco implements GeneralReportModule {
         if (configPanel == null) {
             logger.log(Level.SEVERE, "CASE/UCO settings panel has not been initialized"); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_notInitialized());
+            progressPanel.complete(ReportStatus.ERROR);
             return;            
         }
         
@@ -101,6 +102,7 @@ class ReportCaseUco implements GeneralReportModule {
         if (selectedDataSourceId == ReportCaseUcoConfigPanel.NO_DATA_SOURCE_SELECTED) {
             logger.log(Level.SEVERE, "No data source selected for CASE/UCO report"); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_noDataSourceSelected());
+            progressPanel.complete(ReportStatus.ERROR);
             return;
         } 
         
@@ -110,6 +112,7 @@ class ReportCaseUco implements GeneralReportModule {
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_noCaseOpen());
+            progressPanel.complete(ReportStatus.ERROR);
             return;
         }
         
@@ -127,6 +130,7 @@ class ReportCaseUco implements GeneralReportModule {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to create directory for CASE/UCO report", ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_unableToCreateDirectories());
+            progressPanel.complete(ReportStatus.ERROR);
             return;
         }
         
@@ -147,8 +151,11 @@ class ReportCaseUco implements GeneralReportModule {
             
             progressPanel.updateStatusLabel(Bundle.ReportCaseUco_querying());
             
+            // create CASE/UCO entry for the Autopsy case
+            String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
+            
             // create CASE/UCO data source entry
-            String dataSourceTraceId = getDataSourceInfo(selectedDataSourceId, skCase, jsonGenerator);
+            String dataSourceTraceId = saveDataSourceInfo(selectedDataSourceId, caseTraceId, skCase, jsonGenerator);
             
             // Run getAllFilesQuery to get all files, exclude directories
             final String getAllFilesQuery = "select obj_id, name, size, crtime, atime, mtime, md5, parent_path, mime_type, extension from tsk_files where "
@@ -162,8 +169,7 @@ class ReportCaseUco implements GeneralReportModule {
 
             progressPanel.updateStatusLabel(Bundle.ReportCaseUco_processing());
             
-            // Loop files and write info to report
-            int count = 0;
+            // Loop files and write info to CASE/UCO report
             while (resultSet.next()) {
 
                 if (progressPanel.getStatus() == ReportStatus.CANCELED) {
@@ -182,21 +188,24 @@ class ReportCaseUco implements GeneralReportModule {
                 String extension = resultSet.getString("extension");
                 
                 saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
-                count++;
             }
             progressPanel.complete(ReportStatus.COMPLETE);
-            logger.log(Level.INFO, "ELDEBUG Number of files saved {0}", count); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
+            progressPanel.complete(ReportStatus.ERROR);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to create JSON output for the CASE/UCO report", ex); //NON-NLS
+            progressPanel.complete(ReportStatus.ERROR);
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Unable to read result set", ex); //NON-NLS
+            progressPanel.complete(ReportStatus.ERROR);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "No current case open", ex); //NON-NLS
+            progressPanel.complete(ReportStatus.ERROR);
         } finally {
             if (jsonGenerator != null) {
                 try {
                     jsonGenerator.close();
-                    // ELTODO investigate database closing issue
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Failed to close JSON output file", ex); //NON-NLS
                 }
@@ -204,7 +213,48 @@ class ReportCaseUco implements GeneralReportModule {
         }
     }
     
-    private String getDataSourceInfo(Long selectedDataSourceId, SleuthkitCase skCase, JsonGenerator jsonGenerator) throws TskCoreException, SQLException, IOException {
+    
+    private String saveCaseInfo(SleuthkitCase skCase, JsonGenerator catalog) throws TskCoreException, SQLException, IOException, NoCurrentCaseException {
+        
+        // create a "trace" entry for the Autopsy case iteself
+        String uniqueCaseName;
+        String dbFileName;
+        TskData.DbType dbType = skCase.getDatabaseType();
+        if (dbType == TskData.DbType.SQLITE) {
+            uniqueCaseName = Case.getCurrentCaseThrows().getName();
+            dbFileName = skCase.getDatabaseName();
+        } else {
+            uniqueCaseName = skCase.getDatabaseName();
+            dbFileName = "";
+        }
+        
+        String caseDirPath = skCase.getDbDirPath();
+        String caseTraceId = "case-" + uniqueCaseName;
+        catalog.writeStartObject();
+        catalog.writeStringField("@id", caseTraceId);
+        catalog.writeStringField("@type", "Trace");
+
+        catalog.writeFieldName("propertyBundle");
+        catalog.writeStartArray();
+
+        catalog.writeStartObject();
+        catalog.writeStringField("@type", "File");
+        if (dbType == TskData.DbType.SQLITE) {
+            catalog.writeStringField("filePath", caseDirPath + java.io.File.separator + dbFileName);
+            catalog.writeBooleanField("isDirectory", false);
+        } else {
+            catalog.writeStringField("filePath", caseDirPath);
+            catalog.writeBooleanField("isDirectory", true);            
+        }
+        catalog.writeEndObject();
+
+        catalog.writeEndArray();
+        catalog.writeEndObject();
+
+        return caseTraceId;
+    }
+    
+    private String saveDataSourceInfo(Long selectedDataSourceId, String caseTraceId, SleuthkitCase skCase, JsonGenerator jsonGenerator) throws TskCoreException, SQLException, IOException {
         
         String getImageDataSourceQuery = "select size from tsk_image_info where obj_id = " + selectedDataSourceId;
         SleuthkitCase.CaseDbQuery queryResult = skCase.executeQuery(getImageDataSourceQuery);
@@ -221,12 +271,12 @@ class ReportCaseUco implements GeneralReportModule {
         }
         
         if (isImageDataSource) {
-            // get path to image file
+            // get caseDirPath to image file
             String getPathToDataSourceQuery = "select name from tsk_image_names where obj_id = " + selectedDataSourceId;
             queryResult = skCase.executeQuery(getPathToDataSourceQuery);
             resultSet = queryResult.getResultSet();
             while (resultSet.next()) {
-                imageName = resultSet.getString(1); // ELTODO remove double slashes
+                imageName = resultSet.getString(1);
                 break;
             }
         } else {
@@ -240,10 +290,10 @@ class ReportCaseUco implements GeneralReportModule {
             }
         }
 
-        return saveDataSourceInCaseUcoFormat(jsonGenerator, imageName, imageSize, selectedDataSourceId);
+        return saveDataSourceInCaseUcoFormat(jsonGenerator, imageName, imageSize, selectedDataSourceId, caseTraceId);
     }
     
-    private String saveDataSourceInCaseUcoFormat(JsonGenerator catalog, String imageName, Long imageSize, Long selectedDataSourceId) throws IOException {
+    private String saveDataSourceInCaseUcoFormat(JsonGenerator catalog, String imageName, Long imageSize, Long selectedDataSourceId, String caseTraceId) throws IOException {
         
         // create a "trace" entry for the data source
         String dataSourceTraceId = "data-source-"+selectedDataSourceId;
@@ -268,6 +318,25 @@ class ReportCaseUco implements GeneralReportModule {
         
         catalog.writeEndArray();
         catalog.writeEndObject();
+        
+        // create a "relationship" entry between the case and the data source
+        catalog.writeStartObject();
+        catalog.writeStringField("@id", "relationship-" + caseTraceId);
+        catalog.writeStringField("@type", "Relationship");
+        catalog.writeStringField("source", dataSourceTraceId);
+        catalog.writeStringField("target", caseTraceId);
+        catalog.writeStringField("kindOfRelationshipe", "contained-within");
+        catalog.writeBooleanField("isDirectional", true);
+        
+        catalog.writeFieldName("propertyBundle");
+        catalog.writeStartArray();        
+        catalog.writeStartObject();
+        catalog.writeStringField("@type", "PathRelation");
+        catalog.writeStringField("path", imageName);
+        catalog.writeEndObject();
+        catalog.writeEndArray();
+        
+        catalog.writeEndObject();        
         
         return dataSourceTraceId;
     }
