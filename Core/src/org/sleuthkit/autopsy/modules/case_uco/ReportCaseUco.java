@@ -110,7 +110,7 @@ class ReportCaseUco implements GeneralReportModule {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_noCaseOpen());
             progressPanel.complete(ReportStatus.ERROR);
             return;
@@ -123,7 +123,7 @@ class ReportCaseUco implements GeneralReportModule {
               
         // Create the JSON generator
         JsonFactory jsonGeneratorFactory = new JsonFactory();
-        String reportPath = baseReportDir + getRelativeFilePath(); //NON-NLS
+        String reportPath = baseReportDir + getRelativeFilePath();
         java.io.File reportFile = Paths.get(reportPath).toFile();
         try {
             Files.createDirectories(Paths.get(reportFile.getParent()));
