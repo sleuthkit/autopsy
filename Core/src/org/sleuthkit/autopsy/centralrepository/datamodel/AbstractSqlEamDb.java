@@ -3217,7 +3217,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
 
                 EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-                final String addObjectIdColumnTemplate = "ALTER TABLE %s ADD COLUMN object_id INTEGER;";  //NON-NLS
+                final String addIntegerColumnTemplate = "ALTER TABLE %s ADD COLUMN %s INTEGER;";  //NON-NLS
                 final String addSsidTableTemplate;
                 final String addCaseIdIndexTemplate;
                 final String addDataSourceIdIndexTemplate;
@@ -3249,11 +3249,19 @@ abstract class AbstractSqlEamDb implements EamDb {
                         throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
                 }
                 String instance_type_dbname;
+                final String dataSourcesTableName = "data_sources";
+                final String dataSourceIdColumnName = "data_source_id";
+                if (!doesColumnExist(conn, dataSourcesTableName, dataSourceIdColumnName)) {
+                    statement.execute(String.format(addIntegerColumnTemplate, dataSourcesTableName, dataSourceIdColumnName)); //NON-NLS
+                }
+                //WJS-TODO add index on datasource id column
+
                 //add object_id column to existing _instances table
+                final String objectIdColumnName = "object_id";
                 for (CorrelationAttributeInstance.Type type : CorrelationAttributeInstance.getDefaultCorrelationTypes()) {
                     instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
-                    if (!doesColumnExist(conn, instance_type_dbname, "object_id")) {
-                        statement.execute(String.format(addObjectIdColumnTemplate, instance_type_dbname)); //NON-NLS
+                    if (!doesColumnExist(conn, instance_type_dbname, objectIdColumnName)) {
+                        statement.execute(String.format(addIntegerColumnTemplate, instance_type_dbname, objectIdColumnName)); //NON-NLS
                     }
                     statement.execute(String.format(addObjectIdIndexTemplate, instance_type_dbname, instance_type_dbname));
                 }
