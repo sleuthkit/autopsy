@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.communications;
 
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.TimeZone;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.datamodel.Account;
@@ -33,7 +34,8 @@ class Utils {
     }
 
     static ZoneId getUserPreferredZoneId() {
-        ZoneId zone = UserPreferences.displayTimesInLocalTime() ? ZoneOffset.systemDefault() : ZoneOffset.UTC;
+        ZoneId zone = UserPreferences.displayTimesInLocalTime() ?
+                ZoneOffset.systemDefault() : TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays()).toZoneId();
         return zone;
     }
 

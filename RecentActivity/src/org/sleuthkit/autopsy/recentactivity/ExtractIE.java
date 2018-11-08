@@ -159,6 +159,7 @@ class ExtractIE extends Extract {
             try {
                 BlackboardArtifact bbart = fav.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                 bbart.addAttributes(bbattributes);
+
                 bbartifacts.add(bbart);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  bookmark artifact.", ex); //NON-NLS
@@ -596,6 +597,7 @@ class ExtractIE extends Extract {
     }
 
     /**
+     *
      * Determine if the URL should be ignored.
      *
      * @param url The URL to test.

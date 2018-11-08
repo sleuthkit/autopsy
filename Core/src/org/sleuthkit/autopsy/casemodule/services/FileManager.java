@@ -492,6 +492,7 @@ public class FileManager implements Closeable {
                 }
             }
             trans.commit();
+            trans = null;
 
             /*
              * Publish content added events for the added files and directories.
@@ -502,15 +503,14 @@ public class FileManager implements Closeable {
 
             return dataSource;
 
-        } catch (TskCoreException ex) {
+        } finally {
             if (null != trans) {
                 try {
                     trans.rollback();
-                } catch (TskCoreException ex2) {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to rollback transaction after exception: %s", ex.getMessage()), ex2);
+                } catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to rollback transaction after exception", ex);
                 }
             }
-            throw ex;
         }
     }
 

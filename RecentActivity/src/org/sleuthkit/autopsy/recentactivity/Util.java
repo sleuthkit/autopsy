@@ -50,11 +50,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * @author Alex
+ *
  */
 class Util {
 
-    private static Logger logger = Logger.getLogger(Util.class.getName());
+    private static final Logger logger = Logger.getLogger(Util.class.getName());
 
     private Util() {
     }
@@ -83,8 +83,10 @@ class Util {
     }
 
     /**
-        //JIRA-2384: There is no utility in apache or guave to do this for us?
+     * //JIRA-2384: There is no utility in apache or guave to do this for us?
+     *
      * @param url
+     *
      * @return empty string if no domain could be found
      */
     private static String getBaseDomain(String url) {
@@ -110,8 +112,7 @@ class Util {
                 hostB.append(".");
             }
         }
-        
-        
+
         String base = hostB.toString();
         // verify there are no special characters in there
         if (base.matches(".*[~`!@#$%^&\\*\\(\\)\\+={}\\[\\];:\\?<>,/ ].*")) {
@@ -121,8 +122,9 @@ class Util {
     }
 
     /**
-     * 
+     *
      * @param value
+     *
      * @return empty string if no domain name was found
      */
     public static String extractDomain(String value) {
@@ -156,18 +158,8 @@ class Util {
     }
 
     public static String getFileName(String value) {
-        String filename = "";
-        String filematch = "^([a-zA-Z]\\:)(\\\\[^\\\\/:*?<>\"|]*(?<!\\[ \\]))*(\\.[a-zA-Z]{2,6})$"; //NON-NLS
-
-        Pattern p = Pattern.compile(filematch, Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.COMMENTS);
-        Matcher m = p.matcher(value);
-        if (m.find()) {
-            filename = m.group(1);
-
-        }
         int lastPos = value.lastIndexOf('\\');
-        filename = (lastPos < 0) ? value : value.substring(lastPos + 1);
-        return filename.toString();
+        return (lastPos < 0) ? value : value.substring(lastPos + 1);
     }
 
     public static String getPath(String txt) {

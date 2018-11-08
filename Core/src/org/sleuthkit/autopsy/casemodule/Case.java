@@ -122,6 +122,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
+import org.sleuthkit.autopsy.coreutils.StopWatch;
 
 /**
  * An Autopsy case. Currently, only one case at a time may be open.
@@ -743,11 +744,15 @@ public class Case {
         "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or there is a problem with the coordination service."
     })
     public static void deleteCase(CaseMetadata metadata) throws CaseActionException {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         synchronized (caseActionSerializationLock) {
             if (null != currentCase) {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_cannotDeleteCurrentCase());
             }
         }
+        stopWatch.stop();
+        logger.log(Level.INFO, String.format("Used %d s to acquire caseActionSerializationLock (Java monitor in Case class) for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
 
         /*
          * Set up either a GUI progress indicator without a cancel button (can't
@@ -769,10 +774,19 @@ public class Case {
                  * cannot be deleted if another node has it open.
                  */
                 progressIndicator.progress(Bundle.Case_progressMessage_checkingForOtherUser());
+                stopWatch.reset();
+                stopWatch.start();
                 try (CoordinationService.Lock dirLock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
-                    assert (null != dirLock);
-                    deleteCase(metadata, progressIndicator);
+                    stopWatch.stop();
+                    logger.log(Level.INFO, String.format("Used %d s to acquire case directory coordination service lock for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
+                    if (dirLock != null) {
+                        deleteCase(metadata, progressIndicator);
+                    } else {
+                        throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
+                    }
                 } catch (CoordinationServiceException ex) {
+                    stopWatch.stop();
+                    logger.log(Level.INFO, String.format("Used %d s to fail to acquire case directory coordination service lock for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
                     throw new CaseActionException(Bundle.Case_exceptionMessage_cannotGetLockToDeleteCase(), ex);
                 }
             }
@@ -982,11 +996,13 @@ public class Case {
         "Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details"
     })
     private static void deleteCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
+        StopWatch stopWatch = new StopWatch();
         boolean errorsOccurred = false;
         if (CaseType.MULTI_USER_CASE == metadata.getCaseType()) {
             /*
              * Delete the case database from the database server.
              */
+            stopWatch.start();
             try {
                 progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDatabase());
                 CaseDbConnectionInfo db;
@@ -996,10 +1012,14 @@ public class Case {
                         Statement statement = connection.createStatement();) {
                     String deleteCommand = "DROP DATABASE \"" + metadata.getCaseDatabaseName() + "\""; //NON-NLS
                     statement.execute(deleteCommand);
+                    stopWatch.stop();
+                    logger.log(Level.INFO, String.format("Used %d s to delete case database for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
                 }
             } catch (UserPreferencesException | ClassNotFoundException | SQLException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to delete case database %s for %s (%s) in %s", metadata.getCaseDatabaseName(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
                 errorsOccurred = true;
+                stopWatch.stop();
+                logger.log(Level.INFO, String.format("Used %d s to fail delete case database for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
             }
         }
 
@@ -1009,10 +1029,16 @@ public class Case {
         progressIndicator.progress(Bundle.Case_progressMessage_deletingTextIndex());
         for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class)) {
             try {
+                stopWatch.reset();
+                stopWatch.start();
                 searchService.deleteTextIndex(metadata);
+                stopWatch.stop();
+                logger.log(Level.INFO, String.format("Used %d s to delete text index for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
             } catch (KeywordSearchServiceException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to delete text index for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
                 errorsOccurred = true;
+                stopWatch.stop();
+                logger.log(Level.INFO, String.format("Used %d s to fail to delete text index for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
             }
         }
 
@@ -1020,9 +1046,16 @@ public class Case {
          * Delete the case directory.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDirectory());
+        stopWatch.reset();
+        stopWatch.start();
         if (!FileUtil.deleteDir(new File(metadata.getCaseDirectory()))) {
             logger.log(Level.SEVERE, String.format("Failed to delete case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
             errorsOccurred = true;
+            stopWatch.stop();
+            logger.log(Level.INFO, String.format("Used %d s to fail to delete case directory for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
+        } else {
+            stopWatch.stop();
+            logger.log(Level.INFO, String.format("Used %d s to delete case directory for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
         }
 
         /*
@@ -1576,11 +1609,13 @@ public class Case {
     }
 
     /**
-     * Notifies case event subscribers that a central repository comment has been changed.
-     * 
+     * Notifies case event subscribers that a central repository comment has
+     * been changed.
+     *
      * This should not be called from the event dispatch thread (EDT)
-     * 
-     * @param contentId the objectId for the Content which has had its central repo comment changed
+     *
+     * @param contentId  the objectId for the Content which has had its central
+     *                   repo comment changed
      * @param newComment the new value of the comment
      */
     public void notifyCentralRepoCommentChanged(long contentId, String newComment) {
@@ -1836,7 +1871,7 @@ public class Case {
                 progressIndicator.progress(Bundle.Case_progressMessage_preparingToOpenCaseResources());
                 acquireSharedCaseDirLock(metadata.getCaseDirectory());
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
-                    assert (null != resourcesLock);
+                    assert(resourcesLock != null); // Use reference to avoid compile time warning.
                     open(isNewCase, progressIndicator);
                 } catch (CaseActionException ex) {
                     releaseSharedCaseDirLock(getMetadata().getCaseDirectory());
@@ -2414,7 +2449,7 @@ public class Case {
      * @throws CaseActionException with a user-friendly message if the lock
      *                             cannot be acquired.
      */
-    @Messages({"Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory."})
+    @Messages({"Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory"})
     private void acquireSharedCaseDirLock(String caseDir) throws CaseActionException {
         try {
             caseDirLock = CoordinationService.getInstance().tryGetSharedLock(CategoryNode.CASES, caseDir, DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);

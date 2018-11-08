@@ -31,11 +31,19 @@
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="null"/>
         </Property>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[625, 452]"/>
+        </Property>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
       <SubComponents>
         <Container class="javax.swing.JPanel" name="viewPreferencesPanel">
+          <Properties>
+            <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+              <Dimension value="[625, 452]"/>
+            </Property>
+          </Properties>
 
           <Layout>
             <DimensionLayout dim="0">
@@ -87,57 +95,68 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="commentsOccurencesColumnsCheckbox" min="-2" max="-2" attributes="0"/>
                                       <Component id="hideOtherUsersTagsCheckbox" min="-2" max="-2" attributes="0"/>
-                                      <Component id="deletedFilesLimitCheckbox" alignment="0" max="32767" attributes="0"/>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="deletedFilesLimitCheckbox" max="32767" attributes="0"/>
+                                          <EmptySpace min="-2" pref="399" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                               </Group>
                               <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Group type="102" alignment="0" attributes="0">
+                                          <Component id="centralRepoLabel" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace min="-2" pref="135" max="-2" attributes="0"/>
+                                          <Component id="jScrollPane1" min="-2" pref="272" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="102" attributes="0">
                                           <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="hideKnownFilesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              <Group type="103" alignment="0" groupAlignment="1" attributes="0">
-                                                  <Group type="103" alignment="1" groupAlignment="0" attributes="0">
-                                                      <Group type="102" alignment="0" attributes="0">
-                                                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                                                          <Group type="103" groupAlignment="0" attributes="0">
-                                                              <Component id="dataSourcesHideSlackCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                              <Component id="viewsHideSlackCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Group type="103" groupAlignment="0" attributes="0">
+                                                      <Component id="hideKnownFilesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      <Group type="103" alignment="0" groupAlignment="1" attributes="0">
+                                                          <Group type="103" alignment="1" groupAlignment="0" attributes="0">
+                                                              <Group type="102" alignment="0" attributes="0">
+                                                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                                                  <Group type="103" groupAlignment="0" attributes="0">
+                                                                      <Component id="dataSourcesHideSlackCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                                      <Component id="viewsHideSlackCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                                  </Group>
+                                                              </Group>
+                                                              <Component id="hideSlackFilesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          </Group>
+                                                          <Group type="102" alignment="1" attributes="0">
+                                                              <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                                              <Group type="103" groupAlignment="0" attributes="0">
+                                                                  <Component id="dataSourcesHideKnownCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                                  <Component id="viewsHideKnownCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                              </Group>
                                                           </Group>
                                                       </Group>
-                                                      <Component id="hideSlackFilesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                                   </Group>
-                                                  <Group type="102" alignment="1" attributes="0">
-                                                      <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                                                      <Group type="103" groupAlignment="0" attributes="0">
-                                                          <Component id="dataSourcesHideKnownCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                          <Component id="viewsHideKnownCheckbox" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                      </Group>
-                                                  </Group>
-                                              </Group>
-                                          </Group>
-                                          <EmptySpace type="separate" max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="displayTimeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              <Group type="102" alignment="0" attributes="0">
-                                                  <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                                                  <EmptySpace type="separate" max="-2" attributes="0"/>
                                                   <Group type="103" groupAlignment="0" attributes="0">
-                                                      <Component id="keepCurrentViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="useBestViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="useGMTTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="useLocalTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="displayTimeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      <Group type="102" alignment="0" attributes="0">
+                                                          <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                                                          <Group type="103" groupAlignment="0" attributes="0">
+                                                              <Component id="keepCurrentViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="useBestViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="useLocalTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                              <Component id="useAnotherTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                          </Group>
+                                                      </Group>
+                                                      <Component id="selectFileLabel" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                               </Group>
-                                              <Component id="selectFileLabel" min="-2" max="-2" attributes="0"/>
+                                              <Component id="hideOtherUsersTagsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              <Component id="deletedFilesLimitLabel" alignment="0" min="-2" pref="215" max="-2" attributes="0"/>
                                           </Group>
+                                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                       </Group>
-                                      <Component id="hideOtherUsersTagsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="centralRepoLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="deletedFilesLimitLabel" alignment="0" min="-2" pref="215" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace min="0" pref="10" max="32767" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -158,6 +177,16 @@
                                   <Component id="dataSourcesHideSlackCheckbox" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="viewsHideSlackCheckbox" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="hideOtherUsersTagsLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="hideOtherUsersTagsCheckbox" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="centralRepoLabel" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="commentsOccurencesColumnsCheckbox" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="deletedFilesLimitLabel" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="selectFileLabel" min="-2" max="-2" attributes="0"/>
@@ -169,20 +198,12 @@
                                   <Component id="displayTimeLabel" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="useLocalTimeRadioButton" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace min="-2" max="-2" attributes="0"/>
-                                  <Component id="useGMTTimeRadioButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="useAnotherTimeRadioButton" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jScrollPane1" min="-2" pref="67" max="-2" attributes="0"/>
                               </Group>
                           </Group>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="hideOtherUsersTagsLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="hideOtherUsersTagsCheckbox" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="centralRepoLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="commentsOccurencesColumnsCheckbox" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="deletedFilesLimitLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="deletedFilesLimitCheckbox" min="-2" pref="33" max="-2" attributes="0"/>
                           <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
@@ -295,14 +316,14 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useLocalTimeRadioButtonActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JRadioButton" name="useGMTTimeRadioButton">
+                <Component class="javax.swing.JRadioButton" name="useAnotherTimeRadioButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.useGMTTimeRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.useAnotherTimeRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useGMTTimeRadioButtonActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useAnotherTimeRadioButtonActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JCheckBox" name="hideOtherUsersTagsCheckbox">
@@ -356,6 +377,28 @@
                     </Property>
                   </Properties>
                 </Component>
+                <Container class="javax.swing.JScrollPane" name="jScrollPane1">
+                  <AuxValues>
+                    <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+                  </AuxValues>
+
+                  <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                  <SubComponents>
+                    <Component class="javax.swing.JList" name="timeZoneList">
+                      <Properties>
+                        <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.editors2.ListModelEditor">
+                          <StringArray count="0"/>
+                        </Property>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="timeZoneListValueChanged"/>
+                      </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                      </AuxValues>
+                    </Component>
+                  </SubComponents>
+                </Container>
               </SubComponents>
             </Container>
             <Container class="javax.swing.JPanel" name="currentCaseSettingsPanel">
