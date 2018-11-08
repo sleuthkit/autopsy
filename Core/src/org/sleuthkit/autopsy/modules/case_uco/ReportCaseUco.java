@@ -84,7 +84,7 @@ class ReportCaseUco implements GeneralReportModule {
         "ReportCaseUco.unableToCreateDirectories=Unable to create directory for CASE/UCO report",
         "ReportCaseUco.initializing=Creating directories...",
         "ReportCaseUco.querying=Querying files...",
-        "ReportCaseUco.ingestWarning=Warning, this report will be created before ingest services completed\\!",
+        "ReportCaseUco.ingestWarning=Warning, this report will be created before ingest services completed",
         "ReportCaseUco.processing=Saving files in CASE/UCO format..."
     })
     @Override
@@ -137,7 +137,6 @@ class ReportCaseUco implements GeneralReportModule {
         // Check if ingest has finished
         if (IngestManager.getInstance().isIngestRunning()) {
             MessageNotifyUtil.Message.warn(Bundle.ReportCaseUco_ingestWarning());
-            // ELTODO exit?
         }
 
         SleuthkitCase skCase = currentCase.getSleuthkitCase();
