@@ -42,6 +42,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.collections.SetChangeListener;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -62,6 +63,7 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
+import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -80,6 +82,8 @@ import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.HashHitsFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.HashSetFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
@@ -87,7 +91,6 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
 
 /**
  * This class acts as the model for a TimelineView
@@ -101,9 +104,9 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
  * as to avoid unnecessary db calls through the TimelineManager -jm
  *
  * Concurrency Policy: TimelineManager is internally synchronized, so methods
- * that only access the repo atomically do not need further synchronization. All
- * other member state variables should only be accessed with intrinsic lock of
- * containing FilteredEventsModel held.
+ * that only access the TimelineManager atomically do not need further
+ * synchronization. All other member state variables should only be accessed
+ * with intrinsic lock of containing FilteredEventsModel held.
  *
  */
 public final class FilteredEventsModel {
@@ -121,15 +124,18 @@ public final class FilteredEventsModel {
     private final ReadOnlyObjectWrapper<ZoomState> requestedZoomState = new ReadOnlyObjectWrapper<>();
     private final ReadOnlyObjectWrapper< EventTypeZoomLevel> requestedTypeZoom = new ReadOnlyObjectWrapper<>(EventTypeZoomLevel.BASE_TYPE);
     private final ReadOnlyObjectWrapper< DescriptionLoD> requestedLOD = new ReadOnlyObjectWrapper<>(DescriptionLoD.SHORT);
+    // end Filter and zoome state
 
-    //caches
+    //caches 
     private final LoadingCache<Object, Long> maxCache;
     private final LoadingCache<Object, Long> minCache;
     private final LoadingCache<Long, TimelineEvent> idToEventCache;
     private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
+    /** Map from datasource id to datasource name. */
     private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
+    // end caches
 
     public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomState> currentStateProperty) throws TskCoreException {
         this.autoCase = autoCase;
@@ -151,19 +157,19 @@ public final class FilteredEventsModel {
         minCache = CacheBuilder.newBuilder()
                 .build(new CacheLoaderImpl<>(ignored -> eventManager.getMinTime()));
 
-        getDatasourcesMap().addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
+        datasourcesMap.addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
             DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
             RootFilterState rootFilter = filterProperty().get();
             rootFilter.getDataSourcesFilterState().getFilter().getSubFilters().add(dataSourceFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
-        getHashSets().addListener((SetChangeListener.Change< ? extends String> change) -> {
+        hashSets.addListener((SetChangeListener.Change< ? extends String> change) -> {
             HashSetFilter hashSetFilter = new HashSetFilter(change.getElementAdded());
             RootFilterState rootFilter = filterProperty().get();
             rootFilter.getHashHitsFilterState().getFilter().getSubFilters().add(hashSetFilter);
             requestedFilter.set(rootFilter.copyOf());
         });
-        getTagNames().addListener((ListChangeListener.Change<? extends TagName> change) -> {
+        tagNames.addListener((ListChangeListener.Change<? extends TagName> change) -> {
             RootFilterState rootFilter = filterProperty().get();
             syncTagsFilter(rootFilter);
             requestedFilter.set(rootFilter.copyOf());
@@ -215,18 +221,6 @@ public final class FilteredEventsModel {
         return autoCase.getSleuthkitCase();
     }
 
-    public ObservableList<TagName> getTagNames() {
-        return tagNames;
-    }
-
-    synchronized public ObservableMap<Long, String> getDatasourcesMap() {
-        return datasourcesMap;
-    }
-
-    synchronized public ObservableSet< String> getHashSets() {
-        return hashSets;
-    }
-
     public Interval getBoundingEventsInterval(Interval timeRange, RootFilter filter, DateTimeZone timeZone) throws TskCoreException {
         return eventManager.getSpanningInterval(timeRange, filter, timeZone);
     }
@@ -273,16 +267,17 @@ public final class FilteredEventsModel {
      * for tags that are not in use in the case, and add new filters for tags
      * that don't have them. New filters are selected by default.
      *
-     * @param rootFilter the filter state to modify so it is consistent with the
-     *                   tags in use in the case
+     * @param rootFilterState the filter state to modify so it is consistent
+     *                        with the tags in use in the case
      */
-    public void syncTagsFilter(RootFilterState rootFilter) {
-        for (TagName tagName : tagNames) {
-            rootFilter.getTagsFilterState().getFilter().addSubFilter(new TagNameFilter(tagName));
-        }
-        for (FilterState<? extends TagNameFilter> filterState : rootFilter.getTagsFilterState().getSubFilterStates()) {
+    public void syncTagsFilter(RootFilterState rootFilterState) {
+        tagNames.forEach((tagName) -> {
+            rootFilterState.getTagsFilterState().getFilter().addSubFilter(new TagNameFilter(tagName));
+        });
+        for (FilterState<? extends TagNameFilter> filterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
             filterState.setDisabled(tagNames.contains(filterState.getFilter().getTagName()) == false);
         }
+
     }
 
     /**
@@ -342,31 +337,27 @@ public final class FilteredEventsModel {
     /**
      * @return the default filter used at startup
      */
-    public RootFilterState getDefaultFilter() {
+    public synchronized RootFilterState getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
-
-        getDatasourcesMap().entrySet().stream().forEach((Map.Entry<Long, String> entry) -> {
-            DataSourceFilter dataSourceFilter = new DataSourceFilter(entry.getValue(), entry.getKey());
-            dataSourcesFilter.addSubFilter(dataSourceFilter);
-        });
+        datasourcesMap.entrySet().forEach(dataSourceEntry
+                -> dataSourcesFilter.addSubFilter(new DataSourceFilter(dataSourceEntry.getValue(), dataSourceEntry.getKey()))
+        );
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
-        getHashSets().forEach(hashSetName -> {
-            HashSetFilter hashSetFilter = new HashSetFilter(hashSetName);
-            hashHitsFilter.addSubFilter(hashSetFilter);
-        });
+        hashSets.stream().map(HashSetFilter::new).forEach(hashHitsFilter::addSubFilter);
 
         TagsFilter tagsFilter = new TagsFilter();
-        getTagNames().stream().forEach(tagName -> {
-            TagNameFilter tagNameFilter = new TagNameFilter(tagName);
-            tagsFilter.addSubFilter(tagNameFilter);
-        });
+        tagNames.stream().map(TagNameFilter::new).forEach(tagsFilter::addSubFilter);
+
+        FileTypesFilter fileTypesFilter = FilterUtils.createDefaultFileTypesFilter();
+
         return new RootFilterState(new RootFilter(new HideKnownFilter(),
                 tagsFilter,
                 hashHitsFilter,
                 new TextFilter(),
-                new TypeFilter(EventType.ROOT_EVENT_TYPE),
+                new EventTypeFilter(EventType.ROOT_EVENT_TYPE),
                 dataSourcesFilter,
+                fileTypesFilter,
                 Collections.emptySet()));
     }
 
@@ -397,6 +388,8 @@ public final class FilteredEventsModel {
      * @param eventIDsWithTags the event ids to get the tag counts map for
      *
      * @return a map from tagname displayname to count of applications
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Map<String, Long> getTagCountsByTagName(Set<Long> eventIDsWithTags) throws TskCoreException {
         return eventManager.getTagCountsByTagName(eventIDsWithTags);
@@ -415,7 +408,7 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * return the number of events that pass the requested filter and are within
+     * Return the number of events that pass the requested filter and are within
      * the given time range.
      *
      * NOTE: this method does not change the requested time range
@@ -442,15 +435,23 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * @return The smallest interval spanning all the events from the
-     *         repository, ignoring any filters or requested ranges.
+     * @return The smallest interval spanning all the events from the case,
+     *         ignoring any filters or requested ranges.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Interval getSpanningInterval() throws TskCoreException {
         return new Interval(getMinTime() * 1000, 1000 + getMaxTime() * 1000);
     }
 
     /**
+     * Get the smallest interval spanning all the given events.
+     *
+     * @param eventIDs The IDs of the events to get a spanning interval arround.
+     *
      * @return the smallest interval spanning all the given events
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Interval getSpanningInterval(Collection<Long> eventIDs) throws TskCoreException {
         return eventManager.getSpanningInterval(eventIDs);
@@ -460,6 +461,8 @@ public final class FilteredEventsModel {
      * @return the time (in seconds from unix epoch) of the absolutely first
      *         event available from the repository, ignoring any filters or
      *         requested ranges
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Long getMinTime() throws TskCoreException {
         try {
@@ -473,6 +476,8 @@ public final class FilteredEventsModel {
      * @return the time (in seconds from unix epoch) of the absolutely last
      *         event available from the repository, ignoring any filters or
      *         requested ranges
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public Long getMaxTime() throws TskCoreException {
         try {
@@ -536,6 +541,8 @@ public final class FilteredEventsModel {
      *
      * @return A List of event IDs for the events that are derived from the
      *         given file.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
         return eventManager.getEventIDsForFile(file, includeDerivedArtifacts);
@@ -549,6 +556,8 @@ public final class FilteredEventsModel {
      *
      * @return A List of event IDs for the events that are derived from the
      *         given artifact.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) throws TskCoreException {
         return eventManager.getEventIDsForArtifact(artifact);
@@ -617,6 +626,8 @@ public final class FilteredEventsModel {
     /**
      * (Re)Post an AutopsyEvent received from another event distribution system
      * locally to all registered subscribers.
+     *
+     * @param event The event to re-post.
      */
     public void postAutopsyEventLocally(AutopsyEvent event) {
         eventbus.post(event);
@@ -694,10 +705,12 @@ public final class FilteredEventsModel {
      *
      * @return a Set of X, each element mapped from one element of the original
      *         comma delimited string
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public static <X> List<X> unGroupConcat(String groupConcat, CheckedFunction<String, X, TskCoreException> mapper) throws TskCoreException {
 
-        if (org.apache.commons.lang3.StringUtils.isBlank(groupConcat)) {
+        if (isBlank(groupConcat)) {
             return Collections.emptyList();
         }
 
