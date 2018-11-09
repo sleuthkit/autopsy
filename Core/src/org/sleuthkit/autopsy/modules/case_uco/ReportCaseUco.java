@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.report.ReportProgressPanel.ReportStatus;
 import org.sleuthkit.datamodel.*;
 
 /**
- * ReportCaseUco generates a report in the CASE/UCO format. It saves basic
+ * ReportCaseUco generates a report in the CASE-UCO format. It saves basic
  file info like full caseDirPath, name, MIME type, times, and hash.
  */
 class ReportCaseUco implements GeneralReportModule {
@@ -72,27 +72,27 @@ class ReportCaseUco implements GeneralReportModule {
     }
 
     /**
-     * Generates a CASE/UCO format report.
+     * Generates a CASE-UCO format report.
      *
      * @param baseReportDir caseDirPath to save the report
      * @param progressPanel panel to update the report's progress
      */
     @NbBundle.Messages({
-        "ReportCaseUco.notInitialized=CASE/UCO settings panel has not been initialized",
-        "ReportCaseUco.noDataSourceSelected=No data source selected for CASE/UCO report",
+        "ReportCaseUco.notInitialized=CASE-UCO settings panel has not been initialized",
+        "ReportCaseUco.noDataSourceSelected=No data source selected for CASE-UCO report",
         "ReportCaseUco.noCaseOpen=Unable to open currect case",
-        "ReportCaseUco.unableToCreateDirectories=Unable to create directory for CASE/UCO report",
+        "ReportCaseUco.unableToCreateDirectories=Unable to create directory for CASE-UCO report",
         "ReportCaseUco.initializing=Creating directories...",
         "ReportCaseUco.querying=Querying files...",
         "ReportCaseUco.ingestWarning=Warning, this report will be created before ingest services completed",
-        "ReportCaseUco.processing=Saving files in CASE/UCO format..."
+        "ReportCaseUco.processing=Saving files in CASE-UCO format..."
     })
     @Override
     @SuppressWarnings("deprecation")
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel) {
 
         if (configPanel == null) {
-            logger.log(Level.SEVERE, "CASE/UCO settings panel has not been initialized"); //NON-NLS
+            logger.log(Level.SEVERE, "CASE-UCO settings panel has not been initialized"); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_notInitialized());
             progressPanel.complete(ReportStatus.ERROR);
             return;            
@@ -100,7 +100,7 @@ class ReportCaseUco implements GeneralReportModule {
         
         Long selectedDataSourceId = configPanel.getSelectedDataSourceId();
         if (selectedDataSourceId == ReportCaseUcoConfigPanel.NO_DATA_SOURCE_SELECTED) {
-            logger.log(Level.SEVERE, "No data source selected for CASE/UCO report"); //NON-NLS
+            logger.log(Level.SEVERE, "No data source selected for CASE-UCO report"); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_noDataSourceSelected());
             progressPanel.complete(ReportStatus.ERROR);
             return;
@@ -118,7 +118,7 @@ class ReportCaseUco implements GeneralReportModule {
         try {
             Files.createDirectories(Paths.get(reportFile.getParent()));
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to create directory for CASE/UCO report", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Unable to create directory for CASE-UCO report", ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_unableToCreateDirectories());
             progressPanel.complete(ReportStatus.ERROR);
             return;
@@ -141,10 +141,10 @@ class ReportCaseUco implements GeneralReportModule {
             
             progressPanel.updateStatusLabel(Bundle.ReportCaseUco_querying());
             
-            // create CASE/UCO entry for the Autopsy case
+            // create CASE-UCO entry for the Autopsy case
             String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
             
-            // create CASE/UCO data source entry
+            // create CASE-UCO data source entry
             String dataSourceTraceId = saveDataSourceInfo(selectedDataSourceId, caseTraceId, skCase, jsonGenerator);
             
             // Run getAllFilesQuery to get all files, exclude directories
@@ -159,7 +159,7 @@ class ReportCaseUco implements GeneralReportModule {
                 
                 progressPanel.updateStatusLabel(Bundle.ReportCaseUco_processing());
                 
-                // Loop files and write info to CASE/UCO report
+                // Loop files and write info to CASE-UCO report
                 while (resultSet.next()) {
                     
                     if (progressPanel.getStatus() == ReportStatus.CANCELED) {
@@ -185,7 +185,7 @@ class ReportCaseUco implements GeneralReportModule {
             logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
             progressPanel.complete(ReportStatus.ERROR);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to create JSON output for the CASE/UCO report", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to create JSON output for the CASE-UCO report", ex); //NON-NLS
             progressPanel.complete(ReportStatus.ERROR);
         } catch (SQLException ex) {
             logger.log(Level.WARNING, "Unable to read result set", ex); //NON-NLS
@@ -432,7 +432,7 @@ class ReportCaseUco implements GeneralReportModule {
         try {
             configPanel = new ReportCaseUcoConfigPanel();
         } catch (NoCurrentCaseException | TskCoreException | SQLException ex) {
-            logger.log(Level.SEVERE, "Failed to initialize CASE/UCO settings panel", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to initialize CASE-UCO settings panel", ex); //NON-NLS
             MessageNotifyUtil.Message.error(Bundle.ReportCaseUco_notInitialized());
             configPanel = null;
         }

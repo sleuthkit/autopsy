@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.guiutils.DataSourceComboBoxModel;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * UI controls for CASE/UCO report. It is a panel which provides the
+ * UI controls for CASE-UCO report. It is a panel which provides the
  * ability to select a single datasource from a dropdown list
  * of sources in the current case.
  */
