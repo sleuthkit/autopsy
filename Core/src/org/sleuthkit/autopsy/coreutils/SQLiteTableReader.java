@@ -213,6 +213,7 @@ public class SQLiteTableReader implements AutoCloseable {
     private int currRowColumnIndex;
     private int columnNameIndex;
     private int totalColumnCount;
+    private boolean unfinishedRow;
     private ResultSetMetaData currentMetadata;
 
     private boolean liveResultSet;
@@ -386,10 +387,10 @@ public class SQLiteTableReader implements AutoCloseable {
                         .getColumnName(++columnNameIndex));
             }
 
-            //currRowColumnIndex > 0 means we are still reading the current result set row
-            while (currRowColumnIndex > 0 || queryResults.next()) {
+            while (unfinishedRow || queryResults.next()) {
                 while(currRowColumnIndex < totalColumnCount) {
                     if (condition.getAsBoolean()) {
+                        unfinishedRow = true;
                         return;
                     }
                     
@@ -408,6 +409,7 @@ public class SQLiteTableReader implements AutoCloseable {
 
                     this.forAllAction.accept(item);
                 }
+                unfinishedRow = false;
                 //Wrap column index back around if we've reached the end of the row
                 currRowColumnIndex = currRowColumnIndex % totalColumnCount;
             }
@@ -478,6 +480,7 @@ public class SQLiteTableReader implements AutoCloseable {
      * directory.
      *
      * @param file AbstractFile from the data source
+     * @param id The input files id value
      *
      * @return The path of the file on disk
      *
