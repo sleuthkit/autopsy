@@ -210,9 +210,10 @@ public class SQLiteTableReader implements AutoCloseable {
     private final Consumer<Object> forAllAction;
 
     //Iteration state variables
-    private Integer currRowColumnIndex;
-    private Integer columnNameIndex;
-    private Integer currentColumnCount;
+    private int currRowColumnIndex;
+    private int columnNameIndex;
+    private int totalColumnCount;
+    private boolean unfinishedRow;
     private ResultSetMetaData currentMetadata;
 
     private boolean liveResultSet;
@@ -230,7 +231,7 @@ public class SQLiteTableReader implements AutoCloseable {
         this.onFloatAction = nonNullValue(builder.onFloatAction);
         this.onBlobAction = nonNullValue(builder.onBlobAction);
         this.forAllAction = nonNullValue(builder.forAllAction);
-
+        
         this.file = builder.file;
     }
 
@@ -329,8 +330,7 @@ public class SQLiteTableReader implements AutoCloseable {
 
     /**
      * Reads column names and values from the table. Only actions that were
-     * configured in the Builder will be invoked during iteration. Column names
-     * are only read during the first call to this function. Iteration will stop
+     * configured in the Builder will be invoked during iteration. Iteration will stop
      * when the table read has completed or an exception was encountered.
      *
      * @param tableName Source table to perform a read
@@ -375,22 +375,22 @@ public class SQLiteTableReader implements AutoCloseable {
         try {
             if (!liveResultSet) {
                 openTableResources(query);
-                columnNameIndex = 1;
+                columnNameIndex = 0;
             }
 
             //Process column names before reading the database table values
-            for (; columnNameIndex <= currentColumnCount; columnNameIndex++) {
+            while(columnNameIndex < totalColumnCount) {
                 if (condition.getAsBoolean()) {
                         return;
                 }
                 this.onColumnNameAction.accept(currentMetadata
-                        .getColumnName(columnNameIndex));
+                        .getColumnName(++columnNameIndex));
             }
 
-            //currRowColumnIndex > 0 means we are still reading the current result set row
-            while (currRowColumnIndex > 0 || queryResults.next()) {
-                while(currRowColumnIndex < currentColumnCount) {
+            while (unfinishedRow || queryResults.next()) {
+                while(currRowColumnIndex < totalColumnCount) {
                     if (condition.getAsBoolean()) {
+                        unfinishedRow = true;
                         return;
                     }
                     
@@ -409,8 +409,9 @@ public class SQLiteTableReader implements AutoCloseable {
 
                     this.forAllAction.accept(item);
                 }
+                unfinishedRow = false;
                 //Wrap column index back around if we've reached the end of the row
-                currRowColumnIndex = (currRowColumnIndex % currentColumnCount);
+                currRowColumnIndex = currRowColumnIndex % totalColumnCount;
             }
             closeTableResources();
         } catch (SQLException ex) {
@@ -479,6 +480,7 @@ public class SQLiteTableReader implements AutoCloseable {
      * directory.
      *
      * @param file AbstractFile from the data source
+     * @param id The input files id value
      *
      * @return The path of the file on disk
      *
@@ -510,7 +512,7 @@ public class SQLiteTableReader implements AutoCloseable {
             statement = conn.prepareStatement(query);
             queryResults = statement.executeQuery();
             currentMetadata = queryResults.getMetaData();
-            currentColumnCount = currentMetadata.getColumnCount();
+            totalColumnCount = currentMetadata.getColumnCount();
             liveResultSet = true;
         } catch (SQLException ex) {
             throw new SQLiteTableReaderException(ex);
