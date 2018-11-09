@@ -345,6 +345,9 @@ public interface EamDb {
     /**
      * Find a correlation attribute in the Central Repository database given the
      * instance type, case, data source, value, and file path.
+     * 
+     * Method exists to support instances added using Central Repository version 1,1 and
+     * older
      *
      * @param type                  The type of instance.
      * @param correlationCase       The case tied to the instance.
@@ -353,12 +356,9 @@ public interface EamDb {
      * @param filePath              The file path tied to the instance.
      *
      * @return The correlation attribute if it exists; otherwise null.
-     *
-     * @deprecated - included to support instances added using Central Repository version 1,1 and
-     * older
+     * 
      * @throws EamDbException
      */
-    @Deprecated
     CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CorrelationAttributeNormalizationException;
 
@@ -373,8 +373,6 @@ public interface EamDb {
      *
      * @return The correlation attribute if it exists; otherwise null.
      *
-     * @deprecated - included to support Central Reposities version 1,1 and
-     * older
      * @throws EamDbException
      */
     CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,

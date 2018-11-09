@@ -229,17 +229,18 @@ final class PostgresEamDb extends AbstractSqlEamDb {
     @Override
     boolean doesColumnExist(Connection conn, String tableName, String columnName) throws SQLException {
         final String objectIdColumnExistsTemplate = "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='%s' AND column_name='%s')";  //NON-NLS
-        ResultSet resultSet;
-        Statement statement = conn.createStatement();
+        ResultSet resultSet = null;
+        Statement statement = null;
         boolean columnExists = false;
-        resultSet = statement.executeQuery(String.format(objectIdColumnExistsTemplate, tableName, columnName));
         try {
+            statement = conn.createStatement();
+            resultSet = statement.executeQuery(String.format(objectIdColumnExistsTemplate, tableName, columnName));
             if (resultSet.next()) {
                 columnExists = resultSet.getBoolean(1);
             }
         } finally {
-            resultSet.close();
-            statement.close();
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeStatement(statement);
         }
         return columnExists;
     }

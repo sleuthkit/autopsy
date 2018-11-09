@@ -1565,7 +1565,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 int instanceId = resultSet.getInt(1);
                 int knownStatus = resultSet.getInt(2);
                 String comment = resultSet.getString(3);
-                //null objectId used because we only fall back to using this method when objec
+                //null objectId used because we only fall back to using this method when objectID was not available
                 correlationAttributeInstance = new CorrelationAttributeInstance(type, value,
                         instanceId, correlationCase, correlationDataSource, filePath, comment, TskData.FileKnown.valueOf((byte) knownStatus), null);
             }
@@ -3250,7 +3250,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                     default:
                         throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
                 }
-                String instance_type_dbname;
                 final String dataSourcesTableName = "data_sources";
                 final String dataSourceIdColumnName = "data_source_id";
                 if (!doesColumnExist(conn, dataSourcesTableName, dataSourceIdColumnName)) {
@@ -3258,15 +3257,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 }
                 //WJS-TODO add index on datasource id column
 
-                //add object_id column to existing _instances table
-                final String objectIdColumnName = "object_id";
-                for (CorrelationAttributeInstance.Type type : CorrelationAttributeInstance.getDefaultCorrelationTypes()) {
-                    instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
-                    if (!doesColumnExist(conn, instance_type_dbname, objectIdColumnName)) {
-                        statement.execute(String.format(addIntegerColumnTemplate, instance_type_dbname, objectIdColumnName)); //NON-NLS
-                    }
-                    statement.execute(String.format(addObjectIdIndexTemplate, instance_type_dbname, instance_type_dbname));
-                }
                 //update central repository to be able to store new correlation attributes 
                 final String wirelessNetworsDbTableName = "wireless_networks";
                 final String wirelessNetworksTableInstanceName = wirelessNetworsDbTableName + "_instances";
@@ -3278,7 +3268,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setInt(4, 1);
                 preparedStatement.setInt(5, 1);
                 preparedStatement.execute();
-
                 //create a new wireless_networks_instances table and add indexes for its columns
                 statement.execute(String.format(addSsidTableTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addCaseIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
@@ -3286,7 +3275,16 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute(String.format(addValueIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addKnownStatusIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addObjectIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-
+                //add object_id column to _instances table which do not already have it
+                String instance_type_dbname;
+                final String objectIdColumnName = "object_id";
+                for (CorrelationAttributeInstance.Type type : CorrelationAttributeInstance.getDefaultCorrelationTypes()) {
+                    instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
+                    if (!doesColumnExist(conn, instance_type_dbname, objectIdColumnName)) {
+                        statement.execute(String.format(addIntegerColumnTemplate, instance_type_dbname, objectIdColumnName)); //NON-NLS
+                    }
+                    statement.execute(String.format(addObjectIdIndexTemplate, instance_type_dbname, instance_type_dbname));
+                }
             }
             if (!updateSchemaVersion(conn)) {
                 throw new EamDbException("Error updating schema version");
