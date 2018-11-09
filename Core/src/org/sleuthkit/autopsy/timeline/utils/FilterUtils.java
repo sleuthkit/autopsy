@@ -22,9 +22,10 @@ import com.google.common.net.MediaType;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.openide.util.NbBundle;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.Documents;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.Executable;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.Media;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
@@ -34,55 +35,12 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
  */
 public final class FilterUtils {
 
-    private static final Set<MediaType> MEDIA_MIME_TYPES = Stream.of(
-            "image/*",//NON-NLS
-            "video/*",//NON-NLS
-            "audio/*",//NON-NLS
-            "application/vnd.ms-asf", //NON-NLS
-            "application/vnd.rn-realmedia", //NON-NLS
-            "application/x-shockwave-flash" //NON-NLS 
-    ).map(MediaType::parse).collect(Collectors.toSet());
-
-    private static final Set<MediaType> EXECUTABLE_MIME_TYPES = Stream.of(
-            "application/x-bat",//NON-NLS
-            "application/x-dosexec",//NON-NLS
-            "application/vnd.microsoft.portable-executable",//NON-NLS
-            "application/x-msdownload",//NON-NLS
-            "application/exe",//NON-NLS
-            "application/x-exe",//NON-NLS
-            "application/dos-exe",//NON-NLS
-            "vms/exe",//NON-NLS
-            "application/x-winexe",//NON-NLS
-            "application/msdos-windows",//NON-NLS
-            "application/x-msdos-program"//NON-NLS
-    ).map(MediaType::parse).collect(Collectors.toSet());
-
-    private static final Set<MediaType> DOCUMENT_MIME_TYPES = Stream.of(
-            "text/*", //NON-NLS
-            "application/rtf", //NON-NLS
-            "application/pdf", //NON-NLS
-            "application/json", //NON-NLS
-            "application/javascript", //NON-NLS
-            "application/xml", //NON-NLS
-            "application/x-msoffice", //NON-NLS
-            "application/x-ooxml", //NON-NLS
-            "application/msword", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
-            "application/vnd.ms-powerpoint", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
-            "application/vnd.ms-excel", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
-            "application/vnd.oasis.opendocument.presentation", //NON-NLS
-            "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
-            "application/vnd.oasis.opendocument.text" //NON-NLS
-    ).map(MediaType::parse).collect(Collectors.toSet());
-
-    private static final Set<MediaType> NON_OTHER_MIME_TYPES = new HashSet<>();
+    private static final Set<String> NON_OTHER_MIME_TYPES = new HashSet<>();
 
     static {
-        NON_OTHER_MIME_TYPES.addAll(MEDIA_MIME_TYPES);
-        NON_OTHER_MIME_TYPES.addAll(DOCUMENT_MIME_TYPES);
-        NON_OTHER_MIME_TYPES.addAll(EXECUTABLE_MIME_TYPES);
+        NON_OTHER_MIME_TYPES.addAll(Documents.getMediaTypes());
+        NON_OTHER_MIME_TYPES.addAll(Executable.getMediaTypes());
+        NON_OTHER_MIME_TYPES.addAll(Media.getMediaTypes());
     }
 
     private FilterUtils() {
@@ -95,16 +53,13 @@ public final class FilterUtils {
      * @return The new FileTypesFilter.
      */
     @NbBundle.Messages({
-        "FilterUtils.mediaFilter.displayName=Media",
-        "FilterUtils.documentsFilter.displayName=Documents",
-        "FilterUtils.executablesFilter.displayName=Executables",
         "FilterUtils.otherFilter.displayName=Other"})
     public static FileTypesFilter createDefaultFileTypesFilter() {
         FileTypesFilter fileTypesFilter = new FileTypesFilter();
 
-        fileTypesFilter.addSubFilter(new FileTypeFilter(Bundle.FilterUtils_mediaFilter_displayName(), MEDIA_MIME_TYPES));
-        fileTypesFilter.addSubFilter(new FileTypeFilter(Bundle.FilterUtils_documentsFilter_displayName(), DOCUMENT_MIME_TYPES));
-        fileTypesFilter.addSubFilter(new FileTypeFilter(Bundle.FilterUtils_executablesFilter_displayName(), EXECUTABLE_MIME_TYPES));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(Media.getDisplayName(), Media.getMediaTypes()));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(Documents.getDisplayName(), Documents.getMediaTypes()));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(Executable.getDisplayName(), Executable.getMediaTypes()));
         fileTypesFilter.addSubFilter(new InverseFileTypeFilter(Bundle.FilterUtils_otherFilter_displayName(), NON_OTHER_MIME_TYPES));
 
         return fileTypesFilter;
@@ -116,7 +71,7 @@ public final class FilterUtils {
      */
     private static class InverseFileTypeFilter extends FileTypeFilter {
 
-        InverseFileTypeFilter(String displayName, Collection<MediaType> mediaTypes) {
+        InverseFileTypeFilter(String displayName, Collection<String> mediaTypes) {
             super(displayName, mediaTypes);
         }
 

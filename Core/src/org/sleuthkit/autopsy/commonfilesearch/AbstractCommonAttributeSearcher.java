@@ -97,9 +97,10 @@ public abstract class AbstractCommonAttributeSearcher {
     /**
      * Get the portion of the title that will display the frequency percentage
      * threshold. Items that existed in over this percent of data sources were
-     * ommited from the results. 
+     * ommited from the results.
      *
-     * @return A string providing the frequency percentage threshold, or an empty string if no threshold was set
+     * @return A string providing the frequency percentage threshold, or an
+     *         empty string if no threshold was set
      */
     @NbBundle.Messages({
         "# {0} - threshold percent",
@@ -171,15 +172,15 @@ public abstract class AbstractCommonAttributeSearcher {
      */
     static final Set<String> TEXT_FILES_MIME_TYPES = Stream.of(
             "text/plain", //NON-NLS
-            "application/rtf", //NON-NLS
-            "application/pdf", //NON-NLS
             "text/css", //NON-NLS
             "text/html", //NON-NLS
             "text/csv", //NON-NLS
+            "application/rtf", //NON-NLS
+            "application/pdf", //NON-NLS
+            "text/calendar", //NON-NLS
             "application/json", //NON-NLS
             "application/javascript", //NON-NLS
             "application/xml", //NON-NLS
-            "text/calendar", //NON-NLS
             "application/x-msoffice", //NON-NLS
             "application/x-ooxml", //NON-NLS
             "application/msword", //NON-NLS
