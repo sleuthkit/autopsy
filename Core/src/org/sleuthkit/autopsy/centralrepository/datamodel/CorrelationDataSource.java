@@ -36,6 +36,7 @@ public class CorrelationDataSource implements Serializable {
 
     private final int caseID; //the value in the id column of the case table in the central repo
     private final int dataSourceID;   //< Id in the central repo
+    private final Long caseDataSourceID; //< Id for data source in the caseDB 
     private final String deviceID;  //< Unique to its associated case (not necessarily globally unique)
     private final String name;
 
@@ -44,8 +45,8 @@ public class CorrelationDataSource implements Serializable {
      * @param deviceId User specified case-specific ID
      * @param name Display name of data source
      */
-    public CorrelationDataSource(CorrelationCase correlationCase, String deviceId, String name) {
-        this(correlationCase.getID(), -1, deviceId, name);
+    public CorrelationDataSource(CorrelationCase correlationCase, String deviceId, String name, long caseDataSourceId) {
+        this(correlationCase.getID(), -1, deviceId, name, caseDataSourceId);
     }  
     
     /**
@@ -58,11 +59,13 @@ public class CorrelationDataSource implements Serializable {
     CorrelationDataSource(int caseId,
             int dataSourceId,
             String deviceId,
-            String name) {
+            String name,
+            Long caseDataSourceId) {
         this.caseID = caseId;
         this.dataSourceID = dataSourceId;
         this.deviceID = deviceId;
         this.name = name;
+        this.caseDataSourceID = caseDataSourceId;
     }
 
     /**
@@ -97,7 +100,7 @@ public class CorrelationDataSource implements Serializable {
             correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, deviceId);
         }
         if (correlationDataSource == null) {
-            correlationDataSource = new CorrelationDataSource(correlationCase, deviceId, dataSource.getName());
+            correlationDataSource = new CorrelationDataSource(correlationCase, deviceId, dataSource.getName(), dataSource.getId());
             if (EamDbUtil.useCentralRepo()) {
                 EamDb.getInstance().newDataSource(correlationDataSource);
             }
@@ -142,6 +145,15 @@ public class CorrelationDataSource implements Serializable {
      */
     public int getCaseID() {
         return caseID;
+    }
+    
+    /**
+     * Get the id for the data source in the case db
+     * 
+     * @return caseDataSourceID or NULL if not available
+     */
+    Long getCaseDataSourceID(){
+        return caseDataSourceID;
     }
 
     /**
