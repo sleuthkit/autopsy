@@ -119,13 +119,14 @@ final public class FilterSetPanel extends BorderPane {
         expansionMap.put(filteredEvents.getFilterState().getFilter(), true);
         expansionMap.put(filteredEvents.getFilterState().getEventTypeFilterState().getFilter(), true);
 
+ 
         InvalidationListener applyFiltersListener = observable -> applyFilters();
 
         filteredEvents.eventTypeZoomProperty().addListener(applyFiltersListener);
         filteredEvents.descriptionLODProperty().addListener(applyFiltersListener);
         filteredEvents.timeRangeProperty().addListener(applyFiltersListener);
 
-        filteredEvents.filterProperty().addListener(observable -> refresh());
+        filteredEvents.filterProperty().addListener(observable -> refresh()); 
         refresh();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
@@ -165,9 +166,8 @@ final public class FilterSetPanel extends BorderPane {
     }
 
     private void refresh() {
-        FilterTreeItem filterTreeItem = new FilterTreeItem(filteredEvents.filterProperty().getValue(), expansionMap);
         Platform.runLater(() -> {
-            filterTreeTable.setRoot(filterTreeItem);
+            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filterProperty().get().copyOf(), expansionMap));
         });
     }
 

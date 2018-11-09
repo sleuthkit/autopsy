@@ -56,6 +56,7 @@ public class TimeLineModule {
      * @throws NoCurrentCaseException If there is no case open.
      * @throws TskCoreException       If there was a problem accessing the case
      *                                database.
+     *
      */
     public static TimeLineController getController() throws NoCurrentCaseException, TskCoreException {
         synchronized (controllerLock) {
@@ -89,7 +90,7 @@ public class TimeLineModule {
                 getController().handleCaseEvent(evt);
             } catch (NoCurrentCaseException ex) {
                 // ignore
-
+                return;
             } catch (TskCoreException ex) {
                 MessageNotifyUtil.Message.error("Error creating timeline controller.");
                 logger.log(Level.SEVERE, "Error creating timeline controller", ex);
@@ -120,6 +121,7 @@ public class TimeLineModule {
                 getController().handleIngestModuleEvent(evt);
             } catch (NoCurrentCaseException ex) {
                 // ignore
+                return;
             } catch (TskCoreException ex) {
                 MessageNotifyUtil.Message.error("Error creating timeline controller.");
                 logger.log(Level.SEVERE, "Error creating timeline controller", ex);

@@ -40,6 +40,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -58,6 +59,7 @@ import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.TagsFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
 import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
@@ -159,12 +161,12 @@ public final class FilteredEventsModel {
         InvalidationListener filterSyncListener = observable -> {
             RootFilterState rootFilter = filterProperty().get();
             syncFilters(rootFilter);
-            requestedFilter.set(rootFilter);
+            requestedFilter.set(rootFilter.copyOf());
         };
-
+ 
         datasourcesMap.addListener(filterSyncListener);
-        getHashSets().addListener(filterSyncListener);
-        getTagNames().addListener(filterSyncListener);
+        hashSets.addListener(filterSyncListener);
+        tagNames.addListener(filterSyncListener);
 
         requestedFilter.set(getDefaultFilter());
 
@@ -242,7 +244,7 @@ public final class FilteredEventsModel {
         SleuthkitCase skCase = autoCase.getSleuthkitCase();
         hashSets.addAll(eventManager.getHashSetNames());
         Set<Long> dataSourceIDs = eventManager.getDataSourceIDs();
-
+ 
         //because there is no way to remove a datasource we only add to this map.
         for (Long id : dataSourceIDs) {
             try {
@@ -267,24 +269,24 @@ public final class FilteredEventsModel {
      * @param rootFilterState the filter state to modify so it is consistent
      *                        with the tags in use in the case
      */
-    public void syncTagsFilter(RootFilterState rootFilterState) {
-        tagNames.forEach((tagName) -> {
-            rootFilterState.getTagsFilterState().getFilter().addSubFilter(new TagNameFilter(tagName));
-        });
-        for (FilterState<? extends TagNameFilter> filterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
+    public void syncFilters(RootFilterState rootFilterState) {
+        TagsFilterState tagsFilterState = rootFilterState.getTagsFilterState();
+         for (TagName tagName : tagNames) {
+            tagsFilterState.getFilter().addSubFilter(new TagNameFilter(tagName));
+        }
+        for (FilterState<? extends TagNameFilter> tagFilterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
             tagFilterState.setDisabled(tagNames.contains(tagFilterState.getFilter().getTagName()) == false);
         }
-
-        DataSourcesFilter dataSourcesFilter = rootFilter.getDataSourcesFilterState().getFilter();
+        
+        DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
         for (Map.Entry<Long, DataSource> entry : datasourcesMap.entrySet()) {
             dataSourcesFilter.addSubFilter(new DataSourceFilter(entry.getValue().getName(), entry.getKey()));
         }
-
-        HashHitsFilter hashSetsFilter = rootFilter.getHashHitsFilterState().getFilter();
-        for (String hashSet : getHashSets()) {
+ 
+        HashHitsFilter hashSetsFilter = rootFilterState.getHashHitsFilterState().getFilter();
+        for (String hashSet : hashSets) {
             hashSetsFilter.addSubFilter(new HashSetFilter(hashSet));
         }
-
     }
 
     /**
@@ -347,7 +349,7 @@ public final class FilteredEventsModel {
     public synchronized RootFilterState getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
         datasourcesMap.entrySet().forEach(dataSourceEntry
-                -> dataSourcesFilter.addSubFilter(new DataSourceFilter(dataSourceEntry.getValue(), dataSourceEntry.getKey()))
+                -> dataSourcesFilter.addSubFilter(new DataSourceFilter(dataSourceEntry.getValue().getName(), dataSourceEntry.getKey()))
         );
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
@@ -678,8 +680,8 @@ public final class FilteredEventsModel {
     public synchronized void invalidateCaches(Collection<Long> updatedEventIDs) throws TskCoreException {
         minCache.invalidateAll();
         maxCache.invalidateAll();
-        idToEventCache.invalidateAll(emptyIfNull(updatedEventIDs));
-        eventCountsCache.invalidateAll();
+         idToEventCache.invalidateAll(emptyIfNull(updatedEventIDs));
+         eventCountsCache.invalidateAll();
 
         populateFilterData();
 

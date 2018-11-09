@@ -285,6 +285,7 @@ public class TimeLineController {
             ZoomState historyManagerState = newState;
             filteredEvents.syncFilters(historyManagerState.getFilterState());
             currentParams.set(historyManagerState);
+
         });
 
         try {
@@ -721,7 +722,6 @@ public class TimeLineController {
             // Case is closed, do nothing.
             return;
         }
-
         // ignore remote events.  The node running the ingest should update the Case DB
         // @@@ We should signal though that there is more data and flush caches...
         if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
@@ -754,7 +754,6 @@ public class TimeLineController {
     }
 
     void handleCaseEvent(PropertyChangeEvent evt) {
-
         ListenableFuture<?> future = Futures.immediateFuture(null);
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case BLACKBOARD_ARTIFACT_TAG_ADDED:
@@ -781,9 +780,8 @@ public class TimeLineController {
                 break;
             case EVENT_ADDED:
                 future = executor.submit(() -> {
-                    filteredEvents.invalidateCaches(singleton(((EventAddedEvent) evt).getEventID()));
+                    filteredEvents.invalidateCaches(singleton(((EventAddedEvent) evt).getAddedEventID()));
                     return null;
-
                 });
                 break;
         }
