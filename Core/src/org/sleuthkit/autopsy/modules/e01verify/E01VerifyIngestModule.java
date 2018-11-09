@@ -110,12 +110,17 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         "# {0} - hashName",
         "E01VerifyIngestModule.process.hashAlgorithmError=Error creating message digest for {0} algorithm",
         "# {0} - hashName",
-        "# {1} - hashValue",
-        "E01VerifyIngestModule.process.hashMatch={0} hash verified: {1} ",
+        "E01VerifyIngestModule.process.hashMatch=<li>{0} hash verified</li>",
         "# {0} - hashName",
-        "# {1} - calculatedHashValue",
-        "# {2} - storedHashValue",
-        "E01VerifyIngestModule.process.hashNonMatch={0} hash not verified - calculated hash: {1}  stored hash: {2}",
+        "E01VerifyIngestModule.process.hashNonMatch=<li>{0} hash not verified</li>",
+        "# {0} - calculatedHashValue",
+        "E01VerifyIngestModule.process.calculatedHash=<li>   Calculated hash: {0}</li>",
+        "# {0} - storedHashValue",
+        "E01VerifyIngestModule.process.storedHash=<li>   Stored hash: {0}</li>",
+        "E01VerifyIngestModule.process.listTest=<li>Level 1</li><ul><li>Level 2 a</li><li>Level 2b</li></ul><li> Level 1 again</li>",
+        "# {0} - calculatedHashValue",
+        "# {1} - storedHashValue",
+        "E01VerifyIngestModule.process.hashList=<ul><li>Calculated hash: {0}</li><li>Stored hash: {1}</li></ul>",
     })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
@@ -216,6 +221,16 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         int totalChunks = (int) Math.ceil((double) size / (double) chunkSize);
         logger.log(Level.INFO, "Total chunks = {0}", totalChunks); //NON-NLS
 
+        if (mode.equals(Mode.VERIFY)) {
+            logger.log(Level.INFO, "Starting hash verification of {0}", img.getName()); //NON-NLS
+        } else {
+            logger.log(Level.INFO, "Starting hash calculation for {0}", img.getName()); //NON-NLS
+        }
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+        NbBundle.getMessage(this.getClass(),
+                "EwfVerifyIngestModule.process.startingImg",
+                imgName)));
+        
         // Set up the progress bar
         statusHelper.switchToDeterminate(totalChunks);
         
@@ -265,12 +280,16 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             
             for (HashStruct struct:hashInfo) {
                 if (struct.storedHash.equals(struct.calculatedHash)) {
-                    hashResults += Bundle.E01VerifyIngestModule_process_hashMatch(struct.type.name, struct.storedHash);
+                    hashResults += Bundle.E01VerifyIngestModule_process_hashMatch(struct.type.name);
                 } else {
                     verified = false;
-                    hashResults += Bundle.E01VerifyIngestModule_process_hashNonMatch(struct.type.name, struct.calculatedHash, struct.storedHash);
+                    hashResults += Bundle.E01VerifyIngestModule_process_hashNonMatch(struct.type.name);
                 }
-                
+                hashResults += Bundle.E01VerifyIngestModule_process_hashList(struct.calculatedHash, struct.storedHash);
+                //hashResults += Bundle.E01VerifyIngestModule_process_hashList(struct.calculatedHash, struct.storedHash);
+                //hashResults += Bundle.E01VerifyIngestModule_process_calculatedHash(struct.calculatedHash);
+                //hashResults += Bundle.E01VerifyIngestModule_process_storedHash(struct.storedHash);
+                //hashResults += Bundle.E01VerifyIngestModule_process_listTest();
             }
             
             String verificationResultStr;
