@@ -273,6 +273,7 @@ class ReportHTML implements TableReportModule {
                     break;
                 case TSK_WIFI_NETWORK:
                       in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/network-wifi.png"); //NON-NLS
+                    break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = {0}", dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
