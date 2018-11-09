@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import static java.util.Arrays.asList;
 import java.util.Collection;
@@ -31,49 +30,90 @@ import org.openide.util.NbBundle;
  */
 public final class FileTypeUtils {
 
-    private static final ImmutableSet<String> IMAGE_MIME_TYPES;
-    private static final ImmutableSet<String> AUDIO_MIME_TYPES;
-    private static final ImmutableSet<String> VIDEO_MIME_TYPES;
+    private static final ImmutableSet<String> IMAGE_MIME_TYPES
+            = new ImmutableSet.Builder<String>()
+                    .addAll(asList(ImageIO.getReaderMIMETypes()))
+                    .add("image/bmp", //NON-NLS
+                            "image/gif", //NON-NLS
+                            "image/jpeg", //NON-NLS
+                            "image/png", //NON-NLS
+                            "image/tiff", //NON-NLS
+                            "image/vnd.adobe.photoshop", //NON-NLS
+                            "image/x-raw-nikon", //NON-NLS
+                            "image/x-ms-bmp", //NON-NLS
+                            "image/x-icon", //NON-NLS
+                            "image/webp", //NON-NLS
+                            "image/vnd.microsoft.icon", //NON-NLS
+                            "image/x-rgb", //NON-NLS
+                            "image/x-ms-bmp", //NON-NLS
+                            "image/x-portable-graymap", //NON-NLS
+                            "image/x-portable-bitmap" //NON-NLS 
+                    ).build();
+    private static final ImmutableSet<String> AUDIO_MIME_TYPES
+            = new ImmutableSet.Builder<String>()
+                    .add("audio/midi", //NON-NLS
+                            "audio/mpeg", //NON-NLS
+                            "audio/webm", //NON-NLS
+                            "audio/ogg", //NON-NLS
+                            "audio/wav" //NON-NLS
+                    ).build();
+    private static final ImmutableSet<String> VIDEO_MIME_TYPES
+            = new ImmutableSet.Builder<String>()
+                    .add("video/webm", //NON-NLS
+                            "video/3gpp", //NON-NLS
+                            "video/3gpp2", //NON-NLS
+                            "video/ogg", //NON-NLS
+                            "video/mpeg", //NON-NLS
+                            "video/mp4", //NON-NLS
+                            "video/quicktime", //NON-NLS
+                            "video/x-msvideo", //NON-NLS
+                            "video/x-flv", //NON-NLS
+                            "video/x-m4v", //NON-NLS
+                            "video/x-ms-wmv"//NON-NLS
+                    ).build();
+
+    private static final ImmutableSet<String> DOCUMENT_MIME_TYPES
+            = new ImmutableSet.Builder<String>()
+                    .add("text/plain", //NON-NLS
+                            "text/css", //NON-NLS
+                            "text/html", //NON-NLS
+                            "text/csv", //NON-NLS
+                            "application/rtf", //NON-NLS
+                            "application/pdf", //NON-NLS
+                            "application/json", //NON-NLS
+                            "application/javascript", //NON-NLS
+                            "application/xml", //NON-NLS
+                            "application/x-msoffice", //NON-NLS
+                            "application/x-ooxml", //NON-NLS
+                            "application/msword", //NON-NLS
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
+                            "application/vnd.ms-powerpoint", //NON-NLS
+                            "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
+                            "application/vnd.ms-excel", //NON-NLS
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
+                            "application/vnd.oasis.opendocument.presentation", //NON-NLS
+                            "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
+                            "application/vnd.oasis.opendocument.text" //NON-NLS
+                    ).build();
+    private static final ImmutableSet<String> EXECUTABLE_MIME_TYPES
+            = new ImmutableSet.Builder<String>()
+                    .add("application/x-bat",//NON-NLS
+                            "application/x-dosexec",//NON-NLS
+                            "application/vnd.microsoft.portable-executable",//NON-NLS
+                            "application/x-msdownload",//NON-NLS
+                            "application/exe",//NON-NLS
+                            "application/x-exe",//NON-NLS
+                            "application/dos-exe",//NON-NLS
+                            "vms/exe",//NON-NLS
+                            "application/x-winexe",//NON-NLS
+                            "application/msdos-windows",//NON-NLS
+                            "application/x-msdos-program"//NON-NLS
+                    ).build();
+
     private static final ImmutableSet<String> MULTI_MEDIA_MIME_TYPES;
-    private static final ImmutableSet<String> DOCUMENT_MIME_TYPES;
-    private static final ImmutableSet<String> EXECUTABLE_MIME_TYPES;
     private static final ImmutableSet<String> VISUAL_MEDIA_MIME_TYPES;
 
     static {
-        IMAGE_MIME_TYPES = new ImmutableSet.Builder<String>()
-                .addAll(asList(ImageIO.getReaderMIMETypes()))
-                .add("image/bmp", //NON-NLS
-                        "image/gif", //NON-NLS
-                        "image/jpeg", //NON-NLS
-                        "image/png", //NON-NLS
-                        "image/tiff", //NON-NLS
-                        "image/vnd.adobe.photoshop", //NON-NLS
-                        "image/x-raw-nikon", //NON-NLS
-                        "image/x-ms-bmp", //NON-NLS
-                        "image/x-icon", //NON-NLS
-                        "image/webp", //NON-NLS
-                        "image/vnd.microsoft.icon" //NON-NLS
-                ).build();
-        AUDIO_MIME_TYPES = new ImmutableSet.Builder<String>()
-                .add("audio/midi", //NON-NLS
-                        "audio/mpeg", //NON-NLS
-                        "audio/webm", //NON-NLS
-                        "audio/ogg", //NON-NLS
-                        "audio/wav" //NON-NLS
-                ).build();
-        VIDEO_MIME_TYPES = new ImmutableSet.Builder<String>()
-                .add("video/webm", //NON-NLS
-                        "video/3gpp", //NON-NLS
-                        "video/3gpp2", //NON-NLS
-                        "video/ogg", //NON-NLS
-                        "video/mpeg", //NON-NLS
-                        "video/mp4", //NON-NLS
-                        "video/quicktime", //NON-NLS
-                        "video/x-msvideo", //NON-NLS
-                        "video/x-flv", //NON-NLS
-                        "video/x-m4v", //NON-NLS
-                        "video/x-ms-wmv"//NON-NLS
-                ).build();
         VISUAL_MEDIA_MIME_TYPES = new ImmutableSet.Builder<String>()
                 .addAll(IMAGE_MIME_TYPES)
                 .addAll(VIDEO_MIME_TYPES)
@@ -90,41 +130,7 @@ public final class FileTypeUtils {
                         "application/x-shockwave-flash" //NON-NLS 
                 )
                 .build();
-        DOCUMENT_MIME_TYPES = new ImmutableSet.Builder<String>()
-                .add("text/plain", //NON-NLS
-                        "text/css", //NON-NLS
-                        "text/html", //NON-NLS
-                        "text/csv", //NON-NLS
-                        "application/rtf", //NON-NLS
-                        "application/pdf", //NON-NLS
-                        "application/json", //NON-NLS
-                        "application/javascript", //NON-NLS
-                        "application/xml", //NON-NLS
-                        "application/x-msoffice", //NON-NLS
-                        "application/x-ooxml", //NON-NLS
-                        "application/msword", //NON-NLS
-                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
-                        "application/vnd.ms-powerpoint", //NON-NLS
-                        "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
-                        "application/vnd.ms-excel", //NON-NLS
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
-                        "application/vnd.oasis.opendocument.presentation", //NON-NLS
-                        "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
-                        "application/vnd.oasis.opendocument.text" //NON-NLS
-                ).build();
-        EXECUTABLE_MIME_TYPES = new ImmutableSet.Builder<String>()
-                .add("application/x-bat",//NON-NLS
-                        "application/x-dosexec",//NON-NLS
-                        "application/vnd.microsoft.portable-executable",//NON-NLS
-                        "application/x-msdownload",//NON-NLS
-                        "application/exe",//NON-NLS
-                        "application/x-exe",//NON-NLS
-                        "application/dos-exe",//NON-NLS
-                        "vms/exe",//NON-NLS
-                        "application/x-winexe",//NON-NLS
-                        "application/msdos-windows",//NON-NLS
-                        "application/x-msdos-program"//NON-NLS
-                ).build();
+
     }
 
     private FileTypeUtils() {
