@@ -23,6 +23,7 @@ import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.Collections;
 import javax.imageio.ImageIO;
+import static org.apache.commons.collections4.ListUtils.removeAll;
 import org.openide.util.NbBundle;
 
 /**
@@ -32,7 +33,8 @@ public final class FileTypeUtils {
 
     private static final ImmutableSet<String> IMAGE_MIME_TYPES
             = new ImmutableSet.Builder<String>()
-                    .addAll(asList(ImageIO.getReaderMIMETypes()))
+                    .addAll(removeAll(asList(ImageIO.getReaderMIMETypes()),
+                            asList("application/octet-stream"))) //this claims to be supported, but is not really an image.
                     .add("image/bmp", //NON-NLS
                             "image/gif", //NON-NLS
                             "image/jpeg", //NON-NLS
@@ -46,6 +48,7 @@ public final class FileTypeUtils {
                             "image/vnd.microsoft.icon", //NON-NLS
                             "image/x-rgb", //NON-NLS
                             "image/x-ms-bmp", //NON-NLS
+                            "image/x-xbitmap", //NON-NLS
                             "image/x-portable-graymap", //NON-NLS
                             "image/x-portable-bitmap" //NON-NLS 
                     ).build();
@@ -55,7 +58,9 @@ public final class FileTypeUtils {
                             "audio/mpeg", //NON-NLS
                             "audio/webm", //NON-NLS
                             "audio/ogg", //NON-NLS
-                            "audio/wav" //NON-NLS
+                            "audio/wav", //NON-NLS
+                            "audio/vnd.wave", //NON-NLS
+                            "audio/x-ms-wma"//NON-NLS
                     ).build();
     private static final ImmutableSet<String> VIDEO_MIME_TYPES
             = new ImmutableSet.Builder<String>()
@@ -71,13 +76,14 @@ public final class FileTypeUtils {
                             "video/x-m4v", //NON-NLS
                             "video/x-ms-wmv"//NON-NLS
                     ).build();
-
     private static final ImmutableSet<String> DOCUMENT_MIME_TYPES
             = new ImmutableSet.Builder<String>()
                     .add("text/plain", //NON-NLS
                             "text/css", //NON-NLS
                             "text/html", //NON-NLS
                             "text/csv", //NON-NLS
+                            "text/xml", //NON-NLS
+                            "text/x-log", //NON-NLS
                             "application/rtf", //NON-NLS
                             "application/pdf", //NON-NLS
                             "application/json", //NON-NLS
@@ -86,10 +92,13 @@ public final class FileTypeUtils {
                             "application/x-msoffice", //NON-NLS
                             "application/x-ooxml", //NON-NLS
                             "application/msword", //NON-NLS
+                            "application/msword2", //NON-NLS
+                            "application/vnd.wordperfect", //NON-NLS
                             "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
                             "application/vnd.ms-powerpoint", //NON-NLS
                             "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
                             "application/vnd.ms-excel", //NON-NLS
+                            "application/vnd.ms-excel.sheet.4", //NON-NLS
                             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
                             "application/vnd.oasis.opendocument.presentation", //NON-NLS
                             "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
@@ -125,10 +134,6 @@ public final class FileTypeUtils {
                 .addAll(IMAGE_MIME_TYPES)
                 .addAll(AUDIO_MIME_TYPES)
                 .addAll(VIDEO_MIME_TYPES)
-                .add("application/vnd.ms-asf", //NON-NLS
-                        "application/vnd.rn-realmedia", //NON-NLS
-                        "application/x-shockwave-flash" //NON-NLS 
-                )
                 .build();
 
     }
@@ -141,34 +146,43 @@ public final class FileTypeUtils {
      * Enum of categories/groups of file types.
      */
     @NbBundle.Messages({
-        "FileTypeUtils.FileTypeCategory.Audio.displayName=Audio",
-        "FileTypeUtils.FileTypeCategory.Video.displayName=Video",
-        "FileTypeUtils.FileTypeCategory.Image.displayName=Image",
-        "FileTypeUtils.FileTypeCategory.Media.displayName=Media",
-        "FileTypeUtils.FileTypeCategory.Visual.displayName=Visual",
-        "FileTypeUtils.FileTypeCategory.Documents.displayName=Documents",
-        "FileTypeUtils.FileTypeCategory.Executables.displayName=Executables"})
+        "FileTypeCategory.Audio.displayName=Audio",
+        "FileTypeCategory.Video.displayName=Video",
+        "FileTypeCategory.Image.displayName=Image",
+        "FileTypeCategory.Media.displayName=Media",
+        "FileTypeCategory.Visual.displayName=Visual",
+        "FileTypeCategory.Documents.displayName=Documents",
+        "FileTypeCategory.Executables.displayName=Executables"})
     static public enum FileTypeCategory {
 
-        IMAGE(Bundle.FileTypeUtils_FileTypeCategory_Image_displayName(),
+        IMAGE(Bundle.FileTypeCategory_Image_displayName(),
                 IMAGE_MIME_TYPES,
                 Collections.emptyList()),
-        VIDEO(Bundle.FileTypeUtils_FileTypeCategory_Video_displayName(),
+        VIDEO(Bundle.FileTypeCategory_Video_displayName(),
                 VIDEO_MIME_TYPES,
                 Collections.emptyList()),
-        AUDIO(Bundle.FileTypeUtils_FileTypeCategory_Audio_displayName(),
+        AUDIO(Bundle.FileTypeCategory_Audio_displayName(),
                 AUDIO_MIME_TYPES,
                 Collections.emptyList()),
-        VISUAL(Bundle.FileTypeUtils_FileTypeCategory_Media_displayName(),
+        /**
+         * Images, Videos, flash Animations, etc
+         */
+        VISUAL(Bundle.FileTypeCategory_Media_displayName(),
                 VISUAL_MEDIA_MIME_TYPES,
                 Collections.emptyList()),
-        MEDIA(Bundle.FileTypeUtils_FileTypeCategory_Media_displayName(),
+        /**
+         * VISUAL plus audio.
+         */
+        MEDIA(Bundle.FileTypeCategory_Media_displayName(),
                 MULTI_MEDIA_MIME_TYPES,
                 Collections.emptyList()),
-        EXECUTABLE(Bundle.FileTypeUtils_FileTypeCategory_Executables_displayName(),
+        EXECUTABLE(Bundle.FileTypeCategory_Executables_displayName(),
                 EXECUTABLE_MIME_TYPES,
                 Collections.emptyList()),
-        DOCUMENTS(Bundle.FileTypeUtils_FileTypeCategory_Documents_displayName(),
+        /**
+         * (Plain) Text and "office" documents.
+         */
+        DOCUMENTS(Bundle.FileTypeCategory_Documents_displayName(),
                 DOCUMENT_MIME_TYPES,
                 Collections.emptyList());
 
