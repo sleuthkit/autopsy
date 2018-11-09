@@ -18,17 +18,16 @@
  */
 package org.sleuthkit.autopsy.timeline.utils;
 
-import com.google.common.net.MediaType;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import org.openide.util.NbBundle;
-import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.Documents;
-import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.Executable;
-import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.Media;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.MEDIA;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.EXECUTABLE;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.DOCUMENTS;
 
 /**
  * Utilities to deal with TimelineFilters
@@ -38,9 +37,9 @@ public final class FilterUtils {
     private static final Set<String> NON_OTHER_MIME_TYPES = new HashSet<>();
 
     static {
-        NON_OTHER_MIME_TYPES.addAll(Documents.getMediaTypes());
-        NON_OTHER_MIME_TYPES.addAll(Executable.getMediaTypes());
-        NON_OTHER_MIME_TYPES.addAll(Media.getMediaTypes());
+        NON_OTHER_MIME_TYPES.addAll(DOCUMENTS.getMediaTypes());
+        NON_OTHER_MIME_TYPES.addAll(EXECUTABLE.getMediaTypes());
+        NON_OTHER_MIME_TYPES.addAll(MEDIA.getMediaTypes());
     }
 
     private FilterUtils() {
@@ -57,9 +56,9 @@ public final class FilterUtils {
     public static FileTypesFilter createDefaultFileTypesFilter() {
         FileTypesFilter fileTypesFilter = new FileTypesFilter();
 
-        fileTypesFilter.addSubFilter(new FileTypeFilter(Media.getDisplayName(), Media.getMediaTypes()));
-        fileTypesFilter.addSubFilter(new FileTypeFilter(Documents.getDisplayName(), Documents.getMediaTypes()));
-        fileTypesFilter.addSubFilter(new FileTypeFilter(Executable.getDisplayName(), Executable.getMediaTypes()));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(MEDIA.getDisplayName(), MEDIA.getMediaTypes()));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(DOCUMENTS.getDisplayName(), DOCUMENTS.getMediaTypes()));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(EXECUTABLE.getDisplayName(), EXECUTABLE.getMediaTypes()));
         fileTypesFilter.addSubFilter(new InverseFileTypeFilter(Bundle.FilterUtils_otherFilter_displayName(), NON_OTHER_MIME_TYPES));
 
         return fileTypesFilter;

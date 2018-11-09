@@ -26,10 +26,10 @@ import java.util.Set;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
-import static org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher.MEDIA_PICS_VIDEO_MIME_TYPES;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Algorithm which finds files anywhere in the Central Repo which also occur in
@@ -57,14 +57,7 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
         Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase());
-        
-        Set<String> mimeTypesToFilterOn = new HashSet<>();
-        if (isFilterByMedia()) {
-            mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
-        }
-        if (isFilterByDoc()) {
-            mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
-        }
+        Set<String> mimeTypesToFilterOn = getMimeTypesToFilterOn();
         return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
     }
 
