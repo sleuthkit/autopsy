@@ -1173,11 +1173,12 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     @Override
     boolean doesColumnExist(Connection conn, String tableName, String columnName) throws SQLException {
         final String tableInfoQueryTemplate = "PRAGMA table_info(%s)";  //NON-NLS
-        ResultSet resultSet;
-        Statement statement = conn.createStatement();
+        ResultSet resultSet = null;
+        Statement statement = null;
         boolean columnExists = false;
-        resultSet = statement.executeQuery(String.format(tableInfoQueryTemplate, tableName));
         try {
+            statement = conn.createStatement();
+            resultSet = statement.executeQuery(String.format(tableInfoQueryTemplate, tableName));
             while (resultSet.next()) {
                 // the second value ( 2 ) is the column name
                 if (resultSet.getString(2).equals(columnName)) {
@@ -1186,8 +1187,8 @@ final class SqliteEamDb extends AbstractSqlEamDb {
                 }
             }
         } finally {
-            resultSet.close();
-            statement.close();
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeStatement(statement);
         }
         return columnExists;
     }
