@@ -41,30 +41,30 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Reads row by row through SQLite tables and performs user-defined actions on the row values.
- * Table values are processed by data type. Users configure these actions for certain data types 
- * in the Builder. Example usage:
+ * Reads row by row through SQLite tables and performs user-defined actions on
+ * the row values. Table values are processed by data type. Users configure
+ * these actions for certain data types in the Builder. Example usage:
+ *
+ * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) 
+ * .onInteger((i)
+ *      -> { System.out.println(i); })
+ * .build(); 
  * 
- *  SQLiteTableReader reader = new SQLiteTableReader.Builder(file)
- *                   .onInteger((i) -> {
- *                          System.out.println(i);
- *                   }).build(); 
- *  reader.read(tableName);
+ * reader.read(tableName);
+ *
+ * or
+ *
+ * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) 
+ * .onInteger(new Consumer<Integer>() {
+ *      @Override public void accept(Integer i) { 
+ *          System.out.println(i); 
+ *      }
+ * }).build(); 
  * 
- *  or
- * 
- *  SQLiteTableReader reader = new SQLiteTableReader.Builder(file)
- *                   .onInteger(new Consumer<Integer>() {
- *                      @Override
- *                      public void accept(Integer i) {
- *                          System.out.println(i);
- *                      }
- *                   }).build();
- *  reader.reader(tableName);
- * 
- * Invocation of read(String tableName) causes that table name to be processed row by row.
- * When an Integer is encountered, its value will be passed to the Consumer that 
- * was defined above.
+ * reader.reader(tableName);
+ *
+ * Invocation of read(String tableName) reads row by row. When an Integer is
+ * encountered, its value will be passed to the Consumer that was defined above.
  */
 public class SQLiteTableReader implements AutoCloseable {
 
@@ -74,14 +74,18 @@ public class SQLiteTableReader implements AutoCloseable {
     public static class Builder {
 
         private final AbstractFile file;
+        
         private Consumer<String> onColumnNameAction;
-
         private Consumer<String> onStringAction;
         private Consumer<Long> onLongAction;
         private Consumer<Integer> onIntegerAction;
         private Consumer<Double> onFloatAction;
         private Consumer<byte[]> onBlobAction;
         private Consumer<Object> forAllAction;
+        
+        static <T> Consumer<T> doNothing() {
+            return NOOP -> {};
+        }
 
         /**
          * Creates a Builder for this abstract file.
@@ -90,6 +94,14 @@ public class SQLiteTableReader implements AutoCloseable {
          */
         public Builder(AbstractFile file) {
             this.file = file;
+
+            this.onColumnNameAction = Builder.doNothing();
+            this.onStringAction = Builder.doNothing();
+            this.onLongAction = Builder.doNothing();
+            this.onIntegerAction = Builder.doNothing();
+            this.onFloatAction = Builder.doNothing();
+            this.onBlobAction = Builder.doNothing();
+            this.forAllAction = Builder.doNothing();
         }
 
         /**
@@ -196,59 +208,30 @@ public class SQLiteTableReader implements AutoCloseable {
     }
 
     private final AbstractFile file;
+    private final Builder builder;
+    
+    private final String SELECT_ALL_QUERY = "SELECT * FROM \"%s\""; 
 
     private Connection conn;
     private PreparedStatement statement;
     private ResultSet queryResults;
+    private ResultSetMetaData currentMetadata;
 
-    private final Consumer<String> onColumnNameAction;
-    private final Consumer<String> onStringAction;
-    private final Consumer<Long> onLongAction;
-    private final Consumer<Integer> onIntegerAction;
-    private final Consumer<Double> onFloatAction;
-    private final Consumer<byte[]> onBlobAction;
-    private final Consumer<Object> forAllAction;
-
-    //Iteration state variables
+    //Iteration state
     private int currRowColumnIndex;
     private int columnNameIndex;
     private int totalColumnCount;
     private boolean unfinishedRow;
-    private ResultSetMetaData currentMetadata;
-
     private boolean liveResultSet;
     private String prevTableName;
 
     /**
-     * Assigns references to each action based on the Builder configuration.
+     * Holds reference to the builder instance so that we can use its actions 
+     * during iteration.
      */
     private SQLiteTableReader(Builder builder) {
-
-        this.onColumnNameAction = nonNullValue(builder.onColumnNameAction);
-        this.onStringAction = nonNullValue(builder.onStringAction);
-        this.onIntegerAction = nonNullValue(builder.onIntegerAction);
-        this.onLongAction = nonNullValue(builder.onLongAction);
-        this.onFloatAction = nonNullValue(builder.onFloatAction);
-        this.onBlobAction = nonNullValue(builder.onBlobAction);
-        this.forAllAction = nonNullValue(builder.forAllAction);
-        
+        this.builder = builder;
         this.file = builder.file;
-    }
-
-    /**
-     * Ensures the action is null safe. If action is left null, then during
-     * iteration null checks would be necessary. To mitigate against that, no-op
-     * lambdas are substituted for null values.
-     *
-     * @param <T>    Generic type of consumer
-     * @param action Consumer for generic type, supplied by Builder.
-     *
-     * @return If action is null, then a no-op lambda, if not then the action
-     *         itself.
-     */
-    private <T> Consumer<T> nonNullValue(Consumer<T> action) {
-        return (Objects.nonNull(action)) ? action : NO_OP -> {
-        };
     }
 
     /**
@@ -306,8 +289,7 @@ public class SQLiteTableReader implements AutoCloseable {
     public int getColumnCount(String tableName) throws SQLiteTableReaderException {
         ensureOpen();
         try (ResultSet columnCount = conn.createStatement()
-                .executeQuery("SELECT * FROM "
-                        + "\"" + tableName + "\"")) {
+                .executeQuery(String.format(SELECT_ALL_QUERY, tableName))) {
             return columnCount.getMetaData().getColumnCount();
         } catch (SQLException ex) {
             throw new SQLiteTableReaderException(ex);
@@ -325,23 +307,24 @@ public class SQLiteTableReader implements AutoCloseable {
      * @throws SQLiteTableReaderException
      */
     public void read(String tableName) throws SQLiteTableReaderException {
-        readHelper("SELECT * FROM \"" + tableName + "\"", () -> false);
+        readHelper(String.format(SELECT_ALL_QUERY, tableName), () -> false);
     }
 
     /**
      * Reads column names and values from the table. Only actions that were
-     * configured in the Builder will be invoked during iteration. Iteration will stop
-     * when the table read has completed or an exception was encountered.
+     * configured in the Builder will be invoked during iteration. Iteration
+     * will stop when the table read has completed or an exception was
+     * encountered.
      *
      * @param tableName Source table to perform a read
-     * @param limit Number of rows to read from the table
-     * @param offset Starting row to read from in the table
+     * @param limit     Number of rows to read from the table
+     * @param offset    Starting row to read from in the table
      *
      * @throws SQLiteTableReaderException
      *
      */
     public void read(String tableName, int limit, int offset) throws SQLiteTableReaderException {
-        readHelper("SELECT * FROM \"" + tableName + "\" LIMIT " + limit
+        readHelper(String.format(SELECT_ALL_QUERY, tableName)+ " LIMIT " + limit
                 + " OFFSET " + offset, () -> false);
     }
 
@@ -356,18 +339,16 @@ public class SQLiteTableReader implements AutoCloseable {
      *
      */
     public void read(String tableName, BooleanSupplier condition) throws SQLiteTableReaderException {
-        if (Objects.nonNull(prevTableName) && prevTableName.equals(tableName)) {
-            readHelper("SELECT * FROM \"" + tableName + "\"", condition);
-        } else {
+        if (Objects.isNull(prevTableName) || !prevTableName.equals(tableName)) {
             prevTableName = tableName;
-            closeTableResources();
-            readHelper("SELECT * FROM \"" + tableName + "\"", condition);
+            closeTableResources();        
         }
+        readHelper(String.format(SELECT_ALL_QUERY, tableName), condition);
     }
 
     /**
-     * Performs the result set iteration and is responsible for maintaining state 
-     * of the read over multiple invocations. 
+     * Performs the result set iteration and is responsible for maintaining
+     * state of the read over multiple invocations.
      *
      * @throws SQLiteTableReaderException
      */
@@ -379,35 +360,35 @@ public class SQLiteTableReader implements AutoCloseable {
             }
 
             //Process column names before reading the database table values
-            while(columnNameIndex < totalColumnCount) {
+            while (columnNameIndex < totalColumnCount) {
                 if (condition.getAsBoolean()) {
-                        return;
+                    return;
                 }
-                this.onColumnNameAction.accept(currentMetadata
+                builder.onColumnNameAction.accept(currentMetadata
                         .getColumnName(++columnNameIndex));
             }
 
             while (unfinishedRow || queryResults.next()) {
-                while(currRowColumnIndex < totalColumnCount) {
+                while (currRowColumnIndex < totalColumnCount) {
                     if (condition.getAsBoolean()) {
                         unfinishedRow = true;
                         return;
                     }
-                    
+
                     Object item = queryResults.getObject(++currRowColumnIndex);
                     if (item instanceof String) {
-                        this.onStringAction.accept((String) item);
+                        builder.onStringAction.accept((String) item);
                     } else if (item instanceof Integer) {
-                        this.onIntegerAction.accept((Integer) item);
+                        builder.onIntegerAction.accept((Integer) item);
                     } else if (item instanceof Double) {
-                        this.onFloatAction.accept((Double) item);
+                        builder.onFloatAction.accept((Double) item);
                     } else if (item instanceof Long) {
-                        this.onLongAction.accept((Long) item);
+                        builder.onLongAction.accept((Long) item);
                     } else if (item instanceof byte[]) {
-                        this.onBlobAction.accept((byte[]) item);
+                        builder.onBlobAction.accept((byte[]) item);
                     }
 
-                    this.forAllAction.accept(item);
+                    builder.forAllAction.accept(item);
                 }
                 unfinishedRow = false;
                 //Wrap column index back around if we've reached the end of the row
@@ -480,18 +461,18 @@ public class SQLiteTableReader implements AutoCloseable {
      * directory.
      *
      * @param file AbstractFile from the data source
-     * @param id The input files id value
+     * @param id   The input files id value
      *
      * @return The path of the file on disk
      *
      * @throws IOException            Exception writing file contents
      * @throws NoCurrentCaseException Current case closed during file copying
      */
-    private String copyFileToTempDirectory(AbstractFile file, long id)
+    private String copyFileToTempDirectory(AbstractFile file, long fileId)
             throws IOException, NoCurrentCaseException {
 
         String localDiskPath = Case.getCurrentCaseThrows().getTempDirectory()
-                + File.separator + id + file.getName();
+                + File.separator + fileId + file.getName();
         File localDatabaseFile = new File(localDiskPath);
         if (!localDatabaseFile.exists()) {
             ContentUtils.writeToFile(file, localDatabaseFile);
@@ -568,12 +549,12 @@ public class SQLiteTableReader implements AutoCloseable {
      * @throws Throwable
      */
     @Override
-    public void finalize() throws Throwable {
-        super.finalize();
+    protected void finalize() throws Throwable {
         try {
             close();
         } catch (SQLiteTableReaderException ex) {
             //Do nothing, we tried out best to close the connection.
         }
+        super.finalize();
     }
 }
