@@ -796,11 +796,10 @@ class SevenZipExtractor {
     
     /**
      * UnpackStream used by the SevenZipBindings to do archive extraction. A memory
-     * leak exists in the SevenZip library that will not let go of the Streams until
-     * the entire archive extraction is complete. So, to compensate this UnpackStream
-     * uses a MutableEncodedFileOutputStream, which supports setting a new disk 
-     * location for the contents to be written to (as opposed to creating a new steam
-     * for each file).
+     * leak exists in the SevenZip library that will not let go of the streams until
+     * the entire archive extraction is complete. Instead of creating a new UnpackStream
+     * for every file in the archive, instead we just rebase our EncodedFileOutputStream pointer
+     * for every new file.
      */
     private final static class UnpackStream implements ISequentialOutStream {
 
