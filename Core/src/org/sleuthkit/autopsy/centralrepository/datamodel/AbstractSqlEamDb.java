@@ -3251,7 +3251,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
                 }
                 final String dataSourcesTableName = "data_sources";
-                final String dataSourceIdColumnName = "data_source_id";
+                final String dataSourceIdColumnName = "datasource_id";
                 if (!doesColumnExist(conn, dataSourcesTableName, dataSourceIdColumnName)) {
                     statement.execute(String.format(addIntegerColumnTemplate, dataSourcesTableName, dataSourceIdColumnName)); //NON-NLS
                 }
