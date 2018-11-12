@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
@@ -147,10 +146,10 @@ class SqliteTextExtractor extends ContentTextExtractor {
                 private int rowIndex = 0;
 
                 @Override
-                public void accept(Object t) {
+                public void accept(Object value) {
                     rowIndex++;
                     //Ignore blobs
-                    String objectStr = (t instanceof byte[]) ? "" : Objects.toString(t, "");
+                    String objectStr = (value instanceof byte[]) ? "" : Objects.toString(value, "");
 
                     if (rowIndex > 1 && rowIndex < totalColumns) {
                         objectStr += " ";
