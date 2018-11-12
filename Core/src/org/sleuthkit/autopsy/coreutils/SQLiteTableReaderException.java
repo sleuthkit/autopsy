@@ -27,18 +27,18 @@ public class SQLiteTableReaderException extends Exception {
      * Accepts both a message and a parent exception.
      * 
      * @param msg Message detailing the cause
-     * @param ex Parent exception
+     * @param parentEx Parent exception
      */
-    public SQLiteTableReaderException(String msg, Throwable ex) {
-        super(msg, ex);
+    public SQLiteTableReaderException(String msg, Throwable parentEx) {
+        super(msg, parentEx);
     }
     
     /**
      * Accepts only a parent exception.
      * 
-     * @param ex Parent exception
+     * @param parentEx Parent exception
      */
-    public SQLiteTableReaderException(Throwable ex) {
-        super(ex);
+    public SQLiteTableReaderException(Throwable parentEx) {
+        super(parentEx);
     }
 }
