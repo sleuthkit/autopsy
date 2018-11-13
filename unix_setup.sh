@@ -3,7 +3,7 @@
 # Verifies programs are installed and copies native code into the Autopsy folder structure
 #
 
-TSK_VERSION=4.6.3
+TSK_VERSION=4.6.4
 
 # In the beginning...
 echo "---------------------------------------------"
@@ -15,9 +15,9 @@ echo -n "Checking for PhotoRec..."
 photorec_filepath=/usr/bin/photorec
 photorec_osx_filepath=/usr/local/bin/photorec
 if [ -f "$photorec_filepath" ]; then
-    echo "found in `dirname $photorec_filepath`"
+    echo "found in $(dirname $photorec_filepath)"
 elif [ -f "$photorec_osx_filepath" ]; then
-    echo "found in `dirname $photorec_osx_filepath`"
+    echo "found in $(dirname $photorec_osx_filepath)"
 else
     echo "ERROR: PhotoRec not found, please install the testdisk package."
     exit 1
@@ -41,10 +41,10 @@ fi
 echo -n "Checking for Sleuth Kit Java bindings..."
 if [ -f "/usr/share/java/sleuthkit-$TSK_VERSION.jar" ]; then
     sleuthkit_jar_filepath=/usr/share/java/sleuthkit-$TSK_VERSION.jar
-    echo "found in `dirname $sleuthkit_jar_filepath`"
+    echo "found in $(dirname $sleuthkit_jar_filepath)"
 elif [ -f "/usr/local/share/java/sleuthkit-$TSK_VERSION.jar" ]; then
     sleuthkit_jar_filepath=/usr/local/share/java/sleuthkit-$TSK_VERSION.jar
-    echo "found in `dirname $sleuthkit_jar_filepath`"
+    echo "found in $(dirname $sleuthkit_jar_filepath)"
 else
     echo "ERROR: sleuthkit-$TSK_VERSION.jar not found in /usr/share/java/ or /usr/local/share/java/."
     echo "Please install the Sleuth Kit Java bindings file."
