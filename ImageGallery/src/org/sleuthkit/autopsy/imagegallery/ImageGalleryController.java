@@ -233,19 +233,19 @@ public final class ImageGalleryController {
         dbTaskQueueSize.addListener(obs -> this.updateRegroupDisabled());
 
     }
-    
+
     /**
      * @return Currently displayed group or null if nothing is being displayed
      */
     public GroupViewState getViewState() {
         return historyManager.getCurrentState();
     }
-    
+
     /**
      * Get observable property of the current group. The UI currently changes
-     * based on this property changing, which happens when other actions and 
+     * based on this property changing, which happens when other actions and
      * threads call advance().
-     * 
+     *
      * @return Currently displayed group (as a property that can be observed)
      */
     public ReadOnlyObjectProperty<GroupViewState> viewStateProperty() {
@@ -254,7 +254,8 @@ public final class ImageGalleryController {
 
     /**
      * Should the "forward" button on the history be enabled?
-     * @return 
+     *
+     * @return
      */
     public ReadOnlyBooleanProperty getCanAdvance() {
         return historyManager.getCanAdvance();
@@ -262,19 +263,19 @@ public final class ImageGalleryController {
 
     /**
      * Should the "Back" button on the history be enabled?
-     * @return 
+     *
+     * @return
      */
     public ReadOnlyBooleanProperty getCanRetreat() {
         return historyManager.getCanRetreat();
     }
 
     /**
-     * Display the passed in group.  Causes this group to 
-     * get recorded in the history queue and observers of the 
-     * current state will be notified and update their panels/widgets
-     * appropriately.
-     * 
-     * @param newState 
+     * Display the passed in group. Causes this group to get recorded in the
+     * history queue and observers of the current state will be notified and
+     * update their panels/widgets appropriately.
+     *
+     * @param newState
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     public void advance(GroupViewState newState) {
@@ -283,7 +284,8 @@ public final class ImageGalleryController {
 
     /**
      * Display the next group in the "forward" history stack
-     * @return 
+     *
+     * @return
      */
     public GroupViewState advance() {
         return historyManager.advance();
@@ -291,7 +293,8 @@ public final class ImageGalleryController {
 
     /**
      * Display the previous group in the "back" history stack
-     * @return 
+     *
+     * @return
      */
     public GroupViewState retreat() {
         return historyManager.retreat();
@@ -498,10 +501,6 @@ public final class ImageGalleryController {
 
     public DrawableFile getFileFromID(Long fileID) throws TskCoreException {
         return drawableDB.getFileFromID(fileID);
-    }
-
-    public ReadOnlyDoubleProperty regroupProgress() {
-        return groupManager.regroupProgress();
     }
 
     public HashSetManager getHashSetManager() {
@@ -763,16 +762,17 @@ public final class ImageGalleryController {
                 // Cycle through all of the files returned and call processFile on each
                 //do in transaction
                 drawableDbTransaction = taskDB.beginTransaction();
-                
-                /* We are going to periodically commit the CaseDB transaction and sleep so
-                 * that the user can have Autopsy do other stuff while these bulk tasks are ongoing.
+
+                /* We are going to periodically commit the CaseDB transaction
+                 * and sleep so that the user can have Autopsy do other stuff
+                 * while these bulk tasks are ongoing.
                  */
                 int caseDbCounter = 0;
                 for (final AbstractFile f : files) {
                     if (caseDbTransaction == null) {
                         caseDbTransaction = tskCase.beginTransaction();
                     }
-                    
+
                     if (isCancelled() || Thread.interrupted()) {
                         logger.log(Level.WARNING, "Task cancelled or interrupted: not all contents may be transfered to drawable database."); //NON-NLS
                         taskCompletionStatus = false;
@@ -787,7 +787,7 @@ public final class ImageGalleryController {
                     progressHandle.progress(f.getName(), workDone);
                     updateProgress(workDone - 1 / (double) files.size());
                     updateMessage(f.getName());
-                    
+
                     // Periodically, commit the transaction (which frees the lock) and sleep
                     // to allow other threads to get some work done in CaseDB
                     if ((++caseDbCounter % 200) == 0) {
@@ -807,12 +807,12 @@ public final class ImageGalleryController {
                     caseDbTransaction.commit();
                     caseDbTransaction = null;
                 }
-                
+
                 // pass true so that groupmanager is notified of the changes
                 taskDB.commitTransaction(drawableDbTransaction, true);
                 drawableDbTransaction = null;
 
-            } catch (TskCoreException  | InterruptedException ex) {
+            } catch (TskCoreException | InterruptedException ex) {
                 progressHandle.progress(Bundle.BulkTask_stopCopy_status());
                 logger.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
                 MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());

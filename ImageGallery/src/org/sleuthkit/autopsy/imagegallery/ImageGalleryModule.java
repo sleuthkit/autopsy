@@ -157,14 +157,14 @@ public class ImageGalleryModule {
                 IngestManager.getInstance().removeIngestModuleEventListener(this);
                 return;
             }
-            
+
             /* only process individual files in realtime on the node that is
              * running the ingest. on a remote node, image files are processed
              * enblock when ingest is complete */
             if (((AutopsyEvent) evt).getSourceType() != AutopsyEvent.SourceType.LOCAL) {
                 return;
             }
-            
+
             // Bail out if the case is closed
             try {
                 if (controller == null || Case.getCurrentCaseThrows() == null) {
@@ -211,8 +211,8 @@ public class ImageGalleryModule {
                 }
             }
             else if (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName()) == DATA_ADDED) {
-                ModuleDataEvent mde = (ModuleDataEvent)evt.getOldValue();
-                
+                ModuleDataEvent mde = (ModuleDataEvent) evt.getOldValue();
+
                 if (mde.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
                     DrawableDB drawableDB = controller.getDatabase();
                     if (mde.getArtifacts() != null) {
@@ -291,13 +291,13 @@ public class ImageGalleryModule {
                     break;
                 case CONTENT_TAG_ADDED:
                     final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                    
+
                     long objId = tagAddedEvent.getAddedTag().getContent().getId();
-                    
+
                     // update the cache
                     DrawableDB drawableDB = controller.getDatabase();
                     drawableDB.addTagCache(objId);
-                    
+
                     if (con.getDatabase().isInDB(objId)) {
                         con.getTagsManager().fireTagAddedEvent(tagAddedEvent);
                     }

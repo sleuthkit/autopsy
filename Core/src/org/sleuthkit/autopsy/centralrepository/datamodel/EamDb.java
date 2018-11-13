@@ -31,9 +31,9 @@ import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
  */
 public interface EamDb {
 
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2;
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
-            = new CaseDbSchemaVersionNumber(1, 1);
+            = new CaseDbSchemaVersionNumber(1, 2);
   
     
     /**
