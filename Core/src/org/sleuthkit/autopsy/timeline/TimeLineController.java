@@ -775,7 +775,7 @@ public class TimeLineController {
                     //close timeline on case changes.
                     SwingUtilities.invokeLater(TimeLineController.this::shutDownTimeLine);
                     break;
-                case EVENT_ADDED:
+                case TIMELINE_EVENT_ADDED:
                     executor.submit(filteredEvents::invalidateAllCaches);
                     break;
             }
