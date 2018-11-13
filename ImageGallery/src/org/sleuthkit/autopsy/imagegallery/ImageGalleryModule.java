@@ -364,21 +364,23 @@ public class ImageGalleryModule {
                         // A remote node added a new data source and just finished ingest on it.
                         //drawable db is stale, and if ImageGallery is open, ask user what to do
                         controller.setStale(true);
-                        if (controller.isListeningEnabled() && ImageGalleryTopComponent.isImageGalleryOpen()) {
+                        if (controller.isListeningEnabled()) {
                             SwingUtilities.invokeLater(() -> {
-                                int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
-                                        Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                                        Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
-                                        JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+                                if (ImageGalleryTopComponent.isImageGalleryOpen()) {
+                                    int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
+                                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
+                                            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
 
-                                switch (showAnswer) {
-                                    case JOptionPane.YES_OPTION:
-                                        controller.rebuildDB();
-                                        break;
-                                    case JOptionPane.NO_OPTION:
-                                    case JOptionPane.CANCEL_OPTION:
-                                    default:
-                                        break; //do nothing
+                                    switch (showAnswer) {
+                                        case JOptionPane.YES_OPTION:
+                                            controller.rebuildDB();
+                                            break;
+                                        case JOptionPane.NO_OPTION:
+                                        case JOptionPane.CANCEL_OPTION:
+                                        default:
+                                            break; //do nothing
+                                    }
                                 }
                             });
                         }
