@@ -36,12 +36,10 @@ public class EventAddedEvent extends AutopsyEvent implements Serializable {
     private static final Logger logger = Logger.getLogger(EventAddedEvent.class.getName());
 
     private transient TimelineEvent addedEvent;
-    private final long addedEventID;
 
     public EventAddedEvent(org.sleuthkit.datamodel.TimelineManager.EventAddedEvent event) {
         super(Case.Events.EVENT_ADDED.name(), null, event.getAddedEvent().getEventID());
         addedEvent = event.getAddedEvent();
-        addedEventID = addedEvent.getEventID();
     }
 
     /**
@@ -65,6 +63,7 @@ public class EventAddedEvent extends AutopsyEvent implements Serializable {
             return addedEvent;
         }
         try {
+            Long addedEventID = (Long) super.getNewValue();
             addedEvent = Case.getCurrentCaseThrows().getSleuthkitCase().getTimelineManager().getEventById(addedEventID);
             return addedEvent;
         } catch (NoCurrentCaseException | TskCoreException ex) {
@@ -73,6 +72,12 @@ public class EventAddedEvent extends AutopsyEvent implements Serializable {
         }
     }
 
+    /**
+     * Gets the TimelineEvent that was added.
+     *
+     * @return The TimelineEvent or null if there is an error retrieving the
+     *         TimelineEvent.
+     */
     public TimelineEvent getAddedEvent() {
         return getNewValue();
     }
