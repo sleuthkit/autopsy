@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.imagegallery.gui;
 import java.util.Map;
 import java.util.Optional;
 import javafx.scene.control.ListCell;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB.DrawableDbBuildStatusEnum;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -29,9 +31,12 @@ import org.sleuthkit.datamodel.DataSource;
 public class DataSourceCell extends ListCell<Optional<DataSource>> {
 
     private final Map<DataSource, Boolean> dataSourcesTooManyFiles;
+    private final Map<Long, DrawableDB.DrawableDbBuildStatusEnum> dataSourcesDrawableDBStatus;
 
-    public DataSourceCell(Map<DataSource, Boolean> dataSourcesViewable) {
+    public DataSourceCell(Map<DataSource, Boolean> dataSourcesViewable, Map<Long, DrawableDB.DrawableDbBuildStatusEnum> dataSourcesDrawableDBStatus) {
         this.dataSourcesTooManyFiles = dataSourcesViewable;
+        this.dataSourcesDrawableDBStatus = dataSourcesDrawableDBStatus;
+        
     }
 
     @Override
@@ -43,14 +48,28 @@ public class DataSourceCell extends ListCell<Optional<DataSource>> {
             DataSource dataSource = item.orElse(null);
             String text = (dataSource == null) ? "All" : dataSource.getName() + " (Id: " + dataSource.getId() + ")";
             Boolean tooManyFilesInDataSource = dataSourcesTooManyFiles.getOrDefault(dataSource, false);
+            
+            DrawableDbBuildStatusEnum dataSourceDBStatus = (dataSource != null) ? 
+                     dataSourcesDrawableDBStatus.get(dataSource.getId()) : DrawableDbBuildStatusEnum.UNKNOWN;
+            
+            Boolean dataSourceNotAnalyzed = (dataSourceDBStatus == DrawableDbBuildStatusEnum.DEFAULT);
             if (tooManyFilesInDataSource) {
                 text += " - Too many files";
+            } 
+            if (dataSourceNotAnalyzed) {
+                text += " - Not Analyzed";
+            }
+    
+            // check if item should be disabled
+            if (tooManyFilesInDataSource || dataSourceNotAnalyzed) {
+                setDisable(true);
                 setStyle("-fx-opacity : .5");
-            } else {
+            }
+            else {
                 setGraphic(null);
                 setStyle("-fx-opacity : 1");
             }
-            setDisable(tooManyFilesInDataSource);
+           
             setText(text);
         }
     }
