@@ -293,7 +293,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         
         /*
          * Submit the database queries ASAP. We want updated SCO columns without
-         * blocking the UI as soon as we can get it! Keep all weak references so
+         * blocking the UI. Keep all weak references so
          * this task doesn't block the ability of this node to be GC'd.
          */
         SCOAndTranslationPool.submit(new SCOAndTranslationTask(new WeakReference<>(this), weakPcl));
@@ -367,16 +367,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
 
     /**
-     * Creates a list of properties for this file node. NodeProperty
-     * is a subclass of NodeProperty, with the added functionality of being able to be
-     * enabled and disabled. Disabled properties don't get added to the sheet. 
-     * Additionally, with a return value of a list, any children classes of this 
-     * node may reorder or omit any of these properties as they see fit for their use case.
-     * 
-     * Note: subclasses that use this, please synchronize your createSheet method, so that the 
-     * updates don't come in while you haven't finished creating your sheet.
-     *
-     * @return List of file properties associated with this file node's content.
+     * Creates and populates a list of properties for this nodes property sheet.
      */
     private List<NodeProperty<?>> getProperties() {
         List<NodeProperty<?>> properties = new LinkedList<NodeProperty<?>>() {{
@@ -484,14 +475,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         return Pair.of(count, description);
     }
     
-    /**
-     * Used by subclasses of AbstractAbstractFileNode to add the Score property
-     * to their sheets.
-     *
-     * @param sheetSet the modifiable Sheet.Set returned by
-     *                 Sheet.get(Sheet.PROPERTIES)
-     * @param tags     the list of tags associated with the file
-     */
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.score.displayName=S",
         "AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.",
@@ -528,16 +511,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         return Pair.of(score, description);
     }
     
-    /**
-     * Used by subclasses of AbstractAbstractFileNode to add the comment
-     * property to their sheets.
-     *
-     * @param sheetSet  the modifiable Sheet.Set returned by
-     *                  Sheet.get(Sheet.PROPERTIES)
-     * @param tags      the list of tags associated with the file
-     * @param attribute the correlation attribute associated with this file,
-     *                  null if central repo is not enabled
-     */
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
     HasCommentStatus getCommentProperty(List<ContentTag> tags, CorrelationAttributeInstance attribute) {
@@ -562,9 +535,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     }
     
     /**
-     * Attempts translation of the content name being passed in.
-     *
-     * @return The file names translation.
+     * Translates this nodes content name. Doesn't attempt translation if 
+     * the name is in english or if there is now translation service available.
      */
     String getTranslatedFileName() {
         //If already in complete English, don't translate.
