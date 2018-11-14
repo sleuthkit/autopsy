@@ -41,20 +41,22 @@ public class CorrelationDataSource implements Serializable {
     private final String name;
 
     /**
-     * @param correlationCase CorrelationCase object data source is associated with. Must have been created by EamDB and have a valid ID.
-     * @param deviceId User specified case-specific ID
-     * @param name Display name of data source
+     * @param correlationCase CorrelationCase object data source is associated
+     *                        with. Must have been created by EamDB and have a
+     *                        valid ID.
+     * @param deviceId        User specified case-specific ID
+     * @param name            Display name of data source
      */
     public CorrelationDataSource(CorrelationCase correlationCase, String deviceId, String name, long caseDataSourceId) {
         this(correlationCase.getID(), -1, deviceId, name, caseDataSourceId);
-    }  
-    
+    }
+
     /**
-     * 
-     * @param caseId Row ID for Case in DB
+     *
+     * @param caseId       Row ID for Case in DB
      * @param dataSourceId Row ID for this data source in DB (or -1)
-     * @param deviceId User specified ID for device (unique per case)
-     * @param name User specified name
+     * @param deviceId     User specified ID for device (unique per case)
+     * @param name         User specified name
      */
     CorrelationDataSource(int caseId,
             int dataSourceId,
@@ -69,8 +71,8 @@ public class CorrelationDataSource implements Serializable {
     }
 
     /**
-     * Create a CorrelationDataSource object from a TSK Content object.
-     * This will add it to the central repository.
+     * Create a CorrelationDataSource object from a TSK Content object. This
+     * will add it to the central repository.
      *
      * @param correlationCase the current CorrelationCase used for ensuring
      *                        uniqueness of DataSource
@@ -88,21 +90,24 @@ public class CorrelationDataSource implements Serializable {
         } catch (NoCurrentCaseException ex) {
             throw new EamDbException("Autopsy case is closed");
         }
-        String deviceId;
-        try {
-            deviceId = curCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
-        } catch (TskDataException | TskCoreException ex) {
-            throw new EamDbException("Error getting data source info: " + ex.getMessage());
-        }
-        
+
         CorrelationDataSource correlationDataSource = null;
-        if (EamDbUtil.useCentralRepo()) {
-            correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, deviceId);
+        boolean useCR = EamDbUtil.useCentralRepo();
+        if (useCR) {
+            correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, dataSource.getId());
         }
+
         if (correlationDataSource == null) {
+            String deviceId;
+            try {
+                deviceId = curCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
+            } catch (TskDataException | TskCoreException ex) {
+                throw new EamDbException("Error getting data source info: " + ex.getMessage());
+            }
             correlationDataSource = new CorrelationDataSource(correlationCase, deviceId, dataSource.getName(), dataSource.getId());
-            if (EamDbUtil.useCentralRepo()) {
-                EamDb.getInstance().newDataSource(correlationDataSource);
+            if (useCR) {
+                //add the correlation data source to the central repository and fill in the Central repository data source id in the object
+                correlationDataSource = EamDb.getInstance().newDataSource(correlationDataSource);
             }
         }
         return correlationDataSource;
@@ -146,13 +151,13 @@ public class CorrelationDataSource implements Serializable {
     public int getCaseID() {
         return caseID;
     }
-    
+
     /**
      * Get the id for the data source in the case db
-     * 
+     *
      * @return caseDataSourceID or NULL if not available
      */
-    Long getCaseDataSourceID(){
+    public Long getCaseDataSourceID() {
         return caseDataSourceID;
     }
 

@@ -362,10 +362,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamDataSource the data source to add
      */
     @Override
-    public void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+    public CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
         try {
             acquireExclusiveLock();
-            super.newDataSource(eamDataSource);
+            return super.newDataSource(eamDataSource);
         } finally {
             releaseExclusiveLock();
         }
@@ -381,10 +381,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, Long caseDbDataSourceId) throws EamDbException {
         try {
             acquireSharedLock();
-            return super.getDataSource(correlationCase, dataSourceDeviceId);
+            return super.getDataSource(correlationCase, caseDbDataSourceId);
         } finally {
             releaseSharedLock();
         }
@@ -556,10 +556,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *         dataSource
      */
     @Override
-    public Long getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) throws EamDbException {
+    public Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws EamDbException {
         try {
             acquireSharedLock();
-            return super.getCountArtifactInstancesByCaseDataSource(caseUUID, dataSourceID);
+            return super.getCountArtifactInstancesByCaseDataSource(correlationDataSource);
         } finally {
             releaseSharedLock();
         }

@@ -195,7 +195,7 @@ public interface EamDb {
      *
      * @param eamDataSource the data source to add
      */
-    void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
+    CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source device ID
@@ -206,7 +206,7 @@ public interface EamDb {
      *
      * @return The data source
      */
-    CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException;
+    CorrelationDataSource getDataSource(CorrelationCase correlationCase, Long caseDbDataSourceId) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source ID
@@ -309,7 +309,7 @@ public interface EamDb {
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource
      */
-    Long getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) throws EamDbException;
+    Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws EamDbException;
 
     /**
      * Adds an eamArtifact to an internal list to be later added to DB. Artifact
