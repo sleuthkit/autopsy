@@ -41,6 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DataSource;
 
 /*
  * A runnable that adds an archive data source as well as data sources contained
@@ -195,9 +196,18 @@ class AddArchiveTask implements Runnable {
                             continue;
                         }
 
-                        // if we are here it means the data source was addedd successfully
+                        // if we are here it means the data source was added successfully
                         success = true;
                         newDataSources.addAll(internalDataSource.getContent());
+                        
+                        // Update the names for all new data sources to be the root archive plus the name of the data source
+                        for (Content c:internalDataSource.getContent()) {
+                            if (c instanceof DataSource) {
+                                DataSource ds = (DataSource) c;
+                                String newName = Paths.get(archivePath).getFileName() + "/" + ds.getName();
+                                ds.setDisplayName(newName);
+                            }
+                        }
 
                         // skip all other DSPs for this data source
                         break;

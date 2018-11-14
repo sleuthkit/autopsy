@@ -436,9 +436,9 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         newLine = ('INSERT INTO "image_gallery_groups" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     #remove id field
-    elif ig_groups_index_seen:
-        # Only removing the id field for now. May need to care about group_id, examiner_id and seen fields in future.
-        newLine = ('INSERT INTO "image_gallery_groups_seen" VALUES(' + ', '.join(fields_list[1:]) + ');') 
+    elif ig_groups_seen_index:
+        # Only removing the id and group_id fields for now. May need to care about examiner_id and seen fields in future.
+        newLine = ('INSERT INTO "image_gallery_groups_seen" VALUES(' + ', '.join(fields_list[2:]) + ');') 
         return newLine    
     # remove object ID
     elif path_index:

@@ -35,6 +35,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -157,10 +158,11 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
-                if (isIgnoredUrl(url) == false) {
+                String domain = extractDomain(url);
+                if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                             NbBundle.getMessage(this.getClass(),
-                                    "Firefox.parentModuleName.noSpace"), Util.extractDomain(url))); //NON-NLS
+                                    "Firefox.parentModuleName.noSpace"), domain)); //NON-NLS
 
                 }
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
@@ -252,11 +254,12 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
-                if (isIgnoredUrl(url) == false) {
+                String domain = extractDomain(url);
+                if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                             NbBundle.getMessage(this.getClass(),
                                     "Firefox.parentModuleName.noSpace"),
-                            Util.extractDomain(url))); //NON-NLS
+                            domain)); //NON-NLS
                 }
 
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
@@ -365,8 +368,8 @@ class Firefox extends Extract {
                                     "Firefox.parentModuleName.noSpace"),
                             (Long.valueOf(result.get("creationTime").toString())))); //NON-NLS
                 }
-                if (isIgnoredUrl(host) == false) {
-                    String domain = Util.extractDomain(host); //NON-NLS
+                String domain = extractDomain(host);
+                if (domain != null && domain.isEmpty() == false) {
                     domain = domain.replaceFirst("^\\.+(?!$)", "");
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                             NbBundle.getMessage(this.getClass(),
@@ -493,11 +496,12 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
-                if (isIgnoredUrl(source) == false) {
+                String domain = extractDomain(source);
+                if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                             NbBundle.getMessage(this.getClass(),
                                     "Firefox.parentModuleName.noSpace"),
-                            Util.extractDomain(source))); //NON-NLS
+                            domain)); //NON-NLS
                 }
 
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
@@ -619,11 +623,12 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(), "Firefox.moduleName")));
-                if (isIgnoredUrl(url) == false) {
+                String domain = extractDomain(url);
+                if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                             NbBundle.getMessage(this.getClass(),
                                     "Firefox.parentModuleName.noSpace"),
-                            Util.extractDomain(url))); //NON-NLS
+                            domain)); //NON-NLS
                 }
 
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
@@ -646,24 +651,25 @@ class Firefox extends Extract {
     }
     
     /**
-     * Determine if the URL should be ignored.
+     * Extract the domain from the supplied URL. This method does additional
+     * checks to detect invalid URLs.
      * 
-     * @param url The URL to test.
+     * @param url The URL from which to extract the domain.
      * 
-     * @return True if the URL should be ignored; otherwise false.
+     * @return The domain.
      */
-    private boolean isIgnoredUrl(String url) {
+    private String extractDomain(String url) {
         if (url == null || url.isEmpty()) {
-            return true;
+            return url;
         }
         
         if (url.toLowerCase().startsWith(PLACE_URL_PREFIX)) {
             /*
              * Ignore URLs that begin with the matched text.
              */
-            return true;
+            return null;
         }
         
-        return false;
+        return NetworkUtils.extractDomain(url);
     }
 }

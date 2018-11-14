@@ -26,6 +26,7 @@ import java.io.BufferedReader;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -128,7 +129,7 @@ class ExtractIE extends Extract {
             Long datetime = fav.getCrtime();
             String Tempdate = datetime.toString();
             datetime = Long.valueOf(Tempdate);
-            String domain = Util.extractDomain(url);
+            String domain = extractDomain(url);
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
@@ -144,9 +145,11 @@ class ExtractIE extends Extract {
                     NbBundle.getMessage(this.getClass(),
                             "ExtractIE.parentModuleName.noSpace"),
                     NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), domain));
+            if (domain != null && domain.isEmpty() == false) {
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.parentModuleName.noSpace"), domain));
+            }
 
             BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
             if (bbart != null) {
@@ -241,7 +244,7 @@ class ExtractIE extends Extract {
             Long datetime = cookiesFile.getCrtime();
             String tempDate = datetime.toString();
             datetime = Long.valueOf(tempDate);
-            String domain = Util.extractDomain(url);
+            String domain = extractDomain(url);
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
@@ -260,9 +263,11 @@ class ExtractIE extends Extract {
                     NbBundle.getMessage(this.getClass(),
                             "ExtractIE.parentModuleName.noSpace"),
                     NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), domain));
+            if (domain != null && domain.isEmpty() == false) {
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.parentModuleName.noSpace"), domain));
+            }
             BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
             if (bbart != null) {
                 bbartifacts.add(bbart);
@@ -474,7 +479,7 @@ class ExtractIE extends Extract {
 
             String actime = lineBuff[3];
             Long ftime = (long) 0;
-            String user = null;
+            String user = "";
             String realurl = null;
             String domain;
 
@@ -484,25 +489,41 @@ class ExtractIE extends Extract {
              */
             if (lineBuff[1].contains("@")) {
                 String url[] = lineBuff[1].split("@", 2);
-                user = url[0];
-                user = user.replace("Visited:", ""); //NON-NLS
-                user = user.replace(":Host:", ""); //NON-NLS
-                user = user.replaceAll("(:)(.*?)(:)", "");
-                user = user.trim();
-                realurl = url[1];
-                realurl = realurl.replace("Visited:", ""); //NON-NLS
-                realurl = realurl.replaceAll(":(.*?):", "");
-                realurl = realurl.replace(":Host:", ""); //NON-NLS
-                realurl = realurl.trim();
+                
+                /*
+                 * Verify the left portion of the URL is valid.
+                 */
+                domain = extractDomain(url[0]);
+                
+                if (domain != null && domain.isEmpty() == false) {
+                    /*
+                     * Use the entire input for the URL.
+                     */
+                    realurl = lineBuff[1].trim();
+                } else {
+                    /*
+                     * Use the left portion of the input for the user, and the
+                     * right portion for the host.
+                     */
+                    user = url[0];
+                    user = user.replace("Visited:", ""); //NON-NLS
+                    user = user.replace(":Host:", ""); //NON-NLS
+                    user = user.replaceAll("(:)(.*?)(:)", "");
+                    user = user.trim();
+                    realurl = url[1];
+                    realurl = realurl.replace("Visited:", ""); //NON-NLS
+                    realurl = realurl.replaceAll(":(.*?):", "");
+                    realurl = realurl.replace(":Host:", ""); //NON-NLS
+                    realurl = realurl.trim();
+                    domain = extractDomain(realurl);
+                }
             } else {
                 /*
                  * Use the entire input for the URL.
                  */
-                user = "";
                 realurl = lineBuff[1].trim();
+                domain = extractDomain(realurl);
             }
-
-            domain = Util.extractDomain(realurl);
 
             if (!actime.isEmpty()) {
                 try {
@@ -536,8 +557,7 @@ class ExtractIE extends Extract {
                                 "ExtractIE.parentModuleName.noSpace"),
                         NbBundle.getMessage(this.getClass(),
                                 "ExtractIE.moduleName.text")));
-                
-                if (isIgnoredUrl(lineBuff[1]) == false) {
+                if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                             NbBundle.getMessage(this.getClass(),
                                     "ExtractIE.parentModuleName.noSpace"), domain));
@@ -571,24 +591,25 @@ class ExtractIE extends Extract {
     }
     
     /**
-     * Determine if the URL should be ignored.
+     * Extract the domain from the supplied URL. This method does additional
+     * checks to detect invalid URLs.
      * 
-     * @param url The URL to test.
+     * @param url The URL from which to extract the domain.
      * 
-     * @return True if the URL should be ignored; otherwise false.
+     * @return The domain.
      */
-    private boolean isIgnoredUrl(String url) {
+    private String extractDomain(String url) {
         if (url == null || url.isEmpty()) {
-            return true;
+            return url;
         }
         
         if (url.toLowerCase().startsWith(RESOURCE_URL_PREFIX)) {
             /*
              * Ignore URLs that begin with the matched text.
              */
-            return true;
+            return null;
         }
         
-        return false;
+        return NetworkUtils.extractDomain(url);
     }
 }

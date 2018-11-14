@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeListener;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +68,8 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.HashSetManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
@@ -232,19 +233,19 @@ public final class ImageGalleryController {
         dbTaskQueueSize.addListener(obs -> this.updateRegroupDisabled());
 
     }
-    
+
     /**
      * @return Currently displayed group or null if nothing is being displayed
      */
     public GroupViewState getViewState() {
         return historyManager.getCurrentState();
     }
-    
+
     /**
      * Get observable property of the current group. The UI currently changes
-     * based on this property changing, which happens when other actions and 
+     * based on this property changing, which happens when other actions and
      * threads call advance().
-     * 
+     *
      * @return Currently displayed group (as a property that can be observed)
      */
     public ReadOnlyObjectProperty<GroupViewState> viewStateProperty() {
@@ -253,7 +254,8 @@ public final class ImageGalleryController {
 
     /**
      * Should the "forward" button on the history be enabled?
-     * @return 
+     *
+     * @return
      */
     public ReadOnlyBooleanProperty getCanAdvance() {
         return historyManager.getCanAdvance();
@@ -261,19 +263,19 @@ public final class ImageGalleryController {
 
     /**
      * Should the "Back" button on the history be enabled?
-     * @return 
+     *
+     * @return
      */
     public ReadOnlyBooleanProperty getCanRetreat() {
         return historyManager.getCanRetreat();
     }
 
     /**
-     * Display the passed in group.  Causes this group to 
-     * get recorded in the history queue and observers of the 
-     * current state will be notified and update their panels/widgets
-     * appropriately.
-     * 
-     * @param newState 
+     * Display the passed in group. Causes this group to get recorded in the
+     * history queue and observers of the current state will be notified and
+     * update their panels/widgets appropriately.
+     *
+     * @param newState
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
     public void advance(GroupViewState newState) {
@@ -282,7 +284,8 @@ public final class ImageGalleryController {
 
     /**
      * Display the next group in the "forward" history stack
-     * @return 
+     *
+     * @return
      */
     public GroupViewState advance() {
         return historyManager.advance();
@@ -290,7 +293,8 @@ public final class ImageGalleryController {
 
     /**
      * Display the previous group in the "back" history stack
-     * @return 
+     *
+     * @return
      */
     public GroupViewState retreat() {
         return historyManager.retreat();
@@ -382,6 +386,51 @@ public final class ImageGalleryController {
 
     }
 
+     /**
+     * Returns a map of all data source object ids, along with 
+     * their DB build status.
+     *
+     * This includes any data sources already in the table, 
+     * and any data sources that might have been added to the
+     * case, but are not in the datasources table.
+     *
+     * @return map of data source object ids and their Db build status.
+     */
+    public Map<Long, DrawableDbBuildStatusEnum> getAllDataSourcesDrawableDBStatus() {
+
+        Map<Long, DrawableDbBuildStatusEnum> dataSourceStatusMap = new HashMap<>();
+
+        // no current case open to check
+        if ((null == getDatabase()) || (null == getSleuthKitCase())) {
+            return dataSourceStatusMap;
+        }
+
+        try {
+            Map<Long, DrawableDbBuildStatusEnum> knownDataSourceIds = getDatabase().getDataSourceDbBuildStatus();
+
+            List<DataSource> dataSources = getSleuthKitCase().getDataSources();
+            Set<Long> caseDataSourceIds = new HashSet<>();
+            dataSources.stream().map(DataSource::getId).forEach(caseDataSourceIds::add);
+
+            // collect all data sources already in the table
+            knownDataSourceIds.entrySet().stream().forEach((Map.Entry<Long, DrawableDbBuildStatusEnum> t) -> {
+                dataSourceStatusMap.put(t.getKey(), t.getValue());
+            });
+
+            // collect any new data sources in the case.
+            caseDataSourceIds.forEach((Long id) -> {
+                if (!knownDataSourceIds.containsKey(id)) {
+                    dataSourceStatusMap.put(id, DrawableDbBuildStatusEnum.UNKNOWN);
+                }
+            });
+
+            return dataSourceStatusMap;
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Image Gallery failed to get data source DB status.", ex);
+            return dataSourceStatusMap;
+        }
+    }
+    
     public boolean hasTooManyFiles(DataSource datasource) throws TskCoreException {
         String whereClause = (datasource == null)
                 ? "1 = 1"
@@ -389,6 +438,28 @@ public final class ImageGalleryController {
 
         return sleuthKitCase.countFilesWhere(whereClause) > FILE_LIMIT;
 
+    }
+    
+    /**
+     * Checks if the given data source has any files with no mimetype
+     * 
+     * @param datasource
+     * @return true if the datasource has any files with no mime type
+     * @throws TskCoreException 
+     */
+    public boolean hasFilesWithNoMimetype(Content datasource) throws TskCoreException {
+        
+        // There are some special files/attributes in the root folder, like $BadClus:$Bad and $Security:$SDS  
+        // The IngestTasksScheduler does not push them down to the ingest modules, 
+        // and hence they do not have any assigned mimetype
+        String whereClause = "data_source_obj_id = " + datasource.getId()
+                    + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")"
+                    + " AND ( mime_type IS NULL )"
+                    + " AND ( meta_addr >= 32 ) "
+                    + " AND ( parent_path <> '/' )"
+                    + " AND ( name NOT like '$%:%' )";
+        
+        return sleuthKitCase.countFilesWhere(whereClause) > 0;
     }
 
     synchronized private void shutDownDBExecutor() {
@@ -431,10 +502,6 @@ public final class ImageGalleryController {
 
     public DrawableFile getFileFromID(Long fileID) throws TskCoreException {
         return drawableDB.getFileFromID(fileID);
-    }
-
-    public ReadOnlyDoubleProperty regroupProgress() {
-        return groupManager.regroupProgress();
     }
 
     public HashSetManager getHashSetManager() {
@@ -696,8 +763,17 @@ public final class ImageGalleryController {
                 // Cycle through all of the files returned and call processFile on each
                 //do in transaction
                 drawableDbTransaction = taskDB.beginTransaction();
-                caseDbTransaction = tskCase.beginTransaction();
+
+                /* We are going to periodically commit the CaseDB transaction
+                 * and sleep so that the user can have Autopsy do other stuff
+                 * while these bulk tasks are ongoing.
+                 */
+                int caseDbCounter = 0;
                 for (final AbstractFile f : files) {
+                    if (caseDbTransaction == null) {
+                        caseDbTransaction = tskCase.beginTransaction();
+                    }
+
                     if (isCancelled() || Thread.interrupted()) {
                         logger.log(Level.WARNING, "Task cancelled or interrupted: not all contents may be transfered to drawable database."); //NON-NLS
                         taskCompletionStatus = false;
@@ -712,6 +788,14 @@ public final class ImageGalleryController {
                     progressHandle.progress(f.getName(), workDone);
                     updateProgress(workDone - 1 / (double) files.size());
                     updateMessage(f.getName());
+
+                    // Periodically, commit the transaction (which frees the lock) and sleep
+                    // to allow other threads to get some work done in CaseDB
+                    if ((++caseDbCounter % 200) == 0) {
+                        caseDbTransaction.commit();
+                        caseDbTransaction = null;
+                        Thread.sleep(500); // 1/2 second
+                    }
                 }
 
                 progressHandle.finish();
@@ -720,13 +804,16 @@ public final class ImageGalleryController {
                 updateProgress(1.0);
 
                 progressHandle.start();
-                caseDbTransaction.commit();
-                caseDbTransaction = null;
+                if (caseDbTransaction != null) {
+                    caseDbTransaction.commit();
+                    caseDbTransaction = null;
+                }
+
                 // pass true so that groupmanager is notified of the changes
                 taskDB.commitTransaction(drawableDbTransaction, true);
                 drawableDbTransaction = null;
 
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | InterruptedException ex) {
                 progressHandle.progress(Bundle.BulkTask_stopCopy_status());
                 logger.log(Level.WARNING, "Stopping copy to drawable db task.  Failed to transfer all database contents", ex); //NON-NLS
                 MessageNotifyUtil.Notify.warn(Bundle.BulkTask_errPopulating_errMsg(), ex.getMessage());
@@ -744,9 +831,13 @@ public final class ImageGalleryController {
                     }
                 }
                 progressHandle.finish();
-                if (taskCompletionStatus) {
-                    taskDB.insertOrUpdateDataSource(dataSourceObjId, DrawableDB.DrawableDbBuildStatusEnum.COMPLETE);
-                }
+                
+                DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus = 
+                                (taskCompletionStatus) ? 
+                                    DrawableDB.DrawableDbBuildStatusEnum.COMPLETE : 
+                                    DrawableDB.DrawableDbBuildStatusEnum.DEFAULT;
+                taskDB.insertOrUpdateDataSource(dataSourceObjId, datasourceDrawableDBStatus);
+                
                 updateMessage("");
                 updateProgress(-1.0);
             }
@@ -792,20 +883,16 @@ public final class ImageGalleryController {
             if (known) {
                 taskDB.removeFile(f.getId(), tr);  //remove known files
             } else {
-                try {
-                    // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
-                    if (null == f.getMIMEType()) {
-                        // set to false to force the DB to be marked as stale
-                        this.setTaskCompletionStatus(false);
-                    } //supported mimetype => analyzed
-                    else if (FileTypeUtils.hasDrawableMIMEType(f)) {
-                        taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
-                    } //unsupported mimtype => analyzed but shouldn't include
-                    else {
-                        taskDB.removeFile(f.getId(), tr);
-                    }
-                } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                    throw new TskCoreException("Failed to initialize FileTypeDetector.", ex);
+                // if mimetype of the file hasn't been ascertained, ingest might not have completed yet.
+                if (null == f.getMIMEType()) {
+                    // set to false to force the DB to be marked as stale
+                    this.setTaskCompletionStatus(false);
+                } //supported mimetype => analyzed
+                else if (FileTypeUtils.hasDrawableMIMEType(f)) {
+                    taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
+                } //unsupported mimtype => analyzed but shouldn't include
+                else {
+                    taskDB.removeFile(f.getId(), tr);
                 }
             }
         }
@@ -817,36 +904,4 @@ public final class ImageGalleryController {
         }
     }
 
-    /**
-     * Copy files from a newly added data source into the DB. Get all "drawable"
-     * files, based on extension and mime-type. After ingest we use file type id
-     * module and if necessary jpeg/png signature matching to add/remove files
-     */
-    @NbBundle.Messages({"PrePopulateDataSourceFiles.committingDb.status=committing image/video database"})
-    static class PrePopulateDataSourceFiles extends BulkTransferTask {
-
-        /**
-         * @param dataSourceObjId The object ID of the DataSource that is being
-         *                        pre-populated into the DrawableDB.
-         * @param controller      The controller for this task.
-         */
-        PrePopulateDataSourceFiles(long dataSourceObjId, ImageGalleryController controller) {
-            super(dataSourceObjId, controller);
-        }
-
-        @Override
-        protected void cleanup(boolean success) {
-        }
-
-        @Override
-        void processFile(final AbstractFile f, DrawableDB.DrawableTransaction tr, CaseDbTransaction caseDBTransaction) {
-            taskDB.insertFile(DrawableFile.create(f, false, false), tr, caseDBTransaction);
-        }
-
-        @Override
-        @NbBundle.Messages({"PrePopulateDataSourceFiles.prepopulatingDb.status=prepopulating image/video database",})
-        ProgressHandle getInitialProgressHandle() {
-            return ProgressHandle.createHandle(Bundle.PrePopulateDataSourceFiles_prepopulatingDb_status(), this);
-        }
-    }
 }
