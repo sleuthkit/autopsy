@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.HasCommentStatus;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
 
 
@@ -36,34 +35,29 @@ import org.sleuthkit.datamodel.ContentTag;
  * Completes the tasks needed to populate the Score, Comment, Occurrences and Translation
  * columns in the background so that the UI is not blocked while waiting for responses from the database or 
  * translation service. Once these events are done, it fires a PropertyChangeEvent
- * to let the AbstractAbstractFileNode know it's time to update!
+ * to let the AbstractAbstractFileNode know it's time to update.
  */
 class SCOAndTranslationTask implements Runnable {
     
-    private final WeakReference<AbstractFile> weakContentRef;
+    private final WeakReference<AbstractAbstractFileNode<?>> weakNodeRef;
     private final PropertyChangeListener listener;
     
-    public SCOAndTranslationTask(WeakReference<AbstractFile> weakContentRef, PropertyChangeListener listener) {
-        this.weakContentRef = weakContentRef;
+    public SCOAndTranslationTask(WeakReference<AbstractAbstractFileNode<?>> weakContentRef, PropertyChangeListener listener) {
+        this.weakNodeRef = weakContentRef;
         this.listener = listener;
     }
 
     @Override
     public void run() {
         try {
-            AbstractFile content = weakContentRef.get();
+            AbstractAbstractFileNode<?> fileNode = weakNodeRef.get();
             
             //Long DB queries
-            List<ContentTag> tags = FileNodeUtil.getContentTagsFromDatabase(content);
-            CorrelationAttributeInstance attribute = 
-                    FileNodeUtil.getCorrelationAttributeInstance(content);
-
-            Pair<DataResultViewerTable.Score, String> scoreAndDescription = 
-                    FileNodeUtil.getScorePropertyAndDescription(content, tags);
-            DataResultViewerTable.HasCommentStatus comment = 
-                    FileNodeUtil.getCommentProperty(tags, attribute);
-            Pair<Long, String> countAndDescription = 
-                    FileNodeUtil.getCountPropertyAndDescription(attribute);
+            List<ContentTag> tags = fileNode.getContentTagsFromDatabase();
+            CorrelationAttributeInstance attribute = fileNode.getCorrelationAttributeInstance();
+            Pair<DataResultViewerTable.Score, String> scoreAndDescription = fileNode.getScorePropertyAndDescription(tags);
+            DataResultViewerTable.HasCommentStatus comment = fileNode.getCommentProperty(tags, attribute);
+            Pair<Long, String> countAndDescription = fileNode.getCountPropertyAndDescription(attribute);
 
             //Load the results from the SCO column operations into a wrapper object to be passed
             //back to the listener so that the node can internally update it's propertySheet.
@@ -77,18 +71,21 @@ class SCOAndTranslationTask implements Runnable {
 
             listener.propertyChange(new PropertyChangeEvent(
                 AutopsyEvent.SourceType.LOCAL.toString(),
-                AbstractAbstractFileNode.NodeSpecificEvents.DABABASE_CONTENT_AVAILABLE.toString(),
+                AbstractAbstractFileNode.NodeSpecificEvents.SCO_AVAILABLE.toString(),
                 null,
                 results));
 
             //Once we've got the SCO columns, then lets fire the translation result.
             //Updating of this column is significantly lower priority than 
             //getting results to the SCO columns!
-            listener.propertyChange(new PropertyChangeEvent(
-                AutopsyEvent.SourceType.LOCAL.toString(),
-                AbstractAbstractFileNode.NodeSpecificEvents.TRANSLATION_AVAILABLE.toString(),
-                null,
-                FileNodeUtil.getTranslatedFileName(content)));
+            String translatedFileName = fileNode.getTranslatedFileName();
+            if(!translatedFileName.isEmpty()) {
+                //Only fire if the result is meaningful.
+                listener.propertyChange(new PropertyChangeEvent(
+                    AutopsyEvent.SourceType.LOCAL.toString(),
+                    AbstractAbstractFileNode.NodeSpecificEvents.TRANSLATION_AVAILABLE.toString(),
+                    null, translatedFileName));
+            }
         } catch (NullPointerException ex) {
            //If we are here, that means our weakPcl or content pointer has gone stale (aka
            //has been garbage collected). There's no recovery. Netbeans has 

@@ -51,7 +51,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
      */
     AbstractFsContentNode(T content, boolean directoryBrowseMode) {
         super(content);
-        this.setDisplayName(FileNodeUtil.getContentDisplayName(content));
+        this.setDisplayName(getContentDisplayName(content));
         this.directoryBrowseMode = directoryBrowseMode;
     }
 

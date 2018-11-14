@@ -246,11 +246,11 @@ public final class UserPreferences {
         preferences.putBoolean(HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES, value);
     }
     
-    public static void setDisplayTranslationFileNames(boolean value) {
+    public static void setDisplayTranslatedFileNames(boolean value) {
         preferences.putBoolean(DISPLAY_TRANSLATED_NAMES, value);
     }
     
-    public static boolean displayTranslationFileNames() {
+    public static boolean displayTranslatedFileNames() {
         return preferences.getBoolean(DISPLAY_TRANSLATED_NAMES, false);
     }
 

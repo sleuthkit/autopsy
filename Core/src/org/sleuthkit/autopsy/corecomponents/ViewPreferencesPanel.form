@@ -129,7 +129,7 @@
                                                       <Component id="useBestViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                                       <Component id="useGMTTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                                       <Component id="useLocalTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                      <Component id="translatedNamesButton" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="translateNamesRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                               </Group>
                                               <Component id="selectFileLabel" min="-2" max="-2" attributes="0"/>
@@ -183,7 +183,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="hideOtherUsersTagsCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="translatedNamesButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="translateNamesRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="centralRepoLabel" min="-2" max="-2" attributes="0"/>
@@ -364,14 +364,14 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JRadioButton" name="translatedNamesButton">
+                <Component class="javax.swing.JRadioButton" name="translateNamesRadioButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.translatedNamesButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.translateNamesRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="translatedNamesButtonActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="translateNamesRadioButtonActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JLabel" name="fileDisplayLabel">

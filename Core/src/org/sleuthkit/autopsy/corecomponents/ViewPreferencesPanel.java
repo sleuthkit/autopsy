@@ -49,10 +49,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         //If there is not Text Translator implementation, then hide these buttons
         //from the user.
         TextTranslationService tts = TextTranslationService.getInstance();
-        if(!tts.hasProvider()) {
-            translatedNamesButton.setVisible(false);
-            fileDisplayLabel.setVisible(false);
-        }
+        translateNamesRadioButton.setEnabled(tts.hasProvider());
     }
 
     @Override
@@ -76,7 +73,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         commentsOccurencesColumnsCheckbox.setSelected(UserPreferences.hideCentralRepoCommentsAndOccurrences());
 
         deletedFilesLimitCheckbox.setSelected(DeletedFilePreferences.getDefault().getShouldLimitDeletedFiles());
-        translatedNamesButton.setSelected(UserPreferences.displayTranslationFileNames());
+        translateNamesRadioButton.setSelected(UserPreferences.displayTranslatedFileNames());
 
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
@@ -100,7 +97,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCheckbox.isSelected());
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
         UserPreferences.setHideCentralRepoCommentsAndOccurrences(commentsOccurencesColumnsCheckbox.isSelected());
-        UserPreferences.setDisplayTranslationFileNames(translatedNamesButton.isSelected());
+        UserPreferences.setDisplayTranslatedFileNames(translateNamesRadioButton.isSelected());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -153,7 +150,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         centralRepoLabel = new javax.swing.JLabel();
         deletedFilesLimitCheckbox = new javax.swing.JCheckBox();
         deletedFilesLimitLabel = new javax.swing.JLabel();
-        translatedNamesButton = new javax.swing.JRadioButton();
+        translateNamesRadioButton = new javax.swing.JRadioButton();
         fileDisplayLabel = new javax.swing.JLabel();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
@@ -257,10 +254,10 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(deletedFilesLimitLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.deletedFilesLimitLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(translatedNamesButton, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.translatedNamesButton.text")); // NOI18N
-        translatedNamesButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(translateNamesRadioButton, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.translateNamesRadioButton.text")); // NOI18N
+        translateNamesRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                translatedNamesButtonActionPerformed(evt);
+                translateNamesRadioButtonActionPerformed(evt);
             }
         });
 
@@ -311,7 +308,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                             .addComponent(useBestViewerRadioButton)
                                             .addComponent(useGMTTimeRadioButton)
                                             .addComponent(useLocalTimeRadioButton)
-                                            .addComponent(translatedNamesButton)))
+                                            .addComponent(translateNamesRadioButton)))
                                     .addComponent(selectFileLabel))))
                         .addGap(0, 10, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -352,7 +349,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(hideOtherUsersTagsCheckbox)
-                    .addComponent(translatedNamesButton))
+                    .addComponent(translateNamesRadioButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(centralRepoLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -563,13 +560,13 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_deletedFilesLimitCheckboxActionPerformed
 
-    private void translatedNamesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_translatedNamesButtonActionPerformed
+    private void translateNamesRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_translateNamesRadioButtonActionPerformed
         if (immediateUpdates) {
-            UserPreferences.setDisplayTranslationFileNames(translatedNamesButton.isSelected());
+            UserPreferences.setDisplayTranslatedFileNames(translateNamesRadioButton.isSelected());
         } else {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
-    }//GEN-LAST:event_translatedNamesButtonActionPerformed
+    }//GEN-LAST:event_translateNamesRadioButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -592,7 +589,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel hideSlackFilesLabel;
     private javax.swing.JRadioButton keepCurrentViewerRadioButton;
     private javax.swing.JLabel selectFileLabel;
-    private javax.swing.JRadioButton translatedNamesButton;
+    private javax.swing.JRadioButton translateNamesRadioButton;
     private javax.swing.JRadioButton useBestViewerRadioButton;
     private javax.swing.JRadioButton useGMTTimeRadioButton;
     private javax.swing.JRadioButton useLocalTimeRadioButton;
