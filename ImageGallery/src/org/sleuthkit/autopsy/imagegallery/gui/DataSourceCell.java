@@ -33,8 +33,19 @@ public class DataSourceCell extends ListCell<Optional<DataSource>> {
     private final Map<DataSource, Boolean> dataSourcesTooManyFiles;
     private final Map<Long, DrawableDB.DrawableDbBuildStatusEnum> dataSourcesDrawableDBStatus;
 
-    public DataSourceCell(Map<DataSource, Boolean> dataSourcesViewable, Map<Long, DrawableDB.DrawableDbBuildStatusEnum> dataSourcesDrawableDBStatus) {
-        this.dataSourcesTooManyFiles = dataSourcesViewable;
+    /**
+     * 
+     * @param dataSourcesTooManyFiles: a map of too many files indicator for 
+     *      each data source.  
+     *      Data sources with too many files may substantially slow down 
+     *      the system and hence are disabled for selection.
+     * @param dataSourcesDrawableDBStatus a map of drawable DB status for 
+     *      each data sources.
+     *      Data sources in DEFAULT state are not fully analyzed yet and are 
+     *      disabled for selection.
+     */
+    public DataSourceCell(Map<DataSource, Boolean> dataSourcesTooManyFiles, Map<Long, DrawableDB.DrawableDbBuildStatusEnum> dataSourcesDrawableDBStatus) {
+        this.dataSourcesTooManyFiles = dataSourcesTooManyFiles;
         this.dataSourcesDrawableDBStatus = dataSourcesDrawableDBStatus;
         
     }

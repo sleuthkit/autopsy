@@ -450,7 +450,8 @@ public final class ImageGalleryController {
     public boolean hasFilesWithNoMimetype(Content datasource) throws TskCoreException {
         
         // There are some special files/attributes in the root folder, like $BadClus:$Bad and $Security:$SDS  
-        // that do not go through any ingest modules, and hence do not have any assigned mimetype
+        // The IngestTasksScheduler does not push them down to the ingest modules, 
+        // and hence they do not have any assigned mimetype
         String whereClause = "data_source_obj_id = " + datasource.getId()
                     + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")"
                     + " AND ( mime_type IS NULL )"
