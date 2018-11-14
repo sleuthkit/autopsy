@@ -151,7 +151,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         deletedFilesLimitCheckbox = new javax.swing.JCheckBox();
         deletedFilesLimitLabel = new javax.swing.JLabel();
         translateNamesRadioButton = new javax.swing.JRadioButton();
-        fileDisplayLabel = new javax.swing.JLabel();
+        translateTextLabel = new javax.swing.JLabel();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -261,7 +261,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(fileDisplayLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.fileDisplayLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(translateTextLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.translateTextLabel.text")); // NOI18N
 
         javax.swing.GroupLayout globalSettingsPanelLayout = new javax.swing.GroupLayout(globalSettingsPanel);
         globalSettingsPanel.setLayout(globalSettingsPanelLayout);
@@ -299,7 +299,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                     .addComponent(hideOtherUsersTagsLabel))
                                 .addGap(18, 18, 18)
                                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(fileDisplayLabel)
+                                    .addComponent(translateTextLabel)
                                     .addComponent(displayTimeLabel)
                                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                         .addGap(10, 10, 10)
@@ -344,7 +344,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addComponent(useGMTTimeRadioButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(fileDisplayLabel)
+                    .addComponent(translateTextLabel)
                     .addComponent(hideOtherUsersTagsLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -579,7 +579,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JCheckBox deletedFilesLimitCheckbox;
     private javax.swing.JLabel deletedFilesLimitLabel;
     private javax.swing.JLabel displayTimeLabel;
-    private javax.swing.JLabel fileDisplayLabel;
     private javax.swing.JPanel globalSettingsPanel;
     private javax.swing.JCheckBox groupByDataSourceCheckbox;
     private javax.swing.JLabel hideKnownFilesLabel;
@@ -590,6 +589,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JRadioButton keepCurrentViewerRadioButton;
     private javax.swing.JLabel selectFileLabel;
     private javax.swing.JRadioButton translateNamesRadioButton;
+    private javax.swing.JLabel translateTextLabel;
     private javax.swing.JRadioButton useBestViewerRadioButton;
     private javax.swing.JRadioButton useGMTTimeRadioButton;
     private javax.swing.JRadioButton useLocalTimeRadioButton;

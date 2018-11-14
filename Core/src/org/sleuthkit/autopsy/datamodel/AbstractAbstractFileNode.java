@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -370,7 +370,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * Creates and populates a list of properties for this nodes property sheet.
      */
     private List<NodeProperty<?>> getProperties() {
-        List<NodeProperty<?>> properties = new LinkedList<NodeProperty<?>>() {{
+        List<NodeProperty<?>> properties = new ArrayList<NodeProperty<?>>() {{
             add(new NodeProperty<>(NAME.toString(), NAME.toString(), NO_DESCR, getContentDisplayName(content)));   
             /*
              * Initialize dummy place holder properties for Translation,
@@ -576,7 +576,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @return a list of tags that are associated with the file
      */
     List<ContentTag> getContentTagsFromDatabase() {
-        List<ContentTag> tags = new LinkedList<>();
+        List<ContentTag> tags = new ArrayList<>();
         try {
             tags.addAll(Case.getCurrentCaseThrows().getServices().getTagsManager().getContentTagsByContent(content));
         } catch (TskCoreException | NoCurrentCaseException ex) {
