@@ -78,6 +78,7 @@
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>
             <file name="org-sleuthkit-autopsy-commonfilesearch-CommonAttributeSearchAction.instance"/>
+            <file name="org-sleuthkit-autopsy-md5search-Md5SearchAction.instance"/>
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.ingest.IngestMessagesAction"/>
             </file>
@@ -200,6 +201,10 @@
             <file name="org-sleuthkit-autopsy-commonfilesearch-CommonFilesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-commonfilesearch-CommonAttributeSearchAction.instance"/>
                 <attr name="position" intvalue="103"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-md5search-Md5SearchAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-md5search-Md5SearchAction.instance"/>
+                <attr name="position" intvalue="104"/>
             </file>
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>

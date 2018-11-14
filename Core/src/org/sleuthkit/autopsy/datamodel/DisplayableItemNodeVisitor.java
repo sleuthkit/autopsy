@@ -29,6 +29,8 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
+import org.sleuthkit.autopsy.md5search.CorrelationAttributeInstanceChildNode;
+import org.sleuthkit.autopsy.md5search.DlgCorrelationAttributeInstanceNode;
 
 /**
  * Visitor pattern that goes over all nodes in the directory tree. This includes
@@ -125,6 +127,10 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(CentralRepoCommonAttributeInstanceNode crfin);
     
     T visit(InstanceCountNode icn);
+    
+    T visit(CorrelationAttributeInstanceChildNode caicn);
+    
+    T visit(DlgCorrelationAttributeInstanceNode cain); //DLG:
 
     /*
      * Tags
@@ -212,6 +218,16 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(InstanceCountNode icn){
             return defaultVisit(icn);
+        }
+        
+        @Override
+        public T visit(CorrelationAttributeInstanceChildNode caicn){
+            return defaultVisit(caicn);
+        }
+        
+        @Override
+        public T visit(DlgCorrelationAttributeInstanceNode cain) {
+            return defaultVisit(cain);
         }
         
         @Override
