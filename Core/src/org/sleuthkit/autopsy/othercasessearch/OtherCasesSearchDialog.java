@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.correlationpropertysearch;
+package org.sleuthkit.autopsy.othercasessearch;
 
 import java.awt.Color;
 import java.awt.event.ItemEvent;
@@ -34,7 +34,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -49,20 +48,22 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.othercasessearch.Bundle;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 
 @Messages({
-    "CorrelationPropertySearchDialog.title.text=Correlation Property Search",
-    "CorrelationPropertySearchDialog.results.text=Correlation Properties",
-    "CorrelationPropertySearchDialog.emptyNode.text=No results found.",
-    "CorrelationPropertySearchDialog.validation.invalidHash=The supplied value is not a valid MD5 hash."
+    "OtherCasesSearchDialog.dialogTitle.text=Search Other Cases",
+    "OtherCasesSearchDialog.resultsTitle.text=Other Cases",
+    "OtherCasesSearchDialog.resultsDescription.text=Other Cases Search",
+    "OtherCasesSearchDialog.emptyNode.text=No results found.",
+    "OtherCasesSearchDialog.validation.invalidHash=The supplied value is not a valid MD5 hash."
 })
 /**
- * The Correlation Property Search dialog allows users to search for specific
+ * The Search Other Cases dialog allows users to search for specific
  * types of correlation properties in the Central Repository.
  */
-final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
-    private static final Logger logger = Logger.getLogger(CorrelationPropertySearchDialog.class.getName());
+final class OtherCasesSearchDialog extends javax.swing.JDialog {
+    private static final Logger logger = Logger.getLogger(OtherCasesSearchDialog.class.getName());
     
     private static final String FILES_CORRELATION_TYPE = "Files";
     
@@ -70,17 +71,17 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
     private TextPrompt correlationValueTextFieldPrompt;
 
     /**
-     * Creates a new instance of the Correlation Property Search dialog.
+     * Creates a new instance of the Search Other Cases dialog.
      */
-    CorrelationPropertySearchDialog() {
-        super((JFrame) WindowManager.getDefault().getMainWindow(), Bundle.CorrelationPropertySearchDialog_title_text(), true);
+    OtherCasesSearchDialog() {
+        super((JFrame) WindowManager.getDefault().getMainWindow(), Bundle.OtherCasesSearchDialog_dialogTitle_text(), true);
         this.correlationTypes = new ArrayList<>();
         initComponents();
         customizeComponents();
     }
     
     /**
-     * Perform the correlation property search.
+     * Perform the other cases search.
      */
     private void search() {
         new SwingWorker<List<CorrelationAttributeInstance>, Void>() {
@@ -116,22 +117,22 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
                     
-                    CorrelationPropertySearchNode searchNode = new CorrelationPropertySearchNode(correlationInstances);
-                    CorrelationPropertyFilterNode tableFilterNode = new CorrelationPropertyFilterNode(searchNode, true, searchNode.getName());
+                    OtherCasesSearchNode searchNode = new OtherCasesSearchNode(correlationInstances);
+                    OtherCasesFilterNode tableFilterNode = new OtherCasesFilterNode(searchNode, true, searchNode.getName());
                     
                     String resultsText = String.format("%s (%s; \"%s\")",
-                            Bundle.CorrelationPropertySearchDialog_results_text(),
+                            Bundle.OtherCasesSearchDialog_resultsTitle_text(),
                             (String) correlationTypeComboBox.getSelectedItem(),
                             correlationValueTextField.getText());
                     final TopComponent searchResultWin;
                     if (correlationInstances.isEmpty()) {
                         Node emptyNode = new TableFilterNode(
-                                new EmptyNode(Bundle.CorrelationPropertySearchDialog_emptyNode_text()), true);
+                                new EmptyNode(Bundle.OtherCasesSearchDialog_emptyNode_text()), true);
                         searchResultWin = DataResultTopComponent.createInstance(
-                                resultsText, Bundle.CorrelationPropertySearchDialog_title_text(), emptyNode, 0);
+                                resultsText, Bundle.OtherCasesSearchDialog_resultsDescription_text(), emptyNode, 0);
                     } else {
                         searchResultWin = DataResultTopComponent.createInstance(
-                                resultsText, Bundle.CorrelationPropertySearchDialog_title_text(), tableFilterNode, HIDE_ON_CLOSE, viewers);
+                                resultsText, Bundle.OtherCasesSearchDialog_resultsDescription_text(), tableFilterNode, HIDE_ON_CLOSE, viewers);
                     }
                     searchResultWin.requestActive(); // make it the active top component
                 } catch (ExecutionException | InterruptedException ex) {
@@ -156,25 +157,28 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
         correlationTypeComboBox = new javax.swing.JComboBox<>();
         correlationTypeLabel = new javax.swing.JLabel();
         errorLabel = new javax.swing.JLabel();
+        descriptionLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
 
-        org.openide.awt.Mnemonics.setLocalizedText(correlationValueLabel, org.openide.util.NbBundle.getMessage(CorrelationPropertySearchDialog.class, "CorrelationPropertySearchDialog.correlationValueLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(correlationValueLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationValueLabel.text")); // NOI18N
 
-        correlationValueTextField.setText(org.openide.util.NbBundle.getMessage(CorrelationPropertySearchDialog.class, "CorrelationPropertySearchDialog.correlationValueTextField.text")); // NOI18N
+        correlationValueTextField.setText(org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationValueTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CorrelationPropertySearchDialog.class, "CorrelationPropertySearchDialog.searchButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 searchButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(correlationTypeLabel, org.openide.util.NbBundle.getMessage(CorrelationPropertySearchDialog.class, "CorrelationPropertySearchDialog.correlationTypeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(correlationTypeLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationTypeLabel.text")); // NOI18N
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(CorrelationPropertySearchDialog.class, "CorrelationPropertySearchDialog.errorLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.errorLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.descriptionLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -194,13 +198,18 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(correlationTypeComboBox, 0, 289, Short.MAX_VALUE)
-                            .addComponent(correlationValueTextField))))
+                            .addComponent(correlationValueTextField)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(descriptionLabel)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(descriptionLabel)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(correlationTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(correlationTypeLabel))
@@ -215,8 +224,8 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        searchButton.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CorrelationPropertySearchDialog.class, "CorrelationPropertySearchDialog.searchButton.AccessibleContext.accessibleName")); // NOI18N
-        searchButton.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(CorrelationPropertySearchDialog.class, "CorrelationPropertySearchDialog.searchButton.AccessibleContext.accessibleDescription")); // NOI18N
+        searchButton.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.searchButton.AccessibleContext.accessibleName")); // NOI18N
+        searchButton.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.searchButton.AccessibleContext.accessibleDescription")); // NOI18N
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -234,7 +243,7 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
             dispose();
         } else {
             searchButton.setEnabled(false);
-            errorLabel.setText(Bundle.CorrelationPropertySearchDialog_validation_invalidHash());
+            errorLabel.setText(Bundle.OtherCasesSearchDialog_validation_invalidHash());
             correlationValueTextField.grabFocus();
         }
     }//GEN-LAST:event_searchButtonActionPerformed
@@ -295,7 +304,7 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
     }
     
     @Messages({
-        "CorrelationPropertySearchDialog.correlationValueTextField.filesExample=Example: \"f0e1d2c3b4a5968778695a4b3c2d1e0f\""
+        "OtherCasesSearchDialog.correlationValueTextField.filesExample=Example: \"f0e1d2c3b4a5968778695a4b3c2d1e0f\""
     })
     /**
      * Update the text prompt of the name text field based on the input type
@@ -305,7 +314,7 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
         /**
          * Add text prompt to the text field.
          */
-        String text = Bundle.CorrelationPropertySearchDialog_correlationValueTextField_filesExample();
+        String text = Bundle.OtherCasesSearchDialog_correlationValueTextField_filesExample();
         correlationValueTextFieldPrompt = new TextPrompt(text, correlationValueTextField);
         
         /**
@@ -341,7 +350,7 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
     }
 
     /**
-     * Display the Correlation Property Search dialog.
+     * Display the Search Other Cases dialog.
      */
     public void display() {
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
@@ -353,6 +362,7 @@ final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
     private javax.swing.JLabel correlationTypeLabel;
     private javax.swing.JLabel correlationValueLabel;
     private javax.swing.JTextField correlationValueTextField;
+    private javax.swing.JLabel descriptionLabel;
     private javax.swing.JLabel errorLabel;
     private javax.swing.JButton searchButton;
     // End of variables declaration//GEN-END:variables

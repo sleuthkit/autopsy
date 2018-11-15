@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.correlationpropertysearch;
+package org.sleuthkit.autopsy.othercasessearch;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,13 +29,14 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
+import org.sleuthkit.autopsy.othercasessearch.Bundle;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * Used by the Correlation Property Search feature to encapsulate instances of a
- * given search match.
+ * Used by the Other Cases Search feature to encapsulate instances of a given
+ * search match.
  */
 public final class CorrelationAttributeInstanceNode extends DisplayableItemNode {
 

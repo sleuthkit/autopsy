@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.correlationpropertysearch;
+package org.sleuthkit.autopsy.othercasessearch;
 
 import java.util.List;
 import org.openide.nodes.Children;
@@ -27,15 +27,15 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
  * Creates CorrelationAttributeInstanceNodes from a collection of
  * CorrelationAttributeInstances.
  */
-class CorrelationPropertySearchChildren extends Children.Keys<CorrelationAttributeInstance> {
+class OtherCasesSearchChildren extends Children.Keys<CorrelationAttributeInstance> {
     
     /**
-     * Create an instance of CorrelationPropertySearchChildren.
+     * Create an instance of OtherCasesSearchChildren.
      * 
      * @param lazy     Lazy load?
      * @param fileList List of CorrelationAttributeInstances.
      */
-    CorrelationPropertySearchChildren(boolean lazy, List<CorrelationAttributeInstance> instances) {
+    OtherCasesSearchChildren(boolean lazy, List<CorrelationAttributeInstance> instances) {
         super(lazy);
         this.setKeys(instances);
     }

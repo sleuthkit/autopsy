@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.correlationpropertysearch;
+package org.sleuthkit.autopsy.othercasessearch;
 
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
@@ -26,9 +26,9 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
- * FilterNode containing properties and actions for Correlation Property Search.
+ * FilterNode containing properties and actions for the other cases search.
  */
-final class CorrelationPropertyFilterNode extends FilterNode {
+final class OtherCasesFilterNode extends FilterNode {
 
     private final boolean createChildren;
     private final boolean forceUseWrappedDisplayName;
@@ -44,8 +44,8 @@ final class CorrelationPropertyFilterNode extends FilterNode {
      * @param createChildren True if a Children object should be created for the
      * wrapped node.
      */
-    CorrelationPropertyFilterNode(Node node, boolean createChildren) {
-        super(node, CorrelationPropertyFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
+    OtherCasesFilterNode(Node node, boolean createChildren) {
+        super(node, OtherCasesFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.forceUseWrappedDisplayName = false;
         this.createChildren = createChildren;
     }
@@ -62,8 +62,8 @@ final class CorrelationPropertyFilterNode extends FilterNode {
      * @param columnOrderKey A key that represents the type of the original
      * wrapped node and what is being displayed under that node.
      */
-    CorrelationPropertyFilterNode(Node node, boolean createChildren, String columnOrderKey) {
-        super(node, CorrelationPropertyFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
+    OtherCasesFilterNode(Node node, boolean createChildren, String columnOrderKey) {
+        super(node, OtherCasesFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.forceUseWrappedDisplayName = false;
         this.createChildren = createChildren;
         this.columnOrderKey = columnOrderKey;

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.correlationpropertysearch;
+package org.sleuthkit.autopsy.othercasessearch;
 
 import java.awt.event.ActionEvent;
 import org.openide.awt.ActionID;
@@ -27,15 +27,16 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.othercasessearch.Bundle;
 
 /**
- * Action for accessing the Correlation Property Search dialog.
+ * Action for accessing the Search Other Cases dialog.
  */
-@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.correlationpropertysearch.CorrelationPropertySearchAction")
-@ActionRegistration(displayName = "#CTL_CorrelationPropertySearchAction=Correlation Property Search", lazy = false)
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.othercasessearch.OtherCasesSearchAction")
+@ActionRegistration(displayName = "#CTL_OtherCasesSearchAction=Search Other Cases", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 104)
-@NbBundle.Messages({"CTL_CorrelationPropertySearchAction=Correlation Property Search"})
-public class CorrelationPropertySearchAction extends CallableSystemAction {
+@NbBundle.Messages({"CTL_OtherCasesSearchAction=Search Other Cases"})
+public class OtherCasesSearchAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
@@ -49,15 +50,15 @@ public class CorrelationPropertySearchAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        CorrelationPropertySearchDialog dialog = new CorrelationPropertySearchDialog();
+        OtherCasesSearchDialog dialog = new OtherCasesSearchDialog();
         dialog.display();
     }
 
     @NbBundle.Messages({
-        "CorrelationPropertySearchAction.getName.text=Correlation Property Search"})
+        "OtherCasesSearchAction.getName.text=Search Other Cases"})
     @Override
     public String getName() {
-        return Bundle.CorrelationPropertySearchAction_getName_text();
+        return Bundle.OtherCasesSearchAction_getName_text();
     }
 
     @Override

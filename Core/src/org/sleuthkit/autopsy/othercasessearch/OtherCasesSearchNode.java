@@ -16,35 +16,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.correlationpropertysearch;
+package org.sleuthkit.autopsy.othercasessearch;
 
 import java.util.List;
 import org.openide.nodes.AbstractNode;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.othercasessearch.Bundle;
 
 /**
- * Parent node to CorrelationPropertySearchChildren.
+ * Parent node to OtherCasesSearchChildren.
  */
-class CorrelationPropertySearchNode extends AbstractNode {
+class OtherCasesSearchNode extends AbstractNode {
 
-    private CorrelationPropertySearchChildren children;
+    private OtherCasesSearchChildren children;
 
     /**
-     * Create an instance of CorrelationPropertySearchNode.
+     * Create an instance of OtherCasesSearchNode.
      * 
      * @param keys The list of CorrelationAttributeInstances.
      */
-    CorrelationPropertySearchNode(List<CorrelationAttributeInstance> keys) {
-        super(new CorrelationPropertySearchChildren(true, keys));
-        this.children = (CorrelationPropertySearchChildren) this.getChildren();
+    OtherCasesSearchNode(List<CorrelationAttributeInstance> keys) {
+        super(new OtherCasesSearchChildren(true, keys));
+        this.children = (OtherCasesSearchChildren) this.getChildren();
     }
 
     @Messages({
-        "CorrelationPropertySearchNode.getName.text=Correlation Property Search"
+        "OtherCasesSearchNode.getName.text=Other Cases Search"
     })
     @Override
     public String getName() {
-        return Bundle.CorrelationPropertySearchNode_getName_text();
+        return Bundle.OtherCasesSearchNode_getName_text();
     }
 }
