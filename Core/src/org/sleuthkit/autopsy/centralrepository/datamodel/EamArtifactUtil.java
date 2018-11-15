@@ -166,6 +166,8 @@ public class EamArtifactUtil {
             } else if (correlationType.getId() == CorrelationAttributeInstance.SSID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID() == artifactTypeID) {
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID)).getValueString();
+            } else if (correlationType.getId() == CorrelationAttributeInstance.MAC_TYPE_ID) {
+                value = "NEED_MAC_ADDRESS";
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
