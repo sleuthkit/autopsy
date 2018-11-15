@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.Reader;
 import java.util.Arrays;
@@ -27,9 +27,8 @@ import org.sleuthkit.datamodel.Content;
  * Common methods for utilities that extract text and content and divide into
  * chunks
  */
-abstract class ContentTextExtractor implements TextExtractor<Content> {
-
-
+public abstract class ContentTextExtractor implements TextExtractor<Content> {
+    
     static final List<String> BINARY_MIME_TYPES
             = Arrays.asList(
                     //ignore binary blob data, for which string extraction will be used
@@ -80,7 +79,7 @@ abstract class ContentTextExtractor implements TextExtractor<Content> {
      *
      * @return
      */
-    abstract boolean isContentTypeSpecific();
+    public abstract boolean isContentTypeSpecific();
 
     /**
      * Determines if the file content is supported by the extractor if
@@ -92,7 +91,9 @@ abstract class ContentTextExtractor implements TextExtractor<Content> {
      *
      * @return true if the file content is supported, false otherwise
      */
-    abstract boolean isSupported(Content file, String detectedFormat);
+    public abstract boolean isSupported(Content file, String detectedFormat);
+    
+    public abstract void parseContext(ExtractionContext context);
 
     @Override
     public abstract Reader getReader(Content source) throws TextExtractorException;

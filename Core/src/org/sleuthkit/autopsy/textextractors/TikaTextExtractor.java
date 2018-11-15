@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.textextractors;
 
 import com.google.common.io.CharSource;
 import java.io.File;
@@ -25,6 +25,7 @@ import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -44,8 +45,8 @@ import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.pdf.PDFParserConfig;
 import org.openide.util.NbBundle;
 import org.openide.modules.InstalledFileLocator;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -53,9 +54,11 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extracts text from Tika supported content. Protects against Tika
  * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
-class TikaTextExtractor extends ContentTextExtractor {
+public class TikaTextExtractor extends ContentTextExtractor {
+    
+    private boolean OCREnabled;
 
-    static final private Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
+    private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
@@ -73,7 +76,7 @@ class TikaTextExtractor extends ContentTextExtractor {
 
     @Override
     public void logWarning(final String msg, Exception ex) {
-        KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
+        tikaLogger.log(Level.WARNING, msg, ex);
     }
 
     @Override
@@ -92,7 +95,7 @@ class TikaTextExtractor extends ContentTextExtractor {
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
         
         // configure OCR if it is enabled in KWS settings and installed on the machine
-        if (TESSERACT_PATH != null && KeywordSearchSettings.getOcrOption() && PlatformUtil.isWindowsOS() == true) {
+        if (TESSERACT_PATH != null && OCREnabled && PlatformUtil.isWindowsOS() == true) {
             
             // configure PDFParser. 
             PDFParserConfig pdfConfig = new PDFParserConfig();
@@ -138,7 +141,7 @@ class TikaTextExtractor extends ContentTextExtractor {
         } catch (TextExtractorException ex) {
             throw ex;
         } catch (Exception ex) {
-            KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + content.getId() + ": " + content.getName(), ex.getCause()); //NON-NLS
+            tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the content" + content.getId() + ": " + content.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", content.getId(), content.getName());
             logWarning(msg, ex);
             throw new TextExtractorException(msg, ex);
@@ -231,6 +234,14 @@ class TikaTextExtractor extends ContentTextExtractor {
             return 3 * 3600;
         }
 
+    }
+
+    @Override
+    public void parseContext(ExtractionContext context) {
+        ImageFileExtractionConfig configInstance = context.get(ImageFileExtractionConfig.class);
+        if(Objects.nonNull(configInstance)) {
+            this.OCREnabled = configInstance.getOCREnabled();
+        }
     }
 
     /**

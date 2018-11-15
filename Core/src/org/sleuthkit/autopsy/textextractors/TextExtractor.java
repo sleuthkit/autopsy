@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.Reader;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.SleuthkitVisitableItem;
  * @param <TextSource> The subtype of SleuthkitVisitableItem an implementation
  *                     is able to process.
  */
-interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
+public interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
 
     /**
      * Is this extractor configured such that no extraction will/should be done?
@@ -48,12 +48,10 @@ interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
     /**
      * Get a reader that over the text extracted from the given source.
      *
-     * @param stream
      * @param source
      *
      * @return
-     *
-     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
     abstract Reader getReader(TextSource source) throws TextExtractorException;
 

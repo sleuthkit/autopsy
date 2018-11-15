@@ -16,13 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.Config;
@@ -32,16 +33,17 @@ import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.textextractors.extractionconfigs.HTMLExtractionConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extracts text from HTML content.
  */
-class HtmlTextExtractor extends ContentTextExtractor {
+public class HtmlTextExtractor extends ContentTextExtractor {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
-    private static final int MAX_SIZE = 50_000_000; //50MB
+    private int maxSize = 50_000_000;
 
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
             "application/javascript", //NON-NLS
@@ -58,15 +60,16 @@ class HtmlTextExtractor extends ContentTextExtractor {
     }
 
     @Override
-    boolean isContentTypeSpecific() {
+    public boolean isContentTypeSpecific() {
         return true;
     }
 
     @Override
-    boolean isSupported(Content content, String detectedFormat) {
-        return detectedFormat != null
-                && WEB_MIME_TYPES.contains(detectedFormat)
-                && content.getSize() <= MAX_SIZE;
+    public boolean isSupported(Content content, String detectedFormat) {
+        boolean notNull = detectedFormat != null;
+        boolean supported = WEB_MIME_TYPES.contains(detectedFormat);
+        boolean size = content.getSize() <= maxSize;;
+        return notNull && supported && size;
     }
 
     @Override
@@ -176,5 +179,13 @@ class HtmlTextExtractor extends ContentTextExtractor {
     @Override
     public void logWarning(final String msg, Exception ex) {
         logger.log(Level.WARNING, msg, ex); //NON-NLS  }
+    }
+
+    @Override
+    public void parseContext(ExtractionContext context) {
+        HTMLExtractionConfig configInstance = context.get(HTMLExtractionConfig.class);
+        if(Objects.nonNull(configInstance)) {
+            this.maxSize = configInstance.getContentSizeLimit();
+        }
     }
 }

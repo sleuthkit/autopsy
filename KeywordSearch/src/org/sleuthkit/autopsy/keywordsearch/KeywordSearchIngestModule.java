@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.ArrayList;
+import org.sleuthkit.autopsy.textextractors.ContentTextExtractor;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,12 @@ import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.textextractors.ExtractionContext;
+import org.sleuthkit.autopsy.textextractors.StringsTextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
+import org.sleuthkit.autopsy.textextractors.extractionconfigs.HTMLExtractionConfig;
+import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
+import org.sleuthkit.autopsy.textextractors.extractionconfigs.StringsExtractionConfig;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
@@ -61,6 +68,47 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
     "CannotRunFileTypeDetection=Unable to run file type detection."
 })
 public final class KeywordSearchIngestModule implements FileIngestModule {
+    
+    static final List<String> ARCHIVE_MIME_TYPES
+            = Arrays.asList(
+                    //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
+                    "application/x-7z-compressed", //NON-NLS
+                    "application/x-ace-compressed", //NON-NLS
+                    "application/x-alz-compressed", //NON-NLS
+                    "application/x-arj", //NON-NLS
+                    "application/vnd.ms-cab-compressed", //NON-NLS
+                    "application/x-cfs-compressed", //NON-NLS
+                    "application/x-dgc-compressed", //NON-NLS
+                    "application/x-apple-diskimage", //NON-NLS
+                    "application/x-gca-compressed", //NON-NLS
+                    "application/x-dar", //NON-NLS
+                    "application/x-lzx", //NON-NLS
+                    "application/x-lzh", //NON-NLS
+                    "application/x-rar-compressed", //NON-NLS
+                    "application/x-stuffit", //NON-NLS
+                    "application/x-stuffitx", //NON-NLS
+                    "application/x-gtar", //NON-NLS
+                    "application/x-archive", //NON-NLS
+                    "application/x-executable", //NON-NLS
+                    "application/x-gzip", //NON-NLS
+                    "application/zip", //NON-NLS
+                    "application/x-zoo", //NON-NLS
+                    "application/x-cpio", //NON-NLS
+                    "application/x-shar", //NON-NLS
+                    "application/x-tar", //NON-NLS
+                    "application/x-bzip", //NON-NLS
+                    "application/x-bzip2", //NON-NLS
+                    "application/x-lzip", //NON-NLS
+                    "application/x-lzma", //NON-NLS
+                    "application/x-lzop", //NON-NLS
+                    "application/x-z", //NON-NLS
+                    "application/x-compress"); //NON-NLS
+    
+    static final List<String> BINARY_MIME_TYPES
+            = Arrays.asList(
+                    //ignore binary blob data, for which string extraction will be used
+                    "application/octet-stream", //NON-NLS
+                    "application/x-msdownload"); //NON-NLS
 
     enum UpdateFrequency {
 
@@ -89,13 +137,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
-    private List<ContentTextExtractor> textExtractors;
     private StringsTextExtractor stringExtractor;
-    private TextFileExtractor txtFileExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private long jobId;
-    private long dataSourceId;
     private static final AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
     private int instanceNum = 0;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
@@ -152,7 +197,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         initialized = false;
         jobId = context.getJobId();
-        dataSourceId = context.getDataSource().getId();
 
         Server server = KeywordSearch.getServer();
         if (server.coreIsOpen() == false) {
@@ -239,20 +283,18 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
         }
 
-        //initialize extractors
+        ExtractionContext extractionContext = new ExtractionContext();
+        
+        StringsExtractionConfig stringsConfig = new StringsExtractionConfig();
+        Map<String, String> stringsOptions = KeywordSearchSettings.getStringExtractOptions();
+        stringsConfig.setExtractUTF8(Boolean.parseBoolean(stringsOptions.get("EXTRACT_UTF8")));
+        stringsConfig.setExtractUTF16(Boolean.parseBoolean(stringsOptions.get("EXTRACT_UTF16")));
+        stringsConfig.setExtractScripts(KeywordSearchSettings.getStringExtractScripts());
+        
+        extractionContext.set(StringsExtractionConfig.class, stringsConfig);
+        
         stringExtractor = new StringsTextExtractor();
-        stringExtractor.setScripts(KeywordSearchSettings.getStringExtractScripts());
-        stringExtractor.setOptions(KeywordSearchSettings.getStringExtractOptions());
-
-        txtFileExtractor = new TextFileExtractor();
-
-        textExtractors = new ArrayList<>();
-        //order matters, more specific extractors first
-        textExtractors.add(new HtmlTextExtractor());
-        //Add sqlite text extractor to be default for sqlite files, since tika stuggles 
-        //with them. See SqliteTextExtractor class for specifics
-        textExtractors.add(new SqliteTextExtractor());
-        textExtractors.add(new TikaTextExtractor());
+        stringExtractor.parseContext(extractionContext);
 
         indexer = new Indexer();
         initialized = true;
@@ -345,10 +387,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * Common cleanup code when module stops or final searcher completes
      */
     private void cleanup() {
-        textExtractors.clear();
-        textExtractors = null;
         stringExtractor = null;
-        txtFileExtractor = null;
         initialized = false;
     }
 
@@ -437,16 +476,18 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
             ContentTextExtractor extractor = null;
-
-            //go over available text extractors in order, and pick the first one (most specific one)
-            for (ContentTextExtractor fe : textExtractors) {
-                if (fe.isSupported(aFile, detectedFormat)) {
-                    extractor = fe;
-                    break;
-                }
-            }
-
-            if (extractor == null) {
+            ExtractionContext extractionContext = new ExtractionContext();
+            
+            ImageFileExtractionConfig imageConfig = new ImageFileExtractionConfig();
+            imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
+            extractionContext.set(ImageFileExtractionConfig.class, imageConfig);
+            
+            HTMLExtractionConfig htmlConfig = new HTMLExtractionConfig();
+            htmlConfig.setContentSizeLimit(50000000); //50 MB
+            extractionContext.set(HTMLExtractionConfig.class, htmlConfig);
+            
+            extractor = TextExtractorFactory.getExtractor(aFile, detectedFormat, extractionContext);
+            if (extractor.getClass().getName().equals("StringsTextExtractor")) {
                 // No text extractor found.
                 return false;
             }
@@ -529,7 +570,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
-            if (ContentTextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
+            if (KeywordSearchIngestModule.ARCHIVE_MIME_TYPES.contains(fileType)) {
                 try {
                     if (context.fileIngestIsCancelled()) {
                         return;
@@ -577,7 +618,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 //Carved Files should be the only type of unallocated files capable of a txt extension and 
                 //should be ignored by the TextFileExtractor because they may contain more than one text encoding
                 try {
-                    if (Ingester.getDefault().indexText(txtFileExtractor, aFile, context)) {
+                    TextFileExtractor textFileExtractor = new TextFileExtractor();
+                    if (Ingester.getDefault().indexText(textFileExtractor, aFile, context)) {
                         putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                         wasTextAdded = true;
                     }

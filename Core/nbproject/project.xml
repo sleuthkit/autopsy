@@ -338,13 +338,10 @@
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
-                <package>org.sleuthkit.autopsy.tabulardatareader</package>
+                <package>org.sleuthkit.autopsy.textextractors</package>
+                <package>org.sleuthkit.autopsy.textextractors.extractionconfigs</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackcess-2.2.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackcess-2.2.0.jar</binary-origin>
-            </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/zookeeper-3.4.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/zookeeper-3.4.6.jar</binary-origin>
@@ -356,6 +353,18 @@
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-transports-http-3.0.16.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/cxf-rt-transports-http-3.0.16.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackcess-2.2.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-2.2.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jericho-html-3.3.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\jericho-html-3.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-validator-1.6.jar</runtime-relative-path>
@@ -394,12 +403,12 @@
                 <binary-origin>release/modules/ext/sevenzipjbinding.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackcess-encrypt-2.1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-encrypt-2.1.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-core-3.0.16.jar</runtime-relative-path>
@@ -480,10 +489,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\commons-pool2-2.4.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackcess-encrypt-2.1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackcess-encrypt-2.1.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jsoup-1.10.3.jar</runtime-relative-path>

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.textextractors;
 
 import com.google.common.io.CharSource;
 import java.io.IOException;
@@ -45,14 +45,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  * tables with spaces in table name 3) Tika fails to include the table names in
  * output (except for the first table it parses)
  */
-class SqliteTextExtractor extends ContentTextExtractor {
+public class SqliteTextExtractor extends ContentTextExtractor {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
     private static final CharSequence EMPTY_CHARACTER_SEQUENCE = "";
 
     @Override
-    boolean isContentTypeSpecific() {
+    public boolean isContentTypeSpecific() {
         return true;
     }
 
@@ -75,7 +75,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
      * @return true if x-sqlite3
      */
     @Override
-    boolean isSupported(Content file, String detectedFormat) {
+    public boolean isSupported(Content file, String detectedFormat) {
         return SQLITE_MIMETYPE.equals(detectedFormat);
     }
 
@@ -104,6 +104,11 @@ class SqliteTextExtractor extends ContentTextExtractor {
                             + "a sqlite table steamer for abstract file with id: [%s], name: " //NON-NLS
                             + "[%s].", source.getId(), source.getName()), ex); //NON-NLS
         }
+    }
+
+    @Override
+    public void parseContext(ExtractionContext context) {
+        //No settings.
     }
 
     /**

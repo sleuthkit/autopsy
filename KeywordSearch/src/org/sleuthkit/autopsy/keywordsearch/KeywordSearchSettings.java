@@ -234,14 +234,14 @@ class KeywordSearchSettings {
             KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.DEFAULT);
         }
         //setting default Extract UTF8
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, StringsTextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "EXTRACT_UTF8")) {
             logger.log(Level.INFO, "No configuration for UTF8 found, generating default..."); //NON-NLS
-            KeywordSearchSettings.setStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+            KeywordSearchSettings.setStringExtractOption("EXTRACT_UTF8", Boolean.TRUE.toString());
         }
         //setting default Extract UTF16
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, StringsTextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, "EXTRACT_UTF16")) {
             logger.log(Level.INFO, "No configuration for UTF16 found, generating defaults..."); //NON-NLS
-            KeywordSearchSettings.setStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+            KeywordSearchSettings.setStringExtractOption("EXTRACT_UTF16", Boolean.TRUE.toString());
         }
         //setting OCR default (disabled by default)
         if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, OCR_ENABLED)) {

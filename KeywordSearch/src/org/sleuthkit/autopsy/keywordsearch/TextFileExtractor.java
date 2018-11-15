@@ -25,6 +25,8 @@ import java.util.logging.Level;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.textextractors.ContentTextExtractor;
+import org.sleuthkit.autopsy.textextractors.ExtractionContext;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -42,12 +44,12 @@ final class TextFileExtractor extends ContentTextExtractor {
     static final private Logger logger = Logger.getLogger(TextFileExtractor.class.getName());
 
     @Override
-    boolean isContentTypeSpecific() {
+    public boolean isContentTypeSpecific() {
         return true;
     }
 
     @Override
-    boolean isSupported(Content file, String detectedFormat) {
+    public boolean isSupported(Content file, String detectedFormat) {
         return true;
     }
 
@@ -79,4 +81,8 @@ final class TextFileExtractor extends ContentTextExtractor {
         logger.log(Level.WARNING, msg, ex);
     }
 
+    @Override
+    public void parseContext(ExtractionContext context) {
+        //Nothing
+    }
 }
