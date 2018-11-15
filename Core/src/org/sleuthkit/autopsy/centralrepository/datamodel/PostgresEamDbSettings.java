@@ -350,6 +350,7 @@ public final class PostgresEamDbSettings {
         createDataSourcesTable.append(")");
 
         String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
+        String dataSourceIdx2 = "CREATE INDEX IF NOT EXISTS data_sources_object_id ON data_sources (datasource_obj_id)";
 
         StringBuilder createReferenceSetsTable = new StringBuilder();
         createReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS reference_sets (");
@@ -426,7 +427,8 @@ public final class PostgresEamDbSettings {
 
             stmt.execute(createDataSourcesTable.toString());
             stmt.execute(dataSourceIdx1);
-
+            stmt.execute(dataSourceIdx2);
+            
             stmt.execute(createReferenceSetsTable.toString());
             stmt.execute(referenceSetsIdx1);
 

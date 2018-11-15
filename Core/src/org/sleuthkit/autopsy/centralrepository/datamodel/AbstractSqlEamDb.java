@@ -3262,11 +3262,13 @@ abstract class AbstractSqlEamDb implements EamDb {
                 if (!doesColumnExist(conn, dataSourcesTableName, dataSourceObjectIdColumnName)) {
                     statement.execute(String.format(addIntegerColumnTemplate, dataSourcesTableName, dataSourceObjectIdColumnName)); //NON-NLS
                 }
-                //WJS-TODO add index on datasource id column
+                final String dataSourceObjectIdIndexTemplate = "CREATE INDEX IF NOT EXISTS datasource_object_id ON data_sources (%s)";
+                statement.execute(String.format(dataSourceObjectIdIndexTemplate, dataSourceObjectIdColumnName));
 
                 //update central repository to be able to store new correlation attributes 
                 final String wirelessNetworsDbTableName = "wireless_networks";
                 final String wirelessNetworksTableInstanceName = wirelessNetworsDbTableName + "_instances";
+
                 //add the wireless_networks attribute to the correlation_types table
                 preparedStatement = conn.prepareStatement(addAttributeSql);
                 preparedStatement.setInt(1, CorrelationAttributeInstance.SSID_TYPE_ID);
