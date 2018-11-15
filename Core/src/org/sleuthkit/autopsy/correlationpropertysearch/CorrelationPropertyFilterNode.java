@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 /**
  * FilterNode containing properties and actions for Correlation Property Search.
  */
-public class CorrelationPropertyFilterNode extends FilterNode {
+final class CorrelationPropertyFilterNode extends FilterNode {
 
     private final boolean createChildren;
     private final boolean forceUseWrappedDisplayName;
@@ -44,7 +44,7 @@ public class CorrelationPropertyFilterNode extends FilterNode {
      * @param createChildren True if a Children object should be created for the
      * wrapped node.
      */
-    public CorrelationPropertyFilterNode(Node node, boolean createChildren) {
+    CorrelationPropertyFilterNode(Node node, boolean createChildren) {
         super(node, CorrelationPropertyFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.forceUseWrappedDisplayName = false;
         this.createChildren = createChildren;
@@ -62,7 +62,7 @@ public class CorrelationPropertyFilterNode extends FilterNode {
      * @param columnOrderKey A key that represents the type of the original
      * wrapped node and what is being displayed under that node.
      */
-    public CorrelationPropertyFilterNode(Node node, boolean createChildren, String columnOrderKey) {
+    CorrelationPropertyFilterNode(Node node, boolean createChildren, String columnOrderKey) {
         super(node, CorrelationPropertyFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.forceUseWrappedDisplayName = false;
         this.createChildren = createChildren;
@@ -92,7 +92,7 @@ public class CorrelationPropertyFilterNode extends FilterNode {
      *
      * @param selectedChildNodeInfo The child node selection information.
      */
-    public void setChildNodeSelectionInfo(NodeSelectionInfo selectedChildNodeInfo) {
+    void setChildNodeSelectionInfo(NodeSelectionInfo selectedChildNodeInfo) {
         /*
          * Currently, child selection is only supported for nodes selected in
          * the tree view and decorated with a DataResultFilterNode.
@@ -109,7 +109,7 @@ public class CorrelationPropertyFilterNode extends FilterNode {
      * @return The child node selection information, or null if no child should
      * be selected.
      */
-    public NodeSelectionInfo getChildNodeSelectionInfo() {
+    NodeSelectionInfo getChildNodeSelectionInfo() {
         /*
          * Currently, child selection is only supported for nodes selected in
          * the tree view and decorated with a DataResultFilterNode.
@@ -128,7 +128,7 @@ public class CorrelationPropertyFilterNode extends FilterNode {
      * DataResultViewerTable. The key should represent what kinds of items the
      * table is showing.
      */
-    public String getColumnOrderKey() {
+    String getColumnOrderKey() {
         return columnOrderKey;
     }
 }

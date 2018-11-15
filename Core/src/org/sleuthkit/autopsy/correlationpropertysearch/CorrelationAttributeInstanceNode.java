@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
  * Used by the Correlation Property Search feature to encapsulate instances of a
  * given search match.
  */
-public class CorrelationAttributeInstanceNode extends DisplayableItemNode {
+public final class CorrelationAttributeInstanceNode extends DisplayableItemNode {
 
     private final CorrelationAttributeInstance instance;
     

@@ -26,7 +26,7 @@ import org.openide.nodes.Node;
  * A <code>Children</code> implementation for a
  * <code>CorrelationPropertyFilterNode</code>.
  */
-class CorrelationPropertyFilterChildren extends FilterNode.Children {
+final class CorrelationPropertyFilterChildren extends FilterNode.Children {
     
     /**
      * Create a new Children instance.
@@ -37,7 +37,7 @@ class CorrelationPropertyFilterChildren extends FilterNode.Children {
      * 
      * @return A Children instance.
      */
-    public static Children createInstance(Node wrappedNode, boolean createChildren) {
+    static Children createInstance(Node wrappedNode, boolean createChildren) {
 
         if (createChildren) {
             return new CorrelationPropertyFilterChildren(wrappedNode);

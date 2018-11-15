@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
  * The Correlation Property Search dialog allows users to search for specific
  * types of correlation properties in the Central Repository.
  */
-public class CorrelationPropertySearchDialog extends javax.swing.JDialog {
+final class CorrelationPropertySearchDialog extends javax.swing.JDialog {
     private static final Logger logger = Logger.getLogger(CorrelationPropertySearchDialog.class.getName());
     
     private static final String FILES_CORRELATION_TYPE = "Files";
@@ -72,7 +72,7 @@ public class CorrelationPropertySearchDialog extends javax.swing.JDialog {
     /**
      * Creates a new instance of the Correlation Property Search dialog.
      */
-    public CorrelationPropertySearchDialog() {
+    CorrelationPropertySearchDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(), Bundle.CorrelationPropertySearchDialog_title_text(), true);
         this.correlationTypes = new ArrayList<>();
         initComponents();
