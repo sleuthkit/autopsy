@@ -111,6 +111,16 @@ public interface EamDb {
     public void newDbInfo(String name, String value) throws EamDbException;
 
     /**
+     * Set the data source object id for a specific entry in the data_sources
+     * table
+     *
+     * @param rowId              - the row id for the data_sources table entry
+     * @param dataSourceObjectId - the object id for the data source from the
+     *                           caseDb
+     */
+    void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException;
+
+    /**
      * Get the value for the given name from the name/value db_info table.
      *
      * @param name Name to search for
@@ -345,9 +355,9 @@ public interface EamDb {
     /**
      * Find a correlation attribute in the Central Repository database given the
      * instance type, case, data source, value, and file path.
-     * 
-     * Method exists to support instances added using Central Repository version 1,1 and
-     * older
+     *
+     * Method exists to support instances added using Central Repository version
+     * 1,1 and older
      *
      * @param type                  The type of instance.
      * @param correlationCase       The case tied to the instance.
@@ -356,7 +366,7 @@ public interface EamDb {
      * @param filePath              The file path tied to the instance.
      *
      * @return The correlation attribute if it exists; otherwise null.
-     * 
+     *
      * @throws EamDbException
      */
     CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
@@ -369,7 +379,8 @@ public interface EamDb {
      * @param type                  The type of instance.
      * @param correlationCase       The case tied to the instance.
      * @param correlationDataSource The data source tied to the instance.
-     * @param objectID              The object id of the file tied to the instance.
+     * @param objectID              The object id of the file tied to the
+     *                              instance.
      *
      * @return The correlation attribute if it exists; otherwise null.
      *

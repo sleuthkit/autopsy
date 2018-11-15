@@ -133,6 +133,24 @@ abstract class AbstractSqlEamDb implements EamDb {
 
     }
 
+    @Override
+    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException{
+        Connection conn = connect();
+        PreparedStatement preparedStatement = null;
+        String sql = "UPDATE data_sources SET datasource_id=? WHERE id=?";
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setLong(1, dataSourceObjectId);
+            preparedStatement.setInt(2, rowId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error updating data source object id for data_sources row " + rowId, ex);
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+
     /**
      * Get the value for the given name from the name/value db_info table.
      *

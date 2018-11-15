@@ -274,6 +274,16 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
 
+    @Override
+    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException{
+        try {
+            acquireExclusiveLock();
+            super.addDataSourceObjectId(rowId, dataSourceObjectId);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
     /**
      * Creates new Case in the database
      *
