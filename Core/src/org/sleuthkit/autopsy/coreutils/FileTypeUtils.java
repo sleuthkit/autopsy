@@ -153,7 +153,7 @@ public final class FileTypeUtils {
         "FileTypeCategory.Visual.displayName=Visual",
         "FileTypeCategory.Documents.displayName=Documents",
         "FileTypeCategory.Executables.displayName=Executables"})
-    static public enum FileTypeCategory {
+      public enum FileTypeCategory {
 
         IMAGE(Bundle.FileTypeCategory_Image_displayName(),
                 IMAGE_MIME_TYPES,

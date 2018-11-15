@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.HashUtility;
@@ -156,7 +155,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
             return "";
         } else {
             String mimeTypeString = mimeTypesToFilterOn.stream()
-                    .map(s -> "'" + s + "'")
+                    .map(mimeType -> "'" + mimeType + "'")
                     .collect(Collectors.joining(","));
             return String.format(" and mime_type in (%s)", new Object[]{mimeTypeString});
         }

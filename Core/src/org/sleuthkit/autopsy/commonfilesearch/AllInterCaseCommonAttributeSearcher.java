@@ -20,7 +20,6 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.openide.util.NbBundle;
@@ -28,7 +27,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
