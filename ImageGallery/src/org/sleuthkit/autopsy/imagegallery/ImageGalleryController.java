@@ -441,23 +441,19 @@ public final class ImageGalleryController {
     }
     
     /**
-     * Checks if the given data source has any files with no mimetype
+     * Checks if the given data source has any files with mimetype
      * 
      * @param datasource
-     * @return true if the datasource has any files with no mime type
+     * 
+     * @return true if the datasource has at least one file with mime type
      * @throws TskCoreException 
      */
-    public boolean hasFilesWithNoMimetype(Content datasource) throws TskCoreException {
+    public boolean hasAnyFilesWithMimetype(long datasourceObjId) throws TskCoreException {
         
-        // There are some special files/attributes in the root folder, like $BadClus:$Bad and $Security:$SDS  
-        // The IngestTasksScheduler does not push them down to the ingest modules, 
-        // and hence they do not have any assigned mimetype
-        String whereClause = "data_source_obj_id = " + datasource.getId()
+        String whereClause = "data_source_obj_id = " + datasourceObjId
                     + " AND ( meta_type = " + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue() + ")"
-                    + " AND ( mime_type IS NULL )"
-                    + " AND ( meta_addr >= 32 ) "
-                    + " AND ( parent_path <> '/' )"
-                    + " AND ( name NOT like '$%:%' )";
+                    + " AND ( mime_type IS NOT NULL )"
+                    + " LIMIT 1 ";
         
         return sleuthKitCase.countFilesWhere(whereClause) > 0;
     }
@@ -832,11 +828,16 @@ public final class ImageGalleryController {
                 }
                 progressHandle.finish();
                 
-                DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus = 
-                                (taskCompletionStatus) ? 
-                                    DrawableDB.DrawableDbBuildStatusEnum.COMPLETE : 
-                                    DrawableDB.DrawableDbBuildStatusEnum.DEFAULT;
-                taskDB.insertOrUpdateDataSource(dataSourceObjId, datasourceDrawableDBStatus);
+                try {
+                    DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus = 
+                                    (controller.hasAnyFilesWithMimetype(dataSourceObjId)) ? 
+                                        DrawableDB.DrawableDbBuildStatusEnum.COMPLETE : 
+                                        DrawableDB.DrawableDbBuildStatusEnum.DEFAULT;
+                    taskDB.insertOrUpdateDataSource(dataSourceObjId, datasourceDrawableDBStatus);
+                }
+                catch (TskCoreException ex2) {
+                        logger.log(Level.SEVERE, "Error checking if the data source has any files with mime type", ex2); //NON-NLS
+                }
                 
                 updateMessage("");
                 updateProgress(-1.0);

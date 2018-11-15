@@ -348,12 +348,12 @@ public class ImageGalleryModule {
                         if (controller.isListeningEnabled()) {
                             DataSourceAnalysisCompletedEvent dataSourceAnalysisCompletedEvent = (DataSourceAnalysisCompletedEvent) evt;
                             Content dataSource = dataSourceAnalysisCompletedEvent.getDataSource();
-                            
+                                                        
                             DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus = 
-                                    controller.hasFilesWithNoMimetype(dataSource) ?
-                                        DrawableDB.DrawableDbBuildStatusEnum.DEFAULT : 
-                                        DrawableDB.DrawableDbBuildStatusEnum.COMPLETE;
-                            
+                                controller.hasAnyFilesWithMimetype(dataSource.getId()) ? 
+                                    DrawableDB.DrawableDbBuildStatusEnum.COMPLETE : 
+                                    DrawableDB.DrawableDbBuildStatusEnum.DEFAULT;
+                             
                             controller.getDatabase().insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
                         }
                         return;
