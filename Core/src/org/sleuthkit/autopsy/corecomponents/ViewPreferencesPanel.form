@@ -131,7 +131,7 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="displayTimeLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Component id="selectFileLabel" min="-2" max="-2" attributes="0"/>
-                                      <Component id="TranslateTextLabel" alignment="0" min="-2" pref="120" max="-2" attributes="0"/>
+                                      <Component id="translateTextLabel" alignment="0" min="-2" pref="120" max="-2" attributes="0"/>
                                       <Group type="102" attributes="0">
                                           <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
                                           <Group type="103" groupAlignment="0" attributes="0">
@@ -202,7 +202,7 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="jScrollPane1" min="-2" pref="67" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="TranslateTextLabel" min="-2" max="-2" attributes="0"/>
+                                  <Component id="translateTextLabel" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="translateNamesInTableRadioButton" min="-2" max="-2" attributes="0"/>
                               </Group>
@@ -403,10 +403,10 @@
                     </Component>
                   </SubComponents>
                 </Container>
-                <Component class="javax.swing.JLabel" name="TranslateTextLabel">
+                <Component class="javax.swing.JLabel" name="translateTextLabel">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.TranslateTextLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.translateTextLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>

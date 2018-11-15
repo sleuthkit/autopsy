@@ -160,7 +160,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         deletedFilesLimitLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         timeZoneList = new javax.swing.JList<>();
-        TranslateTextLabel = new javax.swing.JLabel();
+        translateTextLabel = new javax.swing.JLabel();
         hideColumnWrapAroundText = new javax.swing.JLabel();
         translateNamesInTableRadioButton = new javax.swing.JRadioButton();
         currentCaseSettingsPanel = new javax.swing.JPanel();
@@ -276,7 +276,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         });
         jScrollPane1.setViewportView(timeZoneList);
 
-        org.openide.awt.Mnemonics.setLocalizedText(TranslateTextLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.TranslateTextLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(translateTextLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.translateTextLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(hideColumnWrapAroundText, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.hideColumnWrapAroundText.text")); // NOI18N
 
@@ -325,7 +325,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(displayTimeLabel)
                             .addComponent(selectFileLabel)
-                            .addComponent(TranslateTextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(translateTextLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -386,7 +386,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(TranslateTextLabel)
+                        .addComponent(translateTextLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(translateNamesInTableRadioButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -613,7 +613,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel TranslateTextLabel;
     private javax.swing.JLabel centralRepoLabel;
     private javax.swing.JCheckBox commentsOccurencesColumnsCheckbox;
     private javax.swing.JPanel currentCaseSettingsPanel;
@@ -636,6 +635,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel selectFileLabel;
     private javax.swing.JList<String> timeZoneList;
     private javax.swing.JRadioButton translateNamesInTableRadioButton;
+    private javax.swing.JLabel translateTextLabel;
     private javax.swing.JRadioButton useAnotherTimeRadioButton;
     private javax.swing.JRadioButton useBestViewerRadioButton;
     private javax.swing.JRadioButton useLocalTimeRadioButton;
