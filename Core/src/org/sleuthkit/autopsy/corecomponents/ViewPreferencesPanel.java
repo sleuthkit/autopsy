@@ -71,7 +71,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         viewsHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInViewsTree());
 
         commentsOccurencesColumnsCheckbox.setEnabled(EamDbUtil.useCentralRepo());
-        hideColumnWrapAroundText.setEnabled(EamDbUtil.useCentralRepo());
+        commentsOccurencesColumnWrapAroundText.setEnabled(EamDbUtil.useCentralRepo());
         commentsOccurencesColumnsCheckbox.setSelected(UserPreferences.hideCentralRepoCommentsAndOccurrences());
 
         deletedFilesLimitCheckbox.setSelected(DeletedFilePreferences.getDefault().getShouldLimitDeletedFiles());
@@ -161,7 +161,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         timeZoneList = new javax.swing.JList<>();
         translateTextLabel = new javax.swing.JLabel();
-        hideColumnWrapAroundText = new javax.swing.JLabel();
+        commentsOccurencesColumnWrapAroundText = new javax.swing.JLabel();
         translateNamesInTableRadioButton = new javax.swing.JRadioButton();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
@@ -278,7 +278,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(translateTextLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.translateTextLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(hideColumnWrapAroundText, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.hideColumnWrapAroundText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(commentsOccurencesColumnWrapAroundText, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.commentsOccurencesColumnWrapAroundText.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(translateNamesInTableRadioButton, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.translateNamesInTableRadioButton.text")); // NOI18N
         translateNamesInTableRadioButton.addActionListener(new java.awt.event.ActionListener() {
@@ -320,7 +320,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                 .addComponent(commentsOccurencesColumnsCheckbox))
                             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                 .addGap(30, 30, 30)
-                                .addComponent(hideColumnWrapAroundText)))
+                                .addComponent(commentsOccurencesColumnWrapAroundText)))
                         .addGap(18, 18, 18)
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(displayTimeLabel)
@@ -368,7 +368,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addGap(3, 3, 3)
                         .addComponent(commentsOccurencesColumnsCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(hideColumnWrapAroundText)
+                        .addComponent(commentsOccurencesColumnWrapAroundText)
                         .addGap(11, 11, 11)
                         .addComponent(deletedFilesLimitLabel))
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
@@ -614,6 +614,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel centralRepoLabel;
+    private javax.swing.JLabel commentsOccurencesColumnWrapAroundText;
     private javax.swing.JCheckBox commentsOccurencesColumnsCheckbox;
     private javax.swing.JPanel currentCaseSettingsPanel;
     private javax.swing.JPanel currentSessionSettingsPanel;
@@ -624,7 +625,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel displayTimeLabel;
     private javax.swing.JPanel globalSettingsPanel;
     private javax.swing.JCheckBox groupByDataSourceCheckbox;
-    private javax.swing.JLabel hideColumnWrapAroundText;
     private javax.swing.JLabel hideKnownFilesLabel;
     private javax.swing.JCheckBox hideOtherUsersTagsCheckbox;
     private javax.swing.JLabel hideOtherUsersTagsLabel;

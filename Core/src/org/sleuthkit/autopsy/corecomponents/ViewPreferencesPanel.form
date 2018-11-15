@@ -124,7 +124,7 @@
                                       </Group>
                                       <Group type="102" alignment="0" attributes="0">
                                           <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
-                                          <Component id="hideColumnWrapAroundText" min="-2" max="-2" attributes="0"/>
+                                          <Component id="commentsOccurencesColumnWrapAroundText" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
@@ -183,7 +183,7 @@
                                   <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
                                   <Component id="commentsOccurencesColumnsCheckbox" min="-2" pref="18" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="hideColumnWrapAroundText" min="-2" max="-2" attributes="0"/>
+                                  <Component id="commentsOccurencesColumnWrapAroundText" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
                                   <Component id="deletedFilesLimitLabel" min="-2" max="-2" attributes="0"/>
                               </Group>
@@ -410,10 +410,10 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JLabel" name="hideColumnWrapAroundText">
+                <Component class="javax.swing.JLabel" name="commentsOccurencesColumnWrapAroundText">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.hideColumnWrapAroundText.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.commentsOccurencesColumnWrapAroundText.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                 </Component>

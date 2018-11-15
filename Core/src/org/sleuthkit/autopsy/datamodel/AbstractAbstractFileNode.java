@@ -370,42 +370,41 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * Creates and populates a list of properties for this nodes property sheet.
      */
     private List<NodeProperty<?>> getProperties() {
-        List<NodeProperty<?>> properties = new ArrayList<NodeProperty<?>>() {{
-            add(new NodeProperty<>(NAME.toString(), NAME.toString(), NO_DESCR, getContentDisplayName(content)));   
-            /*
-             * Initialize dummy place holder properties for Translation,
-             * Score, Comment, and Occurrences). At the bottom, we kick off a
-             * background task that promises to update these values.
-             */
-            if (UserPreferences.displayTranslatedFileNames()) {
-                add(new NodeProperty<>(TRANSLATION.toString(), TRANSLATION.toString(), NO_DESCR, ""));
-            }
-            add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), NO_DESCR, ""));
-            add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, ""));
-            if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-                add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), NO_DESCR, ""));
-            }
-            add(new NodeProperty<>(LOCATION.toString(), LOCATION.toString(), NO_DESCR, getContentPath(content)));
-            add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
-            add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));
-            add(new NodeProperty<>(ACCESS_TIME.toString(), ACCESS_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getAtime(), content)));
-            add(new NodeProperty<>(CREATED_TIME.toString(), CREATED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCrtime(), content)));
-            add(new NodeProperty<>(SIZE.toString(), SIZE.toString(), NO_DESCR, content.getSize()));
-            add(new NodeProperty<>(FLAGS_DIR.toString(), FLAGS_DIR.toString(), NO_DESCR, content.getDirFlagAsString()));
-            add(new NodeProperty<>(FLAGS_META.toString(), FLAGS_META.toString(), NO_DESCR, content.getMetaFlagsAsString()));
-            add(new NodeProperty<>(MODE.toString(), MODE.toString(), NO_DESCR, content.getModesAsString()));
-            add(new NodeProperty<>(USER_ID.toString(), USER_ID.toString(), NO_DESCR, content.getUid()));
-            add(new NodeProperty<>(GROUP_ID.toString(), GROUP_ID.toString(), NO_DESCR, content.getGid()));
-            add(new NodeProperty<>(META_ADDR.toString(), META_ADDR.toString(), NO_DESCR, content.getMetaAddr()));
-            add(new NodeProperty<>(ATTR_ADDR.toString(), ATTR_ADDR.toString(), NO_DESCR, content.getAttrType().getValue() + "-" + content.getAttributeId()));
-            add(new NodeProperty<>(TYPE_DIR.toString(), TYPE_DIR.toString(), NO_DESCR, content.getDirType().getLabel()));
-            add(new NodeProperty<>(TYPE_META.toString(), TYPE_META.toString(), NO_DESCR, content.getMetaType().toString()));
-            add(new NodeProperty<>(KNOWN.toString(), KNOWN.toString(), NO_DESCR, content.getKnown().getName()));
-            add(new NodeProperty<>(MD5HASH.toString(), MD5HASH.toString(), NO_DESCR, StringUtils.defaultString(content.getMd5Hash())));
-            add(new NodeProperty<>(ObjectID.toString(), ObjectID.toString(), NO_DESCR, content.getId()));
-            add(new NodeProperty<>(MIMETYPE.toString(), MIMETYPE.toString(), NO_DESCR, StringUtils.defaultString(content.getMIMEType())));
-            add(new NodeProperty<>(EXTENSION.toString(), EXTENSION.toString(), NO_DESCR, content.getNameExtension()));
-        }};
+        List<NodeProperty<?>> properties = new ArrayList<>();
+        properties.add(new NodeProperty<>(NAME.toString(), NAME.toString(), NO_DESCR, getContentDisplayName(content)));   
+        /*
+         * Initialize dummy place holder properties for Translation,
+         * Score, Comment, and Occurrences). At the bottom, we kick off a
+         * background task that promises to update these values.
+         */
+        if (UserPreferences.displayTranslatedFileNames()) {
+            properties.add(new NodeProperty<>(TRANSLATION.toString(), TRANSLATION.toString(), NO_DESCR, ""));
+        }
+        properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), NO_DESCR, ""));
+        properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, ""));
+        if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
+            properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), NO_DESCR, ""));
+        }
+        properties.add(new NodeProperty<>(LOCATION.toString(), LOCATION.toString(), NO_DESCR, getContentPath(content)));
+        properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
+        properties.add(new NodeProperty<>(CHANGED_TIME.toString(), CHANGED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCtime(), content)));
+        properties.add(new NodeProperty<>(ACCESS_TIME.toString(), ACCESS_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getAtime(), content)));
+        properties.add(new NodeProperty<>(CREATED_TIME.toString(), CREATED_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getCrtime(), content)));
+        properties.add(new NodeProperty<>(SIZE.toString(), SIZE.toString(), NO_DESCR, content.getSize()));
+        properties.add(new NodeProperty<>(FLAGS_DIR.toString(), FLAGS_DIR.toString(), NO_DESCR, content.getDirFlagAsString()));
+        properties.add(new NodeProperty<>(FLAGS_META.toString(), FLAGS_META.toString(), NO_DESCR, content.getMetaFlagsAsString()));
+        properties.add(new NodeProperty<>(MODE.toString(), MODE.toString(), NO_DESCR, content.getModesAsString()));
+        properties.add(new NodeProperty<>(USER_ID.toString(), USER_ID.toString(), NO_DESCR, content.getUid()));
+        properties.add(new NodeProperty<>(GROUP_ID.toString(), GROUP_ID.toString(), NO_DESCR, content.getGid()));
+        properties.add(new NodeProperty<>(META_ADDR.toString(), META_ADDR.toString(), NO_DESCR, content.getMetaAddr()));
+        properties.add(new NodeProperty<>(ATTR_ADDR.toString(), ATTR_ADDR.toString(), NO_DESCR, content.getAttrType().getValue() + "-" + content.getAttributeId()));
+        properties.add(new NodeProperty<>(TYPE_DIR.toString(), TYPE_DIR.toString(), NO_DESCR, content.getDirType().getLabel()));
+        properties.add(new NodeProperty<>(TYPE_META.toString(), TYPE_META.toString(), NO_DESCR, content.getMetaType().toString()));
+        properties.add(new NodeProperty<>(KNOWN.toString(), KNOWN.toString(), NO_DESCR, content.getKnown().getName()));
+        properties.add(new NodeProperty<>(MD5HASH.toString(), MD5HASH.toString(), NO_DESCR, StringUtils.defaultString(content.getMd5Hash())));
+        properties.add(new NodeProperty<>(ObjectID.toString(), ObjectID.toString(), NO_DESCR, content.getId()));
+        properties.add(new NodeProperty<>(MIMETYPE.toString(), MIMETYPE.toString(), NO_DESCR, StringUtils.defaultString(content.getMIMEType())));
+        properties.add(new NodeProperty<>(EXTENSION.toString(), EXTENSION.toString(), NO_DESCR, content.getNameExtension()));
         
         return properties;
     }
