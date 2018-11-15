@@ -3268,6 +3268,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                 //update central repository to be able to store new correlation attributes 
                 final String wirelessNetworsDbTableName = "wireless_networks";
                 final String wirelessNetworksTableInstanceName = wirelessNetworsDbTableName + "_instances";
+                final String macAddressDbTableName = "mac_address";
+                final String macAddressTableInstanceName = macAddressDbTableName + "_instances";
 
                 //add the wireless_networks attribute to the correlation_types table
                 preparedStatement = conn.prepareStatement(addAttributeSql);
@@ -3277,6 +3279,16 @@ abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setInt(4, 1);
                 preparedStatement.setInt(5, 1);
                 preparedStatement.execute();
+
+                //add the mac_address attribute to the correlation_types table
+                preparedStatement = conn.prepareStatement(addAttributeSql);
+                preparedStatement.setInt(1, CorrelationAttributeInstance.MAC_TYPE_ID);
+                preparedStatement.setString(2, Bundle.CorrelationType_MAC_displayName());
+                preparedStatement.setString(3, macAddressDbTableName);
+                preparedStatement.setInt(4, 1);
+                preparedStatement.setInt(5, 1);
+                preparedStatement.execute();
+
                 //create a new wireless_networks_instances table and add indexes for its columns
                 statement.execute(String.format(addSsidTableTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addCaseIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
@@ -3284,6 +3296,15 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute(String.format(addValueIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addKnownStatusIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addObjectIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
+                
+                 //create a new mac_address_instances table and add indexes for its columns
+                statement.execute(String.format(addSsidTableTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
+                statement.execute(String.format(addCaseIdIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
+                statement.execute(String.format(addDataSourceIdIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
+                statement.execute(String.format(addValueIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
+                statement.execute(String.format(addKnownStatusIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
+                statement.execute(String.format(addObjectIdIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
+                
                 //add object_id column to _instances table which do not already have it
                 String instance_type_dbname;
                 final String objectIdColumnName = "object_id";
