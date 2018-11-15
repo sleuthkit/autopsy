@@ -18,42 +18,44 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.appservices.AutopsyService
+import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 @ServiceProvider(service = AutopsyService.class)
-public class CaseUpdateAutopsyService implements AutopsyService{
-    
+public class DataSourceUpdateService implements AutopsyService {
+
     @Override
+    @NbBundle.Messages({"DataSourceUpdateService.serviceName.text=Update Central Repository Data Sources"})
     public String getServiceName() {
-        return "UpdateCR";
+        return Bundle.DataSourceUpdateService_serviceName_text();
     }
 
     @Override
-    public void openCaseResources(CaseContext context) throws AutopsyServiceException {   
-        if (EamDb.isEnabled()){
+    public void openCaseResources(CaseContext context) throws AutopsyServiceException {
+        if (EamDb.isEnabled()) {
             try {
                 EamDb centralRepository = EamDb.getInstance();
                 CorrelationCase correlationCase = centralRepository.getCase(context.getCase());
                 for (CorrelationDataSource correlationDataSource : centralRepository.getDataSources()) {
-                    if (correlationDataSource.getCaseID() == correlationCase.getID() && correlationDataSource.getCaseDataSourceID() == null){                        
-                        for (Content dataSource : context.getCase().getDataSources()){
-                            if (((DataSource)dataSource).getDeviceId().equals(correlationDataSource.getDeviceID())){
-                               centralRepository.addDataSourceObjectId(correlationDataSource.getID(), dataSource.getId());
-                               break;
+                    //ResultSet.getLong has a value of 0 when the value is null
+                    if (correlationDataSource.getCaseID() == correlationCase.getID() && correlationDataSource.getCaseDataSourceID() == 0) {
+                        for (Content dataSource : context.getCase().getDataSources()) {
+                            if (((DataSource) dataSource).getDeviceId().equals(correlationDataSource.getDeviceID())) {
+                                centralRepository.addDataSourceObjectId(correlationDataSource.getID(), dataSource.getId());
+                                break;
                             }
                         }
-                        
+
                     }
                 }
             } catch (EamDbException | TskCoreException ex) {
-               throw new AutopsyServiceException("Unabe to update datasources in central repository", ex);
+                throw new AutopsyServiceException("Unabe to update datasources in central repository", ex);
             }
         }
     }
-    
+
 }
