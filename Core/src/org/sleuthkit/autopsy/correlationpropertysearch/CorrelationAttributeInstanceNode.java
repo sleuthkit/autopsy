@@ -1,5 +1,4 @@
 /*
- * 
  * Autopsy Forensic Browser
  * 
  * Copyright 2018 Basis Technology Corp.
@@ -17,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.md5search;
+package org.sleuthkit.autopsy.correlationpropertysearch;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,25 +34,26 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * Used by the Common Files search feature to encapsulate instances of a given 
- * MD5s matched in the search.  These nodes will be children of <code>Md5Node</code>s.
- * 
- * Use this type for files which are not in the current case, but from the 
- * Central Repo.  Contrast with <code>SleuthkitCase</code> which should be used 
- * when the FileInstance was found in the case presently open in Autopsy.
+ * Used by the Correlation Property Search feature to encapsulate instances of a
+ * given search match.
  */
-public class DlgCorrelationAttributeInstanceNode extends DisplayableItemNode {
+public class CorrelationAttributeInstanceNode extends DisplayableItemNode {
 
-    private final CorrelationAttributeInstance crFile;
+    private final CorrelationAttributeInstance instance;
     
-    DlgCorrelationAttributeInstanceNode(CorrelationAttributeInstance content) {
+    CorrelationAttributeInstanceNode(CorrelationAttributeInstance content) {
         super(Children.LEAF, Lookups.fixed(content));
-        this.crFile = content;
-        this.setDisplayName(new File(this.crFile.getFilePath()).getName());
+        this.instance = content;
+        this.setDisplayName(new File(this.instance.getFilePath()).getName());
     }
     
+    /**
+     * Get the CorrelationAttributeInstance attached to the node.
+     * 
+     * @return The CorrelationAttributeInstance object.
+     */
     public CorrelationAttributeInstance getCorrelationAttributeInstance(){
-        return this.crFile;
+        return this.instance;
     }
     
     @Override
@@ -77,19 +77,17 @@ public class DlgCorrelationAttributeInstanceNode extends DisplayableItemNode {
 
     @Override
     public String getItemType() {
-        //objects of type FileNode will co-occur in the treetable with objects
-        //  of this type and they will need to provide the same key
-        return DlgCorrelationAttributeInstanceNode.class.getName();
+        return CorrelationAttributeInstanceNode.class.getName();
     }
     
     @NbBundle.Messages({
-        "DlgCorrelationAttributeInstanceNode.columnName.name=Name",
-        "DlgCorrelationAttributeInstanceNode.columnName.case=Case",
-        "DlgCorrelationAttributeInstanceNode.columnName.dataSource=Data Source",
-        "DlgCorrelationAttributeInstanceNode.columnName.known=Known",
-        "DlgCorrelationAttributeInstanceNode.columnName.path=Path",
-        "DlgCorrelationAttributeInstanceNode.columnName.comment=Comment",
-        "DlgCorrelationAttributeInstanceNode.columnName.device=Device"
+        "CorrelationAttributeInstanceNode.columnName.name=Name",
+        "CorrelationAttributeInstanceNode.columnName.case=Case",
+        "CorrelationAttributeInstanceNode.columnName.dataSource=Data Source",
+        "CorrelationAttributeInstanceNode.columnName.known=Known",
+        "CorrelationAttributeInstanceNode.columnName.path=Path",
+        "CorrelationAttributeInstanceNode.columnName.comment=Comment",
+        "CorrelationAttributeInstanceNode.columnName.device=Device"
     })
     @Override
     protected Sheet createSheet(){
@@ -106,7 +104,6 @@ public class DlgCorrelationAttributeInstanceNode extends DisplayableItemNode {
         final String path = centralRepoFile.getFilePath();
         final File file = new File(path);
         final String name = file.getName();
-        //DLG: final String parent = file.getParent();
         final String caseName = centralRepoFile.getCorrelationCase().getDisplayName();
         final CorrelationDataSource dataSource = centralRepoFile.getCorrelationDataSource();
         final String dataSourceName = dataSource.getName();
@@ -117,26 +114,26 @@ public class DlgCorrelationAttributeInstanceNode extends DisplayableItemNode {
         final String NO_DESCR = "";
         
         sheetSet.put(new NodeProperty<>(
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_name(),
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_name(), NO_DESCR, name));
+                Bundle.CorrelationAttributeInstanceNode_columnName_name(),
+                Bundle.CorrelationAttributeInstanceNode_columnName_name(), NO_DESCR, name));
         sheetSet.put(new NodeProperty<>(
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_case(),
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_case(), NO_DESCR, caseName));
+                Bundle.CorrelationAttributeInstanceNode_columnName_case(),
+                Bundle.CorrelationAttributeInstanceNode_columnName_case(), NO_DESCR, caseName));
         sheetSet.put(new NodeProperty<>(
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_dataSource(),
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_dataSource(), NO_DESCR, dataSourceName));
+                Bundle.CorrelationAttributeInstanceNode_columnName_dataSource(),
+                Bundle.CorrelationAttributeInstanceNode_columnName_dataSource(), NO_DESCR, dataSourceName));
         sheetSet.put(new NodeProperty<>(
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_known(),
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_known(), NO_DESCR, known));
+                Bundle.CorrelationAttributeInstanceNode_columnName_known(),
+                Bundle.CorrelationAttributeInstanceNode_columnName_known(), NO_DESCR, known));
         sheetSet.put(new NodeProperty<>(
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_path(),
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_path(), NO_DESCR, path));
+                Bundle.CorrelationAttributeInstanceNode_columnName_path(),
+                Bundle.CorrelationAttributeInstanceNode_columnName_path(), NO_DESCR, path));
         sheetSet.put(new NodeProperty<>(
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_comment(),
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_comment(), NO_DESCR, comment));
+                Bundle.CorrelationAttributeInstanceNode_columnName_comment(),
+                Bundle.CorrelationAttributeInstanceNode_columnName_comment(), NO_DESCR, comment));
         sheetSet.put(new NodeProperty<>(
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_device(),
-                Bundle.DlgCorrelationAttributeInstanceNode_columnName_device(), NO_DESCR, device));
+                Bundle.CorrelationAttributeInstanceNode_columnName_device(),
+                Bundle.CorrelationAttributeInstanceNode_columnName_device(), NO_DESCR, device));
 
         return sheet;        
     }

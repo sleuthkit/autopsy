@@ -16,22 +16,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.md5search;
+package org.sleuthkit.autopsy.correlationpropertysearch;
 
 import java.awt.event.ActionEvent;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 
 /**
- * //DLG:
+ * Action for accessing the Correlation Property Search dialog.
  */
-public class Md5SearchAction extends CallableSystemAction {
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.correlationpropertysearch.CorrelationPropertySearchAction")
+@ActionRegistration(displayName = "#CTL_CorrelationPropertySearchAction=Correlation Property Search", lazy = false)
+@ActionReference(path = "Menu/Tools", position = 104)
+@NbBundle.Messages({"CTL_CorrelationPropertySearchAction=Correlation Property Search"})
+public class CorrelationPropertySearchAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
-        return super.isEnabled() && Case.isCaseOpen();
+        return EamDb.isEnabled() && Case.isCaseOpen();
     }
     
     @Override
@@ -41,15 +49,15 @@ public class Md5SearchAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        Md5SearchDialog dialog = new Md5SearchDialog();
+        CorrelationPropertySearchDialog dialog = new CorrelationPropertySearchDialog();
         dialog.display();
     }
 
     @NbBundle.Messages({
-        "Md5SearchAction.getName.text=Correlation Attribute Search"})
+        "CorrelationPropertySearchAction.getName.text=Correlation Property Search"})
     @Override
     public String getName() {
-        return Bundle.Md5SearchAction_getName_text();
+        return Bundle.CorrelationPropertySearchAction_getName_text();
     }
 
     @Override
