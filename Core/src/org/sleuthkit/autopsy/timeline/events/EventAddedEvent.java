@@ -18,22 +18,76 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
+import java.io.Serializable;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
- *
+ * An AutopsyEvent broadcast when a TimelineEvent is added to the case.
  */
-public class EventAddedEvent extends AutopsyEvent {
- 
-    private final long addedEventID;
+public class EventAddedEvent extends AutopsyEvent implements Serializable {
 
-    public long getAddedEventID() {
-        return addedEventID;
-    }
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(EventAddedEvent.class.getName());
+
+    private transient TimelineEvent addedEvent;
 
     public EventAddedEvent(org.sleuthkit.datamodel.TimelineManager.EventAddedEvent event) {
-        super(Case.Events.EVENT_ADDED.name(), null, event.getEvent());
-        addedEventID = event.getEvent().getEventID();
+        super(Case.Events.EVENT_ADDED.name(), null, event.getAddedEvent().getEventID());
+        addedEvent = event.getAddedEvent();
+    }
+
+    /**
+     * Gets the TimelineEvent that was added.
+     *
+     * @return The TimelineEvent or null if there is an error retrieving the
+     *         TimelineEvent.
+     */
+    @Override
+    public TimelineEvent getNewValue() {
+        /**
+         * The addedEvent field is set in the constructor, but it is transient
+         * so it will become null when the event is serialized for publication
+         * over a network. Doing a lazy load of the TimelineEvent object
+         * bypasses the issues related to the serialization and de-serialization
+         * of TimelineEvent objects and may also save database round trips from
+         * other nodes since subscribers to this event are often not interested
+         * in the event data.
+         */
+        if (null != addedEvent) {
+            return addedEvent;
+        }
+        try {
+            Long addedEventID = (Long) super.getNewValue();
+            addedEvent = Case.getCurrentCaseThrows().getSleuthkitCase().getTimelineManager().getEventById(addedEventID);
+            return addedEvent;
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
+            return null;
+        }
+    }
+
+    /**
+     * Gets the TimelineEvent that was added.
+     *
+     * @return The TimelineEvent or null if there is an error retrieving the
+     *         TimelineEvent.
+     */
+    public TimelineEvent getAddedEvent() {
+        return getNewValue();
+    }
+
+    /**
+     * Gets the Id of the event that was added.
+     *
+     * @return The Id of the event that was added.
+     */
+    public long getAddedEventID() {
+        return (long) super.getNewValue();
     }
 }
