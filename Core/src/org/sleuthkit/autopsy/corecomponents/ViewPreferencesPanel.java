@@ -319,7 +319,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                 .addGap(10, 10, 10)
                                 .addComponent(commentsOccurencesColumnsCheckbox))
                             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                                .addGap(30, 30, 30)
+                                .addGap(32, 32, 32)
                                 .addComponent(commentsOccurencesColumnWrapAroundText)))
                         .addGap(18, 18, 18)
                         .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
