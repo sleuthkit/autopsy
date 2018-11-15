@@ -303,7 +303,7 @@ final class IngestModule implements FileIngestModule {
                 == 1) {
             // ensure we have this data source in the EAM DB
             try {
-                if (null == centralRepoDb.getDataSource(eamCase, eamDataSource.getCaseDataSourceID())) {
+                if (null == centralRepoDb.getDataSource(eamCase, eamDataSource.getDataSourceObjectID())) {
                     centralRepoDb.newDataSource(eamDataSource);
                 }
             } catch (EamDbException ex) {

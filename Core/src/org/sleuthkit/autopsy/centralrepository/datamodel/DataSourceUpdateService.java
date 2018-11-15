@@ -25,6 +25,11 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Class which updates the data sources in the central repository to include the
+ * object id which ties them to the current case.
+ *
+ */
 @ServiceProvider(service = AutopsyService.class)
 public class DataSourceUpdateService implements AutopsyService {
 
@@ -42,7 +47,7 @@ public class DataSourceUpdateService implements AutopsyService {
                 CorrelationCase correlationCase = centralRepository.getCase(context.getCase());
                 for (CorrelationDataSource correlationDataSource : centralRepository.getDataSources()) {
                     //ResultSet.getLong has a value of 0 when the value is null
-                    if (correlationDataSource.getCaseID() == correlationCase.getID() && correlationDataSource.getCaseDataSourceID() == 0) {
+                    if (correlationDataSource.getCaseID() == correlationCase.getID() && correlationDataSource.getDataSourceObjectID() == 0) {
                         for (Content dataSource : context.getCase().getDataSources()) {
                             if (((DataSource) dataSource).getDeviceId().equals(correlationDataSource.getDeviceID())) {
                                 centralRepository.addDataSourceObjectId(correlationDataSource.getID(), dataSource.getId());

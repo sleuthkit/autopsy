@@ -204,6 +204,8 @@ public interface EamDb {
      * Creates new Data Source in the database
      *
      * @param eamDataSource the data source to add
+     * 
+     * @return - A CorrelationDataSource object with data source's central repository id
      */
     CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 

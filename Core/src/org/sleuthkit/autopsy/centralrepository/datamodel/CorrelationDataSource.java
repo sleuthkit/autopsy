@@ -36,11 +36,14 @@ public class CorrelationDataSource implements Serializable {
 
     private final int caseID; //the value in the id column of the case table in the central repo
     private final int dataSourceID;   //< Id in the central repo
-    private final Long caseDataSourceID; //< Id for data source in the caseDB 
+    private final Long dataSourceObjectID; //< Id for data source in the caseDB 
     private final String deviceID;  //< Unique to its associated case (not necessarily globally unique)
     private final String name;
 
     /**
+     * Create a CorrelationDataSource object, the object will not have the data
+     * source id for the row in the central repository.
+     *
      * @param correlationCase CorrelationCase object data source is associated
      *                        with. Must have been created by EamDB and have a
      *                        valid ID.
@@ -52,6 +55,7 @@ public class CorrelationDataSource implements Serializable {
     }
 
     /**
+     * Create a CorrelationDataSource object.
      *
      * @param caseId       Row ID for Case in DB
      * @param dataSourceId Row ID for this data source in DB (or -1)
@@ -67,7 +71,7 @@ public class CorrelationDataSource implements Serializable {
         this.dataSourceID = dataSourceId;
         this.deviceID = deviceId;
         this.name = name;
-        this.caseDataSourceID = caseDataSourceId;
+        this.dataSourceObjectID = caseDataSourceId;
     }
 
     /**
@@ -155,10 +159,10 @@ public class CorrelationDataSource implements Serializable {
     /**
      * Get the id for the data source in the case db
      *
-     * @return caseDataSourceID or NULL if not available
+     * @return dataSourceObjectID or NULL if not available
      */
-    public Long getCaseDataSourceID() {
-        return caseDataSourceID;
+    public Long getDataSourceObjectID() {
+        return dataSourceObjectID;
     }
 
     /**
