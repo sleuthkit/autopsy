@@ -1165,7 +1165,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        // Figure out sql variables or subqueries
+        //Create query to get count of all instances in the database for the specified case specific data source
         String sql = "SELECT 0 ";
 
         for (CorrelationAttributeInstance.Type type : artifactTypes) {
