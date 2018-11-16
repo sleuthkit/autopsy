@@ -45,16 +45,19 @@ public class DataSourceUpdateService implements AutopsyService {
             try {
                 EamDb centralRepository = EamDb.getInstance();
                 CorrelationCase correlationCase = centralRepository.getCase(context.getCase());
-                for (CorrelationDataSource correlationDataSource : centralRepository.getDataSources()) {
-                    //ResultSet.getLong has a value of 0 when the value is null
-                    if (correlationDataSource.getCaseID() == correlationCase.getID() && correlationDataSource.getDataSourceObjectID() == 0) {
-                        for (Content dataSource : context.getCase().getDataSources()) {
-                            if (((DataSource) dataSource).getDeviceId().equals(correlationDataSource.getDeviceID())) {
-                                centralRepository.addDataSourceObjectId(correlationDataSource.getID(), dataSource.getId());
-                                break;
+                //if the case isn't in the central repository yet there won't be data sources in it to update
+                if (correlationCase != null) { 
+                    for (CorrelationDataSource correlationDataSource : centralRepository.getDataSources()) {
+                        //ResultSet.getLong has a value of 0 when the value is null
+                        if (correlationDataSource.getCaseID() == correlationCase.getID() && correlationDataSource.getDataSourceObjectID() == 0) {
+                            for (Content dataSource : context.getCase().getDataSources()) {
+                                if (((DataSource) dataSource).getDeviceId().equals(correlationDataSource.getDeviceID())) {
+                                    centralRepository.addDataSourceObjectId(correlationDataSource.getID(), dataSource.getId());
+                                    break;
+                                }
                             }
-                        }
 
+                        }
                     }
                 }
             } catch (EamDbException | TskCoreException ex) {
