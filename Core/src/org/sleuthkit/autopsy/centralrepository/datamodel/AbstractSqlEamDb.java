@@ -3266,7 +3266,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute(String.format(addDataSourceIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addValueIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addKnownStatusIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-                statement.execute(String.format(addObjectIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 //add file_obj_id column to _instances table which do not already have it
                 String instance_type_dbname;
                 for (CorrelationAttributeInstance.Type type : CorrelationAttributeInstance.getDefaultCorrelationTypes()) {
