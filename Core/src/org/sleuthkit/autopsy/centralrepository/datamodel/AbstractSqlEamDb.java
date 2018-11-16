@@ -829,7 +829,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql
                 = "INSERT INTO "
                 + tableName
-                + "(case_id, data_source_id, value, file_path, known_status, comment, object_id) "
+                + "(case_id, data_source_id, value, file_path, known_status, comment, file_obj_id) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?) "
                 + getConflictClause();
 
@@ -921,7 +921,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + tableName
                 + ".value,"
                 + tableName
-                + ".object_id,"
+                + ".file_obj_id,"
                 + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
@@ -986,7 +986,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + tableName
                 + ".value,"
                 + tableName
-                + ".object_id,"
+                + ".file_obj_id,"
                 + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
@@ -1246,7 +1246,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     String sql
                             = "INSERT INTO "
                             + tableName
-                            + " (case_id, data_source_id, value, file_path, known_status, comment, object_id) "
+                            + " (case_id, data_source_id, value, file_path, known_status, comment, file_obj_id) "
                             + "VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), "
                             + "(SELECT id FROM data_sources WHERE datasource_obj_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?, ?) "
                             + getConflictClause();
@@ -1490,7 +1490,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     = "SELECT id, value, file_path, known_status, comment FROM "
                     + tableName
                     + " WHERE case_id=?"
-                    + " AND object_id=?";
+                    + " AND file_obj_id=?";
 
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setInt(1, correlationCase.getID());
@@ -1715,7 +1715,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + tableName
                 + ".value, "
                 + tableName
-                + ".object_id,"
+                + ".file_obj_id,"
                 + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
@@ -1773,7 +1773,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
-                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, object_id, data_sources.datasource_obj_id FROM "
+                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, file_obj_id, data_sources.datasource_obj_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -3101,7 +3101,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
-                resultSet.getLong("object_id"));
+                resultSet.getLong("file_obj_id"));
     }
 
     private EamOrganization getEamOrganizationFromResultSet(ResultSet resultSet) throws SQLException {
@@ -3295,7 +3295,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute(String.format(addDataSourceIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addValueIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addKnownStatusIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-                statement.execute(String.format(addObjectIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 
                  //create a new mac_address_instances table and add indexes for its columns
                 statement.execute(String.format(addSsidTableTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
@@ -3303,11 +3302,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute(String.format(addDataSourceIdIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
                 statement.execute(String.format(addValueIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
                 statement.execute(String.format(addKnownStatusIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
-                statement.execute(String.format(addObjectIdIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
                 
-                //add object_id column to _instances table which do not already have it
+                //add file_obj_id column to _instances table which do not already have it
                 String instance_type_dbname;
-                final String objectIdColumnName = "object_id";
+                final String objectIdColumnName = "file_obj_id";
                 for (CorrelationAttributeInstance.Type type : CorrelationAttributeInstance.getDefaultCorrelationTypes()) {
                     instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
                     if (!doesColumnExist(conn, instance_type_dbname, objectIdColumnName)) {

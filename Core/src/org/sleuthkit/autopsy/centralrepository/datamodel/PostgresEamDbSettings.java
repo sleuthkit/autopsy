@@ -490,7 +490,7 @@ public final class PostgresEamDbSettings {
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text,");
-        createArtifactInstancesTableTemplate.append("object_id integer,");
+        createArtifactInstancesTableTemplate.append("file_obj_id integer,");
         createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (data_source_id, value, file_path),");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
@@ -551,16 +551,16 @@ public final class PostgresEamDbSettings {
     }
 
     /**
-     * Get the template for creating an index on the object_id column of an
+     * Get the template for creating an index on the file_obj_id column of an
      * instance table. %s will exist in the template where the name of the new
      * table will be addedd.
      *
-     * @return a String which is a template for adding an index to the object_id
+     * @return a String which is a template for adding an index to the file_obj_id
      *         column of a _instances table
      */
     static String getAddObjectIdIndexTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
-        return "CREATE INDEX IF NOT EXISTS %s_object_id ON %s (object_id)";
+        return "CREATE INDEX IF NOT EXISTS %s_file_obj_id ON %s (file_obj_id)";
     }
 
     public boolean insertDefaultDatabaseContent() {
