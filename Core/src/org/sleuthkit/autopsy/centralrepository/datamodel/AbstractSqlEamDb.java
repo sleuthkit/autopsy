@@ -808,7 +808,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql
                 = "INSERT INTO "
                 + tableName
-                + "(case_id, data_source_id, value, file_path, known_status, comment, object_id) "
+                + "(case_id, data_source_id, value, file_path, known_status, comment, file_obj_id) "
                 + "VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), "
                 + "(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?, ?) "
                 + getConflictClause();
@@ -903,7 +903,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + tableName
                 + ".value,"
                 + tableName
-                + ".object_id,"
+                + ".file_obj_id,"
                 + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
@@ -968,7 +968,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + tableName
                 + ".value,"
                 + tableName
-                + ".object_id,"
+                + ".file_obj_id,"
                 + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
@@ -1235,7 +1235,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     String sql
                             = "INSERT INTO "
                             + tableName
-                            + " (case_id, data_source_id, value, file_path, known_status, comment, object_id) "
+                            + " (case_id, data_source_id, value, file_path, known_status, comment, file_obj_id) "
                             + "VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), "
                             + "(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?, ?) "
                             + getConflictClause();
@@ -1481,7 +1481,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     = "SELECT id, value, file_path, known_status, comment FROM "
                     + tableName
                     + " WHERE case_id=?"
-                    + " AND object_id=?";
+                    + " AND file_obj_id=?";
 
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setInt(1, correlationCase.getID());
@@ -1707,7 +1707,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + tableName
                 + ".value, "
                 + tableName
-                + ".object_id,"
+                + ".file_obj_id,"
                 + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
@@ -1765,7 +1765,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
-                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, object_id FROM "
+                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, file_obj_id FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -3092,7 +3092,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
-                resultSet.getLong("object_id"));
+                resultSet.getLong("file_obj_id"));
     }
 
     private EamOrganization getEamOrganizationFromResultSet(ResultSet resultSet) throws SQLException {
@@ -3217,7 +3217,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
 
                 EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-                final String addObjectIdColumnTemplate = "ALTER TABLE %s ADD COLUMN object_id INTEGER;";  //NON-NLS
+                final String addObjectIdColumnTemplate = "ALTER TABLE %s ADD COLUMN file_obj_id INTEGER;";  //NON-NLS
                 final String addSsidTableTemplate;
                 final String addCaseIdIndexTemplate;
                 final String addDataSourceIdIndexTemplate;
@@ -3267,11 +3267,11 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute(String.format(addValueIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addKnownStatusIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addObjectIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-                //add object_id column to _instances table which do not already have it
+                //add file_obj_id column to _instances table which do not already have it
                 String instance_type_dbname;
                 for (CorrelationAttributeInstance.Type type : CorrelationAttributeInstance.getDefaultCorrelationTypes()) {
                     instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
-                    if (!doesColumnExist(conn, instance_type_dbname, "object_id")) {
+                    if (!doesColumnExist(conn, instance_type_dbname, "file_obj_id")) {
                         statement.execute(String.format(addObjectIdColumnTemplate, instance_type_dbname)); //NON-NLS
                     }
                     statement.execute(String.format(addObjectIdIndexTemplate, instance_type_dbname, instance_type_dbname));
