@@ -19,11 +19,10 @@
 package org.sleuthkit.autopsy.imagegallery.actions;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import static java.util.concurrent.Executors.newSingleThreadExecutor;
+import java.util.Map;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
@@ -32,7 +31,6 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
-import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
@@ -50,11 +48,12 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryPreferences;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB;
+import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableDB.DrawableDbBuildStatusEnum;
 import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
@@ -70,6 +69,8 @@ import org.sleuthkit.datamodel.TskCoreException;
     "OpenAction.stale.confDlg.msg=The image / video database may be out of date. "
     + "Do you want to update and listen for further ingest results?\n"
     + "Choosing 'yes' will update the database and enable listening to future ingests.",
+    "OpenAction.notAnalyzedDlg.msg=No image/video files available to display yet.\n"
+        + "Please run FileType and EXIF ingest modules.",
     "OpenAction.stale.confDlg.title=Image Gallery"})
 public final class OpenAction extends CallableSystemAction {
 
@@ -184,17 +185,43 @@ public final class OpenAction extends CallableSystemAction {
     }
 
     private void checkDBStale(ImageGalleryController controller) {
-        //check if db is stale on throw away bg thread and then react back on jfx thread.
-        ListenableFuture<Boolean> staleFuture = TaskUtils.getExecutorForClass(OpenAction.class)
-                .submit(controller::isDataSourcesTableStale);
-        addFXCallback(staleFuture,
-                dbIsStale -> {
+        
+        ListenableFuture<Map<Long, DrawableDB.DrawableDbBuildStatusEnum>> dataSourceStatusMapFuture =  TaskUtils.getExecutorForClass(OpenAction.class)
+                .submit(controller::getAllDataSourcesDrawableDBStatus);
+        
+        addFXCallback(dataSourceStatusMapFuture,
+                dataSourceStatusMap -> {
+                    
+                    boolean dbIsStale = false;
+                    for (Map.Entry<Long, DrawableDbBuildStatusEnum> entry : dataSourceStatusMap.entrySet()) {
+                        DrawableDbBuildStatusEnum status = entry.getValue();
+                        if (DrawableDbBuildStatusEnum.COMPLETE != status) {
+                           dbIsStale = true;
+                        }
+                    }               
+             
                     //back on fx thread.
                     if (false == dbIsStale) {
                         //drawable db is not stale, just open it
                         openTopComponent();
                     } else {
-                        //drawable db is stale, ask what to do
+                        
+                        // If there is only one datasource and it's in DEFAULT State - 
+                        // ingest modules need to be run on the data source
+                        if  (dataSourceStatusMap.size()== 1) {
+                            Map.Entry<Long, DrawableDB.DrawableDbBuildStatusEnum> entry = dataSourceStatusMap.entrySet().iterator().next();
+                            if (entry.getValue() == DrawableDbBuildStatusEnum.DEFAULT ) {
+                                Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.OpenAction_notAnalyzedDlg_msg(), ButtonType.OK);
+                                alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
+                                alert.initModality(Modality.APPLICATION_MODAL);
+
+                                alert.showAndWait();
+                                return;
+                            }
+                        } 
+                        
+                        //drawable db is stale,
+                        //ask what to do
                         Alert alert = new Alert(Alert.AlertType.WARNING,
                                 Bundle.OpenAction_stale_confDlg_msg(),
                                 ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);

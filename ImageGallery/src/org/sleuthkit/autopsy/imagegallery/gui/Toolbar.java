@@ -240,8 +240,8 @@ public class Toolbar extends ToolBar {
     }
 
     private void initDataSourceComboBox() {
-        dataSourceComboBox.setCellFactory(param -> new DataSourceCell(dataSourcesViewable));
-        dataSourceComboBox.setButtonCell(new DataSourceCell(dataSourcesViewable));
+        dataSourceComboBox.setCellFactory(param -> new DataSourceCell(dataSourcesViewable, controller.getAllDataSourcesDrawableDBStatus()));
+        dataSourceComboBox.setButtonCell(new DataSourceCell(dataSourcesViewable, controller.getAllDataSourcesDrawableDBStatus()));
         dataSourceComboBox.setConverter(new StringConverter<Optional<DataSource>>() {
             @Override
             public String toString(Optional<DataSource> object) {

@@ -174,11 +174,14 @@ public final class DrawableDB {
 
     /**
      * Enum to track Image gallery db rebuild status for a data source
+     * 
+     * DO NOT add in the middle.
      */
     public enum DrawableDbBuildStatusEnum {
-        UNKNOWN, /// no known status
-        IN_PROGRESS, /// drawable db rebuild has been started for the data source
-        COMPLETE;       /// drawable db rebuild is complete for the data source
+        UNKNOWN,        /// no known status
+        IN_PROGRESS,    /// ingest or db rebuild is in progress
+        COMPLETE,       /// All files in the data source have had file type detected
+        DEFAULT;        /// Not all files in the data source have had file type detected
     }
 
     //////////////general database logic , mostly borrowed from sleuthkitcase
