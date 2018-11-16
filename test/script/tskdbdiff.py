@@ -333,7 +333,7 @@ class TskDbDiff(object):
                 for line in postgreSQL_db:
                     line = line.strip('\r\n ')
                     # Deal with pg_dump result file
-                    if line.startswith('--') or line.lower().startswith('alter') or not line: # It's comment or alter statement or empty line
+                    if line.startswith('--') or line.lower().startswith('alter') or "pg_catalog" in line or not line: # It's comment or alter statement or catalog entry or empty line
                         continue
                     elif not line.endswith(';'): # Statement not finished
                         dump_line += line
