@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * convenient way to add content hashes to hash set databases.
  */
 @ServiceProvider(service = GeneralReportModule.class)
-public class AddTaggedHashesToHashDb implements GeneralReportModule {
+public class AddTaggedHashesToHashDb extends GeneralReportModule {
 
     private AddTaggedHashesToHashDbConfigPanel configPanel;
 

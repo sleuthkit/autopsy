@@ -47,6 +47,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -56,6 +58,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -72,7 +75,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
-class ReportHTML implements TableReportModule {
+class ReportHTML extends TableReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
     private static final String THUMBS_REL_PATH = "thumbs" + File.separator; //NON-NLS
@@ -89,6 +92,8 @@ class ReportHTML implements TableReportModule {
     private String currentDataType; // name of current data type
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
+    
+    private ReportHTMLConfigurationPanel configPanel;
 
     private final ReportBranding reportBranding;
 
@@ -103,6 +108,14 @@ class ReportHTML implements TableReportModule {
     // Hidden constructor
     private ReportHTML() {
         reportBranding = new ReportBranding();
+    }
+    
+    @Override
+    public JPanel getConfigurationPanel() {
+        if (configPanel == null) {
+            configPanel = new ReportHTMLConfigurationPanel();
+        }
+        return configPanel;
     }
 
     // Refesh the member variables
@@ -332,6 +345,10 @@ class ReportHTML implements TableReportModule {
      */
     @Override
     public void startReport(String baseReportDir) {
+        // Save settings
+        ModuleSettings.setConfigSetting("HTMLReport", "header", configPanel.getHeader()); //NON-NLS
+        ModuleSettings.setConfigSetting("HTMLReport", "footer", configPanel.getFooter()); //NON-NLS
+        
         // Refresh the HTML report
         try {
             refresh();
@@ -392,8 +409,10 @@ class ReportHTML implements TableReportModule {
 
         try {
             StringBuilder page = new StringBuilder();
-            page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n"); //NON-NLS
-            page.append("<div id=\"header\">").append(name).append("</div>\n<div id=\"content\">\n"); //NON-NLS
+            page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n") //NON-NLS
+            .append(writePageHeader())
+            .append("<div id=\"header\">").append(name).append("</div>\n")
+            .append("<div id=\"content\">\n"); //NON-NLS
             if (!description.isEmpty()) {
                 page.append("<p><strong>"); //NON-NLS
                 page.append(description);
@@ -415,7 +434,10 @@ class ReportHTML implements TableReportModule {
     public void endDataType() {
         dataTypes.put(currentDataType, rowCount);
         try {
-            out.write("</div>\n</body>\n</html>\n"); //NON-NLS
+            StringBuilder builder = new StringBuilder();
+            builder.append(writePageFooter());
+            builder.append("</div>\n</body>\n</html>\n"); //NON-NLS
+            out.write(builder.toString());
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write end of HTML report.", ex); //NON-NLS
         } finally {
@@ -429,6 +451,40 @@ class ReportHTML implements TableReportModule {
                 out = null;
             }
         }
+    }
+    
+    /**
+     * Write HTML-formatted page header text based on the text provided in the
+     * configuration panel.
+     * 
+     * @return The HTML-formatted text.
+     */
+    private String writePageHeader() {
+        StringBuilder output = new StringBuilder();
+        String pageHeader = configPanel.getHeader();
+        if (pageHeader.isEmpty() == false) {
+            output.append("<p style=\"text-align: center\">")
+                    .append(StringEscapeUtils.escapeHtml4(pageHeader))
+                    .append("</p>\n"); //NON-NLS
+        }
+        return output.toString();
+    }
+    
+    /**
+     * Write HTML-formatted page footer text based on the text provided in the
+     * configuration panel.
+     * 
+     * @return The HTML-formatted text.
+     */
+    private String writePageFooter() {
+        StringBuilder output = new StringBuilder();
+        String pageFooter = configPanel.getFooter();
+        if (pageFooter.isEmpty() == false) {
+            output.append("<br/><p style=\"text-align: center\">")
+                    .append(StringEscapeUtils.escapeHtml4(pageFooter))
+                    .append("</p>\n"); //NON-NLS
+        }
+        return output.toString();
     }
 
     /**
@@ -1109,6 +1165,7 @@ class ReportHTML implements TableReportModule {
             final boolean generatorLogoSet = reportBranding.getGeneratorLogoPath() != null && !reportBranding.getGeneratorLogoPath().isEmpty();
 
             summary.append("<div id=\"wrapper\">\n"); //NON-NLS
+            summary.append(writePageHeader());
             summary.append("<h1>").append(reportTitle) //NON-NLS
                     .append(running ? NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.warningMsg") : "")
                     .append("</h1>\n"); //NON-NLS
@@ -1129,6 +1186,7 @@ class ReportHTML implements TableReportModule {
                 summary.append("<p class=\"subheadding\">").append(reportFooter).append("</p>\n"); //NON-NLS
             }
             summary.append("</div>\n"); //NON-NLS
+            summary.append(writePageFooter());
             summary.append("</body></html>"); //NON-NLS
             output.write(summary.toString());
         } catch (FileNotFoundException ex) {

@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamExce
 /**
  * Generates a KML file based on geospatial information from the BlackBoard.
  */
-class ReportKML implements GeneralReportModule {
+class ReportKML extends GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportKML.class.getName());
     private static final String KML_STYLE_FILE = "style.kml";

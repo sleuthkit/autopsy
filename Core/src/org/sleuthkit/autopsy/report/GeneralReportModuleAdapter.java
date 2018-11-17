@@ -24,7 +24,7 @@ import javax.swing.JPanel;
  * An adapter that provides no-op implementations of various GeneralReportModule
  * methods.
  */
-public abstract class GeneralReportModuleAdapter implements GeneralReportModule {
+public abstract class GeneralReportModuleAdapter extends GeneralReportModule {
 
     @Override
     public abstract String getName();

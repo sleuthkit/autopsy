@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
-class ReportExcel implements TableReportModule {
+class ReportExcel extends TableReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportExcel.class.getName());
     private static ReportExcel instance;
