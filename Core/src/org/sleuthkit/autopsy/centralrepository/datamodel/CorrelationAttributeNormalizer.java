@@ -67,6 +67,12 @@ final public class CorrelationAttributeNormalizer {
                 return data;
             case CorrelationAttributeInstance.MAC_TYPE_ID:
                 return data;
+            case CorrelationAttributeInstance.IMEI_TYPE_ID:
+                return data;
+            case CorrelationAttributeInstance.IMSI_TYPE_ID:
+                return data;
+            case CorrelationAttributeInstance.ICCID_TYPE_ID:
+                return data;
             default:
                 final String errorMessage = String.format(
                         "Validator function not found for attribute type: %s", 

@@ -3263,18 +3263,24 @@ abstract class AbstractSqlEamDb implements EamDb {
                 }
                 final String dataSourceObjectIdIndexTemplate = "CREATE INDEX IF NOT EXISTS datasource_object_id ON data_sources (%s)";
                 statement.execute(String.format(dataSourceObjectIdIndexTemplate, dataSourceObjectIdColumnName));
-
+                List<String> instaceTablesToAdd = new ArrayList<>();
                 //update central repository to be able to store new correlation attributes 
-                final String wirelessNetworsDbTableName = "wireless_networks";
-                final String wirelessNetworksTableInstanceName = wirelessNetworsDbTableName + "_instances";
+                final String wirelessNetworksDbTableName = "wireless_networks";
+                instaceTablesToAdd.add(wirelessNetworksDbTableName + "_instances");
                 final String macAddressDbTableName = "mac_address";
-                final String macAddressTableInstanceName = macAddressDbTableName + "_instances";
+                instaceTablesToAdd.add(macAddressDbTableName + "_instances");
+                final String imeiNumberDbTableName = "imei_number";
+                instaceTablesToAdd.add(imeiNumberDbTableName + "_instances");
+                final String iccidNumberDbTableName = "iccid_number";
+                instaceTablesToAdd.add(iccidNumberDbTableName + "_instances");
+                final String imsiNumberDbTableName = "imsi_number";
+                instaceTablesToAdd.add(imsiNumberDbTableName + "_instances");
 
                 //add the wireless_networks attribute to the correlation_types table
                 preparedStatement = conn.prepareStatement(addAttributeSql);
                 preparedStatement.setInt(1, CorrelationAttributeInstance.SSID_TYPE_ID);
                 preparedStatement.setString(2, Bundle.CorrelationType_SSID_displayName());
-                preparedStatement.setString(3, wirelessNetworsDbTableName);
+                preparedStatement.setString(3, wirelessNetworksDbTableName);
                 preparedStatement.setInt(4, 1);
                 preparedStatement.setInt(5, 1);
                 preparedStatement.execute();
@@ -3288,20 +3294,42 @@ abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setInt(5, 1);
                 preparedStatement.execute();
 
-                //create a new wireless_networks_instances table and add indexes for its columns
-                statement.execute(String.format(addSsidTableTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-                statement.execute(String.format(addCaseIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-                statement.execute(String.format(addDataSourceIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-                statement.execute(String.format(addValueIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-                statement.execute(String.format(addKnownStatusIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-                
-                 //create a new mac_address_instances table and add indexes for its columns
-                statement.execute(String.format(addSsidTableTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
-                statement.execute(String.format(addCaseIdIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
-                statement.execute(String.format(addDataSourceIdIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
-                statement.execute(String.format(addValueIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
-                statement.execute(String.format(addKnownStatusIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
-                
+                //add the imei_number attribute to the correlation_types table
+                preparedStatement = conn.prepareStatement(addAttributeSql);
+                preparedStatement.setInt(1, CorrelationAttributeInstance.IMEI_TYPE_ID);
+                preparedStatement.setString(2, Bundle.CorrelationType_IMEI_displayName());
+                preparedStatement.setString(3, imeiNumberDbTableName);
+                preparedStatement.setInt(4, 1);
+                preparedStatement.setInt(5, 1);
+                preparedStatement.execute();
+
+                //add the imsi_number attribute to the correlation_types table
+                preparedStatement = conn.prepareStatement(addAttributeSql);
+                preparedStatement.setInt(1, CorrelationAttributeInstance.IMSI_TYPE_ID);
+                preparedStatement.setString(2, Bundle.CorrelationType_IMSI_displayName());
+                preparedStatement.setString(3, imsiNumberDbTableName);
+                preparedStatement.setInt(4, 1);
+                preparedStatement.setInt(5, 1);
+                preparedStatement.execute();
+
+                //add the iccid_number attribute to the correlation_types table
+                preparedStatement = conn.prepareStatement(addAttributeSql);
+                preparedStatement.setInt(1, CorrelationAttributeInstance.ICCID_TYPE_ID);
+                preparedStatement.setString(2, Bundle.CorrelationType_ICCID_displayName());
+                preparedStatement.setString(3, iccidNumberDbTableName);
+                preparedStatement.setInt(4, 1);
+                preparedStatement.setInt(5, 1);
+                preparedStatement.execute();
+
+                //create a new _instances tables and add indexes for their columns
+                for (String tableName : instaceTablesToAdd) {
+                    statement.execute(String.format(addSsidTableTemplate, tableName, tableName));
+                    statement.execute(String.format(addCaseIdIndexTemplate, tableName, tableName));
+                    statement.execute(String.format(addDataSourceIdIndexTemplate, tableName, tableName));
+                    statement.execute(String.format(addValueIndexTemplate, tableName, tableName));
+                    statement.execute(String.format(addKnownStatusIndexTemplate, tableName, tableName));
+                }
+
                 //add file_obj_id column to _instances table which do not already have it
                 String instance_type_dbname;
                 final String objectIdColumnName = "file_obj_id";

@@ -217,6 +217,9 @@ public class CorrelationAttributeInstance implements Serializable {
     public static final int USBID_TYPE_ID = 4;
     public static final int SSID_TYPE_ID = 5;
     public static final int MAC_TYPE_ID = 6;
+    public static final int IMEI_TYPE_ID = 7;
+    public static final int IMSI_TYPE_ID = 8;
+    public static final int ICCID_TYPE_ID = 9;
 
     /**
      * Load the default correlation types
@@ -230,7 +233,10 @@ public class CorrelationAttributeInstance implements Serializable {
         "CorrelationType.PHONE.displayName=Phone Numbers",
         "CorrelationType.USBID.displayName=USB Devices",
         "CorrelationType.SSID.displayName=Wireless Networks",
-        "CorrelationType.MAC.displayName=Mac Addresses"})
+        "CorrelationType.MAC.displayName=Mac Addresses",
+        "CorrelationType.IMEI.displayName=IMEI Number",
+        "CorrelationType.IMSI.displayName=IMSI Number",
+        "CorrelationType.ICCID.displayName=ICCID Number"})
     public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws EamDbException {
         List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
@@ -240,6 +246,9 @@ public class CorrelationAttributeInstance implements Serializable {
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(SSID_TYPE_ID, Bundle.CorrelationType_SSID_displayName(), "wireless_networks", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(MAC_TYPE_ID, Bundle.CorrelationType_MAC_displayName(), "mac_address", true, true)); //NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(IMEI_TYPE_ID, Bundle.CorrelationType_IMEI_displayName(), "imei_number", true, true)); //NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(IMSI_TYPE_ID, Bundle.CorrelationType_IMSI_displayName(), "imsi_number", true, true)); //NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(ICCID_TYPE_ID, Bundle.CorrelationType_ICCID_displayName(), "iccid_number", true, true)); //NON-NLS
         return DEFAULT_CORRELATION_TYPES;
     }
 
