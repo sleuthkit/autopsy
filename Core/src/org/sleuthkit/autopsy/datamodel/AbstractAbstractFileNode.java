@@ -187,16 +187,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.sizeColLbl=Size",
         "AbstractAbstractFileNode.flagsDirColLbl=Flags(Dir)",
         "AbstractAbstractFileNode.flagsMetaColLbl=Flags(Meta)",
-        "AbstractAbstractFileNode.modeColLbl=Mode",
-        "AbstractAbstractFileNode.useridColLbl=UserID",
-        "AbstractAbstractFileNode.groupidColLbl=GroupID",
-        "AbstractAbstractFileNode.metaAddrColLbl=Meta Addr.",
-        "AbstractAbstractFileNode.attrAddrColLbl=Attr. Addr.",
-        "AbstractAbstractFileNode.typeDirColLbl=Type(Dir)",
-        "AbstractAbstractFileNode.typeMetaColLbl=Type(Meta)",
         "AbstractAbstractFileNode.knownColLbl=Known",
         "AbstractAbstractFileNode.md5HashColLbl=MD5 Hash",
-        "AbstractAbstractFileNode.objectId=Object ID",
         "AbstractAbstractFileNode.mimeType=MIME Type",
         "AbstractAbstractFileNode.extensionColLbl=Extension"})
     public enum AbstractFilePropertyType {
@@ -210,16 +202,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         SIZE(AbstractAbstractFileNode_sizeColLbl()),
         FLAGS_DIR(AbstractAbstractFileNode_flagsDirColLbl()),
         FLAGS_META(AbstractAbstractFileNode_flagsMetaColLbl()),
-        MODE(AbstractAbstractFileNode_modeColLbl()),
-        USER_ID(AbstractAbstractFileNode_useridColLbl()),
-        GROUP_ID(AbstractAbstractFileNode_groupidColLbl()),
-        META_ADDR(AbstractAbstractFileNode_metaAddrColLbl()),
-        ATTR_ADDR(AbstractAbstractFileNode_attrAddrColLbl()),
-        TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()),
-        TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()),
         KNOWN(AbstractAbstractFileNode_knownColLbl()),
         MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
-        ObjectID(AbstractAbstractFileNode_objectId()),
         MIMETYPE(AbstractAbstractFileNode_mimeType()),
         EXTENSION(AbstractAbstractFileNode_extensionColLbl());
 
@@ -252,16 +236,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(SIZE.toString(), content.getSize());
         map.put(FLAGS_DIR.toString(), content.getDirFlagAsString());
         map.put(FLAGS_META.toString(), content.getMetaFlagsAsString());
-        map.put(MODE.toString(), content.getModesAsString());
-        map.put(USER_ID.toString(), content.getUid());
-        map.put(GROUP_ID.toString(), content.getGid());
-        map.put(META_ADDR.toString(), content.getMetaAddr());
-        map.put(ATTR_ADDR.toString(), content.getAttrType().getValue() + "-" + content.getAttributeId());
-        map.put(TYPE_DIR.toString(), content.getDirType().getLabel());
-        map.put(TYPE_META.toString(), content.getMetaType().toString());
         map.put(KNOWN.toString(), content.getKnown().getName());
         map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
-        map.put(ObjectID.toString(), content.getId());
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
         map.put(EXTENSION.toString(), content.getNameExtension());
     }
