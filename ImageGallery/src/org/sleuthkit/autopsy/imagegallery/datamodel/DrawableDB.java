@@ -183,46 +183,14 @@ public final class DrawableDB {
         DEFAULT;        /// Not all files in the data source have had file type detected
     }
 
-    //////////////general database logic , mostly borrowed from sleuthkitcase
-    /**
-     * Lock to protect against concurrent write accesses to case database and to
-     * block readers while database is in write transaction. Should be utilized
-     * by all db code where underlying storage supports max. 1 concurrent writer
-     * MUST always call dbWriteUnLock() as early as possible, in the same thread
-     * where dbWriteLock() was called
-     */
-    public void dbWriteLock() {
-        //Logger.getLogger("LOCK").log(Level.INFO, "Locking " + rwLock.toString());
+    private void dbWriteLock() {
         DBLock.lock();
     }
 
-    /**
-     * Release previously acquired write lock acquired in this thread using
-     * dbWriteLock(). Call in "finally" block to ensure the lock is always
-     * released.
-     */
-    public void dbWriteUnlock() {
-        //Logger.getLogger("LOCK").log(Level.INFO, "UNLocking " + rwLock.toString());
+    private void dbWriteUnlock() {
         DBLock.unlock();
     }
-
-    /**
-     * Lock to protect against read while it is in a write transaction state.
-     * Supports multiple concurrent readers if there is no writer. MUST always
-     * call dbReadUnLock() as early as possible, in the same thread where
-     * dbReadLock() was called.
-     */
-//    void dbReadLock() {
-//        DBLock.lock();
-//    }
-    /**
-     * Release previously acquired read lock acquired in this thread using
-     * dbReadLock(). Call in "finally" block to ensure the lock is always
-     * released.
-     */
-//    void dbReadUnlock() {
-//        DBLock.unlock();
-//    }    
+  
     /**
      * Constructs an object that provides access to the drawables database and
      * selected tables in the case database. If the specified drawables database
@@ -869,19 +837,11 @@ public final class DrawableDB {
      */
     public void removeFile(long id) throws TskCoreException, SQLException {
         DrawableTransaction trans = null;
-        CaseDbTransaction caseDbTransaction = null;
         try {
             trans = beginTransaction();
             removeFile(id, trans);
             commitTransaction(trans, true);
         } catch (TskCoreException | SQLException ex) {
-            if (null != caseDbTransaction) {
-                try {
-                    caseDbTransaction.rollback();
-                } catch (TskCoreException ex2) {
-                    logger.log(Level.SEVERE, String.format("Failed to roll back case db transaction after error: %s", ex.getMessage()), ex2); //NON-NLS
-                }
-            }
             if (null != trans) {
                 try {
                     rollbackTransaction(trans);
