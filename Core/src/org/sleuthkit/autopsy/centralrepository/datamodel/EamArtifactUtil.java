@@ -207,14 +207,14 @@ public class EamArtifactUtil {
                 correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
             return new CorrelationAttributeInstance(
-                    value,
                     correlationType,
+                    value,
                     correlationCase,
                     CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
                     bbSourceFile.getParentPath() + bbSourceFile.getName(),
                     "",
-                    TskData.FileKnown.UNKNOWN
-            );
+                    TskData.FileKnown.UNKNOWN,
+                    bbSourceFile.getId());
 
         } catch (TskCoreException | EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
@@ -247,8 +247,6 @@ public class EamArtifactUtil {
         CorrelationAttributeInstance.Type type;
         CorrelationCase correlationCase;
         CorrelationDataSource correlationDataSource;
-        String value;
-        String filePath;
 
         try {
             type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
@@ -258,8 +256,6 @@ public class EamArtifactUtil {
                 return null;
             }
             correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
-            value = file.getMd5Hash();
-            filePath = (file.getParentPath() + file.getName()).toLowerCase();
         } catch (TskCoreException | EamDbException ex) {
             logger.log(Level.SEVERE, "Error retrieving correlation attribute.", ex);
             return null;
@@ -270,12 +266,25 @@ public class EamArtifactUtil {
 
         CorrelationAttributeInstance correlationAttributeInstance;
         try {
-            correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
+            correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, file.getId());
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, String.format(
                     "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
                     content.getName(), content.getId(), ex.getMessage()));
             return null;
+        }
+        //if there was no correlation attribute found for the item using object_id then check for attributes added with schema 1,1 which lack object_id  
+        if (correlationAttributeInstance == null) {
+            String value = file.getMd5Hash();
+            String filePath = (file.getParentPath() + file.getName()).toLowerCase();
+            try {
+                correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
+            } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.WARNING, String.format(
+                        "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
+                        content.getName(), content.getId(), ex.getMessage()));
+                return null;
+            }
         }
 
         return correlationAttributeInstance;
@@ -319,12 +328,16 @@ public class EamArtifactUtil {
             if (null == correlationCase) {
                 correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
+
             return new CorrelationAttributeInstance(
                     filesType,
                     af.getMd5Hash(),
                     correlationCase,
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
-                    af.getParentPath() + af.getName());
+                    af.getParentPath() + af.getName(),
+                    "",
+                    TskData.FileKnown.UNKNOWN,
+                    af.getId());
 
         } catch (TskCoreException | EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error making correlation attribute.", ex);
