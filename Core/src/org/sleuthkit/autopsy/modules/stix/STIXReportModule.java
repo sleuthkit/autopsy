@@ -64,7 +64,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
-public class STIXReportModule extends GeneralReportModule {
+public class STIXReportModule implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(STIXReportModule.class.getName());
     private STIXReportModuleConfigPanel configPanel;

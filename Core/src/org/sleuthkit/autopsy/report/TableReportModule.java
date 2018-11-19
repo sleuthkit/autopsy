@@ -29,7 +29,7 @@ import java.util.List;
  * The data sent consists of user-chosen fields such as Blackboard Artifacts and
  * File/Result Tags.
  */
-abstract class TableReportModule extends ReportModule {
+interface TableReportModule extends ReportModule {
 
     /**
      * Start the report. Open any output streams, initialize member variables,
@@ -40,13 +40,13 @@ abstract class TableReportModule extends ReportModule {
      *                      should go into baseReportDir +
      *                      getRelativeFilePath().
      */
-    public abstract void startReport(String baseReportDir);
+    public void startReport(String baseReportDir);
 
     /**
      * End the report. Close all output streams and write any end-of-report
      * files.
      */
-    public abstract void endReport();
+    public void endReport();
 
     /**
      * Start a new data type for the report. This is how the report will
@@ -57,26 +57,26 @@ abstract class TableReportModule extends ReportModule {
      * @param title       String name of the data type
      * @param description Description of the data type
      */
-    public abstract void startDataType(String title, String description);
+    public void startDataType(String title, String description);
 
     /**
      * End the current data type and prepare for either the end of the report or
      * the start of a new data type.
      */
-    public abstract void endDataType();
+    public void endDataType();
 
     /**
      * Start a new set, or sub-category, for the current data type.
      *
      * @param setName String name of the set
      */
-    public abstract void startSet(String setName);
+    public void startSet(String setName);
 
     /**
      * End the current set and prepare for either the end of the current data
      * type or the start of a new set.
      */
-    public abstract void endSet();
+    public void endSet();
 
     /**
      * Add an index of all the sets to the report's current data type. This
@@ -85,7 +85,7 @@ abstract class TableReportModule extends ReportModule {
      *
      * @param sets List of all the String set names
      */
-    public abstract void addSetIndex(List<String> sets);
+    public void addSetIndex(List<String> sets);
 
     /**
      * Add an element to the current set. An element is considered the 'title'
@@ -93,26 +93,26 @@ abstract class TableReportModule extends ReportModule {
      *
      * @param elementName String name of element
      */
-    public abstract void addSetElement(String elementName);
+    public void addSetElement(String elementName);
 
     /**
      * Create a table with the column names given.
      *
      * @param titles List of String column names
      */
-    public abstract void startTable(List<String> titles);
+    public void startTable(List<String> titles);
 
     /**
      * End the current table.
      */
-    public abstract void endTable();
+    public void endTable();
 
     /**
      * Add a row with the cell values given to the current table.
      *
      * @param row List of String cell values
      */
-    public abstract void addRow(List<String> row);
+    public void addRow(List<String> row);
 
     /**
      * Returns a String date, created by the module. All date values will query
@@ -123,6 +123,6 @@ abstract class TableReportModule extends ReportModule {
      *
      * @return String date as String
      */
-    public abstract String dateToString(long date);
+    public String dateToString(long date);
 
 }

@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  *
  * @author jwallace
  */
-abstract class FileReportModule extends ReportModule {
+interface FileReportModule extends ReportModule {
 
     /**
      * Initialize the report which will be stored at the given path.
@@ -35,19 +35,19 @@ abstract class FileReportModule extends ReportModule {
      *                      should go into baseReportDir +
      *                      getRelativeFilePath().
      */
-    public abstract void startReport(String baseReportDir);
+    public void startReport(String baseReportDir);
 
     /**
      * End the report. Will be called after the entire report has been written.
      */
-    public abstract void endReport();
+    public void endReport();
 
     /**
      * Start the file list table.
      *
      * @param headers The columns that should be included in the table.
      */
-    public abstract void startTable(List<FileReportDataTypes> headers);
+    public void startTable(List<FileReportDataTypes> headers);
 
     /**
      * Add the given AbstractFile as a row in the table. Guaranteed to be called
@@ -56,10 +56,10 @@ abstract class FileReportModule extends ReportModule {
      * @param toAdd   the AbstractFile to be added.
      * @param columns the columns that should be included
      */
-    public abstract void addRow(AbstractFile toAdd, List<FileReportDataTypes> columns);
+    public void addRow(AbstractFile toAdd, List<FileReportDataTypes> columns);
 
     /**
      * Close the table.
      */
-    public abstract void endTable();
+    public void endTable();
 }

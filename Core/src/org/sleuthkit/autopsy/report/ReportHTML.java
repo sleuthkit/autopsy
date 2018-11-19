@@ -75,7 +75,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
-class ReportHTML extends TableReportModule {
+class ReportHTML implements TableReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportHTML.class.getName());
     private static final String THUMBS_REL_PATH = "thumbs" + File.separator; //NON-NLS
@@ -416,7 +416,7 @@ class ReportHTML extends TableReportModule {
             if (!description.isEmpty()) {
                 page.append("<p><strong>"); //NON-NLS
                 page.append(description);
-                page.append("</string></p>\n"); //NON-NLS
+                page.append("</strong></p>\n"); //NON-NLS
             }
             out.write(page.toString());
             currentDataType = name;

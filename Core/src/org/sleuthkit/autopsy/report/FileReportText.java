@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * @author jwallace
  */
-class FileReportText extends FileReportModule {
+class FileReportText implements FileReportModule {
 
     private static final Logger logger = Logger.getLogger(FileReportText.class.getName());
     private String reportPath;

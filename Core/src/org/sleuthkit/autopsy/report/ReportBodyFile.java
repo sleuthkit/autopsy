@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.*;
  * Sleuth Kit wiki as
  * MD5|name|inode|mode_as_string|UID|GID|size|atime|mtime|ctime|crtime.
  */
-class ReportBodyFile extends GeneralReportModule {
+class ReportBodyFile implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportBodyFile.class.getName());
     private static ReportBodyFile instance = null;

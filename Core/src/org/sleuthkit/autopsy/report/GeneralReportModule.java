@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.report;
 
-public abstract class GeneralReportModule extends ReportModule {
+public interface GeneralReportModule extends ReportModule {
 
     /**
      * Called to generate the report. Method is responsible for saving the file
@@ -29,6 +29,6 @@ public abstract class GeneralReportModule extends ReportModule {
      *                      getRelativeFilePath().
      * @param progressPanel panel to update the report's progress with
      */
-    public abstract void generateReport(String baseReportDir, ReportProgressPanel progressPanel);
+    public void generateReport(String baseReportDir, ReportProgressPanel progressPanel);
 
 }
