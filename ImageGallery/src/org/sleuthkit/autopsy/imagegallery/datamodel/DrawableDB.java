@@ -150,7 +150,7 @@ public final class DrawableDB {
 
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
 
-    private final Lock DBLock = rwLock.writeLock(); // Currently serializing everything with on database connection
+    private final Lock DBLock = rwLock.writeLock(); // Currently serializing everything with one database connection
 
     // caches to make inserts / updates faster
     private Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
