@@ -95,7 +95,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         defaultCorrelationTypes = CorrelationAttributeInstance.getDefaultCorrelationTypes();
         defaultCorrelationTypes.forEach((type) -> {
-            bulkArtifacts.put(type.getDbTableName(), new ArrayList<>());
+            bulkArtifacts.put(EamDbUtil.correlationTypeToInstanceTableName(type), new ArrayList<>());
         });
     }
 
@@ -1207,7 +1207,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
 
         synchronized (bulkArtifacts) {
-            bulkArtifacts.get(eamArtifact.getCorrelationType().getDbTableName()).add(eamArtifact);
+            bulkArtifacts.get(EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType())).add(eamArtifact);
             bulkArtifactsCount++;
 
             if (bulkArtifactsCount >= bulkArtifactsThreshold) {
@@ -1240,9 +1240,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                     return;
                 }
 
-                for (CorrelationAttributeInstance.Type type : artifactTypes) {
+                for (String tableName : bulkArtifacts.keySet()) {
 
-                    String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
                     String sql
                             = "INSERT INTO "
                             + tableName
@@ -1253,66 +1252,65 @@ abstract class AbstractSqlEamDb implements EamDb {
 
                     bulkPs = conn.prepareStatement(sql);
 
-                    Collection<CorrelationAttributeInstance> eamArtifacts = bulkArtifacts.get(type.getDbTableName());
-                    if (eamArtifacts != null) {
-                        for (CorrelationAttributeInstance eamArtifact : eamArtifacts) {
+                    Collection<CorrelationAttributeInstance> eamArtifacts = bulkArtifacts.get(tableName);
+                    for (CorrelationAttributeInstance eamArtifact : eamArtifacts) {
 
-                            if (!eamArtifact.getCorrelationValue().isEmpty()) {
+                        if (!eamArtifact.getCorrelationValue().isEmpty()) {
 
-                                if (eamArtifact.getCorrelationCase() == null) {
-                                    throw new EamDbException("CorrelationAttributeInstance case is null for: "
-                                            + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
-                                            + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
-                                            + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue());
-                                }
-                                if (eamArtifact.getCorrelationDataSource() == null) {
-                                    throw new EamDbException("CorrelationAttributeInstance data source is null for: "
-                                            + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
-                                            + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
-                                            + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue());
-                                }
-                                if (eamArtifact.getKnownStatus() == null) {
-                                    throw new EamDbException("CorrelationAttributeInstance known status is null for: "
-                                            + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
-                                            + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
-                                            + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue()
-                                            + "\n\tEam Instance: "
-                                            + "\n\t\tCaseId: " + eamArtifact.getCorrelationDataSource().getCaseID()
-                                            + "\n\t\tDeviceID: " + eamArtifact.getCorrelationDataSource().getDeviceID());
-                                }
-
-                                if (eamArtifact.getCorrelationValue().length() < MAX_VALUE_LENGTH) {
-                                    bulkPs.setString(1, eamArtifact.getCorrelationCase().getCaseUUID());
-                                    bulkPs.setLong(2, eamArtifact.getCorrelationDataSource().getDataSourceObjectID());
-                                    bulkPs.setInt(3, eamArtifact.getCorrelationDataSource().getCaseID());
-                                    bulkPs.setString(4, eamArtifact.getCorrelationValue());
-                                    bulkPs.setString(5, eamArtifact.getFilePath());
-                                    bulkPs.setByte(6, eamArtifact.getKnownStatus().getFileKnownValue());
-                                    if ("".equals(eamArtifact.getComment())) {
-                                        bulkPs.setNull(7, Types.INTEGER);
-                                    } else {
-                                        bulkPs.setString(7, eamArtifact.getComment());
-                                    }
-                                    bulkPs.setLong(8, eamArtifact.getFileObjectId());
-                                    bulkPs.addBatch();
-                                } else {
-                                    logger.log(Level.WARNING, ("Artifact value too long for central repository."
-                                            + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
-                                            + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
-                                            + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue())
-                                            + "\n\tEam Instance: "
-                                            + "\n\t\tCaseId: " + eamArtifact.getCorrelationDataSource().getCaseID()
-                                            + "\n\t\tDeviceID: " + eamArtifact.getCorrelationDataSource().getDeviceID()
-                                            + "\n\t\tFilePath: " + eamArtifact.getFilePath());
-                                }
+                            if (eamArtifact.getCorrelationCase() == null) {
+                                throw new EamDbException("CorrelationAttributeInstance case is null for: "
+                                        + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
+                                        + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                                        + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue());
+                            }
+                            if (eamArtifact.getCorrelationDataSource() == null) {
+                                throw new EamDbException("CorrelationAttributeInstance data source is null for: "
+                                        + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
+                                        + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                                        + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue());
+                            }
+                            if (eamArtifact.getKnownStatus() == null) {
+                                throw new EamDbException("CorrelationAttributeInstance known status is null for: "
+                                        + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
+                                        + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                                        + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue()
+                                        + "\n\tEam Instance: "
+                                        + "\n\t\tCaseId: " + eamArtifact.getCorrelationDataSource().getCaseID()
+                                        + "\n\t\tDeviceID: " + eamArtifact.getCorrelationDataSource().getDeviceID());
                             }
 
+                            if (eamArtifact.getCorrelationValue().length() < MAX_VALUE_LENGTH) {
+                                bulkPs.setString(1, eamArtifact.getCorrelationCase().getCaseUUID());
+                                bulkPs.setLong(2, eamArtifact.getCorrelationDataSource().getDataSourceObjectID());
+                                bulkPs.setInt(3, eamArtifact.getCorrelationDataSource().getCaseID());
+                                bulkPs.setString(4, eamArtifact.getCorrelationValue());
+                                bulkPs.setString(5, eamArtifact.getFilePath());
+                                bulkPs.setByte(6, eamArtifact.getKnownStatus().getFileKnownValue());
+                                if ("".equals(eamArtifact.getComment())) {
+                                    bulkPs.setNull(7, Types.INTEGER);
+                                } else {
+                                    bulkPs.setString(7, eamArtifact.getComment());
+                                }
+                                bulkPs.setLong(8, eamArtifact.getFileObjectId());
+                                bulkPs.addBatch();
+                            } else {
+                                logger.log(Level.WARNING, ("Artifact value too long for central repository."
+                                        + "\n\tCorrelationArtifact ID: " + eamArtifact.getID()
+                                        + "\n\tCorrelationArtifact Type: " + eamArtifact.getCorrelationType().getDisplayName()
+                                        + "\n\tCorrelationArtifact Value: " + eamArtifact.getCorrelationValue())
+                                        + "\n\tEam Instance: "
+                                        + "\n\t\tCaseId: " + eamArtifact.getCorrelationDataSource().getCaseID()
+                                        + "\n\t\tDeviceID: " + eamArtifact.getCorrelationDataSource().getDeviceID()
+                                        + "\n\t\tFilePath: " + eamArtifact.getFilePath());
+                            }
                         }
 
-                        bulkPs.executeBatch();
-                        bulkArtifacts.get(type.getDbTableName()).clear();
                     }
+
+                    bulkPs.executeBatch();
+                    bulkArtifacts.get(tableName).clear();
                 }
+
                 TimingMetric timingMetric = HealthMonitor.getTimingMetric("Correlation Engine: Bulk insert");
                 HealthMonitor.submitTimingMetric(timingMetric);
 
@@ -3296,14 +3294,14 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute(String.format(addDataSourceIdIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addValueIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
                 statement.execute(String.format(addKnownStatusIndexTemplate, wirelessNetworksTableInstanceName, wirelessNetworksTableInstanceName));
-
-                //create a new mac_address_instances table and add indexes for its columns
+                
+                 //create a new mac_address_instances table and add indexes for its columns
                 statement.execute(String.format(addSsidTableTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
                 statement.execute(String.format(addCaseIdIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
                 statement.execute(String.format(addDataSourceIdIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
                 statement.execute(String.format(addValueIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
                 statement.execute(String.format(addKnownStatusIndexTemplate, macAddressTableInstanceName, macAddressTableInstanceName));
-
+                
                 //add file_obj_id column to _instances table which do not already have it
                 String instance_type_dbname;
                 final String objectIdColumnName = "file_obj_id";
