@@ -56,7 +56,6 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
-import org.sleuthkit.autopsy.datamodel.SCOAndTranslationTask.SCOResults;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
@@ -83,7 +82,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
             Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED, Case.Events.CR_COMMENT_CHANGED);
 
-    private static final ExecutorService SCOAndTranslationPool;
+    private static final ExecutorService translationPool;
     private static final Integer MAX_POOL_SIZE = 10;
 
     /**
@@ -108,8 +107,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     static {
         //Initialize this pool only once! This will be used by every instance of AAFN
         //to do their heavy duty SCO column and translation updates.
-        SCOAndTranslationPool = Executors.newFixedThreadPool(MAX_POOL_SIZE, 
-                new ThreadFactoryBuilder().setNameFormat("SCOandTranslation-thread-%d").build());
+        translationPool = Executors.newFixedThreadPool(MAX_POOL_SIZE, 
+                new ThreadFactoryBuilder().setNameFormat("translation-task-thread-%d").build());
     }
 
     /**
@@ -134,14 +133,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     /**
      * Event signals to indicate the background tasks have completed processing.
-     * Currently, we have two property tasks in the background:
+     * Currently, we have one property task in the background:
      *
-     * 1) Retreiving the translation of the file name 2) Getting the SCO column
-     * properties from the databases
+     * 1) Retreiving the translation of the file name
      */
     enum NodeSpecificEvents {
         TRANSLATION_AVAILABLE,
-        SCO_AVAILABLE;
     }
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -223,12 +220,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
          */
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             updateSheet(new NodeProperty<>(TRANSLATION.toString(),TRANSLATION.toString(),NO_DESCR,evt.getNewValue()));
-        } else if (eventType.equals(NodeSpecificEvents.SCO_AVAILABLE.toString())) {
-            SCOResults res = (SCOResults) evt.getNewValue();
-            updateSheet(new NodeProperty<>(SCORE.toString(),SCORE.toString(),res.getScoreDescription(),res.getScore()),
-                    new NodeProperty<>(COMMENT.toString(),COMMENT.toString(),NO_DESCR,res.getComment()),
-                    new NodeProperty<>(OCCURRENCES.toString(),OCCURRENCES.toString(),res.getCountDescription(),res.getCount())
-            );
         }
     };
     /**
@@ -296,7 +287,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
          * blocking the UI. Keep all weak references so
          * this task doesn't block the ability of this node to be GC'd.
          */
-        SCOAndTranslationPool.submit(new SCOAndTranslationTask(new WeakReference<>(this), weakPcl));
+        translationPool.submit(new TranslationTask(new WeakReference<>(this), weakPcl));
 
         return sheet;
     }
@@ -373,17 +364,25 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         List<NodeProperty<?>> properties = new ArrayList<>();
         properties.add(new NodeProperty<>(NAME.toString(), NAME.toString(), NO_DESCR, getContentDisplayName(content)));   
         /*
-         * Initialize dummy place holder properties for Translation,
-         * Score, Comment, and Occurrences). At the bottom, we kick off a
+         * Initialize an empty place holder value. At the bottom, we kick off a
          * background task that promises to update these values.
          */
+        
         if (UserPreferences.displayTranslatedFileNames()) {
             properties.add(new NodeProperty<>(TRANSLATION.toString(), TRANSLATION.toString(), NO_DESCR, ""));
         }
-        properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), NO_DESCR, ""));
-        properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, ""));
+
+        //SCO column prereq info..
+        List<ContentTag> tags = getContentTagsFromDatabase();
+        CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
+        
+        Pair<DataResultViewerTable.Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
+        properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), scoreAndDescription.getRight(), scoreAndDescription.getLeft()));
+        DataResultViewerTable.HasCommentStatus comment = getCommentProperty(tags, attribute);
+        properties.add(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, comment));
         if (!UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
-            properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), NO_DESCR, ""));
+            Pair<Long, String> countAndDescription = getCountPropertyAndDescription(attribute);
+            properties.add(new NodeProperty<>(OCCURRENCES.toString(), OCCURRENCES.toString(), countAndDescription.getRight(), countAndDescription.getLeft()));
         }
         properties.add(new NodeProperty<>(LOCATION.toString(), LOCATION.toString(), NO_DESCR, getContentPath(content)));
         properties.add(new NodeProperty<>(MOD_TIME.toString(), MOD_TIME.toString(), NO_DESCR, ContentUtils.getStringTime(content.getMtime(), content)));
