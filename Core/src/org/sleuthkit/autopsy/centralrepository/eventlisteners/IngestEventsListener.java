@@ -179,6 +179,43 @@ public class IngestEventsListener {
         }
     }
 
+    @NbBundle.Messages({"IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)",
+        "# {0} - typeName",
+        "# {1} - count",
+        "IngestEventsListener.prevCount.text=Number of previous {0}: {1}"})
+    static private void postCorrelatedPreviousArtifactToBlackboard(BlackboardArtifact bbArtifact, long count, String displayName) {
+
+        try {
+            AbstractFile af = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
+            BlackboardArtifact tifArtifact = af.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+            BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
+                    Bundle.IngestEventsListener_prevExists_text());
+            BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
+                    Bundle.IngestEventsListener_prevCount_text(displayName, count));
+            attributes.add(att);
+            attributes.add(att2);
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
+
+            tifArtifact.addAttributes(attributes);
+            try {
+                // index the artifact for keyword search
+                Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+                blackboard.indexArtifact(tifArtifact);
+            } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
+            }
+
+            // fire event to notify UI of this new artifact
+            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
+        } catch (IllegalStateException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+        }
+    }
+
     private class IngestModuleEventListener implements PropertyChangeListener {
 
         @Override
@@ -198,7 +235,8 @@ public class IngestEventsListener {
                     case DATA_ADDED: {
                         //if ingest isn't running create the interesting items otherwise use the ingest module setting to determine if we create interesting items
                         boolean flagNotable = !IngestManager.getInstance().isIngestRunning() || isFlagNotableItems();
-                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable));
+                        boolean flagPrevious = !IngestManager.getInstance().isIngestRunning() || true; //WJS-TODO change this to use a setting instead of true
+                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable, flagPrevious));
                         break;
                     }
                 }
@@ -237,11 +275,13 @@ public class IngestEventsListener {
         private final EamDb dbManager;
         private final PropertyChangeEvent event;
         private final boolean flagNotableItemsEnabled;
+        private final boolean flagPreviousItemsEnabled;
 
-        private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled) {
+        private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled) {
             dbManager = db;
             event = evt;
             this.flagNotableItemsEnabled = flagNotableItemsEnabled;
+            this.flagPreviousItemsEnabled = flagPreviousItemsEnabled;
         }
 
         @Override
@@ -274,6 +314,22 @@ public class IngestEventsListener {
                                     if (!caseDisplayNames.isEmpty()) {
                                         postCorrelatedBadArtifactToBlackboard(bbArtifact,
                                                 caseDisplayNames);
+                                    }
+                                } catch (CorrelationAttributeNormalizationException ex) {
+                                    LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
+                                }
+                            }
+                            if (flagPreviousItemsEnabled && 
+                                    (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.USBID_TYPE_ID ||
+                                    eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.ICCID_TYPE_ID ||
+                                    eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMEI_TYPE_ID ||
+                                    eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMSI_TYPE_ID ||
+                                    eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.MAC_TYPE_ID)) {
+                                try {
+                                    Long countPreviousOccurences = dbManager.getCountArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                    if (countPreviousOccurences > 0) {
+                                        postCorrelatedPreviousArtifactToBlackboard(bbArtifact,
+                                                countPreviousOccurences, eamArtifact.getCorrelationType().getDisplayName());
                                     }
                                 } catch (CorrelationAttributeNormalizationException ex) {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
