@@ -528,7 +528,6 @@ public class SQLiteTableReader implements AutoCloseable {
     @Override
     public void close() throws SQLiteTableReaderException {
         try {
-            closeTableResources();
             if (Objects.nonNull(conn)) {
                 conn.close();
             }
