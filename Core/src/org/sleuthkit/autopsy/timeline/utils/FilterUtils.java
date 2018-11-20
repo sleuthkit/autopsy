@@ -55,7 +55,7 @@ public final class FilterUtils {
             "application/x-msdos-program"//NON-NLS
     );
 
-    private static final Set<String> DOCUMENT_MIME_TYPES = ImmutableSet.of(
+    private static final Set<String> DOCUMENT_MIME_TYPES =ImmutableSet.of(
             "text/*", //NON-NLS
             "application/rtf", //NON-NLS
             "application/pdf", //NON-NLS
