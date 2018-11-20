@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.coreutils;
 
-import com.mchange.v2.cfg.DelayedLogItem;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
