@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -45,11 +46,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  * the row values. Table values are processed by data type. Users configure
  * these actions for certain data types in the Builder. Example usage:
  *
- * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) 
- * .onInteger((i)
- *      -> { System.out.println(i); })
- * .build(); 
- * 
+ * SQLiteTableReader reader = new SQLiteTableReader.Builder(file)
+ *    .onInteger((i)
+ *       -> { System.out.println(i); }) 
+ *    .build();
+ *
  * reader.read(tableName);
  *
  * or
@@ -74,7 +75,7 @@ public class SQLiteTableReader implements AutoCloseable {
     public static class Builder {
 
         private final AbstractFile file;
-        
+
         private Consumer<String> onColumnNameAction;
         private Consumer<String> onStringAction;
         private Consumer<Long> onLongAction;
@@ -209,8 +210,9 @@ public class SQLiteTableReader implements AutoCloseable {
 
     private final AbstractFile file;
     private final Builder builder;
-    
-    private final String SELECT_ALL_QUERY = "SELECT * FROM \"%s\""; 
+  
+    private static final String SELECT_ALL_QUERY = "SELECT * FROM \"%s\"";
+    private static final Logger logger = Logger.getLogger(SQLiteTableReader.class.getName());
 
     private Connection conn;
     private PreparedStatement statement;
@@ -226,7 +228,7 @@ public class SQLiteTableReader implements AutoCloseable {
     private String prevTableName;
 
     /**
-     * Holds reference to the builder instance so that we can use its actions 
+     * Holds reference to the builder instance so that we can use its actions
      * during iteration.
      */
     private SQLiteTableReader(Builder builder) {
@@ -324,7 +326,7 @@ public class SQLiteTableReader implements AutoCloseable {
      *
      */
     public void read(String tableName, int limit, int offset) throws SQLiteTableReaderException {
-        readHelper(String.format(SELECT_ALL_QUERY, tableName)+ " LIMIT " + limit
+        readHelper(String.format(SELECT_ALL_QUERY, tableName) + " LIMIT " + limit
                 + " OFFSET " + offset, () -> false);
     }
 
@@ -341,7 +343,7 @@ public class SQLiteTableReader implements AutoCloseable {
     public void read(String tableName, BooleanSupplier condition) throws SQLiteTableReaderException {
         if (Objects.isNull(prevTableName) || !prevTableName.equals(tableName)) {
             prevTableName = tableName;
-            closeTableResources();        
+            closeTableResources();
         }
         readHelper(String.format(SELECT_ALL_QUERY, tableName), condition);
     }
@@ -513,7 +515,7 @@ public class SQLiteTableReader implements AutoCloseable {
             }
             liveResultSet = false;
         } catch (SQLException ex) {
-            //Do nothing, can't close.. tried our best.
+            logger.log(Level.SEVERE, "Failed to close table resources", ex);
         }
     }
 
@@ -553,7 +555,7 @@ public class SQLiteTableReader implements AutoCloseable {
         try {
             close();
         } catch (SQLiteTableReaderException ex) {
-            //Do nothing, we tried out best to close the connection.
+            logger.log(Level.SEVERE, "Failed to close reader in finalizer", ex);
         }
         super.finalize();
     }

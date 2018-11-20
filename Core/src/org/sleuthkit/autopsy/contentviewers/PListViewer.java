@@ -74,7 +74,7 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
     private final Outline outline;
     private ExplorerManager explorerManager;
 
-    private NSDictionary rootDict;
+    private NSObject rootDict;
 
     /**
      * Creates new form PListViewer
@@ -415,22 +415,35 @@ class PListViewer extends javax.swing.JPanel implements FileTypeViewer, Explorer
     }
 
     /**
-     * Parses given binary stream and extracts Plist key/value
+     * Parses given binary stream and extracts Plist key/value.
      *
-     * @param plistbytes
+     * @param plistbytes The byte array containing the Plist data.
      *
      * @return list of PropKeyValue
      */
     private List<PropKeyValue> parsePList(final byte[] plistbytes) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException {
 
         final List<PropKeyValue> plist = new ArrayList<>();
-        rootDict = (NSDictionary) PropertyListParser.parse(plistbytes);
+        rootDict = PropertyListParser.parse(plistbytes);
 
-        final String[] keys = rootDict.allKeys();
-        for (final String key : keys) {
-            final PropKeyValue pkv = parseProperty(key, rootDict.objectForKey(key));
-            if (null != pkv) {
-                plist.add(pkv);
+        /*
+         * Parse the data if the root is an NSArray or NSDictionary. Anything
+         * else is unexpected and will be ignored.
+         */
+        if (rootDict instanceof NSArray) {
+            for (int i=0; i < ((NSArray)rootDict).count(); i++) {
+                final PropKeyValue pkv = parseProperty("", ((NSArray)rootDict).objectAtIndex(i));
+                if (null != pkv) {
+                    plist.add(pkv);
+                }
+            }
+        } else if (rootDict instanceof NSDictionary) {
+            final String[] keys = ((NSDictionary)rootDict).allKeys();
+            for (final String key : keys) {
+                final PropKeyValue pkv = parseProperty(key, ((NSDictionary)rootDict).objectForKey(key));
+                if (null != pkv) {
+                    plist.add(pkv);
+                }
             }
         }
 

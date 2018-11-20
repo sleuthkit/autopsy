@@ -35,8 +35,9 @@ import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
  * Settings for the Postgres implementation of the Central Repository database
- * 
- * NOTE: This is public scope because the options panel calls it directly to set/get
+ *
+ * NOTE: This is public scope because the options panel calls it directly to
+ * set/get
  */
 public final class PostgresEamDbSettings {
 
@@ -266,7 +267,7 @@ public final class PostgresEamDbSettings {
         return true;
 
     }
-    
+
     public boolean deleteDatabase() {
         Connection conn = getEphemeralConnection(true);
         if (null == conn) {
@@ -391,26 +392,13 @@ public final class PostgresEamDbSettings {
         createCorrelationTypesTable.append("CONSTRAINT correlation_types_names UNIQUE (display_name, db_table_name)");
         createCorrelationTypesTable.append(")");
 
-        // Each "%s" will be replaced with the relevant TYPE_instances table name.
-        StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
-        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
-        createArtifactInstancesTableTemplate.append("id SERIAL PRIMARY KEY,");
-        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("value text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("comment text,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (data_source_id, value, file_path),");
-        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
-        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
-        createArtifactInstancesTableTemplate.append(")");
+        String createArtifactInstancesTableTemplate = getCreateArtifactInstancesTableTemplate();
 
-        // Each "%s" will be replaced with the relevant TYPE_instances table name.
-        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
-        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
-        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
-        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
+        String instancesCaseIdIdx = getAddCaseIdIndexTemplate();
+        String instancesDatasourceIdIdx = getAddDataSourceIdIndexTemplate();
+        String instancesValueIdx = getAddValueIndexTemplate();
+        String instancesKnownStatusIdx = getAddKnownStatusIndexTemplate();
+        String instancesObjectIdIdx = getAddObjectIdIndexTemplate();
 
         StringBuilder createDbInfoTable = new StringBuilder();
         createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
@@ -447,25 +435,26 @@ public final class PostgresEamDbSettings {
 
             // Create a separate instance and reference table for each correlation type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
-            
+
             String reference_type_dbname;
             String instance_type_dbname;
             for (CorrelationAttributeInstance.Type type : DEFAULT_CORRELATION_TYPES) {
                 reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
                 instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
-                
-                stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx1, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx2, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx3, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx4, instance_type_dbname, instance_type_dbname));
+
+                stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesCaseIdIdx, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesDatasourceIdIdx, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesValueIdx, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesKnownStatusIdx, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesObjectIdIdx, instance_type_dbname, instance_type_dbname));
 
                 // FUTURE: allow more than the FILES type
                 if (type.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
                     stmt.execute(String.format(createReferenceTypesTableTemplate.toString(), reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx1, reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx2, reference_type_dbname, reference_type_dbname));
-                }                
+                }
             }
 
         } catch (SQLException ex) {
@@ -478,6 +467,97 @@ public final class PostgresEamDbSettings {
             EamDbUtil.closeConnection(conn);
         }
         return true;
+    }
+
+    /**
+     * Get the template String for creating a new _instances table in a Postgres
+     * central repository. %s will exist in the template where the name of the
+     * new table will be addedd.
+     *
+     * @return a String which is a template for cretating a new _instances table
+     */
+    static String getCreateArtifactInstancesTableTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
+        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
+        createArtifactInstancesTableTemplate.append("id SERIAL PRIMARY KEY,");
+        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("value text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("comment text,");
+        createArtifactInstancesTableTemplate.append("file_obj_id integer,");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (data_source_id, value, file_path),");
+        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
+        createArtifactInstancesTableTemplate.append(")");
+        return createArtifactInstancesTableTemplate.toString();
+    }
+
+    /**
+     * Get the template for creating an index on the case_id column of an
+     * instance table. %s will exist in the template where the name of the new
+     * table will be addedd.
+     *
+     * @return a String which is a template for adding an index to the case_id
+     *         column of a _instances table
+     */
+    static String getAddCaseIdIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
+    }
+
+    /**
+     * Get the template for creating an index on the data_source_id column of an
+     * instance table. %s will exist in the template where the name of the new
+     * table will be addedd.
+     *
+     * @return a String which is a template for adding an index to the
+     *         data_source_id column of a _instances table
+     */
+    static String getAddDataSourceIdIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
+    }
+
+    /**
+     * Get the template for creating an index on the value column of an instance
+     * table. %s will exist in the template where the name of the new table will
+     * be addedd.
+     *
+     * @return a String which is a template for adding an index to the value
+     *         column of a _instances table
+     */
+    static String getAddValueIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
+    }
+
+    /**
+     * Get the template for creating an index on the known_status column of an
+     * instance table. %s will exist in the template where the name of the new
+     * table will be addedd.
+     *
+     * @return a String which is a template for adding an index to the
+     *         known_status column of a _instances table
+     */
+    static String getAddKnownStatusIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
+    }
+
+    /**
+     * Get the template for creating an index on the file_obj_id column of an
+     * instance table. %s will exist in the template where the name of the new
+     * table will be addedd.
+     *
+     * @return a String which is a template for adding an index to the file_obj_id
+     *         column of a _instances table
+     */
+    static String getAddObjectIdIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_file_obj_id ON %s (file_obj_id)";
     }
 
     public boolean insertDefaultDatabaseContent() {

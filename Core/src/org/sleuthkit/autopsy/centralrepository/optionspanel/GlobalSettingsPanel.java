@@ -222,7 +222,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         correlationPropertiesTextArea.setColumns(20);
         correlationPropertiesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         correlationPropertiesTextArea.setLineWrap(true);
-        correlationPropertiesTextArea.setRows(2);
+        correlationPropertiesTextArea.setRows(1);
         correlationPropertiesTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.correlationPropertiesTextArea.text")); // NOI18N
         correlationPropertiesTextArea.setToolTipText("");
         correlationPropertiesTextArea.setWrapStyleWord(true);
@@ -236,17 +236,16 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(correlationPropertiesScrollPane)
                     .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
                         .addComponent(bnManageTypes)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(correlationPropertiesScrollPane))
                 .addContainerGap())
         );
         pnCorrelationPropertiesLayout.setVerticalGroup(
             pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnCorrelationPropertiesLayout.createSequentialGroup()
-                .addGap(7, 7, 7)
-                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnManageTypes)
                 .addGap(8, 8, 8))
@@ -281,7 +280,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(organizationPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(organizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(organizationScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 992, Short.MAX_VALUE)
+                    .addComponent(organizationScrollPane)
                     .addGroup(organizationPanelLayout.createSequentialGroup()
                         .addComponent(manageOrganizationButton)
                         .addGap(0, 0, Short.MAX_VALUE)))
@@ -356,7 +355,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lbCentralRepository, javax.swing.GroupLayout.DEFAULT_SIZE, 1022, Short.MAX_VALUE)
+            .addComponent(lbCentralRepository, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -366,7 +365,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(ingestRunningWarningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 844, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, 974, javax.swing.GroupLayout.PREFERRED_SIZE)))
@@ -382,13 +381,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addComponent(ingestRunningWarningLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(organizationPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(casesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
