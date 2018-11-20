@@ -57,7 +57,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) .onInteger(new
  * Consumer<Integer>() {
- *    @Override public void accept(Integer i) { System.out.println(i); }
+ *    @Override public void accept(Integer i) { 
+ *       System.out.println(i); 
+ *    }
  * }).build();
  *
  * reader.reader(tableName);
