@@ -41,14 +41,12 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributesSearchResultsViewerTable;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.corecomponents.TextPrompt;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.othercasessearch.Bundle;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 
 @Messages({
@@ -56,7 +54,9 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
     "OtherCasesSearchDialog.resultsTitle.text=Other Cases",
     "OtherCasesSearchDialog.resultsDescription.text=Other Cases Search",
     "OtherCasesSearchDialog.emptyNode.text=No results found.",
-    "OtherCasesSearchDialog.validation.invalidHash=The supplied value is not a valid MD5 hash."
+    "OtherCasesSearchDialog.validation.invalidHash=The supplied value is not a valid MD5 hash.",
+    "# {0} - number of cases",
+    "OtherCasesSearchDialog.caseLabel.text=The current Central Repository contains {0} case(s)."
 })
 /**
  * The Search Other Cases dialog allows users to search for specific
@@ -113,12 +113,12 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
                 try {
                     super.done();
                     List<CorrelationAttributeInstance> correlationInstances = this.get();
-                    DataResultViewerTable table = new CommonAttributesSearchResultsViewerTable();
+                    DataResultViewerTable table = new DataResultViewerTable();
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
                     
                     OtherCasesSearchNode searchNode = new OtherCasesSearchNode(correlationInstances);
-                    OtherCasesFilterNode tableFilterNode = new OtherCasesFilterNode(searchNode, true, searchNode.getName());
+                    TableFilterNode tableFilterNode = new TableFilterNode(searchNode, true, searchNode.getName());
                     
                     String resultsText = String.format("%s (%s; \"%s\")",
                             Bundle.OtherCasesSearchDialog_resultsTitle_text(),
@@ -132,7 +132,7 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
                                 resultsText, Bundle.OtherCasesSearchDialog_resultsDescription_text(), emptyNode, 0);
                     } else {
                         searchResultWin = DataResultTopComponent.createInstance(
-                                resultsText, Bundle.OtherCasesSearchDialog_resultsDescription_text(), tableFilterNode, HIDE_ON_CLOSE, viewers);
+                                resultsText, Bundle.OtherCasesSearchDialog_resultsDescription_text(), tableFilterNode, correlationInstances.size(), viewers);
                     }
                     searchResultWin.requestActive(); // make it the active top component
                 } catch (ExecutionException | InterruptedException ex) {
@@ -158,6 +158,7 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
         correlationTypeLabel = new javax.swing.JLabel();
         errorLabel = new javax.swing.JLabel();
         descriptionLabel = new javax.swing.JLabel();
+        casesLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
@@ -180,6 +181,9 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.descriptionLabel.text")); // NOI18N
 
+        casesLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        org.openide.awt.Mnemonics.setLocalizedText(casesLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.casesLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -188,9 +192,12 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(casesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
                         .addComponent(searchButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(descriptionLabel)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(correlationValueLabel)
@@ -198,10 +205,8 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(correlationTypeComboBox, 0, 289, Short.MAX_VALUE)
-                            .addComponent(correlationValueTextField)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(descriptionLabel)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                            .addComponent(correlationValueTextField)
+                            .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -217,10 +222,12 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(correlationValueLabel)
                     .addComponent(correlationValueTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(errorLabel)
+                .addGap(11, 11, 11)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
-                    .addComponent(errorLabel))
+                    .addComponent(casesLabel))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -261,8 +268,10 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
             EamDb dbManager = EamDb.getInstance();
             correlationTypes.clear();
             correlationTypes.addAll(dbManager.getDefinedCorrelationTypes());
+            int numberOfCases = dbManager.getCases().size();
+            casesLabel.setText(Bundle.OtherCasesSearchDialog_caseLabel_text(numberOfCases));
         } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex);
         }
 
         for (CorrelationAttributeInstance.Type type : correlationTypes) {
@@ -358,6 +367,7 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel casesLabel;
     private javax.swing.JComboBox<String> correlationTypeComboBox;
     private javax.swing.JLabel correlationTypeLabel;
     private javax.swing.JLabel correlationValueLabel;

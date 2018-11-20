@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.othercasessearch;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 
 /**
  * A <code>Children</code> implementation for a
@@ -66,7 +67,7 @@ final class OtherCasesFilterChildren extends FilterNode.Children {
      */
     @Override
     protected Node copyNode(Node nodeToCopy) {
-        return new OtherCasesFilterNode(nodeToCopy, false);
+        return new TableFilterNode(nodeToCopy, false);
     }
     
     /**

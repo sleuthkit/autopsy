@@ -22,14 +22,11 @@ import java.util.List;
 import org.openide.nodes.AbstractNode;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.othercasessearch.Bundle;
 
 /**
  * Parent node to OtherCasesSearchChildren.
  */
 class OtherCasesSearchNode extends AbstractNode {
-
-    private OtherCasesSearchChildren children;
 
     /**
      * Create an instance of OtherCasesSearchNode.
@@ -38,7 +35,6 @@ class OtherCasesSearchNode extends AbstractNode {
      */
     OtherCasesSearchNode(List<CorrelationAttributeInstance> keys) {
         super(new OtherCasesSearchChildren(true, keys));
-        this.children = (OtherCasesSearchChildren) this.getChildren();
     }
 
     @Messages({
