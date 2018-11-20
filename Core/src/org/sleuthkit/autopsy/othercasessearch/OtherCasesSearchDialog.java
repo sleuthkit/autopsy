@@ -62,8 +62,10 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
  * The Search Other Cases dialog allows users to search for specific
  * types of correlation properties in the Central Repository.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class OtherCasesSearchDialog extends javax.swing.JDialog {
     private static final Logger logger = Logger.getLogger(OtherCasesSearchDialog.class.getName());
+    private static final long serialVersionUID = 1L;
     
     private static final String FILES_CORRELATION_TYPE = "Files";
     
