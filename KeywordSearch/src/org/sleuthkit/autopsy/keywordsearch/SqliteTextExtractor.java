@@ -127,7 +127,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
             this.file = file;
             reader = new SQLiteTableReader.Builder(file)
                     .onColumnNames(getColumnNameStrategy())
-                    .forAll(getForAllStrategy()).build();
+                    .forAll(getForAllTableValuesStrategy()).build();
         }
 
         /**
@@ -141,28 +141,28 @@ class SqliteTextExtractor extends ContentTextExtractor {
          *
          * @return Our consumer class defined to do the steps above.
          */
-        private Consumer<Object> getForAllStrategy() {
+        private Consumer<Object> getForAllTableValuesStrategy() {
             return new Consumer<Object>() {
-                private int rowIndex = 0;
+                private int columnIndex = 0;
 
                 @Override
                 public void accept(Object value) {
-                    rowIndex++;
+                    columnIndex++;
                     //Ignore blobs
                     String objectStr = (value instanceof byte[]) ? "" : Objects.toString(value, "");
 
-                    if (rowIndex > 1 && rowIndex < totalColumns) {
+                    if (columnIndex > 1 && columnIndex < totalColumns) {
                         objectStr += " ";
                     }
-                    if (rowIndex == 1) {
+                    if (columnIndex == 1) {
                         objectStr = "\t" + objectStr + " ";
                     }
-                    if (rowIndex == totalColumns) {
+                    if (columnIndex == totalColumns) {
                         objectStr += "\n";
                     }
 
                     fillBuffer(objectStr);
-                    rowIndex = rowIndex % totalColumns;
+                    columnIndex = columnIndex % totalColumns;
                 }
             };
         }
@@ -285,8 +285,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
             try {
                 reader.close();
             } catch (SQLiteTableReaderException ex) {
-                //Done reading, but couldn't close the resources. Nothing we can 
-                //do as a recovery.
+                logger.log(Level.WARNING, "Could not close SQliteTableReader.", ex.getMessage());
             }
         }
 
