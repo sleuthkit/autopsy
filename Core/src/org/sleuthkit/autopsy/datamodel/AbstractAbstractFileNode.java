@@ -283,8 +283,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         });
         
         /*
-         * Submit the database queries ASAP. We want updated SCO columns without
-         * blocking the UI. Keep all weak references so
+         * Submit the translation task ASAP. Keep all weak references so
          * this task doesn't block the ability of this node to be GC'd.
          */
         translationPool.submit(new TranslationTask(new WeakReference<>(this), weakPcl));
