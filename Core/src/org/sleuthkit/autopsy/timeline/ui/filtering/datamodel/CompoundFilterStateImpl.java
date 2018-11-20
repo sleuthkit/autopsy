@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
+import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,9 +28,17 @@ import javafx.collections.ObservableList;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.CompoundFilter;
 
-class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends CompoundFilter<SubFilterType>>
-        extends DefaultFilterState<C>
-        implements CompoundFilterState<SubFilterType, C> {
+/**
+ *
+ * Defualt implementation of CompoundFilterState
+ *
+ * @param <SubFilterType> The type of the subfilters in the underlying
+ *                        CompoundFilter
+ * @param <FilterType>    The type of the underlying CompoundFilter
+ */
+class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType extends CompoundFilter<SubFilterType>>
+        extends DefaultFilterState<FilterType>
+        implements CompoundFilterState<SubFilterType, FilterType> {
 
     private final ObservableList<FilterState<SubFilterType>> subFilterStates = FXCollections.observableArrayList();
 
@@ -39,14 +48,9 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
      *
      * @param filter The CompoundFilter this will represent the state of.
      */
-    CompoundFilterStateImpl(C filter) {
+    CompoundFilterStateImpl(FilterType filter) {
         super(filter);
-        filter.getSubFilters().forEach(this::addSubFilterState);
-        filter.getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
-            while (change.next()) {
-                change.getAddedSubList().forEach(CompoundFilterStateImpl.this::addSubFilterState);
-            }
-        });
+        filter.getSubFilters().forEach(this::addStateForSubFilter);
 
         configureListeners();
     }
@@ -60,7 +64,7 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
      *                        of.
      * @param subFilterStates The filter states to use as the sub filter states.
      */
-    CompoundFilterStateImpl(C filter, Collection<FilterState<SubFilterType>> subFilterStates) {
+    CompoundFilterStateImpl(FilterType filter, Collection<FilterState<SubFilterType>> subFilterStates) {
         super(filter);
         subFilterStates.forEach(this::addSubFilterState);
 
@@ -68,6 +72,13 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
     }
 
     private void configureListeners() {
+        //Add a new subfilterstate whenever the underlying subfilters change.
+        getFilter().getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
+            while (change.next()) {
+                change.getAddedSubList().forEach(this::addStateForSubFilter);
+            }
+        });
+
         /*
          * enforce the following relationship between a compound filter and its
          * subfilters: if a compound filter's active property changes, disable
@@ -77,10 +88,9 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
         disableSubFiltersIfNotActive();
         selectedProperty().addListener(selectedProperty -> {
             if (isSelected() && getSubFilterStates().stream().noneMatch(FilterState::isSelected)) {
-                getSubFilterStates().forEach(subFilterState -> subFilterState.setSelected(true));
+                subFilterStates.forEach(subFilterState -> subFilterState.setSelected(true));
             }
         });
-
     }
 
     /**
@@ -91,28 +101,25 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
     private void disableSubFiltersIfNotActive() {
         boolean inactive = isActive() == false;
 
-        for (FilterState<SubFilterType> subFilter : getSubFilterStates()) {
-            subFilter.setDisabled(inactive);
-        }
+        subFilterStates.forEach(subFilterState -> subFilterState.setDisabled(inactive));
     }
 
     @SuppressWarnings("unchecked")
-    private <X extends TimelineFilter, S extends CompoundFilter<X>> void addSubFilterState(SubFilterType subFilter) {
-
+    private void addStateForSubFilter(SubFilterType subFilter) {
         if (subFilter instanceof CompoundFilter<?>) {
-            addSubFilterState((FilterState<SubFilterType>) new CompoundFilterStateImpl<>((S) subFilter));
+            addSubFilterState((FilterState<SubFilterType>) new CompoundFilterStateImpl<>((CompoundFilter<?>) subFilter));
         } else {
             addSubFilterState(new DefaultFilterState<>(subFilter));
         }
-
     }
 
-    private void addSubFilterState(FilterState<SubFilterType> newFilterModel) {
-        getSubFilterStates().add(newFilterModel);
-        newFilterModel.selectedProperty().addListener(selectedProperty -> {
-            //set this compound filter model  selected af any of the subfilters are selected.
-            setSelected(getSubFilterStates().stream().anyMatch(FilterState::isSelected));
+    private void addSubFilterState(FilterState<SubFilterType> newSubFilterState) {
+        subFilterStates.add(newSubFilterState);
+        newSubFilterState.selectedProperty().addListener(selectedProperty -> {
+            //set this compound filter state selected af any of the subfilters are selected.
+            setSelected(subFilterStates.stream().anyMatch(FilterState::isSelected));
         });
+        newSubFilterState.setDisabled(isActive() ==false);
     }
 
     @Override
@@ -121,12 +128,11 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
     }
 
     @Override
-    public CompoundFilterStateImpl<SubFilterType, C> copyOf() {
-
+    public CompoundFilterStateImpl<SubFilterType, FilterType> copyOf() {
         @SuppressWarnings("unchecked")
-        CompoundFilterStateImpl<SubFilterType, C> copy = new CompoundFilterStateImpl<>((C) getFilter().copyOf(),
-                getSubFilterStates().stream().map(FilterState::copyOf).collect(Collectors.toList())
-        );
+        CompoundFilterStateImpl<SubFilterType, FilterType> copy
+                = new CompoundFilterStateImpl<>((FilterType) getFilter().copyOf(),
+                        Lists.transform(subFilterStates, FilterState::copyOf));
 
         copy.setSelected(isSelected());
         copy.setDisabled(isDisabled());
@@ -135,16 +141,16 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, C extends Co
 
     @Override
     @SuppressWarnings("unchecked")
-    public C getActiveFilter() {
+    public FilterType getActiveFilter() {
         if (isActive() == false) {
             return null;
         }
 
-        List<SubFilterType> activeSubFilters = getSubFilterStates().stream()
+        List<SubFilterType> activeSubFilters = subFilterStates.stream()
                 .filter(FilterState::isActive)
                 .map(FilterState::getActiveFilter)
                 .collect(Collectors.toList());
-        C copy = (C) getFilter().copyOf();
+        FilterType copy = (FilterType) getFilter().copyOf();
         copy.getSubFilters().clear();
         copy.getSubFilters().addAll(activeSubFilters);
 

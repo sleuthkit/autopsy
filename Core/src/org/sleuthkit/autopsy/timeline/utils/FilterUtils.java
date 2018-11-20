@@ -18,12 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.utils;
 
-import com.google.common.net.MediaType;
+import com.google.common.collect.ImmutableSet;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
@@ -34,16 +32,16 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
  */
 public final class FilterUtils {
 
-    private static final Set<MediaType> MEDIA_MIME_TYPES = Stream.of(
+    private static final Set<String> MEDIA_MIME_TYPES = ImmutableSet.of(
             "image/*",//NON-NLS
             "video/*",//NON-NLS
             "audio/*",//NON-NLS
             "application/vnd.ms-asf", //NON-NLS
             "application/vnd.rn-realmedia", //NON-NLS
             "application/x-shockwave-flash" //NON-NLS 
-    ).map(MediaType::parse).collect(Collectors.toSet());
+    );
 
-    private static final Set<MediaType> EXECUTABLE_MIME_TYPES = Stream.of(
+    private static final Set<String> EXECUTABLE_MIME_TYPES = ImmutableSet.of(
             "application/x-bat",//NON-NLS
             "application/x-dosexec",//NON-NLS
             "application/vnd.microsoft.portable-executable",//NON-NLS
@@ -55,9 +53,9 @@ public final class FilterUtils {
             "application/x-winexe",//NON-NLS
             "application/msdos-windows",//NON-NLS
             "application/x-msdos-program"//NON-NLS
-    ).map(MediaType::parse).collect(Collectors.toSet());
+    );
 
-    private static final Set<MediaType> DOCUMENT_MIME_TYPES = Stream.of(
+    private static final Set<String> DOCUMENT_MIME_TYPES =ImmutableSet.of(
             "text/*", //NON-NLS
             "application/rtf", //NON-NLS
             "application/pdf", //NON-NLS
@@ -75,9 +73,9 @@ public final class FilterUtils {
             "application/vnd.oasis.opendocument.presentation", //NON-NLS
             "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
             "application/vnd.oasis.opendocument.text" //NON-NLS
-    ).map(MediaType::parse).collect(Collectors.toSet());
+    );
 
-    private static final Set<MediaType> NON_OTHER_MIME_TYPES = new HashSet<>();
+    private static final Set<String> NON_OTHER_MIME_TYPES = new HashSet<>();
 
     static {
         NON_OTHER_MIME_TYPES.addAll(MEDIA_MIME_TYPES);
@@ -116,7 +114,7 @@ public final class FilterUtils {
      */
     private static class InverseFileTypeFilter extends FileTypeFilter {
 
-        InverseFileTypeFilter(String displayName, Collection<MediaType> mediaTypes) {
+        InverseFileTypeFilter(String displayName, Collection<String> mediaTypes) {
             super(displayName, mediaTypes);
         }
 
