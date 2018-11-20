@@ -190,7 +190,7 @@ public final class DrawableDB {
     private void dbWriteUnlock() {
         DBLock.unlock();
     }
-  
+
     /**
      * Constructs an object that provides access to the drawables database and
      * selected tables in the case database. If the specified drawables database
@@ -217,7 +217,7 @@ public final class DrawableDB {
             con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
             if (!initializeDBSchema() || !prepareStatements() || !initializeStandardGroups() || !initializeImageList()) {
                 close();
-                throw new TskCoreException("Failed to create or open drawables database"); //NON-NLS
+                throw new TskCoreException("Failed to initialize drawables database for Image Gallery use"); //NON-NLS
             }
         } finally {
             dbWriteUnlock();
@@ -372,59 +372,52 @@ public final class DrawableDB {
      */
     public static DrawableDB getDrawableDB(ImageGalleryController controller) throws TskCoreException {
         Path dbPath = ImageGalleryModule.getModuleOutputDir(controller.getAutopsyCase()).resolve("drawable.db");
-        boolean hasDataSourceObjIdColumn = hasDataSourceObjIdColumn(dbPath);
         try {
-            if (hasDataSourceObjIdColumn == false) {
-                Files.deleteIfExists(dbPath);
-            }
+            deleteDatabaseIfOlderVersion(dbPath);
+        } catch (SQLException ex) {
+            throw new TskCoreException("Failed to check for obsolete drawables database schema", ex); //NON-NLS
         } catch (IOException ex) {
-            throw new TskCoreException("Error deleting old database", ex); //NON-NLS
+            throw new TskCoreException("Failed to delete obsolete drawables database", ex); //NON-NLS
         }
 
         try {
-            return new DrawableDB(dbPath, controller); //NON-NLS
-        } catch (SQLException ex) {
-            throw new TskCoreException("SQL error creating database connection", ex); //NON-NLS
+            return new DrawableDB(dbPath, controller);
         } catch (IOException ex) {
-            throw new TskCoreException("Error creating database connection", ex); //NON-NLS
+            throw new TskCoreException("Failed to create drawables database directory", ex); //NON-NLS
+        } catch (SQLException ex) {
+            throw new TskCoreException("Failed to create/open the drawables database", ex); //NON-NLS
         }
     }
 
-    /**
-     * Check if the db at the given path has the data_source_obj_id column. If
-     * the db doesn't exist or doesn't even have the drawable_files table, this
-     * method returns false.
-     *
-     * NOTE: This method makes an ad-hoc connection to db, which has the side
-     * effect of creating the drawable.db file if it didn't already exist.
-     */
-    private static boolean hasDataSourceObjIdColumn(Path dbPath) throws TskCoreException {
-
-        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
-                Statement stmt = con.createStatement();) {
-            boolean tableExists = false;
-            try (ResultSet results = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table'");) {//NON-NLS
-                while (results.next()) {
-                    if ("drawable_files".equals(results.getString("name"))) {
-                        tableExists = true;
-                        break;
+    private static void deleteDatabaseIfOlderVersion(Path dbPath) throws SQLException, IOException {
+        if (Files.exists(dbPath)) {
+            boolean hasDrawableFilesTable = false;
+            boolean hasDataSourceIdColumn = false;
+            try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString())) {
+                Statement stmt = con.createStatement();
+                try (ResultSet tableQueryResults = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table'")) { //NON-NLS
+                    while (tableQueryResults.next()) {
+                        if ("drawable_files".equals(tableQueryResults.getString("name"))) {
+                            hasDrawableFilesTable = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasDrawableFilesTable) {
+                    try (ResultSet results = stmt.executeQuery("PRAGMA table_info('drawable_files')")) {
+                        while (results.next()) {
+                            if ("data_source_obj_id".equals(results.getString("name"))) {
+                                hasDataSourceIdColumn = true;
+                                break;
+                            }
+                        }
                     }
                 }
             }
-            if (false == tableExists) {
-                return false;
+            if (!hasDrawableFilesTable || !hasDataSourceIdColumn) {
+                Files.delete(dbPath);
             }
-            try (ResultSet results = stmt.executeQuery("PRAGMA table_info('drawable_files')");) {   //NON-NLS
-                while (results.next()) {
-                    if ("data_source_obj_id".equals(results.getString("name"))) {
-                        return true;
-                    }
-                }
-            }
-        } catch (SQLException ex) {
-            throw new TskCoreException("SQL error checking database compatibility", ex); //NON-NLS
         }
-        return false;
     }
 
     private void setPragmas() throws SQLException {
@@ -777,7 +770,7 @@ public final class DrawableDB {
                 }
             }
         }
-        // Callback to process result of seen query
+// Callback to process result of seen query
         GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
 
         try {
@@ -1588,6 +1581,7 @@ public final class DrawableDB {
             logger.log(Level.WARNING, "failed to delete row for obj_id = " + id, ex); //NON-NLS
         } finally {
             dbWriteUnlock();
+
         }
     }
 
@@ -1751,6 +1745,7 @@ public final class DrawableDB {
         }
 
         return -1;
+
     }
 
     /**
