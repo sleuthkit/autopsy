@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
+import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,10 +52,8 @@ public class TagsFilterState extends CompoundFilterStateImpl<TagNameFilter, Tags
 
     @Override
     public TagsFilterState copyOf() {
-        @SuppressWarnings("unchecked")
         TagsFilterState copy = new TagsFilterState(getFilter().copyOf(),
-                getSubFilterStates().stream().map(FilterState::copyOf).collect(Collectors.toList())
-        );
+                Lists.transform(getSubFilterStates(), FilterState::copyOf));
 
         copy.setSelected(isSelected());
         copy.setDisabled(isDisabled());

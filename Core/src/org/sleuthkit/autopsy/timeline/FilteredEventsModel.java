@@ -32,16 +32,14 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import javafx.beans.Observable;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
-import javafx.collections.SetChangeListener;
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -61,6 +59,7 @@ import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.TagsFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
 import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
@@ -70,12 +69,14 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
@@ -132,7 +133,7 @@ public final class FilteredEventsModel {
     private final LoadingCache<Long, TimelineEvent> idToEventCache;
     private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
     /** Map from datasource id to datasource name. */
-    private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
+    private final ObservableMap<Long, DataSource> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
     // end caches
@@ -157,26 +158,19 @@ public final class FilteredEventsModel {
         minCache = CacheBuilder.newBuilder()
                 .build(new CacheLoaderImpl<>(ignored -> eventManager.getMinTime()));
 
-        datasourcesMap.addListener((MapChangeListener.Change<? extends Long, ? extends String> change) -> {
-            DataSourceFilter dataSourceFilter = new DataSourceFilter(change.getValueAdded(), change.getKey());
+        InvalidationListener filterSyncListener = observable -> {
             RootFilterState rootFilter = filterProperty().get();
-            rootFilter.getDataSourcesFilterState().getFilter().getSubFilters().add(dataSourceFilter);
+            syncFilters(rootFilter);
             requestedFilter.set(rootFilter.copyOf());
-        });
-        hashSets.addListener((SetChangeListener.Change< ? extends String> change) -> {
-            HashSetFilter hashSetFilter = new HashSetFilter(change.getElementAdded());
-            RootFilterState rootFilter = filterProperty().get();
-            rootFilter.getHashHitsFilterState().getFilter().getSubFilters().add(hashSetFilter);
-            requestedFilter.set(rootFilter.copyOf());
-        });
-        tagNames.addListener((ListChangeListener.Change<? extends TagName> change) -> {
-            RootFilterState rootFilter = filterProperty().get();
-            syncTagsFilter(rootFilter);
-            requestedFilter.set(rootFilter.copyOf());
-        });
+        };
+ 
+        datasourcesMap.addListener(filterSyncListener);
+        hashSets.addListener(filterSyncListener);
+        tagNames.addListener(filterSyncListener);
+
         requestedFilter.set(getDefaultFilter());
 
-        requestedZoomState.addListener((Observable observable) -> {
+        requestedZoomState.addListener(observable -> {
             final ZoomState zoomState = requestedZoomState.get();
 
             if (zoomState != null) {
@@ -244,18 +238,22 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * Use the given SleuthkitCase to update the data used to determine the
-     * available filters.
-     *
-     * @param skCase
+     * Update the data used to determine the available filters.
      */
     synchronized private void populateFilterData() throws TskCoreException {
         SleuthkitCase skCase = autoCase.getSleuthkitCase();
         hashSets.addAll(eventManager.getHashSetNames());
-
+        Set<Long> dataSourceIDs = eventManager.getDataSourceIDs();
+ 
         //because there is no way to remove a datasource we only add to this map.
-        for (Long id : eventManager.getDataSourceIDs()) {
-            datasourcesMap.putIfAbsent(id, skCase.getContentById(id).getDataSource().getName());
+        for (Long id : dataSourceIDs) {
+            try {
+                if (datasourcesMap.get(id) == null) {
+                    datasourcesMap.put(id, skCase.getDataSource(id));
+                }
+            } catch (TskDataException ex) {
+                throw new TskCoreException("Error looking up datasource for id " + id, ex);
+            }
         }
 
         //should this only be tags applied to files or event bearing artifacts?
@@ -263,21 +261,32 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * "sync" the given tags filter with the tagnames in use: Disable filters
-     * for tags that are not in use in the case, and add new filters for tags
-     * that don't have them. New filters are selected by default.
+     * "sync" the given root filter with the state of the casee: Disable filters
+     * for tags that are not in use in the case, and add new filters for tags,
+     * hashsets, and datasources. that don't have them. New filters are selected
+     * by default.
      *
      * @param rootFilterState the filter state to modify so it is consistent
      *                        with the tags in use in the case
      */
-    public void syncTagsFilter(RootFilterState rootFilterState) {
-        tagNames.forEach((tagName) -> {
-            rootFilterState.getTagsFilterState().getFilter().addSubFilter(new TagNameFilter(tagName));
-        });
-        for (FilterState<? extends TagNameFilter> filterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
-            filterState.setDisabled(tagNames.contains(filterState.getFilter().getTagName()) == false);
+    public void syncFilters(RootFilterState rootFilterState) {
+        TagsFilterState tagsFilterState = rootFilterState.getTagsFilterState();
+         for (TagName tagName : tagNames) {
+            tagsFilterState.getFilter().addSubFilter(new TagNameFilter(tagName));
         }
-
+        for (FilterState<? extends TagNameFilter> tagFilterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
+            tagFilterState.setDisabled(tagNames.contains(tagFilterState.getFilter().getTagName()) == false);
+        }
+        
+        DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
+        for (Map.Entry<Long, DataSource> entry : datasourcesMap.entrySet()) {
+            dataSourcesFilter.addSubFilter(new DataSourceFilter(entry.getValue().getName(), entry.getKey()));
+        }
+ 
+        HashHitsFilter hashSetsFilter = rootFilterState.getHashHitsFilterState().getFilter();
+        for (String hashSet : hashSets) {
+            hashSetsFilter.addSubFilter(new HashSetFilter(hashSet));
+        }
     }
 
     /**
@@ -340,7 +349,7 @@ public final class FilteredEventsModel {
     public synchronized RootFilterState getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
         datasourcesMap.entrySet().forEach(dataSourceEntry
-                -> dataSourcesFilter.addSubFilter(new DataSourceFilter(dataSourceEntry.getValue(), dataSourceEntry.getKey()))
+                -> dataSourcesFilter.addSubFilter(new DataSourceFilter(dataSourceEntry.getValue().getName(), dataSourceEntry.getKey()))
         );
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
@@ -501,30 +510,22 @@ public final class FilteredEventsModel {
         return postTagsAdded(updatedEventIDs);
     }
 
-    synchronized public boolean handleContentTagDeleted(ContentTagDeletedEvent evt) {
+    synchronized public boolean handleContentTagDeleted(ContentTagDeletedEvent evt) throws TskCoreException {
         DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
-        try {
-            Content content = autoCase.getSleuthkitCase().getContentById(deletedTagInfo.getContentID());
-            boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
-            Set<Long> updatedEventIDs = deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
-            return postTagsDeleted(updatedEventIDs);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "unable to determine tagged status of content.", ex); //NON-NLS
-        }
-        return false;
+
+        Content content = autoCase.getSleuthkitCase().getContentById(deletedTagInfo.getContentID());
+        boolean tagged = autoCase.getServices().getTagsManager().getContentTagsByContent(content).isEmpty() == false;
+        Set<Long> updatedEventIDs = deleteTag(content.getId(), null, deletedTagInfo.getTagID(), tagged);
+        return postTagsDeleted(updatedEventIDs);
     }
 
-    synchronized public boolean handleArtifactTagDeleted(BlackBoardArtifactTagDeletedEvent evt) {
+    synchronized public boolean handleArtifactTagDeleted(BlackBoardArtifactTagDeletedEvent evt) throws TskCoreException {
         DeletedBlackboardArtifactTagInfo deletedTagInfo = evt.getDeletedTagInfo();
-        try {
-            BlackboardArtifact artifact = autoCase.getSleuthkitCase().getBlackboardArtifact(deletedTagInfo.getArtifactID());
-            boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
-            Set<Long> updatedEventIDs = deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
-            return postTagsDeleted(updatedEventIDs);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "unable to determine tagged status of artifact.", ex); //NON-NLS
-        }
-        return false;
+
+        BlackboardArtifact artifact = autoCase.getSleuthkitCase().getBlackboardArtifact(deletedTagInfo.getArtifactID());
+        boolean tagged = autoCase.getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty() == false;
+        Set<Long> updatedEventIDs = deleteTag(artifact.getObjectID(), artifact.getArtifactID(), deletedTagInfo.getTagID(), tagged);
+        return postTagsDeleted(updatedEventIDs);
     }
 
     /**
@@ -664,21 +665,26 @@ public final class FilteredEventsModel {
         return updatedEventIDs;
     }
 
-    synchronized void invalidateAllCaches() {
+    /**
+     * Invalidate the timeline caches for the given event IDs. Also forces the
+     * filter values to be updated with any new values from the case data.( data
+     * sources, tags, etc)
+     *
+     * @param updatedEventIDs A collection of the event IDs whose cached event
+     *                        objects should be invalidated. Can be null or an
+     *                        empty sett to invalidate the general caches, such
+     *                        as min/max time, or the counts per event type.
+     *
+     * @throws TskCoreException
+     */
+    public synchronized void invalidateCaches(Collection<Long> updatedEventIDs) throws TskCoreException {
         minCache.invalidateAll();
         maxCache.invalidateAll();
-        idToEventCache.invalidateAll();
-        invalidateCaches(Collections.emptyList());
-    }
+         idToEventCache.invalidateAll(emptyIfNull(updatedEventIDs));
+         eventCountsCache.invalidateAll();
 
-    synchronized private void invalidateCaches(Collection<Long> updatedEventIDs) {
-        idToEventCache.invalidateAll(updatedEventIDs);
-        eventCountsCache.invalidateAll();
-        try {
-            populateFilterData();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed topopulate filter data.", ex); //NON-NLS
-        }
+        populateFilterData();
+
         eventbus.post(new CacheInvalidatedEvent());
     }
 

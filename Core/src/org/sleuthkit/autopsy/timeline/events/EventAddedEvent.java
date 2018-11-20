@@ -81,4 +81,13 @@ public class EventAddedEvent extends AutopsyEvent implements Serializable {
     public TimelineEvent getAddedEvent() {
         return getNewValue();
     }
+
+    /**
+     * Gets the Id of the event that was added.
+     *
+     * @return The Id of the event that was added.
+     */
+    public long getAddedEventID() {
+        return (long) super.getNewValue();
+    }
 }
