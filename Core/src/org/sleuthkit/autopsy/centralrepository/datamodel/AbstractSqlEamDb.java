@@ -647,7 +647,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @param correlationCase    the current CorrelationCase used for ensuring
      *                           uniqueness of DataSource
-     * @param dataSourceObjectId the data source device ID number
+     * @param dataSourceObjectId the object id of the data source
      *
      * @return The data source
      *
@@ -675,7 +675,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @param correlationCase    the current CorrelationCase used for ensuring
      *                           uniqueness of DataSource
-     * @param dataSourceDeviceId the data source device ID number
+     * @param dataSourceDeviceId the object id of the data source
      *
      * @return The data source
      *
