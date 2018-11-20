@@ -46,8 +46,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * the row values. Table values are processed by data type. Users configure
  * these actions for certain data types in the Builder. Example usage:
  *
- * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) .onInteger((i)
- * -> { System.out.println(i); }) .build();
+ * SQLiteTableReader reader = new SQLiteTableReader.Builder(file)
+ *    .onInteger((i)
+ *       -> { System.out.println(i); }) 
+ *    .build();
  *
  * reader.read(tableName);
  *
@@ -55,8 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) .onInteger(new
  * Consumer<Integer>() {
- *
- * @Override public void accept(Integer i) { System.out.println(i); }
+ *    @Override public void accept(Integer i) { System.out.println(i); }
  * }).build();
  *
  * reader.reader(tableName);
