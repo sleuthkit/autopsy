@@ -375,16 +375,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         properties.add(new NodeProperty<>(SIZE.toString(), SIZE.toString(), NO_DESCR, content.getSize()));
         properties.add(new NodeProperty<>(FLAGS_DIR.toString(), FLAGS_DIR.toString(), NO_DESCR, content.getDirFlagAsString()));
         properties.add(new NodeProperty<>(FLAGS_META.toString(), FLAGS_META.toString(), NO_DESCR, content.getMetaFlagsAsString()));
-        properties.add(new NodeProperty<>(MODE.toString(), MODE.toString(), NO_DESCR, content.getModesAsString()));
-        properties.add(new NodeProperty<>(USER_ID.toString(), USER_ID.toString(), NO_DESCR, content.getUid()));
-        properties.add(new NodeProperty<>(GROUP_ID.toString(), GROUP_ID.toString(), NO_DESCR, content.getGid()));
-        properties.add(new NodeProperty<>(META_ADDR.toString(), META_ADDR.toString(), NO_DESCR, content.getMetaAddr()));
-        properties.add(new NodeProperty<>(ATTR_ADDR.toString(), ATTR_ADDR.toString(), NO_DESCR, content.getAttrType().getValue() + "-" + content.getAttributeId()));
-        properties.add(new NodeProperty<>(TYPE_DIR.toString(), TYPE_DIR.toString(), NO_DESCR, content.getDirType().getLabel()));
-        properties.add(new NodeProperty<>(TYPE_META.toString(), TYPE_META.toString(), NO_DESCR, content.getMetaType().toString()));
         properties.add(new NodeProperty<>(KNOWN.toString(), KNOWN.toString(), NO_DESCR, content.getKnown().getName()));
         properties.add(new NodeProperty<>(MD5HASH.toString(), MD5HASH.toString(), NO_DESCR, StringUtils.defaultString(content.getMd5Hash())));
-        properties.add(new NodeProperty<>(ObjectID.toString(), ObjectID.toString(), NO_DESCR, content.getId()));
         properties.add(new NodeProperty<>(MIMETYPE.toString(), MIMETYPE.toString(), NO_DESCR, StringUtils.defaultString(content.getMIMEType())));
         properties.add(new NodeProperty<>(EXTENSION.toString(), EXTENSION.toString(), NO_DESCR, content.getNameExtension()));
         
@@ -615,16 +607,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(SIZE.toString(), content.getSize());
         map.put(FLAGS_DIR.toString(), content.getDirFlagAsString());
         map.put(FLAGS_META.toString(), content.getMetaFlagsAsString());
-        map.put(MODE.toString(), content.getModesAsString());
-        map.put(USER_ID.toString(), content.getUid());
-        map.put(GROUP_ID.toString(), content.getGid());
-        map.put(META_ADDR.toString(), content.getMetaAddr());
-        map.put(ATTR_ADDR.toString(), content.getAttrType().getValue() + "-" + content.getAttributeId());
-        map.put(TYPE_DIR.toString(), content.getDirType().getLabel());
-        map.put(TYPE_META.toString(), content.getMetaType().toString());
         map.put(KNOWN.toString(), content.getKnown().getName());
         map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
-        map.put(ObjectID.toString(), content.getId());
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
         map.put(EXTENSION.toString(), content.getNameExtension());
     }
