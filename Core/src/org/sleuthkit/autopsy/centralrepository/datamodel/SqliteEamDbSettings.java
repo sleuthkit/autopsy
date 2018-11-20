@@ -419,7 +419,7 @@ public final class SqliteEamDbSettings {
         }
         return true;
     }
-
+    
     /**
      * Get the template String for creating a new _instances table in a Sqlite
      * central repository. %s will exist in the template where the name of the

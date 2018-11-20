@@ -18,15 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import org.openide.nodes.Sheet;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.core.UserPreferences;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.LocalDirectory;
 
 /**
@@ -46,51 +37,6 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
 
     }
 
-    @Override
-    @NbBundle.Messages({
-        "LocalDirectoryNode.createSheet.name.name=Name",
-        "LocalDirectoryNode.createSheet.name.displayName=Name",
-        "LocalDirectoryNode.createSheet.name.desc=no description",
-        "LocalDirectoryNode.createSheet.noDesc=no description"})
-    protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-        if (sheetSet == null) {
-            sheetSet = Sheet.createPropertiesSet();
-            sheet.put(sheetSet);
-        }
-
-        List<ContentTag> tags = getContentTagsFromDatabase();
-        sheetSet.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_name_name(),
-                Bundle.LocalDirectoryNode_createSheet_name_displayName(),
-                Bundle.LocalDirectoryNode_createSheet_name_desc(),
-                getName()));
-        
-        addScoreProperty(sheetSet, tags);
-        
-        CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            correlationAttribute = getCorrelationAttributeInstance();
-        }
-        addCommentProperty(sheetSet, tags, correlationAttribute);
-        
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            addCountProperty(sheetSet, correlationAttribute);
-        }
-        // At present, a LocalDirectory will never be a datasource - the top level of a logical
-        // file set is a VirtualDirectory
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, getContent());
-
-        final String NO_DESCR = Bundle.LocalDirectoryNode_createSheet_noDesc();
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
-        }
-
-        return sheet;
-    }
-
-    @Override
     public <T> T accept(ContentNodeVisitor<T> visitor) {
         return visitor.visit(this);
     }

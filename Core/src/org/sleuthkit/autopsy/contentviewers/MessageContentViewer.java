@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
@@ -721,31 +723,23 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         @Override
         protected Sheet createSheet() {
-            Sheet sheet = new Sheet();
+            Sheet sheet = super.createSheet();
+            Set<String> keepProps = new HashSet<>(Arrays.asList(
+                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.nameColLbl"),
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.score.name"), 
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.comment.name"), 
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.count.name"), 
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.sizeColLbl"),
+                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.mimeType"),
+                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.knownColLbl")));
+            
+            //Remove all other props except for the  ones above
             Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-            if (sheetSet == null) {
-                sheetSet = Sheet.createPropertiesSet();
-                sheet.put(sheetSet);
+            for(Property<?> p : sheetSet.getProperties()) {
+                if(!keepProps.contains(p.getName())){
+                    sheetSet.remove(p.getName());
+                }
             }
-            List<ContentTag> tags = getContentTagsFromDatabase();
-
-            AbstractFile file = getContent();
-            sheetSet.put(new NodeProperty<>("Name", "Name", "Name", file.getName()));
-            
-            addScoreProperty(sheetSet, tags);
-            
-            CorrelationAttributeInstance correlationAttribute = null;
-            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
-                correlationAttribute = getCorrelationAttributeInstance();
-            }
-            addCommentProperty(sheetSet, tags, correlationAttribute);
-            
-            if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
-                addCountProperty(sheetSet, correlationAttribute);
-            }
-            sheetSet.put(new NodeProperty<>("Size", "Size", "Size", file.getSize()));
-            sheetSet.put(new NodeProperty<>("Mime Type", "Mime Type", "Mime Type", StringUtils.defaultString(file.getMIMEType())));
-            sheetSet.put(new NodeProperty<>("Known", "Known", "Known", file.getKnown().getName()));
 
             return sheet;
         }

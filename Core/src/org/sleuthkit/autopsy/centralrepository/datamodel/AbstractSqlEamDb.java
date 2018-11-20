@@ -647,7 +647,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @param correlationCase    the current CorrelationCase used for ensuring
      *                           uniqueness of DataSource
-     * @param dataSourceObjectId the data source device ID number
+     * @param dataSourceObjectId the object id of the data source
      *
      * @return The data source
      *
@@ -675,7 +675,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @param correlationCase    the current CorrelationCase used for ensuring
      *                           uniqueness of DataSource
-     * @param dataSourceDeviceId the data source device ID number
+     * @param dataSourceDeviceId the object id of the data source
      *
      * @return The data source
      *
@@ -3223,7 +3223,6 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
             //Update to 1.2
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
-
                 EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
                 final String addIntegerColumnTemplate = "ALTER TABLE %s ADD COLUMN %s INTEGER;";  //NON-NLS
                 final String addSsidTableTemplate;
@@ -3232,11 +3231,13 @@ abstract class AbstractSqlEamDb implements EamDb {
                 final String addValueIndexTemplate;
                 final String addKnownStatusIndexTemplate;
                 final String addObjectIdIndexTemplate;
+
                 final String addAttributeSql;
                 //get the data base specific code for creating a new _instance table
                 switch (selectedPlatform) {
                     case POSTGRESQL:
                         addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();  //NON-NLS
+
                         addSsidTableTemplate = PostgresEamDbSettings.getCreateArtifactInstancesTableTemplate();
                         addCaseIdIndexTemplate = PostgresEamDbSettings.getAddCaseIdIndexTemplate();
                         addDataSourceIdIndexTemplate = PostgresEamDbSettings.getAddDataSourceIdIndexTemplate();
@@ -3246,6 +3247,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         break;
                     case SQLITE:
                         addAttributeSql = "INSERT OR IGNORE INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";  //NON-NLS
+
                         addSsidTableTemplate = SqliteEamDbSettings.getCreateArtifactInstancesTableTemplate();
                         addCaseIdIndexTemplate = SqliteEamDbSettings.getAddCaseIdIndexTemplate();
                         addDataSourceIdIndexTemplate = SqliteEamDbSettings.getAddDataSourceIdIndexTemplate();

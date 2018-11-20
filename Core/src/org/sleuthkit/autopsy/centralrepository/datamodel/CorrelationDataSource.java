@@ -44,34 +44,36 @@ public class CorrelationDataSource implements Serializable {
      * Create a CorrelationDataSource object, the object will not have the data
      * source id for the row in the central repository.
      *
-     * @param correlationCase CorrelationCase object data source is associated
-     *                        with. Must have been created by EamDB and have a
-     *                        valid ID.
-     * @param deviceId        User specified case-specific ID
-     * @param name            Display name of data source
+     * @param correlationCase    CorrelationCase object data source is
+     *                           associated with. Must have been created by
+     *                           EamDB and have a valid ID.
+     * @param deviceId           User specified case-specific ID
+     * @param name               Display name of data source
+     * @param dataSourceObjectId The object ID for the datasource
      */
-    public CorrelationDataSource(CorrelationCase correlationCase, String deviceId, String name, long caseDataSourceId) {
-        this(correlationCase.getID(), -1, deviceId, name, caseDataSourceId);
+    public CorrelationDataSource(CorrelationCase correlationCase, String deviceId, String name, long dataSourceObjectId) {
+        this(correlationCase.getID(), -1, deviceId, name, dataSourceObjectId);
     }
 
     /**
      * Create a CorrelationDataSource object.
      *
-     * @param caseId       Row ID for Case in DB
-     * @param dataSourceId Row ID for this data source in DB (or -1)
-     * @param deviceId     User specified ID for device (unique per case)
-     * @param name         User specified name
+     * @param caseId             Row ID for Case in DB
+     * @param dataSourceId       Row ID for this data source in DB (or -1)
+     * @param deviceId           User specified ID for device (unique per case)
+     * @param name               User specified name
+     * @param dataSourceObjectId The object ID for the datasource
      */
     CorrelationDataSource(int caseId,
             int dataSourceId,
             String deviceId,
             String name,
-            Long caseDataSourceId) {
+            Long dataSourceObjectId) {
         this.caseID = caseId;
         this.dataSourceID = dataSourceId;
         this.deviceID = deviceId;
         this.name = name;
-        this.dataSourceObjectID = caseDataSourceId;
+        this.dataSourceObjectID = dataSourceObjectId;
     }
 
     /**
@@ -157,7 +159,7 @@ public class CorrelationDataSource implements Serializable {
     }
 
     /**
-     * Get the id for the data source in the case db
+     * Get the object id for the data source in the case db
      *
      * @return dataSourceObjectID or NULL if not available
      */
