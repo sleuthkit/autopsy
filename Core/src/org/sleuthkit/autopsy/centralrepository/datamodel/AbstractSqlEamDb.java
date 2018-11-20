@@ -3215,20 +3215,22 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
             //Update to 1.2
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
-
                 EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
                 final String addObjectIdColumnTemplate = "ALTER TABLE %s ADD COLUMN file_obj_id INTEGER;";  //NON-NLS
+
                 final String addSsidTableTemplate;
                 final String addCaseIdIndexTemplate;
                 final String addDataSourceIdIndexTemplate;
                 final String addValueIndexTemplate;
                 final String addKnownStatusIndexTemplate;
                 final String addObjectIdIndexTemplate;
+
                 final String addAttributeSql;
                 //get the data base specific code for creating a new _instance table
                 switch (selectedPlatform) {
                     case POSTGRESQL:
                         addAttributeSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?) " + getConflictClause();  //NON-NLS
+
                         addSsidTableTemplate = PostgresEamDbSettings.getCreateArtifactInstancesTableTemplate();
                         addCaseIdIndexTemplate = PostgresEamDbSettings.getAddCaseIdIndexTemplate();
                         addDataSourceIdIndexTemplate = PostgresEamDbSettings.getAddDataSourceIdIndexTemplate();
@@ -3238,6 +3240,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         break;
                     case SQLITE:
                         addAttributeSql = "INSERT OR IGNORE INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";  //NON-NLS
+
                         addSsidTableTemplate = SqliteEamDbSettings.getCreateArtifactInstancesTableTemplate();
                         addCaseIdIndexTemplate = SqliteEamDbSettings.getAddCaseIdIndexTemplate();
                         addDataSourceIdIndexTemplate = SqliteEamDbSettings.getAddDataSourceIdIndexTemplate();
@@ -3248,7 +3251,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                     default:
                         throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
                 }
-
                 //update central repository to be able to store new correlation attributes 
                 final String wirelessNetworsDbTableName = "wireless_networks";
                 final String wirelessNetworksTableInstanceName = wirelessNetworsDbTableName + "_instances";
