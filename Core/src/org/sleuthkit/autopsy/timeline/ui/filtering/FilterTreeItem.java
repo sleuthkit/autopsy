@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering;
 
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.scene.control.TreeItem;
@@ -74,12 +72,9 @@ final public class FilterTreeItem extends TreeItem<FilterState<?>> {
                 }
             });
 
-            compoundFilter.selectedProperty().addListener(new InvalidationListener() {
-                @Override
-                public void invalidated(Observable observable) {
-                    if (compoundFilter.isSelected()) {
-                        setExpanded(true);
-                    }
+            compoundFilter.selectedProperty().addListener( observable -> {
+                if (compoundFilter.isSelected()) {
+                    setExpanded(true);
                 }
             });
         }

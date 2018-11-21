@@ -58,11 +58,11 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewE
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TypeFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
 
 /**
  * A Node to represent an EventCluster in a DetailsChart
@@ -179,7 +179,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         final RootFilterState subClusterFilter = eventsModel.getFilterState().copyOf();
         subClusterFilter.getFilter().getSubFilters().addAll(
                 new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
-                new TypeFilter(getEventType()));
+                new EventTypeFilter(getEventType()));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
         final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
         final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());

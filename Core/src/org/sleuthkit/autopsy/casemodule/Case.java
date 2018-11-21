@@ -109,7 +109,7 @@ import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
-import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
+import org.sleuthkit.autopsy.timeline.events.TimelineEventAddedEvent;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -383,23 +383,24 @@ public class Case {
          */
         TAG_DEFINITION_CHANGED,
         /**
-         * An event, such mac time or web activity was added to the current
-         * case. The old value is null and the new value is the SingleEvent that
-         * was added.
-          
-         */ EVENT_ADDED,
-        /* An item in the central repository has had its comment modified. The
-         * old value is null, the new value is string for current comment.
+         * An timeline event, such mac time or web activity was added to the current
+         * case. The old value is null and the new value is the TimelineEvent
+         * that was added.
+         */
+        TIMELINE_EVENT_ADDED,
+        /* An item in the central repository has had its comment
+         * modified. The old value is null, the new value is string for current
+         * comment.
          */
         CR_COMMENT_CHANGED;
-      
+
     };
 
     private final class TSKCaseRepublisher {
 
         @Subscribe
-        public void rebroadcastTimelineEventCreated(TimelineManager.EventAddedEvent event) {
-            eventPublisher.publish(new EventAddedEvent(event));
+        public void rebroadcastTimelineEventCreated(TimelineManager.TimelineEventAddedEvent  event) {
+            eventPublisher.publish(new TimelineEventAddedEvent(event));
         }
 
         @Subscribe
