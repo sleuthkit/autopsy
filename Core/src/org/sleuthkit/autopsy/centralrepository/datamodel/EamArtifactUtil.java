@@ -165,22 +165,24 @@ public class EamArtifactUtil {
             } else if (correlationType.getId() == CorrelationAttributeInstance.SSID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID() == artifactTypeID) {
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID)).getValueString();
-//            } else if (correlationType.getId() == CorrelationAttributeInstance.MAC_TYPE_ID
-//                    && (BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID
-//                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING == artifactTypeID
-//                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER == artifactTypeID
-//                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED == artifactTypeID)) {
-//                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS)).getValueString();
-//            } else if (correlationType.getId() == CorrelationAttributeInstance.IMEI_TYPE_ID
-//                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID) {
-//                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMEI)).getValueString();
-//            } else if (correlationType.getId() == CorrelationAttributeInstance.IMSI_TYPE_ID
-//                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID) {
-//                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI)).getValueString();
-//            } else if (correlationType.getId() == CorrelationAttributeInstance.MAC_TYPE_ID
-//                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID) {
-//                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICID)).getValueString();
-            }  //WJS-TODO enable actually making the mac address attrs when tsk_artifacts and attrs added
+            } else if (correlationType.getId() == CorrelationAttributeInstance.MAC_TYPE_ID
+                    && (BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID() == artifactTypeID
+                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID() == artifactTypeID
+                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID() == artifactTypeID
+                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID)) {
+                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS)).getValueString();
+            } else if (correlationType.getId() == CorrelationAttributeInstance.IMEI_TYPE_ID
+                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID) {
+                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMEI)).getValueString();
+            } else if (correlationType.getId() == CorrelationAttributeInstance.IMSI_TYPE_ID
+                    && (BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID
+                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID() == artifactTypeID)) {
+                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI)).getValueString();
+            } else if (correlationType.getId() == CorrelationAttributeInstance.ICCID_TYPE_ID
+                    && (BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID
+                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID() == artifactTypeID)) {
+                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID)).getValueString();
+            }
 
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
