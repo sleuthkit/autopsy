@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -54,136 +55,109 @@ public class EamArtifactUtil {
      * EamArtifact with a single EamArtifactInstance within. If not, return
      * null.
      *
-     * @param bbArtifact   BlackboardArtifact to examine
+     * @param artifact     BlackboardArtifact to examine
      * @param checkEnabled If true, only create a CorrelationAttribute if it is
      *                     enabled
      *
      * @return List of EamArtifacts
      */
+    @SuppressWarnings("fallthrough") //TSK_DEVICE_INFO purposefully fallsthourgh into TSK_SIM_ATTACHED
     public static List<CorrelationAttributeInstance> makeInstancesFromBlackboardArtifact(BlackboardArtifact bbArtifact,
             boolean checkEnabled) {
-
         List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
-
         try {
-            // Cycle through the types and see if there is a correlation attribute that works
-            // for the given blackboard artifact
-            //
-            // @@@ This seems ineffecient. Instead of cycling based on correlation type, we should just
-            // have switch based on artifact type
-            for (CorrelationAttributeInstance.Type aType : EamDb.getInstance().getDefinedCorrelationTypes()) {
-                if ((checkEnabled && aType.isEnabled()) || !checkEnabled) {
-                    // Now always adds the instance details associated with this occurance.
-                    CorrelationAttributeInstance correlationAttribute = EamArtifactUtil.makeInstanceFromBlackboardArtifact(aType, bbArtifact);
-                    if (correlationAttribute != null) {
-                        eamArtifacts.add(correlationAttribute);
+            BlackboardArtifact artifact = null;
+            if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbArtifact.getArtifactTypeID()) {
+                // Get the associated artifact
+                BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                if (attribute != null) {
+                    artifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                }
+            } else {
+                artifact = bbArtifact;
+            }
+            if (artifact != null) {
+                switch (BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID())) {
+                    case TSK_KEYWORD_HIT: {
+                        BlackboardAttribute setNameAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                        if (setNameAttr != null
+                                && EamArtifactUtil.getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
+                            addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                        }
+                        break;
                     }
+                    case TSK_WEB_BOOKMARK:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+                        break;
+                    case TSK_WEB_COOKIE:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+                        break;
+                    case TSK_WEB_DOWNLOAD:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+                        break;
+                    case TSK_WEB_HISTORY:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+                        break;
+                    case TSK_CONTACT:
+                    //generates the same correlation attrs as tsk_message
+                    case TSK_CALLLOG:
+                    //generates the same correlation attrs as tsk_message
+                    case TSK_MESSAGE: {
+                        String value = null;
+                        if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
+                            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
+                        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))) {
+                            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
+                        } else if (null != artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
+                            value = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
+                        }
+                        // Remove all non-numeric symbols to semi-normalize phone numbers, preserving leading "+" character
+                        if (value != null) {
+                            String newValue = value.replaceAll("\\D", "");
+                            if (value.startsWith("+")) {
+                                newValue = "+" + newValue;
+                            }
+                            value = newValue;
+                            // Only add the correlation attribute if the resulting phone number large enough to be of use
+                            // (these 3-5 digit numbers can be valid, but are not useful for correlation)
+                            if (value.length() > 5) {
+                                eamArtifacts.add(makeCorrelationAttributeInstanceUsingTypeValue(artifact, EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value));
+                            }
+                        }
+                        break;
+                    }
+                    case TSK_DEVICE_ATTACHED:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID);
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
+                        break;
+                    case TSK_WIFI_NETWORK:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID, CorrelationAttributeInstance.SSID_TYPE_ID);
+                        break;
+                    case TSK_WIFI_NETWORK_ADAPTER:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
+                        break;
+                    case TSK_BLUETOOTH_PAIRING:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
+                        break;
+                    case TSK_BLUETOOTH_ADAPTER:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
+                        break;
+                    case TSK_DEVICE_INFO:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMEI, CorrelationAttributeInstance.IMEI_TYPE_ID);
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID);
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID);
+                        break;
+                    case TSK_SIM_ATTACHED:
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID);
+                        addCorrelationAttributeToList(eamArtifacts, artifact, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID);
+                        break;
+                    default:
+                        break;
                 }
             }
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error getting defined correlation types.", ex); // NON-NLS
             return eamArtifacts;
-        }
-
-        return eamArtifacts;
-    }
-
-    /**
-     * Create an EamArtifact of type correlationType if one can be generated
-     * based on the data in the blackboard artifact.
-     *
-     * @param correlationType The Central Repository artifact type to create
-     * @param bbArtifact      The blackboard artifact to pull data from
-     *
-     * @return the new EamArtifact, or null if one was not created because
-     *         bbArtifact did not contain the needed data
-     */
-    private static CorrelationAttributeInstance makeInstanceFromBlackboardArtifact(CorrelationAttributeInstance.Type correlationType,
-            BlackboardArtifact bbArtifact) throws EamDbException {
-        String value = null;
-        int artifactTypeID = bbArtifact.getArtifactTypeID();
-
-        try {
-            if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifactTypeID) {
-                // Get the associated artifact
-                BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
-                if (attribute != null) {
-                    BlackboardArtifact associatedArtifact = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
-                    return EamArtifactUtil.makeInstanceFromBlackboardArtifact(correlationType, associatedArtifact);
-                }
-
-            } else if (correlationType.getId() == CorrelationAttributeInstance.EMAIL_TYPE_ID
-                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() == artifactTypeID) {
-
-                BlackboardAttribute setNameAttr = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
-                if (setNameAttr != null
-                        && EamArtifactUtil.getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
-                    value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD)).getValueString();
-                }
-            } else if (correlationType.getId() == CorrelationAttributeInstance.DOMAIN_TYPE_ID
-                    && (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() == artifactTypeID)) {
-
-                // Lower-case this to normalize domains
-                BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN));
-                if (attribute != null) {
-                    value = attribute.getValueString();
-                }
-            } else if (correlationType.getId() == CorrelationAttributeInstance.PHONE_TYPE_ID
-                    && (BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == artifactTypeID)) {
-
-                if (null != bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
-                    value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
-                } else if (null != bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))) {
-                    value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
-                } else if (null != bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
-                    value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
-                }
-
-                // Remove all non-numeric symbols to semi-normalize phone numbers, preserving leading "+" character
-                if (value != null) {
-                    String newValue = value.replaceAll("\\D", "");
-                    if (value.startsWith("+")) {
-                        newValue = "+" + newValue;
-                    }
-
-                    value = newValue;
-
-                    // If the resulting phone number is too small to be of use, return null
-                    // (these 3-5 digit numbers can be valid, but are not useful for correlation)
-                    if (value.length() <= 5) {
-                        return null;
-                    }
-                }
-            } else if (correlationType.getId() == CorrelationAttributeInstance.USBID_TYPE_ID
-                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
-                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID)).getValueString();
-            } else if (correlationType.getId() == CorrelationAttributeInstance.SSID_TYPE_ID
-                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID() == artifactTypeID) {
-                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID)).getValueString();
-            } else if (correlationType.getId() == CorrelationAttributeInstance.MAC_TYPE_ID
-                    && (BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID)) {
-                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS)).getValueString();
-            } else if (correlationType.getId() == CorrelationAttributeInstance.IMEI_TYPE_ID
-                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID) {
-                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMEI)).getValueString();
-            } else if (correlationType.getId() == CorrelationAttributeInstance.IMSI_TYPE_ID
-                    && (BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID() == artifactTypeID)) {
-                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI)).getValueString();
-            } else if (correlationType.getId() == CorrelationAttributeInstance.ICCID_TYPE_ID
-                    && (BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID() == artifactTypeID
-                    || BlackboardArtifact.ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID() == artifactTypeID)) {
-                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID)).getValueString();
-            }
-
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
             return null;
@@ -191,11 +165,34 @@ public class EamArtifactUtil {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
             return null;
         }
+        return eamArtifacts;
+    }
 
-        if ((null != value) && (value.isEmpty() == false)) {
-            return makeCorrelationAttributeInstanceUsingTypeValue(bbArtifact, correlationType, value);
-        } else {
-            return null;
+    /**
+     * Add a CorrelationAttributeInstance of the specified type to the provided
+     * list if the artifact has an Attribute of the given type with a non empty
+     * value.
+     *
+     * @param eamArtifacts    the list of CorrelationAttributeInstance objects
+     *                        which should be added to
+     * @param artifact        the blackboard artifact which we are creating a
+     *                        CorrelationAttributeInstance for
+     * @param bbAttributeType the type of BlackboardAttribute we expect to exist
+     *                        for a CorrelationAttributeInstance of this type
+     *                        generated from this Blackboard Artifact
+     * @param typeId          the integer type id of the
+     *                        CorrelationAttributeInstance type
+     *
+     * @throws EamDbException
+     * @throws TskCoreException
+     */
+    private static void addCorrelationAttributeToList(List<CorrelationAttributeInstance> eamArtifacts, BlackboardArtifact artifact, ATTRIBUTE_TYPE bbAttributeType, int typeId) throws EamDbException, TskCoreException {
+        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(bbAttributeType));
+        if (attribute != null) {
+            String value = attribute.getValueString();
+            if ((null != value) && (value.isEmpty() == false)) {
+                eamArtifacts.add(makeCorrelationAttributeInstanceUsingTypeValue(artifact, EamDb.getInstance().getCorrelationTypeById(typeId), value));
+            }
         }
     }
 
