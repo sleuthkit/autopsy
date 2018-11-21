@@ -599,10 +599,11 @@ public final class ImageGalleryController {
         }
     }
 
+
     /**
-     * Abstract base class for tasks associated with a file in the database
+     * task that updates one file in database with results from ingest
      */
-    static abstract class FileTask extends BackgroundTask {
+    static class UpdateFileTask extends BackgroundTask {
 
         private final AbstractFile file;
         private final DrawableDB taskDB;
@@ -614,21 +615,11 @@ public final class ImageGalleryController {
         public AbstractFile getFile() {
             return file;
         }
-
-        FileTask(AbstractFile f, DrawableDB taskDB) {
+        
+        UpdateFileTask(AbstractFile f, DrawableDB taskDB) {
             super();
             this.file = f;
             this.taskDB = taskDB;
-        }
-    }
-
-    /**
-     * task that updates one file in database with results from ingest
-     */
-    static class UpdateFileTask extends FileTask {
-
-        UpdateFileTask(AbstractFile f, DrawableDB taskDB) {
-            super(f, taskDB);
         }
 
         /**
@@ -645,27 +636,6 @@ public final class ImageGalleryController {
         }
     }
 
-    /**
-     * task that updates one file in database with results from ingest
-     */
-    static class RemoveFileTask extends FileTask {
-
-        RemoveFileTask(AbstractFile f, DrawableDB taskDB) {
-            super(f, taskDB);
-        }
-
-        /**
-         * Update a file in the database
-         */
-        @Override
-        public void run() {
-            try {
-                getTaskDB().removeFile(getFile().getId());
-            } catch (TskCoreException | SQLException ex) {
-                Logger.getLogger(RemoveFileTask.class.getName()).log(Level.SEVERE, "Error in remove file task", ex); //NON-NLS
-            }
-        }
-    }
 
     /**
      * Base abstract class for various methods of copying image files data, for
