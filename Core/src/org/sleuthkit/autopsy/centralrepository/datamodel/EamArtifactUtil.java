@@ -61,7 +61,6 @@ public class EamArtifactUtil {
      *
      * @return List of EamArtifacts
      */
-    @SuppressWarnings("fallthrough") //TSK_DEVICE_INFO purposefully fallsthourgh into TSK_SIM_ATTACHED
     public static List<CorrelationAttributeInstance> makeInstancesFromBlackboardArtifact(BlackboardArtifact bbArtifact,
             boolean checkEnabled) {
         List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
