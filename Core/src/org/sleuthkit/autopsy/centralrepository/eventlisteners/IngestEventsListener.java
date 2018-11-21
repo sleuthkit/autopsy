@@ -202,7 +202,7 @@ public class IngestEventsListener {
         "# {0} - typeName",
         "# {1} - count",
         "IngestEventsListener.prevCount.text=Number of previous {0}: {1}"})
-    static private void postCorrelatedPreviousArtifactToBlackboard(BlackboardArtifact bbArtifact, long count, String displayName) {
+    static private void postCorrelatedPreviousArtifactToBlackboard(BlackboardArtifact bbArtifact) {
 
         try {
             AbstractFile af = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
@@ -211,10 +211,7 @@ public class IngestEventsListener {
             BlackboardArtifact tifArtifact = af.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.IngestEventsListener_prevExists_text());
-            BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                    Bundle.IngestEventsListener_prevCount_text(displayName, count));
             attributes.add(att);
-            attributes.add(att2);
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
 
             tifArtifact.addAttributes(attributes);
@@ -347,8 +344,7 @@ public class IngestEventsListener {
                                 try {
                                     Long countPreviousOccurences = dbManager.getCountArtifactInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                                     if (countPreviousOccurences > 0) {
-                                        postCorrelatedPreviousArtifactToBlackboard(bbArtifact,
-                                                countPreviousOccurences, eamArtifact.getCorrelationType().getDisplayName());
+                                        postCorrelatedPreviousArtifactToBlackboard(bbArtifact);
                                     }
                                 } catch (CorrelationAttributeNormalizationException ex) {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
