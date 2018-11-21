@@ -49,6 +49,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
@@ -155,10 +156,11 @@ class ExtractIE extends Extract {
                             TSK_PROG_NAME, PARENT_MODULE_NAME,
                             NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")),
                     new BlackboardAttribute(
-                            TSK_DOMAIN, PARENT_MODULE_NAME, Util.extractDomain(getURLFromIEBookmarkFile(fav))));
+                            TSK_DOMAIN, PARENT_MODULE_NAME, NetworkUtils.extractDomain(getURLFromIEBookmarkFile(fav))));
             try {
                 BlackboardArtifact bbart = fav.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
                 bbart.addAttributes(bbattributes);
+
                 bbartifacts.add(bbart);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  bookmark artifact.", ex); //NON-NLS
@@ -261,7 +263,7 @@ class ExtractIE extends Extract {
                             getModuleName()),
                     new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(URL)));
+                            NetworkUtils.extractDomain(URL)));
             try {
                 BlackboardArtifact bbart = cookiesFile.newArtifact(TSK_WEB_COOKIE);
                 bbart.addAttributes(bbattributes);
@@ -560,7 +562,7 @@ class ExtractIE extends Extract {
             realurl = lineBuff[1].trim();
         }
 
-        String domain = Util.extractDomain(realurl);
+        String domain = NetworkUtils.extractDomain(realurl);
         String actime = lineBuff[3];
         Long ftime = (long) 0;
 
@@ -596,6 +598,7 @@ class ExtractIE extends Extract {
     }
 
     /**
+     *
      * Determine if the URL should be ignored.
      *
      * @param url The URL to test.

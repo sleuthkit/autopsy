@@ -67,19 +67,19 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         initComponents();
         Utilities.configureTextPaneAsHtml(jTextPane1);
     }
-    
+
     @Override
     public void setNode(Node node) {
         if ((node == null) || (!isSupported(node))) {
             resetComponent();
             return;
         }
-        
+
         StringBuilder html = new StringBuilder();
-        
+
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         Content sourceFile = null;
-        
+
         try {
             if (artifact != null) {
                 /*
@@ -100,32 +100,32 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                     "Exception while trying to retrieve a Content instance from the BlackboardArtifact '%s' (id=%d).",
                     artifact.getDisplayName(), artifact.getArtifactID()), ex);
         }
-        
+
         if (artifact != null) {
             populateTagData(html, artifact, sourceFile);
         } else {
             populateTagData(html, sourceFile);
         }
-        
+
         if (sourceFile instanceof AbstractFile) {
             populateCentralRepositoryData(html, artifact, (AbstractFile) sourceFile);
         }
-        
+
         setText(html.toString());
         jTextPane1.setCaretPosition(0);
     }
-    
+
     /**
      * Populate the "Selected Item" sections with tag data for the supplied
      * content.
-     * 
+     *
      * @param html    The HTML text to update.
      * @param content Selected content.
      */
     private void populateTagData(StringBuilder html, Content content) {
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            
+
             startSection(html, "Selected Item");
             List<ContentTag> fileTagsList = tskCase.getContentTagsByContent(content);
             if (fileTagsList.isEmpty()) {
@@ -142,11 +142,11 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             logger.log(Level.SEVERE, "Exception while getting tags from the case database.", ex); //NON-NLS
         }
     }
-    
+
     /**
      * Populate the "Selected Item" and "Source File" sections with tag data for
      * a supplied artifact.
-     * 
+     *
      * @param html       The HTML text to update.
      * @param artifact   A selected artifact.
      * @param sourceFile The source content of the selected artifact.
@@ -154,7 +154,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     private void populateTagData(StringBuilder html, BlackboardArtifact artifact, Content sourceFile) {
         try {
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            
+
             startSection(html, "Selected Item");
             List<BlackboardArtifactTag> artifactTagsList = tskCase.getBlackboardArtifactTagsByArtifact(artifact);
             if (artifactTagsList.isEmpty()) {
@@ -165,7 +165,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                 }
             }
             endSection(html);
-            
+
             if (sourceFile != null) {
                 startSection(html, "Source File");
                 List<ContentTag> fileTagsList = tskCase.getContentTagsByContent(sourceFile);
@@ -184,10 +184,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             logger.log(Level.SEVERE, "Exception while getting tags from the case database.", ex); //NON-NLS
         }
     }
-    
+
     /**
      * Populate the "Central Repository Comments" section with data.
-     * 
+     *
      * @param html       The HTML text to update.
      * @param artifact   A selected artifact (can be null).
      * @param sourceFile A selected file, or a source file of the selected
@@ -208,23 +208,24 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                         if (attributeType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
                             CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCase());
                             instancesList.add(new CorrelationAttributeInstance(
-                                    md5,
                                     attributeType,
+                                    md5,
                                     correlationCase,
                                     CorrelationDataSource.fromTSKDataSource(correlationCase, sourceFile.getDataSource()),
                                     sourceFile.getParentPath() + sourceFile.getName(),
                                     "",
-                                    sourceFile.getKnown()));
+                                    sourceFile.getKnown(),
+                                    sourceFile.getId()));
                             break;
                         }
                     }
                 }
 
                 boolean commentDataFound = false;
-                
+
                 for (CorrelationAttributeInstance instance : instancesList) {
-                    List<CorrelationAttributeInstance> correlatedInstancesList =
-                            EamDb.getInstance().getArtifactInstancesByTypeValue(instance.getCorrelationType(), instance.getCorrelationValue());
+                    List<CorrelationAttributeInstance> correlatedInstancesList
+                            = EamDb.getInstance().getArtifactInstancesByTypeValue(instance.getCorrelationType(), instance.getCorrelationValue());
                     for (CorrelationAttributeInstance correlatedInstance : correlatedInstancesList) {
                         if (correlatedInstance.getComment() != null && correlatedInstance.getComment().isEmpty() == false) {
                             commentDataFound = true;
@@ -232,7 +233,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                         }
                     }
                 }
-                
+
                 if (commentDataFound == false) {
                     addMessage(html, "There is no comment data for the selected content in the Central Repository.");
                 }
@@ -247,16 +248,16 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     /**
      * Set the text of the text panel.
-     * 
+     *
      * @param text The text to set to the text panel.
      */
     private void setText(String text) {
         jTextPane1.setText("<html><body>" + text + "</body></html>"); //NON-NLS
     }
-    
+
     /**
      * Start a new data section.
-     * 
+     *
      * @param html        The HTML text to add the section to.
      * @param sectionName The name of the section.
      */
@@ -265,10 +266,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                 .append(sectionName)
                 .append("</p><br>"); //NON-NLS
     }
-    
+
     /**
      * Add a message.
-     * 
+     *
      * @param html    The HTML text to add the message to.
      * @param message The message text.
      */
@@ -277,10 +278,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                 .append(message)
                 .append("</p><br>"); //NON-NLS
     }
-    
+
     /**
      * Add a data table containing information about a tag.
-     * 
+     *
      * @param html The HTML text to add the table to.
      * @param tag  The tag whose information will be used to populate the table.
      */
@@ -296,11 +297,11 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         addRow(html, Bundle.AnnotationsContentViewer_tagEntryDataLabel_comment(), formatHtmlString(tag.getComment()));
         endTable(html);
     }
-    
+
     /**
      * Add a data table containing information about a correlation attribute
      * instance in the Central Repository.
-     * 
+     *
      * @param html              The HTML text to add the table to.
      * @param attributeInstance The attribute instance whose information will be
      *                          used to populate the table.
@@ -319,10 +320,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         addRow(html, Bundle.AnnotationsContentViewer_centralRepositoryEntryDataLabel_path(), attributeInstance.getFilePath());
         endTable(html);
     }
-    
+
     /**
      * Start a data table.
-     * 
+     *
      * @param html The HTML text to add the table to.
      */
     private void startTable(StringBuilder html) {
@@ -331,7 +332,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     /**
      * Add a data row to a table.
-     * 
+     *
      * @param html  The HTML text to add the row to.
      * @param key   The key for the left column of the data row.
      * @param value The value for the right column of the data row.
@@ -343,10 +344,10 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
         html.append(value);
         html.append("</td></tr>"); //NON-NLS
     }
-    
+
     /**
      * End a data table.
-     * 
+     *
      * @param html The HTML text on which to end a table.
      */
     private void endTable(StringBuilder html) {
@@ -355,18 +356,19 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
 
     /**
      * End a data section.
-     * 
+     *
      * @param html The HTML text on which to end a section.
      */
     private void endSection(StringBuilder html) {
         html.append("<br>"); //NON-NLS
     }
-    
+
     /**
      * Apply escape sequence to special characters. Line feed and carriage
      * return character combinations will be converted to HTML line breaks.
-     * 
+     *
      * @param text The text to format.
+     *
      * @return The formatted text.
      */
     private String formatHtmlString(String text) {
@@ -428,7 +430,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
     @Override
     public boolean isSupported(Node node) {
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        
+
         try {
             if (artifact != null) {
                 if (artifact.getSleuthkitCase().getAbstractFileById(artifact.getObjectID()) != null) {
@@ -444,7 +446,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
                     "Exception while trying to retrieve a Content instance from the BlackboardArtifact '%s' (id=%d).",
                     artifact.getDisplayName(), artifact.getArtifactID()), ex);
         }
-        
+
         return false;
     }
 

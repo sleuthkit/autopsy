@@ -22,14 +22,12 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import com.google.common.collect.Lists;
 import static com.google.common.collect.Lists.newArrayList;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +36,7 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -152,7 +151,7 @@ final class FirefoxExtractor extends Extract {
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
-            for (HashMap<String, Object> result : tempList) {
+            for (HashMap<String, Object> result : tempList) { 
                 String url = Objects.toString(result.get("url"), "");
                 Collection<BlackboardAttribute> bbattributes = newArrayList(
                         new BlackboardAttribute(
@@ -169,12 +168,12 @@ final class FirefoxExtractor extends Extract {
                                 Objects.toString(result.get("title"), "")), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_PROG_NAME, PARENT_MODULE_NAME,
-                                getModuleName()));
+                                getModuleName())); 
 
                 if (isIgnoredUrl(url) == false) {
                     bbattributes.add(new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(url)));
+                            NetworkUtils.extractDomain(url)));
                 }
                 try {
                     BlackboardArtifact bbart = historyFile.newArtifact(TSK_WEB_HISTORY);
@@ -249,7 +248,7 @@ final class FirefoxExtractor extends Extract {
             }
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, BOOKMARK_QUERY);
             logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
-            for (HashMap<String, Object> result : tempList) {
+            for (HashMap<String, Object> result : tempList) { 
                 String url = Objects.toString(result.get("url"), "");
 
                 Collection<BlackboardAttribute> bbattributes = newArrayList(
@@ -266,7 +265,7 @@ final class FirefoxExtractor extends Extract {
                 if (isIgnoredUrl(url) == false) {
                     bbattributes.add(new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(url)));
+                            NetworkUtils.extractDomain(url))); 
                 }
                 Long createdTime = Long.valueOf(result.get("dateAdded").toString());
                 if (createdTime > 0) { //NON-NLS
@@ -351,7 +350,7 @@ final class FirefoxExtractor extends Extract {
 
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
             logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
-            for (HashMap<String, Object> result : tempList) {
+            for (HashMap<String, Object> result : tempList) { 
                 String host = Objects.toString(result.get("host"), "");
 
                 Collection<BlackboardAttribute> bbattributes = newArrayList(
@@ -374,7 +373,7 @@ final class FirefoxExtractor extends Extract {
                 if (isIgnoredUrl(host) == false) {
                     bbattributes.add(new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(host.replaceFirst("^\\.+(?!$)", ""))));//NON-NLS
+                            NetworkUtils.extractDomain(host.replaceFirst("^\\.+(?!$)", ""))));//NON-NLS 
                 }
                 if (checkColumn) {
                     bbattributes.add(new BlackboardAttribute(
@@ -472,7 +471,7 @@ final class FirefoxExtractor extends Extract {
 
                 if (isIgnoredUrl(sourceURL) == false) {
                     bbattributes.add(new BlackboardAttribute(TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(sourceURL)));
+                            NetworkUtils.extractDomain(sourceURL)));
                 }
                 String target = result.get("target").toString(); //NON-NLS
 
@@ -491,10 +490,9 @@ final class FirefoxExtractor extends Extract {
                     logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex); //NON-NLS
                     errors++;
                 }
-                try {
-
+                try { 
                     BlackboardArtifact bbart = downloadsFile.newArtifact(TSK_WEB_DOWNLOAD);
-                    bbart.addAttributes(bbattributes);
+                    bbart.addAttributes(bbattributes); 
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to create Firefox download artifact.", ex); //NON-NLS
@@ -593,7 +591,7 @@ final class FirefoxExtractor extends Extract {
 
                 if (isIgnoredUrl(url) == false) {
                     bbattributes.add(new BlackboardAttribute(TSK_DOMAIN, PARENT_MODULE_NAME,
-                            Util.extractDomain(url)));
+                            NetworkUtils.extractDomain(url)));
                 }
                 String target = result.get("target").toString(); //NON-NLS
 
@@ -607,10 +605,10 @@ final class FirefoxExtractor extends Extract {
                         bbattributes.add(new BlackboardAttribute(
                                 TSK_PATH_ID, PARENT_MODULE_NAME,
                                 pathID));
-                    }
+                    } 
                 } catch (UnsupportedEncodingException ex) {
                     logger.log(Level.SEVERE, "Error decoding Firefox download URL in " + temps, ex); //NON-NLS
-                    errors++;
+                    errors++; 
                 }
 
                 try {
@@ -642,10 +640,11 @@ final class FirefoxExtractor extends Extract {
     }
 
     /**
+ 
      * Determine if the URL should be ignored.
      *
      * @param url The URL to test.
-     *
+     *s
      * @return True if the URL should be ignored; otherwise false.
      */
     private boolean isIgnoredUrl(String url) {
@@ -653,6 +652,6 @@ final class FirefoxExtractor extends Extract {
          * Ignore blank URLS and URLs that begin with the matched text.
          */
         return StringUtils.isBlank(url)
-               || url.toLowerCase().startsWith(PLACE_URL_PREFIX);
+               || url.toLowerCase().startsWith(PLACE_URL_PREFIX); 
     }
 }

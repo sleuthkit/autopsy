@@ -145,7 +145,7 @@ public final class ContentUtils {
 
         try {
             if (!shouldDisplayTimesInLocalTime()) {
-                return TimeZone.getTimeZone("GMT");
+                return TimeZone.getTimeZone(UserPreferences.getTimeZoneForDisplays());
             } else {
                 final Content dataSource = content.getDataSource();
                 if ((dataSource != null) && (dataSource instanceof Image)) {

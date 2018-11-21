@@ -102,7 +102,7 @@ public class EamDbSettingsDialog extends JDialog {
 
             @Override
             public String getDescription() {
-                return "Directories and central repository databases";
+                return "Directories and Central Repository databases";
             }
         });
         cbDatabaseType.setSelectedItem(selectedPlatform);

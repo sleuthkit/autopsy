@@ -40,6 +40,7 @@ public final class TextPrompt extends JLabel
 
     public TextPrompt(String text, JTextComponent component, Show show) {
         this.component = component;
+        component.removeAll();
         setShow(show);
         document = component.getDocument();
 

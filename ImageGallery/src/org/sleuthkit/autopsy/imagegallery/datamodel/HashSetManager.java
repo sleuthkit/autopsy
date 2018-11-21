@@ -33,7 +33,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class HashSetManager {
 
-    /** The db that initial values are loaded from. */
+    /**
+     * The db that initial values are loaded from.
+     */
     private final DrawableDB drawableDB;
 
     public HashSetManager(DrawableDB drawableDB) {
@@ -54,14 +56,9 @@ public class HashSetManager {
      */
     private Set<String> getHashSetsForFileHelper(long fileID) {
         try {
-            if (drawableDB.isClosed()) {
-                Logger.getLogger(HashSetManager.class.getName()).log(Level.WARNING, "Failed to get Hash Sets for file. The Db connection was already closed."); //NON-NLS
-                return Collections.emptySet();
-            } else {
-                return drawableDB.getHashSetsForFile(fileID);
-            }
-        } catch (TskCoreException | SQLException ex) {
-            Logger.getLogger(HashSetManager.class.getName()).log(Level.SEVERE, "Failed to get Hash Sets for file."); //NON-NLS
+            return drawableDB.getHashSetsForFile(fileID);
+        } catch (TskCoreException ex) {
+            Logger.getLogger(HashSetManager.class.getName()).log(Level.SEVERE, String.format("Failed to get hash sets for file (id=%d)", fileID), ex); //NON-NLS
             return Collections.emptySet();
         }
     }

@@ -37,6 +37,7 @@ import java.util.*;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -183,7 +184,7 @@ final class Chrome extends Extract {
                                 getModuleName()),
                         new BlackboardAttribute(
                                 TSK_DOMAIN, PARENT_MODULE_NAME,
-                                Util.extractDomain(Objects.toString(result.get("url"), "")))); //NON-NLS
+                                NetworkUtils.extractDomain(Objects.toString(result.get("url"), "")))); //NON-NLS
                 try {
                     BlackboardArtifact bbart = historyFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                     bbart.addAttributes(bbattributes);
@@ -309,7 +310,7 @@ final class Chrome extends Extract {
                 } else {
                     date = Long.valueOf(0);
                 }
-                String domain = Util.extractDomain(url);
+                String domain = NetworkUtils.extractDomain(url);
                 try {
                     Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                             new BlackboardAttribute(
@@ -507,7 +508,7 @@ final class Chrome extends Extract {
                                 (Long.valueOf(result.get("start_time").toString()) / 1000000) - SECONDS_SINCE_JAN_1_1601), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_DOMAIN, PARENT_MODULE_NAME,
-                                Util.extractDomain(Objects.toString(result.get("url"), ""))), //NON-NLS
+                                NetworkUtils.extractDomain(Objects.toString(result.get("url"), ""))), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_PROG_NAME, PARENT_MODULE_NAME,
                                 getModuleName())
@@ -520,6 +521,7 @@ final class Chrome extends Extract {
                 try {
                     BlackboardArtifact bbart = downloadFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
                     bbart.addAttributes(bbattributes);
+
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome download artifact.", ex); //NON-NLS
@@ -589,6 +591,7 @@ final class Chrome extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, LOGIN_QUERY);
             logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2}artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+ 
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
                                 TSK_URL, PARENT_MODULE_NAME,
@@ -607,7 +610,7 @@ final class Chrome extends Extract {
                                 getModuleName()),
                         new BlackboardAttribute(
                                 TSK_URL_DECODED, PARENT_MODULE_NAME,
-                                Util.extractDomain(Objects.toString(result.get("origin_url"), ""))), //NON-NLS
+                                NetworkUtils.extractDomain(Objects.toString(result.get("origin_url"), ""))), //NON-NLS
                         new BlackboardAttribute(
                                 TSK_USER_NAME, PARENT_MODULE_NAME,
                                 Objects.toString(result.get("username_value"), "").replaceAll("'", "''")), //NON-NLS
@@ -618,6 +621,7 @@ final class Chrome extends Extract {
                 try {
                     BlackboardArtifact bbart = signonFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                     bbart.addAttributes(bbattributes);
+
                     bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome login artifact.", ex); //NON-NLS

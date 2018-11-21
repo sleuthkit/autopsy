@@ -22,19 +22,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.Action;
-import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
@@ -44,7 +38,6 @@ import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -68,43 +61,6 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
 
     }
 
-    @Override
-    protected Sheet createSheet() {
-        Sheet sheet = super.createSheet();
-        Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-        if (sheetSet == null) {
-            sheetSet = Sheet.createPropertiesSet();
-            sheet.put(sheetSet);
-        }
-        List<ContentTag> tags = getContentTagsFromDatabase();
-        Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, getContent());
-
-        sheetSet.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.name"),
-                NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),
-                NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.desc"),
-                getName()));
-        
-        addScoreProperty(sheetSet, tags);
-        
-        CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            correlationAttribute = getCorrelationAttributeInstance();
-        }
-        addCommentProperty(sheetSet, tags, correlationAttribute);
-        
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
-            addCountProperty(sheetSet, correlationAttribute);
-        }
-        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.noDescr.text");
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            sheetSet.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
-        }
-
-        return sheet;
-    }
-
-    @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(true)));
