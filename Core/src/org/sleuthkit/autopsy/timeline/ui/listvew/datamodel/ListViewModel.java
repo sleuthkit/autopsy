@@ -36,7 +36,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
- * Model for the ListView.
+ * Model for the ListView. Uses FilteredEventsModel as underlying datamodel and
+ * supplies abstractions / data objects specific to the ListView.
  *
  */
 public class ListViewModel {
@@ -58,6 +59,8 @@ public class ListViewModel {
      * together.
      *
      * @return A List of combined events, sorted by timestamp.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
      */
     public List<CombinedEvent> getCombinedEvents() throws TskCoreException {
         return getCombinedEvents(eventsModel.getTimeRange(), eventsModel.getFilterState());
@@ -85,7 +88,7 @@ public class ListViewModel {
         }
 
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
-       
+
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         final String querySql = "SELECT full_description, time, file_obj_id, "
                                 + dbUtils.csvAggFunction("CAST(tsk_events.event_id AS VARCHAR)") + " AS eventIDs, "

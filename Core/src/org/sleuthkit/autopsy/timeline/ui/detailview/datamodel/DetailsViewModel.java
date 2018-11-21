@@ -57,7 +57,8 @@ import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 
 /**
- *
+ * Model for the Details View. Uses FilteredEventsModel as underlying datamodel
+ * and supplies abstractions / data objects specific to the DetailsView
  */
 final public class DetailsViewModel {
 
@@ -157,7 +158,7 @@ final public class DetailsViewModel {
         String descriptionColumn = eventManager.getDescriptionColumn(descriptionLOD);
         final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
         String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
-      
+
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         String querySql = "SELECT " + formatTimeFunctionHelper(rangeInfo.getPeriodSize().toChronoUnit(), timeZone) + " AS interval, " // NON-NLS
                           + dbUtils.csvAggFunction("tsk_events.event_id") + " as event_ids, " //NON-NLS
