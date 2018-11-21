@@ -279,7 +279,7 @@ public class GroupManager {
                     updateUnSeenGroups(group);
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Error setting seen status for group: %s", group.getGroupKey().getValue().toString()), ex); //NON-NLS
             }
         });
     }
