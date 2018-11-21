@@ -18,17 +18,16 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.List;
-import org.apache.commons.lang3.StringUtils;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import org.openide.nodes.Sheet;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
-import org.sleuthkit.autopsy.core.UserPreferences;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.ContentTag;
 
 /**
  * Node that wraps CaseDBCommonAttributeInstance to represent a file instance
@@ -75,33 +74,25 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
 
     @Override
     protected Sheet createSheet() {
-        Sheet sheet = new Sheet();
+        Sheet sheet = super.createSheet();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
-        if (sheetSet == null) {
-            sheetSet = Sheet.createPropertiesSet();
-            sheet.put(sheetSet);
+        Set<String> keepProps = new HashSet<>(Arrays.asList(
+                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.nameColLbl"),
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.score.name"), 
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.comment.name"), 
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.count.name"), 
+                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.mimeType")));
+        
+        for(Property<?> p : sheetSet.getProperties()) {
+            if(!keepProps.contains(p.getName())){
+                sheetSet.remove(p.getName());
+            }
         }
-        List<ContentTag> tags = getContentTagsFromDatabase();
-
         final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
-
-        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), NO_DESCR, this.getContent().getName()));
         
-        addScoreProperty(sheetSet, tags);
-        
-        CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
-            correlationAttribute = getCorrelationAttributeInstance();
-        }
-        addCommentProperty(sheetSet, tags, correlationAttribute);
-        
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
-            addCountProperty(sheetSet, correlationAttribute);
-        }
-        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
-        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), NO_DESCR, StringUtils.defaultString(this.getContent().getMIMEType())));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, caseName));
+        
         return sheet;
     }
 }

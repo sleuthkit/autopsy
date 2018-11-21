@@ -810,6 +810,7 @@ class ExtractRegistry extends Extract {
                             installtime = Long.valueOf(Tempdate) / 1000;
                         } catch (ParseException e) {
                             logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
+                                            wifiBBartifacts.add(bbart);
                         }
                         break;
                     default:
@@ -817,6 +818,9 @@ class ExtractRegistry extends Extract {
                 }
             }
         }//for 
+            }
+            if (!wifiBBartifacts.isEmpty()){
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK, wifiBBartifacts));
         try {
             List<BlackboardAttribute> bbattributes = Lists.newArrayList(
                     new BlackboardAttribute(

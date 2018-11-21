@@ -28,28 +28,26 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.AnchorPane;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 
 /**
  *
  */
 public class StatusBar extends AnchorPane {
 
-    private final ImageGalleryController controller;
-
     @FXML
     private ProgressBar fileTaskProgresBar;
-
     @FXML
     private Label fileUpdateTaskLabel;
-
     @FXML
-    private Label bgTaskLabel;
-
+    private Label regroupLabel;
     @FXML
     private Label staleLabel;
-
     @FXML
-    private ProgressBar bgTaskProgressBar;
+    private ProgressBar regroupProgressBar;
+
+    private final ImageGalleryController controller;
+    private final GroupManager groupManager;
 
     @FXML
     @NbBundle.Messages({"StatusBar.fileUpdateTaskLabel.text= File Update Tasks",
@@ -58,23 +56,25 @@ public class StatusBar extends AnchorPane {
     void initialize() {
         assert fileTaskProgresBar != null : "fx:id=\"fileTaskProgresBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
         assert fileUpdateTaskLabel != null : "fx:id=\"fileUpdateTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert bgTaskLabel != null : "fx:id=\"bgTaskLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
-        assert bgTaskProgressBar != null : "fx:id=\"bgTaskProgressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
+        assert regroupLabel != null : "fx:id=\"regroupLabel\" was not injected: check your FXML file 'StatusBar.fxml'.";
+        assert regroupProgressBar != null : "fx:id=\"regroupProgressBar\" was not injected: check your FXML file 'StatusBar.fxml'.";
 
         fileUpdateTaskLabel.textProperty().bind(controller.getDBTasksQueueSizeProperty().asString().concat(Bundle.StatusBar_fileUpdateTaskLabel_text()));
         fileTaskProgresBar.progressProperty().bind(controller.getDBTasksQueueSizeProperty().negate());
 
-        controller.regroupProgress().addListener((ov, oldSize, newSize) -> {
+        groupManager.regroupProgress().addListener((ov, oldSize, newSize) -> {
             Platform.runLater(() -> {
-                if (controller.regroupProgress().lessThan(1.0).get()) {
+                if (groupManager.regroupProgress().lessThan(1.0).get()) {
                     // Regrouping in progress
-                    bgTaskProgressBar.progressProperty().setValue(-1.0);
-                    bgTaskLabel.setText(Bundle.StatusBar_bgTaskLabel_text());
+                    regroupProgressBar.progressProperty().setValue(groupManager.regroupProgress().doubleValue());
+                    regroupLabel.setText(groupManager.regroupMessage().get());
+                    
                 } else {
                     // Clear the progress bar
-                    bgTaskProgressBar.progressProperty().setValue(0.0);
-                    bgTaskLabel.setText("");
+                    regroupProgressBar.progressProperty().setValue(0.0);
+                    regroupLabel.setText("");
                 }
+                regroupLabel.setTooltip(new Tooltip(regroupLabel.getText()));
             });
         });
 
@@ -84,6 +84,7 @@ public class StatusBar extends AnchorPane {
 
     public StatusBar(ImageGalleryController controller) {
         this.controller = controller;
+        this.groupManager = controller.getGroupManager();
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("StatusBar.fxml")); //NON-NLS
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
@@ -93,6 +94,5 @@ public class StatusBar extends AnchorPane {
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
-
     }
 }

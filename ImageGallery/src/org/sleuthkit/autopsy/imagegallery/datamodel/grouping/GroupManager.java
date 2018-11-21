@@ -50,6 +50,7 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
@@ -98,18 +99,24 @@ public class GroupManager {
 
     private static final Logger logger = Logger.getLogger(GroupManager.class.getName());
 
-    /** An executor to submit async UI related background tasks to. */
+    /**
+     * An executor to submit async UI related background tasks to.
+     */
     private final ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
             new BasicThreadFactory.Builder().namingPattern("GroupManager BG Thread-%d").build())); //NON-NLS
 
     private final ImageGalleryController controller;
 
-    /** list of all analyzed groups */
+    /**
+     * list of all analyzed groups
+     */
     @GuardedBy("this") //NOPMD
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
     private final ObservableList<DrawableGroup> unmodifiableAnalyzedGroups = FXCollections.unmodifiableObservableList(analyzedGroups);
 
-    /** list of unseen groups */
+    /**
+     * list of unseen groups
+     */
     @GuardedBy("this") //NOPMD
     private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
     private final ObservableList<DrawableGroup> unmodifiableUnSeenGroups = FXCollections.unmodifiableObservableList(unSeenGroups);
@@ -266,14 +273,23 @@ public class GroupManager {
             try {
                 Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
                 getDrawableDB().markGroupSeen(group.getGroupKey(), seen, examiner.getId());
-                group.setSeen(seen);
-                updateUnSeenGroups(group);
+                // only update and reshuffle if its new results
+                if (group.isSeen() != seen) {
+                    group.setSeen(seen);
+                    updateUnSeenGroups(group);
+                }
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error marking group as seen", ex); //NON-NLS
+                logger.log(Level.SEVERE, String.format("Error setting seen status for group: %s", group.getGroupKey().getValue().toString()), ex); //NON-NLS
             }
         });
     }
 
+    /**
+     * Update unseenGroups list accordingly based on the current status of
+     * 'group'. Removes it if it is seen or adds it if it is unseen.
+     *
+     * @param group
+     */
     synchronized private void updateUnSeenGroups(DrawableGroup group) {
         if (group.isSeen()) {
             unSeenGroups.removeAll(group);
@@ -477,8 +493,8 @@ public class GroupManager {
         setSortOrder(sortOrder);
         //only re-query the db if the data source or group by attribute changed or it is forced
         if (dataSource != getDataSource()
-            || groupBy != getGroupBy()
-            || force) {
+                || groupBy != getGroupBy()
+                || force) {
 
             setDataSource(dataSource);
             setGroupBy(groupBy);
@@ -494,6 +510,10 @@ public class GroupManager {
 
     public ReadOnlyDoubleProperty regroupProgress() {
         return regrouper.progressProperty();
+    }
+
+    public ReadOnlyStringProperty regroupMessage() {
+        return regrouper.messageProperty();
     }
 
     @Subscribe
@@ -530,15 +550,18 @@ public class GroupManager {
 
         // NOTE: We assume that it has already been determined that GroupKey can be displayed based on Data Source filters
         if (group == null) {
-            //if there wasn't already a group check if there should be one now
-            // path group, for example, only gets created when all files are analyzed
+            //if there wasn't already a DrawableGroup, then check if this group is now 
+            // in an appropriate state to get one made.  
+            // Path group, for example, only gets a DrawableGroup created when all files are analyzed
             group = popuplateIfAnalyzed(groupKey, null);
         } else {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             group.addFile(fileID);
         }
         // reset the seen status for the group
-        markGroupSeen(group, false);
+        if (group != null) {
+            markGroupSeen(group, false);
+        }
     }
 
     @Subscribe
@@ -607,6 +630,8 @@ public class GroupManager {
      * If the group is analyzed (or other criteria based on grouping) and should
      * be shown to the user, then add it to the appropriate data structures so
      * that it can be viewed.
+     *
+     * @returns null if Group is not ready to be viewed
      */
     synchronized private DrawableGroup popuplateIfAnalyzed(GroupKey<?> groupKey, ReGroupTask<?> task) {
         /*
@@ -626,9 +651,9 @@ public class GroupManager {
          * analyzed because we don't know all the files that will be a part of
          * that group. just show them no matter what.
          */
-        if (groupKey.getAttribute() != DrawableAttribute.PATH
-            || getDrawableDB().isGroupAnalyzed(groupKey)) {
-            try {
+        try {
+            if (groupKey.getAttribute() != DrawableAttribute.PATH
+                    || getDrawableDB().isGroupAnalyzed(groupKey)) {
                 Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                 if (Objects.nonNull(fileIDs)) {
 
@@ -654,9 +679,9 @@ public class GroupManager {
 
                     return group;
                 }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
             }
+        } catch (SQLException | TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
         }
 
         return null;
@@ -716,12 +741,7 @@ public class GroupManager {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     @NbBundle.Messages({"# {0} - groupBy attribute Name",
-        "# {1} - sortBy name",
-        "# {2} - sort Order",
-        "ReGroupTask.displayTitle=regrouping files by {0} sorted by {1} in {2} order",
-        "# {0} - groupBy attribute Name",
-        "# {1} - atribute value",
-        "ReGroupTask.progressUpdate=regrouping files by {0} : {1}"})
+        "ReGroupTask.displayTitle=regrouping by {0}: "})
     class ReGroupTask<AttrValType extends Comparable<AttrValType>> extends LoggedTask<Void> {
 
         private final DataSource dataSource;
@@ -729,16 +749,14 @@ public class GroupManager {
         private final GroupSortBy sortBy;
         private final SortOrder sortOrder;
 
-        private final ProgressHandle groupProgress;
-
         ReGroupTask(DataSource dataSource, DrawableAttribute<AttrValType> groupBy, GroupSortBy sortBy, SortOrder sortOrder) {
-            super(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.getDisplayName(), sortOrder.toString()), true);
+            super(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString()), true);
             this.dataSource = dataSource;
             this.groupBy = groupBy;
             this.sortBy = sortBy;
             this.sortOrder = sortOrder;
 
-            groupProgress = ProgressHandle.createHandle(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString(), sortBy.getDisplayName(), sortOrder.toString()), this);
+            updateTitle(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString()));
         }
 
         @Override
@@ -747,7 +765,8 @@ public class GroupManager {
                 if (isCancelled()) {
                     return null;
                 }
-                groupProgress.start();
+
+                updateProgress(-1, 1);
 
                 analyzedGroups.clear();
                 unSeenGroups.clear();
@@ -755,7 +774,7 @@ public class GroupManager {
                 // Get the list of group keys
                 Multimap<DataSource, AttrValType> valsByDataSource = findValuesForAttribute();
 
-                groupProgress.switchToDeterminate(valsByDataSource.entries().size());
+                updateProgress(0, valsByDataSource.entries().size());
                 int p = 0;
                 // For each key value, partially create the group and add it to the list.
                 for (final Map.Entry<DataSource, AttrValType> valForDataSource : valsByDataSource.entries()) {
@@ -763,9 +782,8 @@ public class GroupManager {
                         return null;
                     }
                     p++;
-                    updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), valForDataSource.getValue()));
+                    updateMessage(Bundle.ReGroupTask_displayTitle(groupBy.attrName.toString()) + valForDataSource.getValue());
                     updateProgress(p, valsByDataSource.size());
-                    groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), valForDataSource), p);
                     popuplateIfAnalyzed(new GroupKey<>(groupBy, valForDataSource.getValue(), valForDataSource.getKey()), this);
                 }
 
@@ -779,8 +797,8 @@ public class GroupManager {
                         = viewedKey.map(GroupKey::getAttribute).orElse(null);
 
                 if (viewedGroup.isPresent() == false //if no group was being viewed,
-                    || (dataSource != null && notEqual(dataSourceOfCurrentGroup, dataSource)) //or the datasource of the viewed group is wrong,
-                    || groupBy != attributeOfCurrentGroup) { // or the groupBy attribute is wrong...
+                        || (dataSource != null && notEqual(dataSourceOfCurrentGroup, dataSource)) //or the datasource of the viewed group is wrong,
+                        || groupBy != attributeOfCurrentGroup) { // or the groupBy attribute is wrong...
 
                     //the current group should not be visible so ...
                     if (isNotEmpty(unSeenGroups)) {
@@ -794,8 +812,8 @@ public class GroupManager {
                     }
                 }
             } finally {
-                groupProgress.finish();
                 updateProgress(1, 1);
+                updateMessage("");
             }
             return null;
         }
@@ -813,11 +831,8 @@ public class GroupManager {
         }
 
         /**
-         * find the distinct values for the given column (DrawableAttribute)
-         *
+         * Find the distinct values for the given column (DrawableAttribute).
          * These values represent the groups of files.
-         *
-         * @param groupBy
          *
          * @return map of data source (or null if group by attribute ignores
          *         data sources) to list of unique group values

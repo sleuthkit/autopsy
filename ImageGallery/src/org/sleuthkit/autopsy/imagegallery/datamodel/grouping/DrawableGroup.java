@@ -68,13 +68,6 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
     DrawableGroup(GroupKey<?> groupKey, Set<Long> filesInGroup, boolean seen) {
         this.groupKey = groupKey;
         this.fileIDs.setAll(filesInGroup);
-        fileIDs.addListener((ListChangeListener.Change<? extends Long> listchange) -> {
-            boolean seenChanged = false;
-            while (false == seenChanged && listchange.next()) {
-                seenChanged |= listchange.wasAdded();
-            }
-            invalidateProperties(seenChanged);
-        });
         this.seen.set(seen);
     }
 
@@ -183,15 +176,21 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         if (fileIDs.contains(f) == false) {
             fileIDs.add(f);
         }
+        // invalidate no matter what because the file could have new hash hits, etc.
+        invalidateProperties(true);
     }
 
     synchronized void setFiles(Set<? extends Long> newFileIds) {
         fileIDs.removeIf(fileID -> newFileIds.contains(fileID) == false);
+        invalidateProperties(false);
         newFileIds.stream().forEach(this::addFile);
     }
 
     synchronized void removeFile(Long f) {
-        fileIDs.removeAll(f);
+        if (fileIDs.contains(f)) {
+            fileIDs.removeAll(f);
+            invalidateProperties(false);
+        }
     }
 
     private void invalidateProperties(boolean seenChanged) {

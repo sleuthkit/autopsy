@@ -167,9 +167,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             public void preferenceChange(PreferenceChangeEvent evt) {
                 switch (evt.getKey()) {
                     case UserPreferences.DISPLAY_TIMES_IN_LOCAL_TIME:
+                    case UserPreferences.TIME_ZONE_FOR_DISPLAYS:
                     case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES:
+                    case UserPreferences.DISPLAY_TRANSLATED_NAMES:
                     case UserPreferences.KEEP_PREFERRED_VIEWER:
                         refreshContentTreeSafe();
                         break;

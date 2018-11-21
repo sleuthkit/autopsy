@@ -35,7 +35,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,11 +49,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * @author Alex
+ *
  */
 class Util {
 
-    private static Logger logger = Logger.getLogger(Util.class.getName());
+    private static final Logger logger = Logger.getLogger(Util.class.getName());
 
     private Util() {
     }
@@ -82,92 +81,9 @@ class Util {
         }
     }
 
-    /**
-        //JIRA-2384: There is no utility in apache or guave to do this for us?
-     * @param url
-     * @return empty string if no domain could be found
-     */
-    private static String getBaseDomain(String url) {
-        //strip protocol
-        String cleanUrl = url.replaceFirst(".*:\\/\\/", "");
-
-        //strip after slashes
-        String dirToks[] = cleanUrl.split("\\/");
-        String host = (dirToks.length > 0) ? dirToks[0] : cleanUrl;
-
-        //get the domain part from host (last 2)
-        StringTokenizer tok = new StringTokenizer(host, ".");
-        StringBuilder hostB = new StringBuilder();
-        int toks = tok.countTokens();
-
-        for (int count = 0; count < toks; ++count) {
-            String part = tok.nextToken();
-            int diff = toks - count;
-            if (diff < 3) {
-                hostB.append(part);
-            }
-            if (diff == 2) {
-                hostB.append(".");
-            }
-        }
-        
-        
-        String base = hostB.toString();
-        // verify there are no special characters in there
-        if (base.matches(".*[~`!@#$%^&\\*\\(\\)\\+={}\\[\\];:\\?<>,/ ].*")) {
-            return "";
-        }
-        return base;
-    }
-
-    /**
-     * 
-     * @param value
-     * @return empty string if no domain name was found
-     */
-    public static String extractDomain(String value) {
-
-        //JIRA-2384: There is no utility in apache or guave to do this for us?
-        if (value == null) {
-            return "";
-
-        }
-        String result = "";
-        // String domainPattern = "(\\w+)\\.(AC|AD|AE|AERO|AF|AG|AI|AL|AM|AN|AO|AQ|AR|ARPA|AS|ASIA|AT|AU|AW|AX|AZ|BA|BB|BD|BE|BF|BG|BH|BI|BIZ|BJ|BM|BN|BO|BR|BS|BT|BV|BW|BY|BZ|CA|CAT|CC|CD|CF|CG|CH|CI|CK|CL|CM|CN|CO|COM|COOP|CR|CU|CV|CW|CX|CY|CZ|DE|DJ|DK|DM|DO|DZ|EC|EDU|EE|EG|ER|ES|ET|EU|FI|FJ|FK|FM|FO|FR|GA|GB|GD|GE|GF|GG|GH|GI|GL|GM|GN|GOV|GP|GQ|GR|GS|GT|GU|GW|GY|HK|HM|HN|HR|HT|HU|ID|IE|IL|IM|IN|INFO|INT|IO|IQ|IR|IS|IT|JE|JM|JO|JOBS|JP|KE|KG|KH|KI|KM|KN|KP|KR|KW|KY|KZ|LA|LB|LC|LI|LK|LR|LS|LT|LU|LV|LY|MA|MC|MD|ME|MG|MH|MIL|MK|ML|MM|MN|MO|MOBI|MP|MQ|MR|MS|MT|MU|MUSEUM|MV|MW|MX|MY|MZ|NA|NAME|NC|NE|NET|NF|NG|NI|NL|NO|NP|NR|NU|NZ|OM|ORG|PA|PE|PF|PG|PH|PK|PL|PM|PN|PR|PRO|PS|PT|PW|PY|QA|RE|RO|RS|RU|RW|SA|SB|SC|SD|SE|SG|SH|SI|SJ|SK|SL|SM|SN|SO|SR|ST|SU|SV|SX|SY|SZ|TC|TD|TEL|TF|TG|TH|TJ|TK|TL|TM|TN|TO|TP|TR|TRAVEL|TT|TV|TW|TZ|UA|UG|UK|US|UY|UZ|VA|VC|VE|VG|VI|VN|VU|WF|WS|XXX|YE|YT|ZA|ZM|ZW(co\\.[a-z].))";
-        //  Pattern p = Pattern.compile(domainPattern,Pattern.CASE_INSENSITIVE);
-        //  Matcher m = p.matcher(value);
-        //  while (m.find()) {
-        //  result = value.substring(m.start(0),m.end(0));
-        //  }
-
-        try {
-            URL url = new URL(value);
-            result = url.getHost();
-        } catch (MalformedURLException ex) {
-            //do not log if not a valid URL, and handle later
-            //Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        //was not a valid URL, try a less picky method
-        if (result == null || result.trim().isEmpty()) {
-            return getBaseDomain(value);
-        }
-        return result;
-    }
-
     public static String getFileName(String value) {
-        String filename = "";
-        String filematch = "^([a-zA-Z]\\:)(\\\\[^\\\\/:*?<>\"|]*(?<!\\[ \\]))*(\\.[a-zA-Z]{2,6})$"; //NON-NLS
-
-        Pattern p = Pattern.compile(filematch, Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.COMMENTS);
-        Matcher m = p.matcher(value);
-        if (m.find()) {
-            filename = m.group(1);
-
-        }
         int lastPos = value.lastIndexOf('\\');
-        filename = (lastPos < 0) ? value : value.substring(lastPos + 1);
-        return filename.toString();
+        return (lastPos < 0) ? value : value.substring(lastPos + 1);
     }
 
     public static String getPath(String txt) {

@@ -54,9 +54,9 @@ public class EamArtifactUtil {
      * EamArtifact with a single EamArtifactInstance within. If not, return
      * null.
      *
-     * @param bbArtifact BlackboardArtifact to examine
+     * @param bbArtifact   BlackboardArtifact to examine
      * @param checkEnabled If true, only create a CorrelationAttribute if it is
-     * enabled
+     *                     enabled
      *
      * @return List of EamArtifacts
      */
@@ -93,10 +93,10 @@ public class EamArtifactUtil {
      * based on the data in the blackboard artifact.
      *
      * @param correlationType The Central Repository artifact type to create
-     * @param bbArtifact The blackboard artifact to pull data from
+     * @param bbArtifact      The blackboard artifact to pull data from
      *
      * @return the new EamArtifact, or null if one was not created because
-     * bbArtifact did not contain the needed data
+     *         bbArtifact did not contain the needed data
      */
     private static CorrelationAttributeInstance makeInstanceFromBlackboardArtifact(CorrelationAttributeInstance.Type correlationType,
             BlackboardArtifact bbArtifact) throws EamDbException {
@@ -159,13 +159,14 @@ public class EamArtifactUtil {
                         return null;
                     }
                 }
-
             } else if (correlationType.getId() == CorrelationAttributeInstance.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID)).getValueString();
+            } else if (correlationType.getId() == CorrelationAttributeInstance.SSID_TYPE_ID
+                    && BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID() == artifactTypeID) {
+                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID)).getValueString();
             }
-
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
             return null;
@@ -185,9 +186,10 @@ public class EamArtifactUtil {
      * Uses the determined type and vallue, then looks up instance details to
      * create proper CorrelationAttributeInstance.
      *
-     * @param bbArtifact the blackboard artifatc
+     * @param bbArtifact      the blackboard artifact
      * @param correlationType the given type
-     * @param value the artifact value
+     * @param value           the artifact value
+     *
      * @return CorrelationAttributeInstance from details
      */
     private static CorrelationAttributeInstance makeCorrelationAttributeInstanceUsingTypeValue(BlackboardArtifact bbArtifact, CorrelationAttributeInstance.Type correlationType, String value) {
@@ -205,14 +207,14 @@ public class EamArtifactUtil {
                 correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
             return new CorrelationAttributeInstance(
-                    value,
                     correlationType,
+                    value,
                     correlationCase,
                     CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
                     bbSourceFile.getParentPath() + bbSourceFile.getName(),
                     "",
-                    TskData.FileKnown.UNKNOWN
-            );
+                    TskData.FileKnown.UNKNOWN,
+                    bbSourceFile.getId());
 
         } catch (TskCoreException | EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
@@ -245,8 +247,6 @@ public class EamArtifactUtil {
         CorrelationAttributeInstance.Type type;
         CorrelationCase correlationCase;
         CorrelationDataSource correlationDataSource;
-        String value;
-        String filePath;
 
         try {
             type = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
@@ -256,8 +256,6 @@ public class EamArtifactUtil {
                 return null;
             }
             correlationDataSource = CorrelationDataSource.fromTSKDataSource(correlationCase, file.getDataSource());
-            value = file.getMd5Hash();
-            filePath = (file.getParentPath() + file.getName()).toLowerCase();
         } catch (TskCoreException | EamDbException ex) {
             logger.log(Level.SEVERE, "Error retrieving correlation attribute.", ex);
             return null;
@@ -268,12 +266,25 @@ public class EamArtifactUtil {
 
         CorrelationAttributeInstance correlationAttributeInstance;
         try {
-            correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
+            correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, file.getId());
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.WARNING, String.format(
                     "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
                     content.getName(), content.getId(), ex.getMessage()));
             return null;
+        }
+        //if there was no correlation attribute found for the item using object_id then check for attributes added with schema 1,1 which lack object_id  
+        if (correlationAttributeInstance == null) {
+            String value = file.getMd5Hash();
+            String filePath = (file.getParentPath() + file.getName()).toLowerCase();
+            try {
+                correlationAttributeInstance = EamDb.getInstance().getCorrelationAttributeInstance(type, correlationCase, correlationDataSource, value, filePath);
+            } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.WARNING, String.format(
+                        "Correlation attribute could not be retrieved for '%s' (id=%d): %s",
+                        content.getName(), content.getId(), ex.getMessage()));
+                return null;
+            }
         }
 
         return correlationAttributeInstance;
@@ -317,12 +328,16 @@ public class EamArtifactUtil {
             if (null == correlationCase) {
                 correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
+
             return new CorrelationAttributeInstance(
                     filesType,
                     af.getMd5Hash(),
                     correlationCase,
                     CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
-                    af.getParentPath() + af.getName());
+                    af.getParentPath() + af.getName(),
+                    "",
+                    TskData.FileKnown.UNKNOWN,
+                    af.getId());
 
         } catch (TskCoreException | EamDbException | CorrelationAttributeNormalizationException ex) {
             logger.log(Level.SEVERE, "Error making correlation attribute.", ex);
@@ -340,7 +355,7 @@ public class EamArtifactUtil {
      * @param file The file to test
      *
      * @return true if the file should be added to the central repo, false
-     * otherwise
+     *         otherwise
      */
     public static boolean isSupportedAbstractFileType(AbstractFile file) {
         if (file == null) {

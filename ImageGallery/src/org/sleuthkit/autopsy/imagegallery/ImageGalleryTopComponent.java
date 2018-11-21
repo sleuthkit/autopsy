@@ -18,13 +18,10 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
@@ -55,10 +52,8 @@ import javafx.stage.Modality;
 import javax.swing.SwingUtilities;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -232,8 +227,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                     @SuppressWarnings(value = "unchecked")
                     ComboBox<Optional<DataSource>> comboBox = (ComboBox<Optional<DataSource>>) datasourceDialog.getDialogPane().lookup(".combo-box");
                     //set custom cell renderer
-                    comboBox.setCellFactory((ListView<Optional<DataSource>> param) -> new DataSourceCell(dataSourcesTooManyFiles));
-                    comboBox.setButtonCell(new DataSourceCell(dataSourcesTooManyFiles));
+                    comboBox.setCellFactory((ListView<Optional<DataSource>> param) -> new DataSourceCell(dataSourcesTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
+                    comboBox.setButtonCell(new DataSourceCell(dataSourcesTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
 
                     DataSource dataSource = datasourceDialog.showAndWait().orElse(Optional.empty()).orElse(null);
                     try {
