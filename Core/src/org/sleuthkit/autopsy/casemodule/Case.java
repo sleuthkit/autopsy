@@ -399,7 +399,7 @@ public class Case {
     private final class TSKCaseRepublisher {
 
         @Subscribe
-        public void rebroadcastTimelineEventCreated(TimelineManager.TimelineEventAddedEvent  event) {
+        public void rebroadcastTimelineEventCreated(TimelineManager.TimelineEventAddedEvent event) {
             eventPublisher.publish(new TimelineEventAddedEvent(event));
         }
 
