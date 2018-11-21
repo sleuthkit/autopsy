@@ -48,46 +48,18 @@ public class CorrelationAttributeInstance implements Serializable {
     private String filePath;
     private String comment;
     private TskData.FileKnown knownStatus;
+    private Long objectId;
 
     public CorrelationAttributeInstance(
-            String correlationValue,
             CorrelationAttributeInstance.Type correlationType,
-            CorrelationCase eamCase,
-            CorrelationDataSource eamDataSource,
-            String filePath
-    ) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN);
-    }
-
-    public CorrelationAttributeInstance(
             String correlationValue,
-            CorrelationAttributeInstance.Type correlationType,
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
-            TskData.FileKnown knownStatus
-    ) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus);
-    }
-
-    public CorrelationAttributeInstance(
-            Type correlationType,
-            String correlationValue,
-            CorrelationCase correlationCase,
-            CorrelationDataSource fromTSKDataSource,
-            String string) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(correlationType, correlationValue, -1, correlationCase, fromTSKDataSource, string, "", TskData.FileKnown.UNKNOWN);
-    }
-
-    /**
-     * NOTE: Only used for when EamDB is NOT enabled.
-     *
-     * @param aType CorrelationAttributeInstance.Type
-     * @param value correlation value
-     */
-    public CorrelationAttributeInstance(Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(aType, value, -1, null, null, "", "", TskData.FileKnown.UNKNOWN);
+            TskData.FileKnown knownStatus,
+            long fileObjectId) throws EamDbException, CorrelationAttributeNormalizationException {
+        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus, fileObjectId);
     }
 
     CorrelationAttributeInstance(
@@ -98,7 +70,8 @@ public class CorrelationAttributeInstance implements Serializable {
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
-            TskData.FileKnown knownStatus
+            TskData.FileKnown knownStatus,
+            Long fileObjectId
     ) throws EamDbException, CorrelationAttributeNormalizationException {
         if (filePath == null) {
             throw new EamDbException("file path is null");
@@ -113,6 +86,7 @@ public class CorrelationAttributeInstance implements Serializable {
         this.filePath = filePath.toLowerCase();
         this.comment = comment;
         this.knownStatus = knownStatus;
+        this.objectId = fileObjectId;
     }
 
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
@@ -146,14 +120,6 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     /**
-     * @param correlationValue the correlationValue to set
-     */
-    public void setCorrelationValue(String correlationValue) {
-        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
-        this.correlationValue = correlationValue.toLowerCase();
-    }
-
-    /**
      * @return the correlation Type
      */
     public Type getCorrelationType() {
@@ -161,17 +127,10 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     /**
-     * @param correlationType the correlation Type to set
-     */
-    public void setCorrelationType(Type correlationType) {
-        this.correlationType = correlationType;
-    }
-
-    /**
      * Is this a database instance?
      *
      * @return True if the instance ID is greater or equal to zero; otherwise
-     * false.
+     *         false.
      */
     public boolean isDatabaseInstance() {
         return (ID >= 0);
@@ -234,10 +193,20 @@ public class CorrelationAttributeInstance implements Serializable {
      * as notable and should never be set to KNOWN.
      *
      * @param knownStatus Should be BAD if the item is tagged as notable,
-     * UNKNOWN otherwise
+     *                    UNKNOWN otherwise
      */
     public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;
+    }
+
+    /**
+     * Get the objectId of the file associated with the correlation attribute or
+     * NULL if the objectId is not available.
+     *
+     * @return the objectId of the file
+     */
+    public Long getFileObjectId() {
+        return objectId;
     }
 
     // Type ID's for Default Correlation Types
@@ -246,18 +215,20 @@ public class CorrelationAttributeInstance implements Serializable {
     public static final int EMAIL_TYPE_ID = 2;
     public static final int PHONE_TYPE_ID = 3;
     public static final int USBID_TYPE_ID = 4;
+    public static final int SSID_TYPE_ID = 5;
 
     /**
      * Load the default correlation types
      *
      * @throws EamDbException if the Type's dbTableName has invalid
-     * characters/format
+     *                        characters/format
      */
     @Messages({"CorrelationType.FILES.displayName=Files",
         "CorrelationType.DOMAIN.displayName=Domains",
         "CorrelationType.EMAIL.displayName=Email Addresses",
         "CorrelationType.PHONE.displayName=Phone Numbers",
-        "CorrelationType.USBID.displayName=USB Devices"})
+        "CorrelationType.USBID.displayName=USB Devices",
+        "CorrelationType.SSID.displayName=Wireless Networks"})
     public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws EamDbException {
         List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
@@ -265,6 +236,7 @@ public class CorrelationAttributeInstance implements Serializable {
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(SSID_TYPE_ID, Bundle.CorrelationType_SSID_displayName(), "wireless_networks", true, true)); // NON-NLS
         return DEFAULT_CORRELATION_TYPES;
     }
 
@@ -283,13 +255,14 @@ public class CorrelationAttributeInstance implements Serializable {
 
         /**
          *
-         * @param typeId Unique ID for this Correlation Type
+         * @param typeId      Unique ID for this Correlation Type
          * @param displayName Name of this type displayed in the UI.
          * @param dbTableName Central repository db table where data of this
-         * type is stored. Must start with a lowercase letter and only contain
-         * lowercase letters, numbers, and '_' characters.
-         * @param supported Is this Type currently supported
-         * @param enabled Is this Type currently enabled.
+         *                    type is stored. Must start with a lowercase letter
+         *                    and only contain lowercase letters, numbers, and
+         *                    '_' characters.
+         * @param supported   Is this Type currently supported
+         * @param enabled     Is this Type currently enabled.
          */
         public Type(int typeId, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             if (dbTableName == null) {
@@ -312,10 +285,11 @@ public class CorrelationAttributeInstance implements Serializable {
          *
          * @param displayName Name of this type displayed in the UI.
          * @param dbTableName Central repository db table where data of this
-         * type is stored Must start with a lowercase letter and only contain
-         * lowercase letters, numbers, and '_' characters.
-         * @param supported Is this Type currently supported
-         * @param enabled Is this Type currently enabled.
+         *                    type is stored Must start with a lowercase letter
+         *                    and only contain lowercase letters, numbers, and
+         *                    '_' characters.
+         * @param supported   Is this Type currently supported
+         * @param enabled     Is this Type currently enabled.
          */
         public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             this(-1, displayName, dbTableName, supported, enabled);
@@ -477,8 +451,8 @@ public class CorrelationAttributeInstance implements Serializable {
          * custom_instances)
          *
          * @param dbTableName the dbTableName to set. Must start with lowercase
-         * letter and can only contain lowercase letters, numbers, and '_'
-         * characters.
+         *                    letter and can only contain lowercase letters,
+         *                    numbers, and '_' characters.
          *
          * @throws EamDbException if dbTableName contains invalid characters
          */
