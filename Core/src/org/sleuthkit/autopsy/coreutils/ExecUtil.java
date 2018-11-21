@@ -158,6 +158,14 @@ public final class ExecUtil {
      */
     public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         Process process = processBuilder.start();
+        return execute(process, timeOut, units, terminator);
+    }
+
+    public static int execute(Process process, ProcessTerminator terminator) throws SecurityException, IOException {
+        return ExecUtil.execute(process, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
+    }
+
+    public static int execute(Process process, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         try {
             do {
                 process.waitFor(timeOut, units);
@@ -166,7 +174,7 @@ public final class ExecUtil {
                     try {
                         process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
                     } catch (InterruptedException exx) {
-                        Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", processBuilder.command().get(0)));
+                        Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", process.toString()));
                     }
                 }
             } while (process.isAlive());
@@ -177,9 +185,9 @@ public final class ExecUtil {
             try {
                 process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
             } catch (InterruptedException exx) {
-                Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", processBuilder.command().get(0)));
+                Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", process.toString()));
             }
-            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0)); // NON-NLS
+            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", process.toString()); // NON-NLS
             Thread.currentThread().interrupt();
         }
         return process.exitValue();

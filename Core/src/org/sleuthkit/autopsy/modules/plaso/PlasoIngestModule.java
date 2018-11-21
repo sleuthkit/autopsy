@@ -18,8 +18,14 @@
  */
 package org.sleuthkit.autopsy.modules.plaso;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
@@ -29,6 +35,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -144,7 +152,17 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         try {
             // Run log2timeline
             statusHelper.progress(Bundle.PlasoIngestModule_running_log2timeline(), 0);
-            ExecUtil.execute(log2TimeLineCommand, new DataSourceIngestModuleProcessTerminator(context));
+            Process log2TimeLine = log2TimeLineCommand.start();
+
+            try (BufferedReader log2TimeLineOutpout = new BufferedReader(new InputStreamReader(log2TimeLine.getInputStream()))) {
+                RunnableImpl runnableImpl = new RunnableImpl(log2TimeLineOutpout, statusHelper, moduleOutputPath);
+                new Thread(runnableImpl).start();
+
+//                processBuilder.redirectOutput(new File(moduleOutputPath + File.separator + "log2timeline_output.txt"));
+//        processBuilder.redirectError(new File(moduleOutputPath + File.separator + "log2timeline_err.txt"));  //NON-NLS
+                ExecUtil.execute(log2TimeLine, new DataSourceIngestModuleProcessTerminator(context));
+                runnableImpl.cancel();
+            }
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, Bundle.PlasoIngestModule_log2timeline_cancelled()); //NON-NLS
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_log2timeline_cancelled());
@@ -156,7 +174,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_log2timeline());
                 return ProcessResult.OK;
             }
-            
+
             // sort the output
             statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
             ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
@@ -171,7 +189,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_psort());
                 return ProcessResult.OK;
             }
-            
+
             // parse the output and make artifacts
             createPlasoArtifacts(plasoFile.getAbsolutePath(), statusHelper);
 
@@ -211,8 +229,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
          * same permissions Autopsy uses.
          */
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
-        processBuilder.redirectOutput(new File(moduleOutputPath + File.separator + "log2timeline_output.txt"));
-        processBuilder.redirectError(new File(moduleOutputPath + File.separator + "log2timeline_err.txt"));  //NON-NLS
+//        processBuilder.redirectOutput(new File(moduleOutputPath + File.separator + "log2timeline_output.txt"));
+//        processBuilder.redirectError(new File(moduleOutputPath + File.separator + "log2timeline_err.txt"));  //NON-NLS
 
         return processBuilder;
     }
@@ -280,7 +298,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
-            
+
             while (resultSet.next()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, Bundle.PlasoIngestModule_create_artifacts_cancelled()); //NON-NLS
@@ -305,7 +323,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", resultSet.getString("filename"));
                     resolvedFile = image;
                 }
-                
+
                 long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
@@ -395,5 +413,47 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             return EventType.REGISTRY.getTypeID();
         }
         return EventType.OTHER.getTypeID();
+    }
+
+    static class RunnableImpl implements Runnable, Cancellable {
+
+        private final BufferedReader log2TimeLineOutpout;
+        private final DataSourceIngestModuleProgress statusHelper;
+        private boolean cancelled = false;
+        private final BufferedWriter writer;
+
+        RunnableImpl(BufferedReader log2TimeLineOutpout, DataSourceIngestModuleProgress statusHelper, String moduleOutputPath) throws IOException {
+            this.log2TimeLineOutpout = log2TimeLineOutpout;
+            this.statusHelper = statusHelper;
+            writer = new BufferedWriter(new FileWriter(new File(moduleOutputPath + File.separator + "log2timeline_output.txt")));
+        }
+
+        @Override
+        public void run() {
+            String line;
+            try {
+                while (null != (line = log2TimeLineOutpout.readLine())
+                       && cancelled == false) {
+                    statusHelper.progress(line); //is this threadsafe
+                    writer.write(line);
+                    writer.newLine();
+                }
+                writer.flush();
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
+            } finally {
+                try {
+                    writer.close();
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+            }
+        }
+
+        @Override
+        public boolean cancel() {
+            cancelled = true;
+            return true;
+        }
     }
 }
