@@ -198,6 +198,12 @@ public class IngestEventsListener {
         }
     }
 
+    /**
+     * Create an Interesting Aritfact hit for a device which was previously seen
+     * in the central repository.
+     *
+     * @param bbArtifact the artifact to create the interesting item for
+     */
     @NbBundle.Messages({"IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)",
         "# {0} - typeName",
         "# {1} - count",
