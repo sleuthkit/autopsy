@@ -154,7 +154,7 @@ public final class DrawableDB {
 
     // caches to make inserts / updates faster
     private Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
-    private final Cache<String, Boolean> groupSeenCache = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
+    private final Cache<GroupKey<?>, Boolean> groupSeenCache = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
     private final Object cacheLock = new Object(); // protects access to the below cache-related objects
     private boolean areCachesLoaded = false; // if true, the below caches contain valid data
     private Set<Long> hasTagCache = new HashSet<>(); // contains obj id of files with tags
@@ -806,8 +806,7 @@ public final class DrawableDB {
          * Check the groupSeenCache to see if the seen status for this group was set recently.
          * If recently set to the same value, there's no need to update it
          */
-        String cacheKey = groupKey.getDataSourceObjId() + "_" + groupKey.getValueDisplayName() + "_" + groupKey.getAttribute().getDisplayName();
-        Boolean cachedValue = groupSeenCache.getIfPresent(cacheKey);
+        Boolean cachedValue = groupSeenCache.getIfPresent(groupKey);
         if (cachedValue != null && cachedValue == seen) {
             return;
         }
@@ -826,7 +825,7 @@ public final class DrawableDB {
 
         tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
 
-        groupSeenCache.put(cacheKey, seen);
+        groupSeenCache.put(groupKey, seen);
         
     }
 

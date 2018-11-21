@@ -147,8 +147,6 @@ public class GroupManager {
 
     private final GroupingService regrouper;
 
-    private final long currentExaminerId;
-    
     @SuppressWarnings("ReturnOfCollectionOrArrayField")
     public ObservableList<DrawableGroup> getAnalyzedGroups() {
         return unmodifiableAnalyzedGroups;
@@ -164,11 +162,10 @@ public class GroupManager {
      *
      * @param controller
      */
-    public GroupManager(ImageGalleryController controller) throws TskCoreException {
+    public GroupManager(ImageGalleryController controller) {
         this.controller = controller;
         this.regrouper = new GroupingService();
         regrouper.setExecutor(exec);
-        this.currentExaminerId = collaborativeModeProp.get() ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId();
     }
 
     /**
@@ -274,7 +271,8 @@ public class GroupManager {
     public ListenableFuture<?> markGroupSeen(DrawableGroup group, boolean seen) {
         return exec.submit(() -> {
             try {
-                getDrawableDB().markGroupSeen(group.getGroupKey(), seen, currentExaminerId);
+                Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
+                getDrawableDB().markGroupSeen(group.getGroupKey(), seen, examiner.getId());
                 // only update and reshuffle if its new results
                 if (group.isSeen() != seen) {
                     group.setSeen(seen);
@@ -659,7 +657,7 @@ public class GroupManager {
                 Set<Long> fileIDs = getFileIDsInGroup(groupKey);
                 if (Objects.nonNull(fileIDs)) {
 
-                    long examinerID = collaborativeModeProp.get() ? -1 : currentExaminerId;
+                    long examinerID = collaborativeModeProp.get() ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId();
                     final boolean groupSeen = getDrawableDB().isGroupSeenByExaminer(groupKey, examinerID);
                     DrawableGroup group;
 
@@ -714,17 +712,21 @@ public class GroupManager {
     synchronized public void setCollaborativeMode(Boolean newValue) {
         collaborativeModeProp.set(newValue);
         analyzedGroups.forEach(group -> {
-            
-            boolean groupSeenByExaminer = getDrawableDB().isGroupSeenByExaminer(
-                    group.getGroupKey(),
-                    newValue ? -1 : currentExaminerId
-            );
-            group.setSeen(groupSeenByExaminer);
-            updateUnSeenGroups(group);
-            if (group.isSeen()) {
-                unSeenGroups.removeAll(group);
-            } else if (unSeenGroups.contains(group) == false) {
-                unSeenGroups.add(group);
+            try {
+                boolean groupSeenByExaminer = getDrawableDB().isGroupSeenByExaminer(
+                        group.getGroupKey(),
+                        newValue ? -1 : controller.getSleuthKitCase().getCurrentExaminer().getId()
+                );
+                group.setSeen(groupSeenByExaminer);
+                updateUnSeenGroups(group);
+                if (group.isSeen()) {
+                    unSeenGroups.removeAll(group);
+                } else if (unSeenGroups.contains(group) == false) {
+                    unSeenGroups.add(group);
+                }
+
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error checking seen state of group.", ex);
             }
         });
         sortUnseenGroups();
