@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.events;
 
-import java.io.Serializable;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -30,15 +29,15 @@ import org.sleuthkit.datamodel.timeline.TimelineEvent;
 /**
  * An AutopsyEvent broadcast when a TimelineEvent is added to the case.
  */
-public class EventAddedEvent extends AutopsyEvent implements Serializable {
+public class TimelineEventAddedEvent extends AutopsyEvent {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(EventAddedEvent.class.getName());
+    private static final Logger logger = Logger.getLogger(TimelineEventAddedEvent.class.getName());
 
     private transient TimelineEvent addedEvent;
 
-    public EventAddedEvent(org.sleuthkit.datamodel.TimelineManager.EventAddedEvent event) {
-        super(Case.Events.EVENT_ADDED.name(), null, event.getAddedEvent().getEventID());
+    public TimelineEventAddedEvent(org.sleuthkit.datamodel.TimelineManager.TimelineEventAddedEvent event) {
+        super(Case.Events.TIMELINE_EVENT_ADDED.name(), null, event.getAddedEvent().getEventID());
         addedEvent = event.getAddedEvent();
     }
 

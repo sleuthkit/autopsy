@@ -778,7 +778,7 @@ public class TimeLineController {
                     return null;
                 });
                 break;
-            case EVENT_ADDED:
+            case TIMELINE_EVENT_ADDED:
                 future = executor.submit(() -> {
                     filteredEvents.invalidateCaches(singleton(((EventAddedEvent) evt).getAddedEventID()));
                     return null;
