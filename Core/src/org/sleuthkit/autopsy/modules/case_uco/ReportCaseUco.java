@@ -57,7 +57,7 @@ class ReportCaseUco implements GeneralReportModule {
     private static ReportCaseUco instance = null;
     private ReportCaseUcoConfigPanel configPanel;
     
-    private static final String REPORT_FILE_NAME = "CaseUco.json";
+    private static final String REPORT_FILE_NAME = "CASE_UCO_output.json-ld";
     
     // Hidden constructor for the report
     private ReportCaseUco() {
@@ -141,6 +141,9 @@ class ReportCaseUco implements GeneralReportModule {
             
             progressPanel.updateStatusLabel(Bundle.ReportCaseUco_querying());
             
+            // create the required CASE-UCO entries at the beginning of the output file
+            initializeJsonOutputFile(jsonGenerator);
+            
             // create CASE-UCO entry for the Autopsy case
             String caseTraceId = saveCaseInfo(skCase, jsonGenerator);
             
@@ -180,6 +183,10 @@ class ReportCaseUco implements GeneralReportModule {
                     saveFileInCaseUcoFormat(objectId, fileName, parent_path, md5Hash, mime_type, size, crtime, atime, mtime, extension, jsonGenerator, dataSourceTraceId);
                 }
             }
+            
+            // create the required CASE-UCO entries at the end of the output file
+            finilizeJsonOutputFile(jsonGenerator);
+            
             progressPanel.complete(ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get list of files from case database", ex); //NON-NLS
@@ -204,7 +211,17 @@ class ReportCaseUco implements GeneralReportModule {
         }
     }
     
+    private void initializeJsonOutputFile(JsonGenerator catalog) throws IOException {
+        catalog.writeStartObject();
+        catalog.writeFieldName("@graph");
+        catalog.writeStartArray();
+    }
     
+    private void finilizeJsonOutputFile(JsonGenerator catalog) throws IOException {
+        catalog.writeEndArray();
+        catalog.writeEndObject();
+    }
+        
     private String saveCaseInfo(SleuthkitCase skCase, JsonGenerator catalog) throws TskCoreException, SQLException, IOException, NoCurrentCaseException {
         
         // create a "trace" entry for the Autopsy case iteself
@@ -319,7 +336,7 @@ class ReportCaseUco implements GeneralReportModule {
         catalog.writeStringField("@type", "Relationship");
         catalog.writeStringField("source", dataSourceTraceId);
         catalog.writeStringField("target", caseTraceId);
-        catalog.writeStringField("kindOfRelationshipe", "contained-within");
+        catalog.writeStringField("kindOfRelationship", "contained-within");
         catalog.writeBooleanField("isDirectional", true);
         
         catalog.writeFieldName("propertyBundle");
@@ -330,7 +347,7 @@ class ReportCaseUco implements GeneralReportModule {
         catalog.writeEndObject();
         catalog.writeEndArray();
         
-        catalog.writeEndObject();        
+        catalog.writeEndObject();
         
         return dataSourceTraceId;
     }
@@ -392,7 +409,7 @@ class ReportCaseUco implements GeneralReportModule {
         catalog.writeStringField("@type", "Relationship");
         catalog.writeStringField("source", fileTraceId);
         catalog.writeStringField("target", dataSourceTraceId);
-        catalog.writeStringField("kindOfRelationshipe", "contained-within");
+        catalog.writeStringField("kindOfRelationship", "contained-within");
         catalog.writeBooleanField("isDirectional", true);
         
         catalog.writeFieldName("propertyBundle");
