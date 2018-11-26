@@ -200,7 +200,7 @@ public final class FileTypeUtils {
 
         }
 
-        public ImmutableSet<String> getExtension() {
+        public ImmutableSet<String> getExtensions() {
             throw new UnsupportedOperationException("This method is not implemented yet.");  //just to be explicit.
         }
     }
