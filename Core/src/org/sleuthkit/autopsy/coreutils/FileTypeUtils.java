@@ -118,25 +118,20 @@ public final class FileTypeUtils {
                             "application/msdos-windows",//NON-NLS
                             "application/x-msdos-program"//NON-NLS
                     ).build();
-
-    private static final ImmutableSet<String> MULTI_MEDIA_MIME_TYPES;
-    private static final ImmutableSet<String> VISUAL_MEDIA_MIME_TYPES;
-
-    static {
-        VISUAL_MEDIA_MIME_TYPES = new ImmutableSet.Builder<String>()
-                .addAll(IMAGE_MIME_TYPES)
-                .addAll(VIDEO_MIME_TYPES)
-                .add("application/vnd.ms-asf", //NON-NLS
-                        "application/vnd.rn-realmedia", //NON-NLS
-                        "application/x-shockwave-flash" //NON-NLS 
-                ).build();
-        MULTI_MEDIA_MIME_TYPES = new ImmutableSet.Builder<String>()
-                .addAll(IMAGE_MIME_TYPES)
-                .addAll(AUDIO_MIME_TYPES)
-                .addAll(VIDEO_MIME_TYPES)
-                .build();
-
-    }
+    private static final ImmutableSet<String> MULTI_MEDIA_MIME_TYPES
+            = new ImmutableSet.Builder<String>()
+                    .addAll(IMAGE_MIME_TYPES)
+                    .addAll(AUDIO_MIME_TYPES)
+                    .addAll(VIDEO_MIME_TYPES)
+                    .build();
+    private static final ImmutableSet<String> VISUAL_MEDIA_MIME_TYPES
+            = new ImmutableSet.Builder<String>()
+                    .addAll(IMAGE_MIME_TYPES)
+                    .addAll(VIDEO_MIME_TYPES)
+                    .add("application/vnd.ms-asf", //NON-NLS
+                            "application/vnd.rn-realmedia", //NON-NLS
+                            "application/x-shockwave-flash" //NON-NLS 
+                    ).build();
 
     private FileTypeUtils() {
 
@@ -153,7 +148,7 @@ public final class FileTypeUtils {
         "FileTypeCategory.Visual.displayName=Visual",
         "FileTypeCategory.Documents.displayName=Documents",
         "FileTypeCategory.Executables.displayName=Executables"})
-      public enum FileTypeCategory {
+    public enum FileTypeCategory {
 
         IMAGE(Bundle.FileTypeCategory_Image_displayName(),
                 IMAGE_MIME_TYPES,
@@ -171,7 +166,7 @@ public final class FileTypeUtils {
                 VISUAL_MEDIA_MIME_TYPES,
                 Collections.emptyList()),
         /**
-         * VISUAL plus audio.
+         * VISUAL plus AUDIO.
          */
         MEDIA(Bundle.FileTypeCategory_Media_displayName(),
                 MULTI_MEDIA_MIME_TYPES,
@@ -180,7 +175,7 @@ public final class FileTypeUtils {
                 EXECUTABLE_MIME_TYPES,
                 Collections.emptyList()),
         /**
-         * (Plain) Text and "office" documents.
+         * (Plain) Text and "Office" documents.
          */
         DOCUMENTS(Bundle.FileTypeCategory_Documents_displayName(),
                 DOCUMENT_MIME_TYPES,
@@ -206,7 +201,7 @@ public final class FileTypeUtils {
         }
 
         public ImmutableSet<String> getExtension() {
-            return extensions;
+            throw new UnsupportedOperationException("This method is not implemented yet.");  //just to be explicit.
         }
     }
 }
