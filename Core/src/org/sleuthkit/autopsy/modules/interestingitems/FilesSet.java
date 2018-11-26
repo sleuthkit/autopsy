@@ -827,7 +827,7 @@ public final class FilesSet implements Serializable {
             /**
              * Construct a case-insensitive file name extension condition.
              *
-             * @param extension The file name extension to be matched.
+             * @param extensions The file name extensions to be matched.
              */
             public ExtensionCondition(List<String> extensions) {
                 // If there is a leading ".", strip it since 

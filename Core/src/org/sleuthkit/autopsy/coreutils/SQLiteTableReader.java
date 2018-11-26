@@ -57,7 +57,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) 
  * .onInteger(new Consumer<Integer>() {
- *      @Override public void accept(Integer i) { 
+ *      (atSymbol)Override public void accept(Integer i) { 
  *          System.out.println(i); 
  *      }
  * }).build(); 
@@ -463,7 +463,7 @@ public class SQLiteTableReader implements AutoCloseable {
      * directory.
      *
      * @param file AbstractFile from the data source
-     * @param id   The input files id value
+     * @param fileId   The input files id value
      *
      * @return The path of the file on disk
      *
