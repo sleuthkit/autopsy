@@ -154,6 +154,7 @@ public final class DrawableDB {
 
     // caches to make inserts / updates faster
     private Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+    private final Cache<GroupKey<?>, Boolean> groupSeenCache = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
     private final Object cacheLock = new Object(); // protects access to the below cache-related objects
     private boolean areCachesLoaded = false; // if true, the below caches contain valid data
     private Set<Long> hasTagCache = new HashSet<>(); // contains obj id of files with tags
@@ -801,6 +802,15 @@ public final class DrawableDB {
      */
     public void markGroupSeen(GroupKey<?> groupKey, boolean seen, long examinerID) throws TskCoreException {
 
+        /*
+         * Check the groupSeenCache to see if the seen status for this group was set recently.
+         * If recently set to the same value, there's no need to update it
+         */
+        Boolean cachedValue = groupSeenCache.getIfPresent(groupKey);
+        if (cachedValue != null && cachedValue == seen) {
+            return;
+        }
+        
         // query to find the group id from attribute/value
         String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
                 + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )",
@@ -809,13 +819,14 @@ public final class DrawableDB {
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
 
         String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, seen ? 1 : 0);
-
         if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
             insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", seen ? 1 : 0);
         }
 
         tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
 
+        groupSeenCache.put(groupKey, seen);
+        
     }
 
     /**
