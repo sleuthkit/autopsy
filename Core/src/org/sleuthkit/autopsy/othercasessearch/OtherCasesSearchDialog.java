@@ -236,7 +236,7 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         CorrelationAttributeInstance.Type correlationType = selectedCorrelationType;
-        String correlationValue = correlationValueTextField.getText();
+        String correlationValue = correlationValueTextField.getText().trim();
         
         if (validateInputs(correlationType, correlationValue)) {
             search(correlationType, correlationValue);
@@ -277,7 +277,7 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
      */
     private boolean validateInputs(CorrelationAttributeInstance.Type type, String value) {
         try {
-            CorrelationAttributeNormalizer.normalize(type, correlationValueTextField.getText().trim());
+            CorrelationAttributeNormalizer.normalize(type, value);
         } catch (CorrelationAttributeNormalizationException ex) {
             // No need to log this.
             return false;
