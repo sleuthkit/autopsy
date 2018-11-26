@@ -322,10 +322,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
     
     @NbBundle.Messages({
-        "BlackboardArtifactNode.createSheet.artifactType.displayName=Artifact Type",
-        "BlackboardArtifactNode.createSheet.artifactType.name=Artifact Type",
-        "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Artifact Details",
-        "BlackboardArtifactNode.createSheet.artifactDetails.name=Artifact Details",
+        "BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type",
+        "BlackboardArtifactNode.createSheet.artifactType.name=Result Type",
+        "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Result Details",
+        "BlackboardArtifactNode.createSheet.artifactDetails.name=Result Details",
         "BlackboardArtifactNode.createSheet.artifactMD5.displayName=MD5 Hash",
         "BlackboardArtifactNode.createSheet.artifactMD5.name=MD5 Hash",
         "BlackboardArtifactNode.createSheet.fileSize.name=Size",
