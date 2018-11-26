@@ -76,7 +76,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.timeline.events.EventAddedEvent;
+import org.sleuthkit.autopsy.timeline.events.TimelineEventAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
@@ -780,7 +780,7 @@ public class TimeLineController {
                 break;
             case TIMELINE_EVENT_ADDED:
                 future = executor.submit(() -> {
-                    filteredEvents.invalidateCaches(singleton(((EventAddedEvent) evt).getAddedEventID()));
+                    filteredEvents.invalidateCaches(singleton(((TimelineEventAddedEvent) evt).getAddedEventID()));
                     return null;
                 });
                 break;
