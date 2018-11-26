@@ -192,72 +192,80 @@ public final class OpenAction extends CallableSystemAction {
         addFXCallback(dataSourceStatusMapFuture,
                 dataSourceStatusMap -> {
                     
-                    boolean dbIsStale = false;
+                    int numUnknown = 0;
                     for (Map.Entry<Long, DrawableDbBuildStatusEnum> entry : dataSourceStatusMap.entrySet()) {
                         DrawableDbBuildStatusEnum status = entry.getValue();
-                        if (DrawableDbBuildStatusEnum.COMPLETE != status) {
-                           dbIsStale = true;
+                        if (DrawableDbBuildStatusEnum.UNKNOWN == status) {
+                            numUnknown++;
                         }
                     }               
              
-                    //back on fx thread.
-                    if (false == dbIsStale) {
-                        //drawable db is not stale, just open it
-                        openTopComponent();
-                    } else {
+                    // NOTE: we are running on the fx thread.
+
+                    // If there are data sources in the "UNKNOWN" state, then we MAY need to rebuild.
+                    // Or not because single-user cases can have UNKNOWN states if ingest was not run yet
+                    if (numUnknown > 0) {
+                        /* A rebuild should occur if either
+                         * - Multi-user case and at least one DS is UNKNOWN
+                         * - Single-user case and case listening has been disabled
+                        */
+                        if ((controller.getAutopsyCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) || 
+                                ((controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) && 
+                                (controller.isListeningEnabled() == false))) {
                         
-                        // If there is only one datasource and it's in DEFAULT State - 
-                        // ingest modules need to be run on the data source
-                        if  (dataSourceStatusMap.size()== 1) {
-                            Map.Entry<Long, DrawableDB.DrawableDbBuildStatusEnum> entry = dataSourceStatusMap.entrySet().iterator().next();
-                            if (entry.getValue() == DrawableDbBuildStatusEnum.DEFAULT ) {
+                            // See if user wants to rebuild, cancel out, or open as is
+                            Alert alert = new Alert(Alert.AlertType.WARNING,
+                            Bundle.OpenAction_stale_confDlg_msg(),
+                            ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+                            alert.initModality(Modality.APPLICATION_MODAL);
+                            alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
+                            GuiUtils.setDialogIcons(alert);
+                            ButtonType answer = alert.showAndWait().orElse(ButtonType.CANCEL);
+                            
+                            if (answer == ButtonType.CANCEL) {
+                                //just do nothing - don't open window
+                                return;
+                            } else if (answer == ButtonType.NO) {
+                                // They don't want to rebuild. Just open the UI as is.
+                                // NOTE: There could be no data....
+                            } else if (answer == ButtonType.YES) {
+                                if (controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
+                                    /* For a single-user case, we favor user
+                                     * experience, and rebuild the database as soon
+                                     * as Image Gallery is enabled for the case.
+                                     *
+                                     * Turning listening off is necessary in order
+                                     * to invoke the listener that will call
+                                     * controller.rebuildDB();
+                                     */
+                                    controller.setListeningEnabled(false);
+                                    controller.setListeningEnabled(true);
+                                } else {
+                                    /*
+                                     * For a multi-user case, we favor overall
+                                     * performance and user experience, not every
+                                     * user may want to review images, so we rebuild
+                                     * the database only when a user launches Image
+                                     * Gallery.
+                                     */
+                                    controller.rebuildDB();
+                                }
+                            }
+                        }
+                        else {    // single user and listening is enabled
+                            // give them a dialog to enable modules if no data sources have been analyzed
+                            if (numUnknown == dataSourceStatusMap.size()) {
                                 Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.OpenAction_notAnalyzedDlg_msg(), ButtonType.OK);
                                 alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
                                 alert.initModality(Modality.APPLICATION_MODAL);
-
                                 alert.showAndWait();
                                 return;
                             }
-                        } 
-                        
-                        //drawable db is stale,
-                        //ask what to do
-                        Alert alert = new Alert(Alert.AlertType.WARNING,
-                                Bundle.OpenAction_stale_confDlg_msg(),
-                                ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
-                        alert.initModality(Modality.APPLICATION_MODAL);
-                        alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
-                        GuiUtils.setDialogIcons(alert);
-                        ButtonType answer = alert.showAndWait().orElse(ButtonType.CANCEL);
-                        if (answer == ButtonType.CANCEL) {
-                            //just do nothing
-                        } else if (answer == ButtonType.NO) {
-                            openTopComponent();
-                        } else if (answer == ButtonType.YES) {
-                            if (controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-                                /* For a single-user case, we favor user
-                                 * experience, and rebuild the database as soon
-                                 * as Image Gallery is enabled for the case.
-                                 *
-                                 * Turning listening off is necessary in order
-                                 * to invoke the listener that will call
-                                 * controller.rebuildDB();
-                                 */
-                                controller.setListeningEnabled(false);
-                                controller.setListeningEnabled(true);
-                            } else {
-                                /*
-                                 * For a multi-user case, we favor overall
-                                 * performance and user experience, not every
-                                 * user may want to review images, so we rebuild
-                                 * the database only when a user launches Image
-                                 * Gallery.
-                                 */
-                                controller.rebuildDB();
-                            }
-                            openTopComponent();
                         }
                     }
+                                 
+                    // otherwise, lets open the UI
+                    openTopComponent();
                 },
                 throwable -> logger.log(Level.SEVERE, "Error checking if drawable db is stale.", throwable)//NON-NLS
         );

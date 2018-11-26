@@ -277,7 +277,7 @@ public class ImageGalleryModule {
                     if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
                         Content newDataSource = (Content) evt.getNewValue();
                         if (con.isListeningEnabled()) { 
-                            controller.getDatabase().insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.DEFAULT);
+                            controller.getDatabase().insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
                         }
                     }
                     break;

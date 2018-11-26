@@ -178,7 +178,7 @@ public final class DrawableDB {
      * DO NOT add in the middle.
      */
     public enum DrawableDbBuildStatusEnum {
-        UNKNOWN, /// no known status
+        UNKNOWN, /// no known status - not yet analyzed 
         IN_PROGRESS, /// ingest or db rebuild is in progress
         COMPLETE, /// All files in the data source have had file type detected
         DEFAULT;        /// Not all files in the data source have had file type detected

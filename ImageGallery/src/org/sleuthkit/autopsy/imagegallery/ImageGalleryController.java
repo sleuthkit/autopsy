@@ -160,7 +160,7 @@ public final class ImageGalleryController {
         }
     }
 
-    boolean isListeningEnabled() {
+    public boolean isListeningEnabled() {
         synchronized (listeningEnabled) {
             return listeningEnabled.get();
         }

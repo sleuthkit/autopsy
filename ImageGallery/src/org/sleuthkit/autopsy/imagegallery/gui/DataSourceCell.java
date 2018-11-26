@@ -63,7 +63,7 @@ public class DataSourceCell extends ListCell<Optional<DataSource>> {
             DrawableDbBuildStatusEnum dataSourceDBStatus = (dataSource != null) ? 
                      dataSourcesDrawableDBStatus.get(dataSource.getId()) : DrawableDbBuildStatusEnum.UNKNOWN;
             
-            Boolean dataSourceNotAnalyzed = (dataSourceDBStatus == DrawableDbBuildStatusEnum.DEFAULT);
+            Boolean dataSourceNotAnalyzed = (dataSourceDBStatus == DrawableDbBuildStatusEnum.UNKNOWN);
             if (tooManyFilesInDataSource) {
                 text += " - Too many files";
             } 
