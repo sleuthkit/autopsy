@@ -328,7 +328,6 @@ public class EamArtifactUtil {
             if (null == correlationCase) {
                 correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
             }
-
             return new CorrelationAttributeInstance(
                     filesType,
                     af.getMd5Hash(),

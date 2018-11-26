@@ -189,14 +189,7 @@ public class ImageGalleryModule {
                             if (isDrawableAndNotKnown(file)) {
                                 con.queueDBTask(new ImageGalleryController.UpdateFileTask(file, controller.getDatabase()));
                             } 
-                            // Remove it from the DB if it is no longer relevant, but had the correct extension
-                            else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
-                                /* Doing this check results in fewer tasks queued
-                                 * up, and faster completion of db update. This file
-                                 * would have gotten scooped up in initial grab, but
-                                 * actually we don't need it */
-                                con.queueDBTask(new ImageGalleryController.RemoveFileTask(file, controller.getDatabase()));
-                            }
+                           
                         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
                             logger.log(Level.SEVERE, "Unable to determine if file is drawable and not known.  Not making any changes to DB", ex); //NON-NLS
                             MessageNotifyUtil.Notify.error("Image Gallery Error",

@@ -55,13 +55,13 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * or
  *
- * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) .onInteger(new
- * Consumer<Integer>() {
- *    @Override public void accept(Integer i) { 
- *       System.out.println(i); 
- *    }
- * }).build();
- *
+ * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) 
+ * .onInteger(new Consumer<Integer>() {
+ *      @Override public void accept(Integer i) { 
+ *          System.out.println(i); 
+ *      }
+ * }).build(); 
+ * 
  * reader.reader(tableName);
  *
  * Invocation of read(String tableName) reads row by row. When an Integer is
@@ -83,10 +83,9 @@ public class SQLiteTableReader implements AutoCloseable {
         private Consumer<Double> onFloatAction;
         private Consumer<byte[]> onBlobAction;
         private Consumer<Object> forAllAction;
-
+        
         static <T> Consumer<T> doNothing() {
-            return NOOP -> {
-            };
+            return NOOP -> {};
         }
 
         /**
@@ -211,7 +210,7 @@ public class SQLiteTableReader implements AutoCloseable {
 
     private final AbstractFile file;
     private final Builder builder;
-
+  
     private static final String SELECT_ALL_QUERY = "SELECT * FROM \"%s\"";
     private static final Logger logger = Logger.getLogger(SQLiteTableReader.class.getName());
 
@@ -528,7 +527,6 @@ public class SQLiteTableReader implements AutoCloseable {
     @Override
     public void close() throws SQLiteTableReaderException {
         try {
-            closeTableResources();
             if (Objects.nonNull(conn)) {
                 conn.close();
             }

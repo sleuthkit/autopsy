@@ -114,9 +114,6 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/imagegallery/Bundle.properties" key="ImageGalleryOptionsPanel.enabledByDefaultBox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="enabledByDefaultBoxActionPerformed"/>
-              </Events>
             </Component>
             <Component class="javax.swing.JSeparator" name="jSeparator1">
             </Component>
@@ -146,9 +143,6 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/imagegallery/Bundle.properties" key="ImageGalleryOptionsPanel.enabledForCaseBox.toolTipText" replaceFormat="NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="enabledForCaseBoxActionPerformed"/>
-              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="unavailableDuringInjestLabel">
               <Properties>
