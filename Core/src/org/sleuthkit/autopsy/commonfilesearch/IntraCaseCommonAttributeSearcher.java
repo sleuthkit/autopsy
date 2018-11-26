@@ -1,16 +1,16 @@
 /*
- * 
+ *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,10 +23,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.HashUtility;
@@ -45,25 +44,22 @@ import org.sleuthkit.datamodel.TskCoreException;
 @SuppressWarnings("PMD.AbstractNaming")
 public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
 
-    private static final String FILTER_BY_MIME_TYPES_WHERE_CLAUSE = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
-
     private final Map<Long, String> dataSourceIdToNameMap;
-    
+
     /**
      * Subclass this to implement different algorithms for getting common files.
      *
-     * @param dataSourceIdMap a map of obj_id to datasource name
+     * @param dataSourceIdMap       a map of obj_id to datasource name
      * @param filterByMediaMimeType match only on files whose mime types can be
-     * broadly categorized as media types
-     * @param filterByDocMimeType match only on files whose mime types can be
-     * broadly categorized as document types
+     *                              broadly categorized as media types
+     * @param filterByDocMimeType   match only on files whose mime types can be
+     *                              broadly categorized as document types
      */
     IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) {
         super(filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
         this.dataSourceIdToNameMap = dataSourceIdMap;
     }
-    
-    
+
     Map<Long, String> getDataSourceIdToNameMap() {
         return Collections.unmodifiableMap(this.dataSourceIdToNameMap);
     }
@@ -96,7 +92,8 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * tree table tab to the top component.
      *
      * @return a data object with all of the matched files in a hierarchical
-     * format
+     *         format
+     *
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      * @throws SQLException
@@ -149,29 +146,18 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * expression will be conjoined to base query with an AND operator.
      *
      * @return sql fragment of the form: 'and "mime_type" in ( [comma delimited
-     * list of mime types] )' or empty string in the event that no types to
-     * filter on were given.
+     *         list of mime types] )' or empty string in the event that no types
+     *         to filter on were given.
      */
     String determineMimeTypeFilter() {
-
-        Set<String> mimeTypesToFilterOn = new HashSet<>();
-        String mimeTypeString = "";
-        if (isFilterByMedia()) {
-            mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
+        Set<String> mimeTypesToFilterOn = getMimeTypesToFilterOn();
+        if (mimeTypesToFilterOn.isEmpty()) {
+            return "";
+        } else {
+            String mimeTypeString = mimeTypesToFilterOn.stream()
+                    .map(mimeType -> "'" + mimeType + "'")
+                    .collect(Collectors.joining(","));
+            return String.format(" and mime_type in (%s)", new Object[]{mimeTypeString});
         }
-        if (isFilterByDoc()) {
-            mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
-        }
-        StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());
-        if (!mimeTypesToFilterOn.isEmpty()) {
-            for (String mimeType : mimeTypesToFilterOn) {
-                mimeTypeFilter.append(SINGLE_QUOTE).append(mimeType).append(SINGLE_QUTOE_COMMA);
-            }
-            mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
-            mimeTypeString = String.format(FILTER_BY_MIME_TYPES_WHERE_CLAUSE, new Object[]{mimeTypeString});
-        }
-        return mimeTypeString;
     }
-    static final String SINGLE_QUTOE_COMMA = "',";
-    static final String SINGLE_QUOTE = "'";
 }

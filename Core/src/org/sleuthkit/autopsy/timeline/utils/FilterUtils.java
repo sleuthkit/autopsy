@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.utils;
 
-import com.google.common.collect.ImmutableSet;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,61 +25,21 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.MEDIA;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.EXECUTABLE;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.DOCUMENTS;
 
 /**
  * Utilities to deal with TimelineFilters
  */
 public final class FilterUtils {
 
-    private static final Set<String> MEDIA_MIME_TYPES = ImmutableSet.of(
-            "image/*",//NON-NLS
-            "video/*",//NON-NLS
-            "audio/*",//NON-NLS
-            "application/vnd.ms-asf", //NON-NLS
-            "application/vnd.rn-realmedia", //NON-NLS
-            "application/x-shockwave-flash" //NON-NLS 
-    );
-
-    private static final Set<String> EXECUTABLE_MIME_TYPES = ImmutableSet.of(
-            "application/x-bat",//NON-NLS
-            "application/x-dosexec",//NON-NLS
-            "application/vnd.microsoft.portable-executable",//NON-NLS
-            "application/x-msdownload",//NON-NLS
-            "application/exe",//NON-NLS
-            "application/x-exe",//NON-NLS
-            "application/dos-exe",//NON-NLS
-            "vms/exe",//NON-NLS
-            "application/x-winexe",//NON-NLS
-            "application/msdos-windows",//NON-NLS
-            "application/x-msdos-program"//NON-NLS
-    );
-
-    private static final Set<String> DOCUMENT_MIME_TYPES =ImmutableSet.of(
-            "text/*", //NON-NLS
-            "application/rtf", //NON-NLS
-            "application/pdf", //NON-NLS
-            "application/json", //NON-NLS
-            "application/javascript", //NON-NLS
-            "application/xml", //NON-NLS
-            "application/x-msoffice", //NON-NLS
-            "application/x-ooxml", //NON-NLS
-            "application/msword", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
-            "application/vnd.ms-powerpoint", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
-            "application/vnd.ms-excel", //NON-NLS
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
-            "application/vnd.oasis.opendocument.presentation", //NON-NLS
-            "application/vnd.oasis.opendocument.spreadsheet", //NON-NLS
-            "application/vnd.oasis.opendocument.text" //NON-NLS
-    );
-
     private static final Set<String> NON_OTHER_MIME_TYPES = new HashSet<>();
 
     static {
-        NON_OTHER_MIME_TYPES.addAll(MEDIA_MIME_TYPES);
-        NON_OTHER_MIME_TYPES.addAll(DOCUMENT_MIME_TYPES);
-        NON_OTHER_MIME_TYPES.addAll(EXECUTABLE_MIME_TYPES);
+        NON_OTHER_MIME_TYPES.addAll(DOCUMENTS.getMediaTypes());
+        NON_OTHER_MIME_TYPES.addAll(EXECUTABLE.getMediaTypes());
+        NON_OTHER_MIME_TYPES.addAll(MEDIA.getMediaTypes());
     }
 
     private FilterUtils() {
@@ -93,16 +52,13 @@ public final class FilterUtils {
      * @return The new FileTypesFilter.
      */
     @NbBundle.Messages({
-        "FilterUtils.mediaFilter.displayName=Media",
-        "FilterUtils.documentsFilter.displayName=Documents",
-        "FilterUtils.executablesFilter.displayName=Executables",
         "FilterUtils.otherFilter.displayName=Other"})
     public static FileTypesFilter createDefaultFileTypesFilter() {
         FileTypesFilter fileTypesFilter = new FileTypesFilter();
 
-        fileTypesFilter.addSubFilter(new FileTypeFilter(Bundle.FilterUtils_mediaFilter_displayName(), MEDIA_MIME_TYPES));
-        fileTypesFilter.addSubFilter(new FileTypeFilter(Bundle.FilterUtils_documentsFilter_displayName(), DOCUMENT_MIME_TYPES));
-        fileTypesFilter.addSubFilter(new FileTypeFilter(Bundle.FilterUtils_executablesFilter_displayName(), EXECUTABLE_MIME_TYPES));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(MEDIA.getDisplayName(), MEDIA.getMediaTypes()));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(DOCUMENTS.getDisplayName(), DOCUMENTS.getMediaTypes()));
+        fileTypesFilter.addSubFilter(new FileTypeFilter(EXECUTABLE.getDisplayName(), EXECUTABLE.getMediaTypes()));
         fileTypesFilter.addSubFilter(new InverseFileTypeFilter(Bundle.FilterUtils_otherFilter_displayName(), NON_OTHER_MIME_TYPES));
 
         return fileTypesFilter;
