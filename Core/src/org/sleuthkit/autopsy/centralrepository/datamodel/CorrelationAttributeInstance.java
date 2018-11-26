@@ -233,7 +233,7 @@ public class CorrelationAttributeInstance implements Serializable {
         "CorrelationType.PHONE.displayName=Phone Numbers",
         "CorrelationType.USBID.displayName=USB Devices",
         "CorrelationType.SSID.displayName=Wireless Networks",
-        "CorrelationType.MAC.displayName=Mac Addresses",
+        "CorrelationType.MAC.displayName=MAC Addresses",
         "CorrelationType.IMEI.displayName=IMEI Number",
         "CorrelationType.IMSI.displayName=IMSI Number",
         "CorrelationType.ICCID.displayName=ICCID Number"})
