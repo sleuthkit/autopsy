@@ -57,7 +57,8 @@ import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 
 /**
- *
+ * Model for the Details View. Uses FilteredEventsModel as underlying datamodel
+ * and supplies abstractions / data objects specific to the DetailsView
  */
 final public class DetailsViewModel {
 
@@ -157,7 +158,7 @@ final public class DetailsViewModel {
         String descriptionColumn = eventManager.getDescriptionColumn(descriptionLOD);
         final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
         String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
-      
+
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         String querySql = "SELECT " + formatTimeFunctionHelper(rangeInfo.getPeriodSize().toChronoUnit(), timeZone) + " AS interval, " // NON-NLS
                           + dbUtils.csvAggFunction("tsk_events.event_id") + " as event_ids, " //NON-NLS
@@ -175,7 +176,7 @@ final public class DetailsViewModel {
         try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);
                 ResultSet resultSet = dbQuery.getResultSet();) {
             while (resultSet.next()) {
-                events.add(eventClusterHelper(resultSet, useSubTypes, descriptionLOD, timeZone));
+                events.add(eventClusterHelper(resultSet, typeColumn, descriptionLOD, timeZone));
             }
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
@@ -198,14 +199,12 @@ final public class DetailsViewModel {
      *
      * @throws SQLException
      */
-    private EventCluster eventClusterHelper(ResultSet resultSet, boolean useSubTypes, DescriptionLoD descriptionLOD, DateTimeZone timeZone) throws SQLException, TskCoreException {
-        Interval interval = new Interval(resultSet.getLong("minTime") * 1000, resultSet.getLong("maxTime") * 1000, timeZone);// NON-NLS
-        String eventIDsString = resultSet.getString("event_ids");// NON-NLS
-        List<Long> eventIDs = unGroupConcat(eventIDsString, Long::valueOf);
+    private EventCluster eventClusterHelper(ResultSet resultSet, String typeColumn, DescriptionLoD descriptionLOD, DateTimeZone timeZone) throws SQLException, TskCoreException {
+        Interval interval = new Interval(resultSet.getLong("minTime") * 1000, resultSet.getLong("maxTime") * 1000, timeZone);
+
+        List<Long> eventIDs = unGroupConcat(resultSet.getString("event_ids"), Long::valueOf); // NON-NLS
         String description = resultSet.getString(eventManager.getDescriptionColumn(descriptionLOD));
-        int eventTypeID = useSubTypes
-                ? resultSet.getInt("sub_type") //NON-NLS
-                : resultSet.getInt("base_type"); //NON-NLS
+        int eventTypeID = resultSet.getInt(typeColumn);
         EventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
                 -> new TskCoreException("Error mapping event type id " + eventTypeID + "to EventType."));//NON-NLS
 
