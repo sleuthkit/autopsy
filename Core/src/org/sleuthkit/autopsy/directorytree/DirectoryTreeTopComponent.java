@@ -171,6 +171,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SRCS_TREE:
                     case UserPreferences.HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES:
+                    case UserPreferences.DISPLAY_TRANSLATED_NAMES:
                     case UserPreferences.KEEP_PREFERRED_VIEWER:
                         refreshContentTreeSafe();
                         break;

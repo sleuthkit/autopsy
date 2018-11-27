@@ -320,7 +320,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
         return srcName;
     }
-
+    
     @NbBundle.Messages({
         "BlackboardArtifactNode.createSheet.artifactType.displayName=Artifact Type",
         "BlackboardArtifactNode.createSheet.artifactType.name=Artifact Type",

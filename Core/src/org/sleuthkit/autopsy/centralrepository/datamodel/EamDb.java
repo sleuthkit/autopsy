@@ -34,8 +34,7 @@ public interface EamDb {
     public static final int SCHEMA_VERSION = 2;
     public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
             = new CaseDbSchemaVersionNumber(1, 2);
-  
-    
+
     /**
      * Get the instance
      *
@@ -112,6 +111,16 @@ public interface EamDb {
     public void newDbInfo(String name, String value) throws EamDbException;
 
     /**
+     * Set the data source object id for a specific entry in the data_sources
+     * table
+     *
+     * @param rowId              - the row id for the data_sources table entry
+     * @param dataSourceObjectId - the object id for the data source from the
+     *                           caseDb
+     */
+    void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException;
+
+    /**
      * Get the value for the given name from the name/value db_info table.
      *
      * @param name Name to search for
@@ -183,43 +192,45 @@ public interface EamDb {
      * @return The retrieved case
      */
     CorrelationCase getCaseById(int caseId) throws EamDbException;
+
     /**
      * Retrieves cases that are in DB.
      *
      * @return List of cases
      */
     List<CorrelationCase> getCases() throws EamDbException;
-    
+
     /**
      * Creates new Data Source in the database
      *
      * @param eamDataSource the data source to add
+     * 
+     * @return - A CorrelationDataSource object with data source's central repository id
      */
-    void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
+    CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source device ID
      *
      * @param correlationCase    the current CorrelationCase used for ensuring
      *                           uniqueness of DataSource
-     * @param dataSourceDeviceId the data source device ID number
+     * @param caseDbDataSourceId the data source device ID number
      *
      * @return The data source
      */
-    CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException;
+    CorrelationDataSource getDataSource(CorrelationCase correlationCase, Long caseDbDataSourceId) throws EamDbException;
 
-    
     /**
      * Retrieves Data Source details based on data source ID
      *
-     * @param correlationCase    the current CorrelationCase used for ensuring
-     *                           uniqueness of DataSource
-     * @param dataSourceId the data source ID number
+     * @param correlationCase the current CorrelationCase used for ensuring
+     *                        uniqueness of DataSource
+     * @param dataSourceId    the data source ID number
      *
      * @return The data source
      */
     CorrelationDataSource getDataSourceById(CorrelationCase correlationCase, int dataSourceId) throws EamDbException;
-    
+
     /**
      * Retrieves data sources that are in DB
      *
@@ -245,7 +256,7 @@ public interface EamDb {
      * @return List of artifact instances for a given type/value
      */
     List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
-    
+
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
@@ -301,21 +312,19 @@ public interface EamDb {
 
     /**
      * Retrieves number of eamArtifact instances in the database that are
-     * associated with the caseDisplayName and dataSource of the given
-     * eamArtifact instance.
+     * associated with the given data source.
      *
-     * @param caseUUID     Case ID to search for
-     * @param dataSourceID Data source ID to search for
+     * @param correlationDataSource   Data source to search for
      *
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource
      */
-    Long getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) throws EamDbException;
+    Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws EamDbException;
 
     /**
      * Adds an eamArtifact to an internal list to be later added to DB. Artifact
- can have 1 or more Artifact Instances. Insert will be triggered by a
- threshold or a call to commitAttributeInstancesBulk().
+     * can have 1 or more Artifact Instances. Insert will be triggered by a
+     * threshold or a call to commitAttributeInstancesBulk().
      *
      * @param eamArtifact The artifact to add
      */
@@ -323,7 +332,7 @@ public interface EamDb {
 
     /**
      * Executes a bulk insert of the eamArtifacts added from the
- addAttributeInstanceBulk() method
+     * addAttributeInstanceBulk() method
      */
     void commitAttributeInstancesBulk() throws EamDbException;
 
@@ -347,6 +356,9 @@ public interface EamDb {
      * Find a correlation attribute in the Central Repository database given the
      * instance type, case, data source, value, and file path.
      *
+     * Method exists to support instances added using Central Repository version
+     * 1,1 and older
+     *
      * @param type                  The type of instance.
      * @param correlationCase       The case tied to the instance.
      * @param correlationDataSource The data source tied to the instance.
@@ -359,6 +371,23 @@ public interface EamDb {
      */
     CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
             CorrelationDataSource correlationDataSource, String value, String filePath) throws EamDbException, CorrelationAttributeNormalizationException;
+
+    /**
+     * Find a correlation attribute in the Central Repository database given the
+     * instance type, case, data source, object id.
+     *
+     * @param type                  The type of instance.
+     * @param correlationCase       The case tied to the instance.
+     * @param correlationDataSource The data source tied to the instance.
+     * @param objectID              The object id of the file tied to the
+     *                              instance.
+     *
+     * @return The correlation attribute if it exists; otherwise null.
+     *
+     * @throws EamDbException
+     */
+    CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
+            CorrelationDataSource correlationDataSource, long objectID) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Sets an eamArtifact instance to the given known status. If eamArtifact
@@ -383,12 +412,15 @@ public interface EamDb {
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =
      * "Bad".
-     * 
+     *
      * @param aType EamArtifact.Type to search for
+     *
      * @return List with 0 or more matching eamArtifact instances.
+     *
      * @throws EamDbException
      */
     List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType) throws EamDbException;
+
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
      *
@@ -490,7 +522,7 @@ public interface EamDb {
      *
      * @param eamOrg The organization to add
      *
-     * @return The organization with the org ID set. 
+     * @return The organization with the org ID set.
      *
      * @throws EamDbException
      */
@@ -700,18 +732,20 @@ public interface EamDb {
     /**
      * Process the Artifact instance in the EamDb
      *
-     * @param type EamArtifact.Type to search for
+     * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
+     *
      * @throws EamDbException
      */
     void processInstanceTable(CorrelationAttributeInstance.Type type, InstanceTableCallback instanceTableCallback) throws EamDbException;
-    
+
     /**
      * Process the Artifact instance in the EamDb
      *
-     * @param type EamArtifact.Type to search for
+     * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
-     * @param whereClause query string to execute
+     * @param whereClause           query string to execute
+     *
      * @throws EamDbException
      */
     void processInstanceTableWhere(CorrelationAttributeInstance.Type type, String whereClause, InstanceTableCallback instanceTableCallback) throws EamDbException;
