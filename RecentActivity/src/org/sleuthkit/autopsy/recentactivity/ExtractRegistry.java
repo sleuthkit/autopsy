@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -767,7 +768,6 @@ class ExtractRegistry extends Extract {
     }
 
     private Collection< BlackboardArtifact> processWinVersion(NodeList myartlist, SleuthkitCase caseDB, AbstractFile regAbstractFile) throws NumberFormatException, IllegalArgumentException, DOMException {
-
         String version = "";
         String systemRoot = "";
         String productId = "";
@@ -804,23 +804,15 @@ class ExtractRegistry extends Extract {
                         break;
                     case "InstallDate": //NON-NLS
                         try {
-                            Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
-                            installtime = epochtime;
-                            String Tempdate = installtime.toString();
-                            installtime = Long.valueOf(Tempdate) / 1000;
+                            installtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime() / 1000;
                         } catch (ParseException e) {
                             logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
-                                            wifiBBartifacts.add(bbart);
                         }
-                        break;
-                    default:
                         break;
                 }
             }
         }//for 
-            }
-            if (!wifiBBartifacts.isEmpty()){
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK, wifiBBartifacts));
+
         try {
             List<BlackboardAttribute> bbattributes = Lists.newArrayList(
                     new BlackboardAttribute(
