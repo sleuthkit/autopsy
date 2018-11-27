@@ -24,12 +24,12 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * The panel shown for all TableReportModules when configuring report modules.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class ReportHTMLConfigurationPanel extends javax.swing.JPanel {
+final class ReportHTMLConfigurationPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form DefaultReportConfigurationPanel
      */
-    public ReportHTMLConfigurationPanel() {
+    ReportHTMLConfigurationPanel() {
         initComponents();
         
         // Load settings
