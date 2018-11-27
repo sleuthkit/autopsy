@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.beans.PropertyChangeEvent;
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.TimeZone;
 import javax.swing.JPanel;
@@ -47,7 +49,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     public ViewPreferencesPanel(boolean immediateUpdates) {
         initComponents();
         this.immediateUpdates = immediateUpdates;
-        
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
+            //disable when case is closed, enable when case is open
+            currentCaseSettingsPanel.setEnabled(evt.getNewValue() != null);
+            groupByDataSourceCheckbox.setEnabled(evt.getNewValue() != null);
+        });
         this.timeZoneList.setListData(TimeZoneUtils.createTimeZoneList().stream().toArray(String[]::new));
     }
 
