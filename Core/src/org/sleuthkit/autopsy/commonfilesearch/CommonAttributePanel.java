@@ -98,21 +98,23 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         
         interCasePanel = new InterCasePanel();
         interCasePanel.setVisible(true);
-        interCasePanel.setSize(384 - 43, (int) jPanel2.getPreferredSize().getHeight() + 43);
+        interCasePanel.setSize(384 - 43, (int) containerPanel.getPreferredSize().getHeight() + 43);
         
         intraCasePanel = new IntraCasePanel();
         intraCasePanel.setVisible(true);
-        intraCasePanel.setSize(384 - 43, (int) jPanel2.getPreferredSize().getHeight() + 43);
+        intraCasePanel.setSize(384 - 43, (int) containerPanel.getPreferredSize().getHeight() + 43);
         
         this.setupDataSources();
         
         if (CommonAttributePanel.isEamDbAvailableForIntercaseSearch()) {
             this.setupCases();
             this.interCasePanel.setupCorrelationTypeFilter();
-            jPanel2.add(interCasePanel);
+            this.interCaseRadio.setSelected(true);
+            switchInnerPanel(interCasePanel);
         } else {
             this.disableIntercaseSearch();
-            jPanel2.add(intraCasePanel);
+            this.intraCaseRadio.setSelected(true);
+            switchInnerPanel(intraCasePanel);
         }
         this.revalidate();
         this.repaint();
@@ -368,7 +370,6 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     if (!this.caseHasMultipleSources()) { //disable intra case search when only 1 data source in current case
                         intraCaseRadio.setEnabled(false);
                         interCaseRadio.setSelected(true);
-                        switchInnerPanel(interCasePanel);
                     }
                     CommonAttributePanel.this.updateErrorTextAndSearchButton();
                 }
@@ -422,9 +423,14 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         }.execute();
     }
     
+    /**
+     * Display the provided panel inside the container panel.
+     * 
+     * @param panel The panel to be shown.
+     */
     private void switchInnerPanel(JPanel panel) {
-        jPanel2.removeAll();
-        jPanel2.add(panel);
+        containerPanel.removeAll();
+        containerPanel.add(panel);
         this.revalidate();
         this.repaint();
     }
@@ -516,7 +522,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         scopeLabel = new javax.swing.JLabel();
         intraCaseRadio = new javax.swing.JRadioButton();
         interCaseRadio = new javax.swing.JRadioButton();
-        jPanel2 = new javax.swing.JPanel();
+        containerPanel = new javax.swing.JPanel();
         percentageThresholdCheck = new javax.swing.JCheckBox();
         percentageThresholdInputBox = new javax.swing.JTextField();
         percentageThresholdTextTwo = new javax.swing.JLabel();
@@ -533,7 +539,6 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         });
 
         jPanel1.setMaximumSize(null);
-        jPanel1.setMinimumSize(null);
         jPanel1.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(commonItemSearchDescription, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonItemSearchDescription.text")); // NOI18N
@@ -559,17 +564,17 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             }
         });
 
-        jPanel2.setBackground(new java.awt.Color(0, 0, 0));
-        jPanel2.setOpaque(false);
+        containerPanel.setBackground(new java.awt.Color(0, 0, 0));
+        containerPanel.setOpaque(false);
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout containerPanelLayout = new javax.swing.GroupLayout(containerPanel);
+        containerPanel.setLayout(containerPanelLayout);
+        containerPanelLayout.setHorizontalGroup(
+            containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 430, Short.MAX_VALUE)
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        containerPanelLayout.setVerticalGroup(
+            containerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 330, Short.MAX_VALUE)
         );
 
@@ -634,7 +639,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(containerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addComponent(commonItemSearchDescription, javax.swing.GroupLayout.Alignment.LEADING)
                                 .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
@@ -654,7 +659,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(interCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(containerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(percentageThresholdCheck)
@@ -862,13 +867,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel commonItemSearchDescription;
+    private javax.swing.JPanel containerPanel;
     private javax.swing.JLabel dataSourcesLabel;
     private javax.swing.JLabel errorText;
     private javax.swing.JRadioButton interCaseRadio;
     private javax.swing.ButtonGroup interIntraButtonGroup;
     private javax.swing.JRadioButton intraCaseRadio;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JCheckBox percentageThresholdCheck;
     private javax.swing.JTextField percentageThresholdInputBox;
     private javax.swing.JLabel percentageThresholdTextTwo;
