@@ -30,6 +30,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -78,9 +79,12 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     private final UserInputErrorManager errorManager;
 
     private int percentageThresholdValue = 20;
+    
+    private final IntraCasePanel intraCasePanel;
+    private final InterCasePanel interCasePanel;
 
     /**
-     * Creates new form CommonFilesPanel
+     * Creates new form CommonAttributePanel
      */
     @NbBundle.Messages({
         "CommonAttributePanel.title=Common Property Panel",
@@ -91,15 +95,27 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         super(WindowManager.getDefault().getMainWindow(), Bundle.CommonAttributePanel_frame_title(), true);
         initComponents();
         this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        this.setupDataSources();
+        
+        interCasePanel = new InterCasePanel();
+        interCasePanel.setVisible(true);
+        interCasePanel.setSize(384 - 43, (int) jPanel2.getPreferredSize().getHeight() + 43);
+        
+        intraCasePanel = new IntraCasePanel();
         intraCasePanel.setVisible(true);
-        interCasePanel.setVisible(false);
+        intraCasePanel.setSize(384 - 43, (int) jPanel2.getPreferredSize().getHeight() + 43);
+        
+        this.setupDataSources();
+        
         if (CommonAttributePanel.isEamDbAvailableForIntercaseSearch()) {
             this.setupCases();
             this.interCasePanel.setupCorrelationTypeFilter();
+            jPanel2.add(interCasePanel);
         } else {
             this.disableIntercaseSearch();
+            jPanel2.add(intraCasePanel);
         }
+        this.revalidate();
+        this.repaint();
 
         this.updatePercentageOptions(CommonAttributePanel.getNumberOfDataSourcesAvailable());
 
@@ -352,8 +368,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     if (!this.caseHasMultipleSources()) { //disable intra case search when only 1 data source in current case
                         intraCaseRadio.setEnabled(false);
                         interCaseRadio.setSelected(true);
-                        intraCasePanel.setVisible(false);
-                        interCasePanel.setVisible(true);
+                        switchInnerPanel(interCasePanel);
                     }
                     CommonAttributePanel.this.updateErrorTextAndSearchButton();
                 }
@@ -405,6 +420,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 }
             }
         }.execute();
+    }
+    
+    private void switchInnerPanel(JPanel panel) {
+        jPanel2.removeAll();
+        jPanel2.add(panel);
+        this.revalidate();
+        this.repaint();
     }
 
     @NbBundle.Messages({
@@ -490,20 +512,19 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
         interIntraButtonGroup = new javax.swing.ButtonGroup();
         jPanel1 = new javax.swing.JPanel();
-        scopeLabel = new javax.swing.JLabel();
-        searchButton = new javax.swing.JButton();
-        errorText = new javax.swing.JLabel();
         commonItemSearchDescription = new javax.swing.JLabel();
+        scopeLabel = new javax.swing.JLabel();
         intraCaseRadio = new javax.swing.JRadioButton();
         interCaseRadio = new javax.swing.JRadioButton();
+        jPanel2 = new javax.swing.JPanel();
         percentageThresholdCheck = new javax.swing.JCheckBox();
         percentageThresholdInputBox = new javax.swing.JTextField();
         percentageThresholdTextTwo = new javax.swing.JLabel();
-        intraCasePanel = new org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel();
-        interCasePanel = new org.sleuthkit.autopsy.commonfilesearch.InterCasePanel();
         dataSourcesLabel = new javax.swing.JLabel();
+        errorText = new javax.swing.JLabel();
+        searchButton = new javax.swing.JButton();
 
-        setMinimumSize(new java.awt.Dimension(450, 460));
+        setMinimumSize(new java.awt.Dimension(450, 570));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -511,29 +532,15 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             }
         });
 
-        jPanel1.setMaximumSize(new java.awt.Dimension(450, 460));
-        jPanel1.setMinimumSize(new java.awt.Dimension(450, 460));
-        jPanel1.setPreferredSize(new java.awt.Dimension(450, 460));
+        jPanel1.setMaximumSize(null);
+        jPanel1.setMinimumSize(null);
         jPanel1.setRequestFocusEnabled(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(scopeLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.scopeLabel.text")); // NOI18N
-        scopeLabel.setFocusable(false);
-
-        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.searchButton.text")); // NOI18N
-        searchButton.setEnabled(false);
-        searchButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
-        searchButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                searchButtonActionPerformed(evt);
-            }
-        });
-
-        errorText.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorText, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.errorText.text")); // NOI18N
-        errorText.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
         org.openide.awt.Mnemonics.setLocalizedText(commonItemSearchDescription, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.commonItemSearchDescription.text")); // NOI18N
         commonItemSearchDescription.setFocusable(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(scopeLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.scopeLabel.text")); // NOI18N
+        scopeLabel.setFocusable(false);
 
         interIntraButtonGroup.add(intraCaseRadio);
         intraCaseRadio.setSelected(true);
@@ -552,6 +559,20 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             }
         });
 
+        jPanel2.setBackground(new java.awt.Color(0, 0, 0));
+        jPanel2.setOpaque(false);
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 430, Short.MAX_VALUE)
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 330, Short.MAX_VALUE)
+        );
+
         org.openide.awt.Mnemonics.setLocalizedText(percentageThresholdCheck, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdCheck.text_1_1")); // NOI18N
         percentageThresholdCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -567,15 +588,20 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
         org.openide.awt.Mnemonics.setLocalizedText(percentageThresholdTextTwo, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.percentageThresholdTextTwo.text_1")); // NOI18N
 
-        intraCasePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.intraCasePanel.border.title"))); // NOI18N
-        intraCasePanel.setMaximumSize(new java.awt.Dimension(32779, 192));
-        intraCasePanel.setMinimumSize(new java.awt.Dimension(204, 192));
-        intraCasePanel.setPreferredSize(new java.awt.Dimension(430, 192));
-        intraCasePanel.setVerifyInputWhenFocusTarget(false);
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourcesLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.dataSourcesLabel.text")); // NOI18N
 
-        interCasePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.interCasePanel.border.title"))); // NOI18N
-        interCasePanel.setMinimumSize(new java.awt.Dimension(430, 230));
-        interCasePanel.setPreferredSize(new java.awt.Dimension(430, 230));
+        errorText.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorText, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.errorText.text")); // NOI18N
+        errorText.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+
+        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.searchButton.text")); // NOI18N
+        searchButton.setEnabled(false);
+        searchButton.setHorizontalTextPosition(javax.swing.SwingConstants.LEADING);
+        searchButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -584,37 +610,37 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(errorText, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                        .addGap(65, 65, 65)
-                        .addComponent(searchButton)
-                        .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(scopeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(dataSourcesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(intraCaseRadio, javax.swing.GroupLayout.PREFERRED_SIZE, 383, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(scopeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(37, 37, 37))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(percentageThresholdCheck)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(percentageThresholdInputBox, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(percentageThresholdTextTwo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(percentageThresholdTextTwo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(errorText, javax.swing.GroupLayout.PREFERRED_SIZE, 330, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(searchButton)
+                        .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                 .addComponent(commonItemSearchDescription, javax.swing.GroupLayout.Alignment.LEADING)
                                 .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
                                     .addGap(20, 20, 20)
-                                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(intraCaseRadio, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(interCaseRadio, javax.swing.GroupLayout.DEFAULT_SIZE, 383, Short.MAX_VALUE))))
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(interCasePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(intraCasePanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
-                        .addComponent(dataSourcesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addContainerGap())))
+                                    .addComponent(interCaseRadio, javax.swing.GroupLayout.PREFERRED_SIZE, 383, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -623,26 +649,24 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 .addComponent(commonItemSearchDescription, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(scopeLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(intraCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(interCaseRadio)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(interCasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(intraCasePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(percentageThresholdCheck)
                     .addComponent(percentageThresholdInputBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(percentageThresholdTextTwo))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(dataSourcesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
                     .addComponent(errorText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
@@ -663,13 +687,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }//GEN-LAST:event_percentageThresholdCheckActionPerformed
 
     private void interCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interCaseRadioActionPerformed
-        intraCasePanel.setVisible(false);
-        interCasePanel.setVisible(true);
+        switchInnerPanel(interCasePanel);
     }//GEN-LAST:event_interCaseRadioActionPerformed
 
     private void intraCaseRadioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_intraCaseRadioActionPerformed
-        intraCasePanel.setVisible(true);
-        interCasePanel.setVisible(false);
+        switchInnerPanel(intraCasePanel);
     }//GEN-LAST:event_intraCaseRadioActionPerformed
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
@@ -842,12 +864,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     private javax.swing.JLabel commonItemSearchDescription;
     private javax.swing.JLabel dataSourcesLabel;
     private javax.swing.JLabel errorText;
-    private org.sleuthkit.autopsy.commonfilesearch.InterCasePanel interCasePanel;
     private javax.swing.JRadioButton interCaseRadio;
     private javax.swing.ButtonGroup interIntraButtonGroup;
-    private org.sleuthkit.autopsy.commonfilesearch.IntraCasePanel intraCasePanel;
     private javax.swing.JRadioButton intraCaseRadio;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JCheckBox percentageThresholdCheck;
     private javax.swing.JTextField percentageThresholdInputBox;
     private javax.swing.JLabel percentageThresholdTextTwo;
