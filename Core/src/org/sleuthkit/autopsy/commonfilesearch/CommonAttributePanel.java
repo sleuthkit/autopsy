@@ -98,11 +98,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         
         interCasePanel = new InterCasePanel();
         interCasePanel.setVisible(true);
-        interCasePanel.setSize(384 - 43, (int) containerPanel.getPreferredSize().getHeight() + 43);
+        interCasePanel.setSize((int) containerPanel.getPreferredSize().getWidth(), (int) containerPanel.getPreferredSize().getHeight());
         
         intraCasePanel = new IntraCasePanel();
         intraCasePanel.setVisible(true);
-        intraCasePanel.setSize(384 - 43, (int) containerPanel.getPreferredSize().getHeight() + 43);
+        intraCasePanel.setSize((int) containerPanel.getPreferredSize().getWidth(), (int) containerPanel.getPreferredSize().getHeight());
         
         this.setupDataSources();
         
