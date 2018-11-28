@@ -195,6 +195,8 @@ public final class OpenAction extends CallableSystemAction {
                     
                     int numStale = 0;
                     int numNoAnalysis = 0;
+                    // NOTE: There is some overlapping code here with Controller.getStaleDataSourceIds().  We could possibly just use
+                    // that method to figure out stale and then do more simple stuff here to figure out if there is no data at all
                     for (Map.Entry<Long, DrawableDbBuildStatusEnum> entry : dataSourceStatusMap.entrySet()) {
                         DrawableDbBuildStatusEnum status = entry.getValue();
                         if (DrawableDbBuildStatusEnum.UNKNOWN == status) {

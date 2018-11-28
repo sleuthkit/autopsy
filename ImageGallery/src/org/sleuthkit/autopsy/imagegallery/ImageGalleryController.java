@@ -51,6 +51,7 @@ import javax.annotation.Nonnull;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -99,7 +100,7 @@ public final class ImageGalleryController {
     private final SimpleBooleanProperty listeningEnabled = new SimpleBooleanProperty(false);
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ReadOnlyBooleanWrapper stale = new ReadOnlyBooleanWrapper(false);
+    private final ReadOnlyBooleanWrapper isCaseStale = new ReadOnlyBooleanWrapper(false);
 
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
     private final SimpleDoubleProperty thumbnailSizeProp = new SimpleDoubleProperty(100);
@@ -171,14 +172,14 @@ public final class ImageGalleryController {
      * @param b True if any data source in the case is stale
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
-    void setStale(Boolean b) {
+    void setCaseStale(Boolean b) {
         Platform.runLater(() -> {
-            stale.set(b);
+            isCaseStale.set(b);
         });
     }
 
     public ReadOnlyBooleanProperty staleProperty() {
-        return stale.getReadOnlyProperty();
+        return isCaseStale.getReadOnlyProperty();
     }
 
     /**
@@ -186,8 +187,8 @@ public final class ImageGalleryController {
      * @return true if any data source in the case is stale
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    boolean isStale() {
-        return stale.get();
+    boolean isCaseStale() {
+        return isCaseStale.get();
     }
 
     ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {
@@ -205,7 +206,7 @@ public final class ImageGalleryController {
         tagsManager.registerListener(categoryManager);
 
         hashSetManager = new HashSetManager(drawableDB);
-        setStale(isDataSourcesTableStale());
+        setCaseStale(isDataSourcesTableStale());
 
         dbExecutor = getNewDBExecutor();
 
@@ -376,9 +377,27 @@ public final class ImageGalleryController {
             // collect all data sources already in the table, that are not yet COMPLETE
             knownDataSourceIds.entrySet().stream().forEach((Map.Entry<Long, DrawableDbBuildStatusEnum> t) -> {
                 DrawableDbBuildStatusEnum status = t.getValue();
-                if ((status != DrawableDbBuildStatusEnum.COMPLETE) && (status != DrawableDbBuildStatusEnum.IN_PROGRESS)) {
-                    staleDataSourceIds.add(t.getKey());
+                switch (status) {
+                    case COMPLETE:
+                    case IN_PROGRESS:
+                        // not stale
+                        break;
+                    case REBUILT_STALE:
+                        staleDataSourceIds.add(t.getKey());
+                        break;
+                    case UNKNOWN:
+                        try {
+                            // stale if there are files in CaseDB with MIME types
+                            if (hasFilesWithMimeType(t.getKey())) {
+                                staleDataSourceIds.add(t.getKey());
+                            }
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.SEVERE, "Error getting MIME types", ex);
+                        }
+
+                        break;
                 }
+
             });
 
             // collect any new data sources in the case.
@@ -393,7 +412,6 @@ public final class ImageGalleryController {
             logger.log(Level.SEVERE, "Image Gallery failed to check if datasources table is stale.", ex);
             return staleDataSourceIds;
         }
-
     }
 
     /**
@@ -855,7 +873,7 @@ public final class ImageGalleryController {
             taskDB.freeFileMetaDataCache();
             // at the end of the task, set the stale status based on the 
             // cumulative status of all data sources
-            controller.setStale(controller.isDataSourcesTableStale());
+            controller.setCaseStale(controller.isDataSourcesTableStale());
         }
 
         @Override

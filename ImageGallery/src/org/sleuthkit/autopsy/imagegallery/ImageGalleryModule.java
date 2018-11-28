@@ -365,7 +365,7 @@ public class ImageGalleryModule {
                     if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
                         // A remote node added a new data source and just finished ingest on it.
                         //drawable db is stale, and if ImageGallery is open, ask user what to do
-                        controller.setStale(true);
+                        controller.setCaseStale(true);
                         if (controller.isListeningEnabled()) {
                             SwingUtilities.invokeLater(() -> {
                                 if (ImageGalleryTopComponent.isImageGalleryOpen()) {
