@@ -107,7 +107,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     static {
         //Initialize this pool only once! This will be used by every instance of AAFN
         //to do their heavy duty SCO column and translation updates.
-        translationPool = Executors.newFixedThreadPool(MAX_POOL_SIZE, 
+        translationPool = Executors.newFixedThreadPool(MAX_POOL_SIZE,
                 new ThreadFactoryBuilder().setNameFormat("translation-task-thread-%d").build());
     }
 
@@ -191,8 +191,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
                 CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
-                updateSheet(new NodeProperty<>(SCORE.toString(),SCORE.toString(),descr,value),
-                            new NodeProperty<>(COMMENT.toString(),COMMENT.toString(),NO_DESCR,getCommentProperty(tags, attribute))
+                updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute))
                 );
             }
         } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
@@ -203,8 +203,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 Score value = scorePropAndDescr.getLeft();
                 String descr = scorePropAndDescr.getRight();
                 CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
-                updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(),descr,value),
-                            new NodeProperty<>(COMMENT.toString(), COMMENT.toString(),NO_DESCR,getCommentProperty(tags, attribute))
+                updateSheet(new NodeProperty<>(SCORE.toString(), SCORE.toString(), descr, value),
+                        new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute))
                 );
             }
         } else if (eventType.equals(Case.Events.CR_COMMENT_CHANGED.toString())) {
@@ -212,14 +212,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             if (event.getContentID() == content.getId()) {
                 List<ContentTag> tags = getContentTagsFromDatabase();
                 CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
-                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(),NO_DESCR,getCommentProperty(tags, attribute)));
+                updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(), NO_DESCR, getCommentProperty(tags, attribute)));
             }
-        /*
-         * Data that was being computed in the background task. Kicked off by a
-         * call to createSheet().
-         */
+            /*
+             * Data that was being computed in the background task. Kicked off
+             * by a call to createSheet().
+             */
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
-            updateSheet(new NodeProperty<>(TRANSLATION.toString(),TRANSLATION.toString(),NO_DESCR,evt.getNewValue()));
+            updateSheet(new NodeProperty<>(TRANSLATION.toString(), TRANSLATION.toString(), NO_DESCR, evt.getNewValue()));
         }
     };
     /**
@@ -251,9 +251,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         Sheet visibleSheet = this.getSheet();
         Sheet.Set visibleSheetSet = visibleSheet.get(Sheet.PROPERTIES);
         Property<?>[] visibleProps = visibleSheetSet.getProperties();
-        for(NodeProperty<?> newProp: newProps) {
-            for(int i = 0; i < visibleProps.length; i++) {
-                if(visibleProps[i].getName().equals(newProp.getName())) {
+        for (NodeProperty<?> newProp : newProps) {
+            for (int i = 0; i < visibleProps.length; i++) {
+                if (visibleProps[i].getName().equals(newProp.getName())) {
                     visibleProps[i] = newProp;
                 }
             }
@@ -281,10 +281,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         newProperties.forEach((property) -> {
             sheetSet.put(property);
         });
-        
+
         /*
-         * Submit the translation task ASAP. Keep all weak references so
-         * this task doesn't block the ability of this node to be GC'd.
+         * Submit the translation task ASAP. Keep all weak references so this
+         * task doesn't block the ability of this node to be GC'd.
          */
         translationPool.submit(new TranslationTask(new WeakReference<>(this), weakPcl));
 
@@ -304,8 +304,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.sizeColLbl=Size",
         "AbstractAbstractFileNode.flagsDirColLbl=Flags(Dir)",
         "AbstractAbstractFileNode.flagsMetaColLbl=Flags(Meta)",
+        "AbstractAbstractFileNode.modeColLbl=Mode",
+        "AbstractAbstractFileNode.useridColLbl=UserID",
+        "AbstractAbstractFileNode.groupidColLbl=GroupID",
+        "AbstractAbstractFileNode.metaAddrColLbl=Meta Addr.",
+        "AbstractAbstractFileNode.attrAddrColLbl=Attr. Addr.",
+        "AbstractAbstractFileNode.typeDirColLbl=Type(Dir)",
+        "AbstractAbstractFileNode.typeMetaColLbl=Type(Meta)",
         "AbstractAbstractFileNode.knownColLbl=Known",
         "AbstractAbstractFileNode.md5HashColLbl=MD5 Hash",
+        "AbstractAbstractFileNode.objectId=Object ID",
         "AbstractAbstractFileNode.mimeType=MIME Type",
         "AbstractAbstractFileNode.extensionColLbl=Extension"})
     public enum AbstractFilePropertyType {
@@ -323,8 +331,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         SIZE(AbstractAbstractFileNode_sizeColLbl()),
         FLAGS_DIR(AbstractAbstractFileNode_flagsDirColLbl()),
         FLAGS_META(AbstractAbstractFileNode_flagsMetaColLbl()),
+        MODE(AbstractAbstractFileNode_modeColLbl()),
+        USER_ID(AbstractAbstractFileNode_useridColLbl()),
+        GROUP_ID(AbstractAbstractFileNode_groupidColLbl()),
+        META_ADDR(AbstractAbstractFileNode_metaAddrColLbl()),
+        ATTR_ADDR(AbstractAbstractFileNode_attrAddrColLbl()),
+        TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()),
+        TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()),
         KNOWN(AbstractAbstractFileNode_knownColLbl()),
         MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
+        ObjectID(AbstractAbstractFileNode_objectId()),
         MIMETYPE(AbstractAbstractFileNode_mimeType()),
         EXTENSION(AbstractAbstractFileNode_extensionColLbl());
 
@@ -345,12 +361,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     private List<NodeProperty<?>> getProperties() {
         List<NodeProperty<?>> properties = new ArrayList<>();
-        properties.add(new NodeProperty<>(NAME.toString(), NAME.toString(), NO_DESCR, getContentDisplayName(content)));   
+        properties.add(new NodeProperty<>(NAME.toString(), NAME.toString(), NO_DESCR, getContentDisplayName(content)));
         /*
          * Initialize an empty place holder value. At the bottom, we kick off a
          * background task that promises to update these values.
          */
-        
+
         if (UserPreferences.displayTranslatedFileNames()) {
             properties.add(new NodeProperty<>(TRANSLATION.toString(), TRANSLATION.toString(), NO_DESCR, ""));
         }
@@ -358,7 +374,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         //SCO column prereq info..
         List<ContentTag> tags = getContentTagsFromDatabase();
         CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
-        
+
         Pair<DataResultViewerTable.Score, String> scoreAndDescription = getScorePropertyAndDescription(tags);
         properties.add(new NodeProperty<>(SCORE.toString(), SCORE.toString(), scoreAndDescription.getRight(), scoreAndDescription.getLeft()));
         DataResultViewerTable.HasCommentStatus comment = getCommentProperty(tags, attribute);
@@ -379,7 +395,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         properties.add(new NodeProperty<>(MD5HASH.toString(), MD5HASH.toString(), NO_DESCR, StringUtils.defaultString(content.getMd5Hash())));
         properties.add(new NodeProperty<>(MIMETYPE.toString(), MIMETYPE.toString(), NO_DESCR, StringUtils.defaultString(content.getMIMEType())));
         properties.add(new NodeProperty<>(EXTENSION.toString(), EXTENSION.toString(), NO_DESCR, content.getNameExtension()));
-        
+
         return properties;
     }
 
@@ -421,7 +437,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             return "";
         }
     }
-    
+
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.count.displayName=O",
         "AbstractAbstractFileNode.createSheet.count.noCentralRepo.description=Central repository was not enabled when this column was populated",
@@ -447,7 +463,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
         return Pair.of(count, description);
     }
-    
+
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.score.displayName=S",
         "AbstractAbstractFileNode.createSheet.notableFile.description=File recognized as notable.",
@@ -483,7 +499,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         return Pair.of(score, description);
     }
-    
+
     @NbBundle.Messages({
         "AbstractAbstractFileNode.createSheet.comment.displayName=C"})
     HasCommentStatus getCommentProperty(List<ContentTag> tags, CorrelationAttributeInstance attribute) {
@@ -506,10 +522,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         return status;
     }
-    
+
     /**
-     * Translates this nodes content name. Doesn't attempt translation if 
-     * the name is in english or if there is now translation service available.
+     * Translates this nodes content name. Doesn't attempt translation if the
+     * name is in english or if there is now translation service available.
      */
     String getTranslatedFileName() {
         //If already in complete English, don't translate.
@@ -542,7 +558,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         return "";
     }
-    
+
     /**
      * Get all tags from the case database that are associated with the file
      *
@@ -565,7 +581,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
         return attribute;
     }
-    
+
     static String getContentPath(AbstractFile file) {
         try {
             return file.getUniquePath();
@@ -575,7 +591,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     }
 
-   static  String getContentDisplayName(AbstractFile file) {
+    static String getContentDisplayName(AbstractFile file) {
         String name = file.getName();
         switch (name) {
             case "..":
@@ -593,9 +609,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @param map     map with preserved ordering, where property names/values
      *                are put
      * @param content The content to get properties for.
-     * 
-     * TODO JIRA-4421: Deprecate this method and resolve warnings that appear
-     * in other locations.
+     *
+     * TODO JIRA-4421: Deprecate this method and resolve warnings that appear in
+     * other locations.
      */
     static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
         map.put(NAME.toString(), getContentDisplayName(content));
