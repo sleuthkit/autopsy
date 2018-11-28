@@ -214,10 +214,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
                 updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(),NO_DESCR,getCommentProperty(tags, attribute)));
             }
-            /*
-             * Data that was being computed in the background task. Kicked off by a 
-             * call to createSheet().
-             */
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             updateSheet(new NodeProperty<>(TRANSLATION.toString(),TRANSLATION.toString(),NO_DESCR,evt.getNewValue()));
         }
