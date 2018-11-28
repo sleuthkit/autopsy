@@ -192,11 +192,11 @@ public final class OpenAction extends CallableSystemAction {
         addFXCallback(dataSourceStatusMapFuture,
                 dataSourceStatusMap -> {
                     
-                    int numUnknown = 0;
+                    int numStale = 0;
                     for (Map.Entry<Long, DrawableDbBuildStatusEnum> entry : dataSourceStatusMap.entrySet()) {
                         DrawableDbBuildStatusEnum status = entry.getValue();
-                        if (DrawableDbBuildStatusEnum.UNKNOWN == status) {
-                            numUnknown++;
+                        if ((DrawableDbBuildStatusEnum.UNKNOWN == status) || (DrawableDbBuildStatusEnum.REBUILT_STALE == status)) {
+                            numStale++;
                         }
                     }               
              
@@ -204,7 +204,7 @@ public final class OpenAction extends CallableSystemAction {
 
                     // If there are data sources in the "UNKNOWN" state, then we MAY need to rebuild.
                     // Or not because single-user cases can have UNKNOWN states if ingest was not run yet
-                    if (numUnknown > 0) {
+                    if (numStale > 0) {
                         /* A rebuild should occur if either
                          * - Multi-user case and at least one DS is UNKNOWN
                          * - Single-user case and case listening has been disabled
@@ -254,7 +254,7 @@ public final class OpenAction extends CallableSystemAction {
                         }
                         else {    // single user and listening is enabled
                             // give them a dialog to enable modules if no data sources have been analyzed
-                            if (numUnknown == dataSourceStatusMap.size()) {
+                            if (numStale == dataSourceStatusMap.size()) {
                                 Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.OpenAction_notAnalyzedDlg_msg(), ButtonType.OK);
                                 alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
                                 alert.initModality(Modality.APPLICATION_MODAL);
