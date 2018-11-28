@@ -215,8 +215,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(),NO_DESCR,getCommentProperty(tags, attribute)));
             }
             /*
-             * Data that was being computed in the background task. Kicked off
-             * by a call to createSheet().
+             * Data that was being computed in the background task. Kicked off by a 
+             * call to createSheet().
              */
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             updateSheet(new NodeProperty<>(TRANSLATION.toString(),TRANSLATION.toString(),NO_DESCR,evt.getNewValue()));
@@ -609,7 +609,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      * @param map     map with preserved ordering, where property names/values
      *                are put
      * @param content The content to get properties for.
-     *
+     * 
      * TODO JIRA-4421: Deprecate this method and resolve warnings that appear
      * in other locations.
      */
