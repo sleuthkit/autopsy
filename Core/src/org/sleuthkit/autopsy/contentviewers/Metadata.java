@@ -26,6 +26,8 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -123,11 +125,14 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     @Messages({
         "Metadata.tableRowTitle.mimeType=MIME Type",
-        "Metadata.nodeText.truncated=(results truncated)"})
+        "Metadata.nodeText.truncated=(results truncated)",
+        "Metadata.tableRowTitle.sha1=SHA1",
+        "Metadata.tableRowTitle.sha256=SHA256"})
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        if (file == null) {
+        Image image = node.getLookup().lookup((Image.class));
+        if (file == null && image == null) {
             setText(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.nonFilePassedIn"));
             return;
         }
@@ -135,64 +140,93 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         StringBuilder sb = new StringBuilder();
         startTable(sb);
 
-        try {
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getUniquePath());
-        } catch (TskCoreException ex) {
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getParentPath() + "/" + file.getName());
-        }
-
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.type"), file.getType().getName());
-        addRow(sb, Bundle.Metadata_tableRowTitle_mimeType(), file.getMIMEType());
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(file.getSize()));
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), ContentUtils.getStringTime(file.getMtime(), file));
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), ContentUtils.getStringTime(file.getAtime(), file));
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), ContentUtils.getStringTime(file.getCrtime(), file));
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), ContentUtils.getStringTime(file.getCtime(), file));
-        
-
-        String md5 = file.getMd5Hash();
-        if (md5 == null) {
-            md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
-        }
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
-
-        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(file.getId()));
-        if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
-        }
-
-        endTable(sb);
-
-        /*
-         * If we have a file system file, grab the more detailed metadata text
-         * too
-         */
-        try {
-            if (file instanceof FsContent) {
-                FsContent fsFile = (FsContent) file;
-
-                sb.append("<hr /><pre>\n"); //NON-NLS
-                sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.text"));
-                sb.append(" <br /><br />"); // NON-NLS
-                for (String str : fsFile.getMetaDataText()) {
-                    sb.append(str).append("<br />"); //NON-NLS
-                    
-                    /* 
-                     * Very long results can cause the UI to hang before displaying,
-                     * so truncate the results if necessary.
-                     */
-                    if(sb.length() > 50000){
-                        sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
-                        break;
-                    }
-                }
-                sb.append("</pre>\n"); //NON-NLS
+        if (file != null) {
+            try {
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getUniquePath());
+            } catch (TskCoreException ex) {
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), file.getParentPath() + "/" + file.getName());
             }
-        } catch (TskCoreException ex) {
-            sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
+
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.type"), file.getType().getName());
+            addRow(sb, Bundle.Metadata_tableRowTitle_mimeType(), file.getMIMEType());
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(file.getSize()));
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.fileNameAlloc"), file.getDirFlagAsString());
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.metadataAlloc"), file.getMetaFlagsAsString());
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.modified"), ContentUtils.getStringTime(file.getMtime(), file));
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.accessed"), ContentUtils.getStringTime(file.getAtime(), file));
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.created"), ContentUtils.getStringTime(file.getCrtime(), file));
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.changed"), ContentUtils.getStringTime(file.getCtime(), file));
+
+
+            String md5 = file.getMd5Hash();
+            if (md5 == null) {
+                md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+            }
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
+
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(file.getId()));
+            if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
+            }
+
+            endTable(sb);
+
+            /*
+             * If we have a file system file, grab the more detailed metadata text
+             * too
+             */
+            try {
+                if (file instanceof FsContent) {
+                    FsContent fsFile = (FsContent) file;
+
+                    sb.append("<hr /><pre>\n"); //NON-NLS
+                    sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.text"));
+                    sb.append(" <br /><br />"); // NON-NLS
+                    for (String str : fsFile.getMetaDataText()) {
+                        sb.append(str).append("<br />"); //NON-NLS
+
+                        /* 
+                         * Very long results can cause the UI to hang before displaying,
+                         * so truncate the results if necessary.
+                         */
+                        if(sb.length() > 50000){
+                            sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
+                            break;
+                        }
+                    }
+                    sb.append("</pre>\n"); //NON-NLS
+                }
+            } catch (TskCoreException ex) {
+                sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
+            }
+        } else {
+            try {
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getUniquePath());
+            } catch (TskCoreException ex) {
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getName());
+            }
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(image.getSize()));
+            
+            String md5 = image.getMd5();
+            if (md5 == null || md5.isEmpty()) {
+                md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+            }
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
+
+            String sha1 = image.getSha1();
+            if (sha1 == null || sha1.isEmpty()) {
+                sha1 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+            }
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha1"), sha1);
+            
+            String sha256 = image.getSha256();
+            if (sha256 == null || sha256.isEmpty()) {
+                sha256 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+            }
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha256"), sha256);
+            
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(image.getId()));
         }
 
         setText(sb.toString());
@@ -227,8 +261,9 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     @Override
     public boolean isSupported(Node node) {
+        Image image = node.getLookup().lookup(Image.class);
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        return file != null;
+        return (file != null) || (image != null);
     }
 
     @Override
