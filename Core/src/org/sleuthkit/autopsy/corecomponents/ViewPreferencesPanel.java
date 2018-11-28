@@ -78,8 +78,9 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         commentsOccurencesColumnsCheckbox.setEnabled(EamDbUtil.useCentralRepo());
         commentsOccurencesColumnWrapAroundText.setEnabled(EamDbUtil.useCentralRepo());
         commentsOccurencesColumnsCheckbox.setSelected(UserPreferences.hideCentralRepoCommentsAndOccurrences());
-
         maximumResultsSpinner.setValue(UserPreferences.getMaximumNumberOfResults());
+        
+        hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
         translateNamesInTableRadioButton.setSelected(UserPreferences.displayTranslatedFileNames());
         
         TextTranslationService tts = TextTranslationService.getInstance();
@@ -90,8 +91,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         currentCaseSettingsPanel.setEnabled(caseIsOpen);
         groupByDataSourceCheckbox.setEnabled(caseIsOpen);
 
-        hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
-        groupByDataSourceCheckbox.setSelected(Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true));
+        if (caseIsOpen) {
+            groupByDataSourceCheckbox.setSelected(Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true));
+        } else {
+            groupByDataSourceCheckbox.setSelected(false);
+        }
 
         // Current Session Settings
         hideRejectedResultsCheckbox.setSelected(DirectoryTreeTopComponent.getDefault().getShowRejectedResults() == false);
@@ -172,10 +176,12 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         currentSessionSettingsPanel = new javax.swing.JPanel();
         hideRejectedResultsCheckbox = new javax.swing.JCheckBox();
 
-        viewPreferencesScrollPane.setBorder(null);
-        viewPreferencesScrollPane.setPreferredSize(new java.awt.Dimension(625, 452));
+        setPreferredSize(new java.awt.Dimension(625, 465));
 
-        viewPreferencesPanel.setPreferredSize(new java.awt.Dimension(625, 452));
+        viewPreferencesScrollPane.setBorder(null);
+        viewPreferencesScrollPane.setPreferredSize(new java.awt.Dimension(625, 465));
+
+        viewPreferencesPanel.setPreferredSize(new java.awt.Dimension(625, 465));
 
         globalSettingsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.globalSettingsPanel.border.title"))); // NOI18N
 
