@@ -39,6 +39,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -193,75 +194,82 @@ public final class OpenAction extends CallableSystemAction {
                 dataSourceStatusMap -> {
                     
                     int numStale = 0;
+                    int numNoAnalysis = 0;
                     for (Map.Entry<Long, DrawableDbBuildStatusEnum> entry : dataSourceStatusMap.entrySet()) {
                         DrawableDbBuildStatusEnum status = entry.getValue();
-                        if ((DrawableDbBuildStatusEnum.UNKNOWN == status) || (DrawableDbBuildStatusEnum.REBUILT_STALE == status)) {
+                        if (DrawableDbBuildStatusEnum.UNKNOWN == status) {
+                            try {
+                                // likely a data source analyzed on a remote node in multi-user case OR single-user case with listening off
+                                if (controller.hasFilesWithMimeType(entry.getKey())) {
+                                    numStale++;
+                                // likely a data source (local or remote) that has no analysis yet (note there is also IN_PROGRESS state)
+                                } else {
+                                    numNoAnalysis++;
+                                }
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Error querying case database", ex);
+                            }
+                        } 
+                        // was already rebuilt, but wasn't complete at the end
+                        else if (DrawableDbBuildStatusEnum.REBUILT_STALE == status) {
                             numStale++;
                         }
                     }               
              
                     // NOTE: we are running on the fx thread.
 
-                    // If there are data sources in the "UNKNOWN" state, then we MAY need to rebuild.
-                    // Or not because single-user cases can have UNKNOWN states if ingest was not run yet
+                    // If there are any that are STALE, give them a prompt to do so. 
                     if (numStale > 0) {
-                        /* A rebuild should occur if either
-                         * - Multi-user case and at least one DS is UNKNOWN
-                         * - Single-user case and case listening has been disabled
-                        */
-                        if ((controller.getAutopsyCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) || 
-                                ((controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) && 
-                                (controller.isListeningEnabled() == false))) {
-                        
-                            // See if user wants to rebuild, cancel out, or open as is
-                            Alert alert = new Alert(Alert.AlertType.WARNING,
-                            Bundle.OpenAction_stale_confDlg_msg(),
-                            ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
-                            alert.initModality(Modality.APPLICATION_MODAL);
-                            alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
-                            GuiUtils.setDialogIcons(alert);
-                            ButtonType answer = alert.showAndWait().orElse(ButtonType.CANCEL);
-                            
-                            if (answer == ButtonType.CANCEL) {
-                                //just do nothing - don't open window
-                                return;
-                            } else if (answer == ButtonType.NO) {
-                                // They don't want to rebuild. Just open the UI as is.
-                                // NOTE: There could be no data....
-                            } else if (answer == ButtonType.YES) {
-                                if (controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-                                    /* For a single-user case, we favor user
-                                     * experience, and rebuild the database as soon
-                                     * as Image Gallery is enabled for the case.
-                                     *
-                                     * Turning listening off is necessary in order
-                                     * to invoke the listener that will call
-                                     * controller.rebuildDB();
-                                     */
-                                    controller.setListeningEnabled(false);
-                                    controller.setListeningEnabled(true);
-                                } else {
-                                    /*
-                                     * For a multi-user case, we favor overall
-                                     * performance and user experience, not every
-                                     * user may want to review images, so we rebuild
-                                     * the database only when a user launches Image
-                                     * Gallery.
-                                     */
-                                    controller.rebuildDB();
-                                }
+                        // See if user wants to rebuild, cancel out, or open as is
+                        Alert alert = new Alert(Alert.AlertType.WARNING,
+                        Bundle.OpenAction_stale_confDlg_msg(),
+                        ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+                        alert.initModality(Modality.APPLICATION_MODAL);
+                        alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
+                        GuiUtils.setDialogIcons(alert);
+                        ButtonType answer = alert.showAndWait().orElse(ButtonType.CANCEL);
+
+                        if (answer == ButtonType.CANCEL) {
+                            //just do nothing - don't open window
+                            return;
+                        } else if (answer == ButtonType.NO) {
+                            // They don't want to rebuild. Just open the UI as is.
+                            // NOTE: There could be no data....
+                        } else if (answer == ButtonType.YES) {
+                            if (controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
+                                /* For a single-user case, we favor user
+                                 * experience, and rebuild the database as soon
+                                 * as Image Gallery is enabled for the case.
+                                 *
+                                 * Turning listening off is necessary in order
+                                 * to invoke the listener that will call
+                                 * controller.rebuildDB();
+                                 */
+                                controller.setListeningEnabled(false);
+                                controller.setListeningEnabled(true);
+                            } else {
+                                /*
+                                 * For a multi-user case, we favor overall
+                                 * performance and user experience, not every
+                                 * user may want to review images, so we rebuild
+                                 * the database only when a user launches Image
+                                 * Gallery.
+                                 */
+                                controller.rebuildDB();
                             }
                         }
-                        else {    // single user and listening is enabled
-                            // give them a dialog to enable modules if no data sources have been analyzed
-                            if (numStale == dataSourceStatusMap.size()) {
-                                Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.OpenAction_notAnalyzedDlg_msg(), ButtonType.OK);
-                                alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
-                                alert.initModality(Modality.APPLICATION_MODAL);
-                                alert.showAndWait();
-                                return;
-                            }
-                        }
+                        openTopComponent();
+                        return;
+                    }
+                    
+                    // if there is no data to display, then let them know
+                    if (numNoAnalysis == dataSourceStatusMap.size()) {
+                        // give them a dialog to enable modules if no data sources have been analyzed
+                        Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.OpenAction_notAnalyzedDlg_msg(), ButtonType.OK);
+                        alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
+                        alert.initModality(Modality.APPLICATION_MODAL);
+                        alert.showAndWait();
+                        return;
                     }
                                  
                     // otherwise, lets open the UI
