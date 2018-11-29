@@ -66,15 +66,15 @@ final public class CorrelationAttributeNormalizer {
             case CorrelationAttributeInstance.USBID_TYPE_ID:
                 return normalizeUsbId(trimmedData);
             case CorrelationAttributeInstance.SSID_TYPE_ID:
-                return data;
+                return trimmedData;
             case CorrelationAttributeInstance.MAC_TYPE_ID:
-                return data;
+                return trimmedData;
             case CorrelationAttributeInstance.IMEI_TYPE_ID:
-                return data;
+                return trimmedData;
             case CorrelationAttributeInstance.IMSI_TYPE_ID:
-                return data;
+                return trimmedData;
             case CorrelationAttributeInstance.ICCID_TYPE_ID:
-                return data;
+                return trimmedData;
             default:
                 final String errorMessage = String.format(
                         "Validator function not found for attribute type: %s", 
