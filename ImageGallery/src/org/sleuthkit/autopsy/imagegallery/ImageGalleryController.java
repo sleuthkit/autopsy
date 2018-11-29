@@ -188,8 +188,7 @@ public final class ImageGalleryController {
         return isCaseStale.get();
     }
 
-    ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {
-         
+    ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {   
         this.autopsyCase = Objects.requireNonNull(newCase);
         this.sleuthKitCase = newCase.getSleuthkitCase();
 

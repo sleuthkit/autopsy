@@ -89,7 +89,7 @@ public class ImageGalleryModule {
                     Case currentCase = Case.getCurrentCaseThrows();
                     controller = new ImageGalleryController(currentCase);
                 } catch (NoCurrentCaseException ex) {
-                    throw new TskCoreException("no current case", ex);
+                    throw new TskCoreException("Failed to get ", ex);
                 }
             }
             return controller;
@@ -97,7 +97,7 @@ public class ImageGalleryModule {
     }
 
     /**
-     * Sets the implicit exit property attribute of the JavaFX Runtime to false
+     * Sets the implicit exit property attribute of the JavaFX runtime to false
      * and sets up listeners for application events. It is invoked at
      * application start up by virtue of the OnStart annotation on the OnStart
      * class in this package.
@@ -144,12 +144,8 @@ public class ImageGalleryModule {
      * @return True or false.
      */
     static boolean isEnabledforCase(Case theCase) {
-        if (theCase != null) {
-            String enabledforCaseProp = new PerCaseProperties(theCase).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.ENABLED);
-            return isNotBlank(enabledforCaseProp) ? Boolean.valueOf(enabledforCaseProp) : ImageGalleryPreferences.isEnabledByDefault();
-        } else {
-            return false;
-        }
+        String enabledforCaseProp = new PerCaseProperties(theCase).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.ENABLED);
+        return isNotBlank(enabledforCaseProp) ? Boolean.valueOf(enabledforCaseProp) : ImageGalleryPreferences.isEnabledByDefault();
     }
 
     /**
@@ -175,18 +171,6 @@ public class ImageGalleryModule {
 
         @Override
         public void propertyChange(PropertyChangeEvent event) {
-            /*
-             * If running in "headless" mode, there is no need to process any
-             * ingest module events during the current session.
-             *
-             * Note that this check cannot be done earlier on start up because
-             * the "headless" property may not have been set yet.
-             */
-            if (RuntimeProperties.runningWithGUI() == false) {
-                IngestManager.getInstance().removeIngestModuleEventListener(this);
-                return;
-            }
-
             /*
              * Only process individual files and artifacts in "real time" on the
              * node that is running the ingest job. On a remote node, image
@@ -252,36 +236,22 @@ public class ImageGalleryModule {
 
         @Override
         public void propertyChange(PropertyChangeEvent event) {
-            /*
-             * If running in "headless" mode, there is no need to process any
-             * case events during the current session. Note that this check
-             * cannot be done earlier in onStart because the "headless" property
-             * may not have been set yet.
-             */
-            if (RuntimeProperties.runningWithGUI() == false) {
-                Case.removePropertyChangeListener(this);
-                return;
-            }
-
             Case.Events eventType = Case.Events.valueOf(event.getPropertyName());
             if (eventType == Case.Events.CURRENT_CASE) {
                 synchronized (controllerLock) {
-                    if (event.getNewValue() != null && event.getNewValue() instanceof Case) {
+                    if (event.getNewValue() != null) {
                         /*
-                         * CURRENT_CASE(_OPENED) event. Construct a new Image
-                         * Gallery controller.
+                         * CURRENT_CASE(_OPENED) event.
                          */
                         Case newCase = (Case) event.getNewValue();
                         try {
                             controller = new ImageGalleryController(newCase);
                         } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Failed to construct controller for new case", ex);
+                            logger.log(Level.SEVERE, String.format("Failed to construct controller for new case %s (%s)", newCase.getDisplayName(), newCase.getName()), ex);
                         }
-                    } else if (event.getOldValue() != null && event.getOldValue() instanceof Case) {
+                    } else if (event.getOldValue() != null) {
                         /*
-                         * CURRENT_CASE(_CLOSED) event. Shut down the controller
-                         * for the case and close the top component, if it is
-                         * open.
+                         * CURRENT_CASE(_CLOSED) event.
                          */
                         SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                         controller.shutDown();
@@ -310,8 +280,8 @@ public class ImageGalleryModule {
                         final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) event;
                         long objId = tagAddedEvent.getAddedTag().getContent().getId();
                         DrawableDB drawableDB = currentController.getDatabase();
-                        drawableDB.addTagCache(objId);
-                        if (drawableDB.isInDB(objId)) { // RJCTODO: Put in cache before in DB check?
+                        drawableDB.addTagCache(objId); // RJCTODO: Why add the tag to the cache before doing the in DB check?
+                        if (drawableDB.isInDB(objId)) {
                             currentController.getTagsManager().fireTagAddedEvent(tagAddedEvent);
                         }
                         break;
@@ -319,7 +289,7 @@ public class ImageGalleryModule {
                         final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) event;
                         if (currentController.getDatabase().isInDB(tagDeletedEvent.getDeletedTagInfo().getContentID())) {
                             currentController.getTagsManager().fireTagDeletedEvent(tagDeletedEvent);
-                        }
+                        } // RJCTODO: Why not remove the tag from the cache?
                         break;
                     default:
                         logger.log(Level.SEVERE, String.format("Received %s event with no subscription", event.getPropertyName())); //NON-NLS
