@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -183,7 +183,9 @@ public final class ImageGalleryController {
     }
 
     ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {
-
+        
+        
+        
         this.autopsyCase = Objects.requireNonNull(newCase);
         this.sleuthKitCase = newCase.getSleuthkitCase();
 
@@ -318,17 +320,14 @@ public final class ImageGalleryController {
     /**
      * reset the state of the controller (eg if the case is closed)
      */
-    public synchronized void reset() {
-        logger.info("Closing ImageGalleryControler for case."); //NON-NLS
-
+    public synchronized void shutDown() {
         selectionModel.clearSelection();
         thumbnailCache.clearCache();
         historyManager.clear();
         groupManager.reset();
-
         shutDownDBExecutor();
         drawableDB.close();
-        dbExecutor = getNewDBExecutor();
+        //dbExecutor = getNewDBExecutor(); RJCTODO
     }
 
     /**
