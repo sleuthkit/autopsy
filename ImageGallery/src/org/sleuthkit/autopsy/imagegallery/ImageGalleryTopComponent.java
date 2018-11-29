@@ -287,6 +287,11 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                          * It could be done by resetting the controller in the
                          * child UI components instead.
                          */
+                        // RJCTODO: Construction of these components can perhaps 
+                        // be separated from opening the window again so that
+                        // a setController implementation could be called from
+                        // the case opened event handler in the ImageGalleryModule
+                        // object.
                         fullUIStack = new StackPane();
                         myScene = new Scene(fullUIStack);
                         jfxPanel.setScene(myScene);
