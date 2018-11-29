@@ -48,46 +48,18 @@ public class CorrelationAttributeInstance implements Serializable {
     private String filePath;
     private String comment;
     private TskData.FileKnown knownStatus;
+    private Long objectId;
 
     public CorrelationAttributeInstance(
-            String correlationValue,
             CorrelationAttributeInstance.Type correlationType,
-            CorrelationCase eamCase,
-            CorrelationDataSource eamDataSource,
-            String filePath
-    ) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN);
-    }
-
-    public CorrelationAttributeInstance(
             String correlationValue,
-            CorrelationAttributeInstance.Type correlationType,
             CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
-            TskData.FileKnown knownStatus
-    ) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus);
-    }
-
-    public CorrelationAttributeInstance(
-            Type correlationType,
-            String correlationValue,
-            CorrelationCase correlationCase,
-            CorrelationDataSource fromTSKDataSource,
-            String string) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(correlationType, correlationValue, -1, correlationCase, fromTSKDataSource, string, "", TskData.FileKnown.UNKNOWN);
-    }
-
-    /**
-     * NOTE: Only used for when EamDB is NOT enabled.
-     *
-     * @param aType CorrelationAttributeInstance.Type
-     * @param value correlation value
-     */
-    public CorrelationAttributeInstance(Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
-        this(aType, value, -1, null, null, "", "", TskData.FileKnown.UNKNOWN);
+            TskData.FileKnown knownStatus,
+            long fileObjectId) throws EamDbException, CorrelationAttributeNormalizationException {
+        this(correlationType, correlationValue, -1, eamCase, eamDataSource, filePath, comment, knownStatus, fileObjectId);
     }
 
     CorrelationAttributeInstance(
@@ -98,7 +70,8 @@ public class CorrelationAttributeInstance implements Serializable {
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
-            TskData.FileKnown knownStatus
+            TskData.FileKnown knownStatus,
+            Long fileObjectId
     ) throws EamDbException, CorrelationAttributeNormalizationException {
         if (filePath == null) {
             throw new EamDbException("file path is null");
@@ -113,6 +86,7 @@ public class CorrelationAttributeInstance implements Serializable {
         this.filePath = filePath.toLowerCase();
         this.comment = comment;
         this.knownStatus = knownStatus;
+        this.objectId = fileObjectId;
     }
 
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
@@ -146,25 +120,10 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     /**
-     * @param correlationValue the correlationValue to set
-     */
-    public void setCorrelationValue(String correlationValue) {
-        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
-        this.correlationValue = correlationValue.toLowerCase();
-    }
-
-    /**
      * @return the correlation Type
      */
     public Type getCorrelationType() {
         return correlationType;
-    }
-
-    /**
-     * @param correlationType the correlation Type to set
-     */
-    public void setCorrelationType(Type correlationType) {
-        this.correlationType = correlationType;
     }
 
     /**
@@ -240,6 +199,16 @@ public class CorrelationAttributeInstance implements Serializable {
         this.knownStatus = knownStatus;
     }
 
+    /**
+     * Get the objectId of the file associated with the correlation attribute or
+     * NULL if the objectId is not available.
+     *
+     * @return the objectId of the file
+     */
+    public Long getFileObjectId() {
+        return objectId;
+    }
+
     // Type ID's for Default Correlation Types
     public static final int FILES_TYPE_ID = 0;
     public static final int DOMAIN_TYPE_ID = 1;
@@ -247,6 +216,10 @@ public class CorrelationAttributeInstance implements Serializable {
     public static final int PHONE_TYPE_ID = 3;
     public static final int USBID_TYPE_ID = 4;
     public static final int SSID_TYPE_ID = 5;
+    public static final int MAC_TYPE_ID = 6;
+    public static final int IMEI_TYPE_ID = 7;
+    public static final int IMSI_TYPE_ID = 8;
+    public static final int ICCID_TYPE_ID = 9;
 
     /**
      * Load the default correlation types
@@ -259,7 +232,11 @@ public class CorrelationAttributeInstance implements Serializable {
         "CorrelationType.EMAIL.displayName=Email Addresses",
         "CorrelationType.PHONE.displayName=Phone Numbers",
         "CorrelationType.USBID.displayName=USB Devices",
-        "CorrelationType.SSID.displayName=Wireless Networks"})
+        "CorrelationType.SSID.displayName=Wireless Networks",
+        "CorrelationType.MAC.displayName=MAC Addresses",
+        "CorrelationType.IMEI.displayName=IMEI Number",
+        "CorrelationType.IMSI.displayName=IMSI Number",
+        "CorrelationType.ICCID.displayName=ICCID Number"})
     public static List<CorrelationAttributeInstance.Type> getDefaultCorrelationTypes() throws EamDbException {
         List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
@@ -268,6 +245,10 @@ public class CorrelationAttributeInstance implements Serializable {
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(SSID_TYPE_ID, Bundle.CorrelationType_SSID_displayName(), "wireless_networks", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(MAC_TYPE_ID, Bundle.CorrelationType_MAC_displayName(), "mac_address", true, true)); //NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(IMEI_TYPE_ID, Bundle.CorrelationType_IMEI_displayName(), "imei_number", true, true)); //NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(IMSI_TYPE_ID, Bundle.CorrelationType_IMSI_displayName(), "imsi_number", true, true)); //NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttributeInstance.Type(ICCID_TYPE_ID, Bundle.CorrelationType_ICCID_displayName(), "iccid_number", true, true)); //NON-NLS
         return DEFAULT_CORRELATION_TYPES;
     }
 

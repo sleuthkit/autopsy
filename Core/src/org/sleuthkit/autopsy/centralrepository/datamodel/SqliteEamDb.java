@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
@@ -57,7 +58,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @return the singleton instance of SqliteEamDb
      *
      * @throws EamDbException if one or more default correlation type(s) have an
-     * invalid db table name.
+     *                        invalid db table name.
      */
     public synchronized static SqliteEamDb getInstance() throws EamDbException {
         if (instance == null) {
@@ -70,7 +71,8 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     /**
      *
      * @throws EamDbException if the AbstractSqlEamDb class has one or more
-     * default correlation type(s) having an invalid db table name.
+     *                        default correlation type(s) having an invalid db
+     *                        table name.
      */
     private SqliteEamDb() throws EamDbException {
         dbSettings = new SqliteEamDbSettings();
@@ -205,7 +207,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Add a new name/value pair in the db_info table.
      *
-     * @param name Key to set
+     * @param name  Key to set
      * @param value Value to set
      *
      * @throws EamDbException
@@ -242,7 +244,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Update the value for a name in the name/value db_info table.
      *
-     * @param name Name to find
+     * @param name  Name to find
      * @param value Value to assign to name.
      *
      * @throws EamDbException
@@ -267,6 +269,16 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         try {
             acquireExclusiveLock();
             return super.newCase(autopsyCase);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    @Override
+    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException{
+        try {
+            acquireExclusiveLock();
+            super.addDataSourceObjectId(rowId, dataSourceObjectId);
         } finally {
             releaseExclusiveLock();
         }
@@ -360,10 +372,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamDataSource the data source to add
      */
     @Override
-    public void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+    public CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
         try {
             acquireExclusiveLock();
-            super.newDataSource(eamDataSource);
+            return super.newDataSource(eamDataSource);
         } finally {
             releaseExclusiveLock();
         }
@@ -372,28 +384,28 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Retrieves Data Source details based on data source device ID
      *
-     * @param correlationCase the current CorrelationCase used for ensuring
-     * uniqueness of DataSource
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSource(CorrelationCase correlationCase, Long caseDbDataSourceId) throws EamDbException {
         try {
             acquireSharedLock();
-            return super.getDataSource(correlationCase, dataSourceDeviceId);
+            return super.getDataSource(correlationCase, caseDbDataSourceId);
         } finally {
             releaseSharedLock();
         }
     }
-    
+
     /**
      * Retrieves Data Source details based on data source ID
      *
-     * @param correlationCase    the current CorrelationCase used for ensuring
-     *                           uniqueness of DataSource
-     * @param dataSourceId the data source ID number
+     * @param correlationCase the current CorrelationCase used for ensuring
+     *                        uniqueness of DataSource
+     * @param dataSourceId    the data source ID number
      *
      * @return The data source
      */
@@ -461,7 +473,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
      *
-     * @param aType EamArtifact.Type to search for
+     * @param aType    EamArtifact.Type to search for
      * @param filePath File path to search for
      *
      * @return List of 0 or more EamArtifactInstances
@@ -486,7 +498,8 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param value The value to search for
      *
      * @return Number of artifact instances having ArtifactType and
-     * ArtifactValue.
+     *         ArtifactValue.
+     *
      * @throws EamDbException
      */
     @Override
@@ -518,6 +531,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param value The value to search for
      *
      * @return Number of unique tuples
+     *
      * @throws EamDbException
      */
     @Override
@@ -545,17 +559,17 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * associated with the caseDisplayName and dataSource of the given
      * eamArtifact instance.
      *
-     * @param caseUUID Case ID to search for
+     * @param caseUUID     Case ID to search for
      * @param dataSourceID Data source ID to search for
      *
      * @return Number of artifact instances having caseDisplayName and
-     * dataSource
+     *         dataSource
      */
     @Override
-    public Long getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) throws EamDbException {
+    public Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws EamDbException {
         try {
             acquireSharedLock();
-            return super.getCountArtifactInstancesByCaseDataSource(caseUUID, dataSourceID);
+            return super.getCountArtifactInstancesByCaseDataSource(correlationDataSource);
         } finally {
             releaseSharedLock();
         }
@@ -563,7 +577,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
 
     /**
      * Executes a bulk insert of the eamArtifacts added from the
- addAttributeInstanceBulk() method
+     * addAttributeInstanceBulk() method
      */
     @Override
     public void commitAttributeInstancesBulk() throws EamDbException {
@@ -596,7 +610,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      * @param knownStatus The status to change the artifact to. Should never be
-     * KNOWN
+     *                    KNOWN
      */
     @Override
     public void setAttributeInstanceKnownStatus(CorrelationAttributeInstance eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
@@ -633,7 +647,9 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * "Bad".
      *
      * @param aType EamArtifact.Type to search for
+     *
      * @return List with 0 or more matching eamArtifact instances.
+     *
      * @throws EamDbException
      */
     @Override
@@ -672,7 +688,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param value Value to search for
      *
      * @return List of cases containing this artifact with instances marked as
-     * bad
+     *         bad
      *
      * @throws EamDbException
      */
@@ -690,6 +706,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * Remove a reference set and all values contained in it.
      *
      * @param referenceSetID
+     *
      * @throws EamDbException
      */
     @Override
@@ -708,6 +725,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @param value
      * @param referenceSetID
      * @param correlationTypeID
+     *
      * @return true if the hash is found in the reference set
      */
     @Override
@@ -723,8 +741,9 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Process the Artifact instance in the EamDb
      *
-     * @param type EamArtifact.Type to search for
+     * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
+     *
      * @throws EamDbException
      */
     @Override
@@ -736,12 +755,13 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
-    
+
     /**
      * Process the Artifact instance in the EamDb
      *
-     * @param type EamArtifact.Type to search for
+     * @param type                  EamArtifact.Type to search for
      * @param instanceTableCallback callback to process the instance
+     *
      * @throws EamDbException
      */
     @Override
@@ -752,7 +772,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseSharedLock();
         }
-    }  
+    }
 
     /**
      * Check whether a reference set with the given name/version is in the
@@ -761,7 +781,9 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @param referenceSetName
      * @param version
+     *
      * @return true if a matching set is found
+     *
      * @throws EamDbException
      */
     @Override
@@ -928,7 +950,8 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add
-     * @param correlationType Correlation Type that this Reference Instance is
+     * @param correlationType       Correlation Type that this Reference
+     *                              Instance is
      *
      * @throws EamDbException
      */
@@ -960,7 +983,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Get all reference entries having a given correlation type and value
      *
-     * @param aType Type to use for matching
+     * @param aType  Type to use for matching
      * @param aValue Value to use for matching
      *
      * @return List of all global file instances with a type and value
@@ -1001,7 +1024,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * artifacts.
      *
      * @return List of EamArtifact.Type's. If none are defined in the database,
-     * the default list will be returned.
+     *         the default list will be returned.
      *
      * @throws EamDbException
      */
@@ -1020,7 +1043,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * artifacts.
      *
      * @return List of enabled EamArtifact.Type's. If none are defined in the
-     * database, the default list will be returned.
+     *         database, the default list will be returned.
      *
      * @throws EamDbException
      */
@@ -1039,7 +1062,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * correlate artifacts.
      *
      * @return List of supported EamArtifact.Type's. If none are defined in the
-     * database, the default list will be returned.
+     *         database, the default list will be returned.
      *
      * @throws EamDbException
      */
@@ -1111,8 +1134,9 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * (meaning the database is in use).
      *
      * @return the lock, or null if locking is not supported
+     *
      * @throws EamDbException if the coordination service is running but we fail
-     * to get the lock
+     *                        to get the lock
      */
     @Override
     public CoordinationService.Lock getExclusiveMultiUserDbLock() throws EamDbException {
@@ -1156,4 +1180,26 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         rwLock.readLock().unlock();
     }
 
+    @Override
+    boolean doesColumnExist(Connection conn, String tableName, String columnName) throws SQLException {
+        final String tableInfoQueryTemplate = "PRAGMA table_info(%s)";  //NON-NLS
+        ResultSet resultSet = null;
+        Statement statement = null;
+        boolean columnExists = false;
+        try {
+            statement = conn.createStatement();
+            resultSet = statement.executeQuery(String.format(tableInfoQueryTemplate, tableName));
+            while (resultSet.next()) {
+                // the second value ( 2 ) is the column name
+                if (resultSet.getString(2).equals(columnName)) {
+                    columnExists = true;
+                    break;
+                }
+            }
+        } finally {
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeStatement(statement);
+        }
+        return columnExists;
+    }
 }

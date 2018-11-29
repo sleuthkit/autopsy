@@ -152,14 +152,14 @@ final class IngestModule implements FileIngestModule {
         // insert this file into the central repository
         try {
             CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
+                    filesType, 
                     md5,
-                    filesType,
                     eamCase,
                     eamDataSource,
                     abstractFile.getParentPath() + abstractFile.getName(),
                     null,
                     TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
-            );
+,                   abstractFile.getId());
             dbManager.addAttributeInstanceBulk(cefi);
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
@@ -192,7 +192,7 @@ final class IngestModule implements FileIngestModule {
             logger.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
         }
         try {
-            Long count = dbManager.getCountArtifactInstancesByCaseDataSource(eamCase.getCaseUUID(), eamDataSource.getDeviceID());
+            Long count = dbManager.getCountArtifactInstancesByCaseDataSource(eamDataSource);
             logger.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, eamCase.getDisplayName(), eamDataSource.getName()}); // NON-NLS
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS
@@ -303,7 +303,7 @@ final class IngestModule implements FileIngestModule {
                 == 1) {
             // ensure we have this data source in the EAM DB
             try {
-                if (null == centralRepoDb.getDataSource(eamCase, eamDataSource.getDeviceID())) {
+                if (null == centralRepoDb.getDataSource(eamCase, eamDataSource.getDataSourceObjectID())) {
                     centralRepoDb.newDataSource(eamDataSource);
                 }
             } catch (EamDbException ex) {

@@ -287,11 +287,13 @@ public final class SqliteEamDbSettings {
         createDataSourcesTable.append("case_id integer NOT NULL,");
         createDataSourcesTable.append("device_id text NOT NULL,");
         createDataSourcesTable.append("name text NOT NULL,");
+        createDataSourcesTable.append("datasource_obj_id integer,");
         createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
         createDataSourcesTable.append(")");
 
         String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
+        String dataSourceIdx2 = "CREATE INDEX IF NOT EXISTS data_sources_object_id ON data_sources (datasource_obj_id)";
 
         StringBuilder createReferenceSetsTable = new StringBuilder();
         createReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS reference_sets (");
@@ -337,12 +339,12 @@ public final class SqliteEamDbSettings {
 
         String createArtifactInstancesTableTemplate = getCreateArtifactInstancesTableTemplate();
 
-        String instancesIdx1 = getAddCaseIdIndexTemplate();
-        String instancesIdx2 = getAddDataSourceIdIndexTemplate();
-
-        String instancesIdx3 = getAddValueIndexTemplate();
-        String instancesIdx4 = getAddKnownStatusIndexTemplate();
-
+        String instancesCaseIdIdx = getAddCaseIdIndexTemplate();
+        String instancesDatasourceIdIdx = getAddDataSourceIdIndexTemplate();
+        String instancesValueIdx = getAddValueIndexTemplate();
+        String instancesKnownStatusIdx = getAddKnownStatusIndexTemplate();
+        String instancesObjectIdIdx = getAddObjectIdIndexTemplate();
+        
         StringBuilder createDbInfoTable = new StringBuilder();
         createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
         createDbInfoTable.append("id integer primary key NOT NULL,");
@@ -374,6 +376,7 @@ public final class SqliteEamDbSettings {
 
             stmt.execute(createDataSourcesTable.toString());
             stmt.execute(dataSourceIdx1);
+            stmt.execute(dataSourceIdx2);
 
             stmt.execute(createReferenceSetsTable.toString());
             stmt.execute(referenceSetsIdx1);
@@ -392,10 +395,11 @@ public final class SqliteEamDbSettings {
                 instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
 
                 stmt.execute(String.format(createArtifactInstancesTableTemplate, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx1, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx2, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx3, instance_type_dbname, instance_type_dbname));
-                stmt.execute(String.format(instancesIdx4, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesCaseIdIdx, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesDatasourceIdIdx, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesValueIdx, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesKnownStatusIdx, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesObjectIdIdx, instance_type_dbname, instance_type_dbname));
 
                 // FUTURE: allow more than the FILES type
                 if (type.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
@@ -434,6 +438,7 @@ public final class SqliteEamDbSettings {
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text,");
+        createArtifactInstancesTableTemplate.append("file_obj_id integer,");
         createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path) ON CONFLICT IGNORE,");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
@@ -491,6 +496,19 @@ public final class SqliteEamDbSettings {
     static String getAddKnownStatusIndexTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
         return "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
+    }
+
+    /**
+     * Get the template for creating an index on the file_obj_id column of an
+     * instance table. %s will exist in the template where the name of the new
+     * table will be addedd.
+     *
+     * @return a String which is a template for adding an index to the file_obj_id
+     *         column of a _instances table
+     */
+    static String getAddObjectIdIndexTemplate() {
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        return "CREATE INDEX IF NOT EXISTS %s_file_obj_id ON %s (file_obj_id)";
     }
 
     public boolean insertDefaultDatabaseContent() {

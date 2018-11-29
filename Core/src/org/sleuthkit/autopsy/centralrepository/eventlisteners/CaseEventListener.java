@@ -443,19 +443,16 @@ final class CaseEventListener implements PropertyChangeListener {
             Content newDataSource = dataSourceAddedEvent.getDataSource();
 
             try {
-                String deviceId = openCase.getSleuthkitCase().getDataSource(newDataSource.getId()).getDeviceId();
                 CorrelationCase correlationCase = dbManager.getCase(openCase);
                 if (null == correlationCase) {
                     correlationCase = dbManager.newCase(openCase);
                 }
-                if (null == dbManager.getDataSource(correlationCase, deviceId)) {
+                if (null == dbManager.getDataSource(correlationCase, newDataSource.getId())) {
                     CorrelationDataSource.fromTSKDataSource(correlationCase, newDataSource);
                 }
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding new data source to the central repository", ex); //NON-NLS
-            } catch (TskCoreException | TskDataException ex) {
-                LOGGER.log(Level.SEVERE, "Error getting data source from DATA_SOURCE_ADDED event content.", ex); //NON-NLS
-            }
+            } 
         } // DATA_SOURCE_ADDED
     }
 
