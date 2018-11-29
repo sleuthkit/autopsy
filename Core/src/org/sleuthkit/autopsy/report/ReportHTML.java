@@ -463,9 +463,9 @@ class ReportHTML implements TableReportModule {
         StringBuilder output = new StringBuilder();
         String pageHeader = configPanel.getHeader();
         if (pageHeader.isEmpty() == false) {
-            output.append("<p style=\"text-align: center\">")
+            output.append("<div id=\"pageHeaderFooter\">")
                     .append(StringEscapeUtils.escapeHtml4(pageHeader))
-                    .append("</p>\n"); //NON-NLS
+                    .append("</div>\n"); //NON-NLS
         }
         return output.toString();
     }
@@ -480,9 +480,9 @@ class ReportHTML implements TableReportModule {
         StringBuilder output = new StringBuilder();
         String pageFooter = configPanel.getFooter();
         if (pageFooter.isEmpty() == false) {
-            output.append("<br/><p style=\"text-align: center\">")
+            output.append("<br/><div id=\"pageHeaderFooter\">")
                     .append(StringEscapeUtils.escapeHtml4(pageFooter))
-                    .append("</p>\n"); //NON-NLS
+                    .append("</div>"); //NON-NLS
         }
         return output.toString();
     }
@@ -916,6 +916,8 @@ class ReportHTML implements TableReportModule {
                     + //NON-NLS
                     "#header {width:100%; padding: 10px; line-height: 25px; background: #07A; color: #FFF; font-size: 20px;}\n"
                     + //NON-NLS
+                    "#pageHeaderFooter {width: 100%; padding: 10px; line-height: 25px; text-align: center; font-size: 20px;}\n"
+                    + //NON-NLS
                     "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; margin-top: 25px; border-bottom: 1px solid #D6D6D6;}\n"
                     + //NON-NLS
                     "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n"
@@ -1127,6 +1129,7 @@ class ReportHTML implements TableReportModule {
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n"); //NON-NLS
             head.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"); //NON-NLS
             head.append("<style type=\"text/css\">\n"); //NON-NLS
+            head.append("#pageHeaderFooter {width: 100%; padding: 10px; line-height: 25px; text-align: center; font-size: 20px;}\n"); //NON-NLS
             head.append("body { padding: 0px; margin: 0px; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353; }\n"); //NON-NLS
             head.append("#wrapper { width: 90%; margin: 0px auto; margin-top: 35px; }\n"); //NON-NLS
             head.append("h1 { color: #07A; font-size: 36px; line-height: 42px; font-weight: normal; margin: 0px; border-bottom: 1px solid #81B9DB; }\n"); //NON-NLS
