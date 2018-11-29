@@ -99,7 +99,7 @@ final public class CorrelationAttributeNormalizer {
             
             if(typeOption.isPresent()){
                 CorrelationAttributeInstance.Type type = typeOption.get();
-                return CorrelationAttributeNormalizer.normalize(type, data.trim());
+                return CorrelationAttributeNormalizer.normalize(type, data);
             } else {
                 throw new CorrelationAttributeNormalizationException(String.format("Given attributeTypeId did not correspond to any known Attribute: %s", attributeTypeId));
             }
