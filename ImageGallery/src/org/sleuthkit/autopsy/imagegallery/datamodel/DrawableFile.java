@@ -161,7 +161,7 @@ public abstract class DrawableFile {
         if (file.getDataSource() instanceof DataSource) {
             return (DataSource)file.getDataSource();
         } else {
-            throw new TskCoreException(String.format("Failed to get data source for drawable file (id = %s)", file.getId()));
+            throw new TskCoreException(String.format("File's data source is not of type DataSource (file id = %s)", file.getId()));
         } 
     }
 
