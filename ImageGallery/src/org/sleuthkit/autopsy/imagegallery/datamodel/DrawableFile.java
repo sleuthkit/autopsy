@@ -158,7 +158,11 @@ public abstract class DrawableFile {
     }
 
     public DataSource getDataSource() throws TskCoreException, TskDataException {
-        return getSleuthkitCase().getDataSource(file.getDataSource().getId());
+        if (file.getDataSource() instanceof DataSource) {
+            return (DataSource)file.getDataSource();
+        } else {
+            throw new TskCoreException(String.format("Failed to get data source for drawable file (id = %s)", file.getId()));
+        } 
     }
 
     private Pair<DrawableAttribute<?>, Collection<?>> makeAttributeValuePair(DrawableAttribute<?> attribute) {
