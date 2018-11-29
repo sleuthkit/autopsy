@@ -127,7 +127,11 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         "Metadata.tableRowTitle.mimeType=MIME Type",
         "Metadata.nodeText.truncated=(results truncated)",
         "Metadata.tableRowTitle.sha1=SHA1",
-        "Metadata.tableRowTitle.sha256=SHA256"})
+        "Metadata.tableRowTitle.sha256=SHA256",
+        "Metadata.tableRowTitle.imageType=Type",
+        "Metadata.tableRowTitle.sectorSize=Sector Size",
+        "Metadata.tableRowTitle.timezone=Time Zone",
+        "Metadata.tableRowTitle.deviceId=Device ID"})
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
@@ -206,6 +210,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             } catch (TskCoreException ex) {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getName());
             }
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.imageType"), image.getType().getName());        
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(image.getSize()));
 
             try {
@@ -229,7 +234,9 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             } catch (TskCoreException ex) {
                 sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
             }
-            
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sectorSize"), Long.toString(image.getSsize()));
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.timezone"), image.getTimeZone());
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.deviceId"), image.getDeviceId());
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(image.getId()));
         }
 
