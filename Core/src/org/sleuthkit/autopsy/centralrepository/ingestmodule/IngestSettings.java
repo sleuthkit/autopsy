@@ -35,7 +35,7 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
      */
     IngestSettings() {
         this.flagTaggedNotableItems = IngestModule.DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
-        this.flagTaggedNotableItems = IngestModule.DEFAULT_FLAG_PREVIOUS_DEVICES;
+        this.flagPreviousDevices = IngestModule.DEFAULT_FLAG_PREVIOUS_DEVICES;
     }
 
     /**
@@ -68,6 +68,6 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
      * @return True if flagging; otherwise false.
      */
     boolean isFlagPreviousDevices() {
-        return flagTaggedNotableItems;
+        return flagPreviousDevices;
     }
 }
