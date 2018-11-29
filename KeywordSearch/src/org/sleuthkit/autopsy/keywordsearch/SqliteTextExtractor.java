@@ -1,41 +1,35 @@
-/*
- * Autopsy Forensic Browser
- *
- * Copyright 2018-2018 Basis Technology Corp.
- * Contact: carrier <at> sleuthkit <dot> org
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/*	
+ * Autopsy Forensic Browser	
+ *	
+ * Copyright 2018-2018 Basis Technology Corp.	
+ * Contact: carrier <at> sleuthkit <dot> org	
+ *	
+ * Licensed under the Apache License, Version 2.0 (the "License");	
+ * you may not use this file except in compliance with the License.	
+ * You may obtain a copy of the License at	
+ *	
+ *     http://www.apache.org/licenses/LICENSE-2.0	
+ *	
+ * Unless required by applicable law or agreed to in writing, software	
+ * distributed under the License is distributed on an "AS IS" BASIS,	
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.	
+ * See the License for the specific language governing permissions and	
+ * limitations under the License.	
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.io.CharSource;
 import java.io.IOException;
 import java.io.Reader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Dedicated SqliteTextExtractor to solve the problems associated with Tika's
@@ -49,7 +43,6 @@ class SqliteTextExtractor extends ContentTextExtractor {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
-    private static final CharSequence EMPTY_CHARACTER_SEQUENCE = "";
 
     @Override
     boolean isContentTypeSpecific() {
@@ -80,7 +73,7 @@ class SqliteTextExtractor extends ContentTextExtractor {
     }
 
     /**
-     * Returns an input stream that will read from a sqlite database.
+     * Returns a stream that will read from a sqlite database.
      *
      * @param source Content file
      *
@@ -91,267 +84,250 @@ class SqliteTextExtractor extends ContentTextExtractor {
      */
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
-        try {
-            //Firewall for any content that is not an AbstractFile
-            if (!AbstractFile.class.isInstance(source)) {
-                return CharSource.wrap(EMPTY_CHARACTER_SEQUENCE).openStream();
+        //Firewall for any content that is not an AbstractFile
+        if (!AbstractFile.class.isInstance(source)) {
+            try {
+                return CharSource.wrap("").openStream();
+            } catch (IOException ex) {
+                throw new TextExtractorException("", ex);
             }
-            return new SQLiteTableReader((AbstractFile) source);
-        } catch (NoCurrentCaseException | IOException | TskCoreException
-                | ClassNotFoundException | SQLException ex) {
-            throw new TextExtractorException(
-                    String.format("Encountered an issue while trying to initialize " //NON-NLS
-                            + "a sqlite table steamer for abstract file with id: [%s], name: " //NON-NLS
-                            + "[%s].", source.getId(), source.getName()), ex); //NON-NLS
         }
+
+        return new SQLiteStreamReader((AbstractFile) source);
     }
 
     /**
-     * Lazily loads tables from the database during reading to conserve memory.
+     * Produces a continuous stream of characters from a database file. To
+     * achieve this, all table names are queues up and a SQLiteTableReader is
+     * used to do the actual queries and table iteration.
      */
-    private class SQLiteTableReader extends Reader {
+    public class SQLiteStreamReader extends Reader {
 
-        private final Iterator<String> tableIterator;
-        private final Connection connection;
-        private Reader currentTableReader;
-        private final AbstractFile source;
+        private final SQLiteTableReader reader;
+        private final AbstractFile file;
+        
+        private Iterator<String> tableNames;
+        private String currentTableName;
+
+        private char[] buf;
+        private ExcessBytes leftOvers;
+        private int totalColumns;
+
+        private int bufIndex;
 
         /**
-         * Creates a reader that streams each table into memory and wraps a
-         * reader around it. Designed to save memory for large databases.
+         * Creates a new reader for the sqlite file. This table reader class
+         * will iterate through a table row by row and pass the values to
+         * different functions based on data type. Here we define what to do on
+         * the column names and we define what to do for all data types.
          *
-         * @param file Sqlite database file
-         *
-         * @throws NoCurrentCaseException Current case has closed
-         * @throws IOException            Exception copying abstract file over
-         *                                to local temp directory
-         * @throws TskCoreException       Exception using file manager to find
-         *                                meta files
-         * @throws ClassNotFoundException Could not find sqlite JDBC class
-         * @throws SQLException           Could not establish jdbc connection
+         * @param file Sqlite file
          */
-        public SQLiteTableReader(AbstractFile file) throws NoCurrentCaseException,
-                IOException, TskCoreException, ClassNotFoundException, SQLException {
-            source = file;
-
-            String localDiskPath = SqliteUtil.writeAbstractFileToLocalDisk(file);
-            SqliteUtil.findAndCopySQLiteMetaFile(file);
-            Class.forName("org.sqlite.JDBC"); //NON-NLS  
-            connection = DriverManager.getConnection("jdbc:sqlite:" + localDiskPath); //NON-NLS
-            tableIterator = getTables().iterator();
+        public SQLiteStreamReader(AbstractFile file) {
+            this.file = file;
+            reader = new SQLiteTableReader.Builder(file)
+                    .onColumnNames(getColumnNameStrategy())
+                    .forAll(getForAllTableValuesStrategy()).build();
         }
 
         /**
-         * Gets the table names from the SQLite database file.
+         * On every item in the database we want to do the following series of
+         * steps: 1) Get it's string representation (ignore blobs with empty
+         * string). 2) Format it based on its positioning in the row. 3) Write
+         * it to buffer
          *
-         * @return Collection of table names from the database schema
-         */
-        private Collection<String> getTables() throws SQLException {
-            Collection<String> tableNames = new LinkedList<>();
-            try (Statement statement = connection.createStatement();
-                    ResultSet resultSet = statement.executeQuery(
-                            "SELECT name FROM sqlite_master "
-                            + " WHERE type= 'table' ")) {
-                while (resultSet.next()) {
-                    tableNames.add(resultSet.getString("name")); //NON-NLS
-                }
-            }
-            return tableNames;
-        }
-
-        /**
-         * Reads from a database table and loads the contents into a table
-         * builder so that its properly formatted during indexing.
+         * rowIndex is purely for keeping track of where the object is in the
+         * table, hence the bounds checking with the mod function.
          *
-         * @param tableName Database table to be read
+         * @return Our consumer class defined to do the steps above.
          */
-        private String getTableAsString(String tableName) {
-            TableBuilder table = new TableBuilder();
-            table.addTableName(tableName);
-            String quotedTableName = "\"" + tableName + "\"";
+        private Consumer<Object> getForAllTableValuesStrategy() {
+            return new Consumer<Object>() {
+                private int columnIndex = 0;
 
-            try (Statement statement = connection.createStatement();
-                    ResultSet resultSet = statement.executeQuery(
-                            "SELECT * FROM " + quotedTableName)) { //NON-NLS
-                ResultSetMetaData metaData = resultSet.getMetaData();
-                int columnCount = resultSet.getMetaData().getColumnCount();
-                Collection<String> row = new LinkedList<>();
+                @Override
+                public void accept(Object value) {
+                    columnIndex++;
+                    //Ignore blobs
+                    String objectStr = (value instanceof byte[]) ? "" : Objects.toString(value, "");
 
-                //Add column names once from metadata
-                for (int i = 1; i <= columnCount; i++) {
-                    row.add(metaData.getColumnName(i));
-                }
-
-                table.addHeader(row);
-                while (resultSet.next()) {
-                    row = new LinkedList<>();
-                    for (int i = 1; i <= columnCount; i++) {
-                        Object result = resultSet.getObject(i);
-                        String type = metaData.getColumnTypeName(i);
-                        if (isValuableResult(result, type)) {
-                            row.add(resultSet.getObject(i).toString());
-                        }
+                    if (columnIndex > 1 && columnIndex < totalColumns) {
+                        objectStr += " ";
                     }
-                    table.addRow(row);
+                    if (columnIndex == 1) {
+                        objectStr = "\t" + objectStr + " ";
+                    }
+                    if (columnIndex == totalColumns) {
+                        objectStr += "\n";
+                    }
+
+                    fillBuffer(objectStr);
+                    columnIndex = columnIndex % totalColumns;
                 }
-                table.addCell("\n");
-            } catch (SQLException ex) {
-                logger.log(Level.WARNING, String.format(
-                        "Error attempting to read file table: [%s]" //NON-NLS
-                        + " for file: [%s] (id=%d).", tableName, //NON-NLS
-                        source.getName(), source.getId()), ex);
-            }
-
-            return table.toString();
+            };
         }
 
         /**
-         * Determines if the result from the result set is worth adding to the
-         * row. Ignores nulls and blobs for the time being.
+         * On every column name in the header do the following series of steps:
+         * 1) Write the tableName before the header. 2) Format the column name
+         * based on row positioning 3) Reset the count if we are at the end,
+         * that way if we want to read multiple tables we can do so without
+         * having to build new consumers.
          *
-         * @param result Object result retrieved from resultSet
-         * @param type   Type of objet retrieved from resultSet
+         * columnIndex is purely for keeping track of where the column name is
+         * in the table, hence the bounds checking with the mod function.
          *
-         * @return boolean where true means valuable, false implies it can be
-         *         skipped.
+         * @return Our consumer class defined to do the steps above.
          */
-        private boolean isValuableResult(Object result, String type) {
-            //Ignore nulls and blobs
-            return result != null && type.compareToIgnoreCase("blob") != 0;
+        private Consumer<String> getColumnNameStrategy() {
+            return new Consumer<String>() {
+                private int columnIndex = 0;
+
+                @Override
+                public void accept(String columnName) {
+                    if (columnIndex == 0) {
+                        fillBuffer("\n" + currentTableName + "\n\n\t");
+                    }
+                    columnIndex++;
+
+                    fillBuffer(columnName + ((columnIndex == totalColumns) ? "\n" : " "));
+
+                    //Reset the columnCount to 0 for next table read
+                    columnIndex = columnIndex % totalColumns;
+                }
+            };
         }
 
         /**
-         * Loads a database file into the character buffer. The underlying
-         * implementation here only loads one table at a time to conserve
-         * memory.
+         * This functions writes the string representation of a database value
+         * into the read buffer. If the buffer becomes full, we save the extra
+         * characters and hold on to them until the next call to read().
          *
-         * @param cbuf Buffer to copy database content characters into
-         * @param off  offset to begin loading in buffer
-         * @param len  length of the buffer
+         * @param val Formatted database value string
+         */
+        private void fillBuffer(String val) {
+            for (int i = 0; i < val.length(); i++) {
+                if (bufIndex != buf.length) {
+                    buf[bufIndex++] = val.charAt(i);
+                } else {
+                    leftOvers = new ExcessBytes(val, i);
+                    break;
+                }
+            }
+        }
+
+        /**
+         * Reads database values into the buffer. This function is responsible for 
+         * getting the next table in the queue, initiating calls to the SQLiteTableReader,
+         * and filling in any excess bytes that are lingering from the previous call.
          *
-         * @return The number of characters read from the reader
-         *
-         * @throws IOException If there is an error with the CharSource wrapping
+         * @throws IOException
          */
         @Override
         public int read(char[] cbuf, int off, int len) throws IOException {
-            if (currentTableReader == null) {
-                String tableResults = getNextTable();
-                if (tableResults == null) {
+            buf = cbuf;
+
+            bufIndex = off;
+
+            //Lazily wait to get table names until first call to read.
+            if (Objects.isNull(tableNames)) {
+                try {
+                    tableNames = reader.getTableNames().iterator();
+                } catch (SQLiteTableReaderException ex) {
+                    //Can't get table names so can't read the file!
                     return -1;
                 }
-                currentTableReader = CharSource.wrap(tableResults).openStream();
             }
 
-            int charactersRead = currentTableReader.read(cbuf, off, len);
-            while (charactersRead == -1) {
-                String tableResults = getNextTable();
-                if (tableResults == null) {
-                    return -1;
+            //If there are excess bytes from last read, then copy thoses in.
+            if (Objects.nonNull(leftOvers) && !leftOvers.isFinished()) {
+                bufIndex += leftOvers.read(cbuf, off, len);
+            }
+
+            //Keep grabbing table names from the queue and reading them until
+            //our buffer is full.
+            while (bufIndex != len) {
+                if (Objects.isNull(currentTableName) || reader.isFinished()) {
+                    if (tableNames.hasNext()) {
+                        currentTableName = tableNames.next();
+                        try {
+                            totalColumns = reader.getColumnCount(currentTableName);
+                            reader.read(currentTableName, () -> bufIndex == len);
+                        } catch (SQLiteTableReaderException ex) {
+                            logger.log(Level.WARNING, String.format(
+                                "Error attempting to read file table: [%s]" //NON-NLS
+                                + " for file: [%s] (id=%d).", currentTableName, //NON-NLS
+                                file.getName(), file.getId()), ex.getMessage());
+                        }
+                    } else {
+                        if (bufIndex == off) {
+                            return -1;
+                        }
+                        return bufIndex;
+                    }
+                } else {
+                    try {
+                        reader.read(currentTableName, () -> bufIndex == len);
+                    } catch (SQLiteTableReaderException ex) {
+                        logger.log(Level.WARNING, String.format(
+                                "Error attempting to read file table: [%s]" //NON-NLS
+                                + " for file: [%s] (id=%d).", currentTableName, //NON-NLS
+                                file.getName(), file.getId()), ex.getMessage());
+                    }
                 }
-                currentTableReader = CharSource.wrap(tableResults).openStream();
-                charactersRead = currentTableReader.read(cbuf, off, len);
             }
 
-            return charactersRead;
+            return bufIndex;
         }
 
-        /**
-         * Grab the next table name from the collection of all table names, once
-         * we no longer have a table to process, return null which will be
-         * understood to mean the end of parsing.
-         *
-         * @return Current table contents or null meaning there are not more
-         *         tables to process
-         */
-        private String getNextTable() {
-            if (tableIterator.hasNext()) {
-                return getTableAsString(tableIterator.next());
-            } else {
-                return null;
-            }
-        }
-
-        /**
-         * Close the underlying connection to the database.
-         *
-         * @throws IOException Not applicable, we can just catch the
-         *                     SQLException
-         */
         @Override
         public void close() throws IOException {
             try {
-                connection.close();
-            } catch (SQLException ex) {
-                //Non-essential exception, user has no need for the connection 
-                //object at this stage so closing details are not important
-                logger.log(Level.WARNING, "Could not close JDBC connection", ex);
+                reader.close();
+            } catch (SQLiteTableReaderException ex) {
+                logger.log(Level.WARNING, "Could not close SQliteTableReader.", ex.getMessage());
             }
         }
 
-    }
-
-    /**
-     * Formats input so that it reads as a table in the console or in a text
-     * viewer
-     */
-    private class TableBuilder {
-
-        private final Integer DEFAULT_CAPACITY = 32000;
-        private final StringBuilder table = new StringBuilder(DEFAULT_CAPACITY);
-
-        private static final String TAB = "\t";
-        private static final String NEW_LINE = "\n";
-        private static final String SPACE = " ";
-
         /**
-         * Add the section to the top left corner of the table. This is where
-         * the name of the table should go
-         *
-         * @param tableName Table name
+         * Wrapper that holds the excess bytes that were left over from the previous
+         * call to read().
          */
-        public void addTableName(String tableName) {
-            table.append(tableName)
-                 .append(NEW_LINE)
-                 .append(NEW_LINE);
-        }
+        private class ExcessBytes {
 
-        /**
-         * Adds a formatted header row to the underlying StringBuilder
-         *
-         * @param vals
-         */
-        public void addHeader(Collection<String> vals) {
-            addRow(vals);
-        }
+            private final String entity;
+            private Integer pointer;
 
-        /**
-         * Adds a formatted row to the underlying StringBuilder
-         *
-         * @param vals
-         */
-        public void addRow(Collection<String> vals) {
-            table.append(TAB);
-            vals.forEach((val) -> {
-                table.append(val);
-                table.append(SPACE);
-            });
-            table.append(NEW_LINE);
-        }
+            public ExcessBytes(String entity, Integer pointer) {
+                this.entity = entity;
+                this.pointer = pointer;
+            }
 
-        public void addCell(String cell) {
-            table.append(cell);
-        }
+            public boolean isFinished() {
+                return entity.length() == pointer;
+            }
 
-        /**
-         * Returns a string version of the table, with all of the escape
-         * sequences necessary to print nicely in the console output.
-         *
-         * @return Formated table contents
-         */
-        @Override
-        public String toString() {
-            return table.toString();
+            /**
+             * Copies the excess bytes this instance is holding onto into the
+             * buffer.
+             *
+             * @param buf buffer to write into
+             * @param off index in buffer to start the write
+             * @param len length of the write
+             *
+             * @return number of characters read into the buffer
+             */
+            public int read(char[] buf, int off, int len) {
+                for (int i = off; i < len; i++) {
+                    if (isFinished()) {
+                        return i - off;
+                    }
+
+                    buf[i] = entity.charAt(pointer++);
+                }
+
+                return len - off;
+            }
         }
     }
 }

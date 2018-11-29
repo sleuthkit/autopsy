@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.beans.PropertyChangeEvent;
+import java.util.EnumSet;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -30,8 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * The Image/Video Gallery panel in the NetBeans provided Options Dialogs
  * accessed via Tools -> Options
  *
- * Uses ImageGalleryPreferences and PerCaseProperties to persist
- * settings
+ * Uses ImageGalleryPreferences and PerCaseProperties to persist settings
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
@@ -45,6 +46,10 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         IngestManager.getInstance().addIngestJobEventListener(evt -> {
             //disable during ingest
             enabledForCaseBox.setEnabled(Case.isCaseOpen() && IngestManager.getInstance().isIngestRunning() == false);
+        });
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
+            //disable when case is closed, enable when case is open
+            enabledForCaseBox.setEnabled(evt.getNewValue() != null && IngestManager.getInstance().isIngestRunning() == false);
         });
 
         enabledByDefaultBox.addActionListener(actionEvent -> controller.changed());
@@ -76,11 +81,6 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
 
         enabledByDefaultBox.setFont(enabledByDefaultBox.getFont().deriveFont(enabledByDefaultBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(enabledByDefaultBox, org.openide.util.NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.enabledByDefaultBox.text")); // NOI18N
-        enabledByDefaultBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                enabledByDefaultBoxActionPerformed(evt);
-            }
-        });
 
         infoIconLabel.setFont(infoIconLabel.getFont().deriveFont(infoIconLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         infoIconLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/info-icon-16.png"))); // NOI18N
@@ -88,11 +88,6 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         enabledForCaseBox.setFont(enabledForCaseBox.getFont().deriveFont(enabledForCaseBox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(enabledForCaseBox, org.openide.util.NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.enabledForCaseBox.text")); // NOI18N
         enabledForCaseBox.setToolTipText(NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.enabledForCaseBox.toolTipText")); // NOI18N
-        enabledForCaseBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                enabledForCaseBoxActionPerformed(evt);
-            }
-        });
 
         unavailableDuringInjestLabel.setFont(unavailableDuringInjestLabel.getFont().deriveFont(unavailableDuringInjestLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         unavailableDuringInjestLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/imagegallery/images/warning16.png"))); // NOI18N
@@ -173,14 +168,6 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
             .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 334, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void enabledByDefaultBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enabledByDefaultBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_enabledByDefaultBoxActionPerformed
-
-    private void enabledForCaseBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enabledForCaseBoxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_enabledForCaseBoxActionPerformed
 
     void load() {
         enabledByDefaultBox.setSelected(ImageGalleryPreferences.isEnabledByDefault());

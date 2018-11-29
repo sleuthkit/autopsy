@@ -344,11 +344,13 @@ public final class PostgresEamDbSettings {
         createDataSourcesTable.append("case_id integer NOT NULL,");
         createDataSourcesTable.append("device_id text NOT NULL,");
         createDataSourcesTable.append("name text NOT NULL,");
+        createDataSourcesTable.append("datasource_obj_id integer,");
         createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
         createDataSourcesTable.append(")");
 
         String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
+        String dataSourceIdx2 = "CREATE INDEX IF NOT EXISTS data_sources_object_id ON data_sources (datasource_obj_id)";
 
         StringBuilder createReferenceSetsTable = new StringBuilder();
         createReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS reference_sets (");
@@ -425,7 +427,8 @@ public final class PostgresEamDbSettings {
 
             stmt.execute(createDataSourcesTable.toString());
             stmt.execute(dataSourceIdx1);
-
+            stmt.execute(dataSourceIdx2);
+            
             stmt.execute(createReferenceSetsTable.toString());
             stmt.execute(referenceSetsIdx1);
 

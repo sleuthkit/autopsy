@@ -43,8 +43,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.DATA_ADDED;
 import static org.sleuthkit.autopsy.ingest.IngestManager.IngestModuleEvent.FILE_DONE;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -303,7 +302,7 @@ public class ImageGalleryModule {
                         if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
                             Content newDataSource = (Content) event.getNewValue();
                             if (currentController.isListeningEnabled()) {
-                                currentController.getDatabase().insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.DEFAULT);
+                                currentController.getDatabase().insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
                             }
                         }
                         break;
@@ -343,6 +342,13 @@ public class ImageGalleryModule {
         })
         @Override
         public void propertyChange(PropertyChangeEvent event) {
+            /*
+             * Only handling data source analysis events.
+             */
+            if (!(event instanceof DataSourceAnalysisEvent)) {
+                return;
+            }
+
             ImageGalleryController controller;
             try {
                 controller = getController();
@@ -351,70 +357,79 @@ public class ImageGalleryModule {
                 return;
             }
 
-            String eventType = event.getPropertyName();
-            switch (IngestManager.IngestJobEvent.valueOf(eventType)) {
-                case DATA_SOURCE_ANALYSIS_STARTED:
-                    if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
-                        if (controller.isListeningEnabled()) {
-                            DataSourceAnalysisStartedEvent dataSourceAnalysisStartedEvent = (DataSourceAnalysisStartedEvent) event;
-                            Content dataSource = dataSourceAnalysisStartedEvent.getDataSource();
-
-                            controller.getDatabase().insertOrUpdateDataSource(dataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS);
-                        }
-                    }
-                    break;
-                case DATA_SOURCE_ANALYSIS_COMPLETED:
-                    if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
-                        /*
-                         * This node just completed analysis of a data source.
-                         * Set the state of the local drawables database.
-                         */
-                        if (controller.isListeningEnabled()) {
-                            DataSourceAnalysisCompletedEvent dataSourceAnalysisCompletedEvent = (DataSourceAnalysisCompletedEvent) event;
-                            Content dataSource = dataSourceAnalysisCompletedEvent.getDataSource();
-                            try {
-                            DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus
-                                    = controller.hasFilesWithNoMimetype(dataSource)
-                                    ? DrawableDB.DrawableDbBuildStatusEnum.DEFAULT
-                                    : DrawableDB.DrawableDbBuildStatusEnum.COMPLETE;
-                            controller.getDatabase().insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
-                            } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Failed to query case database to determine drawables database state", ex);
+            DataSourceAnalysisEvent dataSourceEvent = (DataSourceAnalysisEvent) event;
+            Content dataSource = dataSourceEvent.getDataSource();
+            long dataSourceObjId = dataSource.getId();
+            String eventType = dataSourceEvent.getPropertyName();
+            try {
+                switch (IngestManager.IngestJobEvent.valueOf(eventType)) {
+                    case DATA_SOURCE_ANALYSIS_STARTED:
+                        if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                            if (controller.isListeningEnabled()) {
+                                DrawableDB drawableDb = controller.getDatabase();
+                                // Don't update status if it is is already marked as COMPLETE
+                                if (drawableDb.getDataSourceDbBuildStatus(dataSourceObjId) != DrawableDB.DrawableDbBuildStatusEnum.COMPLETE) {
+                                    drawableDb.insertOrUpdateDataSource(dataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS);
+                                }
                             }
                         }
-                    } else {
-                        /*
-                         * A remote node just completed analysis of a data
-                         * source. The local drawables database is therefore
-                         * stale. If the image gallery top component is open,
-                         * give the user an opportunity to update the drawables
-                         * database now.
-                         */
-                        controller.setStale(true);
-                        if (controller.isListeningEnabled()) {
-                            SwingUtilities.invokeLater(() -> {
-                                if (ImageGalleryTopComponent.isImageGalleryOpen()) {
-                                    int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
-                                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
-                                            Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
-                                            JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+                        break;
+                    case DATA_SOURCE_ANALYSIS_COMPLETED:
+                        if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
+                            /*
+                             * This node just completed analysis of a data
+                             * source. Set the state of the local drawables
+                             * database.
+                             */
+                            if (controller.isListeningEnabled()) {
+                                DrawableDB drawableDb = controller.getDatabase();
+                                if (drawableDb.getDataSourceDbBuildStatus(dataSourceObjId) == DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS) {
 
-                                    switch (showAnswer) {
-                                        case JOptionPane.YES_OPTION:
-                                            controller.rebuildDB();
-                                            break;
-                                        case JOptionPane.NO_OPTION:
-                                        case JOptionPane.CANCEL_OPTION:
-                                        default:
-                                            break; //do nothing
-                                    }
+                                    // If at least one file in CaseDB has mime type, then set to COMPLETE
+                                    // Otherwise, back to UNKNOWN since we assume file type module was not run        
+                                    DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus
+                                            = controller.hasFilesWithMimeType(dataSourceObjId)
+                                            ? DrawableDB.DrawableDbBuildStatusEnum.COMPLETE
+                                            : DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN;
+
+                                    controller.getDatabase().insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
                                 }
-                            });
+                            }
+                        } else if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
+                            /*
+                             * A remote node just completed analysis of a data
+                             * source. The local drawables database is therefore
+                             * stale. If the image gallery top component is
+                             * open, give the user an opportunity to update the
+                             * drawables database now.
+                             */
+                            controller.setCaseStale(true);
+                            if (controller.isListeningEnabled()) {
+                                SwingUtilities.invokeLater(() -> {
+                                    if (ImageGalleryTopComponent.isImageGalleryOpen()) {
+                                        int showAnswer = JOptionPane.showConfirmDialog(ImageGalleryTopComponent.getTopComponent(),
+                                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_msg(),
+                                                Bundle.ImageGalleryController_dataSourceAnalyzed_confDlg_title(),
+                                                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+                                        switch (showAnswer) {
+                                            case JOptionPane.YES_OPTION:
+                                                controller.rebuildDB();
+                                                break;
+                                            case JOptionPane.NO_OPTION:
+                                            case JOptionPane.CANCEL_OPTION:
+                                            default:
+                                                break;
+                                        }
+                                    }
+                                });
+                            }
                         }
-                    }
-                    break;
-                default:
-                    break;
+                        break;
+                    default:
+                        break;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to handle %s event for %s (objId=%d)", dataSourceEvent.getPropertyName(), dataSource.getName(), dataSourceObjId), ex);
             }
         }
     }
