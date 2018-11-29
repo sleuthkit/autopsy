@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -175,15 +175,17 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         } else {
             /*
              * Open the top component's window before configuring the groups
-             * manager so that the wait cursor animation over the empty, gray
-             * window will be displayed if the operations takes awhile.
+             * manager so that the spinner(s) that take the place of a wait will
+             * be displayed if the operations takes awhile.
              */
+            // RJCTODO: Is this really necessary?
             SwingUtilities.invokeLater(() -> showTopComponent());
             synchronized (controllerLock) {
                 GroupManager groupManager = controller.getGroupManager();
                 // RJCTODO: Why are there potentially hazardous nested synchronized 
-                // blocks here (note: method used ot be synchronized)? Why is 
-                // the groups manager not taking responsibility for its own thread 
+                // blocks here (note: method used to be synchronized, my 
+                // dedicated controllerLock lock just makes the nesting more obvious)? 
+                // Why is the groups manager not taking responsibility for its own thread 
                 // safety policy? 
                 synchronized (groupManager) {
                     groupManager.regroup(selectedDataSource, groupManager.getGroupBy(), groupManager.getSortBy(), groupManager.getSortOrder(), true);
@@ -230,6 +232,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
      * already exist.
      */
     public static void closeTopComponent() {
+        // RJCTODO: Could add the flag that used to be used for the busy wait on 
+        // the initial JavaFX thread task to avoid superfluous construction here. 
         getTopComponent().close();
     }
 
@@ -258,12 +262,18 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     private void getCurrentControllerAndOpen() throws TskCoreException {
         ImageGalleryController currentController = ImageGalleryModule.getController();
         /*
-         * First, dispatch a task to run in the JavaFX thread. This task will
-         * swap the new controller, if there is one, into this top component and
-         * its child UI components. It also queues another JavaFX thread task to
-         * check for analyzed groups, which has the side effect of managing the
-         * spinner(s) that take the place of a wait cursor.
+         * Dispatch a task to run in the JavaFX thread. This task will swap the
+         * new controller, if there is one, into this top component and its
+         * child UI components. This task also queues another JavaFX thread task
+         * to check for analyzed groups, which has the side effect of starting
+         * the spinner(s) that take the place of a wait cursor. Finally, this
+         * task starts a background thread to query the case database. This
+         * background task may dispatch a JavaFX thread task to do a data source
+         * selection dialog. Ultimately, there is a final task that either opens
+         * the window in the AWT EDT or displays a "too many files" dialog in
+         * the JFX thread.
          */
+        // RJCTODO: Verify the side effect remark above.
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
@@ -308,12 +318,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                          * property or the group manager's analyzed groups
                          * property changes.
                          */
-                        // RJCTODO: Why was the first lambda not set up to happen on 
-                        // the JavaFX thread? I am using that thread confinement and 
-                        // a volatile controller reference for simplified thread safety, 
-                        // is there a problem with this? It seems like this is a bug, 
-                        // since why would we want this code to execute both in the
-                        // JavaFX thread and elsewhere?
                         controller.regroupDisabledProperty().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroups()));
                         controller.getGroupManager().getAnalyzedGroups().addListener((Observable unused) -> Platform.runLater(() -> checkForAnalyzedGroups()));
 
@@ -323,7 +327,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                          * take the place of a wait cursor if there are no
                          * analyzed groups yet, ingest is running, etc.
                          */
-                        // RJCTODO: Is there a race condition here, since this task will be 
+                        // RJCTODO: Is there a race condition here, since this task could be 
                         // executed before the task to actually open the top component window?
                         // It seems like this might be a sort of a hack and I am wondering 
                         // why this can't be done in openWithSelectedDataSources instead.
@@ -355,7 +359,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                                 Map<DataSource, Boolean> dataSourcesWithTooManyFiles = new HashMap<>();
                                 // RJCTODO: At least some of this designation of "all data sources" with null seems uneccessary; 
                                 // in any case, the use of nulls and zeros here is 
-                                // very confusing and should be reworked. Why was this done?
+                                // very confusing and should be reworked.
                                 if (dataSources.size() <= 1
                                         || controller.getGroupManager().getGroupBy() != DrawableAttribute.PATH) {
                                     dataSourcesWithTooManyFiles.put(null, controller.hasTooManyFiles(null));
@@ -375,7 +379,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
                                         GuiUtils.setDialogIcons(datasourceDialog);
                                         @SuppressWarnings(value = "unchecked")
                                         ComboBox<Optional<DataSource>> comboBox = (ComboBox<Optional<DataSource>>) datasourceDialog.getDialogPane().lookup(".combo-box");
-                                        comboBox.setCellFactory((ListView<Optional<DataSource>> param) -> new DataSourceCell(dataSourcesWithTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
+                                        comboBox.setCellFactory((ListView<Optional<DataSource>> unused) -> new DataSourceCell(dataSourcesWithTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
                                         comboBox.setButtonCell(new DataSourceCell(dataSourcesWithTooManyFiles, controller.getAllDataSourcesDrawableDBStatus()));
                                         DataSource dataSource = datasourceDialog.showAndWait().orElse(Optional.empty()).orElse(null);
                                         openWithSelectedDataSources(dataSource, dataSourcesWithTooManyFiles);
@@ -422,7 +426,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
          * to indicate this method is effectively deprecated. A break point
          * placed here was never hit.
          */
-
         return modes.stream().filter(mode -> mode.getName().equals("timeline") || mode.getName().equals("ImageGallery"))
                 .collect(Collectors.toList());
     }
@@ -442,7 +445,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
          * provided explorer view is present in the TopComponenet, even if it is
          * invisible/ zero sized
          */
-        // RJCTODO: Why is this here?
+        // RJCTODO: Why is this override here? Does the "this" in "this does 
+        // not seem to function correctly" refer to the methdo or the top compnent?
         return em;
     }
 
@@ -475,6 +479,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
             // if there are groups to display, then display them
             // @@@ Need to check timing on this and make sure we have only groups for the selected DS.  Seems like rebuild can cause groups to be created for a DS that is not later selected...
+            // RJCTODO: Get Brian's TODO resolved.
             if (isNotEmpty(groupManager.getAnalyzedGroups())) {
                 clearNotification();
                 return;
