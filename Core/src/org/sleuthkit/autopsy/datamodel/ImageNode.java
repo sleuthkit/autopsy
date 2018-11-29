@@ -167,21 +167,6 @@ public class ImageNode extends AbstractContentNode<Image> {
                 Bundle.ImageNode_createSheet_sectorSize_desc(),
                 this.content.getSsize()));
 
-        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_md5_name(),
-                Bundle.ImageNode_createSheet_md5_displayName(),
-                Bundle.ImageNode_createSheet_md5_desc(),
-                this.content.getMd5()));
-        
-        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_sha1_name(),
-                Bundle.ImageNode_createSheet_sha1_displayName(),
-                Bundle.ImageNode_createSheet_sha1_desc(),
-                this.content.getSha1()));
-        
-        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_sha256_name(),
-                Bundle.ImageNode_createSheet_sha256_displayName(),
-                Bundle.ImageNode_createSheet_sha256_desc(),
-                this.content.getSha256()));
-
         sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_timezone_name(),
                 Bundle.ImageNode_createSheet_timezone_displayName(),
                 Bundle.ImageNode_createSheet_timezone_desc(),

@@ -207,24 +207,28 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.name"), image.getName());
             }
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.size"), Long.toString(image.getSize()));
-            
-            String md5 = image.getMd5();
-            if (md5 == null || md5.isEmpty()) {
-                md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
-            }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
 
-            String sha1 = image.getSha1();
-            if (sha1 == null || sha1.isEmpty()) {
-                sha1 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+            try {
+                String md5 = image.getMd5();
+                if (md5 == null || md5.isEmpty()) {
+                    md5 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+                }
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
+
+                String sha1 = image.getSha1();
+                if (sha1 == null || sha1.isEmpty()) {
+                    sha1 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+                }
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha1"), sha1);
+
+                String sha256 = image.getSha256();
+                if (sha256 == null || sha256.isEmpty()) {
+                    sha256 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
+                }
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha256"), sha256);
+            } catch (TskCoreException ex) {
+                sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
             }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha1"), sha1);
-            
-            String sha256 = image.getSha256();
-            if (sha256 == null || sha256.isEmpty()) {
-                sha256 = NbBundle.getMessage(this.getClass(), "Metadata.tableRowContent.md5notCalc");
-            }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sha256"), sha256);
             
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(image.getId()));
         }

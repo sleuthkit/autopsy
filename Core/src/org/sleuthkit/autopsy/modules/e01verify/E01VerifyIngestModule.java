@@ -98,6 +98,8 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         "E01VerifyIngestModule.process.hashesCalculated= hashes calculated", 
         "# {0} - imageName",
         "E01VerifyIngestModule.process.errorSavingHashes= Error saving hashes for image {0} to the database", 
+        "# {0} - imageName",
+        "E01VerifyIngestModule.process.errorLoadingHashes= Error loading hashes for image {0} from the database", 
     })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
@@ -129,14 +131,21 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         // - Otherwise we'll calculate and store all three hashes (assuming the compute checkbox is selected)
         
         // First get a list of all stored hash types
-        if (img.getMd5() != null && ! img.getMd5().isEmpty()) {
-            hashDataList.add(new HashData(HashType.MD5, img.getMd5()));
-        }
-        if (img.getSha1() != null && ! img.getSha1().isEmpty()) {
-            hashDataList.add(new HashData(HashType.SHA1, img.getSha1()));
-        }
-        if (img.getSha256() != null && ! img.getSha256().isEmpty()) {
-            hashDataList.add(new HashData(HashType.SHA256, img.getSha256()));
+        try {
+            if (img.getMd5() != null && ! img.getMd5().isEmpty()) {
+                hashDataList.add(new HashData(HashType.MD5, img.getMd5()));
+            }
+            if (img.getSha1() != null && ! img.getSha1().isEmpty()) {
+                hashDataList.add(new HashData(HashType.SHA1, img.getSha1()));
+            }
+            if (img.getSha256() != null && ! img.getSha256().isEmpty()) {
+                hashDataList.add(new HashData(HashType.SHA256, img.getSha256()));
+            }
+        } catch (TskCoreException ex) {
+                String msg = Bundle.E01VerifyIngestModule_process_errorLoadingHashes(imgName);
+                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
+                logger.log(Level.SEVERE, msg, ex);
+                return ProcessResult.ERROR;
         }
         
         // Figure out which mode we should be in
