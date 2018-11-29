@@ -183,6 +183,11 @@ public class ImageGalleryModule {
             ImageGalleryController currentController;
             try {
                 currentController = getController();
+                // RJCTODO: If a closed controller had a method that could be
+                // queried to determine whether it was shut down, we could 
+                // bail out here. The older code that used to try to check for
+                // a current case was flawed; there was no guarantee the current
+                // case was the same case associated with the event.
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to handle %s event", event.getPropertyName()), ex); //NON-NLS
                 return;
@@ -232,6 +237,9 @@ public class ImageGalleryModule {
     /**
      * A listener for case application events.
      */
+    // RJCTODO: This code would be easier to read if there were two case event 
+    // listeners, one that handled CURRENT_CASE events and one that handled 
+    // the other events.
     static private class CaseEventListener implements PropertyChangeListener {
 
         @Override
@@ -255,13 +263,17 @@ public class ImageGalleryModule {
                          */
                         SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                         controller.shutDown();
-                        controller = null;
                     }
                 }
             } else {
                 ImageGalleryController currentController;
                 try {
                     currentController = getController();
+                    // RJCTODO: If a closed controller had a method that could be
+                    // queried to determine whether it was shut down, we could 
+                    // bail out here. The older code that used to try to check for
+                    // a current case was flawed; there was no guarantee the current
+                    // case was the same case associated with the event.
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to handle %s event", event.getPropertyName()), ex); //NON-NLS
                     return;
@@ -322,6 +334,11 @@ public class ImageGalleryModule {
             ImageGalleryController controller;
             try {
                 controller = getController();
+                // RJCTODO: If a closed controller had a method that could be
+                // queried to determine whether it was shut down, we could 
+                // bail out here. The older code that used to try to check for
+                // a current case was flawed; there was no guarantee the current
+                // case was the same case associated with the event.                
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to handle %s event", event.getPropertyName()), ex); //NON-NLS
                 return;
