@@ -37,7 +37,6 @@ import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
-import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -51,7 +50,6 @@ import javax.annotation.Nonnull;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -71,7 +69,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
@@ -192,9 +189,7 @@ public final class ImageGalleryController {
     }
 
     ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {
-        
-        
-        
+         
         this.autopsyCase = Objects.requireNonNull(newCase);
         this.sleuthKitCase = newCase.getSleuthkitCase();
 
@@ -327,16 +322,17 @@ public final class ImageGalleryController {
     }
 
     /**
-     * reset the state of the controller (eg if the case is closed)
+     * Shuts down this per case singleton image gallery controller.
      */
     public synchronized void shutDown() {
+        logger.log(Level.INFO, String.format("Shutting down image gallery controller for case %s (%s)", autopsyCase.getDisplayName(), autopsyCase.getName()));
         selectionModel.clearSelection();
         thumbnailCache.clearCache();
         historyManager.clear();
         groupManager.reset();
         shutDownDBExecutor();
         drawableDB.close();
-        //dbExecutor = getNewDBExecutor(); RJCTODO
+        logger.log(Level.INFO, String.format("Completed shut down of image gallery controller for case %s (%s)", autopsyCase.getDisplayName(), autopsyCase.getName()));
     }
 
     /**
@@ -508,6 +504,7 @@ public final class ImageGalleryController {
             } catch (InterruptedException ex) {
                 logger.log(Level.WARNING, "Image Gallery failed to shutdown DB Task Executor in a timely fashion.", ex);
             }
+            dbExecutor = null;
         }
     }
 
