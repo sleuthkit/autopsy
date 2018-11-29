@@ -94,7 +94,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         "# {1} - calculatedHashValue",
         "E01VerifyIngestModule.process.calcHashWithType=<li>Calculated {0} hash: {1}</li>",
         "# {0} - imageName",
-        "E01VerifyIngestModule.process.calculateHashDone=<p>Image Hash Calculation Results for {0}</p>", 
+        "E01VerifyIngestModule.process.calculateHashDone=<p>Data Source Hash Calculation Results for {0}</p>", 
         "E01VerifyIngestModule.process.hashesCalculated= hashes calculated", 
         "# {0} - imageName",
         "E01VerifyIngestModule.process.errorSavingHashes= Error saving hashes for image {0} to the database", 
