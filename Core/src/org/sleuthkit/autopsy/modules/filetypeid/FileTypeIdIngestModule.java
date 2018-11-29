@@ -147,23 +147,29 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      */
     private void createInterestingFileHit(AbstractFile file, FileType fileType) {
         try {
-            BlackboardArtifact artifact;
-            artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
-            BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getInterestingFilesSetName());
-            attributes.add(setNameAttribute);
-            BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType());
-            attributes.add(ruleNameAttribute);
-            artifact.addAttributes(attributes);
-            try {
-                Case.getCurrentCaseThrows().getServices().getBlackboard().indexArtifact(artifact);
-            } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            attributes.add(new BlackboardAttribute(
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(), fileType.getInterestingFilesSetName()));
+            attributes.add(new BlackboardAttribute(
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(), fileType.getMimeType()));
+            
+            Case currentCase = Case.getCurrentCaseThrows();
+            org.sleuthkit.datamodel.Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
+            // Create artifact if it doesn't already exist.
+            if (!tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+                BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                artifact.addAttributes(attributes);
+                
+                try {
+                    currentCase.getServices().getBlackboard().indexArtifact(artifact);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
+                }
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_FILE_HIT artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
     }
 

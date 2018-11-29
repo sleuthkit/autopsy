@@ -18,11 +18,14 @@
  */
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -51,6 +54,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -318,30 +322,39 @@ final class IngestModule implements FileIngestModule {
 
         try {
             String MODULE_NAME = IngestModuleFactory.getModuleName();
-            BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.IngestModule_prevTaggedSet_text());
-            BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                    Bundle.IngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
-            tifArtifact.addAttribute(att);
-            tifArtifact.addAttribute(att2);
+            
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
+                    Bundle.IngestModule_prevTaggedSet_text()));
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
+                    Bundle.IngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", ""))));
+            
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
+            // Create artifact if it doesn't already exist.
+            if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+                BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                tifArtifact.addAttributes(attributes);
 
-            try {
-                // index the artifact for keyword search
-                blackboard.indexArtifact(tifArtifact);
-            } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(tifArtifact);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
+                }
+
+                // send inbox message
+                sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash());
+
+                // fire event to notify UI of this new artifact
+                services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
             }
-
-            // send inbox message
-            sendBadFileInboxMessage(tifArtifact, abstractFile.getName(), abstractFile.getMd5Hash());
-
-            // fire event to notify UI of this new artifact
-            services.fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
         } catch (IllegalStateException ex) {
             logger.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
         }
     }
 
