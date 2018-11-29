@@ -308,9 +308,6 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
                 services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(), 
                         imgName + Bundle.E01VerifyIngestModule_process_hashesCalculated(), results));
                 
-                //
-                // TODO Send event to update UI
-                //
             } catch (TskCoreException ex) {
                 String msg = Bundle.E01VerifyIngestModule_process_errorSavingHashes(imgName);
                 services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
