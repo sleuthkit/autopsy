@@ -42,6 +42,7 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
      * Instantiate the ingest job settings.
      *
      * @param flagTaggedNotableItems Flag previously tagged notable items.
+     * @param flagPreviousDevices Flag devices which exist already in the Central Repository
      */
     IngestSettings(boolean flagTaggedNotableItems, boolean flagPreviousDevices) {
         this.flagTaggedNotableItems = flagTaggedNotableItems;
