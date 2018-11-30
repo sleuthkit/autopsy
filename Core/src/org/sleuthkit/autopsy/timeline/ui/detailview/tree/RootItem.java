@@ -85,7 +85,7 @@ class RootItem extends EventsTreeItem {
     @Override
     void remove(List<DetailViewEvent> path) {
         DetailViewEvent event = path.get(0);
-        BaseTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getBaseType());
+        BaseTypeTreeItem typeTreeItem = childMap.get(EventType.getCommonSuperType(event.getEventTypes()).getBaseType());
 
         //remove the path from the child
         if (typeTreeItem != null) {
@@ -93,7 +93,7 @@ class RootItem extends EventsTreeItem {
 
             //if the child has no children remove it also
             if (typeTreeItem.getChildren().isEmpty()) {
-                childMap.remove(event.getEventType().getBaseType());
+                childMap.remove(EventType.getCommonSuperType(event.getEventTypes()).getBaseType());
                 getChildren().remove(typeTreeItem);
             }
         }
@@ -102,7 +102,7 @@ class RootItem extends EventsTreeItem {
     @Override
     void insert(List<DetailViewEvent> path) {
         DetailViewEvent event = path.get(0);
-        BaseTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getBaseType(),
+        BaseTypeTreeItem treeItem = childMap.computeIfAbsent(EventType.getCommonSuperType(event.getEventTypes()).getBaseType(),
                 baseType -> configureNewTreeItem(new BaseTypeTreeItem(event, getComparator()))
         );
         treeItem.insert(path);

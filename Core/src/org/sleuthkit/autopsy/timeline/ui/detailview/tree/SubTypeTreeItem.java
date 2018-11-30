@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * EventTreeItem for sub event types
@@ -43,7 +44,7 @@ public class SubTypeTreeItem extends EventTypeTreeItem {
      *                   this tree item
      */
     SubTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
-        super(event.getEventType(), comparator);
+        super(EventType.getCommonSuperType(event.getEventTypes()), comparator);
     }
 
     @Override

@@ -27,6 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -211,7 +212,8 @@ final public class DetailsViewModel {
         List<Long> hashHits = unGroupConcat(resultSet.getString("hash_hits"), Long::valueOf); //NON-NLS
         List<Long> tagged = unGroupConcat(resultSet.getString("taggeds"), Long::valueOf); //NON-NLS
 
-        return new EventCluster(interval, eventType, eventIDs, hashHits, tagged, description, descriptionLOD);
+        //TODO: address singleton type, instead of potential multiple types
+        return new EventCluster(interval, Collections.singleton(eventType), eventIDs, hashHits, tagged, description, descriptionLOD);
     }
 
     /**
@@ -233,7 +235,7 @@ final public class DetailsViewModel {
         Map<EventType, SetMultimap< String, EventCluster>> typeMap = new HashMap<>();
 
         for (EventCluster aggregateEvent : preMergedEvents) {
-            typeMap.computeIfAbsent(aggregateEvent.getEventType(), eventType -> HashMultimap.create())
+            typeMap.computeIfAbsent(EventType.getCommonSuperType(aggregateEvent.getEventTypes()), eventType -> HashMultimap.create())
                     .put(aggregateEvent.getDescription(), aggregateEvent);
         }
         //result list to return
@@ -271,7 +273,7 @@ final public class DetailsViewModel {
         Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
 
         for (EventCluster eventCluster : aggEvents) {
-            stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
+            stripeDescMap.merge(ImmutablePair.of(EventType.getCommonSuperType(eventCluster.getEventTypes()), eventCluster.getDescription()),
                     new EventStripe(eventCluster), EventStripe::merge);
         }
 

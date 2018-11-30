@@ -351,7 +351,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
     }
 
     final EventType getEventType() {
-        return tlEvent.getEventType();
+        return EventType.getCommonSuperType(tlEvent.getEventTypes());
     }
 
     long getStartMillis() {

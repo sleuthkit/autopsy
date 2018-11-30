@@ -22,6 +22,7 @@ import java.util.Comparator;
 import javafx.scene.control.TreeItem;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * Comparators of TreeItems: these are the ways the EventsTree can be sorted.
@@ -46,7 +47,7 @@ enum TreeComparator implements Comparator<TreeItem<DetailViewEvent>> {
     Type(Bundle.TreeComparator_Type_displayName()) {
         @Override
         public int compare(TreeItem<DetailViewEvent> item1, TreeItem<DetailViewEvent> item2) {
-            return item1.getValue().getEventType().compareTo(item2.getValue().getEventType());
+            return EventType.getCommonSuperType(item1.getValue().getEventTypes()).compareTo(EventType.getCommonSuperType(item2.getValue().getEventTypes()));
         }
     };
 

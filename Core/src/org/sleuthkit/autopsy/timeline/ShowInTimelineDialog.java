@@ -189,7 +189,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
         unitComboBox.getItems().setAll(SCROLL_BY_UNITS);
         unitComboBox.getSelectionModel().select(ChronoField.MINUTE_OF_HOUR);
 
-        typeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getEventType()));
+        typeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(EventType.getCommonSuperType(param.getValue().getEventTypes())));
         typeColumn.setCellFactory(param -> new TypeTableCell<>());
 
         dateTimeColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getStartMillis()));

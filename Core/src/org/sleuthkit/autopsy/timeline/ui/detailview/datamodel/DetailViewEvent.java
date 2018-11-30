@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
+import com.google.common.collect.ImmutableCollection;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -86,7 +87,7 @@ public interface DetailViewEvent {
      *
      * @return the EventType of this event.
      */
-    EventType getEventType();
+    ImmutableCollection<EventType> getEventTypes();
 
     /**
      * Get the start time of this event as milliseconds from the Unix Epoch.

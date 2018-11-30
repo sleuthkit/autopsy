@@ -102,7 +102,7 @@ class DescriptionTreeItem extends EventsTreeItem {
 
     @Override
     public EventsTreeItem findTreeItemForEvent(DetailViewEvent event) {
-        if (getValue().getEventType() == event.getEventType()
+        if (EventType.getCommonSuperType(getValue().getEventTypes()) == EventType.getCommonSuperType(event.getEventTypes())
                 && getValue().getDescription().equals(event.getDescription())) {
             //if this tree item match the given event, return this.
             return this;
@@ -127,6 +127,6 @@ class DescriptionTreeItem extends EventsTreeItem {
 
     @Override
     EventType getEventType() {
-        return getValue().getEventType();
+        return EventType.getCommonSuperType(getValue().getEventTypes());
     }
 }

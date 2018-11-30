@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 
 /**
@@ -47,29 +48,29 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
      *                   this tree item
      */
     BaseTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
-        super(event.getEventType().getBaseType(), comparator);
+        super(EventType.getCommonSuperType(event.getEventTypes()).getBaseType(), comparator);
     }
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
     public void insert(List<DetailViewEvent> path) {
         DetailViewEvent head = path.get(0);
-        
+
         Supplier< EventsTreeItem> treeItemConstructor;
         String descriptionKey;
         /*
          * if the stripe and this tree item have the same type, create a
          * description tree item, else create a sub-type tree item
          */
-        if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
-            descriptionKey = head.getEventType().getDisplayName();
+        if (EventType.getCommonSuperType(head.getEventTypes()).getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
+            descriptionKey = EventType.getCommonSuperType(head.getEventTypes()).getDisplayName();
             treeItemConstructor = () -> configureNewTreeItem(new SubTypeTreeItem(head, getComparator()));
         } else {
             descriptionKey = head.getDescription();
             DetailViewEvent stripe = path.remove(0); //remove head of list if we are going straight to description
             treeItemConstructor = () -> configureNewTreeItem(new DescriptionTreeItem(stripe, getComparator()));
         }
-        
+
         EventsTreeItem treeItem = childMap.computeIfAbsent(descriptionKey, key -> treeItemConstructor.get());
 
         //insert (rest of) path in to new treeItem
@@ -77,18 +78,18 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
             treeItem.insert(path);
         }
     }
-    
+
     @Override
     void remove(List<DetailViewEvent> path) {
         DetailViewEvent head = path.get(0);
-        
+
         EventsTreeItem descTreeItem;
         /*
          * if the stripe and this tree item have the same type, get the child
          * item keyed on event type, else keyed on description.
          */
-        if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
-            descTreeItem = childMap.get(head.getEventType().getDisplayName());
+        if (EventType.getCommonSuperType(head.getEventTypes()).getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
+            descTreeItem = childMap.get(EventType.getCommonSuperType(head.getEventTypes()).getDisplayName());
         } else {
             path.remove(0); //remove head of list if we are going straight to description
             descTreeItem = childMap.get(head.getDescription());

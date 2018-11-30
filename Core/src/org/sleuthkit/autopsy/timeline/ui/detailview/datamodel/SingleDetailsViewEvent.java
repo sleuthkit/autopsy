@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
@@ -59,7 +62,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     /**
      * The type of this event.
      */
-    private final EventType type;
+    private final ImmutableCollection<EventType> types;
 
     /**
      * The three descriptions (full, med, short) stored in a map, keyed by
@@ -91,20 +94,20 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      * @param fileObjId Object Id of file (could be a data source) that event is associated with
      * @param artifactID
      * @param time
-     * @param type
+     * @param types
      * @param fullDescription
      * @param medDescription
      * @param shortDescription
      * @param hashHit
      * @param tagged 
      */
-    public SingleDetailsViewEvent(long eventID, long dataSourceObjId, long fileObjId, Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, boolean hashHit, boolean tagged) {
+    public SingleDetailsViewEvent(long eventID, long dataSourceObjId, long fileObjId, Long artifactID, long time, Collection<EventType> types, String fullDescription, String medDescription, String shortDescription, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
         this.dataSourceObjId = dataSourceObjId;
         this.fileObjId = fileObjId;
         this.artifactID = Long.valueOf(0).equals(artifactID) ? null : artifactID;
         this.time = time;
-        this.type = type;
+        this.types = ImmutableSet.copyOf( types);
         descriptions = ImmutableMap.<DescriptionLoD, String>of(DescriptionLoD.FULL, fullDescription,
                 DescriptionLoD.MEDIUM, medDescription,
                 DescriptionLoD.SHORT, shortDescription);
@@ -118,7 +121,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
                 singleEvent.getFileObjID(),
                 singleEvent.getArtifactID().orElse(null),
                 singleEvent.getTime(),
-                singleEvent.getEventType(),
+                singleEvent.getEventTypes(),
                 singleEvent.getFullDescription(),
                 singleEvent.getMedDescription(),
                 singleEvent.getShortDescription(),
@@ -136,7 +139,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      *         with the given parent.
      */
     public SingleDetailsViewEvent withParent(MultiEvent<?> newParent) {
-        SingleDetailsViewEvent singleEvent = new SingleDetailsViewEvent(eventID, dataSourceObjId, fileObjId, artifactID, time, type, descriptions.get(DescriptionLoD.FULL), descriptions.get(DescriptionLoD.MEDIUM), descriptions.get(DescriptionLoD.SHORT), hashHit, tagged);
+        SingleDetailsViewEvent singleEvent = new SingleDetailsViewEvent(eventID, dataSourceObjId, fileObjId, artifactID, time, types, descriptions.get(DescriptionLoD.FULL), descriptions.get(DescriptionLoD.MEDIUM), descriptions.get(DescriptionLoD.SHORT), hashHit, tagged);
         singleEvent.parent = newParent;
         return singleEvent;
     }
@@ -200,8 +203,8 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     }
 
     @Override
-    public EventType getEventType() {
-        return type;
+    public ImmutableCollection<EventType> getEventTypes() {
+        return types;
     }
 
     /**
@@ -299,7 +302,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
 
     @Override
     public SortedSet<EventCluster> getClusters() {
-        EventCluster eventCluster = new EventCluster(new Interval(time * 1000, time * 1000), type, getEventIDs(), getEventIDsWithHashHits(), getEventIDsWithTags(), getFullDescription(), DescriptionLoD.FULL);
+        EventCluster eventCluster = new EventCluster(new Interval(time * 1000, time * 1000), types, getEventIDs(), getEventIDsWithHashHits(), getEventIDsWithTags(), getFullDescription(), DescriptionLoD.FULL);
         return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(eventCluster).build();
     }
 
