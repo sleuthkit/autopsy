@@ -277,7 +277,7 @@ public class ImageGalleryModule {
                     if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
                         Content newDataSource = (Content) evt.getNewValue();
                         if (con.isListeningEnabled()) { 
-                            controller.getDatabase().insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.DEFAULT);
+                            controller.getDatabase().insertOrUpdateDataSource(newDataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN);
                         }
                     }
                     break;
@@ -329,10 +329,14 @@ public class ImageGalleryModule {
                     
                     if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.LOCAL) {
                         if (controller.isListeningEnabled()) {
-                        DataSourceAnalysisStartedEvent dataSourceAnalysisStartedEvent = (DataSourceAnalysisStartedEvent) evt;
+                            DataSourceAnalysisStartedEvent dataSourceAnalysisStartedEvent = (DataSourceAnalysisStartedEvent) evt;
                             Content dataSource = dataSourceAnalysisStartedEvent.getDataSource();
-                           
-                            controller.getDatabase().insertOrUpdateDataSource(dataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS);   
+                            
+                            DrawableDB drawableDb = controller.getDatabase();
+                            // Don't update status if it is is already marked as COMPLETE
+                            if (drawableDb.getDataSourceDbBuildStatus(dataSource.getId()) != DrawableDB.DrawableDbBuildStatusEnum.COMPLETE) {
+                                drawableDb.insertOrUpdateDataSource(dataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS); 
+                            }
                         }
                     }
                 } else if (eventType == IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED) {
@@ -342,12 +346,18 @@ public class ImageGalleryModule {
                             DataSourceAnalysisCompletedEvent dataSourceAnalysisCompletedEvent = (DataSourceAnalysisCompletedEvent) evt;
                             Content dataSource = dataSourceAnalysisCompletedEvent.getDataSource();
                             
-                            DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus = 
-                                    controller.hasFilesWithNoMimetype(dataSource) ?
-                                        DrawableDB.DrawableDbBuildStatusEnum.DEFAULT : 
-                                        DrawableDB.DrawableDbBuildStatusEnum.COMPLETE;
+                            DrawableDB drawableDb = controller.getDatabase();
+                            if (drawableDb.getDataSourceDbBuildStatus(dataSource.getId()) == DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS) {
                             
-                            controller.getDatabase().insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
+                                // If at least one file in CaseDB has mime type, then set to COMPLETE
+                                // Otherwise, back to UNKNOWN since we assume file type module was not run        
+                                DrawableDB.DrawableDbBuildStatusEnum datasourceDrawableDBStatus = 
+                                        controller.hasFilesWithMimeType(dataSource.getId()) ?
+                                            DrawableDB.DrawableDbBuildStatusEnum.COMPLETE : 
+                                            DrawableDB.DrawableDbBuildStatusEnum.UNKNOWN;
+
+                                controller.getDatabase().insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
+                            }
                         }
                         return;
                     }   
@@ -355,7 +365,7 @@ public class ImageGalleryModule {
                     if (((AutopsyEvent) evt).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
                         // A remote node added a new data source and just finished ingest on it.
                         //drawable db is stale, and if ImageGallery is open, ask user what to do
-                        controller.setStale(true);
+                        controller.setCaseStale(true);
                         if (controller.isListeningEnabled()) {
                             SwingUtilities.invokeLater(() -> {
                                 if (ImageGalleryTopComponent.isImageGalleryOpen()) {

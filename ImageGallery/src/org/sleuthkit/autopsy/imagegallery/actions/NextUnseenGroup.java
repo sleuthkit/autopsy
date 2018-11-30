@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
  */
 @NbBundle.Messages({
     "NextUnseenGroup.markGroupSeen=Mark Group Seen",
-    "NextUnseenGroup.nextUnseenGroup=Next Unseen group",
+    "NextUnseenGroup.nextUnseenGroup=Next Unseen Group",
     "NextUnseenGroup.allGroupsSeen=All Groups Have Been Seen"})
 public class NextUnseenGroup extends Action {
 
