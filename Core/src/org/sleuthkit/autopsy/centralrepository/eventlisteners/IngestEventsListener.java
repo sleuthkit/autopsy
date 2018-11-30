@@ -164,7 +164,6 @@ public class IngestEventsListener {
             AbstractFile abstractFile = tskCase.getAbstractFileById(bbArtifact.getObjectID());
             org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
-            //DLG: Do I use AbstractFile, or BlackboardArtifact for the input?
             if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
                 tifArtifact.addAttributes(attributes);
