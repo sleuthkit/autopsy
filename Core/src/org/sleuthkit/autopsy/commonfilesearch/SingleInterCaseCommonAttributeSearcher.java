@@ -73,14 +73,31 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
     @Override
     public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
 
+        throw new EamDbException("Not Supported right now");
+    }
+
+        /**
+     * Collect metadata required to render the tree table where matches must
+     * occur in the case with the given ID.
+     *
+     * @return business object needed to populate tree table with results
+     *
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     * @throws SQLException
+     * @throws EamDbException
+     */
+    @Override
+    public CommonAttributeSearchResults2 findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         this.correlationCaseName = cCase.getDisplayName();
         return this.findFiles(cCase);
     }
-
-    CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    
+    CommonAttributeSearchResults2 findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.corAttrType);
-        Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
+        Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
@@ -88,7 +105,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         if (isFilterByDoc()) {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
-        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
+        return new CommonAttributeSearchResults2(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
     }
 
     @NbBundle.Messages({

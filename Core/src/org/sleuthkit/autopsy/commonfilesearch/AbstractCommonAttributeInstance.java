@@ -1,16 +1,16 @@
 /*
- * 
+ *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,11 +47,12 @@ public abstract class AbstractCommonAttributeInstance {
      * Create a leaf node for attributes found in files in the current case db.
      *
      * @param abstractFileReference file from which the common attribute was
-     * found
-     * @param cachedFiles storage for abstract files which have been used
-     * already so we can avoid extra roundtrips to the case db
-     * @param dataSource datasource where this attribute appears
-     * @param caseName case where this attribute appears
+     *                              found
+     * @param cachedFiles           storage for abstract files which have been
+     *                              used already so we can avoid extra
+     *                              roundtrips to the case db
+     * @param dataSource            datasource where this attribute appears
+     * @param caseName              case where this attribute appears
      */
     AbstractCommonAttributeInstance(Long abstractFileReference, String dataSource, String caseName) {
         this.abstractFileObjectId = abstractFileReference;
@@ -64,17 +65,19 @@ public abstract class AbstractCommonAttributeInstance {
      * available in the current data case.
      *
      * @param cachedFiles storage for abstract files which have been used
-     * already so we can avoid extra roundtrips to the case db
+     *                    already so we can avoid extra roundtrips to the case
+     *                    db
      */
     AbstractCommonAttributeInstance() {
         this.abstractFileObjectId = -1L;
         this.caseName = "";
         this.dataSource = "";
     }
-    
+
     /**
      * Get the type of common attribute.
-     * @return 
+     *
+     * @return
      */
     public abstract CorrelationAttributeInstance.Type getCorrelationAttributeInstanceType();
 
@@ -83,8 +86,8 @@ public abstract class AbstractCommonAttributeInstance {
      * CaseDB.
      *
      * @return AbstractFile corresponding to this common attribute or null if it
-     * cannot be found (for example, in the event that this is a central repo
-     * file)
+     *         cannot be found (for example, in the event that this is a central
+     *         repo file)
      */
     abstract AbstractFile getAbstractFile();
 
@@ -144,24 +147,36 @@ public abstract class AbstractCommonAttributeInstance {
      * supports only baseline functionality.
      *
      * @param attributeInstance common file attribute instance form the central
-     * repo
-     * @param abstractFile an AbstractFile from which the attribute instance was
-     * found - applies to CaseDbCommonAttributeInstance only
+     *                          repo
+     * @param abstractFile      an AbstractFile from which the attribute
+     *                          instance was found - applies to
+     *                          CaseDbCommonAttributeInstance only
      * @param currentCaseName
+     *
      * @return the appropriate leaf node for the results tree
+     *
      * @throws TskCoreException
      */
-    static DisplayableItemNode createNode(CorrelationAttributeInstance attribute, AbstractFile abstractFile, String currentCaseName) throws TskCoreException {
+    static DisplayableItemNode createNode(CorrelationAttributeInstance attribute, AbstractFile abstractFile, String currentCaseName, NODE_TYPE nodeType) throws TskCoreException {
 
         DisplayableItemNode leafNode;
 
         if (abstractFile == null) {
-            leafNode = new CentralRepoCommonAttributeInstanceNode(attribute);
+            if (nodeType == NODE_TYPE.CASE_NODE) {
+                leafNode = new CentralRepoCommonAttributeInstanceNode2(attribute);
+            } else {
+                leafNode = new CentralRepoCommonAttributeInstanceNode(attribute);
+            }
         } else {
             final String abstractFileDataSourceName = abstractFile.getDataSource().getName();
             leafNode = new CaseDBCommonAttributeInstanceNode(abstractFile, currentCaseName, abstractFileDataSourceName);
         }
 
         return leafNode;
+    }
+
+    enum NODE_TYPE {
+        CASE_NODE,
+        COUNT_NODE;
     }
 }

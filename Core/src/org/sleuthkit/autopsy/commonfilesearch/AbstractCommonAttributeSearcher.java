@@ -65,6 +65,8 @@ public abstract class AbstractCommonAttributeSearcher {
      */
     public abstract CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
 
+    public abstract CommonAttributeSearchResults2 findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
+    
     /**
      * Implement this to create a descriptive string for the tab which will
      * display this data.
@@ -129,7 +131,7 @@ public abstract class AbstractCommonAttributeSearcher {
         }
         return instanceCollatedCommonFiles;
     }
-
+    
     /*
      * The set of the MIME types that will be checked for extension mismatches
      * when checkType is ONLY_MEDIA. ".jpg", ".jpeg", ".png", ".psd", ".nef",

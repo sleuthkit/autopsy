@@ -43,13 +43,15 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
     private static final Logger LOGGER = Logger.getLogger(CentralRepoCommonAttributeInstance.class.getName());
     private final Integer crFileId;
+    private final NODE_TYPE nodeType;
     private CorrelationAttributeInstance currentAttribute;
     private final CorrelationAttributeInstance.Type correlationType;
 
-    CentralRepoCommonAttributeInstance(Integer attrInstId, CorrelationAttributeInstance.Type correlationType) {
+    CentralRepoCommonAttributeInstance(Integer attrInstId, CorrelationAttributeInstance.Type correlationType, NODE_TYPE nodeType) {
         super();
         this.crFileId = attrInstId;
         this.correlationType = correlationType;
+        this.nodeType = nodeType;
     }
 
     @Override
@@ -127,7 +129,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
         try {
             AbstractFile abstractFileForAttributeInstance = this.getAbstractFile();
-            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createNode(currentAttribute, abstractFileForAttributeInstance, currCaseDbName);
+            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createNode(currentAttribute, abstractFileForAttributeInstance, currCaseDbName, nodeType);
             attrInstNodeList.add(generatedInstNode);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, String.format("Unable to get DataSource for record with md5: %s.  Node not created.", new Object[]{currentAttribute.getCorrelationValue()}), ex);
@@ -135,4 +137,5 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
         return attrInstNodeList.toArray(new DisplayableItemNode[attrInstNodeList.size()]);
     }
+
 }

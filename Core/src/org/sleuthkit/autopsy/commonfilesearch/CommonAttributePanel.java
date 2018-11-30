@@ -316,6 +316,124 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }
 
     /**
+     * Perform the common attribute search.
+     */
+    private void search2() {
+        new SwingWorker<CommonAttributeSearchResults2, Void>() {
+
+            private String tabTitle;
+            private ProgressHandle progress;
+
+            @Override
+            protected CommonAttributeSearchResults2 doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+                progress = ProgressHandle.createHandle(Bundle.CommonAttributePanel_search_done_searchProgressGathering());
+                progress.start();
+                progress.switchToIndeterminate();
+
+                Long dataSourceId = intraCasePanel.getSelectedDataSourceId();
+                Integer caseId = interCasePanel.getSelectedCaseId();
+
+                AbstractCommonAttributeSearcher builder;
+                CommonAttributeSearchResults2 metadata;
+
+                boolean filterByMedia = false;
+                boolean filterByDocuments = false;
+
+                int percentageThreshold = CommonAttributePanel.this.percentageThresholdValue;
+
+                if (!CommonAttributePanel.this.percentageThresholdCheck.isSelected()) {
+                    //0 has the effect of disabling the feature
+                    percentageThreshold = 0;
+                }
+
+                if (CommonAttributePanel.this.interCaseRadio.isSelected()) {
+                    CorrelationAttributeInstance.Type corType = interCasePanel.getSelectedCorrelationType();
+                    if (interCasePanel.fileCategoriesButtonIsSelected()) {
+                        filterByMedia = interCasePanel.pictureVideoCheckboxIsSelected();
+                        filterByDocuments = interCasePanel.documentsCheckboxIsSelected();
+                    }
+                    if (corType == null) {
+                        corType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
+                    }
+                    if (caseId == InterCasePanel.NO_CASE_SELECTED) {
+                        builder = new AllInterCaseCommonAttributeSearcher(filterByMedia, filterByDocuments, corType, percentageThreshold);
+                    } else {
+
+                        builder = new SingleInterCaseCommonAttributeSearcher(caseId, filterByMedia, filterByDocuments, corType, percentageThreshold);
+                    }
+
+                } else {
+                    if (intraCasePanel.fileCategoriesButtonIsSelected()) {
+                        filterByMedia = intraCasePanel.pictureVideoCheckboxIsSelected();
+                        filterByDocuments = intraCasePanel.documentsCheckboxIsSelected();
+                    }
+                    if (Objects.equals(dataSourceId, CommonAttributePanel.NO_DATA_SOURCE_SELECTED)) {
+                        builder = new AllIntraCaseCommonAttributeSearcher(intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
+                    } else {
+                        builder = new SingleIntraCaseCommonAttributeSearcher(dataSourceId, intraCasePanel.getDataSourceMap(), filterByMedia, filterByDocuments, percentageThreshold);
+                    }
+
+                }
+                metadata = builder.findMatches2();
+                this.tabTitle = builder.getTabTitle();
+                return metadata;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    super.done();
+                    CommonAttributeSearchResults2 metadata = this.get();
+                    boolean noKeysExist = true;
+                    try {
+                        noKeysExist = metadata.getMetadata().keySet().isEmpty();
+                    } catch (EamDbException ex) {
+                        LOGGER.log(Level.SEVERE, "Unable to get keys from metadata", ex);
+                    }
+                    if (noKeysExist) {
+                        Node commonFilesNode = new TableFilterNode(new EmptyNode(Bundle.CommonAttributePanel_search_done_noResults()), true);
+                        progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay());
+                        DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), commonFilesNode, 1);
+                    } else {
+                        // -3969
+                        Node commonFilesNode = new CommonAttributeSearchResultRootNode(metadata);
+                        DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonAttributePanel.this));
+                        TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
+                        DataResultViewerTable table = new CommonAttributesSearchResultsViewerTable();
+                        Collection<DataResultViewer> viewers = new ArrayList<>(1);
+                        viewers.add(table);
+                        progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay()); //WJS-TODO change 0 back to a size calculation
+                        DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), tableFilterWithDescendantsNode, 0, viewers);
+                    }
+
+                } catch (InterruptedException ex) {
+                    LOGGER.log(Level.SEVERE, "Interrupted while loading Common Files", ex);
+                    MessageNotifyUtil.Message.error(Bundle.CommonAttributePanel_search_done_interupted());
+                } catch (ExecutionException ex) {
+                    String errorMessage;
+                    Throwable inner = ex.getCause();
+                    if (inner instanceof TskCoreException) {
+                        LOGGER.log(Level.SEVERE, "Failed to load files from database.", ex);
+                        errorMessage = Bundle.CommonAttributePanel_search_done_tskCoreException();
+                    } else if (inner instanceof NoCurrentCaseException) {
+                        LOGGER.log(Level.SEVERE, "Current case has been closed.", ex);
+                        errorMessage = Bundle.CommonAttributePanel_search_done_noCurrentCaseException();
+                    } else if (inner instanceof SQLException) {
+                        LOGGER.log(Level.SEVERE, "Unable to query db for files.", ex);
+                        errorMessage = Bundle.CommonAttributePanel_search_done_sqlException();
+                    } else {
+                        LOGGER.log(Level.SEVERE, "Unexpected exception while running Common Files Search.", ex);
+                        errorMessage = Bundle.CommonAttributePanel_search_done_exception();
+                    }
+                    MessageNotifyUtil.Message.error(errorMessage);
+                } finally {
+                    progress.finish();
+                }
+            }
+        }.execute();
+    }
+
+    /**
      * Sets up the data sources dropdown and returns the data sources map for
      * future usage.
      *
@@ -760,7 +878,11 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         performSearch = DialogDisplayer.getDefault().notify(descriptor) == NotifyDescriptor.YES_OPTION;
                     }
                     if (performSearch) {
-                        search();
+                        if (interCaseRadio.isSelected()) {
+                            search2();
+                        } else {
+                            search();
+                        }
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Unexpected exception while performing common property search", ex); //NON-NLS

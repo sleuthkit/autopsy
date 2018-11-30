@@ -99,7 +99,7 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
 
             if (defaultWidth == null) {
                 column.setPreferredWidth(DEFAULT_WIDTH);
-                LOGGER.log(Level.SEVERE, String.format("Tried to set width on a column not supported by the CommonFilesSearchResultsViewerTable: %s", headerValue));
+                LOGGER.log(Level.WARNING, String.format("Tried to set width on a column not supported by the CommonAttributesSearchResultsViewerTable: %s", headerValue));
             } else {
                 column.setPreferredWidth(defaultWidth);
             }

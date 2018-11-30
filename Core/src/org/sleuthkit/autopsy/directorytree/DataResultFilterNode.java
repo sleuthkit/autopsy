@@ -55,8 +55,11 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
+import org.sleuthkit.autopsy.commonfilesearch.InstanceCaseNode;
+import org.sleuthkit.autopsy.commonfilesearch.InstanceDataSourceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
 import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode2;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
@@ -132,8 +135,8 @@ public class DataResultFilterNode extends FilterNode {
      * wrapped node and may filter out some of its children.
      *
      * @param node The node to wrap.
-     * @param em The ExplorerManager for the component that is creating the
-     * node.
+     * @param em   The ExplorerManager for the component that is creating the
+     *             node.
      */
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
@@ -145,13 +148,13 @@ public class DataResultFilterNode extends FilterNode {
      * result viewers. The wrapper node defines the actions associated with the
      * wrapped node and may filter out some of its children.
      *
-     * @param node The node to wrap.
-     * @param em The ExplorerManager for the component that is creating the
-     * node.
+     * @param node        The node to wrap.
+     * @param em          The ExplorerManager for the component that is creating
+     *                    the node.
      * @param filterKnown Whether or not to filter out children that represent
-     * known files.
+     *                    known files.
      * @param filterSlack Whether or not to filter out children that represent
-     * virtual slack space files.
+     *                    virtual slack space files.
      */
     private DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
         super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));
@@ -261,7 +264,7 @@ public class DataResultFilterNode extends FilterNode {
      * selected.
      *
      * @return The child node selection information, or null if no child should
-     * be selected.
+     *         be selected.
      */
     public NodeSelectionInfo getChildNodeSelectionInfo() {
         if (getOriginal() instanceof DisplayableItemNode) {
@@ -530,20 +533,34 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(CommonAttributeValueNode md5n){
+        public AbstractAction visit(InstanceCaseNode icn) {
             return null;
         }
-
         @Override
-        public AbstractAction visit(CaseDBCommonAttributeInstanceNode fin){
-            return null;
-        }
-
-        @Override
-        public AbstractAction visit(CentralRepoCommonAttributeInstanceNode iccan){
+        public AbstractAction visit(InstanceDataSourceNode icn) {
             return null;
         }
         
+        @Override
+        public AbstractAction visit(CommonAttributeValueNode md5n) {
+            return null;
+        }
+
+        @Override
+        public AbstractAction visit(CaseDBCommonAttributeInstanceNode fin) {
+            return null;
+        }
+
+        @Override
+        public AbstractAction visit(CentralRepoCommonAttributeInstanceNode iccan) {
+            return null;
+        }
+
+        @Override
+        public AbstractAction visit(CentralRepoCommonAttributeInstanceNode2 iccan) {
+            return null;
+        }
+
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
             BlackboardArtifact artifact = ban.getArtifact();

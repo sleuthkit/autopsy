@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
+import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance.NODE_TYPE;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.HashUtility;
@@ -127,9 +128,9 @@ final class InterCaseSearchResultsProcessor {
      *
      * @param currentCase The current TSK Case.
      */
-    Map<Integer, CommonAttributeValueList> findInterCaseCommonAttributeValues(Case currentCase) {
+    Map<String, Map<String, CommonAttributeValueList>> findInterCaseCommonAttributeValues(Case currentCase) {
         try {
-            InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
+            NewInterCaseCommonAttributesCallback instancetableCallback = new NewInterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
 
             int caseId = DbManager.getCase(currentCase).getID();
@@ -154,9 +155,9 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase  The case of interest. Matches must exist in this case.
      */
-    Map<Integer, CommonAttributeValueList> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
+    Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
         try {
-            InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
+            NewInterCaseCommonAttributesCallback instancetableCallback = new NewInterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
             int caseId = DbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
@@ -242,7 +243,7 @@ final class InterCaseSearchResultsProcessor {
             // we don't *have* all the information for the rows in the CR,
             //  so we need to consult the present case via the SleuthkitCase object
             // Later, when the FileInstanceNode is built. Therefore, build node generators for now.
-            CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType);
+            CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType, NODE_TYPE.COUNT_NODE);
             CorrelationAttributeInstance corrAttr = findSingleCorrelationAttribute(resultId);
             searchResult.setCurrentAttributeInst(corrAttr);
             commonAttributeValue.addInstance(searchResult);
@@ -250,6 +251,59 @@ final class InterCaseSearchResultsProcessor {
 
         Map<Integer, CommonAttributeValueList> getInstanceCollatedCommonFiles() {
             return Collections.unmodifiableMap(instanceCollatedCommonFiles);
+        }
+    }
+
+    /**
+     * Callback to use with findInterCaseCommonAttributeValues which generates a
+     * list of md5s for common files search
+     */
+    private class NewInterCaseCommonAttributesCallback implements InstanceTableCallback {
+
+        final Map<String, Map<String, CommonAttributeValueList>> caseCollatedDataSourceCollections = new HashMap<>();
+
+//        private CommonAttributeValue commonAttributeValue = null;
+        String caseName = null;
+        String dataSourceName = null;
+        private String previousRowValue = "";
+
+        @Override
+        public void process(ResultSet resultSet) {
+            try {
+                while (resultSet.next()) {
+                    int resultId = InstanceTableCallback.getId(resultSet);
+                    String corValue = InstanceTableCallback.getValue(resultSet);
+                    if (previousRowValue.isEmpty()) {
+                        previousRowValue = corValue;
+                    }
+                    if (corValue == null || HashUtility.isNoDataMd5(corValue)) {
+                        continue;
+                    }
+                    CorrelationCase correlationCase = EamDb.getInstance().getCaseById(InstanceTableCallback.getCaseId(resultSet));
+                    caseName = correlationCase.getDisplayName();
+                    dataSourceName = EamDb.getInstance().getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet)).getName();
+                    if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
+                        caseCollatedDataSourceCollections.put(caseName, new HashMap<String, CommonAttributeValueList>());
+                    }
+                    Map<String, CommonAttributeValueList> dataSourceToFile = caseCollatedDataSourceCollections.get(caseName);
+                    if (!dataSourceToFile.containsKey(dataSourceName)) {
+                        dataSourceToFile.put(dataSourceName, new CommonAttributeValueList());
+                    }
+                    CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceName);
+                    CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType, NODE_TYPE.CASE_NODE);
+                    CorrelationAttributeInstance corrAttr = findSingleCorrelationAttribute(resultId);
+                    searchResult.setCurrentAttributeInst(corrAttr);
+                    CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
+                    commonAttributeValue.addInstance(searchResult);
+                    valueList.addMetadataToList(new CommonAttributeValue(corValue));
+                }
+            } catch (EamDbException | SQLException ex) {
+                LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
+            }
+        }
+
+        Map<String, Map<String, CommonAttributeValueList>> getInstanceCollatedCommonFiles() {
+            return Collections.unmodifiableMap(caseCollatedDataSourceCollections);
         }
     }
 

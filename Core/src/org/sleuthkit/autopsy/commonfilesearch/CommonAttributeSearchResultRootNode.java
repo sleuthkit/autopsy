@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.openide.nodes.ChildFactory;
@@ -41,6 +42,10 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
         super(Children.create(new InstanceCountNodeFactory(metadataList), true));
     }
 
+        CommonAttributeSearchResultRootNode(CommonAttributeSearchResults2 metadataList) {
+        super(Children.create(new CaseNameNodeFactory(metadataList), true));
+    }
+    
     @NbBundle.Messages({
         "CommonFilesNode.getName.text=Common Files"})
     @Override
@@ -95,6 +100,41 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
         protected Node createNodeForKey(Integer instanceCount){
             CommonAttributeValueList attributeValues =  this.searchResults.getAttributeValuesForInstanceCount(instanceCount);
             return new InstanceCountNode(instanceCount, attributeValues);
+        }
+    }
+    
+        /**
+     * Used to generate <code>InstanceCountNode</code>s.
+     */
+    static class CaseNameNodeFactory extends ChildFactory<String>{
+
+        private static final Logger LOGGER = Logger.getLogger(InstanceCountNodeFactory.class.getName());
+        
+        private final CommonAttributeSearchResults2 searchResults;
+        
+        /**
+         * Build a factory which converts a <code>CommonAttributeSearchResults</code> 
+         * object into <code>DisplayableItemNode</code>s.
+         * @param searchResults 
+         */
+        CaseNameNodeFactory(CommonAttributeSearchResults2 searchResults){
+            this.searchResults = searchResults;
+        }
+
+        @Override
+        protected boolean createKeys(List<String> list) {
+            try {
+                list.addAll(this.searchResults.getMetadata().keySet());
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to create keys.", ex);
+            }
+            return true;
+        }
+        
+        @Override
+        protected Node createNodeForKey(String caseName){
+            Map<String, CommonAttributeValueList> dataSourceNameToInstances =  this.searchResults.getAttributeValuesForCaseName(caseName);
+            return new InstanceCaseNode(caseName, dataSourceNameToInstances);
         }
     }
 }
