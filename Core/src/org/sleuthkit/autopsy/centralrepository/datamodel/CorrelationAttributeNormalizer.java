@@ -219,7 +219,7 @@ final public class CorrelationAttributeNormalizer {
      *                                                    valid ICCID
      */
     private static String normalizeIccid(String data) throws CorrelationAttributeNormalizationException {
-        final String validIccidRegex = "^([8][9][f0-9]{17,22})$";
+        final String validIccidRegex = "^89[f0-9]{17,22}$";
         final String iccidWithoutSeperators = data.toLowerCase().replaceAll(SEPERATORS_REGEX, "");
         if (iccidWithoutSeperators.matches(validIccidRegex)) {
             return iccidWithoutSeperators;
