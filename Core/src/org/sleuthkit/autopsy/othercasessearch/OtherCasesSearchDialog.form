@@ -24,9 +24,10 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" attributes="0">
+          <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="descriptionLabel" pref="430" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="correlationValueLabel" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -34,7 +35,7 @@
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="correlationTypeComboBox" pref="289" max="32767" attributes="0"/>
+                          <Component id="correlationTypeComboBox" max="32767" attributes="0"/>
                           <Component id="correlationValueTextField" max="32767" attributes="0"/>
                           <Component id="errorLabel" alignment="0" max="32767" attributes="0"/>
                       </Group>
@@ -43,13 +44,6 @@
                       <Component id="casesLabel" max="32767" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="searchButton" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="descriptionLabel" min="-2" max="-2" attributes="0"/>
-                          <Component id="noteLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -60,9 +54,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="descriptionLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="noteLabel" min="-2" max="-2" attributes="0"/>
+              <Component id="descriptionLabel" min="-2" pref="39" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="correlationTypeComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -75,7 +67,7 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="errorLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace pref="20" max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="searchButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="casesLabel" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -157,13 +149,6 @@
         <Property name="horizontalAlignment" type="int" value="0"/>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
           <ResourceString bundle="org/sleuthkit/autopsy/othercasessearch/Bundle.properties" key="OtherCasesSearchDialog.casesLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JLabel" name="noteLabel">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/othercasessearch/Bundle.properties" key="OtherCasesSearchDialog.noteLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
