@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.e01verify;
+package org.sleuthkit.autopsy.modules.dataSourceIntegrity;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -40,14 +40,12 @@ import org.openide.util.NbBundle;
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness
  * Format (EWF) E01 image file by generating a hash of the file and comparing it
- * to the value stored in the image.
+ * to the value stored in the image. Will also generate hashes for any image-type 
+ * data source that has none.
  */
-@NbBundle.Messages({
-    "UnableToCalculateHashes=Unable to calculate MD5 hashes."
-})
-public class E01VerifyIngestModule implements DataSourceIngestModule {
+public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
 
-    private static final Logger logger = Logger.getLogger(E01VerifyIngestModule.class.getName());
+    private static final Logger logger = Logger.getLogger(DataSourceIntegrityIngestModule.class.getName());
     private static final long DEFAULT_CHUNK_SIZE = 32 * 1024;
     private static final IngestServices services = IngestServices.getInstance();
 
@@ -58,13 +56,13 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
     
     private IngestJobContext context;
     
-    E01VerifyIngestModule(IngestSettings settings) {
+    DataSourceIntegrityIngestModule(IngestSettings settings) {
         computeHashes = settings.shouldComputeHashes();
         verifyHashes = settings.shouldVerifyHashes();
     }
 
     @NbBundle.Messages({
-        "E01VerifyIngestModule.startup.noCheckboxesSelected=At least one of the checkboxes must be selected"
+        "DataSourceIntegrityIngestModule.startup.noCheckboxesSelected=At least one of the checkboxes must be selected"
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -72,34 +70,34 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         
         // It's an error if the module is run without either option selected
         if (!(computeHashes || verifyHashes)) {
-            throw new IngestModuleException(Bundle.E01VerifyIngestModule_startup_noCheckboxesSelected());
+            throw new IngestModuleException(Bundle.DataSourceIntegrityIngestModule_startup_noCheckboxesSelected());
         }
     }
     
     @NbBundle.Messages({
         "# {0} - imageName",
-        "E01VerifyIngestModule.process.skipCompute=Not computing new hashes for {0} since the option was disabled",
+        "DataSourceIntegrityIngestModule.process.skipCompute=Not computing new hashes for {0} since the option was disabled",
         "# {0} - imageName",
-        "E01VerifyIngestModule.process.skipVerify=Not verifying existing hashes for {0} since the option was disabled",
+        "DataSourceIntegrityIngestModule.process.skipVerify=Not verifying existing hashes for {0} since the option was disabled",
         "# {0} - hashName",
-        "E01VerifyIngestModule.process.hashAlgorithmError=Error creating message digest for {0} algorithm",
+        "DataSourceIntegrityIngestModule.process.hashAlgorithmError=Error creating message digest for {0} algorithm",
         "# {0} - hashName",
-        "E01VerifyIngestModule.process.hashMatch=<li>{0} hash verified</li>",
+        "DataSourceIntegrityIngestModule.process.hashMatch=<li>{0} hash verified</li>",
         "# {0} - hashName",
-        "E01VerifyIngestModule.process.hashNonMatch=<li>{0} hash not verified</li>",
+        "DataSourceIntegrityIngestModule.process.hashNonMatch=<li>{0} hash not verified</li>",
         "# {0} - calculatedHashValue",
         "# {1} - storedHashValue",
-        "E01VerifyIngestModule.process.hashList=<ul><li>Calculated hash: {0}</li><li>Stored hash: {1}</li></ul>",
+        "DataSourceIntegrityIngestModule.process.hashList=<ul><li>Calculated hash: {0}</li><li>Stored hash: {1}</li></ul>",
         "# {0} - hashName",
         "# {1} - calculatedHashValue",
-        "E01VerifyIngestModule.process.calcHashWithType=<li>Calculated {0} hash: {1}</li>",
+        "DataSourceIntegrityIngestModule.process.calcHashWithType=<li>Calculated {0} hash: {1}</li>",
         "# {0} - imageName",
-        "E01VerifyIngestModule.process.calculateHashDone=<p>Data Source Hash Calculation Results for {0}</p>", 
-        "E01VerifyIngestModule.process.hashesCalculated= hashes calculated", 
+        "DataSourceIntegrityIngestModule.process.calculateHashDone=<p>Data Source Hash Calculation Results for {0}</p>", 
+        "DataSourceIntegrityIngestModule.process.hashesCalculated= hashes calculated", 
         "# {0} - imageName",
-        "E01VerifyIngestModule.process.errorSavingHashes= Error saving hashes for image {0} to the database", 
+        "DataSourceIntegrityIngestModule.process.errorSavingHashes= Error saving hashes for image {0} to the database", 
         "# {0} - imageName",
-        "E01VerifyIngestModule.process.errorLoadingHashes= Error loading hashes for image {0} from the database", 
+        "DataSourceIntegrityIngestModule.process.errorLoadingHashes= Error loading hashes for image {0} from the database", 
     })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
@@ -108,7 +106,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         // Skip non-images
         if (!(dataSource instanceof Image)) {
             logger.log(Level.INFO, "Skipping non-image {0}", imgName); //NON-NLS
-            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, DataSourceIntegrityModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                             "EwfVerifyIngestModule.process.skipNonEwf",
                             imgName)));
@@ -120,7 +118,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         long size = img.getSize();
         if (size == 0) {
             logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName); //NON-NLS
-            services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(),
+            services.postMessage(IngestMessage.createMessage(MessageType.ERROR, DataSourceIntegrityModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
                             "EwfVerifyIngestModule.process.errGetSizeOfImg",
                             imgName)));
@@ -142,8 +140,8 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
                 hashDataList.add(new HashData(HashType.SHA256, img.getSha256()));
             }
         } catch (TskCoreException ex) {
-                String msg = Bundle.E01VerifyIngestModule_process_errorLoadingHashes(imgName);
-                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
+                String msg = Bundle.DataSourceIntegrityIngestModule_process_errorLoadingHashes(imgName);
+                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, DataSourceIntegrityModuleFactory.getModuleName(), msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return ProcessResult.ERROR;
         }
@@ -159,13 +157,13 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         // If that mode was not enabled by the user, exit
         if (mode.equals(Mode.COMPUTE) && ! this.computeHashes) {
             logger.log(Level.INFO, "Not computing hashes for {0} since the option was disabled", imgName); //NON-NLS
-            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
-                    Bundle.E01VerifyIngestModule_process_skipCompute(imgName)));
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, DataSourceIntegrityModuleFactory.getModuleName(),
+                    Bundle.DataSourceIntegrityIngestModule_process_skipCompute(imgName)));
             return ProcessResult.OK;
         } else if (mode.equals(Mode.VERIFY) && ! this.verifyHashes) {
             logger.log(Level.INFO, "Not verifying hashes for {0} since the option was disabled", imgName); //NON-NLS
-            services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
-                    Bundle.E01VerifyIngestModule_process_skipVerify(imgName)));
+            services.postMessage(IngestMessage.createMessage(MessageType.INFO, DataSourceIntegrityModuleFactory.getModuleName(),
+                    Bundle.DataSourceIntegrityIngestModule_process_skipVerify(imgName)));
             return ProcessResult.OK;
         }
         
@@ -182,8 +180,8 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             try {
                 hashData.digest = MessageDigest.getInstance(hashData.type.getName());
             } catch (NoSuchAlgorithmException ex) {
-                String msg = Bundle.E01VerifyIngestModule_process_hashAlgorithmError(hashData.type.getName());
-                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
+                String msg = Bundle.DataSourceIntegrityIngestModule_process_hashAlgorithmError(hashData.type.getName());
+                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, DataSourceIntegrityModuleFactory.getModuleName(), msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return ProcessResult.ERROR;
             }
@@ -204,7 +202,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
         } else {
             logger.log(Level.INFO, "Starting hash calculation for {0}", img.getName()); //NON-NLS
         }
-        services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(),
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, DataSourceIntegrityModuleFactory.getModuleName(),
         NbBundle.getMessage(this.getClass(),
                 "EwfVerifyIngestModule.process.startingImg",
                 imgName)));
@@ -224,7 +222,7 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             } catch (TskCoreException ex) {
                 String msg = NbBundle.getMessage(this.getClass(),
                         "EwfVerifyIngestModule.process.errReadImgAtChunk", imgName, i);
-                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
+                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, DataSourceIntegrityModuleFactory.getModuleName(), msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return ProcessResult.ERROR;
             }
@@ -258,12 +256,12 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             
             for (HashData hashData:hashDataList) {
                 if (hashData.storedHash.equals(hashData.calculatedHash)) {
-                    hashResults += Bundle.E01VerifyIngestModule_process_hashMatch(hashData.type.name);
+                    hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashMatch(hashData.type.name);
                 } else {
                     verified = false;
-                    hashResults += Bundle.E01VerifyIngestModule_process_hashNonMatch(hashData.type.name);
+                    hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashNonMatch(hashData.type.name);
                 }
-                hashResults += Bundle.E01VerifyIngestModule_process_hashList(hashData.calculatedHash, hashData.storedHash);
+                hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashList(hashData.calculatedHash, hashData.storedHash);
             }
             
             String verificationResultStr;
@@ -279,13 +277,13 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
             detailedResults += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.resultLi", verificationResultStr);
             detailedResults += hashResults;
 
-            services.postMessage(IngestMessage.createMessage(messageType, E01VerifierModuleFactory.getModuleName(), 
+            services.postMessage(IngestMessage.createMessage(messageType, DataSourceIntegrityModuleFactory.getModuleName(), 
                     imgName + verificationResultStr, detailedResults));
         
         } else {
             // Store the hashes in the database and update the image
             try {
-                String results = Bundle.E01VerifyIngestModule_process_calculateHashDone(imgName);
+                String results = Bundle.DataSourceIntegrityIngestModule_process_calculateHashDone(imgName);
                 
                 for (HashData hashData:hashDataList) {
                     switch (hashData.type) {
@@ -301,16 +299,16 @@ public class E01VerifyIngestModule implements DataSourceIngestModule {
                         default:
                             break;
                     }
-                    results += Bundle.E01VerifyIngestModule_process_calcHashWithType(hashData.type.name, hashData.calculatedHash);
+                    results += Bundle.DataSourceIntegrityIngestModule_process_calcHashWithType(hashData.type.name, hashData.calculatedHash);
                 }
                 
                 // Write the inbox message
-                services.postMessage(IngestMessage.createMessage(MessageType.INFO, E01VerifierModuleFactory.getModuleName(), 
-                        imgName + Bundle.E01VerifyIngestModule_process_hashesCalculated(), results));
+                services.postMessage(IngestMessage.createMessage(MessageType.INFO, DataSourceIntegrityModuleFactory.getModuleName(), 
+                        imgName + Bundle.DataSourceIntegrityIngestModule_process_hashesCalculated(), results));
                 
             } catch (TskCoreException ex) {
-                String msg = Bundle.E01VerifyIngestModule_process_errorSavingHashes(imgName);
-                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, E01VerifierModuleFactory.getModuleName(), msg));
+                String msg = Bundle.DataSourceIntegrityIngestModule_process_errorSavingHashes(imgName);
+                services.postMessage(IngestMessage.createMessage(MessageType.ERROR, DataSourceIntegrityModuleFactory.getModuleName(), msg));
                 logger.log(Level.SEVERE, "Error saving hash for image " + imgName + " to database", ex);
                 return ProcessResult.ERROR;
             }

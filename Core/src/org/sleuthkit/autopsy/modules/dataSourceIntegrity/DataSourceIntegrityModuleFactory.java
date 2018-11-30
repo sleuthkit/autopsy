@@ -1,7 +1,7 @@
 /*
- * Central Repository
+ * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,34 +16,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.centralrepository.ingestmodule;
+package org.sleuthkit.autopsy.modules.dataSourceIntegrity;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
-import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.centralrepository.optionspanel.GlobalSettingsPanel;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.NoIngestModuleIngestJobSettings;
 
 /**
- * Factory for Central Repository ingest modules
+ * An factory that creates data source ingest modules that verify the integrity
+ * of Expert Witness Format (EWF), i.e., .e01 files .
  */
-@ServiceProvider(service = org.sleuthkit.autopsy.ingest.IngestModuleFactory.class)
-@NbBundle.Messages({"IngestModuleFactory.ingestmodule.name=Correlation Engine",
-                    "IngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation"})
-public class IngestModuleFactory extends IngestModuleFactoryAdapter {
+@ServiceProvider(service = IngestModuleFactory.class)
+public class DataSourceIntegrityModuleFactory extends IngestModuleFactoryAdapter {
 
-    /**
-     * Get the name of the module.
-     *
-     * @return The module name.
-     */
-    public static String getModuleName() {
-        return Bundle.IngestModuleFactory_ingestmodule_name();
+    static String getModuleName() {
+        return NbBundle.getMessage(DataSourceIntegrityIngestModule.class,
+                "EwfVerifyIngestModule.moduleName.text");
     }
 
     @Override
@@ -53,7 +47,8 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDescription() {
-        return Bundle.IngestModuleFactory_ingestmodule_desc();
+        return NbBundle.getMessage(DataSourceIntegrityIngestModule.class,
+                "EwfVerifyIngestModule.moduleDesc.text");
     }
 
     @Override
@@ -62,35 +57,23 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public boolean isFileIngestModuleFactory() {
+    public boolean isDataSourceIngestModuleFactory() {
         return true;
     }
 
     @Override
-    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
         if (settings instanceof IngestSettings) {
-            return new IngestModule((IngestSettings) settings);
+            return new DataSourceIntegrityIngestModule((IngestSettings) settings);
         }
         /*
          * Compatibility check for older versions.
          */
         if (settings instanceof NoIngestModuleIngestJobSettings) {
-            return new IngestModule(new IngestSettings());
+            return new DataSourceIntegrityIngestModule(new IngestSettings());
         }
         
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
-    }
-
-    @Override
-    public boolean hasGlobalSettingsPanel() {
-        return true;
-    }
-
-    @Override
-    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
-        GlobalSettingsPanel globalOptionsPanel = new GlobalSettingsPanel();
-        globalOptionsPanel.load();
-        return globalOptionsPanel;
     }
     
     @Override
@@ -116,6 +99,5 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
         }
         
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
-    }
-
+    }    
 }

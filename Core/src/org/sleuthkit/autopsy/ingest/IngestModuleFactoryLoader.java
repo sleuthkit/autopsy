@@ -30,7 +30,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.examples.SampleIngestModuleFactory;
-import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
+import org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeIdModuleFactory;
@@ -39,6 +39,8 @@ import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModu
 import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionModuleFactory;
+import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
+import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
 /**
@@ -55,15 +57,17 @@ final class IngestModuleFactoryLoader {
             add("org.sleuthkit.autopsy.recentactivity.RecentActivityExtracterModuleFactory"); //NON-NLS
             add(HashLookupModuleFactory.class.getCanonicalName());
             add(FileTypeIdModuleFactory.class.getCanonicalName());
+            add(FileExtMismatchDetectorModuleFactory.class.getCanonicalName());
             add(EmbeddedFileExtractorModuleFactory.class.getCanonicalName());
             add(ExifParserModuleFactory.class.getCanonicalName());
             add("org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleFactory"); //NON-NLS
             add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
-            add(FileExtMismatchDetectorModuleFactory.class.getCanonicalName());
-            add(E01VerifierModuleFactory.class.getCanonicalName());
             add(EncryptionDetectionModuleFactory.class.getCanonicalName());
             add(InterestingItemsIngestModuleFactory.class.getCanonicalName());
+            add(CentralRepoIngestModuleFactory.class.getCanonicalName());
             add(PhotoRecCarverIngestModuleFactory.class.getCanonicalName());
+            add(VMExtractorIngestModuleFactory.class.getCanonicalName());
+            add(DataSourceIntegrityModuleFactory.class.getCanonicalName());
         }
     };
 
