@@ -16,8 +16,7 @@ public class TextExtractorFactory {
     private static final ImmutableList<ContentTextExtractor> extractors = 
                 ImmutableList.of(new HtmlTextExtractor(), 
                                  new SqliteTextExtractor(),
-                                 new TikaTextExtractor(),
-                                 new StringsTextExtractor());
+                                 new TikaTextExtractor());
         
     /**
      * Auto detects the corrent text extractor given the file and mimetype. Context 
@@ -26,23 +25,35 @@ public class TextExtractorFactory {
      * @param mimeType
      * @param context
      * @return 
+     * @throws org.sleuthkit.autopsy.textextractors.TextExtractorFactory.NoSpecializedExtractorException 
      */
-    public static ContentTextExtractor getExtractor(AbstractFile file, String mimeType, ExtractionContext context) {
-        ContentTextExtractor extractorInstance = null;
-
+    public static ContentTextExtractor getSpecializedExtractor(AbstractFile file, 
+            String mimeType, ExtractionContext context) throws NoSpecializedExtractorException {
         for(ContentTextExtractor candidate : extractors) {
             candidate.parseContext(context);
             if(candidate.isSupported(file, mimeType)) {
                 try {
-                    extractorInstance = candidate.getClass().newInstance();
+                    ContentTextExtractor extractorInstance = candidate.getClass().newInstance();
                     extractorInstance.parseContext(context);
-                    break;
+                    return extractorInstance;
                 } catch (InstantiationException | IllegalAccessException ex) {
                     
                 }
             }
         }
         
-        return extractorInstance;
+        throw new NoSpecializedExtractorException("Could not find a suitable extractor for mimetype ["+mimeType+"]");
+    }
+    
+    public static StringsTextExtractor getDefaultExtractor(ExtractionContext context) {
+        StringsTextExtractor instance = new StringsTextExtractor();
+        instance.parseContext(context);
+        return instance;
+    }
+    
+    public static class NoSpecializedExtractorException extends Exception {
+        public NoSpecializedExtractorException(String msg) {
+            super(msg);
+        }
     }
 }

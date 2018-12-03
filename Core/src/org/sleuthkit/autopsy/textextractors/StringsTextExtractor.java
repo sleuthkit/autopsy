@@ -57,6 +57,7 @@ public class StringsTextExtractor extends ContentTextExtractor {
         if(configInstance != null) {
             extractUTF8 = configInstance.getExtractUTF8();
             extractUTF16 = configInstance.getExtractUTF16();
+            setScripts(configInstance.getExtractScripts());
         }
     }
 

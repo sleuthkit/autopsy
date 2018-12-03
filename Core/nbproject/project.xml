@@ -348,6 +348,10 @@
                 <binary-origin>release/modules/ext/zookeeper-3.4.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/apache-mime4j-dom-0.8.1.jar</runtime-relative-path>
+                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\Core\release\modules\ext\apache-mime4j-dom-0.8.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
             </class-path-extension>
@@ -430,6 +434,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.10.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/metadata-extractor-2.10.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/apache-mime4j-core-0.8.1.jar</runtime-relative-path>
+                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\Core\release\modules\ext\apache-mime4j-core-0.8.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.17.jar</runtime-relative-path>

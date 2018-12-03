@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -293,9 +294,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         
         extractionContext.set(StringsExtractionConfig.class, stringsConfig);
         
-        stringExtractor = new StringsTextExtractor();
-        stringExtractor.parseContext(extractionContext);
-
+        stringExtractor = TextExtractorFactory.getDefaultExtractor(extractionContext);
         indexer = new Indexer();
         initialized = true;
     }
@@ -482,19 +481,14 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
             extractionContext.set(ImageFileExtractionConfig.class, imageConfig);
             
-            HTMLExtractionConfig htmlConfig = new HTMLExtractionConfig();
-            htmlConfig.setContentSizeLimit(50000000); //50 MB
-            extractionContext.set(HTMLExtractionConfig.class, htmlConfig);
-            
-            extractor = TextExtractorFactory.getExtractor(aFile, detectedFormat, extractionContext);
-            if (extractor.getClass().getName().equals("StringsTextExtractor")) {
-                // No text extractor found.
+            try {
+                extractor = TextExtractorFactory.getSpecializedExtractor(aFile, detectedFormat, extractionContext);
+                //divide into chunks and index
+                return Ingester.getDefault().indexText(extractor, aFile, context);
+            } catch (TextExtractorFactory.NoSpecializedExtractorException ex) {
+                //No text extractor found... run the default instead
                 return false;
             }
-
-            //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
-            //divide into chunks and index
-            return Ingester.getDefault().indexText(extractor, aFile, context);
         }
 
         /**

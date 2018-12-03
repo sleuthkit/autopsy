@@ -32,6 +32,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.tika.Tika;
@@ -46,6 +47,7 @@ import org.apache.tika.parser.pdf.PDFParserConfig;
 import org.openide.util.NbBundle;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -57,6 +59,8 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 public class TikaTextExtractor extends ContentTextExtractor {
     
     private boolean OCREnabled;
+    private final IngestServices services = IngestServices.getInstance();
+    private final Logger logger = services.getLogger(TikaTextExtractor.class.getName());
 
     private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
@@ -141,6 +145,7 @@ public class TikaTextExtractor extends ContentTextExtractor {
         } catch (TextExtractorException ex) {
             throw ex;
         } catch (Exception ex) {
+            logger.log(Level.SEVERE, "",ex);
             tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the content" + content.getId() + ": " + content.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", content.getId(), content.getName());
             logWarning(msg, ex);
