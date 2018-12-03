@@ -50,6 +50,11 @@ public class DataSourceCell extends ListCell<Optional<DataSource>> {
         
     }
 
+    /**
+     * 
+     * @param item  
+     * @param empty 
+     */
     @Override
     protected void updateItem(Optional<DataSource> item, boolean empty) {
         super.updateItem(item, empty);
@@ -57,31 +62,42 @@ public class DataSourceCell extends ListCell<Optional<DataSource>> {
             setText("");
         } else {
             DataSource dataSource = item.orElse(null);
-            String text = (dataSource == null) ? "All" : dataSource.getName() + " (Id: " + dataSource.getId() + ")";
-            Boolean tooManyFilesInDataSource = dataSourcesTooManyFiles.getOrDefault(dataSource, false);
+            String dataSourceName;
+            boolean shouldEnable = true;  // false if user should not be able to select the item
             
-            DrawableDbBuildStatusEnum dataSourceDBStatus = (dataSource != null) ? 
-                     dataSourcesDrawableDBStatus.get(dataSource.getId()) : DrawableDbBuildStatusEnum.UNKNOWN;
-            
-            Boolean dataSourceNotAnalyzed = (dataSourceDBStatus == DrawableDbBuildStatusEnum.DEFAULT);
-            if (tooManyFilesInDataSource) {
-                text += " - Too many files";
-            } 
-            if (dataSourceNotAnalyzed) {
-                text += " - Not Analyzed";
-            }
-    
-            // check if item should be disabled
-            if (tooManyFilesInDataSource || dataSourceNotAnalyzed) {
-                setDisable(true);
-                setStyle("-fx-opacity : .5");
+            if (dataSource == null) {
+                dataSourceName = "All";
+                // NOTE: openAction verifies that there is at least one data source with data.  
+                // So, at this point, "All" should never need to be disabled because none of the data sources
+                // are analyzed.
             }
             else {
+                dataSourceName = dataSource.getName() + " (Id: " + dataSource.getId() + ")";
+                if (dataSourcesDrawableDBStatus.get(dataSource.getId()) == DrawableDbBuildStatusEnum.UNKNOWN) {
+                    dataSourceName += " - Not Analyzed";
+                    shouldEnable = false;
+                }
+            }
+            
+            // if it's analyzed, then make sure there aren't too many files
+            if (shouldEnable) {
+                if (dataSourcesTooManyFiles.getOrDefault(dataSource, false)) {
+                    dataSourceName += " - Too Many Files";
+                    shouldEnable = false;
+                } 
+            }
+            
+            // check if item should be disabled
+            if (shouldEnable) {
                 setGraphic(null);
                 setStyle("-fx-opacity : 1");
             }
+            else {
+                setDisable(true);
+                setStyle("-fx-opacity : .5");
+            }
            
-            setText(text);
+            setText(dataSourceName);
         }
     }
 }

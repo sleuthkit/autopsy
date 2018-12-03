@@ -16,7 +16,7 @@
       <right>
         <HBox alignment="CENTER_RIGHT" prefHeight="-1.0" prefWidth="-1.0" spacing="5.0" BorderPane.alignment="CENTER_RIGHT">
           <children>
-                  <Label fx:id="staleLabel" text="Some data may be out of date.  Enable listening to ingest to update.">
+                  <Label fx:id="staleLabel" text="Additional data may be available after rebuild or enabling listeners.">
       <graphic>
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
       <image>
