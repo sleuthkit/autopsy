@@ -240,7 +240,8 @@ public class ImageGalleryModule {
      */
     // RJCTODO: This code would be easier to read if there were two case event 
     // listeners, one that handled CURRENT_CASE events and one that handled 
-    // the other events.
+    // the other events. Or event better, move the handling of Case events other 
+    // than CURRENT_CASE into ImageGalleryController.
     static private class CaseEventListener implements PropertyChangeListener {
 
         @Override
@@ -270,11 +271,12 @@ public class ImageGalleryModule {
                 ImageGalleryController currentController;
                 try {
                     currentController = getController();
-                    // RJCTODO: If a closed controller had a method that could be
-                    // queried to determine whether it was shut down, we could 
-                    // bail out here. The older code that used to try to check for
-                    // a current case was flawed; there was no guarantee the current
-                    // case was the same case associated with the event.
+                    // RJCTODO: I think it would be best to move handling of these 
+                    // case events into the controller class and have the controller 
+                    // instance register/unregister as a listener when it is 
+                    // contructed and shuts down. This will improve the encapsulation 
+                    // of ImageGalleryController and allow it to check its own open/closed 
+                    // state before handling an event. 
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to handle %s event", event.getPropertyName()), ex); //NON-NLS
                     return;
@@ -335,11 +337,12 @@ public class ImageGalleryModule {
             ImageGalleryController controller;
             try {
                 controller = getController();
-                // RJCTODO: If a closed controller had a method that could be
-                // queried to determine whether it was shut down, we could 
-                // bail out here. The older code that used to try to check for
-                // a current case was flawed; there was no guarantee the current
-                // case was the same case associated with the event.                
+                // RJCTODO: I think it would be best to move handling of these 
+                // case events into the controller class and have the controller 
+                // instance register/unregister as a listener when it is 
+                // contructed and shuts down. This will improve the encapsulation 
+                // of ImageGalleryController and allow it to check its own open/closed 
+                // state before handling an event.                 
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to handle %s event", event.getPropertyName()), ex); //NON-NLS
                 return;
