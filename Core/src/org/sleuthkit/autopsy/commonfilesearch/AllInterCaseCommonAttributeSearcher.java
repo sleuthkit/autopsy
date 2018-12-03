@@ -59,7 +59,7 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     }
 
     @Override
-    public CommonAttributeSearchResults2 findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeCaseSearchResults findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
         Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase());
 
@@ -70,7 +70,7 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
         if (isFilterByDoc()) {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
-        return new CommonAttributeSearchResults2(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
+        return new CommonAttributeCaseSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
     }
 
     @NbBundle.Messages({

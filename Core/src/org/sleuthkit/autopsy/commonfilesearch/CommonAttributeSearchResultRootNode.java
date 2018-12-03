@@ -42,7 +42,7 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
         super(Children.create(new InstanceCountNodeFactory(metadataList), true));
     }
 
-        CommonAttributeSearchResultRootNode(CommonAttributeSearchResults2 metadataList) {
+        CommonAttributeSearchResultRootNode(CommonAttributeCaseSearchResults metadataList) {
         super(Children.create(new CaseNameNodeFactory(metadataList), true));
     }
     
@@ -110,14 +110,14 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
 
         private static final Logger LOGGER = Logger.getLogger(InstanceCountNodeFactory.class.getName());
         
-        private final CommonAttributeSearchResults2 searchResults;
+        private final CommonAttributeCaseSearchResults searchResults;
         
         /**
          * Build a factory which converts a <code>CommonAttributeSearchResults</code> 
          * object into <code>DisplayableItemNode</code>s.
          * @param searchResults 
          */
-        CaseNameNodeFactory(CommonAttributeSearchResults2 searchResults){
+        CaseNameNodeFactory(CommonAttributeCaseSearchResults searchResults){
             this.searchResults = searchResults;
         }
 

@@ -33,22 +33,22 @@ import java.util.stream.Collectors;
  */
 final public class CommonAttributeValue {
 
-    private final String md5;
+    private final String value;
     private final List<AbstractCommonAttributeInstance> fileInstances;
 
-    CommonAttributeValue(String md5, List<AbstractCommonAttributeInstance> fileInstances) {
-        this.md5 = md5;
+    CommonAttributeValue(String value, List<AbstractCommonAttributeInstance> fileInstances) {
+        this.value = value;
         this.fileInstances = fileInstances;
 
     }
 
-    CommonAttributeValue(String md5) {
-        this.md5 = md5;
+    CommonAttributeValue(String value) {
+        this.value = value;
         this.fileInstances = new ArrayList<>();
     }
 
     public String getValue() {
-        return this.md5;
+        return this.value;
     }
 
     /**

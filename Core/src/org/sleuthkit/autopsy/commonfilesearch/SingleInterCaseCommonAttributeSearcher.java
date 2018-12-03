@@ -88,14 +88,14 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
      * @throws EamDbException
      */
     @Override
-    public CommonAttributeSearchResults2 findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeCaseSearchResults findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
 
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         this.correlationCaseName = cCase.getDisplayName();
         return this.findFiles(cCase);
     }
     
-    CommonAttributeSearchResults2 findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    CommonAttributeCaseSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.corAttrType);
         Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
         Set<String> mimeTypesToFilterOn = new HashSet<>();
@@ -105,7 +105,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         if (isFilterByDoc()) {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
-        return new CommonAttributeSearchResults2(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
+        return new CommonAttributeCaseSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
     }
 
     @NbBundle.Messages({

@@ -144,7 +144,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
     }
 
     @Override
-    public CommonAttributeSearchResults2 findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeCaseSearchResults findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         throw new EamDbException("Not Supported at the moment");
     }
 

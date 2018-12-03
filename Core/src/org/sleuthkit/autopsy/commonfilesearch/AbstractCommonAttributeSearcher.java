@@ -65,7 +65,7 @@ public abstract class AbstractCommonAttributeSearcher {
      */
     public abstract CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
 
-    public abstract CommonAttributeSearchResults2 findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
+    public abstract CommonAttributeCaseSearchResults findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
     
     /**
      * Implement this to create a descriptive string for the tab which will

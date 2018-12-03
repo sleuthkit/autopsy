@@ -319,13 +319,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      * Perform the common attribute search.
      */
     private void search2() {
-        new SwingWorker<CommonAttributeSearchResults2, Void>() {
+        new SwingWorker<CommonAttributeCaseSearchResults, Void>() {
 
             private String tabTitle;
             private ProgressHandle progress;
 
             @Override
-            protected CommonAttributeSearchResults2 doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+            protected CommonAttributeCaseSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
                 progress = ProgressHandle.createHandle(Bundle.CommonAttributePanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -334,7 +334,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 Integer caseId = interCasePanel.getSelectedCaseId();
 
                 AbstractCommonAttributeSearcher builder;
-                CommonAttributeSearchResults2 metadata;
+                CommonAttributeCaseSearchResults metadata;
 
                 boolean filterByMedia = false;
                 boolean filterByDocuments = false;
@@ -383,7 +383,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             protected void done() {
                 try {
                     super.done();
-                    CommonAttributeSearchResults2 metadata = this.get();
+                    CommonAttributeCaseSearchResults metadata = this.get();
                     boolean noKeysExist = true;
                     try {
                         noKeysExist = metadata.getMetadata().keySet().isEmpty();
