@@ -265,7 +265,6 @@ final class InterCaseSearchResultsProcessor {
 //        private CommonAttributeValue commonAttributeValue = null;
         String caseName = null;
         String dataSourceName = null;
-        private String previousRowValue = "";
 
         @Override
         public void process(ResultSet resultSet) {
@@ -273,9 +272,6 @@ final class InterCaseSearchResultsProcessor {
                 while (resultSet.next()) {
                     int resultId = InstanceTableCallback.getId(resultSet);
                     String corValue = InstanceTableCallback.getValue(resultSet);
-                    if (previousRowValue.isEmpty()) {
-                        previousRowValue = corValue;
-                    }
                     if (corValue == null || HashUtility.isNoDataMd5(corValue)) {
                         continue;
                     }
@@ -295,7 +291,9 @@ final class InterCaseSearchResultsProcessor {
                     searchResult.setCurrentAttributeInst(corrAttr);
                     CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
                     commonAttributeValue.addInstance(searchResult);
-                    valueList.addMetadataToList(new CommonAttributeValue(corValue));
+                    valueList.addMetadataToList(commonAttributeValue);
+                    dataSourceToFile.put(dataSourceName,valueList);
+                    caseCollatedDataSourceCollections.put(caseName, dataSourceToFile);
                 }
             } catch (EamDbException | SQLException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS

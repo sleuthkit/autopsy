@@ -19,9 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
