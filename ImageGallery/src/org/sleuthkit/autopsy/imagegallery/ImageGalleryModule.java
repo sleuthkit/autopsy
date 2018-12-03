@@ -26,6 +26,7 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -143,7 +144,7 @@ public class ImageGalleryModule {
      *
      * @return True or false.
      */
-    static boolean isEnabledforCase(Case theCase) {
+    static boolean isEnabledforCase(@Nonnull Case theCase) {
         String enabledforCaseProp = new PerCaseProperties(theCase).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.ENABLED);
         return isNotBlank(enabledforCaseProp) ? Boolean.valueOf(enabledforCaseProp) : ImageGalleryPreferences.isEnabledByDefault();
     }
