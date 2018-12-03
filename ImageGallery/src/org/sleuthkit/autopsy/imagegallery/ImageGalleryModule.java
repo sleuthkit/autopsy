@@ -328,7 +328,10 @@ public class ImageGalleryModule {
             /*
              * Only handling data source analysis events.
              */
-            // RJCTODO: DO we need to handle any events at all on an auot ingest node?
+            // RJCTODO: Do we need to handle any events at all on an auto ingest node?
+            // RJCTODO: This would be less messy if IngestManager supported 
+            // subscribing for a subset of events the way case does, and it the 
+            // conditional blocks became method calls. 
             if (!(event instanceof DataSourceAnalysisEvent)) {
                 return;
             }
