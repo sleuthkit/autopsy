@@ -30,6 +30,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.collections4.CollectionUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -214,17 +215,12 @@ public class ImageGalleryModule {
                     break;
                 case DATA_ADDED:
                     ModuleDataEvent artifactAddedEvent = (ModuleDataEvent) event.getOldValue();
-                    if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+                    if (CollectionUtils.isNotEmpty(artifactAddedEvent.getArtifacts())) {
                         DrawableDB drawableDB = currentController.getDatabase();
-                        if (artifactAddedEvent.getArtifacts() != null) {
-                            for (BlackboardArtifact art : artifactAddedEvent.getArtifacts()) {
+                        for (BlackboardArtifact art : artifactAddedEvent.getArtifacts()) {
+                            if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
                                 drawableDB.addExifCache(art.getObjectID());
-                            }
-                        }
-                    } else if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                        DrawableDB drawableDB = currentController.getDatabase();
-                        if (artifactAddedEvent.getArtifacts() != null) {
-                            for (BlackboardArtifact art : artifactAddedEvent.getArtifacts()) {
+                            } else if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                                 drawableDB.addHashSetCache(art.getObjectID());
                             }
                         }
