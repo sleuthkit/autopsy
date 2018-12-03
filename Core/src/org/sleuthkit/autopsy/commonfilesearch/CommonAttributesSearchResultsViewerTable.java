@@ -55,11 +55,8 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
         map.put(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), 65);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl(), 200);
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_nameColLbl(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_hashsetHitsColLbl(), 100);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 130);
-        map.put(Bundle.CommonFilesSearchResultsViewerTable_tagsColLbl1(), 300);
 
         COLUMN_WIDTHS = Collections.unmodifiableMap(map);
     }
@@ -82,12 +79,9 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
         "CommonFilesSearchResultsViewerTable.filesColLbl=Files",
         "CommonFilesSearchResultsViewerTable.instancesColLbl=Instances",
         "CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path",
-        "CommonFilesSearchResultsViewerTable.hashsetHitsColLbl=Hash Set Hits",
         "CommonFilesSearchResultsViewerTable.caseColLbl=Case",
-        "CommonFilesSearchResultsViewerTable.nameColLbl=Name",
         "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source",
         "CommonFilesSearchResultsViewerTable.mimeTypeColLbl=MIME Type",
-        "CommonFilesSearchResultsViewerTable.tagsColLbl1=Tags"
     })
     @Override
     protected void setColumnWidths() {
