@@ -63,7 +63,7 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
      *
      * @return int match count
      */
-    String getCaseName() {
+    String getDatasourceName() {
         return this.dataSourceName;
     }
 
@@ -72,7 +72,7 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
      * constructor, lazy creation of the Children is made possible.
      */
     void createChildren() {
-        dataSourceToValueList.displayDelayedMetadata(); //WJS-TODO move this to the child node
+        dataSourceToValueList.displayDelayedMetadata();
         setChildren(Children.create(new FileInstanceNodeFactory(dataSourceToValueList), true));
     }
 
@@ -97,7 +97,7 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
 
         final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, ""));
-        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, this.getCaseName()));
+        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), NO_DESCR, this.getDatasourceName()));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, ""));

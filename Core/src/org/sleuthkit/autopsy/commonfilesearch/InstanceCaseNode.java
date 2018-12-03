@@ -74,7 +74,6 @@ public final class InstanceCaseNode extends DisplayableItemNode {
      * constructor, lazy creation of the Children is made possible.
      */
     void createChildren() {
-//        dataSourceToValueList.displayDelayedMetadata(); WJS-TODO move this to the child node
         setChildren(Children.create(new CommonAttributeDataSourceNodeFactory(dataSourceToValueList), true));
     }
 
@@ -134,7 +133,6 @@ public final class InstanceCaseNode extends DisplayableItemNode {
          * List of models, each of which is a parent node matching a single md5,
          * containing children FileNodes.
          */
-        // maps sting version of value to value Object (??)
         private final Map<String, CommonAttributeValueList> metadata;
 
         CommonAttributeDataSourceNodeFactory(Map<String, CommonAttributeValueList> attributeValues) {
