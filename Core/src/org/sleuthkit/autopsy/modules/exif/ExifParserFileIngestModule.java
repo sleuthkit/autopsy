@@ -76,7 +76,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
-    private final List<BlackboardArtifact> listOfFacesDetectedArtifacts = new ArrayList<>();
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
@@ -196,13 +195,25 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             ExifIFD0Directory devDir = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
-                if (model != null && !model.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, ExifParserModuleFactory.getModuleName(), model));
+                if (model != null) {
+                    int testSize = model.length(); //DLG:
+                    model = model.trim();
+                    if (!model.isEmpty()) {
+                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, ExifParserModuleFactory.getModuleName(), model));
+                    } else if (testSize > 0) {
+                        System.out.println(); //DLG: Put breakpoint here!
+                    }
                 }
 
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
-                if (make != null && !make.isEmpty()) {
-                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, ExifParserModuleFactory.getModuleName(), make));
+                if (make != null) {
+                    int testSize = make.length(); //DLG:
+                    make = make.trim();
+                    if (!make.isEmpty()) {
+                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, ExifParserModuleFactory.getModuleName(), make));
+                    }else if (testSize > 0) {
+                        System.out.println(); //DLG: Put breakpoint here!
+                    }
                 }
             }
 
