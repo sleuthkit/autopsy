@@ -178,7 +178,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
     @Override
     public void tearDown() {
-//        
+//
 //        // Restore the original properties
 //        ModuleSettings.setConfigSettings(PROPERTIES_FILE, propertiesMap);
 //
@@ -1172,8 +1172,10 @@ public class CentralRepoDatamodelTest extends TestCase {
 //            DbManager.processInstanceTable(fileType, instancetableCallback);
 //            int count1 = instancetableCallback.getCounter();
 //            int count2 = instancetableCallback.getCounterNamingConvention();
-//            assertEquals("Unexpected value for Process Instance count with filepath naming convention", 2, count2);
-//            assertTrue("Unexpected value for Process Instance count with filepath without naming convention: " + count1 + " - expected greater than 0", count1 > 0);
+//            //expects 2 rows to match the naming convention to of been processed, expects at least one row not matching the naming convention to be processed
+//            //if the test code is changed to add additional Correlation Attributes which also have "processinstancecallback" in their path the first of these comparisons will need to change
+//            assertEquals("Counter for items matching naming convention from AttributeInstaceTableCallback indicates an unexepected number of results when processed with DbManager.processInstanceTable", 2, count2);
+//            assertTrue("Counter for items which do not match naming convention from AttributeInstaceTableCallback indicates an unexepected number of results when processed with DbManager.processInstanceTable. Count indicated: " + count1 + " - expected a number greater than 0", count1 > 0);
 //        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
 //            Exceptions.printStackTrace(ex);
 //            Assert.fail("Error Exception thrown when calling processInstanceTable " + ex.getMessage());
@@ -1193,14 +1195,18 @@ public class CentralRepoDatamodelTest extends TestCase {
 //            CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(callbackTestFileHash, fileType, case1, dataSource1fromCase1, callbackTestFilePath1);
 //            CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(callbackTestFileHash, fileType, case1, dataSource1fromCase1, callbackTestFilePath2);
 //            EamDb DbManager = EamDb.getInstance();
+//            //these redundant addArtifactInstance calls allow code to be rearranged if necessary
 //            DbManager.addArtifactInstance(attr1);
 //            DbManager.addArtifactInstance(attr2);
 //            AttributeInstanceTableCallback instancetableCallback = new AttributeInstanceTableCallback();
 //            DbManager.processInstanceTableWhere(fileType, "value='" + callbackTestFileHash + "'", instancetableCallback);
 //            int count1 = instancetableCallback.getCounter();
+//            //naming convention counts 
 //            int count2 = instancetableCallback.getCounterNamingConvention();
-//            assertEquals("Unexpected value for Process Instance Where count with filepath naming convention", 2, count2);
-//            assertTrue("Unexpected value for Process Instance Where count with filepath without naming convention: " + count1 + " - expected greater than 0", count1 > 0);
+//            //this has only processed the rows where the value is equal to the specified value, which should only be the two rows with the naming convention checked for
+//            //if the test code is changed to add additional Correlation Attributes with the same callbackTestFileHash value that is used here these comparisons will need to change
+//            assertEquals("Counter for items matching naming convention from AttributeInstaceTableCallback indicates an unexepected number of results when processed with DbManager.processInstanceTableWhere", 2, count2);
+//            assertEquals("Counter for items which do not match naming convention from AttributeInstaceTableCallback indicates an unexepected number of results when processed with DbManager.processInstanceTableWhere", 0, count1);
 //        } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
 //            Exceptions.printStackTrace(ex);
 //            Assert.fail("Error Exception thrown when calling processInstanceTableWhere " + ex.getMessage());
