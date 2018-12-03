@@ -883,7 +883,7 @@ public final class FilesSet implements Serializable {
             /**
              * Strip "." from the start of the provided extension.
              * 
-             * @param extensions The extension to be processed.
+             * @param extension The extension to be processed.
              * 
              * @return A post-processed extension.
              */
