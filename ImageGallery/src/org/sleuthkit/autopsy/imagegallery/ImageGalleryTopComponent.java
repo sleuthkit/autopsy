@@ -173,12 +173,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         if (dataSourcesTooManyFiles.get(selectedDataSource)) {
             Platform.runLater(ImageGalleryTopComponent::showTooManyFiles);
         } else {
-            /*
-             * Open the top component's window before configuring the groups
-             * manager so that the spinner(s) that take the place of a wait will
-             * be displayed if the operations takes awhile.
-             */
-            // RJCTODO: Is this really necessary?
             SwingUtilities.invokeLater(() -> showTopComponent());
             synchronized (controllerLock) {
                 GroupManager groupManager = controller.getGroupManager();
@@ -443,15 +437,6 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     @Override
     public ExplorerManager getExplorerManager() {
-        /*
-         * Although ImageGallery doesn't currently use the explorer manager,
-         * this TopComponent provides one through the getExplorerManager method.
-         * However, this does not seem to function correctly unless a Netbeans
-         * provided explorer view is present in the TopComponenet, even if it is
-         * invisible/ zero sized
-         */
-        // RJCTODO: Why is this override here? Does the "this" in "this does 
-        // not seem to function correctly" refer to the methdo or the top compnent?
         return em;
     }
 
