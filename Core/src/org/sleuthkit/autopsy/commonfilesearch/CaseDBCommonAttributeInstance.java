@@ -51,7 +51,7 @@ final public class CaseDBCommonAttributeInstance extends AbstractCommonAttribute
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-        final CaseDBCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new CaseDBCommonAttributeInstanceNode(this.getAbstractFile(), this.getCaseName(), this.getDataSource());
+        final CaseDBCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new CaseDBCommonAttributeInstanceNode(this.getAbstractFile(), this.getCaseName(), this.getDataSource(), NODE_TYPE.COUNT_NODE);
         return Arrays.asList(intraCaseCommonAttributeInstanceNode).toArray(new DisplayableItemNode[1]);
     }
     

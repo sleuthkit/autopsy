@@ -162,14 +162,10 @@ public abstract class AbstractCommonAttributeInstance {
         DisplayableItemNode leafNode;
 
         if (abstractFile == null) {
-            if (nodeType == NODE_TYPE.CASE_NODE) {
-                leafNode = new CentralRepoCommonAttributeInstanceNode(attribute);
-            } else {
-                leafNode = new CentralRepoCommonAttributeInstanceNode(attribute);
-            }
+            leafNode = new CentralRepoCommonAttributeInstanceNode(attribute, nodeType);
         } else {
             final String abstractFileDataSourceName = abstractFile.getDataSource().getName();
-            leafNode = new CaseDBCommonAttributeInstanceNode(abstractFile, currentCaseName, abstractFileDataSourceName);
+            leafNode = new CaseDBCommonAttributeInstanceNode(abstractFile, currentCaseName, abstractFileDataSourceName, nodeType);
         }
 
         return leafNode;

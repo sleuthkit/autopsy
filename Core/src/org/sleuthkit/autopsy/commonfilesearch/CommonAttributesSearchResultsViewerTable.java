@@ -55,6 +55,7 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
         map.put(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), 65);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl(), 200);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_valueColLbl(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), 200);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_mimeTypeColLbl(), 130);
 
@@ -80,6 +81,7 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
         "CommonFilesSearchResultsViewerTable.instancesColLbl=Instances",
         "CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path",
         "CommonFilesSearchResultsViewerTable.caseColLbl=Case",
+        "CommonFilesSearchResultsViewerTable.valueColLbl=Value",
         "CommonFilesSearchResultsViewerTable.dataSourceColLbl=Data Source",
         "CommonFilesSearchResultsViewerTable.mimeTypeColLbl=MIME Type",
     })
