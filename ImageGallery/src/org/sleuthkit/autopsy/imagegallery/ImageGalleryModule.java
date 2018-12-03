@@ -177,6 +177,7 @@ public class ImageGalleryModule {
              * node that is running the ingest job. On a remote node, image
              * files are processed as a group when the ingest job is complete.
              */
+            // RJCTODO: DO we need to handle any events at all on an auot ingest node?
             if (((AutopsyEvent) event).getSourceType() != AutopsyEvent.SourceType.LOCAL) {
                 return;
             }
@@ -246,6 +247,7 @@ public class ImageGalleryModule {
 
         @Override
         public void propertyChange(PropertyChangeEvent event) {
+            // RJCTODO: DO we need to handle any events at all on an auot ingest node?
             Case.Events eventType = Case.Events.valueOf(event.getPropertyName());
             if (eventType == Case.Events.CURRENT_CASE) {
                 synchronized (controllerLock) {
@@ -330,6 +332,7 @@ public class ImageGalleryModule {
             /*
              * Only handling data source analysis events.
              */
+            // RJCTODO: DO we need to handle any events at all on an auot ingest node?
             if (!(event instanceof DataSourceAnalysisEvent)) {
                 return;
             }
