@@ -3,9 +3,6 @@
  * Autopsy Forensic Browser
  * 
  * Copyright 2012-2018 Basis Technology Corp.
- * 
- * Copyright 2012 42six Solutions.
- * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,7 +82,8 @@ class ReportCaseUco implements GeneralReportModule {
         "ReportCaseUco.initializing=Creating directories...",
         "ReportCaseUco.querying=Querying files...",
         "ReportCaseUco.ingestWarning=Warning, this report will be created before ingest services completed",
-        "ReportCaseUco.processing=Saving files in CASE-UCO format..."
+        "ReportCaseUco.processing=Saving files in CASE-UCO format...",
+        "ReportCaseUco.srcModuleName.text=CASE-UCO Report"
     })
     @Override
     @SuppressWarnings("deprecation")
@@ -186,6 +184,8 @@ class ReportCaseUco implements GeneralReportModule {
             
             // create the required CASE-UCO entries at the end of the output file
             finilizeJsonOutputFile(jsonGenerator);
+            
+            Case.getCurrentCaseThrows().addReport(reportPath, Bundle.ReportCaseUco_srcModuleName_text(), "");
             
             progressPanel.complete(ReportStatus.COMPLETE);
         } catch (TskCoreException ex) {
