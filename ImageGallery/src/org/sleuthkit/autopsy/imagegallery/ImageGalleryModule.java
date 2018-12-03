@@ -26,9 +26,11 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.commons.collections4.CollectionUtils;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -143,7 +145,7 @@ public class ImageGalleryModule {
      *
      * @return True or false.
      */
-    static boolean isEnabledforCase(Case theCase) {
+    static boolean isEnabledforCase(@Nonnull Case theCase) {
         String enabledforCaseProp = new PerCaseProperties(theCase).getConfigSetting(ImageGalleryModule.MODULE_NAME, PerCaseProperties.ENABLED);
         return isNotBlank(enabledforCaseProp) ? Boolean.valueOf(enabledforCaseProp) : ImageGalleryPreferences.isEnabledByDefault();
     }
@@ -176,6 +178,7 @@ public class ImageGalleryModule {
              * node that is running the ingest job. On a remote node, image
              * files are processed as a group when the ingest job is complete.
              */
+            // RJCTODO: DO we need to handle any events at all on an auot ingest node?
             if (((AutopsyEvent) event).getSourceType() != AutopsyEvent.SourceType.LOCAL) {
                 return;
             }
@@ -212,17 +215,12 @@ public class ImageGalleryModule {
                     break;
                 case DATA_ADDED:
                     ModuleDataEvent artifactAddedEvent = (ModuleDataEvent) event.getOldValue();
-                    if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
+                    if (CollectionUtils.isNotEmpty(artifactAddedEvent.getArtifacts())) {
                         DrawableDB drawableDB = currentController.getDatabase();
-                        if (artifactAddedEvent.getArtifacts() != null) {
-                            for (BlackboardArtifact art : artifactAddedEvent.getArtifacts()) {
+                        for (BlackboardArtifact art : artifactAddedEvent.getArtifacts()) {
+                            if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_METADATA_EXIF.getTypeID()) {
                                 drawableDB.addExifCache(art.getObjectID());
-                            }
-                        }
-                    } else if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                        DrawableDB drawableDB = currentController.getDatabase();
-                        if (artifactAddedEvent.getArtifacts() != null) {
-                            for (BlackboardArtifact art : artifactAddedEvent.getArtifacts()) {
+                            } else if (artifactAddedEvent.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
                                 drawableDB.addHashSetCache(art.getObjectID());
                             }
                         }
@@ -239,11 +237,13 @@ public class ImageGalleryModule {
      */
     // RJCTODO: This code would be easier to read if there were two case event 
     // listeners, one that handled CURRENT_CASE events and one that handled 
-    // the other events.
+    // the other events. Or event better, move the handling of Case events other 
+    // than CURRENT_CASE into ImageGalleryController.
     static private class CaseEventListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent event) {
+            // RJCTODO: DO we need to handle any events at all on an auot ingest node?
             Case.Events eventType = Case.Events.valueOf(event.getPropertyName());
             if (eventType == Case.Events.CURRENT_CASE) {
                 synchronized (controllerLock) {
@@ -269,11 +269,12 @@ public class ImageGalleryModule {
                 ImageGalleryController currentController;
                 try {
                     currentController = getController();
-                    // RJCTODO: If a closed controller had a method that could be
-                    // queried to determine whether it was shut down, we could 
-                    // bail out here. The older code that used to try to check for
-                    // a current case was flawed; there was no guarantee the current
-                    // case was the same case associated with the event.
+                    // RJCTODO: I think it would be best to move handling of these 
+                    // case events into the controller class and have the controller 
+                    // instance register/unregister as a listener when it is 
+                    // contructed and shuts down. This will improve the encapsulation 
+                    // of ImageGalleryController and allow it to check its own open/closed 
+                    // state before handling an event. 
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Failed to handle %s event", event.getPropertyName()), ex); //NON-NLS
                     return;
@@ -327,6 +328,10 @@ public class ImageGalleryModule {
             /*
              * Only handling data source analysis events.
              */
+            // RJCTODO: Do we need to handle any events at all on an auto ingest node?
+            // RJCTODO: This would be less messy if IngestManager supported 
+            // subscribing for a subset of events the way case does, and it the 
+            // conditional blocks became method calls. 
             if (!(event instanceof DataSourceAnalysisEvent)) {
                 return;
             }
@@ -334,11 +339,12 @@ public class ImageGalleryModule {
             ImageGalleryController controller;
             try {
                 controller = getController();
-                // RJCTODO: If a closed controller had a method that could be
-                // queried to determine whether it was shut down, we could 
-                // bail out here. The older code that used to try to check for
-                // a current case was flawed; there was no guarantee the current
-                // case was the same case associated with the event.                
+                // RJCTODO: I think it would be best to move handling of these 
+                // case events into the controller class and have the controller 
+                // instance register/unregister as a listener when it is 
+                // contructed and shuts down. This will improve the encapsulation 
+                // of ImageGalleryController and allow it to check its own open/closed 
+                // state before handling an event.                 
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to handle %s event", event.getPropertyName()), ex); //NON-NLS
                 return;
