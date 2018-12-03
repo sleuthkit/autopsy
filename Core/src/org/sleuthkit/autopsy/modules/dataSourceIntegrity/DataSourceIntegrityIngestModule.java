@@ -56,7 +56,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
     
     private IngestJobContext context;
     
-    DataSourceIntegrityIngestModule(IngestSettings settings) {
+    DataSourceIntegrityIngestModule(DataSourceIntegrityIngestSettings settings) {
         computeHashes = settings.shouldComputeHashes();
         verifyHashes = settings.shouldVerifyHashes();
     }

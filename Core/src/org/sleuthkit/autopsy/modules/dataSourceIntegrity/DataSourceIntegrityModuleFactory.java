@@ -63,14 +63,14 @@ public class DataSourceIntegrityModuleFactory extends IngestModuleFactoryAdapter
 
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
-        if (settings instanceof IngestSettings) {
-            return new DataSourceIntegrityIngestModule((IngestSettings) settings);
+        if (settings instanceof DataSourceIntegrityIngestSettings) {
+            return new DataSourceIntegrityIngestModule((DataSourceIntegrityIngestSettings) settings);
         }
         /*
          * Compatibility check for older versions.
          */
         if (settings instanceof NoIngestModuleIngestJobSettings) {
-            return new DataSourceIntegrityIngestModule(new IngestSettings());
+            return new DataSourceIntegrityIngestModule(new DataSourceIntegrityIngestSettings());
         }
         
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
@@ -78,7 +78,7 @@ public class DataSourceIntegrityModuleFactory extends IngestModuleFactoryAdapter
     
     @Override
     public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
-        return new IngestSettings();
+        return new DataSourceIntegrityIngestSettings();
     }
 
     @Override
@@ -88,14 +88,14 @@ public class DataSourceIntegrityModuleFactory extends IngestModuleFactoryAdapter
 
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
-        if (settings instanceof IngestSettings) {
-            return new IngestSettingsPanel((IngestSettings) settings);
+        if (settings instanceof DataSourceIntegrityIngestSettings) {
+            return new DataSourceIntegrityIngestSettingsPanel((DataSourceIntegrityIngestSettings) settings);
         }
         /*
          * Compatibility check for older versions.
          */
         if (settings instanceof NoIngestModuleIngestJobSettings) {
-            return new IngestSettingsPanel(new IngestSettings());
+            return new DataSourceIntegrityIngestSettingsPanel(new DataSourceIntegrityIngestSettings());
         }
         
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
