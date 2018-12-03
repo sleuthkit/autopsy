@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,6 @@ import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
-import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyIntegerWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -51,7 +50,6 @@ import javax.annotation.Nonnull;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -71,7 +69,6 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
@@ -117,7 +114,7 @@ public final class ImageGalleryController {
     private final CategoryManager categoryManager;
     private final DrawableTagsManager tagsManager;
 
-    private ListeningExecutorService dbExecutor;
+    private final ListeningExecutorService dbExecutor;
 
     private final Case autopsyCase;
     private final SleuthkitCase sleuthKitCase;
@@ -168,7 +165,7 @@ public final class ImageGalleryController {
     }
 
     /**
-     * 
+     *
      * @param b True if any data source in the case is stale
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.ANY)
@@ -183,7 +180,7 @@ public final class ImageGalleryController {
     }
 
     /**
-     * 
+     *
      * @return true if any data source in the case is stale
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -192,7 +189,6 @@ public final class ImageGalleryController {
     }
 
     ImageGalleryController(@Nonnull Case newCase) throws TskCoreException {
-
         this.autopsyCase = Objects.requireNonNull(newCase);
         this.sleuthKitCase = newCase.getSleuthkitCase();
 
@@ -325,19 +321,17 @@ public final class ImageGalleryController {
     }
 
     /**
-     * reset the state of the controller (eg if the case is closed)
+     * Shuts down this per case singleton image gallery controller.
      */
-    public synchronized void reset() {
-        logger.info("Closing ImageGalleryControler for case."); //NON-NLS
-
+    public synchronized void shutDown() {
+        logger.log(Level.INFO, String.format("Shutting down image gallery controller for case %s (%s)", autopsyCase.getDisplayName(), autopsyCase.getName()));
         selectionModel.clearSelection();
         thumbnailCache.clearCache();
         historyManager.clear();
         groupManager.reset();
-
         shutDownDBExecutor();
         drawableDB.close();
-        dbExecutor = getNewDBExecutor();
+        logger.log(Level.INFO, String.format("Completed shut down of image gallery controller for case %s (%s)", autopsyCase.getDisplayName(), autopsyCase.getName()));
     }
 
     /**
@@ -353,8 +347,8 @@ public final class ImageGalleryController {
      * Returns a set of data source object ids that are stale.
      *
      * This includes any data sources already in the table, that are not in
-     * COMPLETE or IN_PROGRESS status, or any data sources that might have been added to the
-     * case, but are not in the datasources table.
+     * COMPLETE or IN_PROGRESS status, or any data sources that might have been
+     * added to the case, but are not in the datasources table.
      *
      * @return list of data source object ids that are stale.
      */
@@ -491,7 +485,7 @@ public final class ImageGalleryController {
 
         return sleuthKitCase.countFilesWhere(whereClause) > 0;
     }
-    
+
     public boolean hasFilesWithMimeType(long dataSourceId) throws TskCoreException {
 
         String whereClause = "data_source_obj_id = " + dataSourceId
@@ -502,13 +496,11 @@ public final class ImageGalleryController {
     }
 
     synchronized private void shutDownDBExecutor() {
-        if (dbExecutor != null) {
-            dbExecutor.shutdownNow();
-            try {
-                dbExecutor.awaitTermination(30, TimeUnit.SECONDS);
-            } catch (InterruptedException ex) {
-                logger.log(Level.WARNING, "Image Gallery failed to shutdown DB Task Executor in a timely fashion.", ex);
-            }
+        dbExecutor.shutdownNow();
+        try {
+            dbExecutor.awaitTermination(30, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            logger.log(Level.WARNING, "Image Gallery failed to shutdown DB Task Executor in a timely fashion.", ex);
         }
     }
 
@@ -523,12 +515,10 @@ public final class ImageGalleryController {
      * @param bgTask
      */
     public synchronized void queueDBTask(BackgroundTask bgTask) {
-        if (dbExecutor == null || dbExecutor.isShutdown()) {
-            dbExecutor = getNewDBExecutor();
+        if (!dbExecutor.isShutdown()) {
+            incrementQueueSize();
+            dbExecutor.submit(bgTask).addListener(this::decrementQueueSize, MoreExecutors.directExecutor());
         }
-        incrementQueueSize();
-        dbExecutor.submit(bgTask).addListener(this::decrementQueueSize, MoreExecutors.directExecutor());
-
     }
 
     private void incrementQueueSize() {
@@ -634,7 +624,6 @@ public final class ImageGalleryController {
         }
     }
 
-
     /**
      * task that updates one file in database with results from ingest
      */
@@ -650,7 +639,7 @@ public final class ImageGalleryController {
         public AbstractFile getFile() {
             return file;
         }
-        
+
         UpdateFileTask(AbstractFile f, DrawableDB taskDB) {
             super();
             this.file = f;
@@ -671,7 +660,6 @@ public final class ImageGalleryController {
         }
     }
 
-
     /**
      * Base abstract class for various methods of copying image files data, for
      * a given data source, into the Image gallery DB.
@@ -680,6 +668,7 @@ public final class ImageGalleryController {
         "BulkTask.stopCopy.status=Stopping copy to drawable db task.",
         "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
     abstract static class BulkTransferTask extends BackgroundTask {
+
         static private final String MIMETYPE_CLAUSE
                 = "(mime_type LIKE '" //NON-NLS
                 + String.join("' OR mime_type LIKE '", FileTypeUtils.getAllSupportedMimeTypes()) //NON-NLS
@@ -742,11 +731,11 @@ public final class ImageGalleryController {
             CaseDbTransaction caseDbTransaction = null;
             boolean hasFilesWithNoMime = true;
             boolean endedEarly = false;
-            
+
             try {
                 // See if there are any files in the DS w/out a MIME TYPE
                 hasFilesWithNoMime = controller.hasFilesWithNoMimeType(dataSourceObjId);
-                
+
                 //grab all files with detected mime types
                 final List<AbstractFile> files = getFiles();
                 progressHandle.switchToDeterminate(files.size());
@@ -756,7 +745,6 @@ public final class ImageGalleryController {
                 updateProgress(0.0);
                 int workDone = 0;
 
-                
                 // Cycle through all of the files returned and call processFile on each
                 //do in transaction
                 drawableDbTransaction = taskDB.beginTransaction();
@@ -776,7 +764,6 @@ public final class ImageGalleryController {
                         logger.log(Level.WARNING, "Task cancelled or interrupted: not all contents may be transfered to drawable database."); //NON-NLS
                         endedEarly = true;
                         progressHandle.finish();
-                        
 
                         break;
                     }

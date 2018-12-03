@@ -199,7 +199,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         } catch (NoCurrentCaseException ex) {
             // It's not an error if there's no case open
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to get image gallery controller", ex); //NON-NLS
         }
 
     }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-18  Basis Technology Corp.
+ * Copyright 2013-2018  Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,9 +31,7 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.beans.property.ReadOnlyLongProperty;
 import javafx.beans.property.ReadOnlyLongWrapper;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
 import org.sleuthkit.autopsy.imagegallery.datamodel.CategoryManager;
@@ -120,10 +118,8 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
                         .map(ImageGalleryModule.getController().getHashSetManager()::isInAnyHashSet)
                         .filter(Boolean::booleanValue)
                         .count());
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
             } catch (TskCoreException ex) {
-               logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Failed to get image gallery controller", ex); //NON-NLS
             }
         }
         return hashSetHitsCount.get();
@@ -138,12 +134,10 @@ public class DrawableGroup implements Comparable<DrawableGroup> {
         if (uncatCount.get() < 0) {
             try {
                 uncatCount.set(ImageGalleryModule.getController().getDatabase().getUncategorizedCount(fileIDs));
-
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                logger.log(Level.WARNING, "Could not access case during getFilesWithHashSetHitsCount()"); //NON-NLS
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to get image gallery controller", ex); //NON-NLS
             }
         }
-
         return uncatCount.get();
     }
 
