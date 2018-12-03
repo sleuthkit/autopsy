@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode2;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResultRootNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCaseNode;
@@ -128,8 +127,6 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(CaseDBCommonAttributeInstanceNode fin);
 
     T visit(CentralRepoCommonAttributeInstanceNode crfin);
-
-    T visit(CentralRepoCommonAttributeInstanceNode2 crfin);
 
     T visit(InstanceCountNode icn);
 
@@ -244,11 +241,6 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(CentralRepoCommonAttributeInstanceNode crfin) {
-            return defaultVisit(crfin);
-        }
-
-        @Override
-        public T visit(CentralRepoCommonAttributeInstanceNode2 crfin) {
             return defaultVisit(crfin);
         }
 

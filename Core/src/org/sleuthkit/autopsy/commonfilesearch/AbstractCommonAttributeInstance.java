@@ -163,7 +163,7 @@ public abstract class AbstractCommonAttributeInstance {
 
         if (abstractFile == null) {
             if (nodeType == NODE_TYPE.CASE_NODE) {
-                leafNode = new CentralRepoCommonAttributeInstanceNode2(attribute);
+                leafNode = new CentralRepoCommonAttributeInstanceNode(attribute);
             } else {
                 leafNode = new CentralRepoCommonAttributeInstanceNode(attribute);
             }

@@ -262,10 +262,6 @@ final class InterCaseSearchResultsProcessor {
 
         final Map<String, Map<String, CommonAttributeValueList>> caseCollatedDataSourceCollections = new HashMap<>();
 
-//        private CommonAttributeValue commonAttributeValue = null;
-        String caseName = null;
-        String dataSourceName = null;
-
         @Override
         public void process(ResultSet resultSet) {
             try {
@@ -276,23 +272,25 @@ final class InterCaseSearchResultsProcessor {
                         continue;
                     }
                     CorrelationCase correlationCase = EamDb.getInstance().getCaseById(InstanceTableCallback.getCaseId(resultSet));
-                    caseName = correlationCase.getDisplayName();
-                    dataSourceName = EamDb.getInstance().getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet)).getName();
+                    String caseName = correlationCase.getDisplayName();
+                    CorrelationDataSource correlationDatasource = EamDb.getInstance().getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
+//                    String dataSourceName = correlationDatasource.getName();
+                    String dataSourceNameKey = correlationDatasource.getName()+ correlationDatasource.getDataSourceObjectID();
                     if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
                         caseCollatedDataSourceCollections.put(caseName, new HashMap<String, CommonAttributeValueList>());
                     }
                     Map<String, CommonAttributeValueList> dataSourceToFile = caseCollatedDataSourceCollections.get(caseName);
-                    if (!dataSourceToFile.containsKey(dataSourceName)) {
-                        dataSourceToFile.put(dataSourceName, new CommonAttributeValueList());
+                    if (!dataSourceToFile.containsKey(dataSourceNameKey)) {
+                        dataSourceToFile.put(dataSourceNameKey, new CommonAttributeValueList());
                     }
-                    CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceName);
+                    CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceNameKey);
                     CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType, NODE_TYPE.CASE_NODE);
                     CorrelationAttributeInstance corrAttr = findSingleCorrelationAttribute(resultId);
                     searchResult.setCurrentAttributeInst(corrAttr);
                     CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
                     commonAttributeValue.addInstance(searchResult);
                     valueList.addMetadataToList(commonAttributeValue);
-                    dataSourceToFile.put(dataSourceName,valueList);
+                    dataSourceToFile.put(dataSourceNameKey,valueList);
                     caseCollatedDataSourceCollections.put(caseName, dataSourceToFile);
                 }
             } catch (EamDbException | SQLException ex) {
