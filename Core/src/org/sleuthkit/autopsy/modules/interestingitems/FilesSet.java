@@ -829,6 +829,18 @@ public final class FilesSet implements Serializable {
              *
              * @param extension The file name extension to be matched.
              */
+            public ExtensionCondition(String extension) {
+                // If there is a leading ".", strip it since 
+                // AbstractFile.getFileNameExtension() returns just the 
+                // extension chars and not the dot.
+                super(extension.startsWith(".") ? extension.substring(1) : extension, false);
+            }            
+            
+            /**
+             * Construct a case-insensitive file name extension condition.
+             *
+             * @param extensions The file name extensions to be matched.
+             */
             public ExtensionCondition(List<String> extensions) {
                 // If there is a leading ".", strip it since 
                 // AbstractFile.getFileNameExtension() returns just the 

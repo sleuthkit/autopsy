@@ -111,6 +111,16 @@ public interface EamDb {
     public void newDbInfo(String name, String value) throws EamDbException;
 
     /**
+     * Set the data source object id for a specific entry in the data_sources
+     * table
+     *
+     * @param rowId              - the row id for the data_sources table entry
+     * @param dataSourceObjectId - the object id for the data source from the
+     *                           caseDb
+     */
+    void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException;
+
+    /**
      * Get the value for the given name from the name/value db_info table.
      *
      * @param name Name to search for
@@ -194,19 +204,21 @@ public interface EamDb {
      * Creates new Data Source in the database
      *
      * @param eamDataSource the data source to add
+     * 
+     * @return - A CorrelationDataSource object with data source's central repository id
      */
-    void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
+    CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source device ID
      *
      * @param correlationCase    the current CorrelationCase used for ensuring
      *                           uniqueness of DataSource
-     * @param dataSourceDeviceId the data source device ID number
+     * @param caseDbDataSourceId the data source device ID number
      *
      * @return The data source
      */
-    CorrelationDataSource getDataSource(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException;
+    CorrelationDataSource getDataSource(CorrelationCase correlationCase, Long caseDbDataSourceId) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source ID
@@ -300,16 +312,14 @@ public interface EamDb {
 
     /**
      * Retrieves number of eamArtifact instances in the database that are
-     * associated with the caseDisplayName and dataSource of the given
-     * eamArtifact instance.
+     * associated with the given data source.
      *
-     * @param caseUUID     Case ID to search for
-     * @param dataSourceID Data source ID to search for
+     * @param correlationDataSource   Data source to search for
      *
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource
      */
-    Long getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) throws EamDbException;
+    Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws EamDbException;
 
     /**
      * Adds an eamArtifact to an internal list to be later added to DB. Artifact
@@ -345,9 +355,9 @@ public interface EamDb {
     /**
      * Find a correlation attribute in the Central Repository database given the
      * instance type, case, data source, value, and file path.
-     * 
-     * Method exists to support instances added using Central Repository version 1,1 and
-     * older
+     *
+     * Method exists to support instances added using Central Repository version
+     * 1,1 and older
      *
      * @param type                  The type of instance.
      * @param correlationCase       The case tied to the instance.
@@ -356,7 +366,7 @@ public interface EamDb {
      * @param filePath              The file path tied to the instance.
      *
      * @return The correlation attribute if it exists; otherwise null.
-     * 
+     *
      * @throws EamDbException
      */
     CorrelationAttributeInstance getCorrelationAttributeInstance(CorrelationAttributeInstance.Type type, CorrelationCase correlationCase,
@@ -369,7 +379,8 @@ public interface EamDb {
      * @param type                  The type of instance.
      * @param correlationCase       The case tied to the instance.
      * @param correlationDataSource The data source tied to the instance.
-     * @param objectID              The object id of the file tied to the instance.
+     * @param objectID              The object id of the file tied to the
+     *                              instance.
      *
      * @return The correlation attribute if it exists; otherwise null.
      *
