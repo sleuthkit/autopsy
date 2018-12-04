@@ -1406,8 +1406,11 @@ public final class DrawableDB {
                     //TODO: convert this to prepared statement 
                     StringBuilder query = new StringBuilder("SELECT data_source_obj_id, " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files "); //NON-NLS
 
+                    query.append(" WHERE ").append(groupBy.attrName.toString()).append(" IS NOT NULL ");
+                    query.append(" AND LENGTH(").append(groupBy.attrName.toString()).append(") > 0 ");
+                    
                     if (dataSource != null) {
-                        query.append(" WHERE data_source_obj_id = ").append(dataSource.getId());
+                        query.append(" AND data_source_obj_id = ").append(dataSource.getId());
                     }
 
                     query.append(" GROUP BY data_source_obj_id, ").append(groupBy.attrName.toString());
