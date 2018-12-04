@@ -165,7 +165,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID()) {
             return filePath + "Bluetooth.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {
-            return filePath + "phone.png"; //NON-NLS
+            return filePath + "devices.png"; //NON-NLS
         }
         return filePath + "artifact-icon.png"; //NON-NLS
     }
