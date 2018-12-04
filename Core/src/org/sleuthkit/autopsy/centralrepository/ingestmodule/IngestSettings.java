@@ -33,7 +33,7 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
      * Instantiate the ingest job settings with default values.
      */
     IngestSettings() {
-        this.flagTaggedNotableItems = CentralRepoIngestModule.DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
+        this.flagTaggedNotableItems = IngestModule.DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
     }
 
     /**

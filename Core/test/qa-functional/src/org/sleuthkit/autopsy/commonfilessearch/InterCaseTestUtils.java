@@ -184,7 +184,7 @@ class InterCaseTestUtils {
         final IngestModuleTemplate vmExtractorTemplate = IngestUtils.getIngestModuleTemplate(new VMExtractorIngestModuleFactory());
         final IngestModuleTemplate photoRecTemplate = IngestUtils.getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory());
         final IngestModuleTemplate dataSourceIntegrityTemplate = IngestUtils.getIngestModuleTemplate(new DataSourceIntegrityModuleFactory());
-        final IngestModuleTemplate eamDbTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory());
+        final IngestModuleTemplate eamDbTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory());
         final IngestModuleTemplate fileExtMismatchDetectorTemplate = IngestUtils.getIngestModuleTemplate(new FileExtMismatchDetectorModuleFactory());
         //TODO we need to figure out how to get ahold of these objects because they are required for properly filling the CR with test data
 //        final IngestModuleTemplate objectDetectorTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.experimental.objectdetection.ObjectDetectionModuleFactory());
@@ -220,7 +220,7 @@ class InterCaseTestUtils {
         kitchenSink.add(dataSourceIntegrityTemplate);
         kitchenSink.add(eamDbTemplate);
         kitchenSink.add(fileExtMismatchDetectorTemplate);
-        //TODO this list should probably be populated by way of loading the appropriate modules based on finding all of the @ServiceProvider(service = CentralRepoIngestModuleFactory.class) types
+        //TODO this list should probably be populated by way of loading the appropriate modules based on finding all of the @ServiceProvider(service = IngestModuleFactory.class) types
 //        kitchenSink.add(objectDetectorTemplate);
 //        kitchenSink.add(emailParserTemplate);
 //        kitchenSink.add(recentActivityTemplate);

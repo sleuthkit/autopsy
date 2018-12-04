@@ -58,11 +58,11 @@ import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
  */
 @Messages({"CentralRepoIngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
     "CentralRepoIngestModule.prevCaseComment.text=Previous Case: "})
-final class CentralRepoIngestModule implements FileIngestModule {
+final class IngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = true;
 
-    private final static Logger logger = Logger.getLogger(CentralRepoIngestModule.class.getName());
+    private final static Logger logger = Logger.getLogger(IngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
@@ -78,7 +78,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
      *
      * @param settings The ingest settings for the module instance.
      */
-    CentralRepoIngestModule(IngestSettings settings) {
+    IngestModule(IngestSettings settings) {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
     }
 
@@ -317,7 +317,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
 
         try {
-            String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
+            String MODULE_NAME = IngestModuleFactory.getModuleName();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.CentralRepoIngestModule_prevTaggedSet_text());
@@ -389,7 +389,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
         detailsSb.append("</table>"); //NON-NLS
 
-        services.postMessage(IngestMessage.createDataMessage(CentralRepoIngestModuleFactory.getModuleName(),
+        services.postMessage(IngestMessage.createDataMessage(IngestModuleFactory.getModuleName(),
                 Bundle.CentralRepoIngestModule_postToBB_knownBadMsg(name),
                 detailsSb.toString(),
                 name + md5Hash,
