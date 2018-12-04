@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,7 @@ public class DataSourceIntegrityModuleFactory extends IngestModuleFactoryAdapter
 
     static String getModuleName() {
         return NbBundle.getMessage(DataSourceIntegrityIngestModule.class,
-                "EwfVerifyIngestModule.moduleName.text");
+                "DataSourceIntegrityModuleFactory.moduleName.text");
     }
 
     @Override
@@ -48,7 +48,7 @@ public class DataSourceIntegrityModuleFactory extends IngestModuleFactoryAdapter
     @Override
     public String getModuleDescription() {
         return NbBundle.getMessage(DataSourceIntegrityIngestModule.class,
-                "EwfVerifyIngestModule.moduleDesc.text");
+                "DataSourceIntegrityModuleFactory.moduleDesc.text");
     }
 
     @Override

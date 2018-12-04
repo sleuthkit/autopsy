@@ -82,17 +82,17 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
         "# {0} - hashName",
         "DataSourceIntegrityIngestModule.process.hashAlgorithmError=Error creating message digest for {0} algorithm",
         "# {0} - hashName",
-        "DataSourceIntegrityIngestModule.process.hashMatch=<li>{0} hash verified</li>",
+        "DataSourceIntegrityIngestModule.process.hashMatch=<li>{0} hash verified </li>",
         "# {0} - hashName",
-        "DataSourceIntegrityIngestModule.process.hashNonMatch=<li>{0} hash not verified</li>",
+        "DataSourceIntegrityIngestModule.process.hashNonMatch=<li>{0} hash not verified </li>",
         "# {0} - calculatedHashValue",
         "# {1} - storedHashValue",
-        "DataSourceIntegrityIngestModule.process.hashList=<ul><li>Calculated hash: {0}</li><li>Stored hash: {1}</li></ul>",
+        "DataSourceIntegrityIngestModule.process.hashList=<ul><li>Calculated hash: {0} </li><li>Stored hash: {1} </li></ul>",
         "# {0} - hashName",
         "# {1} - calculatedHashValue",
-        "DataSourceIntegrityIngestModule.process.calcHashWithType=<li>Calculated {0} hash: {1}</li>",
+        "DataSourceIntegrityIngestModule.process.calcHashWithType=<li>Calculated {0} hash: {1} </li>",
         "# {0} - imageName",
-        "DataSourceIntegrityIngestModule.process.calculateHashDone=<p>Data Source Hash Calculation Results for {0}</p>", 
+        "DataSourceIntegrityIngestModule.process.calculateHashDone=<p>Data Source Hash Calculation Results for {0} </p>", 
         "DataSourceIntegrityIngestModule.process.hashesCalculated= hashes calculated", 
         "# {0} - imageName",
         "DataSourceIntegrityIngestModule.process.errorSavingHashes= Error saving hashes for image {0} to the database", 
@@ -108,7 +108,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             logger.log(Level.INFO, "Skipping non-image {0}", imgName); //NON-NLS
             services.postMessage(IngestMessage.createMessage(MessageType.INFO, DataSourceIntegrityModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
-                            "EwfVerifyIngestModule.process.skipNonEwf",
+                            "DataSourceIntegrityIngestModule.process.skipNonEwf",
                             imgName)));
             return ProcessResult.OK;
         }
@@ -120,7 +120,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName); //NON-NLS
             services.postMessage(IngestMessage.createMessage(MessageType.ERROR, DataSourceIntegrityModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(),
-                            "EwfVerifyIngestModule.process.errGetSizeOfImg",
+                            "DataSourceIntegrityIngestModule.process.errGetSizeOfImg",
                             imgName)));
         }
         
@@ -204,7 +204,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
         }
         services.postMessage(IngestMessage.createMessage(MessageType.INFO, DataSourceIntegrityModuleFactory.getModuleName(),
         NbBundle.getMessage(this.getClass(),
-                "EwfVerifyIngestModule.process.startingImg",
+                "DataSourceIntegrityIngestModule.process.startingImg",
                 imgName)));
         
         // Set up the progress bar
@@ -221,7 +221,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                 read = img.read(data, i * chunkSize, chunkSize);
             } catch (TskCoreException ex) {
                 String msg = NbBundle.getMessage(this.getClass(),
-                        "EwfVerifyIngestModule.process.errReadImgAtChunk", imgName, i);
+                        "DataSourceIntegrityIngestModule.process.errReadImgAtChunk", imgName, i);
                 services.postMessage(IngestMessage.createMessage(MessageType.ERROR, DataSourceIntegrityModuleFactory.getModuleName(), msg));
                 logger.log(Level.SEVERE, msg, ex);
                 return ProcessResult.ERROR;
@@ -251,7 +251,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             // Check that each hash matches
             boolean verified = true;
             String detailedResults = NbBundle
-                .getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verifyResultsHeader", imgName);
+                .getMessage(this.getClass(), "DataSourceIntegrityIngestModule.shutDown.verifyResultsHeader", imgName);
             String hashResults = "";
             
             for (HashData hashData:hashDataList) {
@@ -268,13 +268,13 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             MessageType messageType;
             if (verified) {
                 messageType = MessageType.INFO;
-                verificationResultStr = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.verified");
+                verificationResultStr = NbBundle.getMessage(this.getClass(), "DataSourceIntegrityIngestModule.shutDown.verified");
             } else {
                 messageType = MessageType.WARNING;
-                verificationResultStr = NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.notVerified");
+                verificationResultStr = NbBundle.getMessage(this.getClass(), "DataSourceIntegrityIngestModule.shutDown.notVerified");
             }
             
-            detailedResults += NbBundle.getMessage(this.getClass(), "EwfVerifyIngestModule.shutDown.resultLi", verificationResultStr);
+            detailedResults += NbBundle.getMessage(this.getClass(), "DataSourceIntegrityIngestModule.shutDown.resultLi", verificationResultStr);
             detailedResults += hashResults;
 
             services.postMessage(IngestMessage.createMessage(messageType, DataSourceIntegrityModuleFactory.getModuleName(), 

@@ -28,7 +28,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 final class DataSourceIntegrityIngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
     /**
-     * Creates new form IngestSettingsPanel
+     * Creates new form DataSourceIntegrityIngestSettingsPanel
      */
     public DataSourceIntegrityIngestSettingsPanel(DataSourceIntegrityIngestSettings settings) {
         initComponents();
