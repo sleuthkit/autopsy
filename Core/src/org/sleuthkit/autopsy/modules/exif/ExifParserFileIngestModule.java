@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -195,19 +196,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             ExifIFD0Directory devDir = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
-                if (model != null) {
-                    model = model.trim();
-                    if (!model.isEmpty()) {
-                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, ExifParserModuleFactory.getModuleName(), model));
-                    }
+                if (StringUtils.isNotBlank(model)) {
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, ExifParserModuleFactory.getModuleName(), model));
                 }
 
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
-                if (make != null) {
-                    make = make.trim();
-                    if (!make.isEmpty()) {
-                        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, ExifParserModuleFactory.getModuleName(), make));
-                    }
+                if (StringUtils.isNotBlank(make)) {
+                    attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, ExifParserModuleFactory.getModuleName(), make));
                 }
             }
 
