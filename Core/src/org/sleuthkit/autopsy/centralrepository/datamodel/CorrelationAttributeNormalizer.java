@@ -57,27 +57,30 @@ final public class CorrelationAttributeNormalizer {
             throw new CorrelationAttributeNormalizationException("Data was null.");
         }
 
+        String trimmedData = data.trim();
+
         switch (attributeType.getId()) {
             case CorrelationAttributeInstance.FILES_TYPE_ID:
-                return normalizeMd5(data);
+                return normalizeMd5(trimmedData);
             case CorrelationAttributeInstance.DOMAIN_TYPE_ID:
-                return normalizeDomain(data);
+                return normalizeDomain(trimmedData);
             case CorrelationAttributeInstance.EMAIL_TYPE_ID:
-                return normalizeEmail(data);
+                return normalizeEmail(trimmedData);
             case CorrelationAttributeInstance.PHONE_TYPE_ID:
-                return normalizePhone(data);
+                return normalizePhone(trimmedData);
             case CorrelationAttributeInstance.USBID_TYPE_ID:
-                return normalizeUsbId(data);
+                return normalizeUsbId(trimmedData);
             case CorrelationAttributeInstance.SSID_TYPE_ID:
-                return verifySsid(data);
+                return verifySsid(trimmedData);
             case CorrelationAttributeInstance.MAC_TYPE_ID:
-                return normalizeMac(data);
+                return normalizeMac(trimmedData);
             case CorrelationAttributeInstance.IMEI_TYPE_ID:
-                return normalizeImei(data);
+                return normalizeImei(trimmedData);
             case CorrelationAttributeInstance.IMSI_TYPE_ID:
-                return normalizeImsi(data);
+                return normalizeImsi(trimmedData);
             case CorrelationAttributeInstance.ICCID_TYPE_ID:
-                return normalizeIccid(data);
+                return normalizeIccid(trimmedData);
+
             default:
                 final String errorMessage = String.format(
                         "Validator function not found for attribute type: %s",

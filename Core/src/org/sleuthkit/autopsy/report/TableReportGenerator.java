@@ -756,9 +756,12 @@ class TableReportGenerator {
                                     BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getDisplayName(), currentList));
                 }
                 if (!keyword.equals(currentKeyword)) {
+                    // End the previous table if one exists.
                     if (!currentKeyword.equals("")) {
                         tableModule.endTable();
                     }
+                    
+                    // Prepare for a new table.
                     currentKeyword = keyword;
                     tableModule.addSetElement(currentKeyword);
                     List<String> columnHeaderNames = new ArrayList<>();
@@ -769,6 +772,11 @@ class TableReportGenerator {
                 }
 
                 tableModule.addRow(Arrays.asList(new String[]{preview, uniquePath, tagsList}));
+            }
+            
+            // End the previous table if one exists.
+            if (!currentKeyword.isEmpty()) {
+                tableModule.endTable();
             }
 
             // Finish the current data type
