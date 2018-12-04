@@ -25,12 +25,14 @@ import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.tika.Tika;
@@ -56,6 +58,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 public final class TikaTextExtractor extends ContentTextExtractor {
     
     private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
+    
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
@@ -84,7 +87,9 @@ public final class TikaTextExtractor extends ContentTextExtractor {
     public TikaTextExtractor(ExtractionContext context) {
         if(context != null && context.contains(ImageFileExtractionConfig.class)) {
             ImageFileExtractionConfig configInstance = context.get(ImageFileExtractionConfig.class);
-            this.tesseractOCREnabled = configInstance.getOCREnabled();
+            if(Objects.nonNull(configInstance.getOCREnabled())) {
+                this.tesseractOCREnabled = configInstance.getOCREnabled();
+            }
         }
     }
     

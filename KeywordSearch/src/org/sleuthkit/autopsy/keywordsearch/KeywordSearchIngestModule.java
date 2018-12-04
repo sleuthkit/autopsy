@@ -69,46 +69,14 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 })
 public final class KeywordSearchIngestModule implements FileIngestModule {
     
-    static final List<String> ARCHIVE_MIME_TYPES
-            = Arrays.asList(
-                    //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
-                    "application/x-7z-compressed", //NON-NLS
-                    "application/x-ace-compressed", //NON-NLS
-                    "application/x-alz-compressed", //NON-NLS
-                    "application/x-arj", //NON-NLS
-                    "application/vnd.ms-cab-compressed", //NON-NLS
-                    "application/x-cfs-compressed", //NON-NLS
-                    "application/x-dgc-compressed", //NON-NLS
-                    "application/x-apple-diskimage", //NON-NLS
-                    "application/x-gca-compressed", //NON-NLS
-                    "application/x-dar", //NON-NLS
-                    "application/x-lzx", //NON-NLS
-                    "application/x-lzh", //NON-NLS
-                    "application/x-rar-compressed", //NON-NLS
-                    "application/x-stuffit", //NON-NLS
-                    "application/x-stuffitx", //NON-NLS
-                    "application/x-gtar", //NON-NLS
-                    "application/x-archive", //NON-NLS
-                    "application/x-executable", //NON-NLS
-                    "application/x-gzip", //NON-NLS
-                    "application/zip", //NON-NLS
-                    "application/x-zoo", //NON-NLS
-                    "application/x-cpio", //NON-NLS
-                    "application/x-shar", //NON-NLS
-                    "application/x-tar", //NON-NLS
-                    "application/x-bzip", //NON-NLS
-                    "application/x-bzip2", //NON-NLS
-                    "application/x-lzip", //NON-NLS
-                    "application/x-lzma", //NON-NLS
-                    "application/x-lzop", //NON-NLS
-                    "application/x-z", //NON-NLS
-                    "application/x-compress"); //NON-NLS
-    
-    static final List<String> BINARY_MIME_TYPES
-            = Arrays.asList(
-                    //ignore binary blob data, for which string extraction will be used
-                    "application/octet-stream", //NON-NLS
-                    "application/x-msdownload"); //NON-NLS
+    /**
+     * Options for this extractor
+     */
+    enum StringsExtractOptions {
+        EXTRACT_UTF16, ///< extract UTF16 text, true/false
+        EXTRACT_UTF8, ///< extract UTF8 text, true/false
+    };
+
 
     enum UpdateFrequency {
 
@@ -287,8 +255,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         
         StringsExtractionConfig stringsConfig = new StringsExtractionConfig();
         Map<String, String> stringsOptions = KeywordSearchSettings.getStringExtractOptions();
-        stringsConfig.setExtractUTF8(Boolean.parseBoolean(stringsOptions.get("EXTRACT_UTF8")));
-        stringsConfig.setExtractUTF16(Boolean.parseBoolean(stringsOptions.get("EXTRACT_UTF16")));
+        stringsConfig.setExtractUTF8(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF8.toString())));
+        stringsConfig.setExtractUTF16(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF16.toString())));
         stringsConfig.setExtractScripts(KeywordSearchSettings.getStringExtractScripts());
         
         extractionContext.set(StringsExtractionConfig.class, stringsConfig);
@@ -563,7 +531,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
-            if (KeywordSearchIngestModule.ARCHIVE_MIME_TYPES.contains(fileType)) {
+            if (ContentTextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
                 try {
                     if (context.fileIngestIsCancelled()) {
                         return;

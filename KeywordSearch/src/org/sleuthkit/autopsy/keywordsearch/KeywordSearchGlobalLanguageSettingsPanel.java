@@ -36,6 +36,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.StringsExtractOptions;
 
 /**
  * Child panel of the global settings panel (Languages tab).
@@ -46,7 +47,7 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
     private final Map<String, StringExtract.StringExtractUnicodeTable.SCRIPT> scripts = new HashMap<>();
     private ActionListener updateLanguagesAction;
     private List<SCRIPT> toUpdate;
-
+    
     KeywordSearchGlobalLanguageSettingsPanel() {
         initComponents();
         customizeComponents();
@@ -126,12 +127,12 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
 
     private void reloadScriptsCheckBoxes() {
         boolean utf16
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption("EXTRACT_UTF16"));
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(StringsExtractOptions.EXTRACT_UTF16.toString()));
 
         enableUTF16Checkbox.setSelected(utf16);
 
         boolean utf8
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption("EXTRACT_UTF8"));
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(StringsExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
 
         boolean ocr = KeywordSearchSettings.getOcrOption();
@@ -153,12 +154,12 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         reloadScriptsCheckBoxes();
 
         boolean utf16
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption("EXTRACT_UTF16"));
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(StringsExtractOptions.EXTRACT_UTF16.toString()));
 
         enableUTF16Checkbox.setSelected(utf16);
 
         boolean utf8
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption("EXTRACT_UTF8"));
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(StringsExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
         final boolean extractEnabled = utf16 || utf8;
 
@@ -317,9 +318,9 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
 
     @Override
     public void store() {
-        KeywordSearchSettings.setStringExtractOption("EXTRACT_UTF8",
+        KeywordSearchSettings.setStringExtractOption(StringsExtractOptions.EXTRACT_UTF8.toString(),
                 Boolean.toString(enableUTF8Checkbox.isSelected()));
-        KeywordSearchSettings.setStringExtractOption("EXTRACT_UTF16",
+        KeywordSearchSettings.setStringExtractOption(StringsExtractOptions.EXTRACT_UTF16.toString(),
                 Boolean.toString(enableUTF16Checkbox.isSelected()));
         KeywordSearchSettings.setOcrOption(enableOcrCheckbox.isSelected());
 

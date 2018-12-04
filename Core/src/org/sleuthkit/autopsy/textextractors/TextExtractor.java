@@ -25,11 +25,11 @@ import org.sleuthkit.datamodel.SleuthkitVisitableItem;
  * Extracts text out of a SleuthkitVisitableItem, and exposes it is a Reader.
  * This Reader is given to the Ingester to chunk and index in Solr.
  *
- * @param <T> The subtype of SleuthkitVisitableItem an implementation
- *                     is able to process.
+ * @param <T> The subtype of SleuthkitVisitableItem an implementation is able to
+ *            process.
  */
 public interface TextExtractor<T extends SleuthkitVisitableItem> {
-    
+
     /**
      * Is this extractor configured such that no extraction will/should be done?
      *
@@ -41,17 +41,19 @@ public interface TextExtractor<T extends SleuthkitVisitableItem> {
      * Log the given message and exception as a warning.
      *
      * @param msg Log message
-     * @param ex Exception associated with the incoming message
+     * @param ex  Exception associated with the incoming message
      */
     abstract void logWarning(String msg, Exception ex);
 
     /**
-     * Get a reader that will iterate over the text extracted from the given source.
+     * Get a reader that will iterate over the text extracted from the given
+     * source.
      *
-     * @param source 
+     * @param source source content of type T
      *
-     * @return
-     * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
+     * @return Reader instance that contains the text of the source
+     *
+     * @throws TextExtractorException
      */
     abstract Reader getReader(T source) throws TextExtractorException;
 

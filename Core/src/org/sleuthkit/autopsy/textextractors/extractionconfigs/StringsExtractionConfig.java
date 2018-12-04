@@ -26,8 +26,8 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
  * for all content types).
  */
 public class StringsExtractionConfig {
-    private boolean extractUTF8;
-    private boolean extractUTF16;
+    private Boolean extractUTF8;
+    private Boolean extractUTF16;
     private List<SCRIPT> extractScripts;
 
     /**
@@ -53,7 +53,7 @@ public class StringsExtractionConfig {
      * 
      * @return Flag indicating if UTF-8 has been turned on/off
      */
-    public boolean getExtractUTF8() {
+    public Boolean getExtractUTF8() {
         return extractUTF8;
     }
 
@@ -62,7 +62,7 @@ public class StringsExtractionConfig {
      * 
      * @return Flag indicating if UTF-16 has been turned on/off
      */
-    public boolean getExtractUTF16() { 
+    public Boolean getExtractUTF16() { 
         return extractUTF16;
     }
     

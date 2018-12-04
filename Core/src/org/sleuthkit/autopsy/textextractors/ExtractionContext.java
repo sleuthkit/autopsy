@@ -38,7 +38,7 @@ public class ExtractionContext {
     /**
      * Internally stores a class-instance pair.
      *
-     * @param <T>            Class type that will be stored.
+     * @param <T>            Class type that will be stored
      * @param configClass    The class object of the instance
      * @param configInstance Config instance of type T
      */

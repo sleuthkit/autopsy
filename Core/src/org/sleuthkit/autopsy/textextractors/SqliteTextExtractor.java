@@ -113,10 +113,9 @@ public final class SqliteTextExtractor extends ContentTextExtractor {
      *
      * @param source Content file
      *
-     * @return An InputStream that reads from a Sqlite database.
+     * @return An InputStream that reads from a Sqlite database
      *
-     * @throws
-     * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
+     * @throws TextExtractorException
      */
     @Override
     public Reader getReader(Content source) throws TextExtractorException {

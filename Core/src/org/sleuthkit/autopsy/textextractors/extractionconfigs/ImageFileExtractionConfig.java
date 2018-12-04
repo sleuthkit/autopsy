@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.textextractors.extractionconfigs;
  * Allows for configuration of image file extraction.
  */
 public class ImageFileExtractionConfig {
-    private boolean OCREnabled;
+    private Boolean OCREnabled;
     
     /**
      * Enables OCR to be run on the text extractor responsible for handling

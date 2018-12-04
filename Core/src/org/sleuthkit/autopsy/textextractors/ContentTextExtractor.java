@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.textextractors;
 
+import com.google.common.collect.ImmutableList;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
@@ -31,16 +32,16 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
     
     //Mimetype groups to aassist extractor implementations in ignoring binary and 
     //archive files.
-    static final List<String> BINARY_MIME_TYPES
-            = Arrays.asList(
+    public static final List<String> BINARY_MIME_TYPES
+            = ImmutableList.of(
                     //ignore binary blob data, for which string extraction will be used
                     "application/octet-stream", //NON-NLS
                     "application/x-msdownload"); //NON-NLS
 
     /** generally text extractors should ignore archives and let unpacking
      * modules take care of them */
-    static final List<String> ARCHIVE_MIME_TYPES
-            = Arrays.asList(
+    public static final List<String> ARCHIVE_MIME_TYPES
+            = ImmutableList.of(
                     //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
                     "application/x-7z-compressed", //NON-NLS
                     "application/x-ace-compressed", //NON-NLS
@@ -75,7 +76,7 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
                     "application/x-compress"); //NON-NLS
 
     /**
-     * Accepts content instance to allow for extractor configuration on specific 
+     * Accepts context instance to allow for extractor configuration on specific 
      * file types. 
      * 
      * See extractionconfigs package for available file type configurations.
@@ -117,7 +118,7 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
      * Returns a reader that will iterate over the text of the source content.
      * 
      * @param source Content source to read
-     * @return A reader that contains all source text.
+     * @return A reader that contains all source text
      * @throws TextExtractorException Error encountered during extraction
      */
     @Override

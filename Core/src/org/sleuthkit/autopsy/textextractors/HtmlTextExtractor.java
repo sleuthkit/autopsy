@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 public final class HtmlTextExtractor extends ContentTextExtractor {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
-    private int maxSize;
+    private final int MAX_SIZE;
 
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
             "application/javascript", //NON-NLS
@@ -51,40 +51,40 @@ public final class HtmlTextExtractor extends ContentTextExtractor {
             "text/html", //NON-NLS NON-NLS
             "text/javascript" //NON-NLS
     );
-    
+
     static {
         // Disable Jericho HTML Parser log messages.
         Config.LoggerProvider = LoggerProvider.DISABLED;
     }
 
     /**
-     * Configures the extractor to use the settings HTMLExtractionConfig instance
-     * stored in the ExtractionContext object. 
-     * 
-     * As of now, there are no configurable features of this extractor.
-     * 
+     * Configures the extractor to use the settings in the HTMLExtractionConfig
+     * instance stored in the ExtractionContext object.
+     *
+     * As of now, there are no configurable features for this extractor.
+     *
      * @param context Instance containing config classes
      */
     public HtmlTextExtractor(ExtractionContext context) {
         this();
     }
-    
+
     /**
-     * Creates a default instance of HtmlTextExtractor. Supported file size
+     * Creates a default instance of the HtmlTextExtractor. Supported file size
      * is 50MB.
      */
     public HtmlTextExtractor() {
         //Set default to be 50 MB.
-        maxSize = 50_000_000;
+        MAX_SIZE = 50_000_000;
     }
 
     /**
-     * Determines if this extractor is responsible for extracting only a specific 
-     * type of media.
-     * 
+     * Determines if this extractor is responsible for extracting only a
+     * specific type of media.
+     *
      * In this case, only HTML documents can be read successfully.
-     * 
-     * @return true 
+     *
+     * @return true
      */
     @Override
     public boolean isContentTypeSpecific() {
@@ -93,25 +93,27 @@ public final class HtmlTextExtractor extends ContentTextExtractor {
 
     /**
      * Determines if this content type is supported by this extractor.
-     * 
-     * @param content Content instance to be analyzed
+     *
+     * @param content        Content instance to be analyzed
      * @param detectedFormat Mimetype of content instance
-     * @return flag indicating supporting
+     *
+     * @return flag indicating support
      */
     @Override
     public boolean isSupported(Content content, String detectedFormat) {
-        boolean notNull = detectedFormat != null;
-        boolean supported = WEB_MIME_TYPES.contains(detectedFormat);
-        boolean size = content.getSize() <= maxSize;
-        return notNull && supported && size;
+        return detectedFormat != null
+                && WEB_MIME_TYPES.contains(detectedFormat)
+                && content.getSize() <= MAX_SIZE;
     }
 
     /**
-     * Returns a reader that will iterate over the text of an Html document.
-     * 
+     * Returns a reader that will iterate over the text of an HTML document.
+     *
      * @param content Html document source
+     *
      * @return A reader instance containing the document source text
-     * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException 
+     *
+     * @throws TextExtractorException
      */
     @Override
     public Reader getReader(Content content) throws TextExtractorException {
@@ -216,8 +218,8 @@ public final class HtmlTextExtractor extends ContentTextExtractor {
 
     /**
      * Indicates if this extractor can run.
-     * 
-     * @return Flag indicating if this extractor can run. 
+     *
+     * @return Flag indicating if this extractor can run.
      */
     @Override
     public boolean isDisabled() {
