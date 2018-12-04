@@ -196,23 +196,17 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
                 if (model != null) {
-                    int testSize = model.length(); //DLG:
                     model = model.trim();
                     if (!model.isEmpty()) {
                         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, ExifParserModuleFactory.getModuleName(), model));
-                    } else if (testSize > 0) {
-                        System.out.println(); //DLG: Put breakpoint here!
                     }
                 }
 
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
                 if (make != null) {
-                    int testSize = make.length(); //DLG:
                     make = make.trim();
                     if (!make.isEmpty()) {
                         attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, ExifParserModuleFactory.getModuleName(), make));
-                    }else if (testSize > 0) {
-                        System.out.println(); //DLG: Put breakpoint here!
                     }
                 }
             }
