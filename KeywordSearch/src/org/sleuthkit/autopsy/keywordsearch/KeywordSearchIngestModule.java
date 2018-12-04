@@ -45,7 +45,6 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textextractors.ExtractionContext;
 import org.sleuthkit.autopsy.textextractors.StringsTextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
-import org.sleuthkit.autopsy.textextractors.extractionconfigs.HTMLExtractionConfig;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.StringsExtractionConfig;
 import org.sleuthkit.datamodel.AbstractFile;

@@ -29,6 +29,8 @@ import org.sleuthkit.datamodel.Content;
  */
 public abstract class ContentTextExtractor implements TextExtractor<Content> {
     
+    //Mimetype groups to aassist extractor implementations in ignoring binary and 
+    //archive files.
     static final List<String> BINARY_MIME_TYPES
             = Arrays.asList(
                     //ignore binary blob data, for which string extraction will be used
@@ -73,6 +75,24 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
                     "application/x-compress"); //NON-NLS
 
     /**
+     * Accepts content instance to allow for extractor configuration on specific 
+     * file types. 
+     * 
+     * See extractionconfigs package for available file type configurations.
+     * 
+     * @param context Instance that contains config classes 
+     */
+    public ContentTextExtractor(ExtractionContext context) {
+        
+    }
+    
+    /**
+     * Default constructor to create extractor instances with default configurations.
+     */
+    public ContentTextExtractor() {
+    }
+    
+    /**
      * Determines if the extractor works only for specified types is
      * supportedTypes() or whether is a generic content extractor (such as
      * string extractor)
@@ -85,25 +105,41 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
      * Determines if the file content is supported by the extractor if
      * isContentTypeSpecific() returns true.
      *
-     * @param content           to test if its content should be supported
+     * @param file           to test if its content should be supported
      * @param detectedFormat mime-type with detected format (such as text/plain)
      *                       or null if not detected
      *
      * @return true if the file content is supported, false otherwise
      */
     public abstract boolean isSupported(Content file, String detectedFormat);
-    
-    public abstract void parseContext(ExtractionContext context);
 
+    /**
+     * Returns a reader that will iterate over the text of the source content.
+     * 
+     * @param source Content source to read
+     * @return A reader that contains all source text.
+     * @throws TextExtractorException Error encountered during extraction
+     */
     @Override
     public abstract Reader getReader(Content source) throws TextExtractorException;
 
+    /**
+     * Get the object id of the content source.
+     * 
+     * @param source source content
+     * @return object id associated with this source content
+     */
     @Override
     public long getID(Content source) {
         return source.getId();
     }
 
-
+    /**
+     * Returns the human-readable name of the given content source.
+     * 
+     * @param source source content
+     * @return name of source content
+     */
     @Override
     public String getName(Content source) {
         return source.getName();

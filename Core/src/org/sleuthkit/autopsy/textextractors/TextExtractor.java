@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-16 Basis Technology Corp.
+ * Copyright 2011-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,11 +25,11 @@ import org.sleuthkit.datamodel.SleuthkitVisitableItem;
  * Extracts text out of a SleuthkitVisitableItem, and exposes it is a Reader.
  * This Reader is given to the Ingester to chunk and index in Solr.
  *
- * @param <TextSource> The subtype of SleuthkitVisitableItem an implementation
+ * @param <T> The subtype of SleuthkitVisitableItem an implementation
  *                     is able to process.
  */
-public interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
-
+public interface TextExtractor<T extends SleuthkitVisitableItem> {
+    
     /**
      * Is this extractor configured such that no extraction will/should be done?
      *
@@ -40,39 +40,42 @@ public interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
     /**
      * Log the given message and exception as a warning.
      *
-     * @param msg
-     * @param ex
+     * @param msg Log message
+     * @param ex Exception associated with the incoming message
      */
     abstract void logWarning(String msg, Exception ex);
 
     /**
-     * Get a reader that over the text extracted from the given source.
+     * Get a reader that will iterate over the text extracted from the given source.
      *
-     * @param source
+     * @param source 
      *
      * @return
      * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
-    abstract Reader getReader(TextSource source) throws TextExtractorException;
+    abstract Reader getReader(T source) throws TextExtractorException;
 
     /**
      * Get the 'object' id of the given source.
      *
-     * @param source
+     * @param source Source content of type T
      *
-     * @return
+     * @return Object id of the source content
      */
-    abstract long getID(TextSource source);
+    abstract long getID(T source);
 
     /**
      * Get a human readable name for the given source.
      *
-     * @param source
+     * @param source Source content of type T
      *
-     * @return
+     * @return Name of the content source
      */
-    abstract String getName(TextSource source);
+    abstract String getName(T source);
 
+    /**
+     * System exception for dealing with errors encountered during extraction.
+     */
     class TextExtractorException extends Exception {
 
         public TextExtractorException(String message) {

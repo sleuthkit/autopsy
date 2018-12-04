@@ -23,7 +23,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.Config;
@@ -33,17 +32,16 @@ import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.textextractors.extractionconfigs.HTMLExtractionConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extracts text from HTML content.
  */
-public class HtmlTextExtractor extends ContentTextExtractor {
+public final class HtmlTextExtractor extends ContentTextExtractor {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
-    private int maxSize = 50_000_000;
+    private int maxSize;
 
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
             "application/javascript", //NON-NLS
@@ -59,21 +57,66 @@ public class HtmlTextExtractor extends ContentTextExtractor {
         Config.LoggerProvider = LoggerProvider.DISABLED;
     }
 
+    /**
+     * Configures the extractor to use the settings HTMLExtractionConfig instance
+     * stored in the ExtractionContext object. 
+     * 
+     * As of now, there are no configurable features of this extractor.
+     * 
+     * @param context Instance containing config classes
+     */
+    public HtmlTextExtractor(ExtractionContext context) {
+        this();
+    }
+    
+    /**
+     * Creates a default instance of HtmlTextExtractor. Supported file size
+     * is 50MB.
+     */
+    public HtmlTextExtractor() {
+        //Set default to be 50 MB.
+        maxSize = 50_000_000;
+    }
+
+    /**
+     * Determines if this extractor is responsible for extracting only a specific 
+     * type of media.
+     * 
+     * In this case, only HTML documents can be read successfully.
+     * 
+     * @return true 
+     */
     @Override
     public boolean isContentTypeSpecific() {
         return true;
     }
 
+    /**
+     * Determines if this content type is supported by this extractor.
+     * 
+     * @param content Content instance to be analyzed
+     * @param detectedFormat Mimetype of content instance
+     * @return flag indicating supporting
+     */
     @Override
     public boolean isSupported(Content content, String detectedFormat) {
         boolean notNull = detectedFormat != null;
         boolean supported = WEB_MIME_TYPES.contains(detectedFormat);
-        boolean size = content.getSize() <= maxSize;;
+        boolean size = content.getSize() <= maxSize;
         return notNull && supported && size;
     }
 
+    /**
+     * Returns a reader that will iterate over the text of an Html document.
+     * 
+     * @param content Html document source
+     * @return A reader instance containing the document source text
+     * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException 
+     */
     @Override
     public Reader getReader(Content content) throws TextExtractorException {
+        //TODO JIRA-4467, there is only harm in excluding HTML documents greater
+        //than 50MB due to our troubled approach of extraction.
         ReadContentInputStream stream = new ReadContentInputStream(content);
 
         //Parse the stream with Jericho and put the results in a Reader
@@ -171,6 +214,11 @@ public class HtmlTextExtractor extends ContentTextExtractor {
         }
     }
 
+    /**
+     * Indicates if this extractor can run.
+     * 
+     * @return Flag indicating if this extractor can run. 
+     */
     @Override
     public boolean isDisabled() {
         return false;
@@ -179,13 +227,5 @@ public class HtmlTextExtractor extends ContentTextExtractor {
     @Override
     public void logWarning(final String msg, Exception ex) {
         logger.log(Level.WARNING, msg, ex); //NON-NLS  }
-    }
-
-    @Override
-    public void parseContext(ExtractionContext context) {
-        HTMLExtractionConfig configInstance = context.get(HTMLExtractionConfig.class);
-        if(Objects.nonNull(configInstance)) {
-            this.maxSize = configInstance.getContentSizeLimit();
-        }
     }
 }

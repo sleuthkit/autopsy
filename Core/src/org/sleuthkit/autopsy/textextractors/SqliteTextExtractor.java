@@ -1,20 +1,20 @@
-/*	
- * Autopsy Forensic Browser	
- *	
- * Copyright 2018-2018 Basis Technology Corp.	
- * Contact: carrier <at> sleuthkit <dot> org	
- *	
- * Licensed under the Apache License, Version 2.0 (the "License");	
- * you may not use this file except in compliance with the License.	
- * You may obtain a copy of the License at	
- *	
- *     http://www.apache.org/licenses/LICENSE-2.0	
- *	
- * Unless required by applicable law or agreed to in writing, software	
- * distributed under the License is distributed on an "AS IS" BASIS,	
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.	
- * See the License for the specific language governing permissions and	
- * limitations under the License.	
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018-2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.textextractors;
 
@@ -32,26 +32,62 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Dedicated SqliteTextExtractor to solve the problems associated with Tika's
- * Sqlite parser.
+ * Extracts text from SQLite database files.
  *
- * Tika problems: 1) Tika fails to open virtual tables 2) Tika fails to open
- * tables with spaces in table name 3) Tika fails to include the table names in
- * output (except for the first table it parses)
+ * This is a dedicated solution to address the problems associated with 
+ * Tika's sqlite parser (version 1.17), which include the following:
+ *  1) Virtual tables cause the parser to bail
+ *  2) Tables that contain spaces in their name are not extracted
+ *  3) Table names are not included in its output text
  */
-public class SqliteTextExtractor extends ContentTextExtractor {
+public final class SqliteTextExtractor extends ContentTextExtractor {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
 
+    /**
+     * Accepts a context instance for run-time configuration.
+     * 
+     * As of now, this constructor is a no-op as it does not support 
+     * any type of configuration.
+     * 
+     * @param context Instance that contains config classes
+     */
+    public SqliteTextExtractor(ExtractionContext context) {
+    }
+    
+    /**
+     * Creates a default SqliteTextExtractor instance.
+     */
+    public SqliteTextExtractor() {
+    }
+
+    /**
+     * This extractor only works for sqlite files, so it is indeed content type
+     * specific. 
+     * 
+     * @return true
+     */
     @Override
     public boolean isContentTypeSpecific() {
         return true;
     }
 
+    /**
+     * Determines if this extractor is fit to run.
+     * 
+     * @return Flag indicating if it should or shouldn't be run.
+     */
     @Override
     public boolean isDisabled() {
-        return false;
+        try {
+            Class.forName("org.sqlite.JDBC");
+            return false;
+        } catch (ClassNotFoundException ex) {
+            logger.log(Level.SEVERE, "Sqlite JDBC class could not be found, "
+                    + "SqliteTextExtractor is automatically disabling.", ex); //NON-NLS
+            return true;
+        }
     }
 
     @Override
@@ -73,14 +109,14 @@ public class SqliteTextExtractor extends ContentTextExtractor {
     }
 
     /**
-     * Returns a stream that will read from a sqlite database.
+     * Returns a reader that will iterate over the text of a sqlite database.
      *
      * @param source Content file
      *
      * @return An InputStream that reads from a Sqlite database.
      *
      * @throws
-     * org.sleuthkit.autopsy.keywordsearch.TextExtractor.TextExtractorException
+     * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
@@ -89,16 +125,11 @@ public class SqliteTextExtractor extends ContentTextExtractor {
             try {
                 return CharSource.wrap("").openStream();
             } catch (IOException ex) {
-                throw new TextExtractorException("", ex);
+                throw new TextExtractorException("Could not open CharSource stream", ex);
             }
         }
 
         return new SQLiteStreamReader((AbstractFile) source);
-    }
-
-    @Override
-    public void parseContext(ExtractionContext context) {
-        //No settings.
     }
 
     /**
@@ -106,11 +137,11 @@ public class SqliteTextExtractor extends ContentTextExtractor {
      * achieve this, all table names are queues up and a SQLiteTableReader is
      * used to do the actual queries and table iteration.
      */
-    public class SQLiteStreamReader extends Reader {
+    private class SQLiteStreamReader extends Reader {
 
         private final SQLiteTableReader reader;
         private final AbstractFile file;
-        
+
         private Iterator<String> tableNames;
         private String currentTableName;
 
@@ -222,9 +253,10 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Reads database values into the buffer. This function is responsible for 
-         * getting the next table in the queue, initiating calls to the SQLiteTableReader,
-         * and filling in any excess bytes that are lingering from the previous call.
+         * Reads database values into the buffer. This function is responsible
+         * for getting the next table in the queue, initiating calls to the
+         * SQLiteTableReader, and filling in any excess bytes that are lingering
+         * from the previous call.
          *
          * @throws IOException
          */
@@ -260,9 +292,9 @@ public class SqliteTextExtractor extends ContentTextExtractor {
                             reader.read(currentTableName, () -> bufIndex == len);
                         } catch (SQLiteTableReaderException ex) {
                             logger.log(Level.WARNING, String.format(
-                                "Error attempting to read file table: [%s]" //NON-NLS
-                                + " for file: [%s] (id=%d).", currentTableName, //NON-NLS
-                                file.getName(), file.getId()), ex.getMessage());
+                                    "Error attempting to read file table: [%s]" //NON-NLS
+                                    + " for file: [%s] (id=%d).", currentTableName, //NON-NLS
+                                    file.getName(), file.getId()), ex.getMessage());
                         }
                     } else {
                         if (bufIndex == off) {
@@ -295,8 +327,8 @@ public class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         /**
-         * Wrapper that holds the excess bytes that were left over from the previous
-         * call to read().
+         * Wrapper that holds the excess bytes that were left over from the
+         * previous call to read().
          */
         private class ExcessBytes {
 

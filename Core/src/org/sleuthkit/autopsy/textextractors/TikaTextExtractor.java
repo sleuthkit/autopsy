@@ -25,14 +25,12 @@ import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.tika.Tika;
@@ -47,7 +45,6 @@ import org.apache.tika.parser.pdf.PDFParserConfig;
 import org.openide.util.NbBundle;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -56,18 +53,15 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extracts text from Tika supported content. Protects against Tika
  * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
-public class TikaTextExtractor extends ContentTextExtractor {
+public final class TikaTextExtractor extends ContentTextExtractor {
     
-    private boolean OCREnabled;
-    private final IngestServices services = IngestServices.getInstance();
-    private final Logger logger = services.getLogger(TikaTextExtractor.class.getName());
-
     private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
     private final AutoDetectParser parser = new AutoDetectParser();
     
+    private boolean tesseractOCREnabled;
     private static final String TESSERACT_DIR_NAME = "Tesseract-OCR"; //NON-NLS
     private static final String TESSERACT_EXECUTABLE = "tesseract.exe"; //NON-NLS
     private static final File TESSERACT_PATH = locateTesseractExecutable();
@@ -78,11 +72,43 @@ public class TikaTextExtractor extends ContentTextExtractor {
                     .map(mt -> mt.getType() + "/" + mt.getSubtype())
                     .collect(Collectors.toList());
 
+    /**
+     * Accepts a context instance for run-time configuration.
+     * 
+     * The only configuration that is available to date is the 
+     * ImageFileExtractionConfig.java. You may refer to this class for
+     * supported settings.
+     * 
+     * @param context Instance that contains config classes
+     */
+    public TikaTextExtractor(ExtractionContext context) {
+        if(context != null && context.contains(ImageFileExtractionConfig.class)) {
+            ImageFileExtractionConfig configInstance = context.get(ImageFileExtractionConfig.class);
+            this.tesseractOCREnabled = configInstance.getOCREnabled();
+        }
+    }
+    
+    /**
+     * Creates a default TikaTextExtractor. OCR is turned off by default due to speed
+     * concerns.
+     */
+    public TikaTextExtractor() {    
+    }
+
     @Override
     public void logWarning(final String msg, Exception ex) {
         tikaLogger.log(Level.WARNING, msg, ex);
     }
 
+    /**
+     * Returns a reader that will iterate over the text extracted from Apache 
+     * Tika. 
+     * 
+     * @param content Supported source content to extract
+     * @return Reader that contains Apache Tika extracted text
+     * 
+     * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException 
+     */
     @Override
     public Reader getReader(Content content) throws TextExtractorException {
         ReadContentInputStream stream = new ReadContentInputStream(content);
@@ -99,7 +125,7 @@ public class TikaTextExtractor extends ContentTextExtractor {
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
         
         // configure OCR if it is enabled in KWS settings and installed on the machine
-        if (TESSERACT_PATH != null && OCREnabled && PlatformUtil.isWindowsOS() == true) {
+        if (TESSERACT_PATH != null && tesseractOCREnabled && PlatformUtil.isWindowsOS() == true) {
             
             // configure PDFParser. 
             PDFParserConfig pdfConfig = new PDFParserConfig();
@@ -145,7 +171,6 @@ public class TikaTextExtractor extends ContentTextExtractor {
         } catch (TextExtractorException ex) {
             throw ex;
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "",ex);
             tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the content" + content.getId() + ": " + content.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", content.getId(), content.getName());
             logWarning(msg, ex);
@@ -195,11 +220,26 @@ public class TikaTextExtractor extends ContentTextExtractor {
                         ));
     }
 
+    /**
+     * Determines if this extractor only understands a specifc type of content.
+     * 
+     * Although Apache Tika is defined for many input types, it is still a content
+     * specific approach to extraction.
+     * 
+     * @return true
+     */
     @Override
     public boolean isContentTypeSpecific() {
         return true;
     }
 
+    /**
+     * Determines if Tika is supported for this content type and mimetype.
+     * 
+     * @param content Source content to read
+     * @param detectedFormat Mimetype of content
+     * @return Flag indicating support for reading content type
+     */
     @Override
     public boolean isSupported(Content content, String detectedFormat) {
         if (detectedFormat == null
@@ -213,6 +253,14 @@ public class TikaTextExtractor extends ContentTextExtractor {
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
     }
 
+    /**
+     * Determines if this extractor can be run.
+     * 
+     * So long as Tika's dependencies are present, this extractor can run 
+     * no matter the circumstance.
+     * 
+     * @return true 
+     */
     @Override
     public boolean isDisabled() {
         return false;
@@ -239,14 +287,6 @@ public class TikaTextExtractor extends ContentTextExtractor {
             return 3 * 3600;
         }
 
-    }
-
-    @Override
-    public void parseContext(ExtractionContext context) {
-        ImageFileExtractionConfig configInstance = context.get(ImageFileExtractionConfig.class);
-        if(Objects.nonNull(configInstance)) {
-            this.OCREnabled = configInstance.getOCREnabled();
-        }
     }
 
     /**
