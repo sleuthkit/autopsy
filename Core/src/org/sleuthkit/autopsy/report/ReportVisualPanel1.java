@@ -294,18 +294,18 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         // single selection, so max selection index is the only one selected.
         selectedIndex = m.getMaxSelectionIndex();
 
-        JPanel panel = new DefaultReportConfigurationPanel();
         ReportModule module = modules.get(selectedIndex);
-        boolean generalModuleSelected = false;
-        if (module instanceof GeneralReportModule) {
-            JPanel generalPanel = ((GeneralReportModule) module).getConfigurationPanel();
-            panel = (generalPanel == null) ? new JPanel() : generalPanel;
-            generalModuleSelected = true;
+        JPanel panel = module.getConfigurationPanel();
+        if (panel == null) {
+            panel = new JPanel();
         }
 
         descriptionTextPane.setText(module.getDescription());
         configurationPanel.add(panel, BorderLayout.CENTER);
         configurationPanel.revalidate();
+        configurationPanel.repaint();
+        
+        boolean generalModuleSelected = (module instanceof GeneralReportModule);
 
         wizPanel.setNext(!generalModuleSelected);
         wizPanel.setFinish(generalModuleSelected);
