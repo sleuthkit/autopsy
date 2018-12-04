@@ -178,10 +178,10 @@ public final class DrawableDB {
      * DO NOT add in the middle.
      */
     public enum DrawableDbBuildStatusEnum {
-        UNKNOWN, /// no known status
+        UNKNOWN, /// no known status - not yet analyzed 
         IN_PROGRESS, /// ingest or db rebuild is in progress
-        COMPLETE, /// All files in the data source have had file type detected
-        DEFAULT;        /// Not all files in the data source have had file type detected
+        COMPLETE, /// At least one file in the data source had a MIME type.  Ingest filters may have been applied.
+        REBUILT_STALE;        /// data source was rebuilt, but MIME types were missing during rebuild
     }
 
     private void dbWriteLock() {
@@ -1209,6 +1209,15 @@ public final class DrawableDB {
         }
         return map;
     }
+    
+
+    public DrawableDbBuildStatusEnum getDataSourceDbBuildStatus(Long dataSourceId) throws TskCoreException {   
+        Map<Long, DrawableDbBuildStatusEnum> statusMap = getDataSourceDbBuildStatus();
+        if (statusMap.containsKey(dataSourceId) == false) {
+            throw new TskCoreException("Data Source ID not found: " + dataSourceId);
+        }
+        return statusMap.get(dataSourceId);
+    } 
 
     /**
      * Insert/update given data source object id and it's DB rebuild status in
@@ -1554,16 +1563,9 @@ public final class DrawableDB {
     }
 
     public long countAllFiles() throws TskCoreException {
-        return countAllFiles(null);
+        return countFilesWhere(" 1 ");
     }
 
-    public long countAllFiles(DataSource dataSource) throws TskCoreException {
-        if (null != dataSource) {
-            return countFilesWhere(" data_source_obj_id = ");
-        } else {
-            return countFilesWhere(" 1 ");
-        }
-    }
 
     /**
      * delete the row with obj_id = id.
