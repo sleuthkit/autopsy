@@ -49,9 +49,9 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
     static {
         Map<String, Integer> map = new HashMap<>();
         map.put(Bundle.CommonFilesSearchResultsViewerTable_filesColLbl(), 260);
-        map.put("S", 20);
-        map.put("C", 20);
-        map.put("O", 20);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_score(), 20);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_comment(), 20);
+        map.put(Bundle.CommonFilesSearchResultsViewerTable_occurrences(), 20);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_instancesColLbl(), 65);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), 300);
         map.put(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl(), 200);
@@ -77,7 +77,10 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
 
     @NbBundle.Messages({
         "CommonFilesSearchResultsViewerTable.noDescText= ",
-        "CommonFilesSearchResultsViewerTable.filesColLbl=Files",
+        "CommonFilesSearchResultsViewerTable.filesColLbl=Name",
+        "CommonFilesSearchResultsViewerTable.score=S",
+        "CommonFilesSearchResultsViewerTable.comment=C",
+        "CommonFilesSearchResultsViewerTable.occurrences=O",
         "CommonFilesSearchResultsViewerTable.instancesColLbl=Instances",
         "CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path",
         "CommonFilesSearchResultsViewerTable.caseColLbl=Case",
