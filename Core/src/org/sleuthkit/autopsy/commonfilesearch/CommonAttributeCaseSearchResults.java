@@ -19,6 +19,8 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,7 +44,7 @@ final public class CommonAttributeCaseSearchResults {
     private static final Logger LOGGER = Logger.getLogger(CommonAttributeCaseSearchResults.class.getName());
 
     // maps instance count to list of attribute values. 
-    private final Map<String, Map<String, CommonAttributeValueList>> caseNameToDataSources;
+    private Map<String, Map<String, CommonAttributeValueList>> caseNameToDataSources;
     private final Set<String> mimeTypesToInclude;
     private final int percentageThreshold;
     private final int resultTypeId;
@@ -133,12 +135,10 @@ final public class CommonAttributeCaseSearchResults {
         //Call countUniqueDataSources once to reduce the number of DB queries needed to get
         //the frequencyPercentage
         Double uniqueCaseDataSourceTuples = eamDb.getCountUniqueDataSources().doubleValue();
-
+        Set<String> valuesToRemove = new HashSet<>();
         for (Entry<String, Map<String, CommonAttributeValueList>> mapOfDataSources : Collections.unmodifiableMap(this.caseNameToDataSources).entrySet()) {
-            final Map<String, CommonAttributeValueList> dataSourceValues = mapOfDataSources.getValue();
-            for (Entry<String, CommonAttributeValueList> listOfValues : Collections.unmodifiableMap(dataSourceValues).entrySet()) {
-                final CommonAttributeValueList values = listOfValues.getValue();
-                for (CommonAttributeValue value : Collections.unmodifiableList(values.getDelayedMetadataList())) {
+            for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(mapOfDataSources.getValue()).entrySet()) {
+                for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataList()) {
                     //Intracase common attribute searches will have been created with an empty mimeTypesToInclude list 
                     //because when performing intra case search this filtering will have been done during the query of the case database 
                     boolean mimeTypeToRemove = false;  //allow code to be more efficient by not attempting to remove the same value multiple times
@@ -148,15 +148,12 @@ final public class CommonAttributeCaseSearchResults {
                             if (abstractFile != null) {
                                 String mimeType = commonAttr.getAbstractFile().getMIMEType();
                                 if (mimeType != null && !mimeTypesToInclude.contains(mimeType)) {
-                                    removeResult(mapOfDataSources.getKey(), listOfValues.getKey(), value);
+                                    valuesToRemove.add(value.getValue());
                                     //value will be removed as the mime type existed and was not in the set to be included
                                     //because value is removed this value does not need to be checked further
                                     mimeTypeToRemove = true;
                                     break;
                                 }
-                            }
-                            if (mimeTypeToRemove) {
-                                break;
                             }
                         }
                     }
@@ -167,7 +164,7 @@ final public class CommonAttributeCaseSearchResults {
                             Double commonalityPercentage = uniqueTypeValueTuples / uniqueCaseDataSourceTuples * 100;
                             int frequencyPercentage = commonalityPercentage.intValue();
                             if (frequencyPercentage > maximumPercentageThreshold) {
-                                removeResult(mapOfDataSources.getKey(), listOfValues.getKey(), value);
+                                valuesToRemove.add(value.getValue());
                             }
                         } catch (CorrelationAttributeNormalizationException ex) {
                             LOGGER.log(Level.WARNING, "Unable to determine frequency percentage attribute - frequency filter may not be accurate for these results.", ex);
@@ -176,28 +173,37 @@ final public class CommonAttributeCaseSearchResults {
                 }
             }
         }
-        return Collections.unmodifiableMap(this.caseNameToDataSources);
-    }
-
-    /**
-     * Helper method to remove a result and any of the parent nodes that may now
-     * be empty
-     *
-     * @param caseName      The case name of the result to be removed
-     * @param dataSourceKey The data source name followed by datasource object
-     *                      id of the datasource for the result to be removed
-     * @param value         The CommonAttributeValue which is being reomved
-     */
-    private void removeResult(String caseName, String dataSourceKey, CommonAttributeValue value) {
-        Map<String, CommonAttributeValueList> dataSourceMap = caseNameToDataSources.get(caseName);
-        CommonAttributeValueList valueList = dataSourceMap.get(dataSourceKey);
-        valueList.removeMetaData(value);
-        if (valueList.getDelayedMetadataList().isEmpty()) {
-            dataSourceMap.remove(dataSourceKey);
+        if (!valuesToRemove.isEmpty()) {
+            Map<String, Map<String, CommonAttributeValueList>> filteredCaseNameToDataSources = new HashMap<>();
+            for (Entry<String, Map<String, CommonAttributeValueList>> mapOfDataSources : Collections.unmodifiableMap(this.caseNameToDataSources).entrySet()) {
+                for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(mapOfDataSources.getValue()).entrySet()) {
+                    for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataList()) {
+                        //rebuild collection with values 
+                        if (!valuesToRemove.contains(value.getValue())) {
+                            Map<String, CommonAttributeValueList> filteredMapOfDataSources;
+                            CommonAttributeValueList filteredCommonAttributeValueList;
+                            final String caseName = mapOfDataSources.getKey();
+                            final String dataSourceKey = mapOfValueLists.getKey();
+                            if (filteredCaseNameToDataSources.containsKey(caseName)) {
+                                filteredMapOfDataSources = filteredCaseNameToDataSources.get(caseName);
+                            } else {
+                                filteredMapOfDataSources = new HashMap<>();
+                            }
+                            if (filteredMapOfDataSources.containsKey(dataSourceKey)) {
+                                filteredCommonAttributeValueList = filteredMapOfDataSources.get(dataSourceKey);
+                            } else {
+                                filteredCommonAttributeValueList = new CommonAttributeValueList();
+                            }
+                            filteredCommonAttributeValueList.addMetadataToList(value);
+                            filteredMapOfDataSources.put(dataSourceKey, filteredCommonAttributeValueList);
+                            filteredCaseNameToDataSources.put(caseName, filteredMapOfDataSources);
+                        }
+                    }
+                }
+            }
+            caseNameToDataSources = filteredCaseNameToDataSources;
         }
-        if (dataSourceMap.isEmpty()) {
-            caseNameToDataSources.remove(caseName);
-        }
-    }
 
+        return Collections.unmodifiableMap(caseNameToDataSources);
+    }
 }
