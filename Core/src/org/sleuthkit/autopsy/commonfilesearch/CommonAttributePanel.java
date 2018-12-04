@@ -268,6 +268,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     CommonAttributeSearchResults metadata = this.get();
                     boolean noKeysExist = true;
                     try {
+                        metadata.filterMetadata();
                         noKeysExist = metadata.getMetadata().keySet().isEmpty();
                     } catch (EamDbException ex) {
                         LOGGER.log(Level.SEVERE, "Unable to get keys from metadata", ex);
@@ -386,6 +387,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     CommonAttributeCaseSearchResults metadata = this.get();
                     boolean noKeysExist = true;
                     try {
+                        metadata.filterMetaData();
                         noKeysExist = metadata.getMetadata().keySet().isEmpty();
                     } catch (EamDbException ex) {
                         LOGGER.log(Level.SEVERE, "Unable to get keys from metadata", ex);

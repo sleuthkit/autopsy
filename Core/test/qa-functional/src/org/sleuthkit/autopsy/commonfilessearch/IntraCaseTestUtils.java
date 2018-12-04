@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.commonfilessearch;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -33,7 +32,6 @@ import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
@@ -191,8 +189,6 @@ class IntraCaseTestUtils {
      */
     static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeSearchResults metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
-
-        try {
             for (Map.Entry<Integer, CommonAttributeValueList> entry : metadata.getMetadata().entrySet()) {
                 entry.getValue().displayDelayedMetadata();
                 for (CommonAttributeValue md : entry.getValue().getMetadataList()) {
@@ -201,13 +197,7 @@ class IntraCaseTestUtils {
                     }
                 }
             }
-
             return instanceIdToDataSource;
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
-            return instanceIdToDataSource;
-        }
     }
 
     static List<AbstractFile> getFiles(Set<Long> objectIds) {

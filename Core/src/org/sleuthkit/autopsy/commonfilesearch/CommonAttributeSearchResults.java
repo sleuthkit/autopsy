@@ -106,12 +106,12 @@ final public class CommonAttributeSearchResults {
      *
      * @return map of sizes of children to list of matches
      */
-    public Map<Integer, CommonAttributeValueList> getMetadata() throws EamDbException {
-        if (this.percentageThreshold == 0 && mimeTypesToInclude.isEmpty()) {
-            return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
-        } else {
-            return this.getMetadata(this.percentageThreshold);
-        }
+    public Map<Integer, CommonAttributeValueList> getMetadata() {
+        return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
+    }
+
+    public void filterMetadata() throws EamDbException {
+        filterMetadata(this.percentageThreshold);
     }
 
     /**
@@ -124,7 +124,7 @@ final public class CommonAttributeSearchResults {
      *
      * @return metadata
      */
-    private Map<Integer, CommonAttributeValueList> getMetadata(int maximumPercentageThreshold) throws EamDbException {
+    private void filterMetadata(int maximumPercentageThreshold) throws EamDbException {
         CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
                 .getDefaultCorrelationTypes()
                 .stream()
@@ -164,7 +164,7 @@ final public class CommonAttributeSearchResults {
                                 //value will be removed as the mime type existed and was not in the set to be included
                                 //because value is removed this value does not need to be checked further
                                 mimeTypeToRemove = true;
-                                break;  
+                                break;
                             }
                         }
                         if (mimeTypeToRemove) {
@@ -193,7 +193,6 @@ final public class CommonAttributeSearchResults {
                 }
             }
         }
-
         for (Entry<Integer, List<CommonAttributeValue>> valuesToRemove : itemsToRemove.entrySet()) {
             final Integer key = valuesToRemove.getKey();
             final List<CommonAttributeValue> values = valuesToRemove.getValue();
@@ -207,8 +206,6 @@ final public class CommonAttributeSearchResults {
                 }
             }
         }
-
-        return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
     }
 
     /**
