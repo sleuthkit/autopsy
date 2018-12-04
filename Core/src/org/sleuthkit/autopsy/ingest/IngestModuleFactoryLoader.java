@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemsIngestModu
 import org.sleuthkit.autopsy.modules.photoreccarver.PhotoRecCarverIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.encryptiondetection.EncryptionDetectionModuleFactory;
-//import org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory;
+import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.modules.vmextractor.VMExtractorIngestModuleFactory;
 import org.sleuthkit.autopsy.python.JythonModuleLoader;
 
@@ -64,7 +64,7 @@ final class IngestModuleFactoryLoader {
             add("org.sleuthkit.autopsy.thunderbirdparser.EmailParserModuleFactory"); //NON-NLS
             add(EncryptionDetectionModuleFactory.class.getCanonicalName());
             add(InterestingItemsIngestModuleFactory.class.getCanonicalName());
-            //add(IngestModuleFactory.class.getCanonicalName());
+            add(CentralRepoIngestModuleFactory.class.getCanonicalName());
             add(PhotoRecCarverIngestModuleFactory.class.getCanonicalName());
             add(VMExtractorIngestModuleFactory.class.getCanonicalName());
             add(DataSourceIntegrityModuleFactory.class.getCanonicalName());
@@ -79,7 +79,7 @@ final class IngestModuleFactoryLoader {
      * removed between invocations.
      *
      * @return A list of objects that implement the IngestModuleFactory
-     *         interface.
+     *    interface.
      */
     static List<IngestModuleFactory> getIngestModuleFactories() {
         // A hash set of display names and a hash map of class names to 

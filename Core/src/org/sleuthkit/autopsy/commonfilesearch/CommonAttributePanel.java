@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory;
+import org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable;
@@ -706,7 +706,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 }
                 //if the eamdb is enabled and an instance is able to be retrieved check if each data source has been processed into the cr 
                 HashMap<DataSource, CorrelatedStatus> dataSourceCorrelationMap = new HashMap<>(); //keep track of the status of all data sources that have been ingested
-                String correlationEngineModuleName = IngestModuleFactory.getModuleName();
+                String correlationEngineModuleName = CentralRepoIngestModuleFactory.getModuleName();
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
                 List<CorrelationDataSource> correlatedDataSources = EamDb.getInstance().getDataSources();
                 List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();

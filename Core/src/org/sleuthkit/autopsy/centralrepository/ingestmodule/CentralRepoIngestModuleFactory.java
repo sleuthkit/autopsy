@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.ingest.NoIngestModuleIngestJobSettings;
 @ServiceProvider(service = org.sleuthkit.autopsy.ingest.IngestModuleFactory.class)
 @NbBundle.Messages({"CentralRepoIngestModuleFactory.ingestmodule.name=Correlation Engine",
                     "CentralRepoIngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation"})
-public class IngestModuleFactory extends IngestModuleFactoryAdapter {
+public class CentralRepoIngestModuleFactory extends IngestModuleFactoryAdapter {
 
     /**
      * Get the name of the module.
@@ -69,13 +69,13 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         if (settings instanceof IngestSettings) {
-            return new IngestModule((IngestSettings) settings);
+            return new CentralRepoIngestModule((IngestSettings) settings);
         }
         /*
          * Compatibility check for older versions.
          */
         if (settings instanceof NoIngestModuleIngestJobSettings) {
-            return new IngestModule(new IngestSettings());
+            return new CentralRepoIngestModule(new IngestSettings());
         }
         
         throw new IllegalArgumentException("Expected settings argument to be an instance of IngestSettings");
