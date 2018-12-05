@@ -100,7 +100,7 @@ class TableFilterChildren extends FilterNode.Children {
         "TableFilterChildren.createNodes.limitReached.msg="
         + "The limit on the number of results to display has been reached."
         + " Only the first {0} results will be shown."
-        + " The limit can be modified in the View Options screen."})
+        + " The limit can be modified under Tools, Options, View."})
     protected Node[] createNodes(Node key) {
         int maxNodesToCreate = UserPreferences.getMaximumNumberOfResults();
 
