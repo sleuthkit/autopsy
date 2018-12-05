@@ -110,8 +110,8 @@ final class InterCaseSearchResultsProcessor {
         try {
 
             InterCaseCommonAttributeRowCallback instancetableCallback = new InterCaseCommonAttributeRowCallback();
-            EamDb DbManager = EamDb.getInstance();
-            DbManager.processInstanceTableWhere(correlationType, String.format("id = %s", attrbuteId), instancetableCallback);
+            EamDb dbManager = EamDb.getInstance();
+            dbManager.processInstanceTableWhere(correlationType, String.format("id = %s", attrbuteId), instancetableCallback);
 
             return instancetableCallback.getCorrelationAttribute();
 
@@ -131,11 +131,11 @@ final class InterCaseSearchResultsProcessor {
     Map<String, Map<String, CommonAttributeValueList>> findInterCaseCommonAttributeValues2(Case currentCase) {
         try {
             NewInterCaseCommonAttributesCallback instancetableCallback = new NewInterCaseCommonAttributesCallback();
-            EamDb DbManager = EamDb.getInstance();
+            EamDb dbManager = EamDb.getInstance();
 
-            int caseId = DbManager.getCase(currentCase).getID();
+            int caseId = dbManager.getCase(currentCase).getID();
 
-            DbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
+            dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
                     TskData.FileKnown.KNOWN.getFileKnownValue()),
                     instancetableCallback);
 
@@ -156,11 +156,11 @@ final class InterCaseSearchResultsProcessor {
     Map<Integer, CommonAttributeValueList> findInterCaseCommonAttributeValues(Case currentCase) {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
-            EamDb DbManager = EamDb.getInstance();
+            EamDb dbManager = EamDb.getInstance();
 
-            int caseId = DbManager.getCase(currentCase).getID();
+            int caseId = dbManager.getCase(currentCase).getID();
 
-            DbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
+            dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
                     TskData.FileKnown.KNOWN.getFileKnownValue()),
                     instancetableCallback);
 
@@ -183,10 +183,10 @@ final class InterCaseSearchResultsProcessor {
     Map<Integer, CommonAttributeValueList> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
         try {
             InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
-            EamDb DbManager = EamDb.getInstance();
-            int caseId = DbManager.getCase(currentCase).getID();
+            EamDb dbManager = EamDb.getInstance();
+            int caseId = dbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
-            DbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
+            dbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
                     TskData.FileKnown.KNOWN.getFileKnownValue(), caseId, targetCaseId), instancetableCallback);
             return instancetableCallback.getInstanceCollatedCommonFiles();
         } catch (EamDbException ex) {
@@ -206,10 +206,10 @@ final class InterCaseSearchResultsProcessor {
     Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseCommonAttributeValues2(Case currentCase, CorrelationCase singleCase) {
         try {
             NewInterCaseCommonAttributesCallback instancetableCallback = new NewInterCaseCommonAttributesCallback();
-            EamDb DbManager = EamDb.getInstance();
-            int caseId = DbManager.getCase(currentCase).getID();
+            EamDb dbManager = EamDb.getInstance();
+            int caseId = dbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
-            DbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
+            dbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
                     TskData.FileKnown.KNOWN.getFileKnownValue(), caseId, targetCaseId), instancetableCallback);
             return instancetableCallback.getInstanceCollatedCommonFiles();
         } catch (EamDbException ex) {
@@ -362,13 +362,13 @@ final class InterCaseSearchResultsProcessor {
         @Override
         public void process(ResultSet resultSet) {
             try {
-                EamDb DbManager = EamDb.getInstance();
+                EamDb dbManager = EamDb.getInstance();
 
                 while (resultSet.next()) {
-                    CorrelationCase correlationCase = DbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
-                    CorrelationDataSource dataSource = DbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
+                    CorrelationCase correlationCase = dbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
+                    CorrelationDataSource dataSource = dbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
                     try {
-                        correlationAttributeInstance = DbManager.getCorrelationAttributeInstance(correlationType,
+                        correlationAttributeInstance = dbManager.getCorrelationAttributeInstance(correlationType,
                                 correlationCase,
                                 dataSource,
                                 InstanceTableCallback.getValue(resultSet),
