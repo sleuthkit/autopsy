@@ -204,8 +204,9 @@ public interface EamDb {
      * Creates new Data Source in the database
      *
      * @param eamDataSource the data source to add
-     * 
-     * @return - A CorrelationDataSource object with data source's central repository id
+     *
+     * @return - A CorrelationDataSource object with data source's central
+     *         repository id
      */
     CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 
@@ -304,6 +305,18 @@ public interface EamDb {
     Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
+     * Retrieves number of unique cases in the
+     * database that are associated with the artifactType and artifactValue of
+     * the given artifact.
+     *
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
+     *
+     * @return Number of unique cases
+     */
+    Long getCountOfCasesWithValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+
+    /**
      * Retrieves number of data sources in the database.
      *
      * @return Number of unique data sources
@@ -314,7 +327,7 @@ public interface EamDb {
      * Retrieves number of eamArtifact instances in the database that are
      * associated with the given data source.
      *
-     * @param correlationDataSource   Data source to search for
+     * @param correlationDataSource Data source to search for
      *
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource

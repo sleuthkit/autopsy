@@ -1119,6 +1119,49 @@ abstract class AbstractSqlEamDb implements EamDb {
         return instanceCount;
     }
 
+    /**
+     * Retrieves number of unique cases in the
+     * database that are associated with the artifactType and artifactValue of
+     * the given artifact.
+     *
+     * @param aType The type of the artifact
+     * @param value The correlation value
+     *
+     * @return Number of unique cases
+     */
+    @Override
+    public Long getCountOfCasesWithValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+        String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
+
+        Connection conn = connect();
+
+        Long instanceCount = 0L;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        String sql
+                = "SELECT count(DISTINCT case_id) FROM "
+                + tableName
+                + " WHERE value=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, normalizedValue);
+            resultSet = preparedStatement.executeQuery();
+            resultSet.next();
+            instanceCount = resultSet.getLong(1);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error counting unique caseDisplayName/dataSource tuples having artifactType and artifactValue.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return instanceCount;
+    }
+
     @Override
     public Long getCountUniqueDataSources() throws EamDbException {
         Connection conn = connect();

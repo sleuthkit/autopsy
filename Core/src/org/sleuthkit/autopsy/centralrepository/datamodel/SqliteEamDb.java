@@ -275,7 +275,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException{
+    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException {
         try {
             acquireExclusiveLock();
             super.addDataSourceObjectId(rowId, dataSourceObjectId);
@@ -539,6 +539,28 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         try {
             acquireSharedLock();
             return super.getCountUniqueCaseDataSourceTuplesHavingTypeValue(aType, value);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+    /**
+     * Retrieves number of unique cases in the
+     * database that are associated with the artifactType and artifactValue of
+     * the given artifact.
+     *
+     * @param aType The correlation type
+     * @param value The value to search for
+     *
+     * @return Number of unique cases
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public Long getCountOfCasesWithValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+        try {
+            acquireSharedLock();
+            return super.getCountUniqueDataSources();
         } finally {
             releaseSharedLock();
         }
