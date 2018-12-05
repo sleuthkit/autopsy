@@ -32,7 +32,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.tika.Tika;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extracts text from Tika supported content. Protects against Tika
  * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
-public final class TikaTextExtractor extends ContentTextExtractor {
+final class TikaTextExtractor extends ContentTextExtractor {
     
     private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     
@@ -74,31 +73,6 @@ public final class TikaTextExtractor extends ContentTextExtractor {
                     .stream()
                     .map(mt -> mt.getType() + "/" + mt.getSubtype())
                     .collect(Collectors.toList());
-
-    /**
-     * Accepts a context instance for run-time configuration.
-     * 
-     * The only configuration that is available to date is the 
-     * ImageFileExtractionConfig.java. You may refer to this class for
-     * supported settings.
-     * 
-     * @param context Instance that contains config classes
-     */
-    public TikaTextExtractor(ExtractionContext context) {
-        if(context != null && context.contains(ImageFileExtractionConfig.class)) {
-            ImageFileExtractionConfig configInstance = context.get(ImageFileExtractionConfig.class);
-            if(Objects.nonNull(configInstance.getOCREnabled())) {
-                this.tesseractOCREnabled = configInstance.getOCREnabled();
-            }
-        }
-    }
-    
-    /**
-     * Creates a default TikaTextExtractor. OCR is turned off by default due to speed
-     * concerns.
-     */
-    public TikaTextExtractor() {    
-    }
 
     @Override
     public void logWarning(final String msg, Exception ex) {
@@ -292,6 +266,25 @@ public final class TikaTextExtractor extends ContentTextExtractor {
             return 3 * 3600;
         }
 
+    }
+
+    /**
+     * Determines how the extraction process will proceed given the settings 
+     * stored in this context instance.
+     *
+     * See the ImageFileExtractionConfig class in the extractionconfigs package
+     * for available settings.
+     *
+     * @param context Instance containing config classes
+     */
+    @Override
+    public void setExtractionSettings(ExtractionContext context) {
+        if(context != null && context.contains(ImageFileExtractionConfig.class)) {
+            ImageFileExtractionConfig configInstance = context.get(ImageFileExtractionConfig.class);
+            if(Objects.nonNull(configInstance.getOCREnabled())) {
+                this.tesseractOCREnabled = configInstance.getOCREnabled();
+            }
+        }    
     }
 
     /**

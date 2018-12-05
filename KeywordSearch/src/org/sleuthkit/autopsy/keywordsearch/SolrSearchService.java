@@ -33,6 +33,7 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -45,8 +46,8 @@ import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
-import org.sleuthkit.autopsy.textextractors.StringsTextExtractor;
-import org.sleuthkit.autopsy.textextractors.TikaTextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -121,11 +122,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
         } else {
             try {
-                ingester.indexText(new TikaTextExtractor(), content, null);
-            } catch (Ingester.IngesterException ex) {
+                TextExtractor contentSpecificExtractor = TextExtractorFactory.getContentSpecificExtractor(content, null);
+                ingester.indexText(contentSpecificExtractor, content, null);
+            } catch (TextExtractorFactory.NoContentSpecificExtractorException | Ingester.IngesterException ex) {
                 try {
                     // Try the StringsTextExtractor if Tika extractions fails.
-                    ingester.indexText(new StringsTextExtractor(), content, null);
+                    ingester.indexText(TextExtractorFactory.getDefaultExtractor(null), content, null);
                 } catch (Ingester.IngesterException ex1) {
                     throw new TskCoreException(ex.getCause().getMessage(), ex1);
                 }

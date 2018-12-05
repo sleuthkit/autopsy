@@ -26,6 +26,7 @@ import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.textextractors.ContentTextExtractor;
+import org.sleuthkit.autopsy.textextractors.ExtractionContext;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -78,5 +79,9 @@ final class TextFileExtractor extends ContentTextExtractor {
     @Override
     public void logWarning(String msg, Exception ex) {
         logger.log(Level.WARNING, msg, ex);
+    }
+
+    @Override
+    public void setExtractionSettings(ExtractionContext context) {
     }
 }

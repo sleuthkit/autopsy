@@ -19,13 +19,11 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import org.sleuthkit.autopsy.textextractors.ContentTextExtractor;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -43,11 +41,12 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textextractors.ExtractionContext;
-import org.sleuthkit.autopsy.textextractors.StringsTextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
-import org.sleuthkit.autopsy.textextractors.extractionconfigs.StringsExtractionConfig;
+import org.sleuthkit.autopsy.textextractors.extractionconfigs.DefaultExtractionConfig;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
@@ -105,7 +104,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
-    private StringsTextExtractor stringExtractor;
+    private TextExtractor<AbstractFile> stringExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private long jobId;
@@ -253,13 +252,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         ExtractionContext extractionContext = new ExtractionContext();
         
-        StringsExtractionConfig stringsConfig = new StringsExtractionConfig();
+        DefaultExtractionConfig stringsConfig = new DefaultExtractionConfig();
         Map<String, String> stringsOptions = KeywordSearchSettings.getStringExtractOptions();
         stringsConfig.setExtractUTF8(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF8.toString())));
         stringsConfig.setExtractUTF16(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF16.toString())));
         stringsConfig.setExtractScripts(KeywordSearchSettings.getStringExtractScripts());
         
-        extractionContext.set(StringsExtractionConfig.class, stringsConfig);
+        extractionContext.set(DefaultExtractionConfig.class, stringsConfig);
         
         stringExtractor = TextExtractorFactory.getDefaultExtractor(extractionContext);
         indexer = new Indexer();
@@ -441,7 +440,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            ContentTextExtractor extractor = null;
+            TextExtractor<AbstractFile> extractor = null;
             ExtractionContext extractionContext = new ExtractionContext();
             
             ImageFileExtractionConfig imageConfig = new ImageFileExtractionConfig();
@@ -449,10 +448,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             extractionContext.set(ImageFileExtractionConfig.class, imageConfig);
             
             try {
-                extractor = TextExtractorFactory.getSpecializedExtractor(aFile, detectedFormat, extractionContext);
+                extractor = TextExtractorFactory.getContentSpecificExtractor(aFile, extractionContext);
                 //divide into chunks and index
                 return Ingester.getDefault().indexText(extractor, aFile, context);
-            } catch (TextExtractorFactory.NoSpecializedExtractorException ex) {
+            } catch (TextExtractorFactory.NoContentSpecificExtractorException ex) {
                 //No text extractor found... run the default instead
                 return false;
             }

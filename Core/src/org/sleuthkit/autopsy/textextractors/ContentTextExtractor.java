@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.textextractors;
 
 import com.google.common.collect.ImmutableList;
 import java.io.Reader;
-import java.util.Arrays;
 import java.util.List;
 import org.sleuthkit.datamodel.Content;
 
@@ -74,24 +73,6 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
                     "application/x-lzop", //NON-NLS
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
-
-    /**
-     * Accepts context instance to allow for extractor configuration on specific 
-     * file types. 
-     * 
-     * See extractionconfigs package for available file type configurations.
-     * 
-     * @param context Instance that contains config classes 
-     */
-    public ContentTextExtractor(ExtractionContext context) {
-        
-    }
-    
-    /**
-     * Default constructor to create extractor instances with default configurations.
-     */
-    public ContentTextExtractor() {
-    }
     
     /**
      * Determines if the extractor works only for specified types is

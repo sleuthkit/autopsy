@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 /**
  * Extracts text from HTML content.
  */
-public final class HtmlTextExtractor extends ContentTextExtractor {
+final class HtmlTextExtractor extends ContentTextExtractor {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private final int MAX_SIZE;
@@ -55,18 +55,6 @@ public final class HtmlTextExtractor extends ContentTextExtractor {
     static {
         // Disable Jericho HTML Parser log messages.
         Config.LoggerProvider = LoggerProvider.DISABLED;
-    }
-
-    /**
-     * Configures the extractor to use the settings in the HTMLExtractionConfig
-     * instance stored in the ExtractionContext object.
-     *
-     * As of now, there are no configurable features for this extractor.
-     *
-     * @param context Instance containing config classes
-     */
-    public HtmlTextExtractor(ExtractionContext context) {
-        this();
     }
 
     /**
@@ -229,5 +217,18 @@ public final class HtmlTextExtractor extends ContentTextExtractor {
     @Override
     public void logWarning(final String msg, Exception ex) {
         logger.log(Level.WARNING, msg, ex); //NON-NLS  }
+    }
+
+    /**
+     * Determines how the extraction process will proceed given the settings 
+     * stored in this context instance.
+     * 
+     * As of now, there are no configurable settings for the HtmlTextExtractor.
+     * See the extractionconfigs package for available file configurations.
+     * 
+     * @param context Instance containing config classes
+     */
+    @Override
+    public void setExtractionSettings(ExtractionContext context) {
     }
 }

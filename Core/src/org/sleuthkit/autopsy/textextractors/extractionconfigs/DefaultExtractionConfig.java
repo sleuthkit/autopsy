@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
  * Allows for configuration of the StringsTextExtractor (the default extractor
  * for all content types).
  */
-public class StringsExtractionConfig {
+public class DefaultExtractionConfig {
     private Boolean extractUTF8;
     private Boolean extractUTF16;
     private List<SCRIPT> extractScripts;

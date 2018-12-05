@@ -40,27 +40,10 @@ import org.sleuthkit.datamodel.AbstractFile;
  *  2) Tables that contain spaces in their name are not extracted
  *  3) Table names are not included in its output text
  */
-public final class SqliteTextExtractor extends ContentTextExtractor {
+final class SqliteTextExtractor extends ContentTextExtractor {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
-
-    /**
-     * Accepts a context instance for run-time configuration.
-     * 
-     * As of now, this constructor is a no-op as it does not support 
-     * any type of configuration.
-     * 
-     * @param context Instance that contains config classes
-     */
-    public SqliteTextExtractor(ExtractionContext context) {
-    }
-    
-    /**
-     * Creates a default SqliteTextExtractor instance.
-     */
-    public SqliteTextExtractor() {
-    }
 
     /**
      * This extractor only works for sqlite files, so it is indeed content type
@@ -129,6 +112,19 @@ public final class SqliteTextExtractor extends ContentTextExtractor {
         }
 
         return new SQLiteStreamReader((AbstractFile) source);
+    }
+
+    /**
+     * Determines how the extraction process will proceed given the settings 
+     * stored in this context instance.
+     * 
+     * As of now, there are no configurable settings for the SqliteTextExtractor.
+     * See the extractionconfigs package for available file configurations.
+     * 
+     * @param context Instance containing config classes
+     */
+    @Override
+    public void setExtractionSettings(ExtractionContext context) {
     }
 
     /**

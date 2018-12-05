@@ -35,7 +35,7 @@ public interface TextExtractor<T extends SleuthkitVisitableItem> {
      *
      * @return True if this extractor will/should not perform any extraction.
      */
-    abstract boolean isDisabled();
+    boolean isDisabled();
 
     /**
      * Log the given message and exception as a warning.
@@ -43,7 +43,7 @@ public interface TextExtractor<T extends SleuthkitVisitableItem> {
      * @param msg Log message
      * @param ex  Exception associated with the incoming message
      */
-    abstract void logWarning(String msg, Exception ex);
+    void logWarning(String msg, Exception ex);
 
     /**
      * Get a reader that will iterate over the text extracted from the given
@@ -55,7 +55,7 @@ public interface TextExtractor<T extends SleuthkitVisitableItem> {
      *
      * @throws TextExtractorException
      */
-    abstract Reader getReader(T source) throws TextExtractorException;
+    Reader getReader(T source) throws TextExtractorException;
 
     /**
      * Get the 'object' id of the given source.
@@ -64,7 +64,7 @@ public interface TextExtractor<T extends SleuthkitVisitableItem> {
      *
      * @return Object id of the source content
      */
-    abstract long getID(T source);
+    long getID(T source);
 
     /**
      * Get a human readable name for the given source.
@@ -73,7 +73,18 @@ public interface TextExtractor<T extends SleuthkitVisitableItem> {
      *
      * @return Name of the content source
      */
-    abstract String getName(T source);
+    String getName(T source);
+    
+       
+    /**
+     * Determines how the extraction process will proceed given the settings 
+     * stored in this context instance.
+     * 
+     * See the extractionconfigs package for available file configurations.
+     * 
+     * @param context Instance containing file config classes
+     */
+    void setExtractionSettings(ExtractionContext context);
 
     /**
      * System exception for dealing with errors encountered during extraction.

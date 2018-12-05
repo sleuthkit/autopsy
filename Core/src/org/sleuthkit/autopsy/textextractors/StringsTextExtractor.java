@@ -29,7 +29,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.autopsy.textextractors.extractionconfigs.StringsExtractionConfig;
+import org.sleuthkit.autopsy.textextractors.extractionconfigs.DefaultExtractionConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -37,8 +37,8 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-public final class StringsTextExtractor extends ContentTextExtractor {
-      
+final class StringsTextExtractor extends ContentTextExtractor {
+
     static final private Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
     private boolean extractUTF8;
     private boolean extractUTF16;
@@ -46,10 +46,10 @@ public final class StringsTextExtractor extends ContentTextExtractor {
 
     /**
      * Determines if this extractor may only read particular types of content.
-     * 
+     *
      * Since Strings may be run on any content type, it is not content specific.
-     * 
-     * @return false 
+     *
+     * @return false
      */
     @Override
     public boolean isContentTypeSpecific() {
@@ -57,13 +57,14 @@ public final class StringsTextExtractor extends ContentTextExtractor {
     }
 
     /**
-     * Determines if this extractor can read the content type. 
-     * 
-     * Note: Strings can be run on any type of content, so all types
-     * will return true.
-     * 
-     * @param file Content source to read
+     * Determines if this extractor can read the content type.
+     *
+     * Note: Strings can be run on any type of content, so all types will return
+     * true.
+     *
+     * @param file           Content source to read
      * @param detectedFormat Mimetype of source file.
+     *
      * @return true
      */
     @Override
@@ -72,34 +73,11 @@ public final class StringsTextExtractor extends ContentTextExtractor {
     }
 
     private final List<SCRIPT> extractScripts = new ArrayList<>();
-    
+
     /**
-     * Accepts a context instance for run-time configuration.
-     * 
-     * See StringsExtractionConfig.java for available extraction settings. 
-     * 
-     * @param context Instance that contains config classes.
-     */
-    public StringsTextExtractor(ExtractionContext context) {
-        this();
-        if(context != null && context.contains(StringsExtractionConfig.class)) {
-            StringsExtractionConfig configInstance = context.get(StringsExtractionConfig.class);
-            if(Objects.nonNull(configInstance.getExtractUTF8())) {
-                extractUTF8 = configInstance.getExtractUTF8();
-            }
-            if(Objects.nonNull(configInstance.getExtractUTF16())) {
-                extractUTF16 = configInstance.getExtractUTF16();
-            }
-            if(Objects.nonNull(configInstance.getExtractScripts())) {
-                setScripts(configInstance.getExtractScripts());
-            }
-        }
-    }
-    
-    /**
-     * Creates a default StringsTextExtractor instance. The instance will be 
-     * configured to run only LATIN_2 as its default extraction script and 
-     * UTF-8 as its default encoding.
+     * Creates a default StringsTextExtractor instance. The instance will be
+     * configured to run only LATIN_2 as its default extraction script and UTF-8
+     * as its default encoding.
      */
     public StringsTextExtractor() {
         //LATIN_2 is the default script
@@ -113,10 +91,10 @@ public final class StringsTextExtractor extends ContentTextExtractor {
      * @param extractScripts scripts to use
      */
     public final void setScripts(List<SCRIPT> extractScripts) {
-        if(extractScripts == null) {
+        if (extractScripts == null) {
             return;
         }
-        
+
         this.extractScripts.clear();
         this.extractScripts.addAll(extractScripts);
     }
@@ -137,10 +115,10 @@ public final class StringsTextExtractor extends ContentTextExtractor {
 
     /**
      * Determines if this extractor should be run or not.
-     * 
-     * Atleast one of the extraction encodings in StringsExtractionConfig must 
+     *
+     * Atleast one of the extraction encodings in DefaultExtractionConfig must
      * be set for this extractor to run.
-     * 
+     *
      * @return Flag indicating if this extractor should be run.
      */
     @Override
@@ -150,10 +128,13 @@ public final class StringsTextExtractor extends ContentTextExtractor {
 
     /**
      * Returns a reader that will iterate over the text of the content source.
-     * 
+     *
      * @param content Content source of any type
+     *
      * @return A reader instance that content text can be obtained from
-     * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException 
+     *
+     * @throws
+     * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
     @Override
     public InputStreamReader getReader(Content content) throws TextExtractorException {
@@ -169,10 +150,35 @@ public final class StringsTextExtractor extends ContentTextExtractor {
             return new InternationalStream(content, extractScripts, extractUTF8, extractUTF16);
         }
     }
-    
+
     /**
-     * Content input string stream reader/converter - given Content,
-     * extract strings from it and return encoded bytes via read()
+     * Determines how the extraction process will proceed given the settings 
+     * stored in this context instance.
+     *
+     * See the DefaultExtractionConfig class in the extractionconfigs package
+     * for available settings.
+     *
+     * @param context Instance containing config classes
+     */
+    @Override
+    public void setExtractionSettings(ExtractionContext context) {
+        if (context != null && context.contains(DefaultExtractionConfig.class)) {
+            DefaultExtractionConfig configInstance = context.get(DefaultExtractionConfig.class);
+            if (Objects.nonNull(configInstance.getExtractUTF8())) {
+                extractUTF8 = configInstance.getExtractUTF8();
+            }
+            if (Objects.nonNull(configInstance.getExtractUTF16())) {
+                extractUTF16 = configInstance.getExtractUTF16();
+            }
+            if (Objects.nonNull(configInstance.getExtractScripts())) {
+                setScripts(configInstance.getExtractScripts());
+            }
+        }
+    }
+
+    /**
+     * Content input string stream reader/converter - given Content, extract
+     * strings from it and return encoded bytes via read()
      *
      * Note: the utility supports extraction of only LATIN script and UTF8,
      * UTF16LE, UTF16BE encodings and uses a brute force encoding detection -
