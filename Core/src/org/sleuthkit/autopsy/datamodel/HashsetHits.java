@@ -411,11 +411,15 @@ public class HashsetHits implements AutopsyVisitableItem {
                         BlackboardArtifact art = skCase.getBlackboardArtifact(id);
                         artifactHits.put(id, art);
                     }
-                    list.add(id);
                 } catch (TskException ex) {
                     logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
                 }
             });
+
+            // Adding all keys at once is more efficient than adding one at a 
+            // time because Netbeans triggers internal processing each time an
+            // element is added to the list.
+            list.addAll(artifactHits.keySet());
             return true;
         }
 

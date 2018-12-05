@@ -85,8 +85,6 @@
                                               <Component id="bnAdvancedSettings" min="-2" pref="155" max="-2" attributes="0"/>
                                               <EmptySpace max="-2" attributes="0"/>
                                               <Component id="bnFileExport" min="-2" pref="155" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="bnLogging" min="-2" pref="155" max="-2" attributes="0"/>
                                           </Group>
                                           <Group type="102" alignment="0" attributes="0">
                                               <Component id="jLabelSelectOutputFolder" min="-2" max="-2" attributes="0"/>
@@ -162,7 +160,6 @@
                           <Component id="bnEditIngestSettings" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="bnFileExport" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="bnAdvancedSettings" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="bnLogging" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -246,16 +243,6 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnFileExportActionPerformed"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JButton" name="bnLogging">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AutoIngestSettingsPanel.bnLogging.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnLoggingActionPerformed"/>
               </Events>
             </Component>
             <Component class="javax.swing.JButton" name="browseOutputFolderButton">

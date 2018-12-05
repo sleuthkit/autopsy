@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -71,7 +71,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     + "Do you want to update and listen for further ingest results?\n"
     + "Choosing 'yes' will update the database and enable listening to future ingests.",
     "OpenAction.notAnalyzedDlg.msg=No image/video files available to display yet.\n"
-        + "Please run FileType and EXIF ingest modules.",
+    + "Please run FileType and EXIF ingest modules.",
     "OpenAction.stale.confDlg.title=Image Gallery"})
 public final class OpenAction extends CallableSystemAction {
 
@@ -148,19 +148,20 @@ public final class OpenAction extends CallableSystemAction {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            return;
-        }
-        ImageGalleryController controller;
-        try {
-            controller = ImageGalleryModule.getController();
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting ImageGalleryController for current case.", ex);
+            logger.log(Level.SEVERE, "No current case", ex);
             return;
         }
         Platform.runLater(() -> {
+            ImageGalleryController controller;
+            try {
+                controller = ImageGalleryModule.getController();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to get ImageGalleryController", ex);
+                return;
+            }
+
             if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE
-                && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
+                    && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
                 Alert dialog = new Alert(Alert.AlertType.INFORMATION);
                 dialog.initModality(Modality.APPLICATION_MODAL);
                 dialog.setResizable(true);
@@ -186,13 +187,12 @@ public final class OpenAction extends CallableSystemAction {
     }
 
     private void checkDBStale(ImageGalleryController controller) {
-        
-        ListenableFuture<Map<Long, DrawableDB.DrawableDbBuildStatusEnum>> dataSourceStatusMapFuture =  TaskUtils.getExecutorForClass(OpenAction.class)
+
+        ListenableFuture<Map<Long, DrawableDB.DrawableDbBuildStatusEnum>> dataSourceStatusMapFuture = TaskUtils.getExecutorForClass(OpenAction.class)
                 .submit(controller::getAllDataSourcesDrawableDBStatus);
-        
+
         addFXCallback(dataSourceStatusMapFuture,
-                dataSourceStatusMap -> {
-                    
+                dataSourceStatusMap -> {                   
                     int numStale = 0;
                     int numNoAnalysis = 0;
                     // NOTE: There is some overlapping code here with Controller.getStaleDataSourceIds().  We could possibly just use
@@ -239,7 +239,8 @@ public final class OpenAction extends CallableSystemAction {
                             // NOTE: There could be no data....
                         } else if (answer == ButtonType.YES) {
                             if (controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-                                /* For a single-user case, we favor user
+                                /*
+                                 * For a single-user case, we favor user
                                  * experience, and rebuild the database as soon
                                  * as Image Gallery is enabled for the case.
                                  *
@@ -285,10 +286,9 @@ public final class OpenAction extends CallableSystemAction {
         SwingUtilities.invokeLater(() -> {
             try {
                 ImageGalleryTopComponent.openTopComponent();
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex);//NON-NLS
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS}
+                logger.log(Level.SEVERE, "Failed to open Image Gallery top component", ex); //NON-NLS}
+                // RJCTODO: Give the user some feedback here
             }
         });
     }

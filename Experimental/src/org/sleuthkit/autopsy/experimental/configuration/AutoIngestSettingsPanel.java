@@ -565,7 +565,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
             bnEditIngestSettings.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
             bnAdvancedSettings.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
-            bnLogging.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
             sharedConfigCheckbox.setEnabled(mode == OptionsUiMode.AIM);
             masterNodeCheckBox.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected());
             bnFileExport.setEnabled(mode == OptionsUiMode.AIM);
@@ -603,7 +602,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnEditIngestSettings = new javax.swing.JButton();
         bnAdvancedSettings = new javax.swing.JButton();
         bnFileExport = new javax.swing.JButton();
-        bnLogging = new javax.swing.JButton();
         browseOutputFolderButton = new javax.swing.JButton();
         browseInputFolderButton = new javax.swing.JButton();
         inputPathTextField = new javax.swing.JTextField();
@@ -655,13 +653,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnFileExport.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnFileExportActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnLogging, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnLogging.text")); // NOI18N
-        bnLogging.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnLoggingActionPerformed(evt);
             }
         });
 
@@ -805,9 +796,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(bnAdvancedSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(bnFileExport, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(bnLogging, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addComponent(bnFileExport, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(nodePanelLayout.createSequentialGroup()
                                         .addComponent(jLabelSelectOutputFolder)
                                         .addGap(18, 18, 18)
@@ -863,8 +852,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(bnEditIngestSettings)
                     .addComponent(bnFileExport)
-                    .addComponent(bnAdvancedSettings)
-                    .addComponent(bnLogging))
+                    .addComponent(bnAdvancedSettings))
                 .addGap(18, 18, 18)
                 .addGroup(nodePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(sharedConfigCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1042,23 +1030,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseInputFolderButtonActionPerformed
 
-    private void bnLoggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnLoggingActionPerformed
-        JDialog jDialog = new JDialog();
-        NodeStatusLogPanel loggingPanel = new NodeStatusLogPanel(jDialog);
-
-        JScrollPane jScrollPane = new JScrollPane(loggingPanel);
-        jScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        jScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        jScrollPane.setMinimumSize(new Dimension(100, 100));
-        jDialog.add(jScrollPane);
-        jDialog.setTitle(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.NodeStatusLogging.text"));
-        jDialog.setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame32.gif"));
-        jDialog.setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
-        jDialog.pack();
-        jDialog.setLocationRelativeTo(this);
-        jDialog.setVisible(true);
-    }//GEN-LAST:event_bnLoggingActionPerformed
-
     private void bnFileExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnFileExportActionPerformed
         JDialog jDialog = new JDialog();
         FileExporterSettingsPanel fileExporterSettingsPanel = new FileExporterSettingsPanel(jDialog);
@@ -1210,7 +1181,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnAdvancedSettings.setEnabled(enabled);
         bnEditIngestSettings.setEnabled(enabled);
         bnFileExport.setEnabled(enabled);
-        bnLogging.setEnabled(enabled);
         browseInputFolderButton.setEnabled(enabled);
         browseOutputFolderButton.setEnabled(enabled);
         browseSharedSettingsButton.setEnabled(sharedConfigCheckbox.isSelected() && autoIngestModeRadioButton.isSelected());
@@ -1228,7 +1198,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton bnAdvancedSettings;
     private javax.swing.JButton bnEditIngestSettings;
     private javax.swing.JButton bnFileExport;
-    private javax.swing.JButton bnLogging;
     private javax.swing.JButton browseInputFolderButton;
     private javax.swing.JButton browseOutputFolderButton;
     private javax.swing.JButton browseSharedSettingsButton;
