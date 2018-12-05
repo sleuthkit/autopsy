@@ -73,7 +73,22 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
     @Override
     public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
 
-        throw new EamDbException("Not Supported right now");
+        CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
+        this.correlationCaseName = cCase.getDisplayName();
+        return this.findFiles(cCase);
+    }
+
+    CommonAttributeSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.corAttrType);
+        Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
+        Set<String> mimeTypesToFilterOn = new HashSet<>();
+        if (isFilterByMedia()) {
+            mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
+        }
+        if (isFilterByDoc()) {
+            mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
+        }
+        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
     }
 
         /**
@@ -92,12 +107,12 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
 
         CorrelationCase cCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         this.correlationCaseName = cCase.getDisplayName();
-        return this.findFiles(cCase);
+        return this.findFiles2(cCase);
     }
     
-    CommonAttributeCaseSearchResults findFiles(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    CommonAttributeCaseSearchResults findFiles2(CorrelationCase correlationCase) throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.corAttrType);
-        Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues(Case.getCurrentCase(), correlationCase);
+        Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseCommonAttributeValues2(Case.getCurrentCase(), correlationCase);
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);

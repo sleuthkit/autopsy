@@ -128,7 +128,7 @@ final class InterCaseSearchResultsProcessor {
      *
      * @param currentCase The current TSK Case.
      */
-    Map<String, Map<String, CommonAttributeValueList>> findInterCaseCommonAttributeValues(Case currentCase) {
+    Map<String, Map<String, CommonAttributeValueList>> findInterCaseCommonAttributeValues2(Case currentCase) {
         try {
             NewInterCaseCommonAttributesCallback instancetableCallback = new NewInterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
@@ -147,6 +147,31 @@ final class InterCaseSearchResultsProcessor {
         return new HashMap<>();
     }
 
+     /**
+     * Given the current case, fins all intercase common files from the EamDb
+     * and builds maps of obj id to md5 and case.
+     *
+     * @param currentCase The current TSK Case.
+     */
+    Map<Integer, CommonAttributeValueList> findInterCaseCommonAttributeValues(Case currentCase) {
+        try {
+            InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
+            EamDb DbManager = EamDb.getInstance();
+
+            int caseId = DbManager.getCase(currentCase).getID();
+
+            DbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
+                    TskData.FileKnown.KNOWN.getFileKnownValue()),
+                    instancetableCallback);
+
+            return instancetableCallback.getInstanceCollatedCommonFiles();
+
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
+        }
+        return new HashMap<>();
+    }
+    
     /**
      * Given the current case, and a specific case of interest, finds common
      * files which exist between cases from the EamDb. Builds maps of obj id to
@@ -155,7 +180,30 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase  The case of interest. Matches must exist in this case.
      */
-    Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
+    Map<Integer, CommonAttributeValueList> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
+        try {
+            InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
+            EamDb DbManager = EamDb.getInstance();
+            int caseId = DbManager.getCase(currentCase).getID();
+            int targetCaseId = singleCase.getID();
+            DbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
+                    TskData.FileKnown.KNOWN.getFileKnownValue(), caseId, targetCaseId), instancetableCallback);
+            return instancetableCallback.getInstanceCollatedCommonFiles();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
+        }
+        return new HashMap<>();
+    }    
+    
+    /**
+     * Given the current case, and a specific case of interest, finds common
+     * files which exist between cases from the EamDb. Builds maps of obj id to
+     * md5 and case.
+     *
+     * @param currentCase The current TSK Case.
+     * @param singleCase  The case of interest. Matches must exist in this case.
+     */
+    Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseCommonAttributeValues2(Case currentCase, CorrelationCase singleCase) {
         try {
             NewInterCaseCommonAttributesCallback instancetableCallback = new NewInterCaseCommonAttributesCallback();
             EamDb DbManager = EamDb.getInstance();
