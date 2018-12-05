@@ -114,7 +114,7 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
     @Override
     public long getID(Content source) {
         return source.getId();
-    }
+}
 
     /**
      * Returns the human-readable name of the given content source.

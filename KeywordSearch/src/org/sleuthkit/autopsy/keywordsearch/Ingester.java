@@ -106,8 +106,8 @@ class Ingester {
      * @throws IngesterException if there was an error processing a specific
      *                           artifact, but the Solr server is probably fine.
      */
-    void indexMetaDataOnly(BlackboardArtifact artifact) throws IngesterException {
-        indexChunk("", new ArtifactTextExtractor().getName(artifact), getContentFields(artifact));
+    void indexMetaDataOnly(BlackboardArtifact artifact, TextExtractor<Content> extractor) throws IngesterException {
+        indexChunk("", extractor.getName(artifact), getContentFields(artifact));
     }
 
     /**
@@ -371,7 +371,7 @@ class Ingester {
             Map<String, String> params = new HashMap<>();
             params.put(Server.Schema.ID.toString(), Long.toString(artifact.getArtifactID()));
             try {
-                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(ArtifactTextExtractor.getDataSource(artifact).getId()));
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(artifact.getDataSource().getId()));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Could not get data source id to properly index the artifact " + artifact.getArtifactID(), ex); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));

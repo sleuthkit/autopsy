@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,17 +24,11 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import org.apache.commons.io.IOUtils;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.textextractors.ExtractionContext;
-import org.sleuthkit.autopsy.textextractors.TextExtractor;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -44,46 +38,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
 
     static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
-
-    /**
-     * Get the Content that is the data source for the given artifact. //JMTODO:
-     * is there a prexisting method to do this?
-     *
-     * @param artifact
-     *
-     * @return The data source for the given artifact as a Content object, or
-     *         null if it could not be found.
-     *
-     * @throws TskCoreException if there is a problem accessing the case db.
-     */
-    static Content getDataSource(BlackboardArtifact artifact) throws TskCoreException {
-
-        Case currentCase;
-        try {
-            currentCase = Case.getCurrentCaseThrows();
-        } catch (NoCurrentCaseException ignore) {
-            // thorown by Case.getCurrentOpenCase() if currentCase is null
-            return null;
-        }
-
-        SleuthkitCase sleuthkitCase = currentCase.getSleuthkitCase();
-        if (sleuthkitCase == null) {
-            return null;
-
-        }
-        Content dataSource;
-        AbstractFile abstractFile = sleuthkitCase.getAbstractFileById(artifact.getObjectID());
-        if (abstractFile != null) {
-            dataSource = abstractFile.getDataSource();
-        } else {
-            dataSource = sleuthkitCase.getContentById(artifact.getObjectID());
-        }
-
-        if (dataSource == null) {
-            return null;
-        }
-        return dataSource;
-    }
 
     @Override
     public boolean isDisabled() {
@@ -102,7 +56,7 @@ class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
 
         Content dataSource = null;
         try {
-            dataSource = getDataSource(artifact);
+            dataSource = artifact.getDataSource();
         } catch (TskCoreException tskCoreException) {
             throw new TextExtractorException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
         }

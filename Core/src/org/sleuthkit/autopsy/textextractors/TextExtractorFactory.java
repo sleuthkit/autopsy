@@ -24,11 +24,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Report;
 
 /**
  * Factory for creating text extractors given a source file and a mimetype.
  *
- * See TextExtractor.java for the generic structure of such extractors.
+ * See TextExtractor interface for the generic structure of such extractors.
  */
 public class TextExtractorFactory {
 
@@ -81,19 +82,19 @@ public class TextExtractorFactory {
                             file.getId(), mimeType), ex);
                 }
             }
-        } else if (!(file instanceof BlackboardArtifact)) {
-            TikaTextExtractor tikaExtractor = new TikaTextExtractor();
+        } else if (file instanceof BlackboardArtifact) {
+            TextExtractor artifactExtractor = new ArtifactTextExtractor();
+            artifactExtractor.setExtractionSettings(context);
+            return artifactExtractor;
+        } else if (file instanceof Report) {
+            TextExtractor tikaExtractor = new TikaTextExtractor();
             tikaExtractor.setExtractionSettings(context);
             return tikaExtractor;
         }
-        /*
-         * TODO JIRA-4468 - There should be an additional check for
-         * BlackboardArtifact instances. We should be returning the
-         * ArtifactTextExtractor rather than throwing an exception.
-         */
+
         throw new NoContentSpecificExtractorException(
                 String.format("Could not find a suitable extractor for "
-                        + "file with name [%s] and id=[%d]. Use the default, "
+                        + "file with name [%s] and id=[%d]. Try using the default, "
                         + "non content specific extractor as an alternative.",
                         file.getName(), file.getId())
         );

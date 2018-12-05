@@ -115,14 +115,17 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 return;
             }
             try {
-                ingester.indexMetaDataOnly(artifact);
-                ingester.indexText(new ArtifactTextExtractor(), artifact, null);
-            } catch (Ingester.IngesterException ex) {
+                TextExtractor<Content> contentSpecificExtractor = TextExtractorFactory
+                        .getContentSpecificExtractor(content, null);
+                ingester.indexMetaDataOnly(artifact, contentSpecificExtractor);
+                ingester.indexText(contentSpecificExtractor, artifact, null);
+            } catch (Ingester.IngesterException | TextExtractorFactory.NoContentSpecificExtractorException ex) {
                 throw new TskCoreException(ex.getCause().getMessage(), ex);
             }
         } else {
             try {
-                TextExtractor<Content> contentSpecificExtractor = TextExtractorFactory.getContentSpecificExtractor(content, null);
+                TextExtractor<Content> contentSpecificExtractor = TextExtractorFactory
+                        .getContentSpecificExtractor(content, null);
                 ingester.indexText(contentSpecificExtractor, content, null);
             } catch (TextExtractorFactory.NoContentSpecificExtractorException | Ingester.IngesterException ex) {
                 try {
@@ -441,9 +444,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         final Ingester ingester = Ingester.getDefault();
 
         try {
-            ingester.indexMetaDataOnly(artifact);
-            ingester.indexText(new ArtifactTextExtractor(), artifact, null);
-        } catch (Ingester.IngesterException ex) {
+            TextExtractor<Content> contentSpecificExtractor = 
+                    TextExtractorFactory.getContentSpecificExtractor((Content) artifact, null);
+            ingester.indexMetaDataOnly(artifact, contentSpecificExtractor);
+            ingester.indexText(contentSpecificExtractor, artifact, null);
+        } catch (Ingester.IngesterException | TextExtractorFactory.NoContentSpecificExtractorException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
     }

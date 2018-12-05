@@ -56,7 +56,7 @@ public interface TextExtractor<T extends SleuthkitVisitableItem> {
      * @throws TextExtractorException
      */
     Reader getReader(T source) throws TextExtractorException;
-
+       
     /**
      * Get the 'object' id of the given source.
      *
