@@ -104,7 +104,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
-    private TextExtractor<AbstractFile> stringExtractor;
+    private TextExtractor<Content> stringExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
     private long jobId;
@@ -440,7 +440,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            TextExtractor<AbstractFile> extractor = null;
+            TextExtractor<Content> extractor = null;
             ExtractionContext extractionContext = new ExtractionContext();
             
             ImageFileExtractionConfig imageConfig = new ImageFileExtractionConfig();

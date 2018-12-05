@@ -63,7 +63,7 @@ public class TextExtractorFactory {
      *                                             have no corresponding
      *                                             extractor
      */
-    public static TextExtractor getContentSpecificExtractor(Content file,
+    public static TextExtractor<Content> getContentSpecificExtractor(Content file,
             ExtractionContext context) throws NoContentSpecificExtractorException {
         if (file instanceof AbstractFile) {
             String mimeType = ((AbstractFile) file).getMIMEType();
@@ -108,8 +108,8 @@ public class TextExtractorFactory {
      *
      * @return A StringsTextExtractor instance
      */
-    public static TextExtractor getDefaultExtractor(ExtractionContext context) {
-        TextExtractor stringsInstance = new StringsTextExtractor();
+    public static TextExtractor<Content> getDefaultExtractor(ExtractionContext context) {
+        TextExtractor<Content> stringsInstance = new StringsTextExtractor();
         stringsInstance.setExtractionSettings(context);
         return stringsInstance;
     }

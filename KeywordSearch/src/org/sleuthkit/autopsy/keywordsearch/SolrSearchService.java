@@ -122,7 +122,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
         } else {
             try {
-                TextExtractor contentSpecificExtractor = TextExtractorFactory.getContentSpecificExtractor(content, null);
+                TextExtractor<Content> contentSpecificExtractor = TextExtractorFactory.getContentSpecificExtractor(content, null);
                 ingester.indexText(contentSpecificExtractor, content, null);
             } catch (TextExtractorFactory.NoContentSpecificExtractorException | Ingester.IngesterException ex) {
                 try {
