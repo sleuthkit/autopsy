@@ -630,8 +630,8 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         organizeByCaseRadio = new javax.swing.JRadioButton();
         organizeByCountRadio = new javax.swing.JRadioButton();
 
-        setMinimumSize(new java.awt.Dimension(450, 500));
-        setPreferredSize(new java.awt.Dimension(450, 500));
+        setMinimumSize(new java.awt.Dimension(450, 525));
+        setPreferredSize(new java.awt.Dimension(450, 525));
         setResizable(false);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -639,9 +639,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             }
         });
 
-        jPanel1.setMaximumSize(new java.awt.Dimension(450, 500));
-        jPanel1.setMinimumSize(new java.awt.Dimension(450, 500));
-        jPanel1.setPreferredSize(new java.awt.Dimension(450, 500));
+        jPanel1.setMaximumSize(new java.awt.Dimension(450, 525));
+        jPanel1.setMinimumSize(new java.awt.Dimension(450, 525));
+        jPanel1.setPreferredSize(new java.awt.Dimension(450, 525));
         jPanel1.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(scopeLabel, org.openide.util.NbBundle.getMessage(CommonAttributePanel.class, "CommonAttributePanel.scopeLabel.text")); // NOI18N
@@ -725,8 +725,16 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         .addComponent(dataSourcesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addContainerGap())
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(errorText)
-                        .addGap(65, 65, 65)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(errorText)
+                                .addGap(65, 65, 65))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(20, 20, 20)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(organizeByCountRadio)
+                                    .addComponent(organizeByCaseRadio, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                         .addComponent(searchButton)
                         .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -753,12 +761,6 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         .addComponent(percentageThresholdInputBox, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(percentageThresholdTextTwo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGap(30, 30, 30)
-                .addComponent(organizeByCaseRadio, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(organizeByCountRadio)
-                .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -783,9 +785,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(resultsDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(organizeByCaseRadio)
-                    .addComponent(organizeByCountRadio))
+                .addComponent(organizeByCaseRadio)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(organizeByCountRadio, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(dataSourcesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
