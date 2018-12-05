@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import org.sleuthkit.autopsy.guiutils.DataSourceComboBoxModel;
+import org.sleuthkit.autopsy.guiutils.DataSourceLoader;
 import java.awt.Dimension;
 import java.sql.SQLException;
 import java.util.ArrayList;
