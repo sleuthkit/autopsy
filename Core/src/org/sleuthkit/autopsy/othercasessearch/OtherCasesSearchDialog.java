@@ -169,11 +169,22 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
         org.openide.awt.Mnemonics.setLocalizedText(correlationValueLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationValueLabel.text")); // NOI18N
 
         correlationValueTextField.setText(org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationValueTextField.text")); // NOI18N
+        correlationValueTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                valueFieldKeyReleaseListener(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 searchButtonActionPerformed(evt);
+            }
+        });
+
+        correlationTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                correlationTypeComboBoxActionPerformed(evt);
             }
         });
 
@@ -285,6 +296,16 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
             correlationValueTextField.grabFocus();
         }
     }//GEN-LAST:event_searchButtonActionPerformed
+
+    private void correlationTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_correlationTypeComboBoxActionPerformed
+        //make error message go away when combo box is selected
+        errorLabel.setText("");
+    }//GEN-LAST:event_correlationTypeComboBoxActionPerformed
+
+    private void valueFieldKeyReleaseListener(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_valueFieldKeyReleaseListener
+        //make error message go away when the user enters anything in the value field
+        errorLabel.setText("");
+    }//GEN-LAST:event_valueFieldKeyReleaseListener
 
     /**
      * Validate the supplied input.
