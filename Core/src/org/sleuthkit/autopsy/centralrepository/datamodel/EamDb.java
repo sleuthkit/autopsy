@@ -204,9 +204,8 @@ public interface EamDb {
      * Creates new Data Source in the database
      *
      * @param eamDataSource the data source to add
-     *
-     * @return - A CorrelationDataSource object with data source's central
-     *         repository id
+     * 
+     * @return - A CorrelationDataSource object with data source's central repository id
      */
     CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 
@@ -315,7 +314,7 @@ public interface EamDb {
      * Retrieves number of eamArtifact instances in the database that are
      * associated with the given data source.
      *
-     * @param correlationDataSource Data source to search for
+     * @param correlationDataSource   Data source to search for
      *
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource
