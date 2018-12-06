@@ -58,7 +58,7 @@ public final class InstanceCaseNode extends DisplayableItemNode {
         this.dataSourceToValueList = attributeValues;
 
         this.setDisplayName(this.caseName);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png"); //NON-NLS
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/briefcase.png"); //NON-NLS
     }
 
     /**

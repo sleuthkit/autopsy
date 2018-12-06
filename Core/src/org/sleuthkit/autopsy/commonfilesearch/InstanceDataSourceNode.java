@@ -57,7 +57,7 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
         this.dataSourceToValueList = attributeValues;
 
         this.setDisplayName(this.dataSourceName);
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/image.png"); //NON-NLS
     }
 
     /**
