@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -374,25 +375,32 @@ class VolatilityProcessor {
                         continue;
                     }
                     try {
-                        BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                        BlackboardAttribute att1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, VOLATILITY, Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName));
-                        volArtifact.addAttribute(att1);
+                        Collection<BlackboardAttribute> attributes = new ArrayList<>();
+                        attributes.add(new BlackboardAttribute(
+                                BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, VOLATILITY, Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName)));
+                        
+                        org.sleuthkit.datamodel.Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
+                        // Create artifact if it doesn't already exist.
+                        if (!tskBlackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+                            BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                            volArtifact.addAttributes(attributes);
 
-                        try {
-                            // index the artifact for keyword search
-                            blackboard.indexArtifact(volArtifact);
-                        } catch (Blackboard.BlackboardException ex) {
-                            errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
-                            /*
-                             * Log the exception as well as add it to the error
-                             * messages, to ensure that the stack trace is not
-                             * lost.
-                             */
-                            logger.log(Level.SEVERE, String.format("Failed to index artifact (artifactId=%d) for for output of %s plugin", volArtifact.getArtifactID(), pluginName), ex);
+                            try {
+                                // index the artifact for keyword search
+                                blackboard.indexArtifact(volArtifact);
+                            } catch (Blackboard.BlackboardException ex) {
+                                errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
+                                /*
+                                 * Log the exception as well as add it to the error
+                                 * messages, to ensure that the stack trace is not
+                                 * lost.
+                                 */
+                                logger.log(Level.SEVERE, String.format("Failed to index artifact (artifactId=%d) for for output of %s plugin", volArtifact.getArtifactID(), pluginName), ex);
+                            }
+
+                            // fire event to notify UI of this new artifact
+                            services.fireModuleDataEvent(new ModuleDataEvent(VOLATILITY, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
                         }
-
-                        // fire event to notify UI of this new artifact
-                        services.fireModuleDataEvent(new ModuleDataEvent(VOLATILITY, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
                     } catch (TskCoreException ex) {
                         throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_errorCreatingArtifact(pluginName), ex);
                     }

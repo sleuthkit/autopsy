@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -242,28 +244,41 @@ class SevenZipExtractor {
         String msg = NbBundle.getMessage(SevenZipExtractor.class,
                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnMsg", archiveFile.getName(), escapedFilePath);
         try {
-            BlackboardArtifact artifact = rootArchive.getArchiveFile().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, EmbeddedFileExtractorModuleFactory.getModuleName(),
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, EmbeddedFileExtractorModuleFactory.getModuleName(),
                     "Possible Zip Bomb"));
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                     EmbeddedFileExtractorModuleFactory.getModuleName(),
                     Bundle.SevenZipExtractor_zipBombArtifactCreation_text(archiveFile.getName())));
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                     EmbeddedFileExtractorModuleFactory.getModuleName(),
                     details));
-            try {
-                // index the artifact for keyword search
-                blackboard.indexArtifact(artifact);
-            } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-                MessageNotifyUtil.Notify.error(
-                        Bundle.SevenZipExtractor_indexError_message(), artifact.getDisplayName());
+            
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
+            // Create artifact if it doesn't already exist.
+            if (!tskBlackboard.artifactExists(archiveFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+                BlackboardArtifact artifact = archiveFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                artifact.addAttributes(attributes);
+                
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(artifact);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                            Bundle.SevenZipExtractor_indexError_message(), artifact.getDisplayName());
+                }
+                
+                services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
+                
+                services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
             }
-            services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating blackboard artifact for Zip Bomb Detection for file: " + escapedFilePath, ex); //NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
-        services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
     }
 
     /**
