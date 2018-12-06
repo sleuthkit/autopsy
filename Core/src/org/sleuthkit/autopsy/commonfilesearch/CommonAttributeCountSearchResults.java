@@ -39,9 +39,9 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Stores the results from the various types of common attribute searching
  * Stores results based on how they are currently displayed in the UI
  */
-final public class CommonAttributeSearchResults {
+final public class CommonAttributeCountSearchResults {
 
-    private static final Logger LOGGER = Logger.getLogger(CommonAttributeSearchResults.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributeCountSearchResults.class.getName());
 
     // maps instance count to list of attribute values. 
     private final Map<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
@@ -61,7 +61,7 @@ final public class CommonAttributeSearchResults {
      * @param mimeTypesToFilterOn Set of mime types to include for intercase
      *                            searches
      */
-    CommonAttributeSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType, Set<String> mimeTypesToFilterOn) {
+    CommonAttributeCountSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType, Set<String> mimeTypesToFilterOn) {
         //wrap in a new object in case any client code has used an unmodifiable collection
         this.instanceCountToAttributeValues = new HashMap<>(metadata);
         this.percentageThreshold = percentageThreshold;
@@ -77,7 +77,7 @@ final public class CommonAttributeSearchResults {
      * @param percentageThreshold threshold to filter out files which are too
      *                            common, value of 0 is disabled
      */
-    CommonAttributeSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold) {
+    CommonAttributeCountSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold) {
         //wrap in a new object in case any client code has used an unmodifiable collection
         this.instanceCountToAttributeValues = new HashMap<>(metadata);
         this.percentageThreshold = percentageThreshold;

@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Prototype for an object which finds files with common attributes. Subclass
- * this and implement findMatches in order
+ this and implement findMatchesByCount in order
  */
 public abstract class AbstractCommonAttributeSearcher {
 
@@ -51,10 +51,10 @@ public abstract class AbstractCommonAttributeSearcher {
 
     /**
      * Implement this to search for files with common attributes. Creates an
-     * object (CommonAttributeSearchResults) which contains all of the
-     * information required to display a tree view in the UI. The view will
-     * contain 3 layers: a top level node, indicating the number matches each of
-     * it's children possess, a mid level node indicating the matched attribute,
+ object (CommonAttributeCountSearchResults) which contains all of the
+ information required to display a tree view in the UI. The view will
+ contain 3 layers: a top level node, indicating the number matches each of
+ it's children possess, a mid level node indicating the matched attribute,
      *
      * @return
      *
@@ -63,9 +63,9 @@ public abstract class AbstractCommonAttributeSearcher {
      * @throws SQLException
      * @throws EamDbException
      */
-    public abstract CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
+    public abstract CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
 
-    public abstract CommonAttributeCaseSearchResults findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
+    public abstract CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
     
     /**
      * Implement this to create a descriptive string for the tab which will

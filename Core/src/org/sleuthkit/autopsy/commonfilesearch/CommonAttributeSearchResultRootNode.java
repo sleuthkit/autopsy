@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
  */
 final public class CommonAttributeSearchResultRootNode extends DisplayableItemNode {
 
-    CommonAttributeSearchResultRootNode(CommonAttributeSearchResults metadataList) {
+    CommonAttributeSearchResultRootNode(CommonAttributeCountSearchResults metadataList) {
         super(Children.create(new InstanceCountNodeFactory(metadataList), true));
     }
 
@@ -72,16 +72,16 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
 
         private static final Logger LOGGER = Logger.getLogger(InstanceCountNodeFactory.class.getName());
 
-        private final CommonAttributeSearchResults searchResults;
+        private final CommonAttributeCountSearchResults searchResults;
 
         /**
          * Build a factory which converts a
-         * <code>CommonAttributeSearchResults</code> object into
+         * <code>CommonAttributeCountSearchResults</code> object into
          * <code>DisplayableItemNode</code>s.
          *
          * @param searchResults
          */
-        InstanceCountNodeFactory(CommonAttributeSearchResults searchResults) {
+        InstanceCountNodeFactory(CommonAttributeCountSearchResults searchResults) {
             this.searchResults = searchResults;
         }
 
@@ -109,7 +109,7 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
 
         /**
          * Build a factory which converts a
-         * <code>CommonAttributeSearchResults</code> object into
+         * <code>CommonAttributeCountSearchResults</code> object into
          * <code>DisplayableItemNode</code>s.
          *
          * @param searchResults

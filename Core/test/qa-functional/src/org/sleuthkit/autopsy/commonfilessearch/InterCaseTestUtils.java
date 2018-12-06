@@ -55,7 +55,7 @@ import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
@@ -411,7 +411,7 @@ class InterCaseTestUtils {
         }
     }
 
-    static boolean verifyInstanceCount(CommonAttributeSearchResults searchDomain, int instanceCount) {
+    static boolean verifyInstanceCount(CommonAttributeCountSearchResults searchDomain, int instanceCount) {
             int tally = 0;
             for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
                 entry.getValue().displayDelayedMetadata();
@@ -423,7 +423,7 @@ class InterCaseTestUtils {
             return tally == instanceCount;
     }
 
-    static boolean verifyInstanceExistenceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount) {
+    static boolean verifyInstanceExistenceAndCount(CommonAttributeCountSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount) {
             int tally = 0;
             for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
                 entry.getValue().displayDelayedMetadata();
@@ -501,7 +501,7 @@ class InterCaseTestUtils {
      *
      * @return true if yes, else false
      */
-    boolean areAllResultsOfType(CommonAttributeSearchResults metadata, CorrelationAttributeInstance.Type attributeType) {
+    boolean areAllResultsOfType(CommonAttributeCountSearchResults metadata, CorrelationAttributeInstance.Type attributeType) {
             for (CommonAttributeValueList matches : metadata.getMetadata().values()) {
                 for (CommonAttributeValue value : matches.getMetadataList()) {
                     return value

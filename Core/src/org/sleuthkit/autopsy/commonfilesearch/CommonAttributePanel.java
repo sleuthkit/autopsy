@@ -204,13 +204,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         "CommonAttributePanel.search.done.sqlException=Unable to query db for properties or data sources.",
         "CommonAttributePanel.search.done.noResults=No results found."})
     private void search() {
-        new SwingWorker<CommonAttributeSearchResults, Void>() {
+        new SwingWorker<CommonAttributeCountSearchResults, Void>() {
 
             private String tabTitle;
             private ProgressHandle progress;
 
             @Override
-            protected CommonAttributeSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+            protected CommonAttributeCountSearchResults doInBackground() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
                 progress = ProgressHandle.createHandle(Bundle.CommonAttributePanel_search_done_searchProgressGathering());
                 progress.start();
                 progress.switchToIndeterminate();
@@ -219,7 +219,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 Integer caseId = interCasePanel.getSelectedCaseId();
 
                 AbstractCommonAttributeSearcher builder;
-                CommonAttributeSearchResults metadata;
+                CommonAttributeCountSearchResults metadata;
 
                 boolean filterByMedia = false;
                 boolean filterByDocuments = false;
@@ -259,7 +259,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     }
 
                 }
-                metadata = builder.findMatches();
+                metadata = builder.findMatchesByCount();
                 this.tabTitle = builder.getTabTitle();
                 return metadata;
             }
@@ -268,7 +268,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
             protected void done() {
                 try {
                     super.done();
-                    CommonAttributeSearchResults metadata = this.get();
+                    CommonAttributeCountSearchResults metadata = this.get();
                     boolean noKeysExist = true;
                     try {
                         metadata.filterMetadata();
@@ -378,7 +378,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     }
 
                 }
-                metadata = builder.findMatches2();
+                metadata = builder.findMatchesByCase();
                 this.tabTitle = builder.getTabTitle();
                 return metadata;
             }

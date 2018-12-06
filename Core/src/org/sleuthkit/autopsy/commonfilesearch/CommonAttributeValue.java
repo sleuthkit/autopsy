@@ -1,16 +1,16 @@
 /*
- * 
+ *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,19 +28,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Defines a value that was in the common file search results 
- * as well as information about its instances.
+ * Defines a value that was in the common file search results as well as
+ * information about its instances.
  */
 final public class CommonAttributeValue {
 
     private final String value;
     private final List<AbstractCommonAttributeInstance> fileInstances;
-
-    CommonAttributeValue(String value, List<AbstractCommonAttributeInstance> fileInstances) {
-        this.value = value;
-        this.fileInstances = fileInstances;
-
-    }
 
     CommonAttributeValue(String value) {
         this.value = value;
@@ -53,8 +47,8 @@ final public class CommonAttributeValue {
 
     /**
      * concatenate cases this value was seen into a single string
-     * 
-     * @return 
+     *
+     * @return
      */
     public String getCases() {
         return this.fileInstances.stream().map(AbstractCommonAttributeInstance::getCaseName).collect(Collectors.joining(", "));
@@ -65,7 +59,7 @@ final public class CommonAttributeValue {
         for (AbstractCommonAttributeInstance data : this.fileInstances) {
             sources.add(data.getDataSource());
         }
-        
+
         return String.join(", ", sources);
     }
 

@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
@@ -187,7 +187,7 @@ class IntraCaseTestUtils {
      * @param metadata object returned by the code under test
      * @return mapping of objectId to data source name
      */
-    static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeSearchResults metadata) {
+    static Map<Long, String> mapFileInstancesToDataSources(CommonAttributeCountSearchResults metadata) {
         Map<Long, String> instanceIdToDataSource = new HashMap<>();
             for (Map.Entry<Integer, CommonAttributeValueList> entry : metadata.getMetadata().entrySet()) {
                 entry.getValue().displayDelayedMetadata();

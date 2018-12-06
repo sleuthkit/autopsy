@@ -128,9 +128,9 @@ final class InterCaseSearchResultsProcessor {
      *
      * @param currentCase The current TSK Case.
      */
-    Map<String, Map<String, CommonAttributeValueList>> findInterCaseCommonAttributeValues2(Case currentCase) {
+    Map<String, Map<String, CommonAttributeValueList>> findInterCaseValuesByCase(Case currentCase) {
         try {
-            NewInterCaseCommonAttributesCallback instancetableCallback = new NewInterCaseCommonAttributesCallback();
+            InterCaseByCaseCallback instancetableCallback = new InterCaseByCaseCallback();
             EamDb dbManager = EamDb.getInstance();
 
             int caseId = dbManager.getCase(currentCase).getID();
@@ -153,9 +153,9 @@ final class InterCaseSearchResultsProcessor {
      *
      * @param currentCase The current TSK Case.
      */
-    Map<Integer, CommonAttributeValueList> findInterCaseCommonAttributeValues(Case currentCase) {
+    Map<Integer, CommonAttributeValueList> findInterCaseValuesByCount(Case currentCase) {
         try {
-            InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
+            InterCaseByCountCallback instancetableCallback = new InterCaseByCountCallback();
             EamDb dbManager = EamDb.getInstance();
 
             int caseId = dbManager.getCase(currentCase).getID();
@@ -180,9 +180,9 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase  The case of interest. Matches must exist in this case.
      */
-    Map<Integer, CommonAttributeValueList> findSingleInterCaseCommonAttributeValues(Case currentCase, CorrelationCase singleCase) {
+    Map<Integer, CommonAttributeValueList> findSingleInterCaseValuesByCount(Case currentCase, CorrelationCase singleCase) {
         try {
-            InterCaseCommonAttributesCallback instancetableCallback = new InterCaseCommonAttributesCallback();
+            InterCaseByCountCallback instancetableCallback = new InterCaseByCountCallback();
             EamDb dbManager = EamDb.getInstance();
             int caseId = dbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
@@ -203,9 +203,9 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase  The case of interest. Matches must exist in this case.
      */
-    Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseCommonAttributeValues2(Case currentCase, CorrelationCase singleCase) {
+    Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseValuesByCase(Case currentCase, CorrelationCase singleCase) {
         try {
-            NewInterCaseCommonAttributesCallback instancetableCallback = new NewInterCaseCommonAttributesCallback();
+            InterCaseByCaseCallback instancetableCallback = new InterCaseByCaseCallback();
             EamDb dbManager = EamDb.getInstance();
             int caseId = dbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
@@ -219,10 +219,10 @@ final class InterCaseSearchResultsProcessor {
     }
 
     /**
-     * Callback to use with findInterCaseCommonAttributeValues which generates a
-     * list of md5s for common files search
+     * Callback to use with findInterCaseValuesByCount which generates a
+ list of md5s for common files search
      */
-    private class InterCaseCommonAttributesCallback implements InstanceTableCallback {
+    private class InterCaseByCountCallback implements InstanceTableCallback {
 
         final Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new HashMap<>();
 
@@ -303,10 +303,10 @@ final class InterCaseSearchResultsProcessor {
     }
 
     /**
-     * Callback to use with findInterCaseCommonAttributeValues which generates a
-     * list of md5s for common files search
+     * Callback to use with findInterCaseValuesByCount which generates a
+ list of md5s for common files search
      */
-    private class NewInterCaseCommonAttributesCallback implements InstanceTableCallback {
+    private class InterCaseByCaseCallback implements InstanceTableCallback {
 
         final Map<String, Map<String, CommonAttributeValueList>> caseCollatedDataSourceCollections = new HashMap<>();
 
@@ -343,7 +343,7 @@ final class InterCaseSearchResultsProcessor {
                 }
             } catch (EamDbException | SQLException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
-            }
+            } 
         }
 
         Map<String, Map<String, CommonAttributeValueList>> getInstanceCollatedCommonFiles() {

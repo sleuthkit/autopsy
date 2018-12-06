@@ -24,7 +24,6 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -38,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  * Generates a <code>List<CommonFilesMetadata></code> when
- * <code>findMatches()</code> is called, which organizes files by md5 to prepare
+ * <code>findMatchesByCount()</code> is called, which organizes files by md5 to prepare
  * to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
@@ -103,7 +102,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * @throws SQLException
      */
     @Override
-    public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException {
+    public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException {
         Map<String, CommonAttributeValue> commonFiles = new HashMap<>();
 
         final Case currentCase = Case.getCurrentCaseThrows();
@@ -140,11 +139,11 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
         Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
 
-        return new CommonAttributeSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
+        return new CommonAttributeCountSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
     }
 
     @Override
-    public CommonAttributeCaseSearchResults findMatches2() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         throw new EamDbException("Not Supported at the moment");
     }
 
