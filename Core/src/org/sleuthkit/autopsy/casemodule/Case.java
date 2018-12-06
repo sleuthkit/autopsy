@@ -1122,7 +1122,7 @@ public class Case {
                  */
                 
                 //Deny ability to add a data source if the special admin access file is present.
-                File denyAddDataSourcePermissions = new File(PlatformUtil.getUserConfigDirectory(), "addDataSourceChildLock");
+                File denyAddDataSourcePermissions = new File(PlatformUtil.getUserConfigDirectory(), "_source");
                 if(!denyAddDataSourcePermissions.exists()) {
                     CallableSystemAction.get(AddImageAction.class).setEnabled(true);
                 }
