@@ -20,7 +20,7 @@ Contains only the core ingest modules that ship with Autopsy -->
     </PIPELINE>
     
     <PIPELINE type="ImageAnalysisStageTwo">
-        <MODULE>org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory</MODULE>
+        <MODULE>org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory</MODULE>
     </PIPELINE>
     
 </PIPELINE_CONFIG>

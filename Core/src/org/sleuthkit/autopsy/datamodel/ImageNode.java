@@ -124,10 +124,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         "ImageNode.createSheet.type.text=Image",
         "ImageNode.createSheet.sectorSize.name=Sector Size (Bytes)",
         "ImageNode.createSheet.sectorSize.displayName=Sector Size (Bytes)",
-        "ImageNode.createSheet.sectorSize.desc=Sector size of the image in bytes.",
-        "ImageNode.createSheet.md5.name=MD5 Hash",
-        "ImageNode.createSheet.md5.displayName=MD5 Hash",
-        "ImageNode.createSheet.md5.desc=MD5 Hash of the image",
+        "ImageNode.createSheet.sectorSize.desc=Sector size of the image in bytes.",      
         "ImageNode.createSheet.timezone.name=Timezone",
         "ImageNode.createSheet.timezone.displayName=Timezone",
         "ImageNode.createSheet.timezone.desc=Timezone of the image",
@@ -160,11 +157,6 @@ public class ImageNode extends AbstractContentNode<Image> {
                 Bundle.ImageNode_createSheet_sectorSize_displayName(),
                 Bundle.ImageNode_createSheet_sectorSize_desc(),
                 this.content.getSsize()));
-
-        sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_md5_name(),
-                Bundle.ImageNode_createSheet_md5_displayName(),
-                Bundle.ImageNode_createSheet_md5_desc(),
-                this.content.getMd5()));
 
         sheetSet.put(new NodeProperty<>(Bundle.ImageNode_createSheet_timezone_name(),
                 Bundle.ImageNode_createSheet_timezone_displayName(),
