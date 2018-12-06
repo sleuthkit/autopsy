@@ -35,5 +35,9 @@
         <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         <dependency conf="core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         
+        <!-- Tika 1.14 seems to declare a (transitive?) dependency on cleartk-util 3.2.2, but the most recent
+        version available is 2.0.0  Overriding the version worked-->
+        <override  org="org.cleartk" module="cleartk-util" rev="2.0.0"/>
+        
     </dependencies>
 </ivy-module>

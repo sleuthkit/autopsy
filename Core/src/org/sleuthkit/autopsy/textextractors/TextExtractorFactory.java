@@ -53,6 +53,7 @@ public class TextExtractorFactory {
      * keep the extractors at default settings. Refer to the extractionconfigs
      * package for available file configurations.
      *
+     * @param <T>
      * @param file    Content source that will be read from
      * @param context Contains extraction configurations for certain file types
      *
@@ -64,7 +65,7 @@ public class TextExtractorFactory {
      *                                             have no corresponding
      *                                             extractor
      */
-    public static TextExtractor<Content> getContentSpecificExtractor(Content file,
+    public static <T extends Content> TextExtractor<T> getContentSpecificExtractor(T file,
             ExtractionContext context) throws NoContentSpecificExtractorException {
         if (file instanceof AbstractFile) {
             String mimeType = ((AbstractFile) file).getMIMEType();
@@ -73,7 +74,7 @@ public class TextExtractorFactory {
                     ContentTextExtractor newInstance = (ContentTextExtractor) candidate.newInstance();
                     newInstance.setExtractionSettings(context);
                     if (newInstance.isSupported(file, mimeType)) {
-                        return newInstance;
+                        return (TextExtractor<T>) newInstance;
                     }
                 } catch (SecurityException | InstantiationException | IllegalAccessException
                         | IllegalArgumentException ex) {
@@ -83,11 +84,11 @@ public class TextExtractorFactory {
                 }
             }
         } else if (file instanceof BlackboardArtifact) {
-            TextExtractor artifactExtractor = new ArtifactTextExtractor();
+            TextExtractor<BlackboardArtifact> artifactExtractor = new ArtifactTextExtractor();
             artifactExtractor.setExtractionSettings(context);
-            return artifactExtractor;
+            return (TextExtractor<T>) artifactExtractor;
         } else if (file instanceof Report) {
-            TextExtractor tikaExtractor = new TikaTextExtractor();
+            TextExtractor<T> tikaExtractor = (TextExtractor<T>) new TikaTextExtractor();
             tikaExtractor.setExtractionSettings(context);
             return tikaExtractor;
         }
