@@ -30,7 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -218,26 +217,33 @@ public class IngestEventsListener {
     static private void postCorrelatedPreviousArtifactToBlackboard(BlackboardArtifact bbArtifact) {
 
         try {
-            AbstractFile af = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
-            Collection<BlackboardAttribute> attributes = new ArrayList<>();
             String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
-            BlackboardArtifact tifArtifact = af.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+            
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.IngestEventsListener_prevExists_text());
             attributes.add(att);
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
+            
+            SleuthkitCase tskCase = bbArtifact.getSleuthkitCase();
+            AbstractFile abstractFile = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
+            org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
+            // Create artifact if it doesn't already exist.
+            if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT, attributes)) {
+                BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+                tifArtifact.addAttributes(attributes);
+                
+                try {
+                    // index the artifact for keyword search
+                    Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+                    blackboard.indexArtifact(tifArtifact);
+                } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
+                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
+                }
 
-            tifArtifact.addAttributes(attributes);
-            try {
-                // index the artifact for keyword search
-                Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
-                blackboard.indexArtifact(tifArtifact);
-            } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
+                // fire event to notify UI of this new artifact
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
             }
-
-            // fire event to notify UI of this new artifact
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
         } catch (IllegalStateException ex) {

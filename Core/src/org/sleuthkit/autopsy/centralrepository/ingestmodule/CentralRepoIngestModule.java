@@ -25,7 +25,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -60,14 +59,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  * Ingest module for inserting entries into the Central Repository database on
  * ingest of a data source
  */
-@Messages({"IngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
-    "IngestModule.prevCaseComment.text=Previous Case: "})
-final class IngestModule implements FileIngestModule {
+@Messages({"CentralRepoIngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
+    "CentralRepoIngestModule.prevCaseComment.text=Previous Case: "})
+final class CentralRepoIngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = true;
     static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = true;
 
-    private final static Logger logger = Logger.getLogger(IngestModule.class.getName());
+    private final static Logger logger = Logger.getLogger(CentralRepoIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
@@ -84,7 +83,7 @@ final class IngestModule implements FileIngestModule {
      *
      * @param settings The ingest settings for the module instance.
      */
-    IngestModule(IngestSettings settings) {
+    CentralRepoIngestModule(IngestSettings settings) {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
         flagPreviouslySeenDevices = settings.isFlagPreviousDevices();
     }
@@ -211,8 +210,8 @@ final class IngestModule implements FileIngestModule {
 
     // see ArtifactManagerTimeTester for details
     @Messages({
-        "IngestModule.notfyBubble.title=Central Repository Not Initialized",
-        "IngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Correlation Engine ingest module."
+        "CentralRepoIngestModule.notfyBubble.title=Central Repository Not Initialized",
+        "CentralRepoIngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Correlation Engine ingest module."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -249,7 +248,7 @@ final class IngestModule implements FileIngestModule {
              */
             if (RuntimeProperties.runningWithGUI()) {
                 if (1L == warningMsgRefCounter.incrementAndGet(jobId)) {
-                    MessageNotifyUtil.Notify.warn(Bundle.IngestModule_notfyBubble_title(), Bundle.IngestModule_errorMessage_isNotEnabled());
+                    MessageNotifyUtil.Notify.warn(Bundle.CentralRepoIngestModule_notfyBubble_title(), Bundle.CentralRepoIngestModule_errorMessage_isNotEnabled());
                 }
             }
             return;
@@ -324,16 +323,22 @@ final class IngestModule implements FileIngestModule {
         }
     }
 
+    /**
+     * Post a new interesting artifact for the file marked bad.
+     * 
+     * @param abstractFile     The file from which to create an artifact.
+     * @param caseDisplayNames Case names to be added to a TSK_COMMON attribute.
+     */
     private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
 
         try {
-            String MODULE_NAME = IngestModuleFactory.getModuleName();
+            String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
             
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.IngestModule_prevTaggedSet_text()));
+                    Bundle.CentralRepoIngestModule_prevTaggedSet_text()));
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                    Bundle.IngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", ""))));
+                    Bundle.CentralRepoIngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", ""))));
             
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
@@ -372,12 +377,12 @@ final class IngestModule implements FileIngestModule {
      * @param name     badFile's name
      * @param md5Hash  badFile's md5 hash
      */
-    @Messages({"IngestModule.postToBB.fileName=File Name",
-        "IngestModule.postToBB.md5Hash=MD5 Hash",
-        "IngestModule.postToBB.hashSetSource=Source of Hash",
-        "IngestModule.postToBB.eamHit=Central Repository",
+    @Messages({"CentralRepoIngestModule.postToBB.fileName=File Name",
+        "CentralRepoIngestModule.postToBB.md5Hash=MD5 Hash",
+        "CentralRepoIngestModule.postToBB.hashSetSource=Source of Hash",
+        "CentralRepoIngestModule.postToBB.eamHit=Central Repository",
         "# {0} - Name of file that is Notable",
-        "IngestModule.postToBB.knownBadMsg=Notable: {0}"})
+        "CentralRepoIngestModule.postToBB.knownBadMsg=Notable: {0}"})
     public void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash) {
         StringBuilder detailsSb = new StringBuilder();
         //details
@@ -385,7 +390,7 @@ final class IngestModule implements FileIngestModule {
         //hit
         detailsSb.append("<tr>"); //NON-NLS
         detailsSb.append("<th>") //NON-NLS
-                .append(Bundle.IngestModule_postToBB_fileName())
+                .append(Bundle.CentralRepoIngestModule_postToBB_fileName())
                 .append("</th>"); //NON-NLS
         detailsSb.append("<td>") //NON-NLS
                 .append(name)
@@ -394,22 +399,22 @@ final class IngestModule implements FileIngestModule {
 
         detailsSb.append("<tr>"); //NON-NLS
         detailsSb.append("<th>") //NON-NLS
-                .append(Bundle.IngestModule_postToBB_md5Hash())
+                .append(Bundle.CentralRepoIngestModule_postToBB_md5Hash())
                 .append("</th>"); //NON-NLS
         detailsSb.append("<td>").append(md5Hash).append("</td>"); //NON-NLS
         detailsSb.append("</tr>"); //NON-NLS
 
         detailsSb.append("<tr>"); //NON-NLS
         detailsSb.append("<th>") //NON-NLS
-                .append(Bundle.IngestModule_postToBB_hashSetSource())
+                .append(Bundle.CentralRepoIngestModule_postToBB_hashSetSource())
                 .append("</th>"); //NON-NLS
-        detailsSb.append("<td>").append(Bundle.IngestModule_postToBB_eamHit()).append("</td>"); //NON-NLS            
+        detailsSb.append("<td>").append(Bundle.CentralRepoIngestModule_postToBB_eamHit()).append("</td>"); //NON-NLS            
         detailsSb.append("</tr>"); //NON-NLS
 
         detailsSb.append("</table>"); //NON-NLS
 
-        services.postMessage(IngestMessage.createDataMessage(IngestModuleFactory.getModuleName(),
-                Bundle.IngestModule_postToBB_knownBadMsg(name),
+        services.postMessage(IngestMessage.createDataMessage(CentralRepoIngestModuleFactory.getModuleName(),
+                Bundle.CentralRepoIngestModule_postToBB_knownBadMsg(name),
                 detailsSb.toString(),
                 name + md5Hash,
                 artifact));
