@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import javax.swing.JPanel;
-
 public interface GeneralReportModule extends ReportModule {
 
     /**
@@ -32,14 +30,5 @@ public interface GeneralReportModule extends ReportModule {
      * @param progressPanel panel to update the report's progress with
      */
     public void generateReport(String baseReportDir, ReportProgressPanel progressPanel);
-
-    /**
-     * Returns the configuration panel for the report, which is displayed in the
-     * report configuration step of the report wizard.
-     *
-     * @return Configuration panel or null if the module does not need
-     *         configuration.
-     */
-    public JPanel getConfigurationPanel();
 
 }

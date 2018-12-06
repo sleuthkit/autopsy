@@ -3106,27 +3106,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         updateCoordinationServiceManifestNode(currentJob);
                         eventPublisher.publishRemotely(new AutoIngestJobStatusEvent(currentJob));
                     }
-
-                    if (AutoIngestUserPreferences.getStatusDatabaseLoggingEnabled()) {
-                        String message;
-                        boolean isError = false;
-                        if (getErrorState().equals(ErrorState.NONE)) {
-                            if (currentJob != null) {
-                                message = "Processing " + currentJob.getManifest().getDataSourceFileName()
-                                        + " for case " + currentJob.getManifest().getCaseName();
-                            } else {
-                                message = "Paused or waiting for next case";
-                            }
-                        } else {
-                            message = getErrorState().toString();
-                            isError = true;
-                        }
-                        try {
-                            StatusDatabaseLogger.logToStatusDatabase(message, isError);
-                        } catch (SQLException | UserPreferencesException ex) {
-                            sysLogger.log(Level.WARNING, "Failed to update status database", ex);
-                        }
-                    }
                 }
 
                 // check whether any remote nodes have timed out

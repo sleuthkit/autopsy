@@ -65,6 +65,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 final class IngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = true;
+    static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = true;
 
     private final static Logger logger = Logger.getLogger(IngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
@@ -76,6 +77,7 @@ final class IngestModule implements FileIngestModule {
     private Blackboard blackboard;
     private CorrelationAttributeInstance.Type filesType;
     private final boolean flagTaggedNotableItems;
+    private final boolean flagPreviouslySeenDevices;
 
     /**
      * Instantiate the Correlation Engine ingest module.
@@ -84,6 +86,7 @@ final class IngestModule implements FileIngestModule {
      */
     IngestModule(IngestSettings settings) {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
+        flagPreviouslySeenDevices = settings.isFlagPreviousDevices();
     }
 
     @Override
@@ -231,6 +234,9 @@ final class IngestModule implements FileIngestModule {
          */
         if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagNotableItems()) {
             IngestEventsListener.setFlagNotableItems(flagTaggedNotableItems);
+        }
+        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagSeenDevices()) {
+            IngestEventsListener.setFlagSeenDevices(flagPreviouslySeenDevices);
         }
 
         if (EamDb.isEnabled() == false) {

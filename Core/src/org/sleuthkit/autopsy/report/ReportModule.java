@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2012-2018 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 package org.sleuthkit.autopsy.report;
+
+import javax.swing.JPanel;
 
 /**
  * Interface for report modules that plug in to the reporting infrastructure.
@@ -47,4 +49,15 @@ interface ReportModule {
      *         module does not produce a report file.
      */
     public String getRelativeFilePath();
+
+    /**
+     * Returns the configuration panel for the report, which is displayed in the
+     * report configuration step of the report wizard.
+     *
+     * @return Configuration panel or null if the module does not need
+     *         configuration.
+     */
+    public default JPanel getConfigurationPanel() {
+        return new DefaultReportConfigurationPanel();
+    }
 }
