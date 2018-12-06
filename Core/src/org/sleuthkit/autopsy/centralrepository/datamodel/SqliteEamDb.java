@@ -544,28 +544,6 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
 
-    /**
-     * Retrieves number of unique cases in the
-     * database that are associated with the artifactType and artifactValue of
-     * the given artifact.
-     *
-     * @param aType The correlation type
-     * @param value The value to search for
-     *
-     * @return Number of unique cases
-     *
-     * @throws EamDbException
-     */
-    @Override
-    public Long getCountOfCasesWithValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
-        try {
-            acquireSharedLock();
-            return super.getCountUniqueDataSources();
-        } finally {
-            releaseSharedLock();
-        }
-    }
-
     @Override
     public Long getCountUniqueDataSources() throws EamDbException {
         try {

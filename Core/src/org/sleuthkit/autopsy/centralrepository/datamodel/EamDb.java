@@ -305,18 +305,6 @@ public interface EamDb {
     Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
-     * Retrieves number of unique cases in the
-     * database that are associated with the artifactType and artifactValue of
-     * the given artifact.
-     *
-     * @param aType EamArtifact.Type to search for
-     * @param value Value to search for
-     *
-     * @return Number of unique cases
-     */
-    Long getCountOfCasesWithValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
-
-    /**
      * Retrieves number of data sources in the database.
      *
      * @return Number of unique data sources
