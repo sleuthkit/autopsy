@@ -196,6 +196,10 @@ public class ImageGalleryModule {
                 return;
             }
 
+            if (currentController.isListeningEnabled() == false) {
+                return;
+            }
+            
             String eventType = event.getPropertyName();
             switch (IngestManager.IngestModuleEvent.valueOf(eventType)) {
                 case FILE_DONE:
@@ -203,14 +207,12 @@ public class ImageGalleryModule {
                     if (!file.isFile()) {
                         return;
                     }
-                    if (currentController.isListeningEnabled()) {
-                        try {
-                            if (isDrawableAndNotKnown(file)) {
-                                currentController.queueDBTask(new ImageGalleryController.UpdateFileTask(file, currentController.getDatabase()));
-                            }
-                        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to determine if file is of interest to the image gallery module, ignoring file (obj_id=%d)", file.getId()), ex); //NON-NLS
+                    try {
+                        if (isDrawableAndNotKnown(file)) {
+                            currentController.queueDBTask(new ImageGalleryController.UpdateFileTask(file, currentController.getDatabase()));
                         }
+                    } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                        logger.log(Level.SEVERE, String.format("Failed to determine if file is of interest to the image gallery module, ignoring file (obj_id=%d)", file.getId()), ex); //NON-NLS
                     }
                     break;
                 case DATA_ADDED:
