@@ -37,6 +37,7 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
 
     private final String caseName;
     private final String dataSource;
+    private final String value;
     private final AbstractCommonAttributeInstance.NODE_TYPE nodeType;
 
     /**
@@ -48,11 +49,12 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
      * @param dataSource the datasource which contains the file
      *
      */
-    public CaseDBCommonAttributeInstanceNode(AbstractFile fsContent, String caseName, String dataSource, AbstractCommonAttributeInstance.NODE_TYPE nodeType) {
+    public CaseDBCommonAttributeInstanceNode(AbstractFile fsContent, String caseName, String dataSource, String value, AbstractCommonAttributeInstance.NODE_TYPE nodeType) {
         super(fsContent, false);
         this.caseName = caseName;
         this.dataSource = dataSource;
         this.nodeType = nodeType;
+        this.value = value;
     }
 
     @Override
@@ -96,7 +98,7 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
             sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
             sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl(), NO_DESCR, caseName));
         } else if (nodeType == AbstractCommonAttributeInstance.NODE_TYPE.CASE_NODE) {
-            sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_valueColLbl(), Bundle.CommonFilesSearchResultsViewerTable_valueColLbl(), NO_DESCR, this.getContent().getMd5Hash()));
+            sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_valueColLbl(), Bundle.CommonFilesSearchResultsViewerTable_valueColLbl(), NO_DESCR, this.value));
         }
         return sheet;
     }

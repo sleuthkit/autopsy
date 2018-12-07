@@ -165,9 +165,8 @@ public abstract class AbstractCommonAttributeInstance {
             leafNode = new CentralRepoCommonAttributeInstanceNode(attribute, nodeType);
         } else {
             final String abstractFileDataSourceName = abstractFile.getDataSource().getName();
-            leafNode = new CaseDBCommonAttributeInstanceNode(abstractFile, currentCaseName, abstractFileDataSourceName, nodeType);
+            leafNode = new CaseDBCommonAttributeInstanceNode(abstractFile, currentCaseName, abstractFileDataSourceName, attribute.getCorrelationValue(), nodeType);
         }
-
         return leafNode;
     }
 

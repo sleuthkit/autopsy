@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final public class CaseDBCommonAttributeInstance extends AbstractCommonAttributeInstance {
     
     private static final Logger LOGGER = Logger.getLogger(CaseDBCommonAttributeInstance.class.getName());
-    
+    private final String value;
     
     /**
      * Create meta data required to find an abstract file and build a
@@ -45,13 +45,14 @@ final public class CaseDBCommonAttributeInstance extends AbstractCommonAttribute
      * @param objectId id of abstract file to find
      * @param dataSourceName name of datasource where the object is found
      */
-    CaseDBCommonAttributeInstance(Long abstractFileReference, String dataSource, String caseName) {
+    CaseDBCommonAttributeInstance(Long abstractFileReference, String dataSource, String caseName, String value) {
         super(abstractFileReference, dataSource, caseName);
+        this.value = value;
     }
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-        final CaseDBCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new CaseDBCommonAttributeInstanceNode(this.getAbstractFile(), this.getCaseName(), this.getDataSource(), NODE_TYPE.COUNT_NODE);
+        final CaseDBCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new CaseDBCommonAttributeInstanceNode(this.getAbstractFile(), this.getCaseName(), this.getDataSource(), this.value, NODE_TYPE.COUNT_NODE);
         return Arrays.asList(intraCaseCommonAttributeInstanceNode).toArray(new DisplayableItemNode[1]);
     }
     

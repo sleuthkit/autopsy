@@ -390,14 +390,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                 try {
                     super.done();
                     CommonAttributeCaseSearchResults metadata = this.get();
-                    boolean noKeysExist = true;
-                    try {
-                        metadata.filterMetaData();
-                        noKeysExist = metadata.getMetadata().keySet().isEmpty();
-                    } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Unable to get keys from metadata", ex);
-                    }
-                    if (noKeysExist) {
+                    if (metadata.getMetadata().keySet().isEmpty()) {
                         Node commonFilesNode = new TableFilterNode(new EmptyNode(Bundle.CommonAttributePanel_search_done_noResults()), true);
                         progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay());
                         DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), commonFilesNode, 1);
