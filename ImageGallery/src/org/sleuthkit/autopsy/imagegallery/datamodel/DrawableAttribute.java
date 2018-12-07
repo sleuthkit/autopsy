@@ -227,7 +227,7 @@ public class DrawableAttribute<T extends Comparable<T>> {
 
     public Collection<T> getValue(DrawableFile f) {
         return extractor.apply(f).stream()
-              .filter(v ->  (v != null && v.toString().isEmpty()== false) )
+              .filter(value ->  (value != null && value.toString().isEmpty()== false) )
               .collect(Collectors.toSet());
     }
 
