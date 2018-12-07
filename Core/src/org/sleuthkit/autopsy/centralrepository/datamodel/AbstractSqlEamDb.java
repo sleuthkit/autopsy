@@ -3342,6 +3342,14 @@ abstract class AbstractSqlEamDb implements EamDb {
                     }
                     statement.execute(String.format(addObjectIdIndexTemplate, instance_type_dbname, instance_type_dbname));
                 }
+
+                /*
+                 * Add hash columns to the data_sources table.
+                 */
+                statement.execute("ALTER TABLE data_sources ADD COLUMN md5 TEXT DEFAULT NULL");
+                statement.execute("ALTER TABLE data_sources ADD COLUMN sha1 TEXT DEFAULT NULL");
+                statement.execute("ALTER TABLE data_sources ADD COLUMN sha256 TEXT DEFAULT NULL");
+
             }
             if (!updateSchemaVersion(conn)) {
                 throw new EamDbException("Error updating schema version");
