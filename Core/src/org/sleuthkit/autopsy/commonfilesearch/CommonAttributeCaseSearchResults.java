@@ -139,7 +139,7 @@ final public class CommonAttributeCaseSearchResults {
             throw new EamDbException("Unable to get current case while performing filtering", ex);
         }
         Double uniqueCaseDataSourceTuples = EamDb.getInstance().getCountUniqueDataSources().doubleValue();
-        Map<String, List<ValueToRemove>> valuesToRemove = new HashMap<>();
+
         //Call countUniqueDataSources once to reduce the number of DB queries needed to get
         //the frequencyPercentage
         Map<String, CommonAttributeValueList> currentCaseDataSourceMap = this.caseNameToDataSources.get(currentCaseName);
@@ -147,39 +147,47 @@ final public class CommonAttributeCaseSearchResults {
             LOGGER.log(Level.INFO, "No data for current case found in results, indicating there are no results and nothing will be filtered");
             return;
         }
-        getValuesToRemoveFromCase(valuesToRemove, currentCaseName, currentCaseDataSourceMap, attributeType, maximumPercentageThreshold, uniqueCaseDataSourceTuples);
+        Map<String, Map<String, CommonAttributeValueList>> filteredCaseNameToDataSourcesTree = new HashMap<>();
+        Map<String, CommonAttributeValue> valuesToKeepCurrentCase = getValuesToKeepFromCurrentCase(currentCaseDataSourceMap, attributeType, maximumPercentageThreshold, uniqueCaseDataSourceTuples);
         for (Entry<String, Map<String, CommonAttributeValueList>> mapOfDataSources : Collections.unmodifiableMap(this.caseNameToDataSources).entrySet()) {
             if (!mapOfDataSources.getKey().equals(currentCaseName)) {
-                getValuesToRemoveFromCase(valuesToRemove, mapOfDataSources.getKey(), mapOfDataSources.getValue(), attributeType, maximumPercentageThreshold, uniqueCaseDataSourceTuples);
+                Map<String, CommonAttributeValueList> newTreeForCase = createTreeForCase(valuesToKeepCurrentCase, mapOfDataSources.getValue(), attributeType, maximumPercentageThreshold, uniqueCaseDataSourceTuples);
+                filteredCaseNameToDataSourcesTree.put(mapOfDataSources.getKey(), newTreeForCase);
             }
         }
-        for (Entry<String, List<ValueToRemove>> valueToRemoveEntry : Collections.unmodifiableMap(valuesToRemove).entrySet()) {
-            for (ValueToRemove valueToRemove : valueToRemoveEntry.getValue()) {
-                Map<String, CommonAttributeValueList> dataSourceToValueList = caseNameToDataSources.get(valueToRemove.getCaseName());
-                CommonAttributeValueList valueList = dataSourceToValueList.get(valueToRemove.getDataSourceKey());
-                valueList.removeMetaData(valueToRemove.getValue());
-                if (valueList.getDelayedMetadataList().isEmpty()) {
-                    dataSourceToValueList.remove(valueToRemove.getDataSourceKey());
-                }
-                if (dataSourceToValueList.isEmpty()) {
-                    caseNameToDataSources.remove(valueToRemove.getCaseName());
-                }
-            }
-        }
+        this.caseNameToDataSources = filteredCaseNameToDataSourcesTree;
     }
 
-    private void getValuesToRemoveFromCase(Map<String, List<ValueToRemove>> valuesToRemove, String caseName, Map<String, CommonAttributeValueList> dataSourceToValueList, CorrelationAttributeInstance.Type attributeType, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws EamDbException {
+    private Map<String, CommonAttributeValue> getValuesToKeepFromCurrentCase(Map<String, CommonAttributeValueList> dataSourceToValueList, CorrelationAttributeInstance.Type attributeType, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws EamDbException {
+        Map<String, CommonAttributeValue> valuesToKeep = new HashMap<>();
+        Set<String> valuesToRemove = new HashSet<>();
         for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(dataSourceToValueList).entrySet()) {
             for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataList()) {
-                if (valuesToRemove.containsKey(value.getValue())) {
-                    valuesToRemove.get(value.getValue()).add(new ValueToRemove(caseName, mapOfValueLists.getKey(), value));
+                if (valuesToRemove.contains(value.getValue())) {
+                    //do nothing this value will not be added
                 } else if (filterValue(attributeType, value, maximumPercentageThreshold, uniqueCaseDataSourceTuples)) {
-                    List<ValueToRemove> setOfValues = new ArrayList<>();
-                    setOfValues.add(new ValueToRemove(caseName, mapOfValueLists.getKey(), value));
-                    valuesToRemove.put(value.getValue(), setOfValues);
+                    valuesToRemove.add(value.getValue());
+                } else {
+                    valuesToKeep.put(value.getValue(), value);
                 }
             }
         }
+        return valuesToKeep;
+    }
+
+    private Map<String, CommonAttributeValueList> createTreeForCase(Map<String, CommonAttributeValue> valuesToKeepCurrentCase, Map<String, CommonAttributeValueList> dataSourceToValueList, CorrelationAttributeInstance.Type attributeType, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws EamDbException {
+        Map<String, CommonAttributeValueList> treeForCase = new HashMap<>();
+        for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(dataSourceToValueList).entrySet()) {
+            for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataList()) {
+                if (valuesToKeepCurrentCase.containsKey(value.getValue())) {
+                    if (!treeForCase.containsKey(mapOfValueLists.getKey())) {
+                        treeForCase.put(mapOfValueLists.getKey(), new CommonAttributeValueList());
+                    }
+                    treeForCase.get(mapOfValueLists.getKey()).addMetadataToList(valuesToKeepCurrentCase.get(value.getValue()));
+                }
+            }
+        }
+        return treeForCase;
     }
 
     private boolean filterValue(CorrelationAttributeInstance.Type attributeType, CommonAttributeValue value, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws EamDbException {
@@ -211,40 +219,5 @@ final public class CommonAttributeCaseSearchResults {
             }
         }
         return false;
-    }
-
-    private class ValueToRemove {
-
-        private final String caseName;
-        private final String dataSourceKey;
-        private final CommonAttributeValue value;
-
-        ValueToRemove(String caseName, String dataSourceKey, CommonAttributeValue value) {
-            this.caseName = caseName;
-            this.dataSourceKey = dataSourceKey;
-            this.value = value;
-        }
-
-        /**
-         * @return the caseName
-         */
-        String getCaseName() {
-            return caseName;
-        }
-
-        /**
-         * @return the dataSourceKey
-         */
-        String getDataSourceKey() {
-            return dataSourceKey;
-        }
-
-        /**
-         * @return the value
-         */
-        CommonAttributeValue getValue() {
-            return value;
-        }
-
     }
 }
