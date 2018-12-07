@@ -205,7 +205,7 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>
                 <attr name="position" intvalue="200"/>
             </file>
-            <file name="org-sleuthkit-autopsy-report-ReportWizardAction-separatorAfter.instance">
+            <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction-separatorAfter.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
                 <attr name="position" intvalue="299"/>
             </file>
@@ -220,10 +220,6 @@
                 <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-report-ReportWizardAction.instance"/>
                 <attr name="position" intvalue="100"/>
             </file>-->
-            <file name="org-sleuthkit-autopsy-report-ReportWizardAction-separatorAfter.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="199"/>
-            </file>
             <!--<file name="Separator1.instance_hidden"/>
             <file name="Separator3.instance_hidden"/>-->
         </folder>
