@@ -154,6 +154,7 @@ public final class DrawableDB {
 
     // caches to make inserts / updates faster
     private Cache<String, Boolean> groupCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+    private final Cache<GroupKey<?>, Boolean> groupSeenCache = CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.SECONDS).build();
     private final Object cacheLock = new Object(); // protects access to the below cache-related objects
     private boolean areCachesLoaded = false; // if true, the below caches contain valid data
     private Set<Long> hasTagCache = new HashSet<>(); // contains obj id of files with tags
@@ -177,10 +178,10 @@ public final class DrawableDB {
      * DO NOT add in the middle.
      */
     public enum DrawableDbBuildStatusEnum {
-        UNKNOWN, /// no known status
+        UNKNOWN, /// no known status - not yet analyzed 
         IN_PROGRESS, /// ingest or db rebuild is in progress
-        COMPLETE, /// All files in the data source have had file type detected
-        DEFAULT;        /// Not all files in the data source have had file type detected
+        COMPLETE, /// At least one file in the data source had a MIME type.  Ingest filters may have been applied.
+        REBUILT_STALE;        /// data source was rebuilt, but MIME types were missing during rebuild
     }
 
     private void dbWriteLock() {
@@ -508,8 +509,8 @@ public final class DrawableDB {
                             + " name VARCHAR(255), " //NON-NLS
                             + " created_time integer, " //NON-NLS
                             + " modified_time integer, " //NON-NLS
-                            + " make VARCHAR(255), " //NON-NLS
-                            + " model VARCHAR(255), " //NON-NLS
+                            + " make VARCHAR(255) DEFAULT NULL, " //NON-NLS
+                            + " model VARCHAR(255) DEFAULT NULL, " //NON-NLS
                             + " analyzed integer DEFAULT 0)"; //NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
@@ -801,6 +802,15 @@ public final class DrawableDB {
      */
     public void markGroupSeen(GroupKey<?> groupKey, boolean seen, long examinerID) throws TskCoreException {
 
+        /*
+         * Check the groupSeenCache to see if the seen status for this group was set recently.
+         * If recently set to the same value, there's no need to update it
+         */
+        Boolean cachedValue = groupSeenCache.getIfPresent(groupKey);
+        if (cachedValue != null && cachedValue == seen) {
+            return;
+        }
+        
         // query to find the group id from attribute/value
         String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
                 + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )",
@@ -809,13 +819,14 @@ public final class DrawableDB {
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
 
         String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, seen ? 1 : 0);
-
         if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
             insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", seen ? 1 : 0);
         }
 
         tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
 
+        groupSeenCache.put(groupKey, seen);
+        
     }
 
     /**
@@ -1198,6 +1209,15 @@ public final class DrawableDB {
         }
         return map;
     }
+    
+
+    public DrawableDbBuildStatusEnum getDataSourceDbBuildStatus(Long dataSourceId) throws TskCoreException {   
+        Map<Long, DrawableDbBuildStatusEnum> statusMap = getDataSourceDbBuildStatus();
+        if (statusMap.containsKey(dataSourceId) == false) {
+            throw new TskCoreException("Data Source ID not found: " + dataSourceId);
+        }
+        return statusMap.get(dataSourceId);
+    } 
 
     /**
      * Insert/update given data source object id and it's DB rebuild status in
@@ -1386,8 +1406,11 @@ public final class DrawableDB {
                     //TODO: convert this to prepared statement 
                     StringBuilder query = new StringBuilder("SELECT data_source_obj_id, " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files "); //NON-NLS
 
+                    // skip any null/blank values
+                    query.append("WHERE LENGTH(" + groupBy.attrName.toString() + ") > 0 ");
+                    
                     if (dataSource != null) {
-                        query.append(" WHERE data_source_obj_id = ").append(dataSource.getId());
+                        query.append(" AND data_source_obj_id = ").append(dataSource.getId());
                     }
 
                     query.append(" GROUP BY data_source_obj_id, ").append(groupBy.attrName.toString());
@@ -1543,16 +1566,9 @@ public final class DrawableDB {
     }
 
     public long countAllFiles() throws TskCoreException {
-        return countAllFiles(null);
+        return countFilesWhere(" 1 ");
     }
 
-    public long countAllFiles(DataSource dataSource) throws TskCoreException {
-        if (null != dataSource) {
-            return countFilesWhere(" data_source_obj_id = ");
-        } else {
-            return countFilesWhere(" 1 ");
-        }
-    }
 
     /**
      * delete the row with obj_id = id.

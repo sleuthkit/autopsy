@@ -485,7 +485,12 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                 if (this.fullNameRadioButton.isSelected()) {
                     condition = new FilesSet.Rule.FullNameCondition(this.nameTextField.getText());
                 } else {
-                    condition = new FilesSet.Rule.ExtensionCondition(Arrays.asList(this.nameTextField.getText().split(",")));
+                    List<String> extensions = Arrays.asList(this.nameTextField.getText().split(","));
+                    for (int i=0; i < extensions.size(); i++) {
+                        // Remove leading and trailing whitespace.
+                        extensions.set(i, extensions.get(i).trim());
+                    }
+                    condition = new FilesSet.Rule.ExtensionCondition(extensions);
                 }
             } else {
                 logger.log(Level.SEVERE, "Attempt to get name condition with illegal chars"); // NON-NLS

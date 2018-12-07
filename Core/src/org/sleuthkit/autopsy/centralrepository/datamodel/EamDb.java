@@ -214,7 +214,7 @@ public interface EamDb {
      *
      * @param correlationCase    the current CorrelationCase used for ensuring
      *                           uniqueness of DataSource
-     * @param dataSourceDeviceId the data source device ID number
+     * @param caseDbDataSourceId the data source device ID number
      *
      * @return The data source
      */
@@ -312,11 +312,9 @@ public interface EamDb {
 
     /**
      * Retrieves number of eamArtifact instances in the database that are
-     * associated with the caseDisplayName and dataSource of the given
-     * eamArtifact instance.
+     * associated with the given data source.
      *
-     * @param caseUUID     Case ID to search for
-     * @param dataSourceID Data source ID to search for
+     * @param correlationDataSource   Data source to search for
      *
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource

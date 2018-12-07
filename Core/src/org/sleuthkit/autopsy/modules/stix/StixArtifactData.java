@@ -64,15 +64,15 @@ class StixArtifactData {
     @Messages({"StixArtifactData.indexError.message=Failed to index STIX interesting file hit artifact for keyword search.",
             "StixArtifactData.noOpenCase.errMsg=No open case available."})
     public void createArtifact(String a_title) throws TskCoreException {
-        Blackboard blackboard;
+        Case currentCase;
         try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_noOpenCase_errMsg(), ex.getLocalizedMessage());
             return;
         }
-
+        
         String setName;
         if (a_title != null) {
             setName = "STIX Indicator - " + a_title; //NON-NLS
@@ -80,19 +80,25 @@ class StixArtifactData {
             setName = "STIX Indicator - (no title)"; //NON-NLS
         }
 
-        BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, "Stix", setName)); //NON-NLS
         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, "Stix", observableId)); //NON-NLS
         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, "Stix", objType)); //NON-NLS
-
-        bba.addAttributes(attributes);
-        try {
-            // index the artifact for keyword search
-            blackboard.indexArtifact(bba);
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());
+        
+        org.sleuthkit.datamodel.Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
+        // Create artifact if it doesn't already exist.
+        if (!tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+            BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            bba.addAttributes(attributes);
+            
+            try {
+                // index the artifact for keyword search
+                Blackboard blackboard = currentCase.getServices().getBlackboard();
+                blackboard.indexArtifact(bba);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
+                MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());
+            }
         }
     }
 

@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -58,6 +59,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -76,12 +78,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private final IngestServices services = IngestServices.getInstance();
     private final AtomicInteger filesProcessed = new AtomicInteger(0);
     private volatile boolean filesToFire = false;
-    private final List<BlackboardArtifact> listOfFacesDetectedArtifacts = new ArrayList<>();
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
     private final HashSet<String> supportedMimeTypes = new HashSet<>();
     private TimeZone timeZone = null;
+    private Case currentCase;
     private Blackboard blackboard;
 
     ExifParserFileIngestModule() {
@@ -104,7 +106,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile content) {
         try {
-            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+            currentCase = Case.getCurrentCaseThrows();
+            blackboard = currentCase.getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.INFO, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -142,12 +145,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     }
 
     @Messages({"ExifParserFileIngestModule.indexError.message=Failed to index EXIF Metadata artifact for keyword search."})
-    ProcessResult processFile(AbstractFile f) {
+    ProcessResult processFile(AbstractFile file) {
         InputStream in = null;
         BufferedInputStream bin = null;
 
         try {
-            in = new ReadContentInputStream(f);
+            in = new ReadContentInputStream(file);
             bin = new BufferedInputStream(in);
 
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
@@ -160,7 +163,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 // set the timeZone for the current datasource.
                 if (timeZone == null) {
                     try {
-                        Content dataSource = f.getDataSource();
+                        Content dataSource = file.getDataSource();
                         if ((dataSource != null) && (dataSource instanceof Image)) {
                             Image image = (Image) dataSource;
                             timeZone = TimeZone.getTimeZone(image.getTimeZone());
@@ -196,30 +199,35 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             ExifIFD0Directory devDir = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
-                if (model != null && !model.isEmpty()) {
+                if (StringUtils.isNotBlank(model)) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, ExifParserModuleFactory.getModuleName(), model));
                 }
 
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
-                if (make != null && !make.isEmpty()) {
+                if (StringUtils.isNotBlank(make)) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, ExifParserModuleFactory.getModuleName(), make));
                 }
             }
 
             // Add the attributes, if there are any, to a new artifact
             if (!attributes.isEmpty()) {
-                BlackboardArtifact bba = f.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
-                bba.addAttributes(attributes);
+                SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+                org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
+                // Create artifact if it doesn't already exist.
+                if (!tskBlackboard.artifactExists(file, BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF, attributes)) {
+                    BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF);
+                    bba.addAttributes(attributes);
 
-                try {
-                    // index the artifact for keyword search
-                    blackboard.indexArtifact(bba);
-                } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
-                    MessageNotifyUtil.Notify.error(
-                            Bundle.ExifParserFileIngestModule_indexError_message(), bba.getDisplayName());
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.indexArtifact(bba);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                Bundle.ExifParserFileIngestModule_indexError_message(), bba.getDisplayName());
+                    }
+                    filesToFire = true;
                 }
-                filesToFire = true;
             }
 
             return ProcessResult.OK;
@@ -227,13 +235,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage()); //NON-NLS
             return ProcessResult.ERROR;
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, String.format("Failed to process the image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex);
+            logger.log(Level.WARNING, String.format("Failed to process the image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex);
             return ProcessResult.ERROR;
         } catch (ReadContentInputStreamException ex) {
-            logger.log(Level.WARNING, String.format("Error while trying to read image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error while trying to read image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } catch (IOException ex) {
-            logger.log(Level.WARNING, String.format("IOException when parsing image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("IOException when parsing image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } finally {
             try {

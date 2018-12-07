@@ -105,6 +105,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         furtherDescriptionArea.setRows(5);
         furtherDescriptionArea.setText(NbBundle.getMessage(ImageGalleryOptionsPanel.class, "ImageGalleryOptionsPanel.furtherDescriptionArea.text")); // NOI18N
         furtherDescriptionArea.setWrapStyleWord(true);
+        furtherDescriptionArea.setOpaque(false);
         furtherDescriptionArea.setPreferredSize(new java.awt.Dimension(378, 74));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -199,7 +200,7 @@ final class ImageGalleryOptionsPanel extends javax.swing.JPanel {
         } catch (NoCurrentCaseException ex) {
             // It's not an error if there's no case open
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to get image gallery controller", ex); //NON-NLS
         }
 
     }

@@ -322,11 +322,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
     
     @NbBundle.Messages({
-        "BlackboardArtifactNode.createSheet.artifactType.displayName=Artifact Type",
-        "BlackboardArtifactNode.createSheet.artifactType.name=Artifact Type",
-        "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Artifact Details",
-        "BlackboardArtifactNode.createSheet.artifactDetails.name=Artifact Details",
-        "BlackboardArtifactNode.artifact.displayName=Artifact",
+        "BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type",
+        "BlackboardArtifactNode.createSheet.artifactType.name=Result Type",
+        "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Result Details",
+        "BlackboardArtifactNode.createSheet.artifactDetails.name=Result Details",
         "BlackboardArtifactNode.createSheet.artifactMD5.displayName=MD5 Hash",
         "BlackboardArtifactNode.createSheet.artifactMD5.name=MD5 Hash",
         "BlackboardArtifactNode.createSheet.fileSize.name=Size",
@@ -372,7 +371,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     sheetSet.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.name"),
                             NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.displayName"),
                             NO_DESCR,
-                            associatedArtifact.getDisplayName() + " " + NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.artifact.displayName")));
+                            associatedArtifact.getDisplayName()));
                     sheetSet.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactDetails.name"),
                             NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactDetails.displayName"),
                             NO_DESCR,
