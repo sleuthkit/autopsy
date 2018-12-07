@@ -44,7 +44,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textextractors.ExtractionContext;
-import org.sleuthkit.autopsy.textextractors.TextReader;
+import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.DefaultExtractionConfig;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -484,10 +484,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             extractionContext.set(ImageFileExtractionConfig.class, imageConfig);
             
             try {
-                Reader specializedReader = TextReader.getContentSpecificReader(aFile,extractionContext);
+                Reader specializedReader = TextExtractorFactory.getContentSpecificReader(aFile,extractionContext);
                 //divide into chunks and index
                 return Ingester.getDefault().indexText(specializedReader,aFile.getId(),aFile.getName(), aFile, context);
-            } catch (TextReader.NoReaderFoundException ex) {
+            } catch (TextExtractorFactory.NoReaderFoundException ex) {
                 //No text extractor found... run the default instead
                 return false;
             }
@@ -506,7 +506,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return true;
                 }
-                Reader stringsReader = TextReader.getDefaultReader(aFile, stringsExtractionContext);
+                Reader stringsReader = TextExtractorFactory.getDefaultReader(aFile, stringsExtractionContext);
                 if (Ingester.getDefault().indexText(stringsReader,aFile.getId(),aFile.getName(), aFile, KeywordSearchIngestModule.this.context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;

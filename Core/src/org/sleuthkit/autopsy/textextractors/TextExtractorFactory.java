@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.Report;
  * See ContentTextExtractor interface for the generic structure of such
  * extractors.
  */
-public class TextReader {
+public class TextExtractorFactory {
     
     private final static List<TextExtractor<AbstractFile>> fileExtractors = Arrays.asList(
                 new HtmlTextExtractor<>(),
