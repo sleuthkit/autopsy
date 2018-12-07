@@ -156,7 +156,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
             } else {
                 myLabel.setText(dspType);
             }
-            myLabel.setBackground(new Color(240, 240, 240));//matches background of panel
+            myLabel.setOpaque(false);
             myLabel.setEditable(false);
             myLabel.setWrapStyleWord(true);
             myLabel.setLineWrap(true);
