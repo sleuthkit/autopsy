@@ -218,6 +218,7 @@ public class GetTagNameDialog extends JDialog {
 
             }
         ));
+        tagsTable.setOpaque(false);
         tagsTable.setShowHorizontalLines(false);
         tagsTable.setShowVerticalLines(false);
         tagsTable.setTableHeader(null);

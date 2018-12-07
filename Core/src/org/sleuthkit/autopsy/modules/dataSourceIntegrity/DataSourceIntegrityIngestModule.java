@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -36,6 +37,10 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness
@@ -98,6 +103,10 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
         "DataSourceIntegrityIngestModule.process.errorSavingHashes= Error saving hashes for image {0} to the database", 
         "# {0} - imageName",
         "DataSourceIntegrityIngestModule.process.errorLoadingHashes= Error loading hashes for image {0} from the database", 
+        "# {0} - hashAlgorithm",
+        "# {1} - calculatedHashValue",
+        "# {2} - storedHashValue",
+        "DataSourceIntegrityIngestModule.process.hashFailedForArtifact={0} hash verification failed:\n  Calculated hash: {1}\n  Stored hash: {2}\n",        
     })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
@@ -253,6 +262,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             String detailedResults = NbBundle
                 .getMessage(this.getClass(), "DataSourceIntegrityIngestModule.shutDown.verifyResultsHeader", imgName);
             String hashResults = "";
+            String artifactComment = "";
             
             for (HashData hashData:hashDataList) {
                 if (hashData.storedHash.equals(hashData.calculatedHash)) {
@@ -260,7 +270,9 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                 } else {
                     verified = false;
                     hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashNonMatch(hashData.type.name);
-                }
+                    artifactComment += Bundle.DataSourceIntegrityIngestModule_process_hashFailedForArtifact(hashData.type.name,
+                            hashData.calculatedHash, hashData.storedHash);
+               }
                 hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashList(hashData.calculatedHash, hashData.storedHash);
             }
             
@@ -276,6 +288,16 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             
             detailedResults += NbBundle.getMessage(this.getClass(), "DataSourceIntegrityIngestModule.shutDown.resultLi", verificationResultStr);
             detailedResults += hashResults;
+            
+            if (!verified) {
+                try {
+                    BlackboardArtifact verificationFailedArtifact = Case.getCurrentCase().getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED, img.getId());
+                    verificationFailedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                        DataSourceIntegrityModuleFactory.getModuleName(), artifactComment));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error creating verification failed artifact", ex);
+                }
+            }
 
             services.postMessage(IngestMessage.createMessage(messageType, DataSourceIntegrityModuleFactory.getModuleName(), 
                     imgName + verificationResultStr, detailedResults));
@@ -288,13 +310,25 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                 for (HashData hashData:hashDataList) {
                     switch (hashData.type) {
                         case MD5:
-                            img.setMD5(hashData.calculatedHash);
+                            try {
+                                img.setMD5(hashData.calculatedHash);
+                            } catch (TskDataException ex) {
+                                logger.log(Level.SEVERE, "Error setting calculated hash", ex);
+                            }
                             break;
                         case SHA1:
-                            img.setSha1(hashData.calculatedHash);
-                            break; 
+                            try {
+                                img.setSha1(hashData.calculatedHash);
+                            } catch (TskDataException ex) {
+                                logger.log(Level.SEVERE, "Error setting calculated hash", ex);
+                            }
+                            break;  
                         case SHA256:
-                            img.setSha256(hashData.calculatedHash);
+                            try {
+                                img.setSha256(hashData.calculatedHash);
+                            } catch (TskDataException ex) {
+                                logger.log(Level.SEVERE, "Error setting calculated hash", ex);
+                            }
                             break;
                         default:
                             break;
