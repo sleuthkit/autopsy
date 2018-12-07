@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -36,6 +37,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.openide.util.NbBundle;
+import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Data source ingest module that verifies the integrity of an Expert Witness
@@ -288,13 +290,25 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                 for (HashData hashData:hashDataList) {
                     switch (hashData.type) {
                         case MD5:
-                            img.setMD5(hashData.calculatedHash);
+                            try {
+                                img.setMD5(hashData.calculatedHash);
+                            } catch (TskDataException ex) {
+                                logger.log(Level.SEVERE, "Error setting calculated hash", ex);
+                            }
                             break;
                         case SHA1:
-                            img.setSha1(hashData.calculatedHash);
-                            break; 
+                            try {
+                                img.setSha1(hashData.calculatedHash);
+                            } catch (TskDataException ex) {
+                                logger.log(Level.SEVERE, "Error setting calculated hash", ex);
+                            }
+                            break;  
                         case SHA256:
-                            img.setSha256(hashData.calculatedHash);
+                            try {
+                                img.setSha256(hashData.calculatedHash);
+                            } catch (TskDataException ex) {
+                                logger.log(Level.SEVERE, "Error setting calculated hash", ex);
+                            }
                             break;
                         default:
                             break;
