@@ -448,7 +448,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             extractionContext.set(ImageFileExtractionConfig.class, imageConfig);
             
             try {
-                extractor = TextExtractorFactory.getContentSpecificExtractor(aFile, extractionContext);
+                extractor = TextExtractorFactory.getContentSpecificExtractor(aFile,extractionContext);
                 //divide into chunks and index
                 return Ingester.getDefault().indexText(extractor, aFile, context);
             } catch (TextExtractorFactory.NoContentSpecificExtractorException ex) {

@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-final class StringsTextExtractor extends ContentTextExtractor {
+final class StringsTextExtractor<T extends Content> extends ContentTextExtractor<T> {
 
     static final private Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
     private boolean extractUTF8;

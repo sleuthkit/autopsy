@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.textextractors;
 
-import com.google.common.io.CharSource;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Iterator;
@@ -28,8 +27,8 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Extracts text from SQLite database files.
@@ -40,10 +39,22 @@ import org.sleuthkit.datamodel.AbstractFile;
  *  2) Tables that contain spaces in their name are not extracted
  *  3) Table names are not included in its output text
  */
-final class SqliteTextExtractor extends ContentTextExtractor {
+final class SqliteTextExtractor<T extends Content> extends ContentTextExtractor<T> {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
+    private static boolean isDisabled;
+    
+    static {
+        try {
+            Class.forName("org.sqlite.JDBC");
+            isDisabled = false;
+        } catch (ClassNotFoundException ex) {
+            logger.log(Level.SEVERE, "Sqlite JDBC class could not be found, "
+                + "SqliteTextExtractor is automatically disabling.", ex); //NON-NLS
+            isDisabled = true;
+        }
+    }
 
     /**
      * This extractor only works for sqlite files, so it is indeed content type
@@ -63,14 +74,7 @@ final class SqliteTextExtractor extends ContentTextExtractor {
      */
     @Override
     public boolean isDisabled() {
-        try {
-            Class.forName("org.sqlite.JDBC");
-            return false;
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.SEVERE, "Sqlite JDBC class could not be found, "
-                    + "SqliteTextExtractor is automatically disabling.", ex); //NON-NLS
-            return true;
-        }
+        return isDisabled;
     }
 
     @Override
@@ -102,16 +106,11 @@ final class SqliteTextExtractor extends ContentTextExtractor {
      */
     @Override
     public Reader getReader(Content source) throws TextExtractorException {
-        //Firewall for any content that is not an AbstractFile
-        if (!AbstractFile.class.isInstance(source)) {
-            try {
-                return CharSource.wrap("").openStream();
-            } catch (IOException ex) {
-                throw new TextExtractorException("Could not open CharSource stream", ex);
-            }
+        if(source instanceof AbstractFile) {
+            return new SQLiteStreamReader((AbstractFile)source);
         }
-
-        return new SQLiteStreamReader((AbstractFile) source);
+        throw new TextExtractorException(String.format("Source content with name [%s] and id=[%d] was not of type"
+                + " AbstractFile.", source.getName(), source.getId()));
     }
 
     /**

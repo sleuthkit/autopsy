@@ -32,13 +32,14 @@ import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extracts text from HTML content.
  */
-final class HtmlTextExtractor extends ContentTextExtractor {
+final class HtmlTextExtractor<T extends Content> extends ContentTextExtractor<T> {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private final int MAX_SIZE;

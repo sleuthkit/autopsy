@@ -18,42 +18,30 @@
  */
 package org.sleuthkit.autopsy.textextractors;
 
-import com.google.common.collect.ImmutableList;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.Arrays;
+import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Report;
 
 /**
- * Factory for creating text extractors given a source file and a mimetype.
+ * Factory for creating text extractors given a source file
  *
- * See TextExtractor interface for the generic structure of such extractors.
+ * See ContentTextExtractor interface for the generic structure of such
+ * extractors.
  */
 public class TextExtractorFactory {
 
-    private static final Logger logger = Logger.getLogger(TextExtractorFactory.class.getName());
-
     /**
-     * The order of these extractors is important. It is a must that more
-     * specialized solutions are placed before the TikaTextExtractor to ensure
-     * these solutions are chosen over Tika.
-     */
-    private static final ImmutableList<Class<?>> extractors
-            = ImmutableList.of(HtmlTextExtractor.class,
-                    SqliteTextExtractor.class,
-                    TikaTextExtractor.class);
-
-    /**
-     * Auto detects the correct text extractor given the file and mimetype.
+     * Auto detects the correct text extractor given the file.
      *
-     * TextExtractors can be configured using the ExtractionContext object.
-     * Passing in null or a new unmodified instance of ExtractionContext will
-     * keep the extractors at default settings. Refer to the extractionconfigs
-     * package for available file configurations.
+     * ContentTextExtractor can be configured using the ExtractionContext
+     * object. Passing in null or a new unmodified instance of ExtractionContext
+     * will keep the extractors at default settings. Refer to the
+     * extractionconfigs package for available file configurations.
      *
-     * @param <T>
+     * @param <T>     Type of source content
      * @param file    Content source that will be read from
      * @param context Contains extraction configurations for certain file types
      *
@@ -65,32 +53,25 @@ public class TextExtractorFactory {
      *                                             have no corresponding
      *                                             extractor
      */
-    public static <T extends Content> TextExtractor<T> getContentSpecificExtractor(T file,
+    public static <T extends Content> ContentTextExtractor<T> getContentSpecificExtractor(T file,
             ExtractionContext context) throws NoContentSpecificExtractorException {
         if (file instanceof AbstractFile) {
+            List<ContentTextExtractor<T>> fileExtractors = getAbstractFileExtractors();
             String mimeType = ((AbstractFile) file).getMIMEType();
-            for (Class<?> candidate : extractors) {
-                try {
-                    ContentTextExtractor newInstance = (ContentTextExtractor) candidate.newInstance();
-                    newInstance.setExtractionSettings(context);
-                    if (newInstance.isSupported(file, mimeType)) {
-                        return (TextExtractor<T>) newInstance;
-                    }
-                } catch (SecurityException | InstantiationException | IllegalAccessException
-                        | IllegalArgumentException ex) {
-                    logger.log(Level.SEVERE, String.format("Could not instantiate ContentTextExtractor "
-                            + "instance for file %s, objId=%d and mimeType=%s", file.getName(),
-                            file.getId(), mimeType), ex);
+            for (ContentTextExtractor<T> candidate : fileExtractors) {
+                candidate.setExtractionSettings(context);
+                if (candidate.isSupported(file, mimeType)) {
+                    return candidate;
                 }
             }
         } else if (file instanceof BlackboardArtifact) {
-            TextExtractor<BlackboardArtifact> artifactExtractor = new ArtifactTextExtractor();
+            ContentTextExtractor<T> artifactExtractor = new ArtifactTextExtractor<>();
             artifactExtractor.setExtractionSettings(context);
-            return (TextExtractor<T>) artifactExtractor;
+            return artifactExtractor;
         } else if (file instanceof Report) {
-            TextExtractor<T> tikaExtractor = (TextExtractor<T>) new TikaTextExtractor();
-            tikaExtractor.setExtractionSettings(context);
-            return tikaExtractor;
+            ContentTextExtractor<T> reportExtractor = new TikaTextExtractor<>();
+            reportExtractor.setExtractionSettings(context);
+            return reportExtractor;
         }
 
         throw new NoContentSpecificExtractorException(
@@ -102,16 +83,30 @@ public class TextExtractorFactory {
     }
 
     /**
+     * Instantiates and returns a list of all of the known abstract file
+     * extractors.
+     *
+     * @return A list of specialized ContentTextExtractors
+     */
+    private static <T extends Content> List<ContentTextExtractor<T>> getAbstractFileExtractors() {
+        return Arrays.asList(
+                new HtmlTextExtractor<>(),
+                new SqliteTextExtractor<>(),
+                new TikaTextExtractor<>()
+        );
+    }
+
+    /**
      * Returns the default extractor that can be run on any content type. This
      * extractor should be used as a backup in the event that no specialized
      * extractor can be found.
      *
      * @param context Contains extraction configurations for certain file types
      *
-     * @return A StringsTextExtractor instance
+     * @return A DefaultExtractor instance
      */
-    public static TextExtractor<Content> getDefaultExtractor(ExtractionContext context) {
-        TextExtractor<Content> stringsInstance = new StringsTextExtractor();
+    public static ContentTextExtractor<Content> getDefaultExtractor(ExtractionContext context) {
+        ContentTextExtractor<Content> stringsInstance = new StringsTextExtractor<>();
         stringsInstance.setExtractionSettings(context);
         return stringsInstance;
     }

@@ -54,7 +54,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extracts text from Tika supported content. Protects against Tika
  * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
-final class TikaTextExtractor extends ContentTextExtractor {
+final class TikaTextExtractor<T extends Content> extends ContentTextExtractor<T> {
     
     private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     

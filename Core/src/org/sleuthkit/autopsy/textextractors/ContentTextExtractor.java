@@ -26,8 +26,9 @@ import org.sleuthkit.datamodel.Content;
 /**
  * Common methods for utilities that extract text and content and divide into
  * chunks
+ * @param <T>
  */
-public abstract class ContentTextExtractor implements TextExtractor<Content> {
+public abstract class ContentTextExtractor<T extends Content> implements TextExtractor<T> {
     
     //Mimetype groups to aassist extractor implementations in ignoring binary and 
     //archive files.
@@ -93,7 +94,7 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
      *
      * @return true if the file content is supported, false otherwise
      */
-    public abstract boolean isSupported(Content file, String detectedFormat);
+    public abstract boolean isSupported(T file, String detectedFormat);
 
     /**
      * Returns a reader that will iterate over the text of the source content.
@@ -103,7 +104,7 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
      * @throws TextExtractorException Error encountered during extraction
      */
     @Override
-    public abstract Reader getReader(Content source) throws TextExtractorException;
+    public abstract Reader getReader(T source) throws TextExtractorException;
 
     /**
      * Get the object id of the content source.
@@ -112,9 +113,9 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
      * @return object id associated with this source content
      */
     @Override
-    public long getID(Content source) {
+    public long getID(T source) {
         return source.getId();
-}
+    }
 
     /**
      * Returns the human-readable name of the given content source.
@@ -123,7 +124,7 @@ public abstract class ContentTextExtractor implements TextExtractor<Content> {
      * @return name of source content
      */
     @Override
-    public String getName(Content source) {
+    public String getName(T source) {
         return source.getName();
     }
 }

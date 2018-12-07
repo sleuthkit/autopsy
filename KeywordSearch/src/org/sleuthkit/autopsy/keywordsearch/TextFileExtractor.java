@@ -27,13 +27,13 @@ import org.apache.tika.parser.txt.CharsetMatch;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.textextractors.ContentTextExtractor;
 import org.sleuthkit.autopsy.textextractors.ExtractionContext;
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extract text from .txt files
  */
-final class TextFileExtractor extends ContentTextExtractor {
+final class TextFileExtractor extends ContentTextExtractor<AbstractFile> {
 
     //Set a Minimum confidence value to reject matches that may not have a valid text encoding
     //Values of valid text encodings were generally 100, xml code sometimes had a value around 50, 
@@ -49,12 +49,12 @@ final class TextFileExtractor extends ContentTextExtractor {
     }
 
     @Override
-    public boolean isSupported(Content file, String detectedFormat) {
+    public boolean isSupported(AbstractFile file, String detectedFormat) {
         return true;
     }
 
     @Override
-    public Reader getReader(Content source) throws TextExtractorException {
+    public Reader getReader(AbstractFile source) throws TextExtractorException {
         CharsetDetector detector = new CharsetDetector();
         //wrap stream in a BufferedInputStream so that it supports the mark/reset methods necessary for the CharsetDetector
         InputStream stream = new BufferedInputStream(new ReadContentInputStream(source));

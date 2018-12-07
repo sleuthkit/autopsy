@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Extracts text from artifacts by concatenating the values of all of the
  * artifact's attributes.
  */
-class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
+class ArtifactTextExtractor<T extends Content> extends ContentTextExtractor<T> {
 
     static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
 
@@ -49,14 +49,16 @@ class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
         logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 
-    private InputStream getInputStream(BlackboardArtifact artifact) throws TextExtractorException {
+    private InputStream getInputStream(Content artifact) throws TextExtractorException {
+                        BlackboardArtifact art = (BlackboardArtifact)artifact;
+
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
 
         Content dataSource = null;
         try {
-            dataSource = artifact.getDataSource();
+            dataSource = art.getDataSource();
         } catch (TskCoreException tskCoreException) {
             throw new TextExtractorException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
         }
@@ -65,7 +67,7 @@ class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
         }
 
         try {
-            for (BlackboardAttribute attribute : artifact.getAttributes()) {
+            for (BlackboardAttribute attribute : art.getAttributes()) {
                 artifactContents.append(attribute.getAttributeType().getDisplayName());
                 artifactContents.append(" : ");
                 // We have also discussed modifying BlackboardAttribute.getDisplayString()
@@ -90,21 +92,33 @@ class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
     }
 
     @Override
-    public Reader getReader(BlackboardArtifact source) throws TextExtractorException {
+    public Reader getReader(Content source) throws TextExtractorException {
         return new InputStreamReader(getInputStream(source), StandardCharsets.UTF_8);
     }
 
     @Override
-    public long getID(BlackboardArtifact source) {
-        return source.getArtifactID();
+    public long getID(Content source) {
+        BlackboardArtifact art = (BlackboardArtifact)source;
+        return art.getArtifactID();
     }
 
     @Override
-    public String getName(BlackboardArtifact source) {
-        return source.getDisplayName() + "_" + source.getArtifactID();
+    public String getName(Content source) {
+                BlackboardArtifact art = (BlackboardArtifact)source;
+        return art.getDisplayName() + "_" + art.getArtifactID();
     }
 
     @Override
     public void setExtractionSettings(ExtractionContext context) {
+    }
+
+    @Override
+    public boolean isContentTypeSpecific() {
+        return true;
+    }
+
+    @Override
+    public boolean isSupported(Content file, String detectedFormat) {
+        return true;
     }
 }
