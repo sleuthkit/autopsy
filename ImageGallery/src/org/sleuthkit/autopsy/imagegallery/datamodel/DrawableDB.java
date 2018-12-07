@@ -509,8 +509,8 @@ public final class DrawableDB {
                             + " name VARCHAR(255), " //NON-NLS
                             + " created_time integer, " //NON-NLS
                             + " modified_time integer, " //NON-NLS
-                            + " make VARCHAR(255), " //NON-NLS
-                            + " model VARCHAR(255), " //NON-NLS
+                            + " make VARCHAR(255) DEFAULT NULL, " //NON-NLS
+                            + " model VARCHAR(255) DEFAULT NULL, " //NON-NLS
                             + " analyzed integer DEFAULT 0)"; //NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
@@ -1406,8 +1406,11 @@ public final class DrawableDB {
                     //TODO: convert this to prepared statement 
                     StringBuilder query = new StringBuilder("SELECT data_source_obj_id, " + groupBy.attrName.toString() + ", COUNT(*) FROM drawable_files "); //NON-NLS
 
+                    // skip any null/blank values
+                    query.append("WHERE LENGTH(" + groupBy.attrName.toString() + ") > 0 ");
+                    
                     if (dataSource != null) {
-                        query.append(" WHERE data_source_obj_id = ").append(dataSource.getId());
+                        query.append(" AND data_source_obj_id = ").append(dataSource.getId());
                     }
 
                     query.append(" GROUP BY data_source_obj_id, ").append(groupBy.attrName.toString());
