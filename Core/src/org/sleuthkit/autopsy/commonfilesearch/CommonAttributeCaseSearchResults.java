@@ -209,4 +209,19 @@ final public class CommonAttributeCaseSearchResults {
         }
         return false;
     }
+
+    /**
+     * How many distinct common files exist for this search results?
+     *
+     * @return number of common files
+     */
+    public int size() {
+        int count = 0;
+        for (Entry<String, Map<String, CommonAttributeValueList>> dataSourceToValueList : Collections.unmodifiableMap(this.caseNameToDataSources).entrySet()) {
+            for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(dataSourceToValueList.getValue()).entrySet()) {
+                count += mapOfValueLists.getValue().getDelayedMetadataList().size();
+            }
+        }
+        return count;
+    }
 }
