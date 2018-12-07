@@ -104,7 +104,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
         "# {0} - hashAlgorithm",
         "# {1} - calculatedHashValue",
         "# {2} - storedHashValue",
-        "DataSourceIntegrityIngestModule.process.hashFailedForArtifact={0} hash validation failed:\n  Calculated hash: {1}\n  Stored hash: {2}\n",        
+        "DataSourceIntegrityIngestModule.process.hashFailedForArtifact={0} hash verification failed:\n  Calculated hash: {1}\n  Stored hash: {2}\n",        
     })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
@@ -289,11 +289,11 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             
             if (!verified) {
                 try {
-                    BlackboardArtifact validationFailedArtifact = Case.getCurrentCase().getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_VALIDATION_FAILED, img.getId());
-                    validationFailedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+                    BlackboardArtifact verificationFailedArtifact = Case.getCurrentCase().getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED, img.getId());
+                    verificationFailedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                         DataSourceIntegrityModuleFactory.getModuleName(), artifactComment));
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error creating validation failed artifact", ex);
+                    logger.log(Level.SEVERE, "Error creating verification failed artifact", ex);
                 }
             }
 
