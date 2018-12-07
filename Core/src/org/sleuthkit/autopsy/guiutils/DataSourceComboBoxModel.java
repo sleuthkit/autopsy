@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.commonfilesearch;
+package org.sleuthkit.autopsy.guiutils;
 
 import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
@@ -44,7 +44,7 @@ public class DataSourceComboBoxModel extends AbstractListModel<String> implement
      *
      * @param theDataSoureList names of data sources for user to pick from
      */
-    DataSourceComboBoxModel(String... theDataSoureList) {
+    public DataSourceComboBoxModel(String... theDataSoureList) {
         dataSourceList = theDataSoureList.clone();
     }
 

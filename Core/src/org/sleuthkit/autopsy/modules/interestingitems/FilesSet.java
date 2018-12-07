@@ -833,7 +833,7 @@ public final class FilesSet implements Serializable {
                 // If there is a leading ".", strip it since 
                 // AbstractFile.getFileNameExtension() returns just the 
                 // extension chars and not the dot.
-                super(extension.startsWith(".") ? extension.substring(1) : extension, false);
+                super(normalize(extension), false);
             }            
             
             /**
@@ -842,10 +842,10 @@ public final class FilesSet implements Serializable {
              * @param extensions The file name extensions to be matched.
              */
             public ExtensionCondition(List<String> extensions) {
-                // If there is a leading ".", strip it since 
+                // If there is a leading "." in any list value, strip it since 
                 // AbstractFile.getFileNameExtension() returns just the 
                 // extension chars and not the dot.
-                super(extensions);
+                super(normalize(extensions));
             }
 
             /**
@@ -861,6 +861,34 @@ public final class FilesSet implements Serializable {
             @Override
             public boolean passes(AbstractFile file) {
                 return this.textMatches(file.getNameExtension());
+            }
+            
+            /**
+             * Strip "." from the start of extensions in the provided list.
+             * 
+             * @param extensions The list of extensions to be processed.
+             * 
+             * @return A post-processed list of extensions.
+             */
+            private static List<String> normalize(List<String> extensions) {
+                List<String> values = new ArrayList<>(extensions);
+                
+                for (int i=0; i < values.size(); i++) {
+                    values.set(i, normalize(values.get(i)));
+                }
+                
+                return values;
+            }
+            
+            /**
+             * Strip "." from the start of the provided extension.
+             * 
+             * @param extension The extension to be processed.
+             * 
+             * @return A post-processed extension.
+             */
+            private static String normalize(String extension) {
+                return extension.startsWith(".") ? extension.substring(1) : extension;
             }
 
         }
@@ -986,19 +1014,7 @@ public final class FilesSet implements Serializable {
              *                      match.
              */
             CaseInsensitiveMultiValueStringComparisionMatcher(List<String> valuesToMatch) {
-                List<String> values = new ArrayList<>(valuesToMatch);
-                for (int i=0; i < values.size(); i++) {
-                    // Remove leading and trailing whitespace.
-                    String tempValue = values.get(i).trim();
-                    
-                    // Strip "." from the start of the extension if it exists.
-                    if (tempValue.startsWith(".")) {
-                        tempValue = tempValue.substring(1);
-                    }
-                    
-                    values.set(i, tempValue);
-                }
-                this.valuesToMatch = values;
+                this.valuesToMatch = valuesToMatch;
             }
 
             @Override
