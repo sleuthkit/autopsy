@@ -23,6 +23,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.Config;
 import net.htmlparser.jericho.LoggerProvider;
@@ -186,20 +187,8 @@ final class HtmlTextExtractor<T extends AbstractFile> implements TextExtractor<T
             // All done, now make it a reader
             return new StringReader(stringBuilder.toString());
         } catch (IOException ex) {
+            logger.log(Level.WARNING, "Error extracting HTML from content.", ex);
             throw new InitReaderException("Error extracting HTML from content.", ex);
         }
-    }
-
-    /**
-     * Determines how the extraction process will proceed given the settings 
-     * stored in this context instance.
-     * 
-     * As of now, there are no configurable settings for the HtmlTextExtractor.
-     * See the extractionconfigs package for available file configurations.
-     * 
-     * @param context Instance containing config classes
-     */
-    @Override
-    public void setExtractionSettings(ExtractionContext context) {
     }
 }

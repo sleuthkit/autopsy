@@ -21,17 +21,14 @@ package org.sleuthkit.autopsy.textextractors;
 import java.io.Reader;
 
 /**
- * Extracts text out of a SleuthkitVisitableItem, and exposes it is a Reader.
- * This Reader is given to the Ingester to chunk and index in Solr.
+ * Extracts text out of Objects and exposes it as a Reader.
  *
- * @param <T> The subtype of SleuthkitVisitableItem an implementation is able to
- *            process.
+ * @param <T> Generic data type T
  */
 interface TextExtractor<T> {
     
      /**
-     * Determines if the file content is supported by the extractor if
-     * isContentTypeSpecific() returns true.
+     * Determines if the file content is supported by the extractor.
      *
      * @param file           to test if its content should be supported
      * @param detectedFormat mime-type with detected format (such as text/plain)
@@ -39,7 +36,15 @@ interface TextExtractor<T> {
      *
      * @return true if the file content is supported, false otherwise
      */
-    public abstract boolean isSupported(T file, String detectedFormat);
+    boolean isSupported(T file, String detectedFormat);
+    
+    /**
+     * 
+     * @return 
+     */
+    default boolean isEnabled() {
+        return true;
+    }
     /**
      * Get a reader that will iterate over the text extracted from the given
      * source.
@@ -59,8 +64,13 @@ interface TextExtractor<T> {
      * 
      * @param context Instance containing file config classes
      */
-    void setExtractionSettings(ExtractionContext context);
+    default void setExtractionSettings(ExtractionContext context) {
+        //no-op by default
+    }
     
+    /**
+     * 
+     */
     public class InitReaderException extends Exception {
         public InitReaderException(String msg, Throwable ex) {
             super(msg, ex);

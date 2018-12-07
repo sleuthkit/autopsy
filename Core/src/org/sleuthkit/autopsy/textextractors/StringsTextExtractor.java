@@ -25,7 +25,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.DefaultExtractionConfig;
@@ -36,7 +35,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-final class StringsTextExtractor {
+final class StringsTextExtractor<T extends Content> implements TextExtractor<T> {
 
     private boolean extractUTF8;
     private boolean extractUTF16;
@@ -79,6 +78,7 @@ final class StringsTextExtractor {
      * @throws
      * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
+    @Override
     public InputStreamReader getReader(Content content) {
         InputStream stringStream = getInputStream(content);
         return new InputStreamReader(stringStream, Charset.forName(DEFAULT_INDEXED_TEXT_CHARSET));
@@ -94,7 +94,7 @@ final class StringsTextExtractor {
     }
 
     /**
-     * Determines how the extraction process will proceed given the settings 
+     * Determines how the extraction process will proceed given the settings
      * stored in this context instance.
      *
      * See the DefaultExtractionConfig class in the extractionconfigs package
@@ -102,6 +102,7 @@ final class StringsTextExtractor {
      *
      * @param context Instance containing config classes
      */
+    @Override
     public void setExtractionSettings(ExtractionContext context) {
         if (context != null && context.contains(DefaultExtractionConfig.class)) {
             DefaultExtractionConfig configInstance = context.get(DefaultExtractionConfig.class);
@@ -118,6 +119,26 @@ final class StringsTextExtractor {
     }
 
     /**
+     * 
+     * @param file
+     * @param detectedFormat
+     * @return 
+     */
+    @Override
+    public boolean isSupported(T file, String detectedFormat) {
+        return true;
+    }
+
+    /**
+     * 
+     * @return 
+     */
+    @Override
+    public boolean isEnabled() {
+        return extractUTF8 || extractUTF16;
+    }
+
+    /**
      * Content input string stream reader/converter - given Content, extract
      * strings from it and return encoded bytes via read()
      *
@@ -131,7 +152,6 @@ final class StringsTextExtractor {
      */
     private static class EnglishOnlyStream extends InputStream {
 
-        private static final Logger logger = Logger.getLogger(EnglishOnlyStream.class.getName());
         private static final String NLS = Character.toString((char) 10); //new line
         private static final int READ_BUF_SIZE = 65536;
         private static final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
@@ -346,7 +366,6 @@ final class StringsTextExtractor {
      */
     private static class InternationalStream extends InputStream {
 
-        private static final Logger logger = Logger.getLogger(InternationalStream.class.getName());
         private static final int FILE_BUF_SIZE = 1024 * 1024;
         private final Content content;
         private final byte[] oneCharBuf = new byte[1];

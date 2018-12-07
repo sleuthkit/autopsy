@@ -50,8 +50,7 @@ public class TextReader {
      * @param file    Content source that will be read from
      * @param context Contains extraction configurations for certain file types
      *
-     * @return A ContentTextExtractor instance that is properly configured and
-     *         can be read from the getReader() method.
+     * @return A Reader that contains file source text
      *
      * @throws NoReaderFoundException In the event that the
      *                                             inputted file and mimetype
@@ -65,7 +64,7 @@ public class TextReader {
                 String mimeType = ((AbstractFile) file).getMIMEType();
                 for (TextExtractor<AbstractFile> candidate : fileExtractors) {
                     candidate.setExtractionSettings(context);
-                    if (candidate.isSupported((AbstractFile)file, mimeType)) {
+                    if (candidate.isEnabled() && candidate.isSupported((AbstractFile)file, mimeType)) {
                         return candidate.getReader((AbstractFile)file);
                     }
                 }
@@ -76,7 +75,7 @@ public class TextReader {
             } else if (file instanceof Report) {
                 TextExtractor<Report> reportExtractor = new TikaTextExtractor<>();
                 reportExtractor.setExtractionSettings(context);
-                reportExtractor.getReader((Report)file);
+                return reportExtractor.getReader((Report)file);
             }
         } catch (TextExtractor.InitReaderException ex) {
             throw new NoReaderFoundException(ex);
@@ -95,7 +94,7 @@ public class TextReader {
      * extractor should be used as a backup in the event that no specialized
      * extractor can be found.
      *
-     * @param source
+     * @param source Content source to read from
      * @param context Contains extraction configurations for certain file types
      *
      * @return A DefaultExtractor instance

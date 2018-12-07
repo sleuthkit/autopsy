@@ -69,19 +69,6 @@ final class SqliteTextExtractor<T extends AbstractFile> implements TextExtractor
     public Reader getReader(AbstractFile source) throws InitReaderException {
         return new SQLiteStreamReader(source);
     }
-
-    /**
-     * Determines how the extraction process will proceed given the settings 
-     * stored in this context instance.
-     * 
-     * As of now, there are no configurable settings for the SqliteTextExtractor.
-     * See the extractionconfigs package for available file configurations.
-     * 
-     * @param context Instance containing config classes
-     */
-    @Override
-    public void setExtractionSettings(ExtractionContext context) {
-    }
     
     /**
      * Produces a continuous stream of characters from a database file. To

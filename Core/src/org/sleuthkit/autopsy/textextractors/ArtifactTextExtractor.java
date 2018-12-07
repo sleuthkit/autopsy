@@ -18,12 +18,10 @@
  */
 package org.sleuthkit.autopsy.textextractors;
 
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -36,9 +34,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class ArtifactTextExtractor<T extends BlackboardArtifact> implements TextExtractor<T> {
 
-    static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
-
-    private InputStream getInputStream(BlackboardArtifact artifact) throws InitReaderException {
+    @Override
+    public Reader getReader(BlackboardArtifact artifact) throws InitReaderException {
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
@@ -75,24 +72,8 @@ class ArtifactTextExtractor<T extends BlackboardArtifact> implements TextExtract
             throw new InitReaderException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
         }
 
-        return IOUtils.toInputStream(artifactContents, StandardCharsets.UTF_8);
-    }
-
-    @Override
-    public Reader getReader(BlackboardArtifact source) throws InitReaderException {
-        return new InputStreamReader(getInputStream(source), StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Configures this extractors to the settings stored in relevant config instances.
-     * 
-     * This operation is a no-op since currently there are no configurable settings
-     * of the extraction process.
-     *
-     * @param context Instance containing file config settings
-     */
-    @Override
-    public void setExtractionSettings(ExtractionContext context) {
+        return new InputStreamReader(IOUtils.toInputStream(artifactContents,
+                StandardCharsets.UTF_8), StandardCharsets.UTF_8);
     }
 
     @Override
