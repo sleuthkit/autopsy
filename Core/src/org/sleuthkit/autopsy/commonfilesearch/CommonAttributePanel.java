@@ -66,8 +66,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Panel used for common files search configuration and configuration business
- * logic. Nested within CommonFilesDialog.
+ * Panel used for common files searchByCount configuration and configuration
+ * business logic. Nested within CommonFilesDialog.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class CommonAttributePanel extends javax.swing.JDialog implements Observer {
@@ -139,8 +139,8 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }
 
     /**
-     * Get whether or not the central repository will be enabled as a search
-     * option.
+     * Get whether or not the central repository will be enabled as a
+     * searchByCount option.
      *
      * @return true if the central repository exists and has at least 2 cases in
      *         and includes the current case, false otherwise.
@@ -184,7 +184,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }
 
     /**
-     * Disable the option to search for common attributes in the central
+     * Disable the option to searchByCount for common attributes in the central
      * repository.
      */
     private void disableIntercaseSearch() {
@@ -205,7 +205,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
         "CommonAttributePanel.search.done.interupted=Something went wrong finding common properties.",
         "CommonAttributePanel.search.done.sqlException=Unable to query db for properties or data sources.",
         "CommonAttributePanel.search.done.noResults=No results found."})
-    private void search() {
+    private void searchByCount() {
         new SwingWorker<CommonAttributeCountSearchResults, Void>() {
 
             private String tabTitle;
@@ -324,7 +324,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     /**
      * Perform the common attribute search.
      */
-    private void search2() {
+    private void searchByCase() {
         new SwingWorker<CommonAttributeCaseSearchResults, Void>() {
 
             private String tabTitle;
@@ -474,7 +474,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     dataSourcesNames = dataSourceMap.values().toArray(dataSourcesNames);
                     CommonAttributePanel.this.intraCasePanel.setDatasourceComboboxModel(new DataSourceComboBoxModel(dataSourcesNames));
 
-                    if (!this.caseHasMultipleSources()) { //disable intra case search when only 1 data source in current case
+                    if (!this.caseHasMultipleSources()) { //disable intra case searchByCount when only 1 data source in current case
                         intraCaseRadio.setEnabled(false);
                         interCaseRadio.setSelected(true);
                         intraCasePanel.setVisible(false);
@@ -838,12 +838,13 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }//GEN-LAST:event_searchButtonActionPerformed
 
     /**
-     * If the settings reflect that a inter-case search is being performed,
-     * checks that the data sources in the current case have been processed with
-     * Correlation Engine enabled and exist in the central repository. Prompting
-     * the user as to whether they still want to perform the search in the case
-     * any data sources are unprocessed. If the settings reflect that a
-     * intra-case search is being performed, it just performs the search.
+     * If the settings reflect that a inter-case searchByCount is being
+     * performed, checks that the data sources in the current case have been
+     * processed with Correlation Engine enabled and exist in the central
+     * repository. Prompting the user as to whether they still want to perform
+     * the searchByCount in the case any data sources are unprocessed. If the
+     * settings reflect that a intra-case searchByCount is being performed, it
+     * just performs the searchByCount.
      *
      * Notes: - Does not check that the data sources were processed into the
      * current central repository instead of another. - Does not check that the
@@ -921,9 +922,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                     }
                     if (performSearch) {
                         if (interCaseRadio.isSelected() && organizeByCaseRadio.isSelected()) {
-                            search2();
+                            searchByCase();
                         } else {
-                            search();
+                            searchByCount();
                         }
                     }
                 } catch (InterruptedException | ExecutionException ex) {
@@ -951,8 +952,8 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     }
 
     /**
-     * Update the error text and the enabled status of the search button to
-     * reflect the current validity of the search settings.
+     * Update the error text and the enabled status of the searchByCount button
+     * to reflect the current validity of the searchByCount settings.
      */
     private void updateErrorTextAndSearchButton() {
         if (this.errorManager.anyErrors()) {
