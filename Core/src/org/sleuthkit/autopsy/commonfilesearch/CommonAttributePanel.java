@@ -87,7 +87,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
     @NbBundle.Messages({
         "CommonAttributePanel.title=Common Property Panel",
         "CommonAttributePanel.exception=Unexpected Exception loading DataSources.",
-        "CommonAttributePanel.frame.title=Common Property Search",
+        "CommonAttributePanel.frame.title=Find Common Properties",
         "CommonAttributePanel.intraCasePanel.title=Curren Case Options"})
     CommonAttributePanel() {
         super(WindowManager.getDefault().getMainWindow(), Bundle.CommonAttributePanel_frame_title(), true);
@@ -193,12 +193,12 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
      * Perform the common attribute search.
      */
     @NbBundle.Messages({
-        "CommonAttributePanel.search.results.pathText=Common Property Search Results",
-        "CommonAttributePanel.search.done.searchProgressGathering=Gathering Common Property Search Results.",
-        "CommonAttributePanel.search.done.searchProgressDisplay=Displaying Common Property Search Results.",
+        "CommonAttributePanel.search.results.pathText=Common Properties Results",
+        "CommonAttributePanel.search.done.searchProgressGathering=Gathering Common Properties Results.",
+        "CommonAttributePanel.search.done.searchProgressDisplay=Displaying Common Properties Results.",
         "CommonAttributePanel.search.done.tskCoreException=Unable to run query against DB.",
         "CommonAttributePanel.search.done.noCurrentCaseException=Unable to open case file.",
-        "CommonAttributePanel.search.done.exception=Unexpected exception running Common Property Search.",
+        "CommonAttributePanel.search.done.exception=Unexpected exception running Find Common Properties.",
         "CommonAttributePanel.search.done.interupted=Something went wrong finding common properties.",
         "CommonAttributePanel.search.done.sqlException=Unable to query db for properties or data sources.",
         "CommonAttributePanel.search.done.noResults=No results found."})
@@ -765,7 +765,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         search();
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while performing common property search", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while looking for common properties", ex); //NON-NLS
                 }
             }
         }.execute();

@@ -81,7 +81,7 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
      * Create the commonAttributePanel and display it.
      */
     @NbBundle.Messages({
-        "CommonAttributeSearchAction.openPanel.intro=The common property search feature is not available because:",
+        "CommonAttributeSearchAction.openPanel.intro=The find common properties feature is not available because:",
         "CommonAttributeSearchAction.openPanel.resolution=\n\nAddress one of these issues to enable this feature.",
         "CommonAttributeSearchAction.openPanel.noCaseOpen=\n  - No case is open.",
         "CommonAttributeSearchAction.openPanel.notEnoughDataSources=\n  - There are not multiple data sources in the current case.",
@@ -143,7 +143,7 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
                         DialogDisplayer.getDefault().notify(descriptor);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while opening Common Properties Search", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while opening Find Common Properties", ex); //NON-NLS
                 }
             }
         }
@@ -151,7 +151,7 @@ final public class CommonAttributeSearchAction extends CallableSystemAction {
     }
 
     @NbBundle.Messages({
-        "CommonAttributeSearchAction.getName.text=Common Property Search"})
+        "CommonAttributeSearchAction.getName.text=Find Common Properties"})
     @Override
     public String getName() {
         return Bundle.CommonAttributeSearchAction_getName_text();
