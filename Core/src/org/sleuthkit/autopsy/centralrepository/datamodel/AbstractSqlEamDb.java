@@ -3346,9 +3346,15 @@ abstract class AbstractSqlEamDb implements EamDb {
                 /*
                  * Add hash columns to the data_sources table.
                  */
-                statement.execute("ALTER TABLE data_sources ADD COLUMN md5 TEXT DEFAULT NULL");
-                statement.execute("ALTER TABLE data_sources ADD COLUMN sha1 TEXT DEFAULT NULL");
-                statement.execute("ALTER TABLE data_sources ADD COLUMN sha256 TEXT DEFAULT NULL");
+                if (!doesColumnExist(conn, dataSourcesTableName, "md5")) {
+                    statement.execute("ALTER TABLE data_sources ADD COLUMN md5 TEXT DEFAULT NULL");
+                }
+                if (!doesColumnExist(conn, dataSourcesTableName, "sha1")) {
+                    statement.execute("ALTER TABLE data_sources ADD COLUMN sha1 TEXT DEFAULT NULL");
+                }
+                if (!doesColumnExist(conn, dataSourcesTableName, "sha256")) {
+                    statement.execute("ALTER TABLE data_sources ADD COLUMN sha256 TEXT DEFAULT NULL");
+                }
 
             }
             if (!updateSchemaVersion(conn)) {
