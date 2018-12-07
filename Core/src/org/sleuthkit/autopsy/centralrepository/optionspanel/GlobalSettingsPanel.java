@@ -233,6 +233,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         correlationPropertiesTextArea.setToolTipText("");
         correlationPropertiesTextArea.setWrapStyleWord(true);
         correlationPropertiesTextArea.setBorder(null);
+        correlationPropertiesTextArea.setOpaque(false);
         correlationPropertiesScrollPane.setViewportView(correlationPropertiesTextArea);
 
         javax.swing.GroupLayout pnCorrelationPropertiesLayout = new javax.swing.GroupLayout(pnCorrelationProperties);
@@ -277,6 +278,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         organizationTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.organizationTextArea.text")); // NOI18N
         organizationTextArea.setWrapStyleWord(true);
         organizationTextArea.setBorder(null);
+        organizationTextArea.setOpaque(false);
         organizationScrollPane.setViewportView(organizationTextArea);
 
         javax.swing.GroupLayout organizationPanelLayout = new javax.swing.GroupLayout(organizationPanel);
@@ -323,6 +325,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         casesTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.casesTextArea.text")); // NOI18N
         casesTextArea.setWrapStyleWord(true);
         casesTextArea.setBorder(null);
+        casesTextArea.setOpaque(false);
         casesScrollPane.setViewportView(casesTextArea);
 
         javax.swing.GroupLayout casesPanelLayout = new javax.swing.GroupLayout(casesPanel);

@@ -196,6 +196,10 @@ public class ImageGalleryModule {
                 return;
             }
 
+            if (currentController.isListeningEnabled() == false) {
+                return;
+            }
+            
             String eventType = event.getPropertyName();
             switch (IngestManager.IngestModuleEvent.valueOf(eventType)) {
                 case FILE_DONE:
@@ -203,14 +207,12 @@ public class ImageGalleryModule {
                     if (!file.isFile()) {
                         return;
                     }
-                    if (currentController.isListeningEnabled()) {
-                        try {
-                            if (isDrawableAndNotKnown(file)) {
-                                currentController.queueDBTask(new ImageGalleryController.UpdateFileTask(file, currentController.getDatabase()));
-                            }
-                        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to determine if file is of interest to the image gallery module, ignoring file (obj_id=%d)", file.getId()), ex); //NON-NLS
+                    try {
+                        if (isDrawableAndNotKnown(file)) {
+                            currentController.queueDBTask(new ImageGalleryController.UpdateFileTask(file, currentController.getDatabase()));
                         }
+                    } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                        logger.log(Level.SEVERE, String.format("Failed to determine if file is of interest to the image gallery module, ignoring file (obj_id=%d)", file.getId()), ex); //NON-NLS
                     }
                     break;
                 case DATA_ADDED:
@@ -364,6 +366,7 @@ public class ImageGalleryModule {
                                 if (drawableDb.getDataSourceDbBuildStatus(dataSourceObjId) != DrawableDB.DrawableDbBuildStatusEnum.COMPLETE) {
                                     drawableDb.insertOrUpdateDataSource(dataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS);
                                 }
+                                drawableDb.buildFileMetaDataCache();
                             }
                         }
                         break;
@@ -387,6 +390,7 @@ public class ImageGalleryModule {
 
                                     controller.getDatabase().insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
                                 }
+                                controller.getDatabase().freeFileMetaDataCache();
                             }
                         } else if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
                             /*
