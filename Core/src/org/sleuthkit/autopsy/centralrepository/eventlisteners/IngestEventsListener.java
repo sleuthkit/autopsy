@@ -62,6 +62,7 @@ public class IngestEventsListener {
     private static int correlationModuleInstanceCount;
     private static boolean flagNotableItems;
     private static boolean flagSeenDevices;
+    private static boolean createCrProperties;
     private final ExecutorService jobProcessingExecutor;
     private static final String INGEST_EVENT_THREAD_NAME = "Ingest-Event-Listener-%d";
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
@@ -146,6 +147,15 @@ public class IngestEventsListener {
     }
 
     /**
+     * Are correlation properties being created
+     *
+     * @return True if creating correlation properties; otherwise false.
+     */
+    public synchronized static boolean shouldCreateCrProperties() {
+        return createCrProperties;
+    }
+
+    /**
      * Configure the listener to flag notable items or not.
      *
      * @param value True to flag notable items; otherwise false.
@@ -163,6 +173,15 @@ public class IngestEventsListener {
         flagSeenDevices = value;
     }
 
+    /**
+     * Configure the listener to create correlation properties
+     *
+     * @param value True to create properties; otherwise false.
+     */
+    public synchronized static void setCreateCrProperties(boolean value) {
+        createCrProperties = value;
+    }
+
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
         "IngestEventsListener.prevCaseComment.text=Previous Case: ",
         "IngestEventsListener.ingestmodule.name=Correlation Engine"})
@@ -170,14 +189,14 @@ public class IngestEventsListener {
 
         try {
             String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
-            
+
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.IngestEventsListener_prevTaggedSet_text()));
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
                     Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", ""))));
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
-            
+
             SleuthkitCase tskCase = bbArtifact.getSleuthkitCase();
             AbstractFile abstractFile = tskCase.getAbstractFileById(bbArtifact.getObjectID());
             org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
@@ -185,7 +204,7 @@ public class IngestEventsListener {
             if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
                 tifArtifact.addAttributes(attributes);
-                
+
                 try {
                     // index the artifact for keyword search
                     Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
@@ -218,13 +237,13 @@ public class IngestEventsListener {
 
         try {
             String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
-            
+
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.IngestEventsListener_prevExists_text());
             attributes.add(att);
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
-            
+
             SleuthkitCase tskCase = bbArtifact.getSleuthkitCase();
             AbstractFile abstractFile = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
             org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
@@ -232,7 +251,7 @@ public class IngestEventsListener {
             if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
                 tifArtifact.addAttributes(attributes);
-                
+
                 try {
                     // index the artifact for keyword search
                     Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
@@ -271,7 +290,8 @@ public class IngestEventsListener {
                         //if ingest isn't running create the interesting items otherwise use the ingest module setting to determine if we create interesting items
                         boolean flagNotable = !IngestManager.getInstance().isIngestRunning() || isFlagNotableItems();
                         boolean flagPrevious = !IngestManager.getInstance().isIngestRunning() || isFlagSeenDevices();
-                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable, flagPrevious));
+                        boolean createAttributes = !IngestManager.getInstance().isIngestRunning() || shouldCreateCrProperties();
+                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable, flagPrevious, createAttributes));
                         break;
                     }
                 }
@@ -311,12 +331,14 @@ public class IngestEventsListener {
         private final PropertyChangeEvent event;
         private final boolean flagNotableItemsEnabled;
         private final boolean flagPreviousItemsEnabled;
+        private final boolean createCorrelationAttributes;
 
-        private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled) {
+        private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled, boolean createCorrelationAttributes) {
             dbManager = db;
             event = evt;
             this.flagNotableItemsEnabled = flagNotableItemsEnabled;
             this.flagPreviousItemsEnabled = flagPreviousItemsEnabled;
+            this.createCorrelationAttributes = createCorrelationAttributes;
         }
 
         @Override
@@ -369,7 +391,9 @@ public class IngestEventsListener {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
                                 }
                             }
-                            eamArtifacts.add(eamArtifact);
+                            if (createCorrelationAttributes) {
+                                eamArtifacts.add(eamArtifact);
+                            }
                         }
                     } catch (EamDbException ex) {
                         LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex);

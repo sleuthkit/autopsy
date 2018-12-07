@@ -29,6 +29,7 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
 
     private boolean flagTaggedNotableItems;
     private boolean flagPreviousDevices;
+    private boolean createCorrelationProperties;
 
     /**
      * Instantiate the ingest job settings with default values.
@@ -36,17 +37,22 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
     IngestSettings() {
         this.flagTaggedNotableItems = CentralRepoIngestModule.DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
         this.flagPreviousDevices = CentralRepoIngestModule.DEFAULT_FLAG_PREVIOUS_DEVICES;
+        this.createCorrelationProperties = CentralRepoIngestModule.DEFAULT_CREATE_CR_PROPERTIES;
     }
 
     /**
      * Instantiate the ingest job settings.
      *
-     * @param flagTaggedNotableItems Flag previously tagged notable items.
-     * @param flagPreviousDevices Flag devices which exist already in the Central Repository
+     * @param flagTaggedNotableItems      Flag previously tagged notable items.
+     * @param flagPreviousDevices         Flag devices which exist already in
+     *                                    the Central Repository
+     * @param createCorrelationProperties Create correlation properties in the
+     *                                    central repository
      */
-    IngestSettings(boolean flagTaggedNotableItems, boolean flagPreviousDevices) {
+    IngestSettings(boolean flagTaggedNotableItems, boolean flagPreviousDevices, boolean createCorrelationProperties) {
         this.flagTaggedNotableItems = flagTaggedNotableItems;
         this.flagPreviousDevices = flagPreviousDevices;
+        this.createCorrelationProperties = createCorrelationProperties;
     }
 
     @Override
@@ -70,5 +76,14 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
      */
     boolean isFlagPreviousDevices() {
         return flagPreviousDevices;
+    }
+
+    /**
+     * Should correlation properties be created
+     *
+     * @return True if creating; otherwise false.
+     */
+    boolean shouldCreateCorrelationProperties() {
+        return createCorrelationProperties;
     }
 }
