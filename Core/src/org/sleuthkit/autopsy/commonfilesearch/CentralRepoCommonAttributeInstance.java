@@ -77,7 +77,6 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
                 // Only attempt to make the abstract file if the attribute is from the current case
                 if (currentCase.getName().equals(currentAttributeInstance.getCorrelationCase().getCaseUUID())) {
-
                     SleuthkitCase tskDb = currentCase.getSleuthkitCase();
 
                     // Find the correct data source
@@ -98,8 +97,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                         parentPath += File.separator;
                     }
                     parentPath = parentPath.replace("\\", "/");
-
-                    final String whereClause = String.format("lower(name) = '%s' AND md5 = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, currentAttribute.getCorrelationValue(), parentPath, dataSource.get().getId());
+                    final String whereClause = String.format("lower(name) = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, parentPath, dataSource.get().getId());
                     List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(whereClause);
 
                     if (potentialAbstractFiles.isEmpty()) {

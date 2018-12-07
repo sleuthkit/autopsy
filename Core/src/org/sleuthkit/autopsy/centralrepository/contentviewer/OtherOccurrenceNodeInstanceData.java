@@ -122,20 +122,8 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      */
     boolean isCentralRepoNode() {
         return (originalCorrelationInstance != null);
-    }
-    
-    /**
-     * Uses the saved instance plus type and value to make a new CorrelationAttribute.
-     * Should only be called if isCentralRepoNode() is true.
-     * @return the newly created CorrelationAttribute
-     */
-    CorrelationAttributeInstance getCorrelationAttribute() throws EamDbException {
-        if (! isCentralRepoNode() ) { 
-            throw new EamDbException("Can not create CorrelationAttribute for non central repo node");
-        }
-        return originalCorrelationInstance;
-    }
-    
+    }    
+ 
     /**
      * Get the case name
      * @return the case name
@@ -206,7 +194,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      * @return the original abstract file
      */
     AbstractFile getAbstractFile() throws EamDbException {
-        if (originalCorrelationInstance == null) {
+        if (originalAbstractFile == null) {
             throw new EamDbException("AbstractFile is null");
         }
         return originalAbstractFile;
