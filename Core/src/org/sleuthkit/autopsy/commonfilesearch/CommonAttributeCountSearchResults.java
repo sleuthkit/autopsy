@@ -110,6 +110,11 @@ final public class CommonAttributeCountSearchResults {
         return Collections.unmodifiableMap(this.instanceCountToAttributeValues);
     }
 
+    /**
+     * Filter the results based on the criteria the user specified
+     *
+     * @throws EamDbException
+     */
     public void filterMetadata() throws EamDbException {
         filterMetadata(this.percentageThreshold);
     }

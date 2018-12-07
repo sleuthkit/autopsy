@@ -57,7 +57,6 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
         Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findInterCaseValuesByCount(Case.getCurrentCase());
-
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
@@ -72,7 +71,6 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
         Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findInterCaseValuesByCase(Case.getCurrentCase());
-
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);

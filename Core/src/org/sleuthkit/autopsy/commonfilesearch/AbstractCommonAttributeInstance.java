@@ -146,12 +146,14 @@ public abstract class AbstractCommonAttributeInstance {
      * Otherwise, we will get an InterCaseCommonAttributeInstanceNode which
      * supports only baseline functionality.
      *
-     * @param attributeInstance common file attribute instance form the central
-     *                          repo
-     * @param abstractFile      an AbstractFile from which the attribute
-     *                          instance was found - applies to
-     *                          CaseDbCommonAttributeInstance only
-     * @param currentCaseName
+     * @param attribute       common file attribute instance form the central
+     *                        repo
+     * @param abstractFile    an AbstractFile from which the attribute instance
+     *                        was found - applies to
+     *                        CaseDbCommonAttributeInstance only
+     * @param currentCaseName the name of the current case
+     * @param nodeType        the type of the node to create for determining
+     *                        which columns to add
      *
      * @return the appropriate leaf node for the results tree
      *
@@ -170,7 +172,11 @@ public abstract class AbstractCommonAttributeInstance {
         return leafNode;
     }
 
-    enum NODE_TYPE {
+    /**
+     * Enum for type of results being displayed in nodes.
+     */
+    public enum NODE_TYPE {
+        //depending on the type of results displayed different columns will be necessary to display complete information
         CASE_NODE,
         COUNT_NODE;
     }

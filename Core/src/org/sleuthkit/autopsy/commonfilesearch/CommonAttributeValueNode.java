@@ -52,7 +52,6 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
     public CommonAttributeValueNode(CommonAttributeValue data) {
         super(Children.create(
                 new FileInstanceNodeFactory(data), true));
-
         this.commonFileCount = data.getInstanceCount();
         this.cases = data.getCases();
         // @@ We seem to be doing this string concat twice.  We also do it in getDataSources()
@@ -85,16 +84,16 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
     }
 
     /**
-     * MD5 which is common to these matches
+     * Value which is common to these matches
      *
-     * @return string md5 hash
+     * @return string the the value which is correlated on
      */
     public String getValue() {
         return this.value;
     }
 
     @NbBundle.Messages({
-        "Md5Node.createSheet.noDescription= "
+        "ValueNode.createSheet.noDescription= "
     })
     @Override
     protected Sheet createSheet() {
@@ -105,7 +104,7 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
             sheet.put(sheetSet);
         }
 
-        final String NO_DESCR = Bundle.Md5Node_createSheet_noDescription();
+        final String NO_DESCR = Bundle.ValueNode_createSheet_noDescription();
         sheetSet.put(new NodeProperty<>(NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.nameColLbl"), NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.nameColLbl"), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSources()));

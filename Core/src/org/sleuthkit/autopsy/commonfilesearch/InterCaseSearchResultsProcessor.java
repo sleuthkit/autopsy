@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.HashUtility;
 
 /**
- * Used to process and return CorrelationCase md5s from the EamDB for
+ * Used to process and return CorrelationCase values from the EamDB for
  * CommonFilesSearch.
  */
 final class InterCaseSearchResultsProcessor {
@@ -124,9 +124,13 @@ final class InterCaseSearchResultsProcessor {
 
     /**
      * Given the current case, fins all intercase common files from the EamDb
-     * and builds maps of obj id to md5 and case.
+     * and builds maps of case name to maps of data source name to
+     * CommonAttributeValueList.
      *
      * @param currentCase The current TSK Case.
+     *
+     * @return map of Case name to Maps of Datasources and their
+     *         CommonAttributeValueLists
      */
     Map<String, Map<String, CommonAttributeValueList>> findInterCaseValuesByCase(Case currentCase) {
         try {
@@ -147,7 +151,7 @@ final class InterCaseSearchResultsProcessor {
         return new HashMap<>();
     }
 
-     /**
+    /**
      * Given the current case, fins all intercase common files from the EamDb
      * and builds maps of obj id to md5 and case.
      *
@@ -171,7 +175,7 @@ final class InterCaseSearchResultsProcessor {
         }
         return new HashMap<>();
     }
-    
+
     /**
      * Given the current case, and a specific case of interest, finds common
      * files which exist between cases from the EamDb. Builds maps of obj id to
@@ -193,12 +197,17 @@ final class InterCaseSearchResultsProcessor {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
         return new HashMap<>();
-    }    
-    
+    }
+
     /**
      * Given the current case, and a specific case of interest, finds common
-     * files which exist between cases from the EamDb. Builds maps of obj id to
-     * md5 and case.
+     * files which exist between cases from the EamDb. Builds map of case name
+     * to maps of data source name to CommonAttributeValueList.
+     *
+     * @param currentCase The current TSK Case.
+     *
+     * @return map of Case name to Maps of Datasources and their
+     *         CommonAttributeValueLists
      *
      * @param currentCase The current TSK Case.
      * @param singleCase  The case of interest. Matches must exist in this case.
@@ -219,8 +228,8 @@ final class InterCaseSearchResultsProcessor {
     }
 
     /**
-     * Callback to use with findInterCaseValuesByCount which generates a
- list of md5s for common files search
+     * Callback to use with findInterCaseValuesByCount which generates a list of
+     * md5s for common files search
      */
     private class InterCaseByCountCallback implements InstanceTableCallback {
 
@@ -303,8 +312,8 @@ final class InterCaseSearchResultsProcessor {
     }
 
     /**
-     * Callback to use with findInterCaseValuesByCount which generates a
- list of md5s for common files search
+     * Callback to use with findInterCaseValuesByCount which generates a list of
+     * md5s for common files search
      */
     private class InterCaseByCaseCallback implements InstanceTableCallback {
 
@@ -323,7 +332,7 @@ final class InterCaseSearchResultsProcessor {
                     String caseName = correlationCase.getDisplayName();
                     CorrelationDataSource correlationDatasource = EamDb.getInstance().getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
 //                    String dataSourceName = correlationDatasource.getName();
-                    String dataSourceNameKey = correlationDatasource.getName()+ correlationDatasource.getDataSourceObjectID();
+                    String dataSourceNameKey = correlationDatasource.getName() + correlationDatasource.getDataSourceObjectID();
                     if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
                         caseCollatedDataSourceCollections.put(caseName, new HashMap<String, CommonAttributeValueList>());
                     }
@@ -338,12 +347,12 @@ final class InterCaseSearchResultsProcessor {
                     CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
                     commonAttributeValue.addInstance(searchResult);
                     valueList.addMetadataToList(commonAttributeValue);
-                    dataSourceToFile.put(dataSourceNameKey,valueList);
+                    dataSourceToFile.put(dataSourceNameKey, valueList);
                     caseCollatedDataSourceCollections.put(caseName, dataSourceToFile);
                 }
             } catch (EamDbException | SQLException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
-            } 
+            }
         }
 
         Map<String, Map<String, CommonAttributeValueList>> getInstanceCollatedCommonFiles() {

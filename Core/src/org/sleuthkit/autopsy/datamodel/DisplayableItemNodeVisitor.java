@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2017 Basis Technology Corp.
+ * Copyright 2011 - 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstance
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResultRootNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCaseNode;
-import org.sleuthkit.autopsy.commonfilesearch.InstanceDataSourceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
 import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceDataSourceNode;
@@ -228,12 +227,12 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(InstanceCaseNode icn) {
             return defaultVisit(icn);
         }
-        
+
         @Override
         public T visit(InstanceDataSourceNode icn) {
             return defaultVisit(icn);
         }
-        
+
         @Override
         public T visit(CorrelationAttributeInstanceNode cain) {
             return defaultVisit(cain);

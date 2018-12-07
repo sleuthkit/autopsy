@@ -1,16 +1,16 @@
 /*
- * 
+ *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,19 +31,21 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Encapsulates data required to instantiate a <code>FileInstanceNode</code> for an instance in the CaseDB
+ * Encapsulates data required to instantiate a <code>FileInstanceNode</code> for
+ * an instance in the CaseDB
  */
 final public class CaseDBCommonAttributeInstance extends AbstractCommonAttributeInstance {
-    
+
     private static final Logger LOGGER = Logger.getLogger(CaseDBCommonAttributeInstance.class.getName());
     private final String value;
-    
+
     /**
      * Create meta data required to find an abstract file and build a
      * FileInstanceNode.
      *
-     * @param objectId id of abstract file to find
+     * @param objectId       id of abstract file to find
      * @param dataSourceName name of datasource where the object is found
+     * @param value          the correlation value which was found
      */
     CaseDBCommonAttributeInstance(Long abstractFileReference, String dataSource, String caseName, String value) {
         super(abstractFileReference, dataSource, caseName);
@@ -55,7 +57,7 @@ final public class CaseDBCommonAttributeInstance extends AbstractCommonAttribute
         final CaseDBCommonAttributeInstanceNode intraCaseCommonAttributeInstanceNode = new CaseDBCommonAttributeInstanceNode(this.getAbstractFile(), this.getCaseName(), this.getDataSource(), this.value, NODE_TYPE.COUNT_NODE);
         return Arrays.asList(intraCaseCommonAttributeInstanceNode).toArray(new DisplayableItemNode[1]);
     }
-    
+
     @Override
     AbstractFile getAbstractFile() {
 

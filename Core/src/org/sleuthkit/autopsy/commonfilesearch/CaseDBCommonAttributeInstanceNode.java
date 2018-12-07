@@ -47,6 +47,8 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
      * @param fsContent  the file which is being represented by this node
      * @param caseName   the name of the case
      * @param dataSource the datasource which contains the file
+     * @param value      the value that the correlation attribute was matched on
+     * @param nodeType   the type of node to display columns for
      *
      */
     public CaseDBCommonAttributeInstanceNode(AbstractFile fsContent, String caseName, String dataSource, String value, AbstractCommonAttributeInstance.NODE_TYPE nodeType) {
@@ -94,6 +96,7 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
         }
         final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
+        //add different columns for complete information depending on how nodes are structured in results
         if (nodeType == AbstractCommonAttributeInstance.NODE_TYPE.COUNT_NODE) {
             sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
             sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl(), NO_DESCR, caseName));

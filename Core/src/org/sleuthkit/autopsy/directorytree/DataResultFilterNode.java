@@ -535,11 +535,12 @@ public class DataResultFilterNode extends FilterNode {
         public AbstractAction visit(InstanceCaseNode icn) {
             return null;
         }
+
         @Override
         public AbstractAction visit(InstanceDataSourceNode icn) {
             return null;
         }
-        
+
         @Override
         public AbstractAction visit(CommonAttributeValueNode md5n) {
             return null;

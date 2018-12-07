@@ -34,8 +34,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * Node used to indicate the number of matches found with the MD5 children of
- * this Node.
+ * Node used to group results by case.
  */
 public final class InstanceCaseNode extends DisplayableItemNode {
 
@@ -45,26 +44,25 @@ public final class InstanceCaseNode extends DisplayableItemNode {
     final private Map<String, CommonAttributeValueList> dataSourceToValueList;
 
     /**
-     * Create a node with the given number of instances, and the given selection
-     * of metadata.
+     * Create a node with all instances for the given case, and the given
+     * selection of metadata.
      *
-     * @param instanceCount
-     * @param attributeValues
+     * @param caseName        the name of the case
+     * @param attributeValues the map of data sources to
+     *                        CommonAttributeValueLists to be included
      */
     public InstanceCaseNode(String caseName, Map<String, CommonAttributeValueList> attributeValues) {
         super(Children.create(new CommonAttributeDataSourceNodeFactory(attributeValues), true));
-
         this.caseName = caseName;
         this.dataSourceToValueList = attributeValues;
-
         this.setDisplayName(this.caseName);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/briefcase.png"); //NON-NLS
     }
 
     /**
-     * Number of matches found for each of the MD5 children.
+     * Name of the case all child nodes are contained in.
      *
-     * @return int match count
+     * @return String case name
      */
     String getCaseName() {
         return this.caseName;
@@ -79,7 +77,8 @@ public final class InstanceCaseNode extends DisplayableItemNode {
     }
 
     /**
-     * Get a list of metadata for the MD5s which are children of this object.
+     * Get a list of metadata for the datasources which are children of this
+     * object.
      *
      * @return List<Md5Metadata>
      */
@@ -110,7 +109,6 @@ public final class InstanceCaseNode extends DisplayableItemNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
         final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
         sheetSet.put(new NodeProperty<>(NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.nameColLbl"), NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.nameColLbl"), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, ""));
@@ -120,14 +118,14 @@ public final class InstanceCaseNode extends DisplayableItemNode {
     }
 
     /**
-     * ChildFactory which builds CommonFileParentNodes from the
-     * CommonAttributeValue metadata models.
+     * ChildFactory which builds InstanceDataSourceNode from the metadata data
+     * sources.
      */
     static class CommonAttributeDataSourceNodeFactory extends ChildFactory<String> {
 
         /**
-         * List of models, each of which is a parent node matching a single md5,
-         * containing children FileNodes.
+         * Map of data sources, each of which is a parent node matching a case
+         * name, containing children FileNodes.
          */
         private final Map<String, CommonAttributeValueList> metadata;
 

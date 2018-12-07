@@ -135,5 +135,4 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
         return attrInstNodeList.toArray(new DisplayableItemNode[attrInstNodeList.size()]);
     }
-
 }

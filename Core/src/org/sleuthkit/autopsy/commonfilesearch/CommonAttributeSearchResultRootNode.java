@@ -40,7 +40,7 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
     }
 
     CommonAttributeSearchResultRootNode(CommonAttributeCaseSearchResults metadataList) {
-        super(Children.create(new CaseNameNodeFactory(metadataList), true));
+        super(Children.create(new InstanceCaseNodeFactory(metadataList), true));
     }
 
     @NbBundle.Messages({
@@ -99,22 +99,22 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
     }
 
     /**
-     * Used to generate <code>InstanceCountNode</code>s.
+     * Used to generate <code>InstanceCaseNode</code>s.
      */
-    static class CaseNameNodeFactory extends ChildFactory<String> {
+    static class InstanceCaseNodeFactory extends ChildFactory<String> {
 
-        private static final Logger LOGGER = Logger.getLogger(InstanceCountNodeFactory.class.getName());
+        private static final Logger LOGGER = Logger.getLogger(InstanceCaseNodeFactory.class.getName());
 
         private final CommonAttributeCaseSearchResults searchResults;
 
         /**
          * Build a factory which converts a
-         * <code>CommonAttributeCountSearchResults</code> object into
+         * <code>CommonAttributeCaseSearchResults</code> object into
          * <code>DisplayableItemNode</code>s.
          *
          * @param searchResults
          */
-        CaseNameNodeFactory(CommonAttributeCaseSearchResults searchResults) {
+        InstanceCaseNodeFactory(CommonAttributeCaseSearchResults searchResults) {
             this.searchResults = searchResults;
         }
 

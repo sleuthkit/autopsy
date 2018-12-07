@@ -33,8 +33,7 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * Node used to indicate the number of matches found with the MD5 children of
- * this Node.
+ * Node used to group results by data source.
  */
 public final class InstanceDataSourceNode extends DisplayableItemNode {
 
@@ -44,11 +43,12 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
     final private CommonAttributeValueList dataSourceToValueList;
 
     /**
-     * Create a node with the given number of instances, and the given selection
-     * of metadata.
+     * Create a node with all instances for the given data source, and the given
+     * selection of metadata.
      *
-     * @param instanceCount
-     * @param attributeValues
+     * @param dataSourceName  the name of the dataSource
+     * @param attributeValues the commonAttributeValueList containing the
+     *                        results
      */
     public InstanceDataSourceNode(String dataSourceName, CommonAttributeValueList attributeValues) {
         super(Children.create(new FileInstanceNodeFactory(attributeValues), true));
@@ -61,9 +61,9 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
     }
 
     /**
-     * Number of matches found for each of the MD5 children.
+     * Get the name of the data source
      *
-     * @return int match count
+     * @return String data source name
      */
     String getDatasourceName() {
         return this.dataSourceName;
@@ -96,7 +96,6 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-
         final String NO_DESCR = Bundle.InstanceCountNode_createSheet_noDescription();
         sheetSet.put(new NodeProperty<>(NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.nameColLbl"), NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.nameColLbl"), NO_DESCR, ""));
         sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, ""));
@@ -111,8 +110,8 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
     }
 
     /**
-     * Child generator for <code>SleuthkitCaseFileInstanceNode</code> of
-     * <code>CommonAttributeValueNode</code>.
+     * ChildFactory which builds DisplayableItem from the metadata data
+     * sources.
      */
     static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeInstance> {
 

@@ -72,7 +72,7 @@ final public class CommonAttributeValue {
     }
 
     /**
-     * How many distinct file instances exist for the MD5 represented by this
+     * How many distinct file instances exist for the value represented by this
      * object?
      *
      * @return number of instances
