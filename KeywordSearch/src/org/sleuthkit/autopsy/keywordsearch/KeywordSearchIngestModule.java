@@ -486,7 +486,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             extractionContext.set(ImageFileExtractionConfig.class, imageConfig);
             
             try {
-                Reader specializedReader = TextExtractorFactory.getReader(aFile,extractionContext).getReader();
+                Reader specializedReader = TextExtractorFactory.getExtractor(aFile,extractionContext).getReader();
                 //divide into chunks and index
                 return Ingester.getDefault().indexText(specializedReader,aFile.getId(),aFile.getName(), aFile, context);
             } catch (TextExtractorFactory.NoTextExtractorFound | InitReaderException ex) {
@@ -508,7 +508,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return true;
                 }
-                Reader stringsReader = TextExtractorFactory.getDefaultReader(aFile, stringsExtractionContext).getReader();
+                Reader stringsReader = TextExtractorFactory.getDefaultExtractor(aFile, stringsExtractionContext).getReader();
                 if (Ingester.getDefault().indexText(stringsReader,aFile.getId(),aFile.getName(), aFile, KeywordSearchIngestModule.this.context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;

@@ -117,7 +117,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
             try {
                 Reader blackboardReader = TextExtractorFactory
-                        .getReader(content, null).getReader();
+                        .getExtractor(content, null).getReader();
                 String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
                 ingester.indexMetaDataOnly(artifact, sourceName);
                 ingester.indexText(blackboardReader, artifact.getArtifactID(), sourceName, content, null);
@@ -127,12 +127,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         } else {
             try {
                 Reader contentReader = TextExtractorFactory
-                        .getReader(content, null).getReader();
+                        .getExtractor(content, null).getReader();
                 ingester.indexText(contentReader, content.getId(), content.getName(), content, null);
             } catch (TextExtractorFactory.NoTextExtractorFound | InitReaderException | Ingester.IngesterException ex) {
                 try {
                     // Try the StringsTextExtractor if Tika extractions fails.
-                    ingester.indexText(TextExtractorFactory.getDefaultReader(content, null).getReader(),content.getId(),content.getName(), content, null);
+                    ingester.indexText(TextExtractorFactory.getDefaultExtractor(content, null).getReader(),content.getId(),content.getName(), content, null);
                 } catch (Ingester.IngesterException | InitReaderException ex1) {
                     throw new TskCoreException(ex.getCause().getMessage(), ex1);
                 }
@@ -448,7 +448,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         try {
             String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
             Reader contentSpecificReader = 
-                    TextExtractorFactory.getReader((Content) artifact, null).getReader();
+                    TextExtractorFactory.getExtractor((Content) artifact, null).getReader();
             ingester.indexMetaDataOnly(artifact, sourceName);
             ingester.indexText(contentSpecificReader, artifact.getId(), sourceName, artifact, null);
         } catch (Ingester.IngesterException | TextExtractorFactory.NoTextExtractorFound | InitReaderException ex) {

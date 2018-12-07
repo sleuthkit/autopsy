@@ -50,7 +50,7 @@ public class TextExtractorFactory {
      *                                             have no corresponding
      *                                             extractor
      */
-    public static TextExtractor<Content> getReader(Content file,
+    public static TextExtractor<Content> getExtractor(Content file,
             ExtractionContext context) throws NoTextExtractorFound {
         if (file instanceof AbstractFile) {
             String mimeType = ((AbstractFile) file).getMIMEType();   
@@ -91,7 +91,7 @@ public class TextExtractorFactory {
      *
      * @return A DefaultExtractor instance
      */
-    public static TextExtractor<Content> getDefaultReader(Content source, ExtractionContext context) {
+    public static TextExtractor<Content> getDefaultExtractor(Content source, ExtractionContext context) {
         StringsTextExtractor stringsInstance = new StringsTextExtractor(source);
         stringsInstance.setExtractionSettings(context);
         return stringsInstance;
