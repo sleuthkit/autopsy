@@ -21,19 +21,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.Reader;
-import java.util.logging.Level;
 import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.textextractors.ContentTextExtractor;
-import org.sleuthkit.autopsy.textextractors.ExtractionContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extract text from .txt files
  */
-final class TextFileExtractor extends ContentTextExtractor<AbstractFile> {
+final class TextFileExtractor {
 
     //Set a Minimum confidence value to reject matches that may not have a valid text encoding
     //Values of valid text encodings were generally 100, xml code sometimes had a value around 50, 
@@ -41,47 +37,30 @@ final class TextFileExtractor extends ContentTextExtractor<AbstractFile> {
     //This limited information was used to select the current value as one that would filter out clearly non-text 
     //files while hopefully working on all files with a valid text encoding
     static final private int MIN_MATCH_CONFIDENCE = 20;
-    static final private Logger logger = Logger.getLogger(TextFileExtractor.class.getName());
 
-    @Override
-    public boolean isContentTypeSpecific() {
-        return true;
-    }
-
-    @Override
-    public boolean isSupported(AbstractFile file, String detectedFormat) {
-        return true;
-    }
-
-    @Override
-    public Reader getReader(AbstractFile source) throws TextExtractorException {
+    public Reader getReader(AbstractFile source) throws TextFileExtractorException {
         CharsetDetector detector = new CharsetDetector();
         //wrap stream in a BufferedInputStream so that it supports the mark/reset methods necessary for the CharsetDetector
         InputStream stream = new BufferedInputStream(new ReadContentInputStream(source));
         try {
             detector.setText(stream);
         } catch (IOException ex) {
-            throw new TextExtractorException("Unable to get string from detected text in TextFileExtractor", ex);
+            throw new TextFileExtractorException("Unable to get string from detected text in TextFileExtractor", ex);
         }
         CharsetMatch match = detector.detect();
         if (match.getConfidence() < MIN_MATCH_CONFIDENCE) {
-            throw new TextExtractorException("Text does not match any character set with a high enough confidence for TextFileExtractor");
+            throw new TextFileExtractorException("Text does not match any character set with a high enough confidence for TextFileExtractor");
         }
 
         return match.getReader();
     }
-
-    @Override
-    public boolean isDisabled() {
-        return false;
-    }
-
-    @Override
-    public void logWarning(String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex);
-    }
-
-    @Override
-    public void setExtractionSettings(ExtractionContext context) {
+    
+    public class TextFileExtractorException extends Exception {
+        public TextFileExtractorException(String msg, Throwable ex) {
+            super(msg, ex);
+        }
+        public TextFileExtractorException(String msg) {
+            super(msg);
+        }
     }
 }

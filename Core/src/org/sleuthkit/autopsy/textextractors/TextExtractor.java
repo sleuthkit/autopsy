@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.textextractors;
 
 import java.io.Reader;
-import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 /**
  * Extracts text out of a SleuthkitVisitableItem, and exposes it is a Reader.
@@ -28,23 +27,19 @@ import org.sleuthkit.datamodel.SleuthkitVisitableItem;
  * @param <T> The subtype of SleuthkitVisitableItem an implementation is able to
  *            process.
  */
-public interface TextExtractor<T extends SleuthkitVisitableItem> {
-
-    /**
-     * Is this extractor configured such that no extraction will/should be done?
+interface TextExtractor<T> {
+    
+     /**
+     * Determines if the file content is supported by the extractor if
+     * isContentTypeSpecific() returns true.
      *
-     * @return True if this extractor will/should not perform any extraction.
-     */
-    boolean isDisabled();
-
-    /**
-     * Log the given message and exception as a warning.
+     * @param file           to test if its content should be supported
+     * @param detectedFormat mime-type with detected format (such as text/plain)
+     *                       or null if not detected
      *
-     * @param msg Log message
-     * @param ex  Exception associated with the incoming message
+     * @return true if the file content is supported, false otherwise
      */
-    void logWarning(String msg, Exception ex);
-
+    public abstract boolean isSupported(T file, String detectedFormat);
     /**
      * Get a reader that will iterate over the text extracted from the given
      * source.
@@ -53,28 +48,8 @@ public interface TextExtractor<T extends SleuthkitVisitableItem> {
      *
      * @return Reader instance that contains the text of the source
      *
-     * @throws TextExtractorException
      */
-    Reader getReader(T source) throws TextExtractorException;
-       
-    /**
-     * Get the 'object' id of the given source.
-     *
-     * @param source Source content of type T
-     *
-     * @return Object id of the source content
-     */
-    long getID(T source);
-
-    /**
-     * Get a human readable name for the given source.
-     *
-     * @param source Source content of type T
-     *
-     * @return Name of the content source
-     */
-    String getName(T source);
-    
+    Reader getReader(T source) throws InitReaderException;
        
     /**
      * Determines how the extraction process will proceed given the settings 
@@ -85,18 +60,18 @@ public interface TextExtractor<T extends SleuthkitVisitableItem> {
      * @param context Instance containing file config classes
      */
     void setExtractionSettings(ExtractionContext context);
-
-    /**
-     * System exception for dealing with errors encountered during extraction.
-     */
-    class TextExtractorException extends Exception {
-
-        public TextExtractorException(String message) {
-            super(message);
+    
+    public class InitReaderException extends Exception {
+        public InitReaderException(String msg, Throwable ex) {
+            super(msg, ex);
         }
-
-        public TextExtractorException(String message, Throwable cause) {
-            super(message, cause);
+        
+        public InitReaderException(Throwable ex) {
+            super(ex);
+        }
+        
+        public InitReaderException(String msg) {
+            super(msg);
         }
     }
 }

@@ -23,7 +23,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.Config;
 import net.htmlparser.jericho.LoggerProvider;
@@ -33,13 +32,12 @@ import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extracts text from HTML content.
  */
-final class HtmlTextExtractor<T extends Content> extends ContentTextExtractor<T> {
+final class HtmlTextExtractor<T extends AbstractFile> implements TextExtractor<T> {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private final int MAX_SIZE;
@@ -68,19 +66,6 @@ final class HtmlTextExtractor<T extends Content> extends ContentTextExtractor<T>
     }
 
     /**
-     * Determines if this extractor is responsible for extracting only a
-     * specific type of media.
-     *
-     * In this case, only HTML documents can be read successfully.
-     *
-     * @return true
-     */
-    @Override
-    public boolean isContentTypeSpecific() {
-        return true;
-    }
-
-    /**
      * Determines if this content type is supported by this extractor.
      *
      * @param content        Content instance to be analyzed
@@ -89,7 +74,7 @@ final class HtmlTextExtractor<T extends Content> extends ContentTextExtractor<T>
      * @return flag indicating support
      */
     @Override
-    public boolean isSupported(Content content, String detectedFormat) {
+    public boolean isSupported(AbstractFile content, String detectedFormat) {
         return detectedFormat != null
                 && WEB_MIME_TYPES.contains(detectedFormat)
                 && content.getSize() <= MAX_SIZE;
@@ -105,7 +90,7 @@ final class HtmlTextExtractor<T extends Content> extends ContentTextExtractor<T>
      * @throws TextExtractorException
      */
     @Override
-    public Reader getReader(Content content) throws TextExtractorException {
+    public Reader getReader(AbstractFile content) throws InitReaderException {
         //TODO JIRA-4467, there is only harm in excluding HTML documents greater
         //than 50MB due to our troubled approach of extraction.
         ReadContentInputStream stream = new ReadContentInputStream(content);
@@ -201,23 +186,8 @@ final class HtmlTextExtractor<T extends Content> extends ContentTextExtractor<T>
             // All done, now make it a reader
             return new StringReader(stringBuilder.toString());
         } catch (IOException ex) {
-            throw new TextExtractorException("Error extracting HTML from content.", ex);
+            throw new InitReaderException("Error extracting HTML from content.", ex);
         }
-    }
-
-    /**
-     * Indicates if this extractor can run.
-     *
-     * @return Flag indicating if this extractor can run.
-     */
-    @Override
-    public boolean isDisabled() {
-        return false;
-    }
-
-    @Override
-    public void logWarning(final String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 
     /**

@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.logging.Level;
 import org.apache.commons.io.IOUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -35,39 +34,27 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Extracts text from artifacts by concatenating the values of all of the
  * artifact's attributes.
  */
-class ArtifactTextExtractor<T extends Content> extends ContentTextExtractor<T> {
+class ArtifactTextExtractor<T extends BlackboardArtifact> implements TextExtractor<T> {
 
     static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
 
-    @Override
-    public boolean isDisabled() {
-        return false;
-    }
-
-    @Override
-    public void logWarning(final String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
-    }
-
-    private InputStream getInputStream(Content artifact) throws TextExtractorException {
-                        BlackboardArtifact art = (BlackboardArtifact)artifact;
-
+    private InputStream getInputStream(BlackboardArtifact artifact) throws InitReaderException {
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
 
         Content dataSource = null;
         try {
-            dataSource = art.getDataSource();
+            dataSource = artifact.getDataSource();
         } catch (TskCoreException tskCoreException) {
-            throw new TextExtractorException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
+            throw new InitReaderException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
         }
         if (dataSource == null) {
-            throw new TextExtractorException("Datasource was null for artifact: " + artifact.toString());
+            throw new InitReaderException("Datasource was null for artifact: " + artifact.toString());
         }
 
         try {
-            for (BlackboardAttribute attribute : art.getAttributes()) {
+            for (BlackboardAttribute attribute : artifact.getAttributes()) {
                 artifactContents.append(attribute.getAttributeType().getDisplayName());
                 artifactContents.append(" : ");
                 // We have also discussed modifying BlackboardAttribute.getDisplayString()
@@ -85,40 +72,31 @@ class ArtifactTextExtractor<T extends Content> extends ContentTextExtractor<T> {
                 artifactContents.append(System.lineSeparator());
             }
         } catch (TskCoreException tskCoreException) {
-            throw new TextExtractorException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
+            throw new InitReaderException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
         }
 
         return IOUtils.toInputStream(artifactContents, StandardCharsets.UTF_8);
     }
 
     @Override
-    public Reader getReader(Content source) throws TextExtractorException {
+    public Reader getReader(BlackboardArtifact source) throws InitReaderException {
         return new InputStreamReader(getInputStream(source), StandardCharsets.UTF_8);
     }
 
-    @Override
-    public long getID(Content source) {
-        BlackboardArtifact art = (BlackboardArtifact)source;
-        return art.getArtifactID();
-    }
-
-    @Override
-    public String getName(Content source) {
-                BlackboardArtifact art = (BlackboardArtifact)source;
-        return art.getDisplayName() + "_" + art.getArtifactID();
-    }
-
+    /**
+     * Configures this extractors to the settings stored in relevant config instances.
+     * 
+     * This operation is a no-op since currently there are no configurable settings
+     * of the extraction process.
+     *
+     * @param context Instance containing file config settings
+     */
     @Override
     public void setExtractionSettings(ExtractionContext context) {
     }
 
     @Override
-    public boolean isContentTypeSpecific() {
-        return true;
-    }
-
-    @Override
-    public boolean isSupported(Content file, String detectedFormat) {
+    public boolean isSupported(BlackboardArtifact file, String detectedFormat) {
         return true;
     }
 }

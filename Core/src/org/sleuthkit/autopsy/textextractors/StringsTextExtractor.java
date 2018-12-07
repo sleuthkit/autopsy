@@ -25,7 +25,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -37,40 +36,11 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-final class StringsTextExtractor<T extends Content> extends ContentTextExtractor<T> {
+final class StringsTextExtractor {
 
-    static final private Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
     private boolean extractUTF8;
     private boolean extractUTF16;
     private final static String DEFAULT_INDEXED_TEXT_CHARSET = "UTF-8";
-
-    /**
-     * Determines if this extractor may only read particular types of content.
-     *
-     * Since Strings may be run on any content type, it is not content specific.
-     *
-     * @return false
-     */
-    @Override
-    public boolean isContentTypeSpecific() {
-        return false;
-    }
-
-    /**
-     * Determines if this extractor can read the content type.
-     *
-     * Note: Strings can be run on any type of content, so all types will return
-     * true.
-     *
-     * @param file           Content source to read
-     * @param detectedFormat Mimetype of source file.
-     *
-     * @return true
-     */
-    @Override
-    public boolean isSupported(Content file, String detectedFormat) {
-        return true;
-    }
 
     private final List<SCRIPT> extractScripts = new ArrayList<>();
 
@@ -100,33 +70,6 @@ final class StringsTextExtractor<T extends Content> extends ContentTextExtractor
     }
 
     /**
-     * Get the currently used scripts for extraction
-     *
-     * @return scripts currently used or null if not supported
-     */
-    public List<SCRIPT> getScripts() {
-        return new ArrayList<>(extractScripts);
-    }
-
-    @Override
-    public void logWarning(final String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
-    }
-
-    /**
-     * Determines if this extractor should be run or not.
-     *
-     * Atleast one of the extraction encodings in DefaultExtractionConfig must
-     * be set for this extractor to run.
-     *
-     * @return Flag indicating if this extractor should be run.
-     */
-    @Override
-    public boolean isDisabled() {
-        return extractUTF8 == false && extractUTF16 == false;
-    }
-
-    /**
      * Returns a reader that will iterate over the text of the content source.
      *
      * @param content Content source of any type
@@ -136,8 +79,7 @@ final class StringsTextExtractor<T extends Content> extends ContentTextExtractor
      * @throws
      * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
-    @Override
-    public InputStreamReader getReader(Content content) throws TextExtractorException {
+    public InputStreamReader getReader(Content content) {
         InputStream stringStream = getInputStream(content);
         return new InputStreamReader(stringStream, Charset.forName(DEFAULT_INDEXED_TEXT_CHARSET));
     }
@@ -160,7 +102,6 @@ final class StringsTextExtractor<T extends Content> extends ContentTextExtractor
      *
      * @param context Instance containing config classes
      */
-    @Override
     public void setExtractionSettings(ExtractionContext context) {
         if (context != null && context.contains(DefaultExtractionConfig.class)) {
             DefaultExtractionConfig configInstance = context.get(DefaultExtractionConfig.class);

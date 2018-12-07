@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.textextractors;
 
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -31,8 +32,13 @@ import org.sleuthkit.datamodel.Report;
  * See ContentTextExtractor interface for the generic structure of such
  * extractors.
  */
-public class TextExtractorFactory {
-
+public class TextReader {
+    
+    private final static List<TextExtractor<AbstractFile>> fileExtractors = Arrays.asList(
+                new HtmlTextExtractor<>(),
+                new SqliteTextExtractor<>(),
+                new TikaTextExtractor<>()
+        );
     /**
      * Auto detects the correct text extractor given the file.
      *
@@ -41,40 +47,42 @@ public class TextExtractorFactory {
      * will keep the extractors at default settings. Refer to the
      * extractionconfigs package for available file configurations.
      *
-     * @param <T>     Type of source content
      * @param file    Content source that will be read from
      * @param context Contains extraction configurations for certain file types
      *
      * @return A ContentTextExtractor instance that is properly configured and
      *         can be read from the getReader() method.
      *
-     * @throws NoContentSpecificExtractorException In the event that the
+     * @throws NoReaderFoundException In the event that the
      *                                             inputted file and mimetype
      *                                             have no corresponding
      *                                             extractor
      */
-    public static <T extends Content> ContentTextExtractor<T> getContentSpecificExtractor(T file,
-            ExtractionContext context) throws NoContentSpecificExtractorException {
-        if (file instanceof AbstractFile) {
-            List<ContentTextExtractor<T>> fileExtractors = getAbstractFileExtractors();
-            String mimeType = ((AbstractFile) file).getMIMEType();
-            for (ContentTextExtractor<T> candidate : fileExtractors) {
-                candidate.setExtractionSettings(context);
-                if (candidate.isSupported(file, mimeType)) {
-                    return candidate;
+    public static Reader getContentSpecificReader(Content file,
+            ExtractionContext context) throws NoReaderFoundException {
+        try {
+            if (file instanceof AbstractFile) {
+                String mimeType = ((AbstractFile) file).getMIMEType();
+                for (TextExtractor<AbstractFile> candidate : fileExtractors) {
+                    candidate.setExtractionSettings(context);
+                    if (candidate.isSupported((AbstractFile)file, mimeType)) {
+                        return candidate.getReader((AbstractFile)file);
+                    }
                 }
+            } else if (file instanceof BlackboardArtifact) {
+                TextExtractor<BlackboardArtifact> artifactExtractor = new ArtifactTextExtractor<>();
+                artifactExtractor.setExtractionSettings(context);
+                return artifactExtractor.getReader((BlackboardArtifact)file);
+            } else if (file instanceof Report) {
+                TextExtractor<Report> reportExtractor = new TikaTextExtractor<>();
+                reportExtractor.setExtractionSettings(context);
+                reportExtractor.getReader((Report)file);
             }
-        } else if (file instanceof BlackboardArtifact) {
-            ContentTextExtractor<T> artifactExtractor = new ArtifactTextExtractor<>();
-            artifactExtractor.setExtractionSettings(context);
-            return artifactExtractor;
-        } else if (file instanceof Report) {
-            ContentTextExtractor<T> reportExtractor = new TikaTextExtractor<>();
-            reportExtractor.setExtractionSettings(context);
-            return reportExtractor;
+        } catch (TextExtractor.InitReaderException ex) {
+            throw new NoReaderFoundException(ex);
         }
-
-        throw new NoContentSpecificExtractorException(
+        
+        throw new NoReaderFoundException(
                 String.format("Could not find a suitable extractor for "
                         + "file with name [%s] and id=[%d]. Try using the default, "
                         + "non content specific extractor as an alternative.",
@@ -83,42 +91,33 @@ public class TextExtractorFactory {
     }
 
     /**
-     * Instantiates and returns a list of all of the known abstract file
-     * extractors.
-     *
-     * @return A list of specialized ContentTextExtractors
-     */
-    private static <T extends Content> List<ContentTextExtractor<T>> getAbstractFileExtractors() {
-        return Arrays.asList(
-                new HtmlTextExtractor<>(),
-                new SqliteTextExtractor<>(),
-                new TikaTextExtractor<>()
-        );
-    }
-
-    /**
      * Returns the default extractor that can be run on any content type. This
      * extractor should be used as a backup in the event that no specialized
      * extractor can be found.
      *
+     * @param source
      * @param context Contains extraction configurations for certain file types
      *
      * @return A DefaultExtractor instance
      */
-    public static ContentTextExtractor<Content> getDefaultExtractor(ExtractionContext context) {
-        ContentTextExtractor<Content> stringsInstance = new StringsTextExtractor<>();
+    public static Reader getDefaultReader(Content source, ExtractionContext context) {
+        StringsTextExtractor stringsInstance = new StringsTextExtractor();
         stringsInstance.setExtractionSettings(context);
-        return stringsInstance;
+        return stringsInstance.getReader(source);
     }
 
     /**
      * System level exception for handling content types that have no specific
      * strategy defined for extracting their text.
      */
-    public static class NoContentSpecificExtractorException extends Exception {
+    public static class NoReaderFoundException extends Exception {
 
-        public NoContentSpecificExtractorException(String msg) {
+        public NoReaderFoundException(String msg) {
             super(msg);
+        }
+        
+        public NoReaderFoundException(Throwable ex) {
+            super(ex);
         }
     }
 }

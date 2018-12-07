@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Extracts text from SQLite database files.
@@ -39,48 +38,10 @@ import org.sleuthkit.datamodel.Content;
  *  2) Tables that contain spaces in their name are not extracted
  *  3) Table names are not included in its output text
  */
-final class SqliteTextExtractor<T extends Content> extends ContentTextExtractor<T> {
+final class SqliteTextExtractor<T extends AbstractFile> implements TextExtractor<T> {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
-    private static boolean isDisabled;
-    
-    static {
-        try {
-            Class.forName("org.sqlite.JDBC");
-            isDisabled = false;
-        } catch (ClassNotFoundException ex) {
-            logger.log(Level.SEVERE, "Sqlite JDBC class could not be found, "
-                + "SqliteTextExtractor is automatically disabling.", ex); //NON-NLS
-            isDisabled = true;
-        }
-    }
-
-    /**
-     * This extractor only works for sqlite files, so it is indeed content type
-     * specific. 
-     * 
-     * @return true
-     */
-    @Override
-    public boolean isContentTypeSpecific() {
-        return true;
-    }
-
-    /**
-     * Determines if this extractor is fit to run.
-     * 
-     * @return Flag indicating if it should or shouldn't be run.
-     */
-    @Override
-    public boolean isDisabled() {
-        return isDisabled;
-    }
-
-    @Override
-    public void logWarning(String msg, Exception exception) {
-        logger.log(Level.WARNING, msg, exception); //NON-NLS
-    }
 
     /**
      * Supports only the sqlite mimetypes
@@ -91,7 +52,7 @@ final class SqliteTextExtractor<T extends Content> extends ContentTextExtractor<
      * @return true if x-sqlite3
      */
     @Override
-    public boolean isSupported(Content file, String detectedFormat) {
+    public boolean isSupported(AbstractFile file, String detectedFormat) {
         return SQLITE_MIMETYPE.equals(detectedFormat);
     }
 
@@ -105,12 +66,8 @@ final class SqliteTextExtractor<T extends Content> extends ContentTextExtractor<
      * @throws TextExtractorException
      */
     @Override
-    public Reader getReader(Content source) throws TextExtractorException {
-        if(source instanceof AbstractFile) {
-            return new SQLiteStreamReader((AbstractFile)source);
-        }
-        throw new TextExtractorException(String.format("Source content with name [%s] and id=[%d] was not of type"
-                + " AbstractFile.", source.getName(), source.getId()));
+    public Reader getReader(AbstractFile source) throws InitReaderException {
+        return new SQLiteStreamReader(source);
     }
 
     /**
@@ -125,7 +82,7 @@ final class SqliteTextExtractor<T extends Content> extends ContentTextExtractor<
     @Override
     public void setExtractionSettings(ExtractionContext context) {
     }
-
+    
     /**
      * Produces a continuous stream of characters from a database file. To
      * achieve this, all table names are queues up and a SQLiteTableReader is

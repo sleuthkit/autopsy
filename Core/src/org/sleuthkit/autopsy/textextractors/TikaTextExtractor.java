@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.textextractors;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharSource;
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +55,53 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extracts text from Tika supported content. Protects against Tika
  * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
-final class TikaTextExtractor<T extends Content> extends ContentTextExtractor<T> {
+final class TikaTextExtractor<T extends Content> implements TextExtractor<T> {
+    
+      //Mimetype groups to aassist extractor implementations in ignoring binary and 
+    //archive files.
+    private static final List<String> BINARY_MIME_TYPES
+            = ImmutableList.of(
+                    //ignore binary blob data, for which string extraction will be used
+                    "application/octet-stream", //NON-NLS
+                    "application/x-msdownload"); //NON-NLS
+
+    /** generally text extractors should ignore archives and let unpacking
+     * modules take care of them */
+    private static final List<String> ARCHIVE_MIME_TYPES
+            = ImmutableList.of(
+                    //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
+                    "application/x-7z-compressed", //NON-NLS
+                    "application/x-ace-compressed", //NON-NLS
+                    "application/x-alz-compressed", //NON-NLS
+                    "application/x-arj", //NON-NLS
+                    "application/vnd.ms-cab-compressed", //NON-NLS
+                    "application/x-cfs-compressed", //NON-NLS
+                    "application/x-dgc-compressed", //NON-NLS
+                    "application/x-apple-diskimage", //NON-NLS
+                    "application/x-gca-compressed", //NON-NLS
+                    "application/x-dar", //NON-NLS
+                    "application/x-lzx", //NON-NLS
+                    "application/x-lzh", //NON-NLS
+                    "application/x-rar-compressed", //NON-NLS
+                    "application/x-stuffit", //NON-NLS
+                    "application/x-stuffitx", //NON-NLS
+                    "application/x-gtar", //NON-NLS
+                    "application/x-archive", //NON-NLS
+                    "application/x-executable", //NON-NLS
+                    "application/x-gzip", //NON-NLS
+                    "application/zip", //NON-NLS
+                    "application/x-zoo", //NON-NLS
+                    "application/x-cpio", //NON-NLS
+                    "application/x-shar", //NON-NLS
+                    "application/x-tar", //NON-NLS
+                    "application/x-bzip", //NON-NLS
+                    "application/x-bzip2", //NON-NLS
+                    "application/x-lzip", //NON-NLS
+                    "application/x-lzma", //NON-NLS
+                    "application/x-lzop", //NON-NLS
+                    "application/x-z", //NON-NLS
+                    "application/x-compress"); //NON-NLS
+
     
     private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     
@@ -74,11 +121,6 @@ final class TikaTextExtractor<T extends Content> extends ContentTextExtractor<T>
                     .map(mt -> mt.getType() + "/" + mt.getSubtype())
                     .collect(Collectors.toList());
 
-    @Override
-    public void logWarning(final String msg, Exception ex) {
-        tikaLogger.log(Level.WARNING, msg, ex);
-    }
-
     /**
      * Returns a reader that will iterate over the text extracted from Apache 
      * Tika. 
@@ -89,7 +131,7 @@ final class TikaTextExtractor<T extends Content> extends ContentTextExtractor<T>
      * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException 
      */
     @Override
-    public Reader getReader(Content content) throws TextExtractorException {
+    public Reader getReader(Content content) throws InitReaderException {
         ReadContentInputStream stream = new ReadContentInputStream(content);
 
         Metadata metadata = new Metadata();
@@ -136,7 +178,7 @@ final class TikaTextExtractor<T extends Content> extends ContentTextExtractor<T>
             PushbackReader pushbackReader = new PushbackReader(tikaReader);
             int read = pushbackReader.read();
             if (read == -1) {
-                throw new TextExtractorException("Unable to extract text: Tika returned empty reader for " + content);
+                throw new InitReaderException("Unable to extract text: Tika returned empty reader for " + content);
             }
             pushbackReader.unread(read);
 
@@ -145,15 +187,13 @@ final class TikaTextExtractor<T extends Content> extends ContentTextExtractor<T>
             return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", content.getId(), content.getName());
-            logWarning(msg, te);
-            throw new TextExtractorException(msg, te);
-        } catch (TextExtractorException ex) {
+            throw new InitReaderException(msg, te);
+        } catch (InitReaderException ex) {
             throw ex;
         } catch (Exception ex) {
             tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the content" + content.getId() + ": " + content.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", content.getId(), content.getName());
-            logWarning(msg, ex);
-            throw new TextExtractorException(msg, ex);
+            throw new InitReaderException(msg, ex);
         } finally {
             future.cancel(true);
         }
@@ -200,19 +240,6 @@ final class TikaTextExtractor<T extends Content> extends ContentTextExtractor<T>
     }
 
     /**
-     * Determines if this extractor only understands a specifc type of content.
-     * 
-     * Although Apache Tika is defined for many input types, it is still a content
-     * specific approach to extraction.
-     * 
-     * @return true
-     */
-    @Override
-    public boolean isContentTypeSpecific() {
-        return true;
-    }
-
-    /**
      * Determines if Tika is supported for this content type and mimetype.
      * 
      * @param content Source content to read
@@ -222,27 +249,14 @@ final class TikaTextExtractor<T extends Content> extends ContentTextExtractor<T>
     @Override
     public boolean isSupported(Content content, String detectedFormat) {
         if (detectedFormat == null
-                || ContentTextExtractor.BINARY_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
-                || ContentTextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)
+                || BINARY_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
+                || ARCHIVE_MIME_TYPES.contains(detectedFormat)
                 || (detectedFormat.startsWith("video/") && !detectedFormat.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
                 || detectedFormat.equals(SQLITE_MIMETYPE) //Skip sqlite files, Tika cannot handle virtual tables and will fail with an exception. //NON-NLS
                 ) {
             return false;
         }
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
-    }
-
-    /**
-     * Determines if this extractor can be run.
-     * 
-     * So long as Tika's dependencies are present, this extractor can run 
-     * no matter the circumstance.
-     * 
-     * @return true 
-     */
-    @Override
-    public boolean isDisabled() {
-        return false;
     }
 
     /**

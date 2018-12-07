@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.BufferedReader;
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -32,7 +33,6 @@ import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
 import org.sleuthkit.autopsy.healthmonitor.TimingMetric;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
-import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -106,8 +106,8 @@ class Ingester {
      * @throws IngesterException if there was an error processing a specific
      *                           artifact, but the Solr server is probably fine.
      */
-    void indexMetaDataOnly(BlackboardArtifact artifact, TextExtractor<Content> extractor) throws IngesterException {
-        indexChunk("", extractor.getName(artifact), getContentFields(artifact));
+    void indexMetaDataOnly(BlackboardArtifact artifact, String sourceName) throws IngesterException {
+        indexChunk("", sourceName, getContentFields(artifact));
     }
 
     /**
@@ -142,23 +142,12 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     // TODO (JIRA-3118): Cancelled text indexing does not propagate cancellation to clients 
-    < T extends SleuthkitVisitableItem> boolean indexText(TextExtractor< T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
-        final long sourceID = extractor.getID(source);
-        final String sourceName = extractor.getName(source);
-
+    < T extends SleuthkitVisitableItem> boolean indexText(Reader sourceReader, long sourceID, String sourceName, T source, IngestJobContext context) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
-
-        if (extractor.isDisabled()) {
-            /*
-             * some Extractors, notable the strings extractor, have options
-             * which can be configured such that no extraction should be done
-             */
-            return true;
-        }
-
+        
         Map<String, String> fields = getContentFields(source);
         //Get a reader for the content of the given source
-        try (BufferedReader reader = new BufferedReader(extractor.getReader(source));) {
+        try (BufferedReader reader = new BufferedReader(sourceReader)) {
             Chunker chunker = new Chunker(reader);
             for (Chunk chunk : chunker) {
                 if (context != null && context.fileIngestIsCancelled()) {
@@ -173,18 +162,18 @@ class Ingester {
                     indexChunk(chunk.toString(), sourceName, fields);
                     numChunks++;
                 } catch (Ingester.IngesterException ingEx) {
-                    extractor.logWarning("Ingester had a problem with extracted string from file '" //NON-NLS
+                    logger.log(Level.WARNING, "Ingester had a problem with extracted string from file '" //NON-NLS
                             + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
 
                     throw ingEx; //need to rethrow to signal error and move on
                 }
             }
             if (chunker.hasException()) {
-                extractor.logWarning("Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
+                logger.log(Level.WARNING, "Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
                 return false;
             }
         } catch (Exception ex) {
-            extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
+            logger.log(Level.WARNING, "Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
             if (context != null && context.fileIngestIsCancelled()) {
