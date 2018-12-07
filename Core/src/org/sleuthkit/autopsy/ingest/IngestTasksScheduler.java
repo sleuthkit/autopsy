@@ -451,7 +451,11 @@ final class IngestTasksScheduler {
             boolean isInRootDir = false;
             try {
                 AbstractFile parent = f.getParentDirectory();
-                isInRootDir = parent.isRoot();
+                if (parent == null) {
+                    isInRootDir = true;
+                } else {
+                    isInRootDir = parent.isRoot();
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error querying parent directory for" + f.getName(), ex); //NON-NLS
             }
