@@ -402,8 +402,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         DataResultViewerTable table = new CommonAttributesSearchResultsViewerTable();
                         Collection<DataResultViewer> viewers = new ArrayList<>(1);
                         viewers.add(table);
-                        progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay()); //WJS-TODO change 0 back to a size calculation
-                        DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), tableFilterWithDescendantsNode, metadata.size(), viewers);
+                        progress.setDisplayName(Bundle.CommonAttributePanel_search_done_searchProgressDisplay());
+                        //0 passed as arguement due to JIRA-4502 ensuring the value is never displayed JIRA-TODO
+                        DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), tableFilterWithDescendantsNode, 0, viewers);
                     }
 
                 } catch (InterruptedException ex) {
