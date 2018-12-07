@@ -35,10 +35,11 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-final class StringsTextExtractor<T extends Content> implements TextExtractor<T> {
+final class StringsTextExtractor extends TextExtractor<Content> {
 
     private boolean extractUTF8;
     private boolean extractUTF16;
+    private final Content content;
     private final static String DEFAULT_INDEXED_TEXT_CHARSET = "UTF-8";
 
     private final List<SCRIPT> extractScripts = new ArrayList<>();
@@ -48,10 +49,11 @@ final class StringsTextExtractor<T extends Content> implements TextExtractor<T> 
      * configured to run only LATIN_2 as its default extraction script and UTF-8
      * as its default encoding.
      */
-    public StringsTextExtractor() {
+    public StringsTextExtractor(Content content) {
         //LATIN_2 is the default script
         extractScripts.add(SCRIPT.LATIN_2);
         extractUTF8 = true;
+        this.content = content;
     }
 
     /**
@@ -79,7 +81,7 @@ final class StringsTextExtractor<T extends Content> implements TextExtractor<T> 
      * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
     @Override
-    public InputStreamReader getReader(Content content) {
+    public InputStreamReader getReader() {
         InputStream stringStream = getInputStream(content);
         return new InputStreamReader(stringStream, Charset.forName(DEFAULT_INDEXED_TEXT_CHARSET));
     }
@@ -120,22 +122,16 @@ final class StringsTextExtractor<T extends Content> implements TextExtractor<T> 
 
     /**
      * 
-     * @param file
-     * @param detectedFormat
-     * @return 
-     */
-    @Override
-    public boolean isSupported(T file, String detectedFormat) {
-        return true;
-    }
-
-    /**
-     * 
      * @return 
      */
     @Override
     public boolean isEnabled() {
         return extractUTF8 || extractUTF16;
+    }
+
+    @Override
+    boolean isSupported(Content file, String detectedFormat) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**

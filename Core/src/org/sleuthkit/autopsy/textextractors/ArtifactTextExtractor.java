@@ -32,10 +32,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Extracts text from artifacts by concatenating the values of all of the
  * artifact's attributes.
  */
-class ArtifactTextExtractor<T extends BlackboardArtifact> implements TextExtractor<T> {
+class ArtifactTextExtractor extends TextExtractor<Content> {
 
+    private final BlackboardArtifact artifact;
+    
+    public ArtifactTextExtractor(Content artifact) {
+        this.artifact = (BlackboardArtifact) artifact;
+    }
+    
     @Override
-    public Reader getReader(BlackboardArtifact artifact) throws InitReaderException {
+    public Reader getReader() throws InitReaderException {
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
@@ -77,7 +83,7 @@ class ArtifactTextExtractor<T extends BlackboardArtifact> implements TextExtract
     }
 
     @Override
-    public boolean isSupported(BlackboardArtifact file, String detectedFormat) {
+    public boolean isSupported(Content file, String detectedFormat) {
         return true;
     }
 }

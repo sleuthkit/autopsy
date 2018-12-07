@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extracts text from Tika supported content. Protects against Tika
  * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
-final class TikaTextExtractor<T extends Content> implements TextExtractor<T> {
+final class TikaTextExtractor extends TextExtractor<Content> {
     
       //Mimetype groups to aassist extractor implementations in ignoring binary and 
     //archive files.
@@ -109,6 +109,7 @@ final class TikaTextExtractor<T extends Content> implements TextExtractor<T> {
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
     private final AutoDetectParser parser = new AutoDetectParser();
+    private final Content content;
     
     private boolean tesseractOCREnabled;
     private static final String TESSERACT_DIR_NAME = "Tesseract-OCR"; //NON-NLS
@@ -121,6 +122,9 @@ final class TikaTextExtractor<T extends Content> implements TextExtractor<T> {
                     .map(mt -> mt.getType() + "/" + mt.getSubtype())
                     .collect(Collectors.toList());
 
+    public TikaTextExtractor(Content content) {
+        this.content = content;
+    }
     /**
      * Returns a reader that will iterate over the text extracted from Apache 
      * Tika. 
@@ -131,7 +135,7 @@ final class TikaTextExtractor<T extends Content> implements TextExtractor<T> {
      * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException 
      */
     @Override
-    public Reader getReader(Content content) throws InitReaderException {
+    public Reader getReader() throws InitReaderException {
         ReadContentInputStream stream = new ReadContentInputStream(content);
 
         Metadata metadata = new Metadata();

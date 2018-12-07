@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.textextractors;
 
-import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -33,12 +32,6 @@ import org.sleuthkit.datamodel.Report;
  * extractors.
  */
 public class TextExtractorFactory {
-    
-    private final static List<TextExtractor<AbstractFile>> fileExtractors = Arrays.asList(
-                new HtmlTextExtractor<>(),
-                new SqliteTextExtractor<>(),
-                new TikaTextExtractor<>()
-        );
     /**
      * Auto detects the correct text extractor given the file.
      *
@@ -52,36 +45,35 @@ public class TextExtractorFactory {
      *
      * @return A Reader that contains file source text
      *
-     * @throws NoReaderFoundException In the event that the
+     * @throws NoTextExtractorFound In the event that the
      *                                             inputted file and mimetype
      *                                             have no corresponding
      *                                             extractor
      */
-    public static Reader getContentSpecificReader(Content file,
-            ExtractionContext context) throws NoReaderFoundException {
-        try {
-            if (file instanceof AbstractFile) {
-                String mimeType = ((AbstractFile) file).getMIMEType();
-                for (TextExtractor<AbstractFile> candidate : fileExtractors) {
-                    candidate.setExtractionSettings(context);
-                    if (candidate.isEnabled() && candidate.isSupported((AbstractFile)file, mimeType)) {
-                        return candidate.getReader((AbstractFile)file);
-                    }
+    public static TextExtractor<Content> getReader(Content file,
+            ExtractionContext context) throws NoTextExtractorFound {
+        if (file instanceof AbstractFile) {
+            String mimeType = ((AbstractFile) file).getMIMEType();   
+            List<TextExtractor<Content>> extractors = Arrays.asList(
+                    new HtmlTextExtractor(file),
+                    new SqliteTextExtractor(file), 
+                    new TikaTextExtractor(file));
+            for(TextExtractor<Content> extractor : extractors) {
+                if(extractor.isEnabled() && extractor.isSupported(file, mimeType)) {
+                    return extractor;
                 }
-            } else if (file instanceof BlackboardArtifact) {
-                TextExtractor<BlackboardArtifact> artifactExtractor = new ArtifactTextExtractor<>();
-                artifactExtractor.setExtractionSettings(context);
-                return artifactExtractor.getReader((BlackboardArtifact)file);
-            } else if (file instanceof Report) {
-                TextExtractor<Report> reportExtractor = new TikaTextExtractor<>();
-                reportExtractor.setExtractionSettings(context);
-                return reportExtractor.getReader((Report)file);
             }
-        } catch (TextExtractor.InitReaderException ex) {
-            throw new NoReaderFoundException(ex);
+        } else if (file instanceof BlackboardArtifact) {
+            TextExtractor<Content> artifactExtractor = new ArtifactTextExtractor((BlackboardArtifact)file);
+            artifactExtractor.setExtractionSettings(context);
+            return artifactExtractor;
+        } else if (file instanceof Report) {
+            TextExtractor<Content> reportExtractor = new TikaTextExtractor(file);
+            reportExtractor.setExtractionSettings(context);
+            return reportExtractor;
         }
         
-        throw new NoReaderFoundException(
+        throw new NoTextExtractorFound(
                 String.format("Could not find a suitable extractor for "
                         + "file with name [%s] and id=[%d]. Try using the default, "
                         + "non content specific extractor as an alternative.",
@@ -99,23 +91,23 @@ public class TextExtractorFactory {
      *
      * @return A DefaultExtractor instance
      */
-    public static Reader getDefaultReader(Content source, ExtractionContext context) {
-        StringsTextExtractor stringsInstance = new StringsTextExtractor();
+    public static TextExtractor<Content> getDefaultReader(Content source, ExtractionContext context) {
+        StringsTextExtractor stringsInstance = new StringsTextExtractor(source);
         stringsInstance.setExtractionSettings(context);
-        return stringsInstance.getReader(source);
+        return stringsInstance;
     }
 
     /**
      * System level exception for handling content types that have no specific
      * strategy defined for extracting their text.
      */
-    public static class NoReaderFoundException extends Exception {
+    public static class NoTextExtractorFound extends Exception {
 
-        public NoReaderFoundException(String msg) {
+        public NoTextExtractorFound(String msg) {
             super(msg);
         }
         
-        public NoReaderFoundException(Throwable ex) {
+        public NoTextExtractorFound(Throwable ex) {
             super(ex);
         }
     }

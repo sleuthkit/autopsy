@@ -28,6 +28,7 @@ import org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Extracts text from SQLite database files.
@@ -38,11 +39,15 @@ import org.sleuthkit.datamodel.AbstractFile;
  *  2) Tables that contain spaces in their name are not extracted
  *  3) Table names are not included in its output text
  */
-final class SqliteTextExtractor<T extends AbstractFile> implements TextExtractor<T> {
+final class SqliteTextExtractor extends TextExtractor<Content> {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
+    private final AbstractFile file;
 
+    public SqliteTextExtractor(Content file) {
+        this.file = (AbstractFile) file;
+    }
     /**
      * Supports only the sqlite mimetypes
      *
@@ -52,7 +57,7 @@ final class SqliteTextExtractor<T extends AbstractFile> implements TextExtractor
      * @return true if x-sqlite3
      */
     @Override
-    public boolean isSupported(AbstractFile file, String detectedFormat) {
+    public boolean isSupported(Content file, String detectedFormat) {
         return SQLITE_MIMETYPE.equals(detectedFormat);
     }
 
@@ -66,8 +71,8 @@ final class SqliteTextExtractor<T extends AbstractFile> implements TextExtractor
      * @throws TextExtractorException
      */
     @Override
-    public Reader getReader(AbstractFile source) throws InitReaderException {
-        return new SQLiteStreamReader(source);
+    public Reader getReader() throws InitReaderException {
+        return new SQLiteStreamReader(file);
     }
     
     /**

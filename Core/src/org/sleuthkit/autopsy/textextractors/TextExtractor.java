@@ -25,7 +25,7 @@ import java.io.Reader;
  *
  * @param <T> Generic data type T
  */
-interface TextExtractor<T> {
+public abstract class TextExtractor<T> {
     
      /**
      * Determines if the file content is supported by the extractor.
@@ -36,25 +36,25 @@ interface TextExtractor<T> {
      *
      * @return true if the file content is supported, false otherwise
      */
-    boolean isSupported(T file, String detectedFormat);
+    abstract boolean isSupported(T file, String detectedFormat);
     
     /**
      * 
      * @return 
      */
-    default boolean isEnabled() {
+    boolean isEnabled() {
         return true;
     }
+    
     /**
      * Get a reader that will iterate over the text extracted from the given
      * source.
      *
-     * @param source source content of type T
-     *
      * @return Reader instance that contains the text of the source
+     * @throws org.sleuthkit.autopsy.textextractors.InitReaderException
      *
      */
-    Reader getReader(T source) throws InitReaderException;
+    public abstract Reader getReader() throws InitReaderException;
        
     /**
      * Determines how the extraction process will proceed given the settings 
@@ -64,24 +64,7 @@ interface TextExtractor<T> {
      * 
      * @param context Instance containing file config classes
      */
-    default void setExtractionSettings(ExtractionContext context) {
+    void setExtractionSettings(ExtractionContext context) {
         //no-op by default
-    }
-    
-    /**
-     * 
-     */
-    public class InitReaderException extends Exception {
-        public InitReaderException(String msg, Throwable ex) {
-            super(msg, ex);
-        }
-        
-        public InitReaderException(Throwable ex) {
-            super(ex);
-        }
-        
-        public InitReaderException(String msg) {
-            super(msg);
-        }
     }
 }

@@ -46,6 +46,8 @@ import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.textextractors.InitReaderException;
+import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -115,23 +117,23 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
             try {
                 Reader blackboardReader = TextExtractorFactory
-                        .getContentSpecificReader(content, null);
+                        .getReader(content, null).getReader();
                 String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
                 ingester.indexMetaDataOnly(artifact, sourceName);
                 ingester.indexText(blackboardReader, artifact.getArtifactID(), sourceName, content, null);
-            } catch (Ingester.IngesterException | TextExtractorFactory.NoReaderFoundException ex) {
+            } catch (Ingester.IngesterException | TextExtractorFactory.NoTextExtractorFound | InitReaderException ex) {
                 throw new TskCoreException(ex.getCause().getMessage(), ex);
             }
         } else {
             try {
                 Reader contentReader = TextExtractorFactory
-                        .getContentSpecificReader(content, null);
+                        .getReader(content, null).getReader();
                 ingester.indexText(contentReader, content.getId(), content.getName(), content, null);
-            } catch (TextExtractorFactory.NoReaderFoundException | Ingester.IngesterException ex) {
+            } catch (TextExtractorFactory.NoTextExtractorFound | InitReaderException | Ingester.IngesterException ex) {
                 try {
                     // Try the StringsTextExtractor if Tika extractions fails.
-                    ingester.indexText(TextExtractorFactory.getDefaultReader(content, null),content.getId(),content.getName(), content, null);
-                } catch (Ingester.IngesterException ex1) {
+                    ingester.indexText(TextExtractorFactory.getDefaultReader(content, null).getReader(),content.getId(),content.getName(), content, null);
+                } catch (Ingester.IngesterException | InitReaderException ex1) {
                     throw new TskCoreException(ex.getCause().getMessage(), ex1);
                 }
             }
@@ -446,10 +448,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         try {
             String sourceName = artifact.getDisplayName() + "_" + artifact.getArtifactID();
             Reader contentSpecificReader = 
-                    TextExtractorFactory.getContentSpecificReader((Content) artifact, null);
+                    TextExtractorFactory.getReader((Content) artifact, null).getReader();
             ingester.indexMetaDataOnly(artifact, sourceName);
             ingester.indexText(contentSpecificReader, artifact.getId(), sourceName, artifact, null);
-        } catch (Ingester.IngesterException | TextExtractorFactory.NoReaderFoundException ex) {
+        } catch (Ingester.IngesterException | TextExtractorFactory.NoTextExtractorFound | InitReaderException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
     }
