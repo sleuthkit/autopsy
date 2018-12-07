@@ -364,6 +364,7 @@ public class ImageGalleryModule {
                                 if (drawableDb.getDataSourceDbBuildStatus(dataSourceObjId) != DrawableDB.DrawableDbBuildStatusEnum.COMPLETE) {
                                     drawableDb.insertOrUpdateDataSource(dataSource.getId(), DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS);
                                 }
+                                drawableDb.buildFileMetaDataCache();
                             }
                         }
                         break;
@@ -387,6 +388,7 @@ public class ImageGalleryModule {
 
                                     controller.getDatabase().insertOrUpdateDataSource(dataSource.getId(), datasourceDrawableDBStatus);
                                 }
+                                controller.getDatabase().freeFileMetaDataCache();
                             }
                         } else if (((AutopsyEvent) event).getSourceType() == AutopsyEvent.SourceType.REMOTE) {
                             /*
