@@ -167,7 +167,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {
             return filePath + "devices.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_VALIDATION_FAILED.getTypeID()) {
-            return filePath + "warning16.png"; //NON-NLS
+            return filePath + "validationFailed.png"; //NON-NLS
         }
         return filePath + "artifact-icon.png"; //NON-NLS
     }

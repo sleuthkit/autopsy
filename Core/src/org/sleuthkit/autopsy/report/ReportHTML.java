@@ -300,7 +300,7 @@ class ReportHTML implements TableReportModule {
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/devices.png"); //NON-NLS
                     break;
                 case TSK_VALIDATION_FAILED:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/red-circle-exclamation.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/validationFailed.png"); //NON-NLS
                     break;    
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = {0}", dataType); //NON-NLS
