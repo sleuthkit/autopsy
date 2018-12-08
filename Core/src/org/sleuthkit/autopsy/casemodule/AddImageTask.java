@@ -255,7 +255,7 @@ class AddImageTask implements Runnable {
                             criticalErrorOccurred = true;
                         }
                         try {
-                            if (!StringUtils.isBlank(md5)) {
+                            if (!StringUtils.isBlank(sha1)) {
                                 newImage.setSha1(sha1);
                             }
                         } catch (TskCoreException | TskDataException ex) {
@@ -268,7 +268,7 @@ class AddImageTask implements Runnable {
                             criticalErrorOccurred = true;
                         }
                         try {
-                            if (!StringUtils.isBlank(md5)) {
+                            if (!StringUtils.isBlank(sha256)) {
                                 newImage.setSha256(sha256);
                             }
                         } catch (TskCoreException | TskDataException ex) {
