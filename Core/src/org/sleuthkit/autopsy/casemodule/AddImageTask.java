@@ -241,44 +241,47 @@ class AddImageTask implements Runnable {
                             ImageWriterService.createImageWriter(imageId, imageWriterSettings);
                         }
                         newDataSources.add(newImage);
-                        try {
-                            if (!StringUtils.isBlank(md5)) {
+                        if (!StringUtils.isBlank(md5)) {
+                            try {
                                 newImage.setMD5(md5);
+                            } catch (TskCoreException | TskDataException ex) {
+                                /*
+                                 * Treat both exceptions as the same since this
+                                 * is a new image and the hash should not
+                                 * already be set.
+                                 */
+                                logger.log(Level.SEVERE, String.format("Failed to add MD5 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
+                                errorMessages.add(ex.getMessage());
+                                criticalErrorOccurred = true;
                             }
-                        } catch (TskCoreException | TskDataException ex) {
-                            /*
-                             * Treat both exceptions as the same since this is a
-                             * new image and the hash should not already be set.
-                             */
-                            logger.log(Level.SEVERE, String.format("Failed to add MD5 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
-                            errorMessages.add(ex.getMessage());
-                            criticalErrorOccurred = true;
                         }
-                        try {
-                            if (!StringUtils.isBlank(sha1)) {
+                        if (!StringUtils.isBlank(sha1)) {
+                            try {
                                 newImage.setSha1(sha1);
+                            } catch (TskCoreException | TskDataException ex) {
+                                /*
+                                 * Treat both exceptions as the same since this
+                                 * is a new image and the hash should not
+                                 * already be set.
+                                 */
+                                logger.log(Level.SEVERE, String.format("Failed to add SHA1 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
+                                errorMessages.add(ex.getMessage());
+                                criticalErrorOccurred = true;
                             }
-                        } catch (TskCoreException | TskDataException ex) {
-                            /*
-                             * Treat both exceptions as the same since this is a
-                             * new image and the hash should not already be set.
-                             */
-                            logger.log(Level.SEVERE, String.format("Failed to add SHA1 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
-                            errorMessages.add(ex.getMessage());
-                            criticalErrorOccurred = true;
                         }
-                        try {
-                            if (!StringUtils.isBlank(sha256)) {
+                        if (!StringUtils.isBlank(sha256)) {
+                            try {
                                 newImage.setSha256(sha256);
+                            } catch (TskCoreException | TskDataException ex) {
+                                /*
+                                 * Treat both exceptions as the same since this
+                                 * is a new image and the hash should not
+                                 * already be set.
+                                 */
+                                logger.log(Level.SEVERE, String.format("Failed to add SHA256 for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
+                                errorMessages.add(ex.getMessage());
+                                criticalErrorOccurred = true;
                             }
-                        } catch (TskCoreException | TskDataException ex) {
-                            /*
-                             * Treat both exceptions as the same since this is a
-                             * new image and the hash should not already be set.
-                             */
-                            logger.log(Level.SEVERE, String.format("Failed to add SHA256 for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
-                            errorMessages.add(ex.getMessage());
-                            criticalErrorOccurred = true;
                         }
                     } else {
                         String errorMessage = String.format("Error commiting adding image %s to the case database, no object id returned", imagePath); //NON-NLS
