@@ -29,6 +29,7 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.CURRENT_DB_SCHEMA_VERSION;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -387,6 +388,10 @@ public final class SqliteEamDbSettings {
             stmt.execute(createCorrelationTypesTable.toString());
 
             stmt.execute(createDbInfoTable.toString());
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
 
             // Create a separate instance and reference table for each artifact type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
@@ -520,9 +525,7 @@ public final class SqliteEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
-                && EamDbUtil.updateSchemaVersion(conn)
-                && EamDbUtil.insertDefaultOrganization(conn);
+        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn) && EamDbUtil.insertDefaultOrganization(conn);
         EamDbUtil.closeConnection(conn);
         return result;
     }
