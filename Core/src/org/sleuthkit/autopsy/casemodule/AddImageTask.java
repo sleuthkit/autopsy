@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.annotation.concurrent.GuardedBy;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
@@ -242,7 +243,9 @@ class AddImageTask implements Runnable {
                         }
                         newDataSources.add(newImage);
                         try {
-                            newImage.setMD5(md5);
+                            if (!StringUtils.isBlank(md5)) {
+                                newImage.setMD5(md5);
+                            }
                         } catch (TskCoreException | TskDataException ex) {
                             /*
                              * Treat both exceptions as the same since this is a
@@ -253,7 +256,9 @@ class AddImageTask implements Runnable {
                             criticalErrorOccurred = true;
                         }
                         try {
-                            newImage.setSha1(sha1);
+                            if (!StringUtils.isBlank(md5)) {
+                                newImage.setSha1(sha1);
+                            }
                         } catch (TskCoreException | TskDataException ex) {
                             /*
                              * Treat both exceptions as the same since this is a
@@ -264,7 +269,9 @@ class AddImageTask implements Runnable {
                             criticalErrorOccurred = true;
                         }
                         try {
-                            newImage.setSha256(sha256);
+                            if (!StringUtils.isBlank(md5)) {
+                                newImage.setSha256(sha256);
+                            }
                         } catch (TskCoreException | TskDataException ex) {
                             /*
                              * Treat both exceptions as the same since this is a
