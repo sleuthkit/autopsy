@@ -41,9 +41,10 @@ import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
  * wizard. It also provides a run method overload to allow it to be used
  * independently of the wizard.
  */
-@ServiceProviders(value={
-    @ServiceProvider(service=DataSourceProcessor.class),
-    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
+@ServiceProviders(value = {
+    @ServiceProvider(service = DataSourceProcessor.class)
+    ,
+    @ServiceProvider(service = AutoIngestDataSourceProcessor.class)}
 )
 public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
@@ -66,6 +67,9 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     private int sectorSize;
     private String timeZone;
     private boolean ignoreFatOrphanFiles;
+    private String md5;
+    private String sha1;
+    private String sha256;
     private boolean setDataSourceOptionsCalled;
 
     static {
@@ -74,7 +78,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         filtersList.add(encaseFilter);
         allExt.addAll(GeneralFilter.RAW_IMAGE_EXTS);
         allExt.addAll(GeneralFilter.ENCASE_IMAGE_EXTS);
-        if(!System.getProperty("os.name").toLowerCase().contains("mac")){
+        if (!System.getProperty("os.name").toLowerCase().contains("mac")) {
             filtersList.add(virtualMachineFilter);
             allExt.addAll(GeneralFilter.VIRTUAL_MACHINE_EXTS);
         }
@@ -89,10 +93,10 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
     public ImageDSProcessor() {
         configPanel = ImageFilePanel.createInstance(ImageDSProcessor.class.getName(), filtersList);
     }
-    
+
     /**
      * Get the list of file filters supported by this DSP.
-     * 
+     *
      * @return A list of all supported file filters.
      */
     static List<FileFilter> getFileFiltersList() {
@@ -172,8 +176,20 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
             sectorSize = configPanel.getSectorSize();
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
+            md5 = configPanel.getMd5();
+            if (md5.isEmpty()) {
+                md5 = null;
+            }
+            sha1 = configPanel.getSha1();
+            if (sha1.isEmpty()) {
+                sha1 = null;
+            }
+            sha256 = configPanel.getSha256();
+            if (sha256.isEmpty()) {
+                sha256 = null;
+            }
         }
-        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
+        run(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, progressMonitor, callback);
     }
 
     /**
@@ -198,7 +214,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      * @param callback             Callback to call when processing is done.
      */
     public void run(String deviceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        run(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
+        run(deviceId, imagePath, 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
     }
 
     /**
@@ -219,12 +235,15 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
+     * @param md5                  The MD5 hash of the image, may be null.
+     * @param sha1                 The SHA-1 hash of the image, may be null.
+     * @param sha256               The SHA-256 hash of the image, may be null.
      * @param progressMonitor      Progress monitor for reporting progress
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, null, progressMonitor, callback);
+    private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
 
@@ -267,12 +286,12 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
 
     @Override
     public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
-        
+
         // check file extension for supported types
         if (!isAcceptedByFiler(dataSourcePath.toFile(), filtersList)) {
             return 0;
         }
-        
+
         try {
             // verify that the image has a file system that TSK can process
             Case currentCase = Case.getCurrentCaseThrows();
@@ -283,7 +302,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         } catch (Exception ex) {
             throw new AutoIngestDataSourceProcessorException("Exception inside canProcess() method", ex);
         }
-        
+
         // able to process the data source
         return 100;
     }
@@ -296,9 +315,9 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.ignoreFatOrphanFiles = false;
         setDataSourceOptionsCalled = true;
-        run(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, progressMonitor, callBack);
+        run(deviceId, dataSourcePath.toString(), sectorSize, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callBack);
     }
-    
+
     /**
      * Sets the configuration of the data source processor without using the
      * selection and configuration panel.
@@ -321,5 +340,5 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
         setDataSourceOptionsCalled = true;
     }
-    
+
 }
