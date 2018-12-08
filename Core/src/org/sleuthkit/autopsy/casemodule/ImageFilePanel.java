@@ -21,23 +21,21 @@ package org.sleuthkit.autopsy.casemodule;
 import java.io.File;
 import java.util.Calendar;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
-import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.datamodel.HashUtility;
 
 /**
  * Panel for adding an image file such as .img, .E0x, .00x, etc. Allows the user
@@ -47,15 +45,10 @@ import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ImageFilePanel extends JPanel implements DocumentListener {
 
-    private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
+    private static final long serialVersionUID = 1L;
     private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
     private static final String[] SECTOR_SIZE_CHOICES = {"Auto Detect", "512", "1024", "2048", "4096"};
-
     private final JFileChooser fileChooser = new JFileChooser();
-
-    /**
-     * Externally supplied name is used to store settings
-     */
     private final String contextName;
 
     /**
@@ -79,7 +72,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
         sectorSizeComboBox.setSelectedIndex(0);
 
-        pathErrorLabel.setVisible(false);
+        errorLabel.setVisible(false);
 
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -117,8 +110,27 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     public static synchronized ImageFilePanel createInstance(String context, List<FileFilter> fileChooserFilters) {
         ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters);
         // post-constructor initialization of listener support without leaking references of uninitialized objects
-        instance.pathTextField.getDocument().addDocumentListener(instance);
+        instance.getPathTextField().getDocument().addDocumentListener(instance);
+        instance.getMd5TextFieldField().getDocument().addDocumentListener(instance);
+        instance.getSha1TextField().getDocument().addDocumentListener(instance);
+        instance.getSha256TextField().getDocument().addDocumentListener(instance);
         return instance;
+    }
+
+    private JTextField getPathTextField() {
+        return pathTextField;
+    }
+
+    private JTextField getMd5TextFieldField() {
+        return md5HashTextField;
+    }
+
+    private JTextField getSha1TextField() {
+        return sha1HashTextField;
+    }
+
+    private JTextField getSha256TextField() {
+        return sha256HashTextField;
     }
 
     /**
@@ -135,7 +147,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         timeZoneLabel = new javax.swing.JLabel();
         timeZoneComboBox = new javax.swing.JComboBox<>();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
-        pathErrorLabel = new javax.swing.JLabel();
+        errorLabel = new javax.swing.JLabel();
         sectorSizeLabel = new javax.swing.JLabel();
         sectorSizeComboBox = new javax.swing.JComboBox<>();
         sha256HashLabel = new javax.swing.JLabel();
@@ -166,8 +178,8 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.text")); // NOI18N
         noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.toolTipText")); // NOI18N
 
-        pathErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(pathErrorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.pathErrorLabel.text")); // NOI18N
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.errorLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(sectorSizeLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sectorSizeLabel.text")); // NOI18N
 
@@ -195,7 +207,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pathLabel)
-                    .addComponent(pathErrorLabel)
+                    .addComponent(errorLabel)
                     .addComponent(noFatOrphansCheckbox))
                 .addGap(0, 0, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -212,7 +224,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                     .addComponent(md5HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(sha1HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 287, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(sha256HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(11, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -222,8 +234,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(browseButton)
                     .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(3, 3, 3)
-                .addComponent(pathErrorLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -246,7 +256,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(sha256HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(sha256HashLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(errorLabel)
+                .addContainerGap(45, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -282,10 +294,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JLabel md5HashLabel;
     private javax.swing.JTextField md5HashTextField;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
-    private javax.swing.JLabel pathErrorLabel;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
     private javax.swing.JComboBox<String> sectorSizeComboBox;
@@ -340,6 +352,18 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         return noFatOrphansCheckbox.isSelected();
     }
 
+    String getMd5() {
+        return this.md5HashTextField.getText();
+    }
+
+    String getSha1() {
+        return this.sha1HashTextField.getText();
+    }
+
+    String getSha256() {
+        return this.sha256HashTextField.getText();
+    }
+
     public void reset() {
         //reset the UI elements to default 
         pathTextField.setText(null);
@@ -350,30 +374,43 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      *
      * @return true if a proper image has been selected, false otherwise
      */
-    @NbBundle.Messages({"ImageFilePanel.pathValidation.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive",
-            "ImageFilePanel.pathValidation.getOpenCase.Error=Warning: Exception while getting open case."
-            })
+    @NbBundle.Messages({
+        "ImageFilePanel.validatePanel.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive",
+        "ImageFilePanel.validatePanel.invalidMD5=Invalid MD5 hash",
+        "ImageFilePanel.validatePanel.invalidSHA1=Invalid SHA1 hash",
+        "ImageFilePanel.validatePanel.invalidSHA256=Invalid SHA256 hash",})
     public boolean validatePanel() {
-        pathErrorLabel.setVisible(false);
+        errorLabel.setVisible(false);
+
         String path = getContentPaths();
-        if (StringUtils.isBlank(path)) {
+        if (StringUtils.isBlank(path) || (!(new File(path).isFile() || DriveUtils.isPhysicalDrive(path) || DriveUtils.isPartition(path)))) {
             return false;
         }
 
-        // Display warning if there is one (but don't disable "next" button)
-        try {
-            if (false == PathValidator.isValidForMultiUserCase(path, Case.getCurrentCaseThrows().getCaseType())) {
-                pathErrorLabel.setVisible(true);
-                pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_dataSourceOnCDriveError());
-            }
-        } catch (NoCurrentCaseException ex) {
-            pathErrorLabel.setVisible(true);
-            pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_getOpenCase_Error());
+        if (!StringUtils.isBlank(getMd5()) && !HashUtility.isValidMd5Hash(getMd5())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_invalidMD5());
+            return false;
         }
 
-        return new File(path).isFile()
-                || DriveUtils.isPhysicalDrive(path)
-                || DriveUtils.isPartition(path);
+        if (!StringUtils.isBlank(getSha1()) && !HashUtility.isValidSha1Hash(getSha1())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_invalidSHA1());
+            return false;
+        }
+
+        if (!StringUtils.isBlank(getSha256()) && !HashUtility.isValidSha256Hash(getSha256())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_invalidSHA256());
+            return false;
+        }
+
+        if (!PathValidator.isValidForMultiUserCase(path, Case.getCurrentCase().getCaseType())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_dataSourceOnCDriveError());
+        }
+
+        return true;
     }
 
     public void storeSettings() {
@@ -416,12 +453,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         "ImageFilePanel.moduleErr.msg=A module caused an error listening to ImageFilePanel updates."
         + " See log to determine which module. Some data could be incomplete.\n"})
     private void updateHelper() {
-        try {
-            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.error(ImageFilePanel_moduleErr(), ImageFilePanel_moduleErr_msg());
-        }
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
     /**
