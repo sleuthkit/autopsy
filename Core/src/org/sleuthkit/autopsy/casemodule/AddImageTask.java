@@ -67,7 +67,6 @@ class AddImageTask implements Runnable {
      * TODO (AUT-2021): Merge SleuthkitJNI.AddImageProcess and AddImageTask
      */
     private final Object tskAddImageProcessLock;
-
     @GuardedBy("tskAddImageProcessLock")
     private boolean tskAddImageProcessStopped;
     private SleuthkitJNI.CaseDbHandle.AddImageProcess tskAddImageProcess;
