@@ -121,7 +121,7 @@ class AddImageTask implements Runnable {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Failed to add image data source, no current case", ex);
+            logger.log(Level.SEVERE, String.format("Failed to add image data source at %s, no current case", imagePath), ex);
             return;
         }
         progressMonitor.setIndeterminate(true);
