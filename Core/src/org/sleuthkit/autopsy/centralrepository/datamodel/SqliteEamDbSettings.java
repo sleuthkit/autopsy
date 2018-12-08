@@ -33,7 +33,6 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
 /**
  * Settings for the sqlite implementation of the Central Repository database
@@ -57,7 +56,6 @@ public final class SqliteEamDbSettings {
     private static final String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
     private static final String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
     private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*(\\.db)?";
-    private CaseDbSchemaVersionNumber createdDbSchemaVersion = new CaseDbSchemaVersionNumber(0, 0);    
     private String dbName;
     private String dbDirectory;
     private int bulkThreshold;
