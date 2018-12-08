@@ -155,8 +155,7 @@ public class EamDbUtil {
                 statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMinor() + " WHERE id=" + id);
             } else {
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
-            }
-                                    
+            }                              
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error adding schema version to db_info.", ex);
             return false;
