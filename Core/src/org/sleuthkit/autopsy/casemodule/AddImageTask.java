@@ -244,43 +244,46 @@ class AddImageTask implements Runnable {
                         if (!StringUtils.isBlank(md5)) {
                             try {
                                 newImage.setMD5(md5);
-                            } catch (TskCoreException | TskDataException ex) {
-                                /*
-                                 * Treat both exceptions as the same since this
-                                 * is a new image and the hash should not
-                                 * already be set.
-                                 */
+                            } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, String.format("Failed to add MD5 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
                                 errorMessages.add(ex.getMessage());
                                 criticalErrorOccurred = true;
+                            } catch (TskDataException ignored) {
+                                /*
+                                 * The only reasonable way for this to happen at
+                                 * present is through C/C++ processing of an EWF
+                                 * image, which is not an error.
+                                 */
                             }
                         }
                         if (!StringUtils.isBlank(sha1)) {
                             try {
                                 newImage.setSha1(sha1);
-                            } catch (TskCoreException | TskDataException ex) {
-                                /*
-                                 * Treat both exceptions as the same since this
-                                 * is a new image and the hash should not
-                                 * already be set.
-                                 */
+                            } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, String.format("Failed to add SHA1 hash for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
                                 errorMessages.add(ex.getMessage());
                                 criticalErrorOccurred = true;
+                            } catch (TskDataException ignored) {
+                                /*
+                                 * The only reasonable way for this to happen at
+                                 * present is through C/C++ processing of an EWF
+                                 * image, which is not an error.
+                                 */
                             }
                         }
                         if (!StringUtils.isBlank(sha256)) {
                             try {
                                 newImage.setSha256(sha256);
-                            } catch (TskCoreException | TskDataException ex) {
-                                /*
-                                 * Treat both exceptions as the same since this
-                                 * is a new image and the hash should not
-                                 * already be set.
-                                 */
+                            } catch (TskCoreException ex) {
                                 logger.log(Level.SEVERE, String.format("Failed to add SHA256 for image data source %s (objId=%d)", newImage.getName(), newImage.getId()), ex);
                                 errorMessages.add(ex.getMessage());
                                 criticalErrorOccurred = true;
+                            } catch (TskDataException ignored) {
+                                /*
+                                 * The only reasonable way for this to happen at
+                                 * present is through C/C++ processing of an EWF
+                                 * image, which is not an error.
+                                 */
                             }
                         }
                     } else {
