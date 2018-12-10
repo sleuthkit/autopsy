@@ -80,7 +80,7 @@ public class CommonAttributesSearchResultsViewerTable extends DataResultViewerTa
     @NbBundle.Messages({
         "CommonFilesSearchResultsViewerTable.noDescText= ",
         "CommonFilesSearchResultsViewerTable.instancesColLbl=Instances",
-        "CommonFilesSearchResultsViewerTable.localPath=Local Parent Path",
+        "CommonFilesSearchResultsViewerTable.localPath=Parent Path in Current Case",
         "CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path",
         "CommonFilesSearchResultsViewerTable.caseColLbl=Case",
         "CommonFilesSearchResultsViewerTable.valueColLbl=Value",
