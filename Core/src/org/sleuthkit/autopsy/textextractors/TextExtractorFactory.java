@@ -52,7 +52,8 @@ public class TextExtractorFactory {
      * @param context Contains extraction configurations for certain file types
      *
      * @return A TextExtractor that supports the given content. File text can be
-     *         obtained from {@link TextExtractor#getReader()}.
+     *         obtained from
+     *         {@link org.sleuthkit.autopsy.textextractors.TextExtractor#getReader()}.
      *
      * @throws NoTextExtractorFound Encountered when there is no TextExtractor
      *                              was found for the given content type. Use {@link

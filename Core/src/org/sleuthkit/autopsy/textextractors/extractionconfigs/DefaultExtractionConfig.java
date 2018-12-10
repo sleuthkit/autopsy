@@ -22,10 +22,17 @@ import java.util.List;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
- * Allows for configuration of the {@link TextExtractor} obtained from
+ * Allows for configuration of the
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractor} obtained from
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content, org.openide.util.Lookup)}.
  *
+ * The default extractor will read strings from the Content instance. This class
+ * allows for the configuration of the encoding language script to use during
+ * extraction.
+ *
  * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
+ * @see
+ * org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT
  * @see org.openide.util.Lookup
  */
 public class DefaultExtractionConfig {

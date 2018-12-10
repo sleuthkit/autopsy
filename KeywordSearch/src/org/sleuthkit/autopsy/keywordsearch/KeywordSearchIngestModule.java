@@ -45,8 +45,8 @@ import org.sleuthkit.autopsy.keywordsearch.TextFileExtractor.TextFileExtractorEx
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
-import org.sleuthkit.autopsy.textextractors.InitReaderException;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
+import org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.DefaultExtractionConfig;
@@ -486,7 +486,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 Reader specializedReader = TextExtractorFactory.getExtractor(aFile,extractionContext).getReader();
                 //divide into chunks and index
                 return Ingester.getDefault().indexText(specializedReader,aFile.getId(),aFile.getName(), aFile, context);
-            } catch (TextExtractorFactory.NoTextExtractorFound | InitReaderException ex) {
+            } catch (TextExtractorFactory.NoTextExtractorFound | ExtractionException ex) {
                 //No text extractor found... run the default instead
                 return false;
             }
@@ -514,7 +514,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     return false;
                 }
-            } catch (IngesterException | InitReaderException ex) {
+            } catch (IngesterException | ExtractionException ex) {
                 logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);  //NON-NLS
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 return false;

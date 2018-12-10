@@ -35,11 +35,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ArtifactTextExtractor extends TextExtractor {
 
     private final BlackboardArtifact artifact;
-    
+
     public ArtifactTextExtractor(Content artifact) {
         this.artifact = (BlackboardArtifact) artifact;
     }
-    
+
     @Override
     public Reader getReader() throws ExtractionException {
         // Concatenate the string values of all attributes into a single

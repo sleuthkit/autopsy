@@ -56,12 +56,14 @@ public abstract class TextExtractor {
 
     /**
      * Get a {@link java.io.Reader} that will iterate over the text extracted
-     * from the {@link org.sleuthkit.datamodel.Content} used to create this
-     * TextExtractor instance.
+     * from the {@link org.sleuthkit.datamodel.Content} passed into
+     * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}.
      *
      * @return {@link java.io.Reader} that contains the text of the underlying
      *         {@link org.sleuthkit.datamodel.Content}
-     * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException
+     *
+     * @throws
+     * org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException
      *
      * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
      *
@@ -77,23 +79,25 @@ public abstract class TextExtractor {
     void setExtractionSettings(Lookup context) {
         //no-op by default
     }
-    
+
     /**
-    * Exception encountered during {@link org.sleuthkit.autopsy.textextractors.TextExtractor#getReader()}.
-    * This indicates that there was an internal parsing error that occurred during the 
-    */
-   public class ExtractionException extends Exception {
+     * Exception encountered during
+     * {@link org.sleuthkit.autopsy.textextractors.TextExtractor#getReader()}.
+     * This indicates that there was an internal parsing error that occurred
+     * during the reading of Content text.
+     */
+    public class ExtractionException extends Exception {
 
-       public ExtractionException(String msg, Throwable ex) {
-           super(msg, ex);
-       }
+        public ExtractionException(String msg, Throwable ex) {
+            super(msg, ex);
+        }
 
-       public ExtractionException(Throwable ex) {
-           super(ex);
-       }
+        public ExtractionException(Throwable ex) {
+            super(ex);
+        }
 
-       public ExtractionException(String msg) {
-           super(msg);
-       }
-   }
+        public ExtractionException(String msg) {
+            super(msg);
+        }
+    }
 }

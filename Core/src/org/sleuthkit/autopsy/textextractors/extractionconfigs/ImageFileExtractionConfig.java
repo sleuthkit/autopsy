@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.textextractors.extractionconfigs;
 
 /**
- * Allows for configuration of image file extraction.
+ * Allows for configuration of OCR on image files.
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractor}'s that use
  * ImageFileExtractionConfig can be obtained through
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content)}

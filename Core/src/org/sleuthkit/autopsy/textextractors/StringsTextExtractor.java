@@ -107,9 +107,9 @@ final class StringsTextExtractor extends TextExtractor {
      */
     @Override
     public void setExtractionSettings(Lookup context) {
-        if(context != null) {
+        if (context != null) {
             DefaultExtractionConfig configInstance = context.lookup(DefaultExtractionConfig.class);
-            if(configInstance == null) {
+            if (configInstance == null) {
                 return;
             }
             if (Objects.nonNull(configInstance.getExtractUTF8())) {
@@ -125,8 +125,8 @@ final class StringsTextExtractor extends TextExtractor {
     }
 
     /**
-     * 
-     * @return 
+     *
+     * @return
      */
     @Override
     public boolean isEnabled() {
