@@ -27,9 +27,9 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
 
-    private boolean flagTaggedNotableItems;
-    private boolean flagPreviousDevices;
-    private boolean createCorrelationProperties;
+    private final boolean flagTaggedNotableItems;
+    private final boolean flagPreviousDevices;
+    private final boolean createCorrelationProperties;
 
     /**
      * Instantiate the ingest job settings with default values.
