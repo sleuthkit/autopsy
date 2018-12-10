@@ -31,6 +31,7 @@ import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearchIngestModule.StringsExtractOptions;
 
 /**
  * Ingest job settings panel for keyword search file ingest modules.
@@ -102,8 +103,8 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void displayEncodings() {
-        String utf8 = KeywordSearchSettings.getStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF8.toString());
-        String utf16 = KeywordSearchSettings.getStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF16.toString());
+        String utf8 = KeywordSearchSettings.getStringExtractOption(StringsExtractOptions.EXTRACT_UTF8.toString());
+        String utf16 = KeywordSearchSettings.getStringExtractOption(StringsExtractOptions.EXTRACT_UTF16.toString());
         ArrayList<String> encodingsList = new ArrayList<>();
         if (utf8 == null || Boolean.parseBoolean(utf8)) {
             encodingsList.add("UTF8");
