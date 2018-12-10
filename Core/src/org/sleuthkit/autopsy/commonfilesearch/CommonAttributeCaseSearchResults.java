@@ -116,23 +116,23 @@ final public class CommonAttributeCaseSearchResults {
      */
     private Map<String, Map<String, CommonAttributeValueList>> filterMetadata(Map<String, Map<String, CommonAttributeValueList>> metadata, int percentageThreshold, int resultTypeId, Set<String> mimeTypesToFilterOn) {
         try {
-            CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
-                    .getDefaultCorrelationTypes()
-                    .stream()
-                    .filter(filterType -> filterType.getId() == resultTypeId)
-                    .findFirst().get();
             final String currentCaseName;
             try {
                 currentCaseName = Case.getCurrentCaseThrows().getDisplayName();
             } catch (NoCurrentCaseException ex) {
                 throw new EamDbException("Unable to get current case while performing filtering", ex);
             }
-            //Call countUniqueDataSources once to reduce the number of DB queries needed to get the frequencyPercentage
-            Double uniqueCaseDataSourceTuples = EamDb.getInstance().getCountUniqueDataSources().doubleValue();
             Map<String, CommonAttributeValueList> currentCaseDataSourceMap = metadata.get(currentCaseName);
             if (currentCaseDataSourceMap == null) {
                 throw new EamDbException("No data for current case found in results, indicating there are no results and nothing will be filtered");
             }
+            CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
+                    .getDefaultCorrelationTypes()
+                    .stream()
+                    .filter(filterType -> filterType.getId() == resultTypeId)
+                    .findFirst().get();
+            //Call countUniqueDataSources once to reduce the number of DB queries needed to get the frequencyPercentage
+            Double uniqueCaseDataSourceTuples = EamDb.getInstance().getCountUniqueDataSources().doubleValue();
             Map<String, Map<String, CommonAttributeValueList>> filteredCaseNameToDataSourcesTree = new HashMap<>();
             Map<String, CommonAttributeValue> valuesToKeepCurrentCase = getValuesToKeepFromCurrentCase(currentCaseDataSourceMap, attributeType, percentageThreshold, uniqueCaseDataSourceTuples, mimeTypesToFilterOn);
             for (Entry<String, Map<String, CommonAttributeValueList>> mapOfDataSources : Collections.unmodifiableMap(metadata).entrySet()) {
@@ -237,7 +237,6 @@ final public class CommonAttributeCaseSearchResults {
     private boolean filterValue(CorrelationAttributeInstance.Type attributeType, CommonAttributeValue value, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples, Set<String> mimeTypesToInclude) throws EamDbException {
         //Intracase common attribute searches will have been created with an empty mimeTypesToInclude list 
         //because when performing intra case search this filtering will have been done during the query of the case database 
-        boolean mimeTypeToRemove = false;  //allow code to be more efficient by not attempting to remove the same value multiple times
         if (!mimeTypesToInclude.isEmpty()) { //only do the mime type filtering when mime types aren't empty
             for (AbstractCommonAttributeInstance commonAttr : value.getInstances()) {
                 AbstractFile abstractFile = commonAttr.getAbstractFile();
@@ -249,7 +248,7 @@ final public class CommonAttributeCaseSearchResults {
                 }
             }
         }
-        if (!mimeTypeToRemove && maximumPercentageThreshold != 0) {  //only do the frequency filtering when a max % was set
+        if (maximumPercentageThreshold != 0) {  //only do the frequency filtering when a max % was set
             try {
                 Double uniqueTypeValueTuples = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(
                         attributeType, value.getValue()).doubleValue();
