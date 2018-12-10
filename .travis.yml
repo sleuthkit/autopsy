@@ -19,11 +19,11 @@ install:
  - sh travis_build.sh
 script:
  - set -e
- - echo "building autopsy..." && echo -en 'travis_fold:start:script.build\\r'
+ - echo "Building Autopsy..." && echo -en 'travis_fold:start:script.build\\r'
  - cd $TRAVIS_BUILD_DIR/
- - ant -q build
+ - ant build
  - echo -en 'travis_fold:end:script.build\\r'
- - echo "testing autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
+ - echo "Testing Autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
  - cd Core/
  - xvfb-run ant -q test
  - echo -en 'travis_fold:end:script.tests\\r'
