@@ -120,6 +120,7 @@ final class TikaTextExtractor extends TextExtractor {
     private static final String TESSERACT_DIR_NAME = "Tesseract-OCR"; //NON-NLS
     private static final String TESSERACT_EXECUTABLE = "tesseract.exe"; //NON-NLS
     private static final File TESSERACT_PATH = locateTesseractExecutable();
+    private static final String LANGUAGE_PACKS = getLanguagePacks();
 
     private static final List<String> TIKA_SUPPORTED_TYPES
             = new Tika().getParser().getSupportedTypes(new ParseContext())
@@ -177,8 +178,7 @@ final class TikaTextExtractor extends TextExtractor {
             ocrConfig.setTesseractPath(tesseractFolder);
             // Tesseract expects language data packs to be in a subdirectory of tesseractFolder, in a folder called "tessdata".
             // If they are stored somewhere else, use ocrConfig.setTessdataPath(String tessdataPath) to point to them
-            System.out.println(getLanguagePacks());
-            ocrConfig.setLanguage(getLanguagePacks());
+            ocrConfig.setLanguage(LANGUAGE_PACKS);
             parseContext.set(TesseractOCRConfig.class, ocrConfig);
         }
 
@@ -279,7 +279,7 @@ final class TikaTextExtractor extends TextExtractor {
      *
      * @return String of all language packs available for Tesseract to use
      */
-    private String getLanguagePacks() {
+    private static String getLanguagePacks() {
         File languagePackRootDir = new File(TESSERACT_PATH.getParent(), "tessdata");
         //Acceptable extensions for Tesseract-OCR version 3.05 language packs.
         //All extensions other than traineddata are associated with cube files that
