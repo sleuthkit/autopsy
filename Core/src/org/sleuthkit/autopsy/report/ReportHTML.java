@@ -47,6 +47,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
+import javax.swing.JPanel;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -56,6 +58,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.ContentUtils.ExtractFscContentVisitor;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -89,6 +92,8 @@ class ReportHTML implements TableReportModule {
     private String currentDataType; // name of current data type
     private Integer rowCount;       // number of rows (aka artifacts or tags) for the current data type
     private Writer out;
+    
+    private ReportHTMLConfigurationPanel configPanel;
 
     private final ReportBranding reportBranding;
 
@@ -103,6 +108,14 @@ class ReportHTML implements TableReportModule {
     // Hidden constructor
     private ReportHTML() {
         reportBranding = new ReportBranding();
+    }
+    
+    @Override
+    public JPanel getConfigurationPanel() {
+        if (configPanel == null) {
+            configPanel = new ReportHTMLConfigurationPanel();
+        }
+        return configPanel;
     }
 
     // Refesh the member variables
@@ -272,8 +285,23 @@ class ReportHTML implements TableReportModule {
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
                     break;
                 case TSK_WIFI_NETWORK:
-                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/network-wifi.png"); //NON-NLS
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/network-wifi.png"); //NON-NLS
                     break;
+                case TSK_WIFI_NETWORK_ADAPTER:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/network-wifi.png"); //NON-NLS
+                    break;
+                case TSK_SIM_ATTACHED:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/sim_card.png"); //NON-NLS
+                    break;
+                case TSK_BLUETOOTH_ADAPTER:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/Bluetooth.png"); //NON-NLS
+                    break;
+                case TSK_DEVICE_INFO:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/devices.png"); //NON-NLS
+                    break;
+                case TSK_VERIFICATION_FAILED:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/images/validationFailed.png"); //NON-NLS
+                    break;    
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = {0}", dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
@@ -332,6 +360,10 @@ class ReportHTML implements TableReportModule {
      */
     @Override
     public void startReport(String baseReportDir) {
+        // Save settings
+        ModuleSettings.setConfigSetting("HTMLReport", "header", configPanel.getHeader()); //NON-NLS
+        ModuleSettings.setConfigSetting("HTMLReport", "footer", configPanel.getFooter()); //NON-NLS
+        
         // Refresh the HTML report
         try {
             refresh();
@@ -392,12 +424,14 @@ class ReportHTML implements TableReportModule {
 
         try {
             StringBuilder page = new StringBuilder();
-            page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n"); //NON-NLS
-            page.append("<div id=\"header\">").append(name).append("</div>\n<div id=\"content\">\n"); //NON-NLS
+            page.append("<html>\n<head>\n\t<title>").append(name).append("</title>\n\t<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n</head>\n<body>\n") //NON-NLS
+            .append(writePageHeader())
+            .append("<div id=\"header\">").append(name).append("</div>\n")
+            .append("<div id=\"content\">\n"); //NON-NLS
             if (!description.isEmpty()) {
                 page.append("<p><strong>"); //NON-NLS
                 page.append(description);
-                page.append("</string></p>\n"); //NON-NLS
+                page.append("</strong></p>\n"); //NON-NLS
             }
             out.write(page.toString());
             currentDataType = name;
@@ -415,7 +449,10 @@ class ReportHTML implements TableReportModule {
     public void endDataType() {
         dataTypes.put(currentDataType, rowCount);
         try {
-            out.write("</div>\n</body>\n</html>\n"); //NON-NLS
+            StringBuilder builder = new StringBuilder();
+            builder.append(writePageFooter());
+            builder.append("</div>\n</body>\n</html>\n"); //NON-NLS
+            out.write(builder.toString());
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write end of HTML report.", ex); //NON-NLS
         } finally {
@@ -429,6 +466,40 @@ class ReportHTML implements TableReportModule {
                 out = null;
             }
         }
+    }
+    
+    /**
+     * Write HTML-formatted page header text based on the text provided in the
+     * configuration panel.
+     * 
+     * @return The HTML-formatted text.
+     */
+    private String writePageHeader() {
+        StringBuilder output = new StringBuilder();
+        String pageHeader = configPanel.getHeader();
+        if (pageHeader.isEmpty() == false) {
+            output.append("<div id=\"pageHeaderFooter\">")
+                    .append(StringEscapeUtils.escapeHtml4(pageHeader))
+                    .append("</div>\n"); //NON-NLS
+        }
+        return output.toString();
+    }
+    
+    /**
+     * Write HTML-formatted page footer text based on the text provided in the
+     * configuration panel.
+     * 
+     * @return The HTML-formatted text.
+     */
+    private String writePageFooter() {
+        StringBuilder output = new StringBuilder();
+        String pageFooter = configPanel.getFooter();
+        if (pageFooter.isEmpty() == false) {
+            output.append("<br/><div id=\"pageHeaderFooter\">")
+                    .append(StringEscapeUtils.escapeHtml4(pageFooter))
+                    .append("</div>"); //NON-NLS
+        }
+        return output.toString();
     }
 
     /**
@@ -860,6 +931,8 @@ class ReportHTML implements TableReportModule {
                     + //NON-NLS
                     "#header {width:100%; padding: 10px; line-height: 25px; background: #07A; color: #FFF; font-size: 20px;}\n"
                     + //NON-NLS
+                    "#pageHeaderFooter {width: 100%; padding: 10px; line-height: 25px; text-align: center; font-size: 20px;}\n"
+                    + //NON-NLS
                     "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; margin-top: 25px; border-bottom: 1px solid #D6D6D6;}\n"
                     + //NON-NLS
                     "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n"
@@ -1071,6 +1144,7 @@ class ReportHTML implements TableReportModule {
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.title")).append("</title>\n"); //NON-NLS
             head.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"); //NON-NLS
             head.append("<style type=\"text/css\">\n"); //NON-NLS
+            head.append("#pageHeaderFooter {width: 100%; padding: 10px; line-height: 25px; text-align: center; font-size: 20px;}\n"); //NON-NLS
             head.append("body { padding: 0px; margin: 0px; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353; }\n"); //NON-NLS
             head.append("#wrapper { width: 90%; margin: 0px auto; margin-top: 35px; }\n"); //NON-NLS
             head.append("h1 { color: #07A; font-size: 36px; line-height: 42px; font-weight: normal; margin: 0px; border-bottom: 1px solid #81B9DB; }\n"); //NON-NLS
@@ -1109,6 +1183,7 @@ class ReportHTML implements TableReportModule {
             final boolean generatorLogoSet = reportBranding.getGeneratorLogoPath() != null && !reportBranding.getGeneratorLogoPath().isEmpty();
 
             summary.append("<div id=\"wrapper\">\n"); //NON-NLS
+            summary.append(writePageHeader());
             summary.append("<h1>").append(reportTitle) //NON-NLS
                     .append(running ? NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.warningMsg") : "")
                     .append("</h1>\n"); //NON-NLS
@@ -1129,6 +1204,7 @@ class ReportHTML implements TableReportModule {
                 summary.append("<p class=\"subheadding\">").append(reportFooter).append("</p>\n"); //NON-NLS
             }
             summary.append("</div>\n"); //NON-NLS
+            summary.append(writePageFooter());
             summary.append("</body></html>"); //NON-NLS
             output.write(summary.toString());
         } catch (FileNotFoundException ex) {

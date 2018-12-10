@@ -214,10 +214,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 CorrelationAttributeInstance attribute = getCorrelationAttributeInstance();
                 updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(),NO_DESCR,getCommentProperty(tags, attribute)));
             }
-        /*
-         * Data that was being computed in the background task. Kicked off by a
-         * call to createSheet().
-         */
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             updateSheet(new NodeProperty<>(TRANSLATION.toString(),TRANSLATION.toString(),NO_DESCR,evt.getNewValue()));
         }
@@ -304,8 +300,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.sizeColLbl=Size",
         "AbstractAbstractFileNode.flagsDirColLbl=Flags(Dir)",
         "AbstractAbstractFileNode.flagsMetaColLbl=Flags(Meta)",
+        "AbstractAbstractFileNode.modeColLbl=Mode",
+        "AbstractAbstractFileNode.useridColLbl=UserID",
+        "AbstractAbstractFileNode.groupidColLbl=GroupID",
+        "AbstractAbstractFileNode.metaAddrColLbl=Meta Addr.",
+        "AbstractAbstractFileNode.attrAddrColLbl=Attr. Addr.",
+        "AbstractAbstractFileNode.typeDirColLbl=Type(Dir)",
+        "AbstractAbstractFileNode.typeMetaColLbl=Type(Meta)",
         "AbstractAbstractFileNode.knownColLbl=Known",
         "AbstractAbstractFileNode.md5HashColLbl=MD5 Hash",
+        "AbstractAbstractFileNode.objectId=Object ID",
         "AbstractAbstractFileNode.mimeType=MIME Type",
         "AbstractAbstractFileNode.extensionColLbl=Extension"})
     public enum AbstractFilePropertyType {
@@ -323,8 +327,16 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         SIZE(AbstractAbstractFileNode_sizeColLbl()),
         FLAGS_DIR(AbstractAbstractFileNode_flagsDirColLbl()),
         FLAGS_META(AbstractAbstractFileNode_flagsMetaColLbl()),
+        MODE(AbstractAbstractFileNode_modeColLbl()),
+        USER_ID(AbstractAbstractFileNode_useridColLbl()),
+        GROUP_ID(AbstractAbstractFileNode_groupidColLbl()),
+        META_ADDR(AbstractAbstractFileNode_metaAddrColLbl()),
+        ATTR_ADDR(AbstractAbstractFileNode_attrAddrColLbl()),
+        TYPE_DIR(AbstractAbstractFileNode_typeDirColLbl()),
+        TYPE_META(AbstractAbstractFileNode_typeMetaColLbl()),
         KNOWN(AbstractAbstractFileNode_knownColLbl()),
         MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
+        ObjectID(AbstractAbstractFileNode_objectId()),
         MIMETYPE(AbstractAbstractFileNode_mimeType()),
         EXTENSION(AbstractAbstractFileNode_extensionColLbl());
 
@@ -345,7 +357,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     private List<NodeProperty<?>> getProperties() {
         List<NodeProperty<?>> properties = new ArrayList<>();
-        properties.add(new NodeProperty<>(NAME.toString(), NAME.toString(), NO_DESCR, getContentDisplayName(content)));   
+        properties.add(new NodeProperty<>(NAME.toString(), NAME.toString(), NO_DESCR, getContentDisplayName(content))); 
         /*
          * Initialize an empty place holder value. At the bottom, we kick off a
          * background task that promises to update these values.

@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.othercasessearch.Bundle;
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.othercasessearch.OtherCasesSearchAction")
 @ActionRegistration(displayName = "#CTL_OtherCasesSearchAction=Search Other Cases", lazy = false)
-@ActionReference(path = "Menu/Tools", position = 104)
+@ActionReference(path = "Menu/Tools", position = 201)
 @NbBundle.Messages({"CTL_OtherCasesSearchAction=Search Other Cases"})
 public class OtherCasesSearchAction extends CallableSystemAction {
 

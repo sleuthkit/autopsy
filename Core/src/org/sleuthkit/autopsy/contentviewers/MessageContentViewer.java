@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -105,6 +106,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     @NbBundle.Messages("MessageContentViewer.AtrachmentsPanel.title=Attachments")
     public MessageContentViewer() {
         initComponents();
+        envelopePanel.setBackground(new Color(0, 0, 0, 38));
         drp = DataResultPanel.createInstanceUninitialized(Bundle.MessageContentViewer_AtrachmentsPanel_title(), "", new TableFilterNode(Node.EMPTY, false), 0, null);
         attachmentsScrollPane.setViewportView(drp);
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);

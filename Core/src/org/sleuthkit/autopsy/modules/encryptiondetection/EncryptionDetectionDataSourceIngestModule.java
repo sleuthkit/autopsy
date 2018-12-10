@@ -141,7 +141,12 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
              * Make an ingest inbox message.
              */
             StringBuilder detailsSb = new StringBuilder("");
-            detailsSb.append("File: ").append(volume.getParent().getUniquePath()).append(volume.getName());
+            detailsSb.append("File: ");
+            Content parentFile = volume.getParent();
+            if (parentFile != null) {
+                detailsSb.append(volume.getParent().getUniquePath());
+            }
+            detailsSb.append(volume.getName());
             if (artifactType.equals(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED)) {
                 detailsSb.append("<br/>\nEntropy: ").append(calculatedEntropy);
             }

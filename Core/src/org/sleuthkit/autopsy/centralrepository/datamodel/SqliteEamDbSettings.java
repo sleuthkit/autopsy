@@ -29,6 +29,7 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.CURRENT_DB_SCHEMA_VERSION;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -288,6 +289,9 @@ public final class SqliteEamDbSettings {
         createDataSourcesTable.append("device_id text NOT NULL,");
         createDataSourcesTable.append("name text NOT NULL,");
         createDataSourcesTable.append("datasource_obj_id integer,");
+        createDataSourcesTable.append("md5 text DEFAULT NULL,");
+        createDataSourcesTable.append("sha1 text DEFAULT NULL,");
+        createDataSourcesTable.append("sha256 text DEFAULT NULL,");        
         createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
         createDataSourcesTable.append(")");
@@ -384,6 +388,10 @@ public final class SqliteEamDbSettings {
             stmt.execute(createCorrelationTypesTable.toString());
 
             stmt.execute(createDbInfoTable.toString());
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
 
             // Create a separate instance and reference table for each artifact type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
@@ -517,9 +525,7 @@ public final class SqliteEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
-                && EamDbUtil.updateSchemaVersion(conn)
-                && EamDbUtil.insertDefaultOrganization(conn);
+        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn) && EamDbUtil.insertDefaultOrganization(conn);
         EamDbUtil.closeConnection(conn);
         return result;
     }
