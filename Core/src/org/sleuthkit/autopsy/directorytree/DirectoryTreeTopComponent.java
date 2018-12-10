@@ -173,7 +173,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     case UserPreferences.HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES:
                     case UserPreferences.DISPLAY_TRANSLATED_NAMES:
                     case UserPreferences.KEEP_PREFERRED_VIEWER:
-                    case UserPreferences.MAXIMUM_NUMBER_OF_RESULTS:
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.SHOW_ONLY_CURRENT_USER_TAGS:

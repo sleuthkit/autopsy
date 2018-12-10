@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -38,10 +38,11 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 /**
  * Extracts text from HTML content.
  */
-class HtmlTextExtractor extends ContentTextExtractor {
+final class HtmlTextExtractor extends TextExtractor {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
-    private static final int MAX_SIZE = 50_000_000; //50MB
+    private final int MAX_SIZE;
+    private final Content file;
 
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
             "application/javascript", //NON-NLS
@@ -51,27 +52,51 @@ class HtmlTextExtractor extends ContentTextExtractor {
             "text/html", //NON-NLS NON-NLS
             "text/javascript" //NON-NLS
     );
-    
+
     static {
         // Disable Jericho HTML Parser log messages.
         Config.LoggerProvider = LoggerProvider.DISABLED;
     }
 
-    @Override
-    boolean isContentTypeSpecific() {
-        return true;
+    /**
+     * Creates a default instance of the HtmlTextExtractor. Supported file size
+     * is 50MB.
+     */
+    public HtmlTextExtractor(Content file) {
+        //Set default to be 50 MB.
+        MAX_SIZE = 50_000_000;
+        this.file = file;
     }
 
+    /**
+     * Determines if this content type is supported by this extractor.
+     *
+     * @param content        Content instance to be analyzed
+     * @param detectedFormat Mimetype of content instance
+     *
+     * @return flag indicating support
+     */
     @Override
-    boolean isSupported(Content content, String detectedFormat) {
+    public boolean isSupported(Content content, String detectedFormat) {
         return detectedFormat != null
                 && WEB_MIME_TYPES.contains(detectedFormat)
                 && content.getSize() <= MAX_SIZE;
     }
 
+    /**
+     * Returns a reader that will iterate over the text of an HTML document.
+     *
+     * @param content Html document source
+     *
+     * @return A reader instance containing the document source text
+     *
+     * @throws TextExtractorException
+     */
     @Override
-    public Reader getReader(Content content) throws TextExtractorException {
-        ReadContentInputStream stream = new ReadContentInputStream(content);
+    public Reader getReader() throws ExtractionException {
+        //TODO JIRA-4467, there is only harm in excluding HTML documents greater
+        //than 50MB due to our troubled approach of extraction.
+        ReadContentInputStream stream = new ReadContentInputStream(file);
 
         //Parse the stream with Jericho and put the results in a Reader
         try {
@@ -164,17 +189,8 @@ class HtmlTextExtractor extends ContentTextExtractor {
             // All done, now make it a reader
             return new StringReader(stringBuilder.toString());
         } catch (IOException ex) {
-            throw new TextExtractorException("Error extracting HTML from content.", ex);
+            logger.log(Level.WARNING, "Error extracting HTML from content.", ex);
+            throw new ExtractionException("Error extracting HTML from content.", ex);
         }
-    }
-
-    @Override
-    public boolean isDisabled() {
-        return false;
-    }
-
-    @Override
-    public void logWarning(final String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 }
