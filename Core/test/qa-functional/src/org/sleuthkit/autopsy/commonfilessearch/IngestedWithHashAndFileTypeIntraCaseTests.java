@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.*;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -100,7 +100,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 //            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 //
 //            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
-//            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = allSourcesBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 //
@@ -141,7 +141,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 //            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 //
 //            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, true, false, 0);
-//            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = allSourcesBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 //
@@ -182,7 +182,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 //            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 //
 //            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, true, 0);
-//            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = allSourcesBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 //
@@ -224,7 +224,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 //            Long first = getDataSourceIdByName(SET1, dataSources);
 //
 //            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false, 0);
-//            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = singleSourceBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 //
@@ -266,7 +266,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 //            Long first = getDataSourceIdByName(SET1, dataSources);
 //
 //            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, true, false, 0);
-//            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = singleSourceBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 //
@@ -308,7 +308,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 //            Long first = getDataSourceIdByName(SET1, dataSources);
 //
 //            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, true, 0);
-//            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = singleSourceBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 //
@@ -350,7 +350,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 //            Long second = getDataSourceIdByName(SET2, dataSources);
 //
 //            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(second, dataSources, false, false, 0);
-//            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = singleSourceBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 //
@@ -391,7 +391,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 //            Long last = getDataSourceIdByName(SET4, dataSources);
 //
 //            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(last, dataSources, false, false, 0);
-//            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = singleSourceBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 //
@@ -432,7 +432,7 @@ public class IngestedWithHashAndFileTypeIntraCaseTests extends NbTestCase {
 //            Long third = getDataSourceIdByName(SET3, dataSources);
 //
 //            AbstractCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(third, dataSources, false, false, 0);
-//            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = singleSourceBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = mapFileInstancesToDataSources(metadata);
 //

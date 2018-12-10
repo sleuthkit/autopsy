@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.*;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleTemplate;
@@ -106,7 +106,7 @@ public class MatchesInAtLeastTwoSourcesIntraCaseTests extends NbTestCase {
 //            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 //
 //            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
-//            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = allSourcesBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 //
