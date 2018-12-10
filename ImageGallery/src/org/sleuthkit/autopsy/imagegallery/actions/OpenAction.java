@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -70,7 +71,7 @@ import org.sleuthkit.datamodel.TskCoreException;
     + "Do you want to update and listen for further ingest results?\n"
     + "Choosing 'yes' will update the database and enable listening to future ingests.",
     "OpenAction.notAnalyzedDlg.msg=No image/video files available to display yet.\n"
-        + "Please run FileType and EXIF ingest modules.",
+    + "Please run FileType and EXIF ingest modules.",
     "OpenAction.stale.confDlg.title=Image Gallery"})
 public final class OpenAction extends CallableSystemAction {
 
@@ -147,19 +148,20 @@ public final class OpenAction extends CallableSystemAction {
         try {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-            return;
-        }
-        ImageGalleryController controller;
-        try {
-            controller = ImageGalleryModule.getController();
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting ImageGalleryController for current case.", ex);
+            logger.log(Level.SEVERE, "No current case", ex);
             return;
         }
         Platform.runLater(() -> {
+            ImageGalleryController controller;
+            try {
+                controller = ImageGalleryModule.getController();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Failed to get ImageGalleryController", ex);
+                return;
+            }
+
             if (currentCase.getCaseType() == Case.CaseType.MULTI_USER_CASE
-                && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
+                    && ImageGalleryPreferences.isMultiUserCaseInfoDialogDisabled() == false) {
                 Alert dialog = new Alert(Alert.AlertType.INFORMATION);
                 dialog.initModality(Modality.APPLICATION_MODAL);
                 dialog.setResizable(true);
@@ -185,57 +187,60 @@ public final class OpenAction extends CallableSystemAction {
     }
 
     private void checkDBStale(ImageGalleryController controller) {
-        
-        ListenableFuture<Map<Long, DrawableDB.DrawableDbBuildStatusEnum>> dataSourceStatusMapFuture =  TaskUtils.getExecutorForClass(OpenAction.class)
+
+        ListenableFuture<Map<Long, DrawableDB.DrawableDbBuildStatusEnum>> dataSourceStatusMapFuture = TaskUtils.getExecutorForClass(OpenAction.class)
                 .submit(controller::getAllDataSourcesDrawableDBStatus);
-        
+
         addFXCallback(dataSourceStatusMapFuture,
-                dataSourceStatusMap -> {
-                    
-                    boolean dbIsStale = false;
+                dataSourceStatusMap -> {                   
+                    int numStale = 0;
+                    int numNoAnalysis = 0;
+                    // NOTE: There is some overlapping code here with Controller.getStaleDataSourceIds().  We could possibly just use
+                    // that method to figure out stale and then do more simple stuff here to figure out if there is no data at all
                     for (Map.Entry<Long, DrawableDbBuildStatusEnum> entry : dataSourceStatusMap.entrySet()) {
                         DrawableDbBuildStatusEnum status = entry.getValue();
-                        if (DrawableDbBuildStatusEnum.COMPLETE != status) {
-                           dbIsStale = true;
+                        if (DrawableDbBuildStatusEnum.UNKNOWN == status) {
+                            try {
+                                // likely a data source analyzed on a remote node in multi-user case OR single-user case with listening off
+                                if (controller.hasFilesWithMimeType(entry.getKey())) {
+                                    numStale++;
+                                // likely a data source (local or remote) that has no analysis yet (note there is also IN_PROGRESS state)
+                                } else {
+                                    numNoAnalysis++;
+                                }
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Error querying case database", ex);
+                            }
+                        } 
+                        // was already rebuilt, but wasn't complete at the end
+                        else if (DrawableDbBuildStatusEnum.REBUILT_STALE == status) {
+                            numStale++;
                         }
                     }               
              
-                    //back on fx thread.
-                    if (false == dbIsStale) {
-                        //drawable db is not stale, just open it
-                        openTopComponent();
-                    } else {
-                        
-                        // If there is only one datasource and it's in DEFAULT State - 
-                        // ingest modules need to be run on the data source
-                        if  (dataSourceStatusMap.size()== 1) {
-                            Map.Entry<Long, DrawableDB.DrawableDbBuildStatusEnum> entry = dataSourceStatusMap.entrySet().iterator().next();
-                            if (entry.getValue() == DrawableDbBuildStatusEnum.DEFAULT ) {
-                                Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.OpenAction_notAnalyzedDlg_msg(), ButtonType.OK);
-                                alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
-                                alert.initModality(Modality.APPLICATION_MODAL);
+                    // NOTE: we are running on the fx thread.
 
-                                alert.showAndWait();
-                                return;
-                            }
-                        } 
-                        
-                        //drawable db is stale,
-                        //ask what to do
+                    // If there are any that are STALE, give them a prompt to do so. 
+                    if (numStale > 0) {
+                        // See if user wants to rebuild, cancel out, or open as is
                         Alert alert = new Alert(Alert.AlertType.WARNING,
-                                Bundle.OpenAction_stale_confDlg_msg(),
-                                ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+                        Bundle.OpenAction_stale_confDlg_msg(),
+                        ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
                         alert.initModality(Modality.APPLICATION_MODAL);
                         alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
                         GuiUtils.setDialogIcons(alert);
                         ButtonType answer = alert.showAndWait().orElse(ButtonType.CANCEL);
+
                         if (answer == ButtonType.CANCEL) {
-                            //just do nothing
+                            //just do nothing - don't open window
+                            return;
                         } else if (answer == ButtonType.NO) {
-                            openTopComponent();
+                            // They don't want to rebuild. Just open the UI as is.
+                            // NOTE: There could be no data....
                         } else if (answer == ButtonType.YES) {
                             if (controller.getAutopsyCase().getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-                                /* For a single-user case, we favor user
+                                /*
+                                 * For a single-user case, we favor user
                                  * experience, and rebuild the database as soon
                                  * as Image Gallery is enabled for the case.
                                  *
@@ -255,9 +260,23 @@ public final class OpenAction extends CallableSystemAction {
                                  */
                                 controller.rebuildDB();
                             }
-                            openTopComponent();
                         }
+                        openTopComponent();
+                        return;
                     }
+                    
+                    // if there is no data to display, then let them know
+                    if (numNoAnalysis == dataSourceStatusMap.size()) {
+                        // give them a dialog to enable modules if no data sources have been analyzed
+                        Alert alert = new Alert(Alert.AlertType.WARNING, Bundle.OpenAction_notAnalyzedDlg_msg(), ButtonType.OK);
+                        alert.setTitle(Bundle.OpenAction_stale_confDlg_title());
+                        alert.initModality(Modality.APPLICATION_MODAL);
+                        alert.showAndWait();
+                        return;
+                    }
+                                 
+                    // otherwise, lets open the UI
+                    openTopComponent();
                 },
                 throwable -> logger.log(Level.SEVERE, "Error checking if drawable db is stale.", throwable)//NON-NLS
         );
@@ -267,10 +286,9 @@ public final class OpenAction extends CallableSystemAction {
         SwingUtilities.invokeLater(() -> {
             try {
                 ImageGalleryTopComponent.openTopComponent();
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Attempted to access ImageGallery with no case open.", ex);//NON-NLS
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting ImageGalleryController.", ex); //NON-NLS}
+                logger.log(Level.SEVERE, "Failed to open Image Gallery top component", ex); //NON-NLS}
+                // RJCTODO: Give the user some feedback here
             }
         });
     }

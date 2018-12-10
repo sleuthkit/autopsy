@@ -434,6 +434,10 @@
                 <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-core-2.9.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-frontend-jaxrs-3.0.16.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/cxf-rt-frontend-jaxrs-3.0.16.jar</binary-origin>
             </class-path-extension>

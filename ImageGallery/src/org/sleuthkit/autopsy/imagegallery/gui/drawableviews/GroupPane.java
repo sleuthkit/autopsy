@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-18 Basis Technology Corp.
+ * Copyright 2013-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,7 @@ package org.sleuthkit.autopsy.imagegallery.gui.drawableviews;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import static com.google.common.collect.Lists.transform;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +33,6 @@ import java.util.Map;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.IntStream;
 import javafx.animation.Interpolator;
@@ -135,17 +132,14 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewMode;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
-import org.sleuthkit.autopsy.imagegallery.gui.GuiUtils;
 import static org.sleuthkit.autopsy.imagegallery.gui.GuiUtils.createAutoAssigningMenuItem;
 import org.sleuthkit.autopsy.imagegallery.utils.TaskUtils;
 import static org.sleuthkit.autopsy.imagegallery.utils.TaskUtils.addFXCallback;
-import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A GroupPane displays the contents of a DrawableGroup. It supports both
  * GridView and SlideShowView modes by swapping out its internal components.
- *
  *
  * TODO: Extract the The GridView instance to a separate class analogous to the
  * SlideShow.

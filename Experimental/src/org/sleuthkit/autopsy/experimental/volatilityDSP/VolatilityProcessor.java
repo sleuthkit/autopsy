@@ -24,6 +24,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
+import static java.util.Collections.singleton;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +43,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -53,7 +56,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
  */
 class VolatilityProcessor {
 
-    private final static Logger logger = Logger.getLogger(VolatilityProcessor.class.getName());
+    private static final Logger logger = Logger.getLogger(VolatilityProcessor.class.getName());
     private static final String VOLATILITY = "Volatility"; //NON-NLS
     private static final String VOLATILITY_EXECUTABLE = "volatility_2.6_win64_standalone.exe"; //NON-NLS
     private final List<String> errorMsgs = new ArrayList<>();
@@ -61,13 +64,14 @@ class VolatilityProcessor {
     private final Image dataSource;
     private final List<String> pluginsToRun;
     private final DataSourceProcessorProgressMonitor progressMonitor;
-    private Case currentCase;
     private File executableFile;
     private String moduleOutputPath;
     private FileManager fileManager;
     private volatile boolean isCancelled;
     private Content outputVirtDir;
     private String profile;
+    private Blackboard blackboard;
+    private String caseDirectory;
 
     /**
      * Constructs a processor that runs Volatility on a given memory image file
@@ -104,13 +108,16 @@ class VolatilityProcessor {
     })
     void run() throws VolatilityProcessorException {
         this.errorMsgs.clear();
-
+        Case currentCase;
         try {
-            this.currentCase = Case.getCurrentCaseThrows();
+
+            currentCase = Case.getCurrentCaseThrows();
+
         } catch (NoCurrentCaseException ex) {
             throw new VolatilityProcessorException(Bundle.VolatilityProcessor_progressMessage_noCurrentCase(), ex);
         }
-
+        blackboard = currentCase.getSleuthkitCase().getBlackboard();
+        caseDirectory = currentCase.getCaseDirectory();
         executableFile = locateVolatilityExecutable();
         if (executableFile == null) {
             throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_volatilityExeNotFound());
@@ -239,7 +246,7 @@ class VolatilityProcessor {
         }
 
         try {
-            String relativePath = new File(currentCase.getCaseDirectory()).toURI().relativize(new File(outputFileAsString).toURI()).getPath();
+            String relativePath = new File(caseDirectory).toURI().relativize(new File(outputFileAsString).toURI()).getPath();
             fileManager.addDerivedFile(pluginToRun, relativePath, outputFile.length(), 0, 0, 0, 0, true, outputVirtDir, null, null, null, null, EncodingType.NONE);
         } catch (TskCoreException ex) {
             errorMsgs.add("Error adding " + pluginToRun + " volatility report as a file");
@@ -313,7 +320,6 @@ class VolatilityProcessor {
         "VolatilityProcessor_errorMessage_failedToIndexArtifact=Error indexing artifact from output of {0} plugin"
     })
     private void flagFiles(Set<String> fileSet, String pluginName) throws VolatilityProcessorException {
-        Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
         for (String file : fileSet) {
             if (isCancelled) {
                 return;
@@ -331,7 +337,7 @@ class VolatilityProcessor {
 
             String filePath = volfile.getParent();
 
-            logger.log(Level.INFO, "Looking up file " + fileName + " at path " + filePath);
+            logger.log(Level.INFO, "Looking up file {0} at path {1}", new Object[]{fileName, filePath});
 
             try {
                 List<AbstractFile> resolvedFiles;
@@ -344,7 +350,7 @@ class VolatilityProcessor {
                 }
 
                 // if we didn't get anything, then try adding a wildcard for extension
-                if ((resolvedFiles.isEmpty()) && (fileName.contains(".") == false)) { //NON-NLS
+                if (resolvedFiles.isEmpty() && (fileName.contains(".") == false)) { //NON-NLS
 
                     // if there is already the same entry with ".exe" in the set, just use that one
                     if (fileSet.contains(file + ".exe")) { //NON-NLS
@@ -352,13 +358,11 @@ class VolatilityProcessor {
                     }
 
                     fileName += ".%"; //NON-NLS
-                    logger.log(Level.INFO, "Looking up file (extension wildcard) " + fileName + " at path " + filePath);
+                    logger.log(Level.INFO, "Looking up file (extension wildcard) {0} at path {1}", new Object[]{fileName, filePath});
 
-                    if (filePath == null) {
-                        resolvedFiles = fileManager.findFiles(fileName); //NON-NLS
-                    } else {
-                        resolvedFiles = fileManager.findFiles(fileName, filePath); //NON-NLS
-                    }
+                    resolvedFiles = filePath == null
+                            ? fileManager.findFiles(fileName)
+                            : fileManager.findFiles(fileName, filePath);
                 }
 
                 if (resolvedFiles.isEmpty()) {
@@ -371,27 +375,31 @@ class VolatilityProcessor {
                         continue;
                     }
                     try {
-                        BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                        BlackboardAttribute att1 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, VOLATILITY, Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName));
-                        volArtifact.addAttribute(att1);
 
-                        try {
-                            /*
-                             * Post the artifact which will index the artifact
-                             * for keyword search, and fire ModuleDataEvent to
-                             * notify the UI of this new artifact.
-                             */
-                            blackboard.postArtifact(volArtifact, VOLATILITY);
-                        } catch (Blackboard.BlackboardException ex) {
-                            errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
-                            /*
-                             * Log the exception as well as add it to the error
-                             * messages, to ensure that the stack trace is not
-                             * lost.
-                             */
-                            logger.log(Level.SEVERE, String.format("Failed to index artifact (artifactId=%d) for for output of %s plugin", volArtifact.getArtifactID(), pluginName), ex);
+                        Collection<BlackboardAttribute> attributes = singleton(
+                                new BlackboardAttribute(
+                                        TSK_SET_NAME, VOLATILITY,
+                                        Bundle.VolatilityProcessor_artifactAttribute_interestingFileSet(pluginName))
+                        );
+
+                        // Create artifact if it doesn't already exist.
+                        if (!blackboard.artifactExists(resolvedFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+                            BlackboardArtifact volArtifact = resolvedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                            volArtifact.addAttributes(attributes);
+
+                            try {
+                                // index the artifact for keyword search
+                                blackboard.postArtifact(volArtifact, VOLATILITY);
+                            } catch (Blackboard.BlackboardException ex) {
+                                errorMsgs.add(Bundle.VolatilityProcessor_errorMessage_failedToIndexArtifact(pluginName));
+                                /*
+                                 * Log the exception as well as add it to the
+                                 * error messages, to ensure that the stack
+                                 * trace is not lost.
+                                 */
+                                logger.log(Level.SEVERE, String.format("Failed to index artifact (artifactId=%d) for for output of %s plugin", volArtifact.getArtifactID(), pluginName), ex);
+                            }
                         }
-
                     } catch (TskCoreException ex) {
                         throw new VolatilityProcessorException(Bundle.VolatilityProcessor_exceptionMessage_errorCreatingArtifact(pluginName), ex);
                     }

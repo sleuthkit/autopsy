@@ -26,19 +26,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -55,21 +53,30 @@ import org.sleuthkit.autopsy.datamodel.EmptyNode;
     "OtherCasesSearchDialog.resultsDescription.text=Other Cases Search",
     "OtherCasesSearchDialog.emptyNode.text=No results found.",
     "OtherCasesSearchDialog.validation.invalidHash=The supplied value is not a valid MD5 hash.",
+    "OtherCasesSearchDialog.validation.invalidEmail=The supplied value is not a valid e-mail address.",
+    "OtherCasesSearchDialog.validation.invalidDomain=The supplied value is not a valid domain.",
+    "OtherCasesSearchDialog.validation.invalidPhone=The supplied value is not a valid phone number.",
+    "OtherCasesSearchDialog.validation.invalidSsid=The supplied value is not a valid wireless network.",
+    "OtherCasesSearchDialog.validation.invalidMac=The supplied value is not a valid MAC address.",
+    "OtherCasesSearchDialog.validation.invalidImei=The supplied value is not a valid IMEI number.",
+    "OtherCasesSearchDialog.validation.invalidImsi=The supplied value is not a valid IMSI number.",
+    "OtherCasesSearchDialog.validation.invalidIccid=The supplied value is not a valid ICCID number.",
+    "OtherCasesSearchDialog.validation.genericMessage=The supplied value is not valid.",
     "# {0} - number of cases",
     "OtherCasesSearchDialog.caseLabel.text=The current Central Repository contains {0} case(s)."
 })
 /**
- * The Search Other Cases dialog allows users to search for specific
- * types of correlation properties in the Central Repository.
+ * The Search Other Cases dialog allows users to search for specific types of
+ * correlation properties in the Central Repository.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class OtherCasesSearchDialog extends javax.swing.JDialog {
+
     private static final Logger logger = Logger.getLogger(OtherCasesSearchDialog.class.getName());
     private static final long serialVersionUID = 1L;
-    
-    private static final String FILES_CORRELATION_TYPE = "Files";
-    
+
     private final List<CorrelationAttributeInstance.Type> correlationTypes;
+    private CorrelationAttributeInstance.Type selectedCorrelationType;
     private TextPrompt correlationValueTextFieldPrompt;
 
     /**
@@ -81,26 +88,22 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
         initComponents();
         customizeComponents();
     }
-    
+
     /**
      * Perform the other cases search.
+     *
+     * @param type  The correlation type.
+     * @param value The value to be matched.
      */
-    private void search() {
+    private void search(CorrelationAttributeInstance.Type type, String value) {
         new SwingWorker<List<CorrelationAttributeInstance>, Void>() {
-            
+
             @Override
             protected List<CorrelationAttributeInstance> doInBackground() {
-                List<CorrelationAttributeInstance.Type> correlationTypes;
                 List<CorrelationAttributeInstance> correlationInstances = new ArrayList<>();
-                
+
                 try {
-                    correlationTypes = EamDb.getInstance().getDefinedCorrelationTypes();
-                    for (CorrelationAttributeInstance.Type type : correlationTypes) {
-                        if (type.getDisplayName().equals((String) correlationTypeComboBox.getSelectedItem())) {
-                            correlationInstances = EamDb.getInstance().getArtifactInstancesByTypeValue(type, correlationValueTextField.getText());
-                            break;
-                        }
-                    }
+                    correlationInstances = EamDb.getInstance().getArtifactInstancesByTypeValue(type, value);
                 } catch (EamDbException ex) {
                     logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex);
                 } catch (CorrelationAttributeNormalizationException ex) {
@@ -118,14 +121,12 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
                     DataResultViewerTable table = new DataResultViewerTable();
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
-                    
+
                     OtherCasesSearchNode searchNode = new OtherCasesSearchNode(correlationInstances);
                     TableFilterNode tableFilterNode = new TableFilterNode(searchNode, true, searchNode.getName());
-                    
+
                     String resultsText = String.format("%s (%s; \"%s\")",
-                            Bundle.OtherCasesSearchDialog_resultsTitle_text(),
-                            (String) correlationTypeComboBox.getSelectedItem(),
-                            correlationValueTextField.getText());
+                            Bundle.OtherCasesSearchDialog_resultsTitle_text(), type.getDisplayName(), value);
                     final TopComponent searchResultWin;
                     if (correlationInstances.isEmpty()) {
                         Node emptyNode = new TableFilterNode(
@@ -168,11 +169,22 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
         org.openide.awt.Mnemonics.setLocalizedText(correlationValueLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationValueLabel.text")); // NOI18N
 
         correlationValueTextField.setText(org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationValueTextField.text")); // NOI18N
+        correlationValueTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                valueFieldKeyReleaseListener(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 searchButtonActionPerformed(evt);
+            }
+        });
+
+        correlationTypeComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                correlationTypeComboBoxActionPerformed(evt);
             }
         });
 
@@ -183,7 +195,7 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.descriptionLabel.text")); // NOI18N
 
-        casesLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        casesLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         org.openide.awt.Mnemonics.setLocalizedText(casesLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.casesLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -193,44 +205,42 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(casesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(searchButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(descriptionLabel)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(descriptionLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 430, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(correlationValueLabel)
                             .addComponent(correlationTypeLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(correlationTypeComboBox, 0, 289, Short.MAX_VALUE)
+                            .addComponent(correlationTypeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(correlationValueTextField)
-                            .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(errorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(casesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(searchButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(descriptionLabel)
+                .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(correlationTypeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(correlationTypeLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(15, 15, 15)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(correlationValueLabel)
-                    .addComponent(correlationValueTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(correlationValueTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(correlationValueLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(errorLabel)
-                .addGap(11, 11, 11)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(searchButton)
                     .addComponent(casesLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         searchButton.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.searchButton.AccessibleContext.accessibleName")); // NOI18N
@@ -240,29 +250,88 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
-        if (validateInputs()) {
-            /*
-             * Just in case, we'll lock down the type and value components to
-             * avoid the possibly of a race condition.
-             */
-            correlationTypeComboBox.setEnabled(false);
-            correlationValueTextField.setEnabled(false);
-            
-            search();
+        CorrelationAttributeInstance.Type correlationType = selectedCorrelationType;
+        String correlationValue = correlationValueTextField.getText().trim();
+
+        if (validateInputs(correlationType, correlationValue)) {
+            search(correlationType, correlationValue);
             dispose();
         } else {
+            String validationMessage;
+            switch (correlationType.getId()) {
+                case CorrelationAttributeInstance.FILES_TYPE_ID:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidHash();
+                    break;
+                case CorrelationAttributeInstance.DOMAIN_TYPE_ID:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidDomain();
+                    break;
+                case CorrelationAttributeInstance.EMAIL_TYPE_ID:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidEmail();
+                    break;
+                case CorrelationAttributeInstance.PHONE_TYPE_ID:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidPhone();
+                    break;
+                case CorrelationAttributeInstance.SSID_TYPE_ID:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidSsid();
+                    break;
+                case CorrelationAttributeInstance.MAC_TYPE_ID:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidMac();
+                    break;
+                case CorrelationAttributeInstance.IMEI_TYPE_ID:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidImei();
+                    break;
+                case CorrelationAttributeInstance.IMSI_TYPE_ID:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidImsi();
+                    break;
+                case CorrelationAttributeInstance.ICCID_TYPE_ID:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidIccid();
+                    break;
+                default:
+                    validationMessage = Bundle.OtherCasesSearchDialog_validation_genericMessage();
+                    break;
+
+            }
+            errorLabel.setText(validationMessage);
             searchButton.setEnabled(false);
-            errorLabel.setText(Bundle.OtherCasesSearchDialog_validation_invalidHash());
             correlationValueTextField.grabFocus();
         }
     }//GEN-LAST:event_searchButtonActionPerformed
+
+    private void correlationTypeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_correlationTypeComboBoxActionPerformed
+        //make error message go away when combo box is selected
+        errorLabel.setText("");
+    }//GEN-LAST:event_correlationTypeComboBoxActionPerformed
+
+    private void valueFieldKeyReleaseListener(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_valueFieldKeyReleaseListener
+        //make error message go away when the user enters anything in the value field
+        errorLabel.setText("");
+    }//GEN-LAST:event_valueFieldKeyReleaseListener
+
+    /**
+     * Validate the supplied input.
+     *
+     * @param type  The correlation type.
+     * @param value The value to be validated.
+     *
+     * @return True if the input is valid for the given type; otherwise false.
+     */
+    private boolean validateInputs(CorrelationAttributeInstance.Type type, String value) {
+        try {
+            CorrelationAttributeNormalizer.normalize(type, value);
+        } catch (CorrelationAttributeNormalizationException ex) {
+            // No need to log this.
+            return false;
+        }
+
+        return true;
+    }
 
     /**
      * Further customize the components beyond the standard initialization.
      */
     private void customizeComponents() {
         searchButton.setEnabled(false);
-        
+
         /*
          * Add correlation types to the combo-box.
          */
@@ -277,20 +346,21 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
         }
 
         for (CorrelationAttributeInstance.Type type : correlationTypes) {
-            // We only support the "Files" type for now.
-            if (type.getDisplayName().equals(FILES_CORRELATION_TYPE)) {
-                correlationTypeComboBox.addItem(type.getDisplayName());
-            }
+            correlationTypeComboBox.addItem(type.getDisplayName());
         }
         correlationTypeComboBox.setSelectedIndex(0);
-        
+
         correlationTypeComboBox.addItemListener(new ItemListener() {
             @Override
             public void itemStateChanged(ItemEvent e) {
+                updateSelectedType();
+                updateCorrelationValueTextFieldPrompt();
                 updateSearchButton();
             }
         });
-        
+
+        updateSelectedType();
+
         /*
          * Create listener for text input.
          */
@@ -310,12 +380,21 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
                 updateSearchButton();
             }
         });
-        
+
         updateCorrelationValueTextFieldPrompt();
     }
-    
+
     @Messages({
-        "OtherCasesSearchDialog.correlationValueTextField.filesExample=Example: \"f0e1d2c3b4a5968778695a4b3c2d1e0f\""
+        "OtherCasesSearchDialog.correlationValueTextField.filesExample=Example: \"f0e1d2c3b4a5968778695a4b3c2d1e0f\"",
+        "OtherCasesSearchDialog.correlationValueTextField.domainExample=Example: \"domain.com\"",
+        "OtherCasesSearchDialog.correlationValueTextField.emailExample=Example: \"user@host.com\"",
+        "OtherCasesSearchDialog.correlationValueTextField.phoneExample=Example: \"(800)123-4567\"",
+        "OtherCasesSearchDialog.correlationValueTextField.usbExample=Example: \"4&1234567&0\"",
+        "OtherCasesSearchDialog.correlationValueTextField.ssidExample=Example: \"WirelessNetwork-5G\"",
+        "OtherCasesSearchDialog.correlationValueTextField.macExample=Example: \"0C-14-F2-01-AF-45\"",
+        "OtherCasesSearchDialog.correlationValueTextField.imeiExample=Example: \"351756061523999\"",
+        "OtherCasesSearchDialog.correlationValueTextField.imsiExample=Example: \"310150123456789\"",
+        "OtherCasesSearchDialog.correlationValueTextField.iccidExample=Example: \"89 91 19 1299 99 329451 0\""
     })
     /**
      * Update the text prompt of the name text field based on the input type
@@ -325,39 +404,73 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
         /**
          * Add text prompt to the text field.
          */
-        String text = Bundle.OtherCasesSearchDialog_correlationValueTextField_filesExample();
+        String text;
+        switch (selectedCorrelationType.getId()) {
+            case CorrelationAttributeInstance.FILES_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_filesExample();
+                break;
+            case CorrelationAttributeInstance.DOMAIN_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_domainExample();
+                break;
+            case CorrelationAttributeInstance.EMAIL_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_emailExample();
+                break;
+            case CorrelationAttributeInstance.PHONE_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_phoneExample();
+                break;
+            case CorrelationAttributeInstance.USBID_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_usbExample();
+                break;
+            case CorrelationAttributeInstance.SSID_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_ssidExample();
+                break;
+            case CorrelationAttributeInstance.MAC_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_macExample();
+                break;
+            case CorrelationAttributeInstance.IMEI_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_imeiExample();
+                break;
+            case CorrelationAttributeInstance.IMSI_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_imsiExample();
+                break;
+            case CorrelationAttributeInstance.ICCID_TYPE_ID:
+                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_iccidExample();
+                break;
+            default:
+                text = "";
+                break;
+        }
         correlationValueTextFieldPrompt = new TextPrompt(text, correlationValueTextField);
-        
+
         /**
          * Sets the foreground color and transparency of the text prompt.
          */
         correlationValueTextFieldPrompt.setForeground(Color.LIGHT_GRAY);
         correlationValueTextFieldPrompt.changeAlpha(0.9f); // Mostly opaque
-        
+
         validate();
         repaint();
     }
-    
+
+    /**
+     * Update the 'selectedCorrelationType' value to match the selected type
+     * from the combo-box.
+     */
+    private void updateSelectedType() {
+        for (CorrelationAttributeInstance.Type type : correlationTypes) {
+            if (type.getDisplayName().equals((String) correlationTypeComboBox.getSelectedItem())) {
+                selectedCorrelationType = type;
+                break;
+            }
+        }
+    }
+
     /**
      * Enable or disable the Search button depending on whether or not text has
      * been provided for the correlation property value.
      */
     private void updateSearchButton() {
         searchButton.setEnabled(correlationValueTextField.getText().isEmpty() == false);
-    }
-    
-    /**
-     * Validate the value input.
-     * 
-     * @return True if the input is valid for the selected type; otherwise false.
-     */
-    private boolean validateInputs() {
-        Pattern md5Pattern = Pattern.compile("^[a-fA-F0-9]{32}$"); // NON-NLS
-        Matcher matcher = md5Pattern.matcher(correlationValueTextField.getText().trim());
-        if (matcher.find()) {
-            return true;
-        }
-        return false;
     }
 
     /**

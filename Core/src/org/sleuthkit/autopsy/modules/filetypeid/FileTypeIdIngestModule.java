@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -146,27 +148,38 @@ public class FileTypeIdIngestModule implements FileIngestModule {
      * @param fileType The file type rule for categorizing the hit.
      */
     private void createInterestingFileHit(AbstractFile file, FileType fileType) {
+
+        List<BlackboardAttribute> attributes = Arrays.asList(
+                new BlackboardAttribute(
+                        TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(),
+                        fileType.getInterestingFilesSetName()),
+                new BlackboardAttribute(
+                        TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(),
+                        fileType.getMimeType()));
         try {
-            BlackboardArtifact artifact = file.newArtifact(TSK_INTERESTING_FILE_HIT);
-            artifact.addAttributes(Arrays.asList(
-                    new BlackboardAttribute(
-                            TSK_SET_NAME, FileTypeIdModuleFactory.getModuleName(),
-                            fileType.getInterestingFilesSetName()),
-                    new BlackboardAttribute(
-                            TSK_CATEGORY, FileTypeIdModuleFactory.getModuleName(),
-                            fileType.getMimeType())));
-            try {
-                /*
-                 * post the artifact which will index the artifact for keyword
-                 * search, and fire an event to notify UI of this new artifact
-                 */
-                file.getSleuthkitCase().getBlackboard().postArtifact(artifact, FileTypeIdModuleFactory.getModuleName());
-            } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, String.format("Unable to post TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
+            Case currentCase = Case.getCurrentCaseThrows();
+
+            Blackboard tskBlackboard = currentCase.getSleuthkitCase().getBlackboard();
+            // Create artifact if it doesn't already exist.
+            if (!tskBlackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
+                BlackboardArtifact artifact = file.newArtifact(TSK_INTERESTING_FILE_HIT);
+                artifact.addAttributes(attributes);
+                try {
+                    /*
+                     * post the artifact which will index the artifact for
+                     * keyword search, and fire an event to notify UI of this
+                     * new artifact
+                     */
+                    tskBlackboard.postArtifact(artifact, FileTypeIdModuleFactory.getModuleName());
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, String.format("Unable to index TSK_INTERESTING_FILE_HIT blackboard artifact %d (file obj_id=%d)", artifact.getArtifactID(), file.getId()), ex); //NON-NLS
+                }
             }
 
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Unable to create TSK_INTERESTING_FILE_HIT artifact for file (obj_id=%d)", file.getId()), ex); //NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
     }
 

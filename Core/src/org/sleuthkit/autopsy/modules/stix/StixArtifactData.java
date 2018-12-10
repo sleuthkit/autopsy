@@ -18,9 +18,10 @@
  */
 package org.sleuthkit.autopsy.modules.stix;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -29,7 +30,11 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -45,13 +50,13 @@ class StixArtifactData {
     private final String objType;
     private static final Logger logger = Logger.getLogger(StixArtifactData.class.getName());
 
-    public StixArtifactData(AbstractFile a_file, String a_observableId, String a_objType) {
+    StixArtifactData(AbstractFile a_file, String a_observableId, String a_objType) {
         file = a_file;
         observableId = a_observableId;
         objType = a_objType;
     }
 
-    public StixArtifactData(long a_objId, String a_observableId, String a_objType) {
+    StixArtifactData(long a_objId, String a_observableId, String a_objType) {
         try {
             Case case1 = Case.getCurrentCaseThrows();
             SleuthkitCase sleuthkitCase = case1.getSleuthkitCase();
@@ -75,29 +80,28 @@ class StixArtifactData {
             return;
         }
 
-        String setName;
-        if (a_title != null) {
-            setName = "STIX Indicator - " + a_title; //NON-NLS
-        } else {
-            setName = "STIX Indicator - (no title)"; //NON-NLS
-        }
+        String setName = "STIX Indicator - " + StringUtils.defaultIfBlank(a_title, "(no title)"); //NON-NLS
 
-        BlackboardArtifact bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-        Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, setName)); //NON-NLS
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE, MODULE_NAME, observableId)); //NON-NLS
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, MODULE_NAME, objType)); //NON-NLS
+        Collection<BlackboardAttribute> attributes = Arrays.asList(
+                new BlackboardAttribute(TSK_SET_NAME, MODULE_NAME, setName),
+                new BlackboardAttribute(TSK_TITLE, MODULE_NAME, observableId),
+                new BlackboardAttribute(TSK_CATEGORY, MODULE_NAME, objType));
 
-        bba.addAttributes(attributes);
-        try {
-            /*
-             * post the artifact which will index the artifact for keyword
-             * search, and fire an event to notify UI of this new artifact
-             */
-            blackboard.postArtifact(bba, MODULE_NAME);
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());
+        // Create artifact if it doesn't already exist.
+        if (!blackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
+            BlackboardArtifact bba = file.newArtifact(TSK_INTERESTING_FILE_HIT);
+            bba.addAttributes(attributes);
+
+            try {
+                /*
+                 * post the artifact which will index the artifact for keyword
+                 * search, and fire an event to notify UI of this new artifact
+                 */
+                blackboard.postArtifact(bba, MODULE_NAME);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
+                MessageNotifyUtil.Notify.error(Bundle.StixArtifactData_indexError_message(), bba.getDisplayName());
+            }
         }
     }
 

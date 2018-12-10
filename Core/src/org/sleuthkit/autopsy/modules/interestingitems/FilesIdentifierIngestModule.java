@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,10 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -53,6 +57,8 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(FilesIdentifierIngestModule.class.getName());
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final Map<Long, List<FilesSet>> interestingFileSetsByJob = new ConcurrentHashMap<>();
+    private static final String MODULE_NAME = InterestingItemsIngestModuleFactory.getModuleName();
+
     private final FilesIdentifierIngestJobSettings settings;
     private final IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
@@ -102,6 +108,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
         }
+
         // Skip slack space files.
         if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
             return ProcessResult.OK;
@@ -113,49 +120,50 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
             String ruleSatisfied = filesSet.fileIsMemberOf(file);
             if (ruleSatisfied != null) {
                 try {
-                    // Post an interesting files set hit artifact to the 
-                    // blackboard.
-                    String moduleName = InterestingItemsIngestModuleFactory.getModuleName();
-                    BlackboardArtifact artifact = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-                    Collection<BlackboardAttribute> attributes = new ArrayList<>();
 
-                    // Add a set name attribute to the artifact. This adds a 
-                    // fair amount of redundant data to the attributes table 
-                    // (i.e., rows that differ only in artifact id), but doing
-                    // otherwise would requires reworking the interesting files
-                    // set hit artifact.
-                    BlackboardAttribute setNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, moduleName, filesSet.getName());
-                    attributes.add(setNameAttribute);
+                    Collection<BlackboardAttribute> attributes = Arrays.asList(
+                            /*
+                             * Add a set name attribute to the artifact. This
+                             * adds a fair amount of redundant data to the
+                             * attributes table (i.e., rows that differ only in
+                             * artifact id), but doing otherwise would requires
+                             * reworking the interesting files set hit artifact. */
+                            new BlackboardAttribute(
+                                    TSK_SET_NAME, MODULE_NAME,
+                                    filesSet.getName()),
+                            /*
+                             * Add a category attribute to the artifact to
+                             * record the interesting files set membership rule
+                             * that was satisfied. */
+                            new BlackboardAttribute(
+                                    TSK_CATEGORY, MODULE_NAME,
+                                    ruleSatisfied)
+                    );
 
-                    // Add a category attribute to the artifact to record the 
-                    // interesting files set membership rule that was satisfied.
-                    BlackboardAttribute ruleNameAttribute = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CATEGORY, moduleName, ruleSatisfied);
-                    attributes.add(ruleNameAttribute);
+                    // Create artifact if it doesn't already exist.
+                    if (!blackboard.artifactExists(file, TSK_INTERESTING_FILE_HIT, attributes)) {
+                        BlackboardArtifact artifact = file.newArtifact(TSK_INTERESTING_FILE_HIT);
+                        artifact.addAttributes(attributes);
+                        try {
 
-                    artifact.addAttributes(attributes);
-                    try {
-                        /*
-                         * post the artifact which will index the artifact for
-                         * keyword search, and fire an event to notify UI of
-                         * this new artifact
-                         */
-                        blackboard.postArtifact(artifact, moduleName);
-                    } catch (Blackboard.BlackboardException ex) {
-                        logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());
+                            // Post thet artifact to the blackboard.
+                            blackboard.postArtifact(artifact, MODULE_NAME);
+                        } catch (Blackboard.BlackboardException ex) {
+                            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                            MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());
+                        }
+
+                        // make an ingest inbox message
+                        StringBuilder detailsSb = new StringBuilder();
+                        detailsSb.append("File: ").append(file.getParentPath()).append(file.getName()).append("<br/>\n");
+                        detailsSb.append("Rule Set: ").append(filesSet.getName());
+
+                        services.postMessage(IngestMessage.createDataMessage(InterestingItemsIngestModuleFactory.getModuleName(),
+                                "Interesting File Match: " + filesSet.getName() + "(" + file.getName() + ")",
+                                detailsSb.toString(),
+                                file.getName(),
+                                artifact));
                     }
-
-                    // make an ingest inbox message
-                    StringBuilder detailsSb = new StringBuilder();
-                    detailsSb.append("File: ").append(file.getParentPath()).append(file.getName()).append("<br/>\n");
-                    detailsSb.append("Rule Set: ").append(filesSet.getName());
-
-                    services.postMessage(IngestMessage.createDataMessage(InterestingItemsIngestModuleFactory.getModuleName(),
-                            "Interesting File Match: " + filesSet.getName() + "(" + file.getName() + ")",
-                            detailsSb.toString(),
-                            file.getName(),
-                            artifact));
-
                 } catch (TskCoreException ex) {
                     FilesIdentifierIngestModule.logger.log(Level.SEVERE, "Error posting to the blackboard", ex); //NOI18N NON-NLS
                 }

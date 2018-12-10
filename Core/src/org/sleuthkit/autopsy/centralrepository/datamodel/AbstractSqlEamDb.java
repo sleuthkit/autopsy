@@ -56,6 +56,11 @@ import org.sleuthkit.datamodel.TskData;
 abstract class AbstractSqlEamDb implements EamDb {
 
     private final static Logger logger = Logger.getLogger(AbstractSqlEamDb.class.getName());
+    static final String SCHEMA_MAJOR_VERSION_KEY = "SCHEMA_VERSION";
+    static final String SCHEMA_MINOR_VERSION_KEY = "SCHEMA_MINOR_VERSION";
+    static final String CREATED_SCHEMA_MAJOR_VERSION_KEY = "CREATED_SCHEMA_MAJOR_VERSION";
+    static final String CREATED_SCHEMA_MINOR_VERSION_KEY = "CREATED_SCHEMA_MINOR_VERSION";
+    static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 2);
 
     protected final List<CorrelationAttributeInstance.Type> defaultCorrelationTypes;
 
@@ -3342,6 +3347,27 @@ abstract class AbstractSqlEamDb implements EamDb {
                     }
                     statement.execute(String.format(addObjectIdIndexTemplate, instance_type_dbname, instance_type_dbname));
                 }
+
+                /*
+                 * Add hash columns to the data_sources table.
+                 */
+                if (!doesColumnExist(conn, dataSourcesTableName, "md5")) {
+                    statement.execute("ALTER TABLE data_sources ADD COLUMN md5 TEXT DEFAULT NULL");
+                }
+                if (!doesColumnExist(conn, dataSourcesTableName, "sha1")) {
+                    statement.execute("ALTER TABLE data_sources ADD COLUMN sha1 TEXT DEFAULT NULL");
+                }
+                if (!doesColumnExist(conn, dataSourcesTableName, "sha256")) {
+                    statement.execute("ALTER TABLE data_sources ADD COLUMN sha256 TEXT DEFAULT NULL");
+                }
+
+                /*
+                 * Put values into the db_info table indicating that the
+                 * creation schema version is not known.
+                 */
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MAJOR_VERSION_KEY + "', '0')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MINOR_VERSION_KEY + "', '0')");
+
             }
             if (!updateSchemaVersion(conn)) {
                 throw new EamDbException("Error updating schema version");

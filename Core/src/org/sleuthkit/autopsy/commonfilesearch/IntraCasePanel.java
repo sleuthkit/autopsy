@@ -19,6 +19,7 @@
  */
 package org.sleuthkit.autopsy.commonfilesearch;
 
+import org.sleuthkit.autopsy.guiutils.DataSourceComboBoxModel;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

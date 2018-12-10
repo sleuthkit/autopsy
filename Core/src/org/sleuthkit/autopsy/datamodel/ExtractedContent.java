@@ -159,6 +159,16 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return filePath + "face.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {
             return filePath + "network-wifi.png"; //NON-NLS
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID()) {
+            return filePath + "network-wifi.png"; //NON-NLS
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {
+            return filePath + "sim_card.png"; //NON-NLS
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID()) {
+            return filePath + "Bluetooth.png"; //NON-NLS
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {
+            return filePath + "devices.png"; //NON-NLS
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED.getTypeID()) {
+            return filePath + "validationFailed.png"; //NON-NLS
         }
         return filePath + "artifact-icon.png"; //NON-NLS
     }

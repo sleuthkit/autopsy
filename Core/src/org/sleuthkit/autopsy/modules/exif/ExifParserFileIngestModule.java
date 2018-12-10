@@ -32,11 +32,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.TimeZone;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -77,8 +74,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private static final String MODULE_NAME = ExifParserModuleFactory.getModuleName();
-    private final AtomicInteger filesProcessed = new AtomicInteger(0);
-    private final List<BlackboardArtifact> artifactsToPost = new ArrayList<>();
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
@@ -127,12 +122,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        final int filesProcessedValue = filesProcessed.incrementAndGet();
-        // Post artifacts every 1000 files
-        if ((filesProcessedValue % 1000 == 0)) {
-            postArtifacts();
-        }
-
         //skip unsupported
         if (!parsableFormat(content)) {
             return ProcessResult.OK;
@@ -141,9 +130,9 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         return processFile(content);
     }
 
-    private ProcessResult processFile(AbstractFile f) {
+    private ProcessResult processFile(AbstractFile file) {
 
-        try (BufferedInputStream bin = new BufferedInputStream(new ReadContentInputStream(f));) {
+        try (BufferedInputStream bin = new BufferedInputStream(new ReadContentInputStream(file));) {
 
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             Metadata metadata = ImageMetadataReader.readMetadata(bin);
@@ -155,7 +144,7 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                 // set the timeZone for the current datasource.
                 if (timeZone == null) {
                     try {
-                        Content dataSource = f.getDataSource();
+                        Content dataSource = file.getDataSource();
                         if ((dataSource != null) && (dataSource instanceof Image)) {
                             Image image = (Image) dataSource;
                             timeZone = TimeZone.getTimeZone(image.getTimeZone());
@@ -201,10 +190,19 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
 
             // Add the attributes, if there are any, to a new artifact
             if (!attributes.isEmpty()) {
-                BlackboardArtifact bba = f.newArtifact(TSK_METADATA_EXIF);
-                bba.addAttributes(attributes);
-                synchronized (artifactsToPost) {
-                    artifactsToPost.add(bba);
+                // Create artifact if it doesn't already exist.
+                if (!blackboard.artifactExists(file, TSK_METADATA_EXIF, attributes)) {
+                    BlackboardArtifact bba = file.newArtifact(TSK_METADATA_EXIF);
+                    bba.addAttributes(attributes);
+
+                    try {
+                        // index the artifact for keyword search
+                        blackboard.postArtifact(bba, MODULE_NAME);
+                    } catch (Blackboard.BlackboardException ex) {
+                        logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(
+                                Bundle.ExifParserFileIngestModule_indexError_message(), bba.getDisplayName());
+                    }
                 }
             }
 
@@ -213,13 +211,13 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             logger.log(Level.WARNING, "Failed to create blackboard artifact for exif metadata ({0}).", ex.getLocalizedMessage()); //NON-NLS
             return ProcessResult.ERROR;
         } catch (ImageProcessingException ex) {
-            logger.log(Level.WARNING, String.format("Failed to process the image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex);
+            logger.log(Level.WARNING, String.format("Failed to process the image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex);
             return ProcessResult.ERROR;
         } catch (ReadContentInputStreamException ex) {
-            logger.log(Level.WARNING, String.format("Error while trying to read image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("Error while trying to read image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         } catch (IOException ex) {
-            logger.log(Level.WARNING, String.format("IOException when parsing image file '%s/%s' (id=%d).", f.getParentPath(), f.getName(), f.getId()), ex); //NON-NLS
+            logger.log(Level.WARNING, String.format("IOException when parsing image file '%s/%s' (id=%d).", file.getParentPath(), file.getName(), file.getId()), ex); //NON-NLS
             return ProcessResult.ERROR;
         }
     }
@@ -242,26 +240,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         // We only need to check for this final event on the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
             timeZone = null;
-            postArtifacts();
-        }
-    }
-
-    private void postArtifacts() {
-        synchronized (artifactsToPost) {
-            if (CollectionUtils.isNotEmpty(artifactsToPost)) {
-                try {
-                    /*
-                     * Post the artifact which will index the artifact for
-                     * keyword search, and fire an event to notify UI of this
-                     * new artifact
-                     */
-                    blackboard.postArtifacts(artifactsToPost, MODULE_NAME);
-                } catch (Blackboard.BlackboardException ex) {
-                    logger.log(Level.SEVERE, "Unable to post exif blackboard artifacts", ex); //NON-NLS
-                    MessageNotifyUtil.Notify.error(Bundle.ExifParserFileIngestModule_indexError_message(), "");
-                }
-                artifactsToPost.clear();
-            }
         }
     }
 }
