@@ -65,6 +65,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = true;
     static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = true;
+    static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
 
     private final static Logger logger = Logger.getLogger(CentralRepoIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
@@ -77,6 +78,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private CorrelationAttributeInstance.Type filesType;
     private final boolean flagTaggedNotableItems;
     private final boolean flagPreviouslySeenDevices;
+    private final boolean createCorrelationProperties;
 
     /**
      * Instantiate the Correlation Engine ingest module.
@@ -86,6 +88,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     CentralRepoIngestModule(IngestSettings settings) {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
         flagPreviouslySeenDevices = settings.isFlagPreviousDevices();
+        createCorrelationProperties = settings.shouldCreateCorrelationProperties();
     }
 
     @Override
@@ -114,7 +117,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         if (abstractFile.getKnown() == TskData.FileKnown.KNOWN) {
             return ProcessResult.OK;
         }
-        
+
         EamDb dbManager;
         try {
             dbManager = EamDb.getInstance();
@@ -149,32 +152,34 @@ final class CentralRepoIngestModule implements FileIngestModule {
             } catch (EamDbException ex) {
                 logger.log(Level.SEVERE, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
-            } catch (CorrelationAttributeNormalizationException ex){
+            } catch (CorrelationAttributeNormalizationException ex) {
                 logger.log(Level.INFO, "Error searching database for artifact.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
 
         // insert this file into the central repository
-        try {
-            CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
-                    filesType, 
-                    md5,
-                    eamCase,
-                    eamDataSource,
-                    abstractFile.getParentPath() + abstractFile.getName(),
-                    null,
-                    TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
-,                   abstractFile.getId());
-            dbManager.addAttributeInstanceBulk(cefi);
-        } catch (EamDbException ex) {
-            logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
-            return ProcessResult.ERROR;
-        } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
-            return ProcessResult.ERROR;
+        if (createCorrelationProperties) {
+            try {
+                CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
+                        filesType,
+                        md5,
+                        eamCase,
+                        eamDataSource,
+                        abstractFile.getParentPath() + abstractFile.getName(),
+                        null,
+                        TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
+                        ,
+                         abstractFile.getId());
+                dbManager.addAttributeInstanceBulk(cefi);
+            } catch (EamDbException ex) {
+                logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                return ProcessResult.ERROR;
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                return ProcessResult.ERROR;
+            }
         }
-
         return ProcessResult.OK;
     }
 
@@ -236,6 +241,9 @@ final class CentralRepoIngestModule implements FileIngestModule {
         }
         if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagSeenDevices()) {
             IngestEventsListener.setFlagSeenDevices(flagPreviouslySeenDevices);
+        }
+        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.shouldCreateCrProperties()) {
+            IngestEventsListener.setCreateCrProperties(createCorrelationProperties);
         }
 
         if (EamDb.isEnabled() == false) {
@@ -325,7 +333,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
     /**
      * Post a new interesting artifact for the file marked bad.
-     * 
+     *
      * @param abstractFile     The file from which to create an artifact.
      * @param caseDisplayNames Case names to be added to a TSK_COMMON attribute.
      */
@@ -333,13 +341,13 @@ final class CentralRepoIngestModule implements FileIngestModule {
 
         try {
             String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
-            
+
             Collection<BlackboardAttribute> attributes = new ArrayList<>();
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.CentralRepoIngestModule_prevTaggedSet_text()));
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
                     Bundle.CentralRepoIngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", ""))));
-            
+
             SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
