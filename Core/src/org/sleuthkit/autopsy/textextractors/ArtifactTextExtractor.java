@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Extracts text from artifacts by concatenating the values of all of the
  * artifact's attributes.
  */
-class ArtifactTextExtractor extends TextExtractor<Content> {
+class ArtifactTextExtractor extends TextExtractor {
 
     private final BlackboardArtifact artifact;
     
@@ -41,7 +41,7 @@ class ArtifactTextExtractor extends TextExtractor<Content> {
     }
     
     @Override
-    public Reader getReader() throws InitReaderException {
+    public Reader getReader() throws ExtractionException {
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
@@ -50,10 +50,10 @@ class ArtifactTextExtractor extends TextExtractor<Content> {
         try {
             dataSource = artifact.getDataSource();
         } catch (TskCoreException tskCoreException) {
-            throw new InitReaderException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
+            throw new ExtractionException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
         }
         if (dataSource == null) {
-            throw new InitReaderException("Datasource was null for artifact: " + artifact.toString());
+            throw new ExtractionException("Datasource was null for artifact: " + artifact.toString());
         }
 
         try {
@@ -75,7 +75,7 @@ class ArtifactTextExtractor extends TextExtractor<Content> {
                 artifactContents.append(System.lineSeparator());
             }
         } catch (TskCoreException tskCoreException) {
-            throw new InitReaderException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
+            throw new ExtractionException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
         }
 
         return new InputStreamReader(IOUtils.toInputStream(artifactContents,

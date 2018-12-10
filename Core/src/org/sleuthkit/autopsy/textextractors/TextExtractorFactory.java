@@ -20,79 +20,115 @@ package org.sleuthkit.autopsy.textextractors;
 
 import java.util.Arrays;
 import java.util.List;
+import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Report;
 
 /**
- * Factory for creating text extractors given a source file
+ * Factory for creating
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractor}'s given a
+ * {@link org.sleuthkit.datamodel.Content} instance
  *
- * See ContentTextExtractor interface for the generic structure of such
- * extractors.
+ * See {@link org.sleuthkit.autopsy.textextractors.extractionconfigs} for
+ * available {@link org.sleuthkit.autopsy.textextractors.TextExtractor}
+ * configuration options.
+ *
+ * @see org.openide.util.Lookup
  */
 public class TextExtractorFactory {
+
     /**
-     * Auto detects the correct text extractor given the file.
+     * Auto detects the correct
+     * {@link org.sleuthkit.autopsy.textextractors.TextExtractor} given the
+     * {@link org.sleuthkit.datamodel.Content}.
      *
-     * ContentTextExtractor can be configured using the ExtractionContext
-     * object. Passing in null or a new unmodified instance of ExtractionContext
-     * will keep the extractors at default settings. Refer to the
-     * extractionconfigs package for available file configurations.
+     * See {@link org.sleuthkit.autopsy.textextractors.extractionconfigs} for
+     * available {@link org.sleuthkit.autopsy.textextractors.TextExtractor}
+     * configuration options.
      *
-     * @param file    Content source that will be read from
+     * @param content Content source that will be read from
      * @param context Contains extraction configurations for certain file types
      *
-     * @return A Reader that contains file source text
+     * @return A TextExtractor that supports the given content. File text can be
+     *         obtained from {@link TextExtractor#getReader()}.
      *
-     * @throws NoTextExtractorFound In the event that the
-     *                                             inputted file and mimetype
-     *                                             have no corresponding
-     *                                             extractor
+     * @throws NoTextExtractorFound Encountered when there is no TextExtractor
+     *                              was found for the given content type. Use {@link
+     *                              TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content,
+     *                              org.openide.util.Lookup)}
+     *
+     * @see org.openide.util.Lookup
      */
-    public static TextExtractor<Content> getExtractor(Content file,
-            ExtractionContext context) throws NoTextExtractorFound {
-        if (file instanceof AbstractFile) {
-            String mimeType = ((AbstractFile) file).getMIMEType();   
-            List<TextExtractor<Content>> extractors = Arrays.asList(
-                    new HtmlTextExtractor(file),
-                    new SqliteTextExtractor(file), 
-                    new TikaTextExtractor(file));
-            for(TextExtractor<Content> extractor : extractors) {
-                if(extractor.isEnabled() && extractor.isSupported(file, mimeType)) {
+    public static TextExtractor getExtractor(Content content,
+            Lookup context) throws NoTextExtractorFound {
+        if (content instanceof AbstractFile) {
+            String mimeType = ((AbstractFile) content).getMIMEType();
+            List<TextExtractor> extractors = Arrays.asList(
+                    new HtmlTextExtractor(content),
+                    new SqliteTextExtractor(content),
+                    new TikaTextExtractor(content));
+            for (TextExtractor extractor : extractors) {
+                extractor.setExtractionSettings(context);
+                if (extractor.isEnabled() && extractor.isSupported(content, mimeType)) {
                     return extractor;
                 }
             }
-        } else if (file instanceof BlackboardArtifact) {
-            TextExtractor<Content> artifactExtractor = new ArtifactTextExtractor((BlackboardArtifact)file);
+        } else if (content instanceof BlackboardArtifact) {
+            TextExtractor artifactExtractor = new ArtifactTextExtractor((BlackboardArtifact) content);
             artifactExtractor.setExtractionSettings(context);
             return artifactExtractor;
-        } else if (file instanceof Report) {
-            TextExtractor<Content> reportExtractor = new TikaTextExtractor(file);
+        } else if (content instanceof Report) {
+            TextExtractor reportExtractor = new TikaTextExtractor(content);
             reportExtractor.setExtractionSettings(context);
             return reportExtractor;
         }
-        
+
         throw new NoTextExtractorFound(
                 String.format("Could not find a suitable extractor for "
-                        + "file with name [%s] and id=[%d]. Try using the default, "
+                        + "content with name [%s] and id=[%d]. Try using the default, "
                         + "non content specific extractor as an alternative.",
-                        file.getName(), file.getId())
+                        content.getName(), content.getId())
         );
     }
 
     /**
-     * Returns the default extractor that can be run on any content type. This
-     * extractor should be used as a backup in the event that no specialized
-     * extractor can be found.
+     * Auto detects the correct
+     * {@link org.sleuthkit.autopsy.textextractors.TextExtractor} given the
+     * {@link org.sleuthkit.datamodel.Content}.
      *
-     * @param source Content source to read from
+     * @param content Content instance that will be read from
+     *
+     * @return A TextExtractor that supports the given content. File text can be
+     *         obtained from {@link TextExtractor#getReader()}.
+     *
+     * @throws NoTextExtractorFound Encountered when there is no TextExtractor
+     *                              was found for the given content type. Use {@link
+     *                              TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content,
+     *                              org.openide.util.Lookup)}
+     */
+    public static TextExtractor getExtractor(Content content)
+            throws NoTextExtractorFound {
+        return getExtractor(content, null);
+    }
+
+    /**
+     * Returns the default extractor that can be run on any content type. This
+     * extractor should be used as a backup in the event that no extractor was
+     * found using or {@link TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content, org.openide.util.Lookup)}
+     * {@link TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content)}.
+     *
+     * @param content Content source to read from
      * @param context Contains extraction configurations for certain file types
      *
-     * @return A DefaultExtractor instance
+     * @return A DefaultExtractor instance. File text can be obtained from
+     *         {@link TextExtractor#getReader()}.
+     *
+     * @see org.openide.util.Lookup
      */
-    public static TextExtractor<Content> getDefaultExtractor(Content source, ExtractionContext context) {
-        StringsTextExtractor stringsInstance = new StringsTextExtractor(source);
+    public static TextExtractor getDefaultExtractor(Content content, Lookup context) {
+        TextExtractor stringsInstance = new StringsTextExtractor(content);
         stringsInstance.setExtractionSettings(context);
         return stringsInstance;
     }
@@ -100,13 +136,19 @@ public class TextExtractorFactory {
     /**
      * System level exception for handling content types that have no specific
      * strategy defined for extracting their text.
+     *
+     * @see
+     * org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content)
+     * @see
+     * org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content,
+     * org.openide.util.Lookup)}
      */
     public static class NoTextExtractorFound extends Exception {
 
         public NoTextExtractorFound(String msg) {
             super(msg);
         }
-        
+
         public NoTextExtractorFound(Throwable ex) {
             super(ex);
         }

@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 /**
  * Extracts text from HTML content.
  */
-final class HtmlTextExtractor extends TextExtractor<Content> {
+final class HtmlTextExtractor extends TextExtractor {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private final int MAX_SIZE;
@@ -93,7 +93,7 @@ final class HtmlTextExtractor extends TextExtractor<Content> {
      * @throws TextExtractorException
      */
     @Override
-    public Reader getReader() throws InitReaderException {
+    public Reader getReader() throws ExtractionException {
         //TODO JIRA-4467, there is only harm in excluding HTML documents greater
         //than 50MB due to our troubled approach of extraction.
         ReadContentInputStream stream = new ReadContentInputStream(file);
@@ -190,7 +190,7 @@ final class HtmlTextExtractor extends TextExtractor<Content> {
             return new StringReader(stringBuilder.toString());
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error extracting HTML from content.", ex);
-            throw new InitReaderException("Error extracting HTML from content.", ex);
+            throw new ExtractionException("Error extracting HTML from content.", ex);
         }
     }
 }

@@ -19,15 +19,22 @@
 package org.sleuthkit.autopsy.textextractors;
 
 import java.io.Reader;
+import org.openide.util.Lookup;
+import org.sleuthkit.datamodel.Content;
 
 /**
- * Extracts text out of Objects and exposes it as a Reader.
+ * Extracts the text out of {@link org.sleuthkit.datamodel.Content} instances
+ * and exposes them as a {@link java.io.Reader}. Concrete implementations can be
+ * obtained from
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content)}
+ * or
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content, org.openide.util.Lookup)}.
  *
- * @param <T> Generic data type T
+ * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
  */
-public abstract class TextExtractor<T> {
-    
-     /**
+public abstract class TextExtractor {
+
+    /**
      * Determines if the file content is supported by the extractor.
      *
      * @param file           to test if its content should be supported
@@ -36,35 +43,57 @@ public abstract class TextExtractor<T> {
      *
      * @return true if the file content is supported, false otherwise
      */
-    abstract boolean isSupported(T file, String detectedFormat);
-    
+    abstract boolean isSupported(Content file, String detectedFormat);
+
     /**
-     * 
-     * @return 
+     * Determines if the TextExtractor instance is enabled to read content.
+     *
+     * @return
      */
     boolean isEnabled() {
         return true;
     }
-    
+
     /**
-     * Get a reader that will iterate over the text extracted from the given
-     * source.
+     * Get a {@link java.io.Reader} that will iterate over the text extracted
+     * from the {@link org.sleuthkit.datamodel.Content} used to create this
+     * TextExtractor instance.
      *
-     * @return Reader instance that contains the text of the source
-     * @throws org.sleuthkit.autopsy.textextractors.InitReaderException
+     * @return {@link java.io.Reader} that contains the text of the underlying
+     *         {@link org.sleuthkit.datamodel.Content}
+     * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException
+     *
+     * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
      *
      */
-    public abstract Reader getReader() throws InitReaderException;
-       
+    public abstract Reader getReader() throws ExtractionException;
+
     /**
-     * Determines how the extraction process will proceed given the settings 
-     * stored in this context instance.
-     * 
-     * See the extractionconfigs package for available file configurations.
-     * 
+     * Determines how the extraction process will proceed given the settings
+     * stored in the context instance.
+     *
      * @param context Instance containing file config classes
      */
-    void setExtractionSettings(ExtractionContext context) {
+    void setExtractionSettings(Lookup context) {
         //no-op by default
     }
+    
+    /**
+    * Exception encountered during {@link org.sleuthkit.autopsy.textextractors.TextExtractor#getReader()}.
+    * This indicates that there was an internal parsing error that occurred during the 
+    */
+   public class ExtractionException extends Exception {
+
+       public ExtractionException(String msg, Throwable ex) {
+           super(msg, ex);
+       }
+
+       public ExtractionException(Throwable ex) {
+           super(ex);
+       }
+
+       public ExtractionException(String msg) {
+           super(msg);
+       }
+   }
 }

@@ -46,6 +46,7 @@ import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.pdf.PDFParserConfig;
 import org.openide.util.NbBundle;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
 import org.sleuthkit.datamodel.Content;
@@ -55,7 +56,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extracts text from Tika supported content. Protects against Tika
  * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
-final class TikaTextExtractor extends TextExtractor<Content> {
+final class TikaTextExtractor extends TextExtractor {
     
       //Mimetype groups to aassist extractor implementations in ignoring binary and 
     //archive files.
@@ -135,7 +136,7 @@ final class TikaTextExtractor extends TextExtractor<Content> {
      * @throws org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException 
      */
     @Override
-    public Reader getReader() throws InitReaderException {
+    public Reader getReader() throws ExtractionException {
         ReadContentInputStream stream = new ReadContentInputStream(content);
 
         Metadata metadata = new Metadata();
@@ -182,7 +183,7 @@ final class TikaTextExtractor extends TextExtractor<Content> {
             PushbackReader pushbackReader = new PushbackReader(tikaReader);
             int read = pushbackReader.read();
             if (read == -1) {
-                throw new InitReaderException("Unable to extract text: Tika returned empty reader for " + content);
+                throw new ExtractionException("Unable to extract text: Tika returned empty reader for " + content);
             }
             pushbackReader.unread(read);
 
@@ -191,13 +192,13 @@ final class TikaTextExtractor extends TextExtractor<Content> {
             return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", content.getId(), content.getName());
-            throw new InitReaderException(msg, te);
-        } catch (InitReaderException ex) {
+            throw new ExtractionException(msg, te);
+        } catch (ExtractionException ex) {
             throw ex;
         } catch (Exception ex) {
             tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the content" + content.getId() + ": " + content.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", content.getId(), content.getName());
-            throw new InitReaderException(msg, ex);
+            throw new ExtractionException(msg, ex);
         } finally {
             future.cancel(true);
         }
@@ -296,9 +297,12 @@ final class TikaTextExtractor extends TextExtractor<Content> {
      * @param context Instance containing config classes
      */
     @Override
-    public void setExtractionSettings(ExtractionContext context) {
-        if(context != null && context.contains(ImageFileExtractionConfig.class)) {
-            ImageFileExtractionConfig configInstance = context.get(ImageFileExtractionConfig.class);
+    public void setExtractionSettings(Lookup context) {
+        if(context != null) {
+            ImageFileExtractionConfig configInstance = context.lookup(ImageFileExtractionConfig.class);
+            if(configInstance == null) {
+                return;
+            }
             if(Objects.nonNull(configInstance.getOCREnabled())) {
                 this.tesseractOCREnabled = configInstance.getOCREnabled();
             }

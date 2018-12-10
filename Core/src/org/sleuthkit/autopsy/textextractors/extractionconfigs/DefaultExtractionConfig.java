@@ -22,17 +22,21 @@ import java.util.List;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
- * Allows for configuration of the StringsTextExtractor (the default extractor
- * for all content types).
+ * Allows for configuration of the {@link TextExtractor} obtained from
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content, org.openide.util.Lookup)}.
+ *
+ * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
+ * @see org.openide.util.Lookup
  */
 public class DefaultExtractionConfig {
+
     private Boolean extractUTF8;
     private Boolean extractUTF16;
     private List<SCRIPT> extractScripts;
 
     /**
-     * Enables the UTF-8 encoding to be used during strings extraction.
-     * 
+     * Enables UTF-8 encoding to be used during extraction.
+     *
      * @param enabled Flag indicating if UTF-8 should be turned on
      */
     public void setExtractUTF8(boolean enabled) {
@@ -40,8 +44,8 @@ public class DefaultExtractionConfig {
     }
 
     /**
-     * Enables the UTF-16 encoding to be used during strings extraction.
-     * 
+     * Enables UTF-16 encoding to be used during extraction.
+     *
      * @param enabled Flag indicating if UTF-16 should be turned on
      */
     public void setExtractUTF16(boolean enabled) {
@@ -50,7 +54,7 @@ public class DefaultExtractionConfig {
 
     /**
      * Returns whether extracting with UTF-8 encoding should be done.
-     * 
+     *
      * @return Flag indicating if UTF-8 has been turned on/off
      */
     public Boolean getExtractUTF8() {
@@ -59,26 +63,28 @@ public class DefaultExtractionConfig {
 
     /**
      * Return whether extracting with UTF-16 encoding should be done.
-     * 
+     *
      * @return Flag indicating if UTF-16 has been turned on/off
      */
-    public Boolean getExtractUTF16() { 
+    public Boolean getExtractUTF16() {
         return extractUTF16;
     }
-    
+
     /**
-     * Sets the type of extraction scripts that will be used during this 
-     * extraction.
-     * 
+     * Sets the type of extraction scripts that will be used during this
+     * extraction. See
+     * {@link org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT}
+     * for more information about available scripts.
+     *
      * @param scripts Desired set of scripts to be used during extraction
      */
     public void setExtractScripts(List<SCRIPT> scripts) {
         this.extractScripts = scripts;
     }
-    
+
     /**
      * Gets the desired set of scripts to be used during extraction.
-     * 
+     *
      * @return Set of extraction scripts to be used
      */
     public List<SCRIPT> getExtractScripts() {

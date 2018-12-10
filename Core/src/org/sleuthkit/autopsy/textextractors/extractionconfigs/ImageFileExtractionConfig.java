@@ -20,14 +20,23 @@ package org.sleuthkit.autopsy.textextractors.extractionconfigs;
 
 /**
  * Allows for configuration of image file extraction.
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractor}'s that use
+ * ImageFileExtractionConfig can be obtained through
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content)}
+ * or
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content, org.openide.util.Lookup)}.
+ *
+ * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
+ * @see org.openide.util.Lookup
  */
 public class ImageFileExtractionConfig {
+
     private Boolean OCREnabled;
-    
+
     /**
      * Enables OCR to be run on the text extractor responsible for handling
      * image files.
-     * 
+     *
      * @param enabled Flag indicating if OCR is enabled.
      */
     public void setOCREnabled(boolean enabled) {
@@ -36,7 +45,7 @@ public class ImageFileExtractionConfig {
 
     /**
      * Gets the OCR flag that has been set. By default this flag is turned off.
-     * 
+     *
      * @return Flag indicating if OCR is enabled.
      */
     public boolean getOCREnabled() {

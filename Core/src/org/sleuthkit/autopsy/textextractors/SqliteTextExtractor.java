@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.Content;
  *  2) Tables that contain spaces in their name are not extracted
  *  3) Table names are not included in its output text
  */
-final class SqliteTextExtractor extends TextExtractor<Content> {
+final class SqliteTextExtractor extends TextExtractor {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
@@ -71,7 +71,7 @@ final class SqliteTextExtractor extends TextExtractor<Content> {
      * @throws TextExtractorException
      */
     @Override
-    public Reader getReader() throws InitReaderException {
+    public Reader getReader() throws ExtractionException {
         return new SQLiteStreamReader(file);
     }
     

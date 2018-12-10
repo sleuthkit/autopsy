@@ -25,6 +25,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.textextractors.extractionconfigs.DefaultExtractionConfig;
@@ -35,7 +36,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-final class StringsTextExtractor extends TextExtractor<Content> {
+final class StringsTextExtractor extends TextExtractor {
 
     private boolean extractUTF8;
     private boolean extractUTF16;
@@ -102,12 +103,15 @@ final class StringsTextExtractor extends TextExtractor<Content> {
      * See the DefaultExtractionConfig class in the extractionconfigs package
      * for available settings.
      *
-     * @param context Instance containing config classes
+     * @param context Lookup instance containing config classes
      */
     @Override
-    public void setExtractionSettings(ExtractionContext context) {
-        if (context != null && context.contains(DefaultExtractionConfig.class)) {
-            DefaultExtractionConfig configInstance = context.get(DefaultExtractionConfig.class);
+    public void setExtractionSettings(Lookup context) {
+        if(context != null) {
+            DefaultExtractionConfig configInstance = context.lookup(DefaultExtractionConfig.class);
+            if(configInstance == null) {
+                return;
+            }
             if (Objects.nonNull(configInstance.getExtractUTF8())) {
                 extractUTF8 = configInstance.getExtractUTF8();
             }
