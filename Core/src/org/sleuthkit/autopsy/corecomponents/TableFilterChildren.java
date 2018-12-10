@@ -18,26 +18,17 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
- * A <code>Children</code> implementation for a 
- * <code>TableFilterNode</code>. A 
- * <code>TableFilterNode</code> creates at most one layer of child 
- * nodes for the node it wraps. It is designed to be used in the results view 
- * to ensure the individual viewers display only the first layer of child nodes.
+ * A <code>Children</code> implementation for a <code>TableFilterNode</code>. A
+ * <code>TableFilterNode</code> creates at most one layer of child nodes for the
+ * node it wraps. It is designed to be used in the results view to ensure the
+ * individual viewers display only the first layer of child nodes.
  */
 class TableFilterChildren extends FilterNode.Children {
-
-    private int numberOfNodesCreated;
-    private static volatile boolean maxResultsDialogShown = false;
 
     /**
      * Creates a Children object for a TableFilterNode. A TableFilterNode
@@ -71,7 +62,6 @@ class TableFilterChildren extends FilterNode.Children {
      */
     TableFilterChildren(Node wrappedNode) {
         super(wrappedNode);
-        numberOfNodesCreated = 0;
     }
 
     /**
@@ -96,41 +86,7 @@ class TableFilterChildren extends FilterNode.Children {
      * @return
      */
     @Override
-    @NbBundle.Messages({"# {0} - The results limit",
-        "TableFilterChildren.createNodes.limitReached.msg="
-        + "The limit on the number of results to display has been reached."
-        + " Only the first {0} results will be shown."
-        + " The limit can be modified under Tools, Options, View."})
     protected Node[] createNodes(Node key) {
-        int maxNodesToCreate = UserPreferences.getMaximumNumberOfResults();
-
-        if (maxNodesToCreate == 0 || numberOfNodesCreated < maxNodesToCreate) {
-            // We either haven't hit the limit yet, or we don't have a limit.
-
-            /**
-             * We only want to apply the limit to "our" nodes (i.e. not the
-             * wait node). If we don't do this the "Please wait..."
-             * node causes the number of results in the table to be off by one.
-             * Using the Bundle to get the value so that we are not tied to a
-             * particular locale.
-             */
-            if (!key.getDisplayName().equalsIgnoreCase(NbBundle.getMessage(Node.class, "LBL_WAIT"))) {
-                numberOfNodesCreated++;
-
-                // If we have a limit and the creation of this node reaches it,
-                // tell the user if they haven't already been told.
-                if (numberOfNodesCreated == maxNodesToCreate && !maxResultsDialogShown) {
-                    maxResultsDialogShown = true;
-
-                    SwingUtilities.invokeLater(()
-                            -> JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                                    Bundle.TableFilterChildren_createNodes_limitReached_msg(maxNodesToCreate))
-                    );
-                }
-            }
-            return new Node[]{this.copyNode(key)};
-        } else {
-            return new Node[]{};
-        }
+        return new Node[]{this.copyNode(key)};
     }
 }

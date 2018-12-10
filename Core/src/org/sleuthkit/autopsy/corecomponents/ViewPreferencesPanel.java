@@ -78,7 +78,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         commentsOccurencesColumnsCheckbox.setEnabled(EamDbUtil.useCentralRepo());
         commentsOccurencesColumnWrapAroundText.setEnabled(EamDbUtil.useCentralRepo());
         commentsOccurencesColumnsCheckbox.setSelected(UserPreferences.hideCentralRepoCommentsAndOccurrences());
-        maximumResultsSpinner.setValue(UserPreferences.getMaximumNumberOfResults());
         
         hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
         translateNamesInTableRadioButton.setSelected(UserPreferences.displayTranslatedFileNames());
@@ -115,7 +114,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
         UserPreferences.setHideCentralRepoCommentsAndOccurrences(commentsOccurencesColumnsCheckbox.isSelected());
         UserPreferences.setDisplayTranslatedFileNames(translateNamesInTableRadioButton.isSelected());
-        UserPreferences.setMaximumNumberOfResults((Integer)maximumResultsSpinner.getValue());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -164,13 +162,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         hideOtherUsersTagsLabel = new javax.swing.JLabel();
         centralRepoLabel = new javax.swing.JLabel();
         commentsOccurencesColumnsCheckbox = new javax.swing.JCheckBox();
-        maximumResultsLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         timeZoneList = new javax.swing.JList<>();
         translateTextLabel = new javax.swing.JLabel();
         commentsOccurencesColumnWrapAroundText = new javax.swing.JLabel();
         translateNamesInTableRadioButton = new javax.swing.JRadioButton();
-        maximumResultsSpinner = new javax.swing.JSpinner();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -270,9 +266,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(maximumResultsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maximumResultsLabel.text")); // NOI18N
-        maximumResultsLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maximumResultsLabel.toolTipText")); // NOI18N
-
         timeZoneList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 timeZoneListValueChanged(evt);
@@ -288,13 +281,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         translateNamesInTableRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 translateNamesInTableRadioButtonActionPerformed(evt);
-            }
-        });
-
-        maximumResultsSpinner.setModel(new javax.swing.SpinnerNumberModel(20000, 0, 100000, 10000));
-        maximumResultsSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                maximumResultsSpinnerStateChanged(evt);
             }
         });
 
@@ -347,11 +333,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                                     .addComponent(useBestViewerRadioButton)
                                     .addComponent(useLocalTimeRadioButton)
                                     .addComponent(useAnotherTimeRadioButton)
-                                    .addComponent(translateNamesInTableRadioButton)))))
-                    .addGroup(globalSettingsPanelLayout.createSequentialGroup()
-                        .addComponent(maximumResultsLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(maximumResultsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addComponent(translateNamesInTableRadioButton))))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         globalSettingsPanelLayout.setVerticalGroup(
@@ -380,11 +362,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addGap(3, 3, 3)
                         .addComponent(commentsOccurencesColumnsCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(commentsOccurencesColumnWrapAroundText)
-                        .addGap(6, 6, 6)
-                        .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(maximumResultsLabel)
-                            .addComponent(maximumResultsSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(commentsOccurencesColumnWrapAroundText))
                     .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                         .addComponent(selectFileLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -489,7 +467,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(viewPreferencesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 528, Short.MAX_VALUE)
+            .addComponent(viewPreferencesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -615,14 +593,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_useBestViewerRadioButtonActionPerformed
 
-    private void maximumResultsSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_maximumResultsSpinnerStateChanged
-        if (immediateUpdates) {
-            UserPreferences.setMaximumNumberOfResults((Integer)maximumResultsSpinner.getValue());
-        } else {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);            
-        }
-    }//GEN-LAST:event_maximumResultsSpinnerStateChanged
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel centralRepoLabel;
@@ -642,8 +612,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JLabel hideSlackFilesLabel;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JRadioButton keepCurrentViewerRadioButton;
-    private javax.swing.JLabel maximumResultsLabel;
-    private javax.swing.JSpinner maximumResultsSpinner;
     private javax.swing.JLabel selectFileLabel;
     private javax.swing.JList<String> timeZoneList;
     private javax.swing.JRadioButton translateNamesInTableRadioButton;
