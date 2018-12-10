@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -266,12 +265,12 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             
             for (HashData hashData:hashDataList) {
                 if (hashData.storedHash.equals(hashData.calculatedHash)) {
-                    hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashMatch(hashData.type.name);
+                    hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashMatch(hashData.type.name) + " ";
                 } else {
                     verified = false;
-                    hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashNonMatch(hashData.type.name);
+                    hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashNonMatch(hashData.type.name) + " ";
                     artifactComment += Bundle.DataSourceIntegrityIngestModule_process_hashFailedForArtifact(hashData.type.name,
-                            hashData.calculatedHash, hashData.storedHash);
+                            hashData.calculatedHash, hashData.storedHash) + " ";
                }
                 hashResults += Bundle.DataSourceIntegrityIngestModule_process_hashList(hashData.calculatedHash, hashData.storedHash);
             }
