@@ -27,22 +27,32 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
 
-    private boolean flagTaggedNotableItems;
+    private final boolean flagTaggedNotableItems;
+    private final boolean flagPreviousDevices;
+    private final boolean createCorrelationProperties;
 
     /**
      * Instantiate the ingest job settings with default values.
      */
     IngestSettings() {
-        this.flagTaggedNotableItems = IngestModule.DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
+        this.flagTaggedNotableItems = CentralRepoIngestModule.DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS;
+        this.flagPreviousDevices = CentralRepoIngestModule.DEFAULT_FLAG_PREVIOUS_DEVICES;
+        this.createCorrelationProperties = CentralRepoIngestModule.DEFAULT_CREATE_CR_PROPERTIES;
     }
 
     /**
      * Instantiate the ingest job settings.
      *
-     * @param flagTaggedNotableItems Flag previously tagged notable items.
+     * @param flagTaggedNotableItems      Flag previously tagged notable items.
+     * @param flagPreviousDevices         Flag devices which exist already in
+     *                                    the Central Repository
+     * @param createCorrelationProperties Create correlation properties in the
+     *                                    central repository
      */
-    IngestSettings(boolean flagTaggedNotableItems) {
+    IngestSettings(boolean flagTaggedNotableItems, boolean flagPreviousDevices, boolean createCorrelationProperties) {
         this.flagTaggedNotableItems = flagTaggedNotableItems;
+        this.flagPreviousDevices = flagPreviousDevices;
+        this.createCorrelationProperties = createCorrelationProperties;
     }
 
     @Override
@@ -60,12 +70,20 @@ final class IngestSettings implements IngestModuleIngestJobSettings {
     }
 
     /**
-     * Flag or ignore previously identified notable items.
+     * Are previously seen devices to be flagged?
      *
-     * @param ignorePreviousNotableItems Are previously tagged notable items to
-     *                                   be flagged?
+     * @return True if flagging; otherwise false.
      */
-    void setFlagTaggedNotableItems(boolean flagTaggedNotableItems) {
-        this.flagTaggedNotableItems = flagTaggedNotableItems;
+    boolean isFlagPreviousDevices() {
+        return flagPreviousDevices;
+    }
+
+    /**
+     * Should correlation properties be created
+     *
+     * @return True if creating; otherwise false.
+     */
+    boolean shouldCreateCorrelationProperties() {
+        return createCorrelationProperties;
     }
 }

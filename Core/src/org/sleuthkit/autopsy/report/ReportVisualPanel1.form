@@ -72,6 +72,7 @@
             </LineBorder>
           </Border>
         </Property>
+        <Property name="opaque" type="boolean" value="false"/>
       </Properties>
 
       <Layout>
@@ -107,6 +108,7 @@
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="null"/>
             </Property>
+            <Property name="opaque" type="boolean" value="false"/>
           </Properties>
         </Component>
       </SubComponents>
@@ -126,6 +128,7 @@
             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
               <Connection code="new javax.swing.AbstractListModel&lt;ReportModule&gt;() {&#xa;    ReportModule[] modules = {};&#xa;    public int getSize() { return modules.length; }&#xa;    public ReportModule getElementAt(int i) { return modules[i]; }&#xa;}" type="code"/>
             </Property>
+            <Property name="opaque" type="boolean" value="false"/>
           </Properties>
           <AuxValues>
             <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JList&lt;&gt;()"/>

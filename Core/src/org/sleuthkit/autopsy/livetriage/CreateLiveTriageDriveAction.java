@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.livetriage.CreateLiveTriageDriveAction")
-@ActionReference(path = "Menu/Tools", position = 1401)
+@ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)
 @ActionRegistration(displayName = "#CTL_CreateLiveTriageDriveAction", lazy = false)
 @NbBundle.Messages({"CTL_CreateLiveTriageDriveAction=Make Live Triage Drive"})
 public final class CreateLiveTriageDriveAction extends CallableSystemAction implements PropertyChangeListener {

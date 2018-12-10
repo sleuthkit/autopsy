@@ -398,7 +398,12 @@ final class FileExporter {
              * Is the NTFS or FAT file in the root directory?
              */
             AbstractFile parent = file.getParentDirectory();
-            boolean isInRootDir = parent.isRoot();
+            boolean isInRootDir;
+            if (parent == null) {
+                isInRootDir = true;
+            } else {
+                isInRootDir = parent.isRoot();
+            }
 
             /*
              * Check its meta-address and check its name for the '$' character

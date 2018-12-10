@@ -47,6 +47,10 @@ final class InstanceCountNodeTreeExpansionListener implements TreeExpansionListe
                 if (instanceCountNode != null) {
                     instanceCountNode.createChildren();
                 }
+                final InstanceDataSourceNode instanceDataSourceNode = dataResultFilterNode.getLookup().lookup(InstanceDataSourceNode.class);
+                if (instanceDataSourceNode != null) {
+                    instanceDataSourceNode.createChildren();
+                }
             }
         }
     }

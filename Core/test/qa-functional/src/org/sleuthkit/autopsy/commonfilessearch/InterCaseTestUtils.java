@@ -55,12 +55,12 @@ import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstance;
 import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
-import org.sleuthkit.autopsy.commonfilesearch.DataSourceLoader;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
+import org.sleuthkit.autopsy.guiutils.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.modules.e01verify.E01VerifierModuleFactory;
+import org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
 import org.sleuthkit.autopsy.modules.exif.ExifParserModuleFactory;
 import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleFactory;
@@ -183,8 +183,8 @@ class InterCaseTestUtils {
         final IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
         final IngestModuleTemplate vmExtractorTemplate = IngestUtils.getIngestModuleTemplate(new VMExtractorIngestModuleFactory());
         final IngestModuleTemplate photoRecTemplate = IngestUtils.getIngestModuleTemplate(new PhotoRecCarverIngestModuleFactory());
-        final IngestModuleTemplate e01VerifierTemplate = IngestUtils.getIngestModuleTemplate(new E01VerifierModuleFactory());
-        final IngestModuleTemplate eamDbTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.centralrepository.ingestmodule.IngestModuleFactory());
+        final IngestModuleTemplate dataSourceIntegrityTemplate = IngestUtils.getIngestModuleTemplate(new DataSourceIntegrityModuleFactory());
+        final IngestModuleTemplate eamDbTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.centralrepository.ingestmodule.CentralRepoIngestModuleFactory());
         final IngestModuleTemplate fileExtMismatchDetectorTemplate = IngestUtils.getIngestModuleTemplate(new FileExtMismatchDetectorModuleFactory());
         //TODO we need to figure out how to get ahold of these objects because they are required for properly filling the CR with test data
 //        final IngestModuleTemplate objectDetectorTemplate = IngestUtils.getIngestModuleTemplate(new org.sleuthkit.autopsy.experimental.objectdetection.ObjectDetectionModuleFactory());
@@ -217,10 +217,10 @@ class InterCaseTestUtils {
         kitchenSink.add(hashLookupTemplate);
         kitchenSink.add(vmExtractorTemplate);
         kitchenSink.add(photoRecTemplate);
-        kitchenSink.add(e01VerifierTemplate);
+        kitchenSink.add(dataSourceIntegrityTemplate);
         kitchenSink.add(eamDbTemplate);
         kitchenSink.add(fileExtMismatchDetectorTemplate);
-        //TODO this list should probably be populated by way of loading the appropriate modules based on finding all of the @ServiceProvider(service = IngestModuleFactory.class) types
+        //TODO this list should probably be populated by way of loading the appropriate modules based on finding all of the @ServiceProvider(service = CentralRepoIngestModuleFactory.class) types
 //        kitchenSink.add(objectDetectorTemplate);
 //        kitchenSink.add(emailParserTemplate);
 //        kitchenSink.add(recentActivityTemplate);
@@ -411,10 +411,8 @@ class InterCaseTestUtils {
         }
     }
 
-    static boolean verifyInstanceCount(CommonAttributeSearchResults searchDomain, int instanceCount) {
-        try {
+    static boolean verifyInstanceCount(CommonAttributeCountSearchResults searchDomain, int instanceCount) {
             int tally = 0;
-
             for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
                 entry.getValue().displayDelayedMetadata();
                 for (CommonAttributeValue value : entry.getValue().getMetadataList()) {
@@ -422,21 +420,11 @@ class InterCaseTestUtils {
                     tally += value.getInstanceCount();
                 }
             }
-
             return tally == instanceCount;
-
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
-            return false;
-        }
     }
 
-    static boolean verifyInstanceExistenceAndCount(CommonAttributeSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount) {
-
-        try {
+    static boolean verifyInstanceExistenceAndCount(CommonAttributeCountSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount) {
             int tally = 0;
-
             for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
                 entry.getValue().displayDelayedMetadata();
                 for (CommonAttributeValue value : entry.getValue().getMetadataList()) {
@@ -494,14 +482,7 @@ class InterCaseTestUtils {
                     }
                 }
             }
-
             return tally == instanceCount;
-
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
-            return false;
-        }
     }
 
     /**
@@ -520,8 +501,7 @@ class InterCaseTestUtils {
      *
      * @return true if yes, else false
      */
-    boolean areAllResultsOfType(CommonAttributeSearchResults metadata, CorrelationAttributeInstance.Type attributeType) {
-        try {
+    boolean areAllResultsOfType(CommonAttributeCountSearchResults metadata, CorrelationAttributeInstance.Type attributeType) {
             for (CommonAttributeValueList matches : metadata.getMetadata().values()) {
                 for (CommonAttributeValue value : matches.getMetadataList()) {
                     return value
@@ -532,9 +512,5 @@ class InterCaseTestUtils {
                 return false;
             }
             return false;
-        } catch (EamDbException ex) {
-            Assert.fail(ex.getMessage());
-            return false;
-        }
     }
 }

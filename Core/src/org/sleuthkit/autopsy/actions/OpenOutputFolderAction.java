@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ActionRegistration(displayName = "#CTL_OpenOutputFolder", iconInMenu = true, lazy = false)
-@ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)
+@ActionReference(path = "Menu/Tools", position = 1900, separatorBefore = 1899)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
 public final class OpenOutputFolderAction extends CallableSystemAction {
 

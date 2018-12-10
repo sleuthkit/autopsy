@@ -54,10 +54,9 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     }
 
     @Override
-    public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+    public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
-        Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findInterCaseCommonAttributeValues(Case.getCurrentCase());
-        
+        Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findInterCaseValuesByCount(Case.getCurrentCase());
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
@@ -65,7 +64,21 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
         if (isFilterByDoc()) {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
-        return new CommonAttributeSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
+        return new CommonAttributeCountSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
+    }
+
+    @Override
+    public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+        InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
+        Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findInterCaseValuesByCase(Case.getCurrentCase());
+        Set<String> mimeTypesToFilterOn = new HashSet<>();
+        if (isFilterByMedia()) {
+            mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
+        }
+        if (isFilterByDoc()) {
+            mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
+        }
+        return new CommonAttributeCaseSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
     }
 
     @NbBundle.Messages({

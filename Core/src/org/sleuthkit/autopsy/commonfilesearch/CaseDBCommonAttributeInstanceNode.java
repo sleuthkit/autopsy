@@ -37,20 +37,26 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
 
     private final String caseName;
     private final String dataSource;
+    private final String value;
+    private final AbstractCommonAttributeInstance.NODE_TYPE nodeType;
 
     /**
      * Create a node which can be used in a multilayer tree table and is based
      * on an <code>AbstractFile</code>.
      *
-     * @param fsContent the file which is being represented by this node
-     * @param caseName the name of the case
+     * @param fsContent  the file which is being represented by this node
+     * @param caseName   the name of the case
      * @param dataSource the datasource which contains the file
-     * 
+     * @param value      the value that the correlation attribute was matched on
+     * @param nodeType   the type of node to display columns for
+     *
      */
-    public CaseDBCommonAttributeInstanceNode(AbstractFile fsContent, String caseName, String dataSource) {
+    public CaseDBCommonAttributeInstanceNode(AbstractFile fsContent, String caseName, String dataSource, String value, AbstractCommonAttributeInstance.NODE_TYPE nodeType) {
         super(fsContent, false);
         this.caseName = caseName;
         this.dataSource = dataSource;
+        this.nodeType = nodeType;
+        this.value = value;
     }
 
     @Override
@@ -77,22 +83,27 @@ public class CaseDBCommonAttributeInstanceNode extends FileNode {
         Sheet sheet = super.createSheet();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         Set<String> keepProps = new HashSet<>(Arrays.asList(
-                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.nameColLbl"),
-                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.score.name"), 
-                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.comment.name"), 
-                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.count.name"), 
-                NbBundle.getMessage(AbstractAbstractFileNode.class,  "AbstractAbstractFileNode.mimeType")));
-        
-        for(Property<?> p : sheetSet.getProperties()) {
-            if(!keepProps.contains(p.getName())){
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.nameColLbl"),
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.score.name"),
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.comment.name"),
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.createSheet.count.name"),
+                NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.mimeType")));
+
+        for (Property<?> p : sheetSet.getProperties()) {
+            if (!keepProps.contains(p.getName())) {
                 sheetSet.remove(p.getName());
             }
         }
         final String NO_DESCR = Bundle.CommonFilesSearchResultsViewerTable_noDescText();
-        
-        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
-        sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl1(), NO_DESCR, caseName));
-        
+        //add different columns for complete information depending on how nodes are structured in results
+        if (nodeType == AbstractCommonAttributeInstance.NODE_TYPE.COUNT_NODE) {
+             sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), Bundle.CommonFilesSearchResultsViewerTable_pathColLbl(), NO_DESCR, this.getContent().getParentPath()));
+            sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), Bundle.CommonFilesSearchResultsViewerTable_dataSourceColLbl(), NO_DESCR, this.getDataSource()));
+            sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_caseColLbl(), Bundle.CommonFilesSearchResultsViewerTable_caseColLbl(), NO_DESCR, caseName));
+        } else if (nodeType == AbstractCommonAttributeInstance.NODE_TYPE.CASE_NODE) {
+             sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_localPath(), Bundle.CommonFilesSearchResultsViewerTable_localPath(), NO_DESCR, this.getContent().getParentPath()));
+            sheetSet.put(new NodeProperty<>(Bundle.CommonFilesSearchResultsViewerTable_valueColLbl(), Bundle.CommonFilesSearchResultsViewerTable_valueColLbl(), NO_DESCR, this.value));
+        }
         return sheet;
     }
 }
