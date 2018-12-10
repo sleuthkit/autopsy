@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
@@ -225,7 +226,9 @@ public class DrawableAttribute<T extends Comparable<T>> {
     }
 
     public Collection<T> getValue(DrawableFile f) {
-        return extractor.apply(f);
+        return extractor.apply(f).stream()
+              .filter(value ->  (value != null && value.toString().isEmpty()== false) )
+              .collect(Collectors.toSet());
     }
 
     public static enum AttributeName {

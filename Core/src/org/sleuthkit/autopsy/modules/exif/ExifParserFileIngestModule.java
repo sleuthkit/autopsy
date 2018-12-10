@@ -31,12 +31,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -76,8 +78,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
     private static final Logger logger = Logger.getLogger(ExifParserFileIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private final AtomicInteger filesProcessed = new AtomicInteger(0);
-    private volatile boolean filesToFire = false;
-    private final List<BlackboardArtifact> listOfFacesDetectedArtifacts = new ArrayList<>();
     private long jobId;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private FileTypeDetector fileTypeDetector;
@@ -125,15 +125,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         // skip known
         if (content.getKnown().equals(TskData.FileKnown.KNOWN)) {
             return ProcessResult.OK;
-        }
-
-        // update the tree every 1000 files if we have EXIF data that is not being being displayed 
-        final int filesProcessedValue = filesProcessed.incrementAndGet();
-        if ((filesProcessedValue % 1000 == 0)) {
-            if (filesToFire) {
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
-                filesToFire = false;
-            }
         }
 
         //skip unsupported
@@ -199,12 +190,12 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
             ExifIFD0Directory devDir = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
             if (devDir != null) {
                 String model = devDir.getString(ExifIFD0Directory.TAG_MODEL);
-                if (model != null && !model.isEmpty()) {
+                if (StringUtils.isNotBlank(model)) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MODEL, ExifParserModuleFactory.getModuleName(), model));
                 }
 
                 String make = devDir.getString(ExifIFD0Directory.TAG_MAKE);
-                if (make != null && !make.isEmpty()) {
+                if (StringUtils.isNotBlank(make)) {
                     attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DEVICE_MAKE, ExifParserModuleFactory.getModuleName(), make));
                 }
             }
@@ -226,7 +217,10 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
                         MessageNotifyUtil.Notify.error(
                                 Bundle.ExifParserFileIngestModule_indexError_message(), bba.getDisplayName());
                     }
-                    filesToFire = true;
+                    
+                    services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), 
+                                    BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF, 
+                                    Collections.singletonList(bba)));
                 }
             }
 
@@ -276,10 +270,6 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         // We only need to check for this final event on the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
             timeZone = null;
-            if (filesToFire) {
-                //send the final new data event
-                services.fireModuleDataEvent(new ModuleDataEvent(ExifParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF));
-            }
         }
     }
 }

@@ -655,6 +655,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         setDescriptionTextArea.setLineWrap(true);
         setDescriptionTextArea.setRows(6);
         setDescriptionTextArea.setMinimumSize(new java.awt.Dimension(10, 22));
+        setDescriptionTextArea.setOpaque(false);
         setDescScrollPanel.setViewportView(setDescriptionTextArea);
 
         editSetButton.setFont(editSetButton.getFont().deriveFont(editSetButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
@@ -789,6 +790,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         jTextArea1.setRows(3);
         jTextArea1.setText(org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.jTextArea1.text")); // NOI18N
         jTextArea1.setWrapStyleWord(true);
+        jTextArea1.setOpaque(false);
         jScrollPane2.setViewportView(jTextArea1);
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.jLabel7.text")); // NOI18N

@@ -495,6 +495,7 @@
                       <Border info="null"/>
                     </Property>
                     <Property name="focusable" type="boolean" value="false"/>
+                    <Property name="opaque" type="boolean" value="false"/>
                   </Properties>
                 </Component>
               </SubComponents>

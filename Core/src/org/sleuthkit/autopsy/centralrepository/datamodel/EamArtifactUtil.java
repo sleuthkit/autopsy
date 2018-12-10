@@ -120,7 +120,10 @@ public class EamArtifactUtil {
                             // Only add the correlation attribute if the resulting phone number large enough to be of use
                             // (these 3-5 digit numbers can be valid, but are not useful for correlation)
                             if (value.length() > 5) {
-                                eamArtifacts.add(makeCorrelationAttributeInstanceUsingTypeValue(artifactForInstance, EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value));
+                                CorrelationAttributeInstance inst = makeCorrelationAttributeInstanceUsingTypeValue(artifactForInstance, EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
+                                if (inst != null) {
+                                    eamArtifacts.add(inst);
+                                }
                             }
                         }
                         break;
@@ -190,7 +193,10 @@ public class EamArtifactUtil {
         if (attribute != null) {
             String value = attribute.getValueString();
             if ((null != value) && (value.isEmpty() == false)) {
-                eamArtifacts.add(makeCorrelationAttributeInstanceUsingTypeValue(artifact, EamDb.getInstance().getCorrelationTypeById(typeId), value));
+                CorrelationAttributeInstance inst = makeCorrelationAttributeInstanceUsingTypeValue(artifact, EamDb.getInstance().getCorrelationTypeById(typeId), value);
+                if (inst != null) {
+                    eamArtifacts.add(inst);
+                }
             }
         }
     }
@@ -203,7 +209,7 @@ public class EamArtifactUtil {
      * @param correlationType the given type
      * @param value           the artifactForInstance value
      *
-     * @return CorrelationAttributeInstance from details
+     * @return CorrelationAttributeInstance from details, or null if validation failed or another error occurred
      */
     private static CorrelationAttributeInstance makeCorrelationAttributeInstanceUsingTypeValue(BlackboardArtifact bbArtifact, CorrelationAttributeInstance.Type correlationType, String value) {
         try {

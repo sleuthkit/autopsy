@@ -219,6 +219,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
         org.openide.awt.Mnemonics.setLocalizedText(reportModulesLabel, org.openide.util.NbBundle.getMessage(ReportVisualPanel1.class, "ReportVisualPanel1.reportModulesLabel.text")); // NOI18N
 
         configurationPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(125, 125, 125)));
+        configurationPanel.setOpaque(false);
 
         javax.swing.GroupLayout configurationPanelLayout = new javax.swing.GroupLayout(configurationPanel);
         configurationPanel.setLayout(configurationPanelLayout);
@@ -235,6 +236,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
 
         descriptionTextPane.setBackground(new java.awt.Color(240, 240, 240));
         descriptionTextPane.setBorder(null);
+        descriptionTextPane.setOpaque(false);
         descriptionScrollPane.setViewportView(descriptionTextPane);
 
         modulesJList.setBackground(new java.awt.Color(240, 240, 240));
@@ -243,6 +245,7 @@ final class ReportVisualPanel1 extends JPanel implements ListSelectionListener {
             public int getSize() { return modules.length; }
             public ReportModule getElementAt(int i) { return modules[i]; }
         });
+        modulesJList.setOpaque(false);
         modulesScrollPane.setViewportView(modulesJList);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

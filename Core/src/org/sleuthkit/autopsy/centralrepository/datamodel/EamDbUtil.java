@@ -25,7 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDb.CURRENT_DB_SCHEMA_VERSION;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.CURRENT_DB_SCHEMA_VERSION;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -139,7 +139,6 @@ public class EamDbUtil {
 
         Statement statement;
         ResultSet resultSet;
-        String sql = "INSERT INTO db_info (name, value) VALUES (?, ?)";
         try {
             statement = conn.createStatement();
             resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_VERSION'");
@@ -156,7 +155,7 @@ public class EamDbUtil {
                 statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMinor() + " WHERE id=" + id);
             } else {
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
-            }
+            }                              
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error adding schema version to db_info.", ex);
             return false;

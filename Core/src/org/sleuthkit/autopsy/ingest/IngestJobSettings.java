@@ -440,7 +440,8 @@ public final class IngestJobSettings {
                         break;
                     case "EWF Verify": //NON-NLS
                     case "E01 Verify": //NON-NLS
-                        moduleNames.add("E01 Verifier"); //NON-NLS
+                    case "E01 Verifier": // NON-NLS
+                        moduleNames.add("Data Source Integrity"); //NON-NLS
                         break;
                     case "Archive Extractor": //NON-NLS
                         moduleNames.add("Embedded File Extractor"); //NON-NLS
