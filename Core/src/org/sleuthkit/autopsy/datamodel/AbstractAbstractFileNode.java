@@ -572,7 +572,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;
-        if (EamDbUtil.useCentralRepo()) {
+        if (EamDbUtil.useCentralRepo() && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
             attribute = EamArtifactUtil.getInstanceFromContent(content);
         }
         return attribute;
