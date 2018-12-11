@@ -82,6 +82,11 @@ public interface EamDb {
     void saveSettings();
 
     /**
+     * Reset the database (testing method)
+     */
+    void reset() throws EamDbException;
+
+    /**
      * Is the database enabled?
      *
      * @return Is the database enabled

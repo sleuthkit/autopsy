@@ -102,6 +102,37 @@ final class PostgresEamDb extends AbstractSqlEamDb {
         }
     }
 
+    @Override
+    public void reset() throws EamDbException {
+        Connection conn = connect();
+
+        try {
+            Statement dropContent = conn.createStatement();
+            dropContent.executeUpdate("TRUNCATE TABLE organizations RESTART IDENTITY CASCADE");
+            dropContent.executeUpdate("TRUNCATE TABLE cases RESTART IDENTITY CASCADE");
+            dropContent.executeUpdate("TRUNCATE TABLE data_sources RESTART IDENTITY CASCADE");
+            dropContent.executeUpdate("TRUNCATE TABLE reference_sets RESTART IDENTITY CASCADE");
+            dropContent.executeUpdate("TRUNCATE TABLE correlation_types RESTART IDENTITY CASCADE");
+            dropContent.executeUpdate("TRUNCATE TABLE db_info RESTART IDENTITY CASCADE");
+
+            String instancesTemplate = "TRUNCATE TABLE %s_instances RESTART IDENTITY CASCADE";
+            String referencesTemplate = "TRUNCATE TABLE reference_%s RESTART IDENTITY CASCADE";
+            for (CorrelationAttributeInstance.Type type : defaultCorrelationTypes) {
+                dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
+                // FUTURE: support other reference types
+                if (type.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                    dropContent.executeUpdate(String.format(referencesTemplate, type.getDbTableName()));
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
+        } finally {
+            EamDbUtil.closeConnection(conn);
+        }
+
+        dbSettings.insertDefaultDatabaseContent();
+    }
+
     /**
      * Setup a connection pool for db connections.
      *
