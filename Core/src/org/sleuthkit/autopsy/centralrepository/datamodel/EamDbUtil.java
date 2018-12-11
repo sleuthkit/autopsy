@@ -126,42 +126,16 @@ public class EamDbUtil {
     }
 
     /**
-     * Store the schema version into the db_info table.
-     *
-     * This should be called immediately following the database schema being
-     * loaded.
+     * Writes the current schema version into the database.
      *
      * @param conn Open connection to use.
      *
-     * @return true on success, else false
+     * @throws SQLException If there is an error doing the update.
      */
-    static boolean updateSchemaVersion(Connection conn) {
-
-        Statement statement;
-        ResultSet resultSet;
-        try {
-            statement = conn.createStatement();
-            resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_VERSION'");
-            if (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMajor() + " WHERE id=" + id);
-            } else {
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
-            }
-
-            resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
-            if (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMinor() + " WHERE id=" + id);
-            } else {
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
-            }                              
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error adding schema version to db_info.", ex);
-            return false;
-        }
-
-        return true;
+    static void updateSchemaVersion(Connection conn) throws SQLException {
+        Statement statement = conn.createStatement();
+        statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
+        statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
     }
 
     /**
@@ -191,9 +165,9 @@ public class EamDbUtil {
     }
 
     /**
-     * Upgrade the current central reposity to the newest version. If the upgrade
-     * fails, the central repository will be disabled and the current settings
-     * will be cleared.
+     * Upgrade the current central reposity to the newest version. If the
+     * upgrade fails, the central repository will be disabled and the current
+     * settings will be cleared.
      *
      * @return true if the upgrade succeeds, false otherwise.
      */
@@ -201,7 +175,7 @@ public class EamDbUtil {
         if (!EamDb.isEnabled()) {
             return true;
         }
-        
+
         CoordinationService.Lock lock = null;
         try {
             EamDb db = EamDb.getInstance();
@@ -217,23 +191,23 @@ public class EamDbUtil {
             LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
 
             // Disable the central repo and clear the current settings.
-            try{
+            try {
                 if (null != EamDb.getInstance()) {
                     EamDb.getInstance().shutdownConnections();
                 }
-            } catch (EamDbException ex2){
+            } catch (EamDbException ex2) {
                 LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex);
-            } 
+            }
             setUseCentralRepo(false);
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
             EamDbPlatformEnum.saveSelectedPlatform();
-            
+
             return false;
         } finally {
-            if(lock != null){
-                try{
+            if (lock != null) {
+                try {
                     lock.release();
-                } catch (CoordinationServiceException ex){
+                } catch (CoordinationServiceException ex) {
                     LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
                 }
             }
@@ -254,6 +228,7 @@ public class EamDbUtil {
      * Check whether the given org is the default organization.
      *
      * @param org
+     *
      * @return true if it is the default org, false otherwise
      */
     public static boolean isDefaultOrg(EamOrganization org) {
@@ -264,6 +239,7 @@ public class EamDbUtil {
      * Add the default organization to the database
      *
      * @param conn
+     *
      * @return true if successful, false otherwise
      */
     static boolean insertDefaultOrganization(Connection conn) {
@@ -294,7 +270,7 @@ public class EamDbUtil {
      * If the Central Repos use has been enabled.
      *
      * @return true if the Central Repo may be configured, false if it should
-     * not be able to be
+     *         not be able to be
      */
     public static boolean useCentralRepo() {
         return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
@@ -305,7 +281,7 @@ public class EamDbUtil {
      * configured.
      *
      * @param centralRepoCheckBoxIsSelected - true if the central repo can be
-     * used
+     *                                      used
      */
     public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected) {
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));
@@ -364,7 +340,7 @@ public class EamDbUtil {
      * Close the prepared statement.
      *
      * @param preparedStatement The prepared statement to be closed.
-     * 
+     *
      * @deprecated Use closeStatement() instead.
      *
      * @throws EamDbException

@@ -406,13 +406,6 @@ public final class PostgresEamDbSettings {
         String instancesKnownStatusIdx = getAddKnownStatusIndexTemplate();
         String instancesObjectIdIdx = getAddObjectIdIndexTemplate();
 
-        StringBuilder createDbInfoTable = new StringBuilder();
-        createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
-        createDbInfoTable.append("id SERIAL PRIMARY KEY NOT NULL,");
-        createDbInfoTable.append("name text NOT NULL,");
-        createDbInfoTable.append("value text NOT NULL");
-        createDbInfoTable.append(")");
-
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
         Connection conn = null;
@@ -438,11 +431,11 @@ public final class PostgresEamDbSettings {
 
             stmt.execute(createCorrelationTypesTable.toString());
 
-            stmt.execute(createDbInfoTable.toString());
+            stmt.execute("CREATE TABLE db_info (name PRIMARY KEY, value TEXT NOT NULL)");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
 
             // Create a separate instance and reference table for each correlation type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();

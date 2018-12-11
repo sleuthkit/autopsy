@@ -58,8 +58,8 @@ abstract class AbstractSqlEamDb implements EamDb {
     private final static Logger logger = Logger.getLogger(AbstractSqlEamDb.class.getName());
     static final String SCHEMA_MAJOR_VERSION_KEY = "SCHEMA_VERSION";
     static final String SCHEMA_MINOR_VERSION_KEY = "SCHEMA_MINOR_VERSION";
-    static final String CREATED_SCHEMA_MAJOR_VERSION_KEY = "CREATED_SCHEMA_MAJOR_VERSION";
-    static final String CREATED_SCHEMA_MINOR_VERSION_KEY = "CREATED_SCHEMA_MINOR_VERSION";
+    static final String CREATION_SCHEMA_MAJOR_VERSION_KEY = "CREATION_SCHEMA_MAJOR_VERSION";
+    static final String CREATION_SCHEMA_MINOR_VERSION_KEY = "CREATION_SCHEMA_MINOR_VERSION";
     static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 2);
 
     protected final List<CorrelationAttributeInstance.Type> defaultCorrelationTypes;
@@ -3184,7 +3184,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             statement = conn.createStatement();
 
             int minorVersion = 0;
-            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
             if (resultSet.next()) {
                 String minorVersionStr = resultSet.getString("value");
                 try {
@@ -3195,7 +3195,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
 
             int majorVersion = 0;
-            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_VERSION'");
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
             if (resultSet.next()) {
                 String majorVersionStr = resultSet.getString("value");
                 try {
@@ -3215,6 +3215,8 @@ abstract class AbstractSqlEamDb implements EamDb {
                 return;
             }
 
+            EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+
             // Update from 1.0 to 1.1
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
@@ -3228,7 +3230,6 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
             //Update to 1.2
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
-                EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
                 final String addIntegerColumnTemplate = "ALTER TABLE %s ADD COLUMN %s INTEGER;";  //NON-NLS
                 final String addSsidTableTemplate;
                 final String addCaseIdIndexTemplate;
@@ -3362,19 +3363,26 @@ abstract class AbstractSqlEamDb implements EamDb {
                 }
 
                 /*
-                 * Put values into the db_info table indicating that the
-                 * creation schema version is not known.
+                 * Drop the db_info table and add it back in with a unique
+                 * constraint on the name column. There is no data worry about
+                 * here, since all that is currently stored in the db_info table
+                 * is the schema version info, the current value of which will
+                 * be inserted here along with a name and value pair for the
+                 * schema at creation time. The latter will be set to 0,0 to
+                 * indicate that it is unknown.
                  */
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MAJOR_VERSION_KEY + "', '0')");
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MINOR_VERSION_KEY + "', '0')");
-
+                statement.execute("DROP TABLE db_info");
+                statement.execute("CREATE TABLE db_info (name PRIMARY KEY, value TEXT NOT NULL)");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "','" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "','" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','0')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "','0')");
             }
-            if (!updateSchemaVersion(conn)) {
-                throw new EamDbException("Error updating schema version");
-            }
 
+            updateSchemaVersion(conn);
             conn.commit();
             logger.log(Level.INFO, "Central Repository upgraded to version " + CURRENT_DB_SCHEMA_VERSION);
+
         } catch (SQLException | EamDbException ex) {
             try {
                 if (conn != null) {

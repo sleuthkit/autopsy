@@ -109,46 +109,6 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
 
-    @Override
-    public void reset() throws EamDbException {
-        try {
-            acquireExclusiveLock();
-
-            Connection conn = connect();
-
-            try {
-
-                Statement dropContent = conn.createStatement();
-                dropContent.executeUpdate("DELETE FROM organizations");
-                dropContent.executeUpdate("DELETE FROM cases");
-                dropContent.executeUpdate("DELETE FROM data_sources");
-                dropContent.executeUpdate("DELETE FROM reference_sets");
-                dropContent.executeUpdate("DELETE FROM artifact_types");
-                dropContent.executeUpdate("DELETE FROM db_info");
-
-                String instancesTemplate = "DELETE FROM %s_instances";
-                String referencesTemplate = "DELETE FROM global_files";
-                for (CorrelationAttributeInstance.Type type : defaultCorrelationTypes) {
-                    dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
-                    // FUTURE: support other reference types
-                    if (type.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
-                        dropContent.executeUpdate(String.format(referencesTemplate, type.getDbTableName()));
-                    }
-                }
-
-                dropContent.executeUpdate("VACUUM");
-            } catch (SQLException ex) {
-                LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
-            } finally {
-                EamDbUtil.closeConnection(conn);
-            }
-
-            dbSettings.insertDefaultDatabaseContent();
-        } finally {
-            releaseExclusiveLock();
-        }
-    }
-
     /**
      * Setup a connection pool for db connections.
      *
