@@ -3386,7 +3386,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                  * column having a UNIQUE constraint. The name column could now
                  * be used as the primary key, but the essentially useless id
                  * column is retained for the sake of backwards compatibility.
-                 * Note that the creation schema version numbers is set to 0,0
+                 * Note that the creation schema version number is set to 0.0
                  * to indicate that it is unknown.
                  */
                 String creationMajorVer;
