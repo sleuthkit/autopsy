@@ -3184,27 +3184,41 @@ abstract class AbstractSqlEamDb implements EamDb {
             statement = conn.createStatement();
 
             int minorVersion = 0;
+            String minorVersionStr = null;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
             if (resultSet.next()) {
-                String minorVersionStr = resultSet.getString("value");
+                minorVersionStr = resultSet.getString("value");
                 try {
                     minorVersion = Integer.parseInt(minorVersionStr);
                 } catch (NumberFormatException ex) {
                     throw new EamDbException("Bad value for schema minor version (" + minorVersionStr + ") - database is corrupt", ex);
                 }
+            } else {
+                throw new EamDbException("Failed to read schema minor version from db_info table");
             }
 
             int majorVersion = 0;
+            String majorVersionStr = null;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
             if (resultSet.next()) {
-                String majorVersionStr = resultSet.getString("value");
+                majorVersionStr = resultSet.getString("value");
                 try {
                     majorVersion = Integer.parseInt(majorVersionStr);
                 } catch (NumberFormatException ex) {
                     throw new EamDbException("Bad value for schema version (" + majorVersionStr + ") - database is corrupt", ex);
                 }
+            } else {
+                throw new EamDbException("Failed to read schema major version from db_info table");
             }
 
+            /*
+             * IMPORTANT: The code that follows had a bug in it prior to Autopsy
+             * 4.10.0. The consequence of the bug is that the schema version
+             * number is always reset to 1.0 or 1.1 if a Central Repository is
+             * opened by an Autopsy 4.9.1 or earlier client. To cope with this,
+             * there is an effort in updates to 1.2 and greater to not retry
+             * schema updates that may already have been done once.
+             */
             CaseDbSchemaVersionNumber dbSchemaVersion = new CaseDbSchemaVersionNumber(majorVersion, minorVersion);
             if (dbSchemaVersion.equals(CURRENT_DB_SCHEMA_VERSION)) {
                 logger.log(Level.INFO, "Central Repository is up to date");
@@ -3369,25 +3383,41 @@ abstract class AbstractSqlEamDb implements EamDb {
 
                 /*
                  * Drop the db_info table and add it back in with the name
-                 * column as the primary key since it needs to be unique and is
-                 * the only meaningful way to query the table. There is no data
-                 * transfer worry about here, since all that is currently stored
-                 * in the db_info table is the schema version info, the current
-                 * value of which will be inserted here along with a name and
-                 * value pair for the schema at creation time. The latter will
-                 * be set to 0,0 to indicate that it is unknown.
+                 * column having a UNIQUE constraint. The name column could now
+                 * be used as the primary key, but the essentially useless id
+                 * column is retained for the sake of backwards compatibility.
+                 * Note that the creation schema version numbers is set to 0,0
+                 * to indicate that it is unknown.
                  */
+                String creationMajorVer;
+                resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name = '" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "'");
+                if (resultSet.next()) {
+                    creationMajorVer = resultSet.getString("value");
+                } else {
+                    creationMajorVer = "0";
+                }
+                String creationMinorVer;
+                resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name = '" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "'");
+                if (resultSet.next()) {
+                    creationMinorVer = resultSet.getString("value");
+                } else {
+                    creationMinorVer = "0";
+                }
                 statement.execute("DROP TABLE db_info");
-                statement.execute("CREATE TABLE db_info (name TEXT PRIMARY KEY, value TEXT NOT NULL)");
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "','" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "','" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','0')");
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "','0')");
+                if (selectedPlatform == EamDbPlatformEnum.POSTGRESQL) {
+                    statement.execute("CREATE TABLE db_info (id SERIAL, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
+                } else {
+                    statement.execute("CREATE TABLE db_info (id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
+                }
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "','" + majorVersionStr + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "','" + minorVersionStr + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','" + creationMajorVer + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "','" + creationMinorVer + "')");
             }
 
             updateSchemaVersion(conn);
             conn.commit();
-            logger.log(Level.INFO, String.format("Central Repository schema upgraded to version %s", CURRENT_DB_SCHEMA_VERSION));
+            logger.log(Level.INFO, String.format("Central Repository schema updated to version %s", CURRENT_DB_SCHEMA_VERSION));
 
         } catch (SQLException | EamDbException ex) {
             try {
@@ -3395,7 +3425,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     conn.rollback();
                 }
             } catch (SQLException ex2) {
-                logger.log(Level.SEVERE, "Central Repository rollback of failed schema update failed", ex2);
+                logger.log(Level.SEVERE, String.format("Central Repository rollback of failed schema update to %s failed", CURRENT_DB_SCHEMA_VERSION), ex2);
             }
             throw ex;
         } finally {
