@@ -3217,7 +3217,9 @@ abstract class AbstractSqlEamDb implements EamDb {
 
             EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
 
-            // Update from 1.0 to 1.1
+            /*
+             * Update to 1.1
+             */
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN read_only BOOLEAN;"); //NON-NLS
@@ -3228,7 +3230,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 // regardless of whether this succeeds.
                 EamDbUtil.insertDefaultOrganization(conn);
             }
-            //Update to 1.2
+
+            /*
+             * Update to 1.2
+             */
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
                 final String addIntegerColumnTemplate = "ALTER TABLE %s ADD COLUMN %s INTEGER;";  //NON-NLS
                 final String addSsidTableTemplate;
@@ -3363,16 +3368,17 @@ abstract class AbstractSqlEamDb implements EamDb {
                 }
 
                 /*
-                 * Drop the db_info table and add it back in with a unique
-                 * constraint on the name column. There is no data worry about
-                 * here, since all that is currently stored in the db_info table
-                 * is the schema version info, the current value of which will
-                 * be inserted here along with a name and value pair for the
-                 * schema at creation time. The latter will be set to 0,0 to
-                 * indicate that it is unknown.
+                 * Drop the db_info table and add it back in with the name
+                 * column as the primary key since it needs to be unique and is
+                 * the only meaningful way to query the table. There is no data
+                 * transfer worry about here, since all that is currently stored
+                 * in the db_info table is the schema version info, the current
+                 * value of which will be inserted here along with a name and
+                 * value pair for the schema at creation time. The latter will
+                 * be set to 0,0 to indicate that it is unknown.
                  */
                 statement.execute("DROP TABLE db_info");
-                statement.execute("CREATE TABLE db_info (name PRIMARY KEY, value TEXT NOT NULL)");
+                statement.execute("CREATE TABLE db_info (name TEXT PRIMARY KEY, value TEXT NOT NULL)");
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "','" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "','" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','0')");
@@ -3381,7 +3387,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
             updateSchemaVersion(conn);
             conn.commit();
-            logger.log(Level.INFO, "Central Repository upgraded to version " + CURRENT_DB_SCHEMA_VERSION);
+            logger.log(Level.INFO, String.format("Central Repository schema upgraded to version %s", CURRENT_DB_SCHEMA_VERSION));
 
         } catch (SQLException | EamDbException ex) {
             try {
@@ -3389,7 +3395,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     conn.rollback();
                 }
             } catch (SQLException ex2) {
-                logger.log(Level.SEVERE, "Database rollback failed", ex2);
+                logger.log(Level.SEVERE, "Central Repository rollback of failed schema update failed", ex2);
             }
             throw ex;
         } finally {

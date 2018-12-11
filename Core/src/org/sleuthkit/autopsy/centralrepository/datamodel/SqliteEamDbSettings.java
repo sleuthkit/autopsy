@@ -380,7 +380,7 @@ public final class SqliteEamDbSettings {
 
             stmt.execute(createCorrelationTypesTable.toString());
 
-            stmt.execute("CREATE TABLE db_info (name PRIMARY KEY, value TEXT NOT NULL)");
+            stmt.execute("CREATE TABLE db_info (name TEXT PRIMARY KEY, value TEXT NOT NULL)");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
