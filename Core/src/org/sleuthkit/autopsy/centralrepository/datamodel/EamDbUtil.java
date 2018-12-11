@@ -135,7 +135,7 @@ public class EamDbUtil {
     static void updateSchemaVersion(Connection conn) throws SQLException {
         Statement statement = conn.createStatement();
         statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
-        statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
+        statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
     }
 
     /**
@@ -165,8 +165,8 @@ public class EamDbUtil {
     }
 
     /**
-     * Upgrade the current central reposity to the newest version. If the
-     * upgrade fails, the central repository will be disabled and the current
+     * Upgrade the current Central Reposity schema to the newest version. If the
+     * upgrade fails, the Central Repository will be disabled and the current
      * settings will be cleared.
      *
      * @return true if the upgrade succeeds, false otherwise.
