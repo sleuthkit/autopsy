@@ -133,9 +133,10 @@ public class EamDbUtil {
      * @throws SQLException If there is an error doing the update.
      */
     static void updateSchemaVersion(Connection conn) throws SQLException {
-        Statement statement = conn.createStatement();
-        statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
-        statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
+        try (Statement statement = conn.createStatement()) {
+            statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
+            statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
+        }
     }
 
     /**
