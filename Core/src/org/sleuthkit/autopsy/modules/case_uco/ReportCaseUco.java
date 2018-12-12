@@ -391,7 +391,7 @@ class ReportCaseUco implements GeneralReportModule {
             catalog.writeStartArray();
             catalog.writeStartObject();
             catalog.writeStringField("@type", "Hash");
-            catalog.writeStringField("hashMethod", "SHA256");
+            catalog.writeStringField("hashMethod", "MD5");
             catalog.writeStringField("hashValue", md5Hash);
             catalog.writeEndObject();
             catalog.writeEndArray();
