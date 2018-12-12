@@ -23,14 +23,9 @@ import org.openide.util.Lookup;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Extracts the text out of {@link org.sleuthkit.datamodel.Content} instances
- * and exposes them as a {@link java.io.Reader}. Concrete implementations can be
- * obtained from
- * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content)}
- * or
- * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content, org.openide.util.Lookup)}.
- *
- * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
+ * Extracts the text out of Content instances and exposes them as a Reader.
+ * Concrete implementations can be obtained from
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
  */
 public abstract class TextExtractor {
 
@@ -55,12 +50,11 @@ public abstract class TextExtractor {
     }
 
     /**
-     * Get a {@link java.io.Reader} that will iterate over the text extracted
-     * from the {@link org.sleuthkit.datamodel.Content} passed into
+     * Get a Reader that will iterate over the text extracted from the Content
+     * passed into
      * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}.
      *
-     * @return {@link java.io.Reader} that contains the text of the underlying
-     *         {@link org.sleuthkit.datamodel.Content}
+     * @return Reader that contains the text of the underlying Content
      *
      * @throws
      * org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException

@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
 /**
  * Allows for configuration of the
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractor} obtained from
- * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content, org.openide.util.Lookup)}.
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getDefaultExtractor(Content, Lookup)}.
  *
  * The default extractor will read strings from the Content instance. This class
  * allows for the configuration of the encoding language script to use during
