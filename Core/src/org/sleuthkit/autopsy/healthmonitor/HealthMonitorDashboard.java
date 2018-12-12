@@ -58,8 +58,9 @@ public class HealthMonitorDashboard {
     
     private final static Logger logger = Logger.getLogger(HealthMonitorDashboard.class.getName());
     
-    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess"; // NON-NLS
-    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(), ADMIN_ACCESS_FILE_NAME).toString();
+    private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
+    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(),
+            "config" + File.separator + ADMIN_ACCESS_FILE_NAME).toString();
     
     Map<String, List<HealthMonitor.DatabaseTimingResult>> timingData;
     List<HealthMonitor.UserData> userData;

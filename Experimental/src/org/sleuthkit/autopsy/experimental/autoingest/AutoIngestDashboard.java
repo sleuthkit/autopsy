@@ -27,6 +27,7 @@ import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,8 +47,9 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AutoIngestDashboard extends JPanel implements Observer {
     
-    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess";
-    private final static String ADMIN_ACCESS_FILE_PATH = Places.getUserDirectory().getAbsolutePath() + File.separator + ADMIN_ACCESS_FILE_NAME;
+    private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
+    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(),
+            "config" + File.separator + ADMIN_ACCESS_FILE_NAME).toString();
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private AutoIngestMonitor autoIngestMonitor;
