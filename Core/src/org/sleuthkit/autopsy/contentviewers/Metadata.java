@@ -27,7 +27,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
@@ -116,7 +115,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
     }
 
     private void addRow(StringBuilder sb, String key, String value) {
-        sb.append("<tr><td>"); //NON-NLS
+        sb.append("<tr><td valign=\"top\">"); //NON-NLS
         sb.append(key);
         sb.append("</td><td>"); //NON-NLS
         sb.append(value);
@@ -238,6 +237,18 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.timezone"), image.getTimeZone());
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.deviceId"), image.getDeviceId());
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(image.getId()));
+
+            // Add all the data source paths to the "Name" value cell.
+            String[] imagePaths = image.getPaths();
+            StringBuilder pathValues = new StringBuilder("<div>");
+            pathValues.append(imagePaths[0]);
+            pathValues.append("</div>");
+            for (int i=1; i < imagePaths.length; i++) {
+                pathValues.append("<div>");
+                pathValues.append(imagePaths[i]);
+                pathValues.append("</div>");
+            }
+            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), pathValues.toString());
         }
 
         setText(sb.toString());
