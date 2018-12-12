@@ -238,7 +238,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.deviceId"), image.getDeviceId());
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(image.getId()));
 
-            // Add all the data source paths to the "Name" value cell.
+            // Add all the data source paths to the "Local Path" value cell.
             String[] imagePaths = image.getPaths();
             StringBuilder pathValues = new StringBuilder("<div>");
             pathValues.append(imagePaths[0]);
