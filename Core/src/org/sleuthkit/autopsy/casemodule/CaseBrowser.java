@@ -34,12 +34,15 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 
@@ -60,6 +63,9 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
     private int originalPathColumnIndex = 0;
     private static final Logger LOGGER = Logger.getLogger(CaseBrowser.class.getName());
     private LoadCaseListWorker tableWorker;
+
+    // Map of ZooKeeper node names to CaseMetadata instances.
+    private Map<String, CaseMetadata> nodeNameToMetadataMap = new HashMap<>();
 
     @Override
     public ExplorerManager getExplorerManager() {
@@ -209,9 +215,19 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
             List<String> nodeList = CoordinationService.getInstance().getNodeList(CoordinationService.CategoryNode.CASES);
 
             for (String node : nodeList) {
-                Path casePath;
+                if (nodeNameToMetadataMap.containsKey(node)) {
+                    caseList.add(nodeNameToMetadataMap.get(node));
+                    continue;
+                }
+
+                // Ignore nodes that cannot have case metadata files.
+                node = node.toUpperCase();
+                if (node.endsWith("_RESOURCES") || node.endsWith("AUTO_INGEST_LOG.TXT")) {
+                    continue;
+                }
+
                 try {
-                    casePath = Paths.get(node).toRealPath(LinkOption.NOFOLLOW_LINKS);
+                    Path casePath = Paths.get(node).toRealPath(LinkOption.NOFOLLOW_LINKS);
 
                     File caseFolder = casePath.toFile();
                     if (caseFolder.exists()) {
@@ -227,7 +243,9 @@ class CaseBrowser extends javax.swing.JPanel implements ExplorerManager.Provider
                             String name = file.getName().toLowerCase();
                             if (autFilePath == null && name.endsWith(".aut")) {
                                 try {
-                                    caseList.add(new CaseMetadata(Paths.get(file.getAbsolutePath())));
+                                    CaseMetadata metadata = new CaseMetadata(Paths.get(file.getAbsolutePath()));
+                                    caseList.add(metadata);
+                                    nodeNameToMetadataMap.put(node, metadata);
                                 } catch (CaseMetadata.CaseMetadataException ex) {
                                     LOGGER.log(Level.SEVERE, String.format("Error reading case metadata file '%s'.", autFilePath), ex);
                                 }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.BufferedWriter;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -445,7 +446,7 @@ public final class CaseMetadata {
              * Parse the file into an XML DOM and get the root element.
              */
             DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-            Document doc = builder.parse(this.getFilePath().toFile());
+            Document doc = builder.parse(new FileInputStream(this.getFilePath().toFile()));
             doc.getDocumentElement().normalize();
             Element rootElement = doc.getDocumentElement();
             if (!rootElement.getNodeName().equals(ROOT_ELEMENT_NAME)) {
