@@ -105,8 +105,8 @@ final class SqliteTextExtractor extends TextExtractor {
         public SQLiteStreamReader(AbstractFile file) {
             this.file = file;
             reader = new SQLiteTableReader.Builder(file)
-                    .onColumnNames(getColumnNameStrategy())
-                    .forAll(getForAllTableValuesStrategy()).build();
+                    .forAllColumnNames(getColumnNameStrategy())
+                    .forAllTableValues(getForAllTableValuesStrategy()).build();
         }
 
         /**
