@@ -42,30 +42,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Reads row by row through SQLite tables and performs user-defined actions on
- * the row values. Table values are processed by data type. Users configure
- these actions for certain data types in the Builder. Example usage:
-
- SQLiteTableReader reader = new SQLiteTableReader.Builder(file)
-    .forAllIntegerValues((i)
-       -> { System.out.println(i); }) 
-    .build();
-
- reader.read(tableName);
-
- or
-
- SQLiteTableReader reader = new SQLiteTableReader.Builder(file) 
- .forAllIntegerValues(new Consumer<Integer>() {
- *      (atSymbol)Override public void accept(Integer i) { 
- *          System.out.println(i); 
- *      }
- * }).build(); 
+ * Reads through SQLite tables row by row. Functions performed on the 
+ * data must be declared up front to the Builder. For example:
  * 
- * reader.reader(tableName);
- *
- * Invocation of read(String tableName) reads row by row. When an Integer is
- * encountered, its value will be passed to the Consumer that was defined above.
+ * tableReader = new SQLiteTableReader.Builder(file).forAllColumnNames(System.out::println);
+ * tableReader.read("Sample Table X");
+ * 
+ * By declaring the functions up front, the SQLiteTableReader instance can stream the 
+ * table contents in the most memory efficient manner. 
  */
 public class SQLiteTableReader implements AutoCloseable {
 
