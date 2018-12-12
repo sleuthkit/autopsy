@@ -27,26 +27,20 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Report;
 
 /**
- * Factory for creating
- * {@link org.sleuthkit.autopsy.textextractors.TextExtractor}'s given a
- * {@link org.sleuthkit.datamodel.Content} instance
+ * Factory for creating TextExtractors given a Content instance
  *
  * See {@link org.sleuthkit.autopsy.textextractors.extractionconfigs} for
- * available {@link org.sleuthkit.autopsy.textextractors.TextExtractor}
- * configuration options.
+ * available TextExtractor configuration options.
  *
  * @see org.openide.util.Lookup
  */
 public class TextExtractorFactory {
 
     /**
-     * Auto detects the correct
-     * {@link org.sleuthkit.autopsy.textextractors.TextExtractor} given the
-     * {@link org.sleuthkit.datamodel.Content}.
+     * Auto detects the correct TextExtractor given the Content.
      *
      * See {@link org.sleuthkit.autopsy.textextractors.extractionconfigs} for
-     * available {@link org.sleuthkit.autopsy.textextractors.TextExtractor}
-     * configuration options.
+     * available TextExtractor configuration options.
      *
      * @param content Content source that will be read from
      * @param context Contains extraction configurations for certain file types
@@ -56,9 +50,8 @@ public class TextExtractorFactory {
      *         {@link org.sleuthkit.autopsy.textextractors.TextExtractor#getReader()}.
      *
      * @throws NoTextExtractorFound Encountered when there is no TextExtractor
-     *                              was found for the given content type. Use {@link
-     *                              TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content,
-     *                              org.openide.util.Lookup)}
+     *                              was found for the given content type. Use
+     *                              getDefaultExtractor(Content,Lookup) instead.
      *
      * @see org.openide.util.Lookup
      */
@@ -95,9 +88,7 @@ public class TextExtractorFactory {
     }
 
     /**
-     * Auto detects the correct
-     * {@link org.sleuthkit.autopsy.textextractors.TextExtractor} given the
-     * {@link org.sleuthkit.datamodel.Content}.
+     * Auto detects the correct TextExtractor given the Content.
      *
      * @param content Content instance that will be read from
      *
@@ -105,9 +96,9 @@ public class TextExtractorFactory {
      *         obtained from {@link TextExtractor#getReader()}.
      *
      * @throws NoTextExtractorFound Encountered when there is no TextExtractor
-     *                              was found for the given content type. Use {@link
-     *                              TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content,
-     *                              org.openide.util.Lookup)}
+     *                              was found for the given content type. Use
+     *                              getDefaultExtractor(Content,Lookup) method
+     *                              instead.
      */
     public static TextExtractor getExtractor(Content content)
             throws NoTextExtractorFound {
@@ -117,8 +108,7 @@ public class TextExtractorFactory {
     /**
      * Returns the default extractor that can be run on any content type. This
      * extractor should be used as a backup in the event that no extractor was
-     * found using or {@link TextExtractorFactory#getDefaultExtractor(org.sleuthkit.datamodel.Content, org.openide.util.Lookup)}
-     * {@link TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content)}.
+     * found using getExtractor(Content) or getExtrator(Content, Lookup).
      *
      * @param content Content source to read from
      * @param context Contains extraction configurations for certain file types
