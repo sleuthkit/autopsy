@@ -34,11 +34,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
-import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents.RefreshChildrenEvent;
 
 /**
@@ -48,8 +48,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents
 final class AutoIngestDashboard extends JPanel implements Observer {
     
     private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
-    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(),
-            "config", ADMIN_ACCESS_FILE_NAME).toString();
+    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private AutoIngestMonitor autoIngestMonitor;
