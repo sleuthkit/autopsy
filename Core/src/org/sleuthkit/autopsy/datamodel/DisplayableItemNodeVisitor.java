@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2017 Basis Technology Corp.
+ * Copyright 2011 - 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,10 @@ package org.sleuthkit.autopsy.datamodel;
 import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResultRootNode;
 import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
+import org.sleuthkit.autopsy.commonfilesearch.InstanceCaseNode;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
 import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonfilesearch.InstanceDataSourceNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
@@ -67,7 +69,7 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ViewsNode vn);
 
     T visit(DataSourceGroupingNode dataSourceGroupingNode);
-    
+
     T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileExtensionNode fsfn);
 
     T visit(DeletedContentNode dcn);
@@ -122,11 +124,15 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(CommonAttributeSearchResultRootNode cfn);
 
     T visit(CaseDBCommonAttributeInstanceNode fin);
-    
+
     T visit(CentralRepoCommonAttributeInstanceNode crfin);
-    
+
     T visit(InstanceCountNode icn);
-    
+
+    T visit(InstanceCaseNode icn);
+
+    T visit(InstanceDataSourceNode icn);
+
     T visit(CorrelationAttributeInstanceNode cain);
 
     /*
@@ -211,19 +217,29 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(CommonAttributeSearchResultRootNode cfn) {
             return defaultVisit(cfn);
         }
-        
+
         @Override
-        public T visit(InstanceCountNode icn){
+        public T visit(InstanceCountNode icn) {
             return defaultVisit(icn);
         }
-        
+
+        @Override
+        public T visit(InstanceCaseNode icn) {
+            return defaultVisit(icn);
+        }
+
+        @Override
+        public T visit(InstanceDataSourceNode icn) {
+            return defaultVisit(icn);
+        }
+
         @Override
         public T visit(CorrelationAttributeInstanceNode cain) {
             return defaultVisit(cain);
         }
-        
+
         @Override
-        public T visit(CentralRepoCommonAttributeInstanceNode crfin){
+        public T visit(CentralRepoCommonAttributeInstanceNode crfin) {
             return defaultVisit(crfin);
         }
 
@@ -361,7 +377,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(DataSourceGroupingNode dataSourceGroupingNode) {
             return defaultVisit(dataSourceGroupingNode);
         }
-        
+
         @Override
         public T visit(ResultsNode rn) {
             return defaultVisit(rn);

@@ -43,11 +43,12 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
     private void customizeComponents(IngestSettings settings) {
         flagTaggedNotableItemsCheckbox.setSelected(settings.isFlagTaggedNotableItems());
         flagPreviouslySeenDevicesCheckbox.setSelected(settings.isFlagPreviousDevices());
+        createCorrelationPropertiesCheckbox.setSelected(settings.shouldCreateCorrelationProperties());
     }
     
     @Override
     public IngestModuleIngestJobSettings getSettings() {
-        return new IngestSettings(flagTaggedNotableItemsCheckbox.isSelected(), flagPreviouslySeenDevicesCheckbox.isSelected());
+        return new IngestSettings(flagTaggedNotableItemsCheckbox.isSelected(), flagPreviouslySeenDevicesCheckbox.isSelected(), createCorrelationPropertiesCheckbox.isSelected());
     }
 
     /**
@@ -62,6 +63,7 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
         ingestSettingsLabel = new javax.swing.JLabel();
         flagTaggedNotableItemsCheckbox = new javax.swing.JCheckBox();
         flagPreviouslySeenDevicesCheckbox = new javax.swing.JCheckBox();
+        createCorrelationPropertiesCheckbox = new javax.swing.JCheckBox();
 
         ingestSettingsLabel.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsLabel, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.ingestSettingsLabel.text")); // NOI18N
@@ -69,6 +71,8 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
         org.openide.awt.Mnemonics.setLocalizedText(flagTaggedNotableItemsCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.flagTaggedNotableItemsCheckbox.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(flagPreviouslySeenDevicesCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.flagPreviouslySeenDevicesCheckbox.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(createCorrelationPropertiesCheckbox, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.createCorrelationPropertiesCheckbox.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -80,9 +84,10 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
                     .addComponent(ingestSettingsLabel)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(flagPreviouslySeenDevicesCheckbox)
-                            .addComponent(flagTaggedNotableItemsCheckbox))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(flagTaggedNotableItemsCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(flagPreviouslySeenDevicesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(createCorrelationPropertiesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap(65, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -90,15 +95,18 @@ final class IngestSettingsPanel extends IngestModuleIngestJobSettingsPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(ingestSettingsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(9, 9, 9)
+                .addComponent(createCorrelationPropertiesCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(flagTaggedNotableItemsCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(flagPreviouslySeenDevicesCheckbox)
-                .addContainerGap(222, Short.MAX_VALUE))
+                .addContainerGap(197, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox createCorrelationPropertiesCheckbox;
     private javax.swing.JCheckBox flagPreviouslySeenDevicesCheckbox;
     private javax.swing.JCheckBox flagTaggedNotableItemsCheckbox;
     private javax.swing.JLabel ingestSettingsLabel;

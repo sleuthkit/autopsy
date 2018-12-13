@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.SingleInterCaseCommonAttributeSearcher;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.*;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -103,7 +103,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
 //        try {
 //            //note that the params false and false are presently meaningless because that feature is not supported yet
 //            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.FILE_TYPE, 0);
-//            CommonAttributeSearchResults metadata = builder.findMatches();
+//            CommonAttributeCountSearchResults metadata = builder.findMatches();
 //
 //            assertTrue("Results should not be empty", metadata.size() != 0);
 //
@@ -154,7 +154,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
 //            CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
 //            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false, fileType, 0);
 //
-//            CommonAttributeSearchResults metadata = builder.findMatches();
+//            CommonAttributeCountSearchResults metadata = builder.findMatches();
 //
 //            assertTrue("Results should not be empty", metadata.size() != 0);
 //
@@ -206,7 +206,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
 //            CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
 //            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, fileType, 50);
 //
-//            CommonAttributeSearchResults metadata = builder.findMatches();
+//            CommonAttributeCountSearchResults metadata = builder.findMatches();
 //
 //            assertTrue("Results should not be empty", metadata.size() != 0);
 //

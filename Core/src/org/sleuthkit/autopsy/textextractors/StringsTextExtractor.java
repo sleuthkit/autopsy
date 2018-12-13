@@ -16,19 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.Objects;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
+import org.sleuthkit.autopsy.textextractors.extractionconfigs.DefaultExtractionConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -36,24 +36,25 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-class StringsTextExtractor extends ContentTextExtractor {
+final class StringsTextExtractor extends TextExtractor {
 
-    static final private Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
-
-    /**
-     * Options for this extractor
-     */
-    enum ExtractOptions {
-        EXTRACT_UTF16, ///< extract UTF16 text, true/false
-        EXTRACT_UTF8, ///< extract UTF8 text, true/false
-    };
+    private boolean extractUTF8;
+    private boolean extractUTF16;
+    private final Content content;
+    private final static String DEFAULT_INDEXED_TEXT_CHARSET = "UTF-8";
 
     private final List<SCRIPT> extractScripts = new ArrayList<>();
-    private Map<String, String> extractOptions = new HashMap<>();
 
-    public StringsTextExtractor() {
+    /**
+     * Creates a default StringsTextExtractor instance. The instance will be
+     * configured to run only LATIN_2 as its default extraction script and UTF-8
+     * as its default encoding.
+     */
+    public StringsTextExtractor(Content content) {
         //LATIN_2 is the default script
         extractScripts.add(SCRIPT.LATIN_2);
+        extractUTF8 = true;
+        this.content = content;
     }
 
     /**
@@ -61,56 +62,29 @@ class StringsTextExtractor extends ContentTextExtractor {
      *
      * @param extractScripts scripts to use
      */
-    public void setScripts(List<SCRIPT> extractScripts) {
+    public final void setScripts(List<SCRIPT> extractScripts) {
+        if (extractScripts == null) {
+            return;
+        }
+
         this.extractScripts.clear();
         this.extractScripts.addAll(extractScripts);
     }
 
     /**
-     * Get the currently used scripts for extraction
+     * Returns a reader that will iterate over the text of the content source.
      *
-     * @return scripts currently used or null if not supported
-     */
-    public List<SCRIPT> getScripts() {
-        return new ArrayList<>(extractScripts);
-    }
-
-    /**
-     * Get current options
+     * @param content Content source of any type
      *
-     * @return currently used, extractor specific options, or null of not
-     *         supported
-     */
-    public Map<String, String> getOptions() {
-        return extractOptions;
-    }
-
-    /**
-     * Set extractor specific options
+     * @return A reader instance that content text can be obtained from
      *
-     * @param options options to use
+     * @throws
+     * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
-    public void setOptions(Map<String, String> options) {
-        this.extractOptions = options;
-    }
-
     @Override
-    public void logWarning(final String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
-    }
-
-    @Override
-    public boolean isDisabled() {
-        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
-        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
-
-        return extractUTF8 == false && extractUTF16 == false;
-    }
-
-    @Override
-    public InputStreamReader getReader(Content content) throws TextExtractorException {
+    public InputStreamReader getReader() {
         InputStream stringStream = getInputStream(content);
-        return new InputStreamReader(stringStream, Server.DEFAULT_INDEXED_TEXT_CHARSET);
+        return new InputStreamReader(stringStream, Charset.forName(DEFAULT_INDEXED_TEXT_CHARSET));
     }
 
     InputStream getInputStream(Content content) {
@@ -118,27 +92,55 @@ class StringsTextExtractor extends ContentTextExtractor {
         if (extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1)) {
             return new EnglishOnlyStream(content);//optimal for english, english only
         } else {
-            boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
-            boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
-
             return new InternationalStream(content, extractScripts, extractUTF8, extractUTF16);
         }
     }
 
+    /**
+     * Determines how the extraction process will proceed given the settings
+     * stored in this context instance.
+     *
+     * See the DefaultExtractionConfig class in the extractionconfigs package
+     * for available settings.
+     *
+     * @param context Lookup instance containing config classes
+     */
     @Override
-    public boolean isContentTypeSpecific() {
-        return false;
-    }
-
-    @Override
-    public boolean isSupported(Content content, String detectedFormat) {
-        // strings can be run on anything. 
-        return true;
+    public void setExtractionSettings(Lookup context) {
+        if (context != null) {
+            DefaultExtractionConfig configInstance = context.lookup(DefaultExtractionConfig.class);
+            if (configInstance == null) {
+                return;
+            }
+            if (Objects.nonNull(configInstance.getExtractUTF8())) {
+                extractUTF8 = configInstance.getExtractUTF8();
+            }
+            if (Objects.nonNull(configInstance.getExtractUTF16())) {
+                extractUTF16 = configInstance.getExtractUTF16();
+            }
+            if (Objects.nonNull(configInstance.getExtractScripts())) {
+                setScripts(configInstance.getExtractScripts());
+            }
+        }
     }
 
     /**
-     * Content input string stream reader/converter - given Content,
-     * extract strings from it and return encoded bytes via read()
+     *
+     * @return
+     */
+    @Override
+    public boolean isEnabled() {
+        return extractUTF8 || extractUTF16;
+    }
+
+    @Override
+    boolean isSupported(Content file, String detectedFormat) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    /**
+     * Content input string stream reader/converter - given Content, extract
+     * strings from it and return encoded bytes via read()
      *
      * Note: the utility supports extraction of only LATIN script and UTF8,
      * UTF16LE, UTF16BE encodings and uses a brute force encoding detection -
@@ -150,7 +152,6 @@ class StringsTextExtractor extends ContentTextExtractor {
      */
     private static class EnglishOnlyStream extends InputStream {
 
-        private static final Logger logger = Logger.getLogger(EnglishOnlyStream.class.getName());
         private static final String NLS = Character.toString((char) 10); //new line
         private static final int READ_BUF_SIZE = 65536;
         private static final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
@@ -244,12 +245,7 @@ class StringsTextExtractor extends ContentTextExtractor {
                 }
                 //get char from cur read buf
                 char c = (char) curReadBuf[readBufOffset++];
-                if (c == 0 && singleConsecZero == false) {
-                    //preserve the current sequence if max consec. 1 zero char
-                    singleConsecZero = true;
-                } else {
-                    singleConsecZero = false;
-                }
+                singleConsecZero = c == 0 && singleConsecZero == false; //preserve the current sequence if max consec. 1 zero char
                 if (StringExtract.isPrintableAscii(c)) {
                     tempString.append(c);
                     ++tempStringLen;
@@ -328,7 +324,7 @@ class StringsTextExtractor extends ContentTextExtractor {
         private int copyToReturn(byte[] b, int off, long len) {
             final String curStringS = curString.toString();
             //logger.log(Level.INFO, curStringS);
-            byte[] stringBytes = curStringS.getBytes(Server.DEFAULT_INDEXED_TEXT_CHARSET);
+            byte[] stringBytes = curStringS.getBytes(Charset.forName(DEFAULT_INDEXED_TEXT_CHARSET));
             System.arraycopy(stringBytes, 0, b, off, Math.min(curStringLen, (int) len));
             //logger.log(Level.INFO, curStringS);
             //copied all string, reset
@@ -370,7 +366,6 @@ class StringsTextExtractor extends ContentTextExtractor {
      */
     private static class InternationalStream extends InputStream {
 
-        private static final Logger logger = Logger.getLogger(InternationalStream.class.getName());
         private static final int FILE_BUF_SIZE = 1024 * 1024;
         private final Content content;
         private final byte[] oneCharBuf = new byte[1];
@@ -499,7 +494,7 @@ class StringsTextExtractor extends ContentTextExtractor {
          */
         private void convert(int numBytes) {
             lastExtractResult = stringExtractor.extract(fileReadBuff, numBytes, 0);
-            convertBuff = lastExtractResult.getText().getBytes(Server.DEFAULT_INDEXED_TEXT_CHARSET);
+            convertBuff = lastExtractResult.getText().getBytes(Charset.forName(DEFAULT_INDEXED_TEXT_CHARSET));
             //reset tracking vars
             if (lastExtractResult.getNumBytes() == 0) {
                 bytesInConvertBuff = 0;

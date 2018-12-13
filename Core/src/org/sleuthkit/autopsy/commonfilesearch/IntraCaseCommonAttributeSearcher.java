@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -36,8 +37,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  * Generates a <code>List<CommonFilesMetadata></code> when
- * <code>findMatches()</code> is called, which organizes files by md5 to prepare
- * to display in viewer.
+ * <code>findMatchesByCount()</code> is called, which organizes files by md5 to
+ * prepare to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
  */
@@ -99,7 +100,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * @throws SQLException
      */
     @Override
-    public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException {
+    public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException {
         Map<String, CommonAttributeValue> commonFiles = new HashMap<>();
 
         final Case currentCase = Case.getCurrentCaseThrows();
@@ -125,10 +126,10 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
                 if (commonFiles.containsKey(md5)) {
                     final CommonAttributeValue commonAttributeValue = commonFiles.get(md5);
-                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName));
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName, md5));
                 } else {
                     final CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
-                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName));
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName, md5));
                     commonFiles.put(md5, commonAttributeValue);
                 }
             }
@@ -136,7 +137,12 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
         Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
 
-        return new CommonAttributeSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
+        return new CommonAttributeCountSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
+    }
+
+    @Override
+    public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+        throw new EamDbException("Not Supported at the moment");
     }
 
     /**

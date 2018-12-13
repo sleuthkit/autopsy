@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
@@ -48,8 +49,12 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -61,8 +66,11 @@ import org.sleuthkit.datamodel.TskData;
     "CentralRepoIngestModule.prevCaseComment.text=Previous Case: "})
 final class CentralRepoIngestModule implements FileIngestModule {
 
+    private static final String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
+
     static final boolean DEFAULT_FLAG_TAGGED_NOTABLE_ITEMS = true;
     static final boolean DEFAULT_FLAG_PREVIOUS_DEVICES = true;
+    static final boolean DEFAULT_CREATE_CR_PROPERTIES = true;
 
     private final static Logger logger = Logger.getLogger(CentralRepoIngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
@@ -75,6 +83,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     private final boolean flagTaggedNotableItems;
     private final boolean flagPreviouslySeenDevices;
     private Blackboard blackboard;
+    private final boolean createCorrelationProperties;
 
     /**
      * Instantiate the Correlation Engine ingest module.
@@ -84,6 +93,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
     CentralRepoIngestModule(IngestSettings settings) {
         flagTaggedNotableItems = settings.isFlagTaggedNotableItems();
         flagPreviouslySeenDevices = settings.isFlagPreviousDevices();
+        createCorrelationProperties = settings.shouldCreateCorrelationProperties();
     }
 
     @Override
@@ -153,27 +163,28 @@ final class CentralRepoIngestModule implements FileIngestModule {
             }
         }
 
-        // insert this file into the central repository
-        try {
-            CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
-                    filesType,
-                    md5,
-                    eamCase,
-                    eamDataSource,
-                    abstractFile.getParentPath() + abstractFile.getName(),
-                    null,
-                    TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
-                    ,
-                     abstractFile.getId());
-            dbManager.addAttributeInstanceBulk(cefi);
-        } catch (EamDbException ex) {
-            logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
-            return ProcessResult.ERROR;
-        } catch (CorrelationAttributeNormalizationException ex) {
-            logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
-            return ProcessResult.ERROR;
+        // insert this file into the central repository 
+        if (createCorrelationProperties) {
+            try {
+                CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
+                        filesType,
+                        md5,
+                        eamCase,
+                        eamDataSource,
+                        abstractFile.getParentPath() + abstractFile.getName(),
+                        null,
+                        TskData.FileKnown.UNKNOWN // NOTE: Known status in the CR is based on tagging, not hashes like the Case Database.
+                        ,
+                         abstractFile.getId());
+                dbManager.addAttributeInstanceBulk(cefi);
+            } catch (EamDbException ex) {
+                logger.log(Level.SEVERE, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                return ProcessResult.ERROR;
+            } catch (CorrelationAttributeNormalizationException ex) {
+                logger.log(Level.INFO, "Error adding artifact to bulk artifacts.", ex); // NON-NLS
+                return ProcessResult.ERROR;
+            }
         }
-
         return ProcessResult.OK;
     }
 
@@ -235,6 +246,9 @@ final class CentralRepoIngestModule implements FileIngestModule {
         }
         if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.isFlagSeenDevices()) {
             IngestEventsListener.setFlagSeenDevices(flagPreviouslySeenDevices);
+        }
+        if (IngestEventsListener.getCeModuleInstanceCount() == 1 || !IngestEventsListener.shouldCreateCrProperties()) {
+            IngestEventsListener.setCreateCrProperties(createCorrelationProperties);
         }
 
         if (EamDb.isEnabled() == false) {
@@ -330,17 +344,18 @@ final class CentralRepoIngestModule implements FileIngestModule {
      */
     private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
 
-        String MODULE_NAME = CentralRepoIngestModuleFactory.getModuleName();
-
-        Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                Bundle.CentralRepoIngestModule_prevTaggedSet_text()));
-        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                Bundle.CentralRepoIngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", ""))));
+        Collection<BlackboardAttribute> attributes = Arrays.asList(
+                new BlackboardAttribute(
+                        TSK_SET_NAME, MODULE_NAME,
+                        Bundle.CentralRepoIngestModule_prevTaggedSet_text()),
+                new BlackboardAttribute(
+                        TSK_COMMENT, MODULE_NAME,
+                        Bundle.CentralRepoIngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))));
         try {
+
             // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
-                BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+            if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_FILE_HIT, attributes)) {
+                BlackboardArtifact tifArtifact = abstractFile.newArtifact(TSK_INTERESTING_FILE_HIT);
                 tifArtifact.addAttributes(attributes);
                 try {
                     // index the artifact for keyword search

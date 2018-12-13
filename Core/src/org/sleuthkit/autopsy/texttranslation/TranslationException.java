@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.texttranslation;
 
 /**
- * Provides a system exception for the Text Translation errors
+ * Provides a system exception for Text Translation errors
  */
 public class TranslationException extends Exception {
     

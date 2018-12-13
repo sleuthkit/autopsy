@@ -75,8 +75,6 @@ public final class UserPreferences {
     public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
     public static final String HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES = "HideCentralRepoCommentsAndOccurrences";
     public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
-    public static final String MAXIMUM_NUMBER_OF_RESULTS = "MaximumNumberOfResults";
-    private static final int DEFAULT_MAX_RESULTS = 20000;
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -472,21 +470,5 @@ public final class UserPreferences {
      */
     public static void setLogFileCount(int count) {
         preferences.putInt(MAX_NUM_OF_LOG_FILE, count);
-    }
-    
-    /**
-     * Set the maximum number of result rows to show in data result tables.
-     * @param max 
-     */
-    public static void setMaximumNumberOfResults(int max) {
-        preferences.putInt(MAXIMUM_NUMBER_OF_RESULTS, max);
-    }
-    
-    /**
-     * Get the maximum number of result rows to show in data result tables.
-     * @return 
-     */
-    public static int getMaximumNumberOfResults() {
-        return preferences.getInt(MAXIMUM_NUMBER_OF_RESULTS, DEFAULT_MAX_RESULTS);
     }
 }

@@ -469,7 +469,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.createSheet.noScore.description=No score"})
     Pair<DataResultViewerTable.Score, String> getScorePropertyAndDescription(List<ContentTag> tags) {
         DataResultViewerTable.Score score = DataResultViewerTable.Score.NO_SCORE;
-        String description = "";
+        String description = Bundle.AbstractAbstractFileNode_createSheet_noScore_description();
         if (content.getKnown() == TskData.FileKnown.BAD) {
             score = DataResultViewerTable.Score.NOTABLE_SCORE;
             description = Bundle.AbstractAbstractFileNode_createSheet_notableFile_description();
@@ -572,7 +572,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance attribute = null;
-        if (EamDbUtil.useCentralRepo()) {
+        if (EamDbUtil.useCentralRepo() && !UserPreferences.hideCentralRepoCommentsAndOccurrences()) {
             attribute = EamArtifactUtil.getInstanceFromContent(content);
         }
         return attribute;
