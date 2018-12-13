@@ -243,12 +243,15 @@ class ReportCaseUco implements GeneralReportModule {
         catalog.writeStringField("@type", "Trace");
 
         catalog.writeFieldName("propertyBundle");
-        catalog.writeStartArray();
-
+        catalog.writeStartArray();        
         catalog.writeStartObject();
+        
+        // replace double slashes with single ones
+        caseDirPath = caseDirPath.replaceAll("\\\\", "/");
+        
         catalog.writeStringField("@type", "File");
         if (dbType == TskData.DbType.SQLITE) {
-            catalog.writeStringField("filePath", caseDirPath + java.io.File.separator + dbFileName);
+            catalog.writeStringField("filePath", caseDirPath + "/" + dbFileName);
             catalog.writeBooleanField("isDirectory", false);
         } else {
             catalog.writeStringField("filePath", caseDirPath);
@@ -300,7 +303,10 @@ class ReportCaseUco implements GeneralReportModule {
                 }
             }
         }
-
+        
+        // replace double back slashes with single ones
+        imageName = imageName.replaceAll("\\\\", "/");
+        
         return saveDataSourceInCaseUcoFormat(jsonGenerator, imageName, imageSize, selectedDataSourceId, caseTraceId);
     }
     
