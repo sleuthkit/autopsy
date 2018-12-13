@@ -105,7 +105,11 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
         "# {0} - hashAlgorithm",
         "# {1} - calculatedHashValue",
         "# {2} - storedHashValue",
-        "DataSourceIntegrityIngestModule.process.hashFailedForArtifact={0} hash verification failed:\n  Calculated hash: {1}\n  Stored hash: {2}\n",        
+        "DataSourceIntegrityIngestModule.process.hashFailedForArtifact={0} hash verification failed:\n  Calculated hash: {1}\n  Stored hash: {2}\n",  
+        "# {0} - imageName",
+        "DataSourceIntegrityIngestModule.process.verificationSuccess=Integrity of {0} verified",
+        "# {0} - imageName",
+        "DataSourceIntegrityIngestModule.process.verificationFailure={0} failed integrity verification",
     })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
@@ -276,13 +280,16 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             }
             
             String verificationResultStr;
+            String messageResultStr;
             MessageType messageType;
             if (verified) {
                 messageType = MessageType.INFO;
                 verificationResultStr = NbBundle.getMessage(this.getClass(), "DataSourceIntegrityIngestModule.shutDown.verified");
+                messageResultStr = Bundle.DataSourceIntegrityIngestModule_process_verificationSuccess(imgName);
             } else {
                 messageType = MessageType.WARNING;
                 verificationResultStr = NbBundle.getMessage(this.getClass(), "DataSourceIntegrityIngestModule.shutDown.notVerified");
+                messageResultStr = Bundle.DataSourceIntegrityIngestModule_process_verificationFailure(imgName);
             }
             
             detailedResults += NbBundle.getMessage(this.getClass(), "DataSourceIntegrityIngestModule.shutDown.resultLi", verificationResultStr);
@@ -299,7 +306,7 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
             }
 
             services.postMessage(IngestMessage.createMessage(messageType, DataSourceIntegrityModuleFactory.getModuleName(), 
-                    imgName + verificationResultStr, detailedResults));
+                    messageResultStr, detailedResults));
         
         } else {
             // Store the hashes in the database and update the image

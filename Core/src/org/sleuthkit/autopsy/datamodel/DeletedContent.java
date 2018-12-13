@@ -446,9 +446,6 @@ public class DeletedContent implements AutopsyVisitableItem {
                 if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                     query += " AND data_source_obj_id = " + filteringDSObjId;
                 }
-                if (UserPreferences.getMaximumNumberOfResults() != 0) {
-                    query += " LIMIT " + UserPreferences.getMaximumNumberOfResults(); //NON-NLS
-                }
                 return query;
             }
 

@@ -58,23 +58,24 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @NbBundle.Messages({"IngestEventsListener.ingestmodule.name=Correlation Engine"})
 public class IngestEventsListener {
-    
+
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
     private static final String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
-    
+
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
     private static int correlationModuleInstanceCount;
     private static boolean flagNotableItems;
     private static boolean flagSeenDevices;
+    private static boolean createCrProperties;
     private final ExecutorService jobProcessingExecutor;
     private static final String INGEST_EVENT_THREAD_NAME = "Ingest-Event-Listener-%d";
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
-    
+
     IngestEventsListener() {
         jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(INGEST_EVENT_THREAD_NAME).build());
     }
-    
+
     void shutdown() {
         ThreadUtils.shutDownTaskExecutor(jobProcessingExecutor);
     }
@@ -150,6 +151,15 @@ public class IngestEventsListener {
     }
 
     /**
+     * Are correlation properties being created
+     *
+     * @return True if creating correlation properties; otherwise false.
+     */
+    public synchronized static boolean shouldCreateCrProperties() {
+        return createCrProperties;
+    }
+
+    /**
      * Configure the listener to flag notable items or not.
      *
      * @param value True to flag notable items; otherwise false.
@@ -166,11 +176,20 @@ public class IngestEventsListener {
     public synchronized static void setFlagSeenDevices(boolean value) {
         flagSeenDevices = value;
     }
-    
+
+    /**
+     * Configure the listener to create correlation properties
+     *
+     * @param value True to create properties; otherwise false.
+     */
+    public synchronized static void setCreateCrProperties(boolean value) {
+        createCrProperties = value;
+    }
+
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
         "IngestEventsListener.prevCaseComment.text=Previous Case: "})
     static private void postCorrelatedBadArtifactToBlackboard(BlackboardArtifact bbArtifact, List<String> caseDisplayNames) {
-        
+
         Collection<BlackboardAttribute> attributes = Arrays.asList(
                 new BlackboardAttribute(
                         TSK_SET_NAME, MODULE_NAME,
@@ -204,17 +223,17 @@ public class IngestEventsListener {
                         bbArtifact.getArtifactID()));
         postArtifactToBlackboard(bbArtifact, attributes);
     }
-    
+
     private static void postArtifactToBlackboard(BlackboardArtifact bbArtifact, Collection<BlackboardAttribute> attributes) {
         try {
-            
             SleuthkitCase tskCase = bbArtifact.getSleuthkitCase();
-            AbstractFile abstractFile = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
+            AbstractFile abstractFile = tskCase.getAbstractFileById(bbArtifact.getObjectID());
             Blackboard blackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
             if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_ARTIFACT_HIT, attributes)) {
                 BlackboardArtifact tifArtifact = abstractFile.newArtifact(TSK_INTERESTING_ARTIFACT_HIT);
                 tifArtifact.addAttributes(attributes);
+
                 try {
                     // index the artifact for keyword search
                     blackboard.postArtifact(tifArtifact, MODULE_NAME);
@@ -228,9 +247,9 @@ public class IngestEventsListener {
             LOGGER.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
         }
     }
-    
+
     private class IngestModuleEventListener implements PropertyChangeListener {
-        
+
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             //if ingest is running we want there to check if there is a Correlation Engine module running 
@@ -249,16 +268,17 @@ public class IngestEventsListener {
                         //if ingest isn't running create the interesting items otherwise use the ingest module setting to determine if we create interesting items
                         boolean flagNotable = !IngestManager.getInstance().isIngestRunning() || isFlagNotableItems();
                         boolean flagPrevious = !IngestManager.getInstance().isIngestRunning() || isFlagSeenDevices();
-                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable, flagPrevious));
+                        boolean createAttributes = !IngestManager.getInstance().isIngestRunning() || shouldCreateCrProperties();
+                        jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable, flagPrevious, createAttributes));
                         break;
                     }
                 }
             }
         }
     }
-    
+
     private class IngestJobEventListener implements PropertyChangeListener {
-        
+
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
@@ -268,11 +288,11 @@ public class IngestEventsListener {
                 }
             }
         }
-        
+
     }
-    
+
     private final class AnalysisCompleteTask implements Runnable {
-        
+
         @Override
         public void run() {
             // clear the tracker to reduce memory usage
@@ -282,21 +302,23 @@ public class IngestEventsListener {
             //else another instance of the Correlation Engine Module is still being run.
         } // DATA_SOURCE_ANALYSIS_COMPLETED
     }
-    
+
     private final class DataAddedTask implements Runnable {
-        
+
         private final EamDb dbManager;
         private final PropertyChangeEvent event;
         private final boolean flagNotableItemsEnabled;
         private final boolean flagPreviousItemsEnabled;
-        
-        private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled) {
-            dbManager = db;
-            event = evt;
+        private final boolean createCorrelationAttributes;
+
+        private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled, boolean createCorrelationAttributes) {
+            this.dbManager = db;
+            this.event = evt;
             this.flagNotableItemsEnabled = flagNotableItemsEnabled;
             this.flagPreviousItemsEnabled = flagPreviousItemsEnabled;
+            this.createCorrelationAttributes = createCorrelationAttributes;
         }
-        
+
         @Override
         public void run() {
             if (!EamDb.isEnabled()) {
@@ -308,7 +330,7 @@ public class IngestEventsListener {
                 return;
             }
             List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
-            
+
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
                 // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
                 List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
@@ -347,7 +369,9 @@ public class IngestEventsListener {
                                     LOGGER.log(Level.INFO, String.format("Unable to flag notable item: %s.", eamArtifact.toString()), ex);
                                 }
                             }
-                            eamArtifacts.add(eamArtifact);
+                            if (createCorrelationAttributes) {
+                                eamArtifacts.add(eamArtifact);
+                            }
                         }
                     } catch (EamDbException ex) {
                         LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex);

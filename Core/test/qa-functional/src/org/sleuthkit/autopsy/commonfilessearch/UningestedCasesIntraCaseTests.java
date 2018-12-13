@@ -29,7 +29,7 @@ import org.openide.util.Exceptions;
 import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
 import static org.sleuthkit.autopsy.commonfilessearch.IntraCaseTestUtils.SET1;
@@ -81,7 +81,7 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
 //            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 //
 //            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
-//            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = allSourcesBuilder.findMatches();
 //
 //            int resultCount = metadata.size();
 //            assertEquals(resultCount, 0);
@@ -101,7 +101,7 @@ public class UningestedCasesIntraCaseTests extends NbTestCase {
 //            Long first = getDataSourceIdByName(SET1, dataSources);
 //
 //            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(first, dataSources, false, false, 0);
-//            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = singleSourceBuilder.findMatches();
 //
 //            int resultCount = metadata.size();
 //            assertEquals(resultCount, 0);
