@@ -4,13 +4,13 @@
 
 The Common Properties Search feature allows you to search for multiple copies of a property within the current case or within the \ref central_repo_page.
 
-To start a search, go to Tools->Common Properties Search to bring up the main dialog. Searching requires at least one of the following to be true:
+To start a search, go to Tools->Find Common Properties to bring up the main dialog. Searching requires at least one of the following to be true:
 <ul>
 <li> The current case has more than one data source
 <li> The Central Repository contains at least two cases
 </ul>
 
-A message will be displayed if both of these conditions are false.
+If both conditions are false, then the menu item will be disabled. If only one is false then part of the search dialog will be disabled.
 
 \section common_properties_search_types Common Properties Search Scope
 
@@ -48,14 +48,22 @@ You can select the type of property to search for in the menu below:
 
 Restricting a file search to only return images or documents is currently disabled. 
 
-Finally, you can choose to hide matches that appear with a high frequency in the Central Repository.
+You can choose to hide matches that appear with a high frequency in the Central Repository. Finally you can choose how to display the results, which will be described below.
 
 \section common_properties_results Search Results
 
 Each search displays its results in a new tab. The title of the tab will include the search parameters.
 
+\subsection common_properties_sort_by_count Sort by number of occurrences
+
 \image html common_properties_result.png
 
-The top tree level of the results shows the number of matching files. The results are grouped by how many matching files were found and then grouped by the property itself.
+This is how all results from searches within the current case are displayed, and an option for displaying the results of a search between the current case and the Central Repository. The top tree level of the results shows the number of matching properties. The results are grouped by how many matching properties were found and then grouped by the property itself.
+
+\subsection common_properties_sort_by_case Sort by case
+
+This option is only available when searching between the current case and the Central Repository. The top level shows each case with matching properties, then you can select which data source to view. Every matching property will be displayed under the data source.
+
+\image html common_properties_result_case_sort.png
 
 */
