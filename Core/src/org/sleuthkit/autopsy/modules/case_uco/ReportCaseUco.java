@@ -304,9 +304,6 @@ class ReportCaseUco implements GeneralReportModule {
             }
         }
         
-        // replace double back slashes with single ones
-        imageName = imageName.replaceAll("\\\\", "/");
-        
         return saveDataSourceInCaseUcoFormat(jsonGenerator, imageName, imageSize, selectedDataSourceId, caseTraceId);
     }
     
@@ -323,6 +320,10 @@ class ReportCaseUco implements GeneralReportModule {
         
         catalog.writeStartObject();
         catalog.writeStringField("@type", "File");
+        
+        // replace double back slashes with single ones
+        imageName = imageName.replaceAll("\\\\", "/");
+        
         catalog.writeStringField("filePath", imageName);
         catalog.writeEndObject();
         
