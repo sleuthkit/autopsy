@@ -60,7 +60,7 @@ public class HealthMonitorDashboard {
     
     private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
     private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(),
-            "config" + File.separator + ADMIN_ACCESS_FILE_NAME).toString();
+            "config", ADMIN_ACCESS_FILE_NAME).toString();
     
     Map<String, List<HealthMonitor.DatabaseTimingResult>> timingData;
     List<HealthMonitor.UserData> userData;

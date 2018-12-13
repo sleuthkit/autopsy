@@ -49,7 +49,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     
     private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
     private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(),
-            "config" + File.separator + ADMIN_ACCESS_FILE_NAME).toString();
+            "config", ADMIN_ACCESS_FILE_NAME).toString();
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private AutoIngestMonitor autoIngestMonitor;
