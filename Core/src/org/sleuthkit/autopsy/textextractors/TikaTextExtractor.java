@@ -205,6 +205,8 @@ final class TikaTextExtractor extends TextExtractor {
                  */
                 ocrConfig.setLanguage(LANGUAGE_PACKS);
                 parseContext.set(TesseractOCRConfig.class, ocrConfig);
+                
+                stream = new ReadContentInputStream(content);
             }
         } else {
             stream = new ReadContentInputStream(content);
