@@ -31,8 +31,8 @@ import org.sleuthkit.datamodel.Report;
 /**
  * Factory for creating Readers given a Content instance
  *
- * See {@link org.sleuthkit.autopsy.textextractors.textreaderconfigs} for
- * available Reader configuration options.
+ * See {@link org.sleuthkit.autopsy.textreaders.textreaderconfigs} for available
+ * Reader configuration options.
  *
  * @see org.openide.util.Lookup
  */
@@ -42,7 +42,7 @@ public class TextReaders {
      * Returns a reader containing the Content text. Configuration files can be
      * added to the Lookup.
      *
-     * See {@link org.sleuthkit.autopsy.textextractors.textreaderconfigs} for
+     * See {@link org.sleuthkit.autopsy.textreaders.textreaderconfigs} for
      * available Reader configuration options.
      *
      * @param content Content source that will be read from
@@ -50,9 +50,9 @@ public class TextReaders {
      *
      * @return Reader containing file text
      *
-     * @throws NoTextReaderFound Encountered when there is no Reader found for 
-     *                           the given content type or there was an error while
-     *                           creating the reader.
+     * @throws NoTextReaderFound Encountered when there is no Reader found for
+     *                           the given content type or there was an error
+     *                           while creating the reader.
      *
      * @see org.openide.util.Lookup
      */
@@ -100,9 +100,9 @@ public class TextReaders {
      * @return Reader containing file text
      *
      * @throws NoTextReaderFound Encountered when there is no Reader was found
-                           for the given content type. Use
-                           getStringsReader(Content,Lookup) method
-                           instead.
+     *                           for the given content type. Use
+     *                           getStringsReader(Content,Lookup) method
+     *                           instead.
      */
     public static Reader getReader(Content content)
             throws NoTextReaderFound {
@@ -114,6 +114,9 @@ public class TextReaders {
      * content types. This method should be used as a backup in the event that
      * no reader was found using getReader(Content) or getReader(Content,
      * Lookup).
+     *
+     * Configure this reader with the StringsConfig in
+     * {@link org.sleuthkit.autopsy.textreaders.textreaderconfigs}
      *
      * @param content Content source to read from
      * @param context Contains extraction configurations for certain file types
