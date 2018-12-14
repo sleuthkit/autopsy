@@ -28,7 +28,7 @@ import java.util.Objects;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.autopsy.textextractors.textreaderconfigs.DefaultReaderConfig;
+import org.sleuthkit.autopsy.textreaders.textreaderconfigs.DefaultReaderConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;

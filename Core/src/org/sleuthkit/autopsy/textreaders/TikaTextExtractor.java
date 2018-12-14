@@ -51,7 +51,7 @@ import org.openide.util.NbBundle;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.textextractors.textreaderconfigs.ImageConfig;
+import org.sleuthkit.autopsy.textreaders.textreaderconfigs.ImageConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
