@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textextractors.extractionconfigs;
+package org.sleuthkit.autopsy.textextractors.textreaderconfigs;
 
 import java.util.List;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
  * org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT
  * @see org.openide.util.Lookup
  */
-public class DefaultExtractionConfig {
+public class DefaultReaderConfig {
 
     private Boolean extractUTF8;
     private Boolean extractUTF16;

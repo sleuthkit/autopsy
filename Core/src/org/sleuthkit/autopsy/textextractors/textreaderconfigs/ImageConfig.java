@@ -16,17 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textextractors.extractionconfigs;
+package org.sleuthkit.autopsy.textextractors.textreaderconfigs;
 
 /**
  * Allows for configuration of OCR on image files.
  * TextExtractors that use
- * ImageFileExtractionConfig can be obtained through
- * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
+ ImageConfig can be obtained through
+ {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
  *
  * @see org.openide.util.Lookup
  */
-public class ImageFileExtractionConfig {
+public class ImageConfig {
 
     private Boolean OCREnabled;
 
