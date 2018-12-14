@@ -1,5 +1,67 @@
 /*! \page reporting_page Reporting
 
+\section reporting_overview Overview
+
+The report modules primarily allow the user to output some or all of the data from a case into a different format. This includes
+making an HTML or Excel report containing all the extracted content, keyword hits, etc. from a case, or creating a KML file out
+of any coordinates found to load into software like Google Earth.
+
+\image html reports_select.png
+
+The different types of reports will be described below. The majority of the report modules will generate a report file which
+will be displayed in the case under the "Reports" node of the tree.
+
+\image html reports_result_viewer.png
+
+If the report type has an associated viewer (such as a web browser for an HTML report), you can double-click the report to open it 
+in an external application. Alternately you can browse to the "Reports" folder in the case folder and open the report from there.
+
+\image html reports_folder.png
+
+\section report_types Report Types
+
+
+\subsection report_html HTML Report
+
+\subsection report_excel Excel Report
+
+Generating an Excel report is very similar to HTML reports - you select which tags and data types to export and Autopsy will create a .xlsx file.
+
+\image html reports_excel.png
+
+\subsection report_tagged_hashes Add Tagged Hashes
+
+This is one of the report modules that doesn't generate an actual report. The purpose of this module is to easily add the hashes
+of some/all tagged files to an Autopsy hash set that can be used by the \ref hash_db_page.
+
+\image html reports_hashes_config.png
+
+After running this module, if you use the same hash set on future cases then everything that was tagged with one of the selected tags in this case will
+show up as Hashset Hits.
+
+\subsection report_case_uco CASE-UCO
+
+\subsection report_files Files - Text
+
+This report module allows you create a tab delimited text file from all files in the current case. You can select which fields should be exported.
+
+\image html reports_files_config.png
+<br>
+\image html reports_files_results.png
+
+
+\subsection report_kml Google Earth KML
+
+\subsection report_stix STIX
+
+\subsection report_body_file TSK Body File
+
+
+
+
+
+
+
 Reporting 
 
 To create a report, go to "Tools", "Generate Report". You can choose several different types of reports. We will go through the HTML report here.
