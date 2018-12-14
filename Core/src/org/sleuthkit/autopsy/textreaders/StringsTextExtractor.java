@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textextractors;
+package org.sleuthkit.autopsy.textreaders;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +28,7 @@ import java.util.Objects;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.autopsy.textextractors.extractionconfigs.DefaultExtractionConfig;
+import org.sleuthkit.autopsy.textreaders.textreaderconfigs.StringsConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-final class StringsTextExtractor extends TextExtractor {
+final class StringsTextExtractor {
 
     private boolean extractUTF8;
     private boolean extractUTF16;
@@ -81,7 +81,6 @@ final class StringsTextExtractor extends TextExtractor {
      * @throws
      * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
-    @Override
     public InputStreamReader getReader() {
         InputStream stringStream = getInputStream(content);
         return new InputStreamReader(stringStream, Charset.forName(DEFAULT_INDEXED_TEXT_CHARSET));
@@ -100,15 +99,14 @@ final class StringsTextExtractor extends TextExtractor {
      * Determines how the extraction process will proceed given the settings
      * stored in this context instance.
      *
-     * See the DefaultExtractionConfig class in the extractionconfigs package
-     * for available settings.
+     * See the StringsConfig class in the extractionconfigs package
+ for available settings.
      *
      * @param context Lookup instance containing config classes
      */
-    @Override
     public void setExtractionSettings(Lookup context) {
         if (context != null) {
-            DefaultExtractionConfig configInstance = context.lookup(DefaultExtractionConfig.class);
+            StringsConfig configInstance = context.lookup(StringsConfig.class);
             if (configInstance == null) {
                 return;
             }
@@ -118,8 +116,8 @@ final class StringsTextExtractor extends TextExtractor {
             if (Objects.nonNull(configInstance.getExtractUTF16())) {
                 extractUTF16 = configInstance.getExtractUTF16();
             }
-            if (Objects.nonNull(configInstance.getExtractScripts())) {
-                setScripts(configInstance.getExtractScripts());
+            if (Objects.nonNull(configInstance.getLanguageScripts())) {
+                setScripts(configInstance.getLanguageScripts());
             }
         }
     }
@@ -128,12 +126,10 @@ final class StringsTextExtractor extends TextExtractor {
      *
      * @return
      */
-    @Override
     public boolean isEnabled() {
         return extractUTF8 || extractUTF16;
     }
 
-    @Override
     boolean isSupported(Content file, String detectedFormat) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

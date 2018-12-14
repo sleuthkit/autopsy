@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textextractors;
+package org.sleuthkit.autopsy.textreaders;
 
 import java.io.Reader;
 import org.openide.util.Lookup;
@@ -27,7 +27,7 @@ import org.sleuthkit.datamodel.Content;
  * Concrete implementations can be obtained from
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
  */
-public abstract class TextExtractor {
+abstract class TextExtractor {
 
     /**
      * Determines if the file content is supported by the extractor.

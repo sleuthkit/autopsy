@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textextractors;
+package org.sleuthkit.autopsy.textreaders;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharSource;
@@ -61,8 +61,8 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.textreaders.textreaderconfigs.ImageConfig;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -499,16 +499,15 @@ final class TikaTextExtractor extends TextExtractor {
      * Determines how the extraction process will proceed given the settings
      * stored in this context instance.
      *
-     * See the ImageFileExtractionConfig class in the extractionconfigs package
-     * for available settings.
+     * See the ImageConfig class in the extractionconfigs package
+ for available settings.
      *
      * @param context Instance containing config classes
      */
     @Override
     public void setExtractionSettings(Lookup context) {
         if (context != null) {
-            ImageFileExtractionConfig configInstance = context.lookup(ImageFileExtractionConfig.class);
-
+            ImageConfig configInstance = context.lookup(ImageConfig.class);
             if (configInstance != null && Objects.nonNull(configInstance.getOCREnabled())) {
                 this.tesseractOCREnabled = configInstance.getOCREnabled();
             }
