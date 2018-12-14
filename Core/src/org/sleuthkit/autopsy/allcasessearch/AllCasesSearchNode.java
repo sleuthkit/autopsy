@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.othercasessearch;
+package org.sleuthkit.autopsy.allcasessearch;
 
 import java.util.List;
 import org.openide.nodes.AbstractNode;
@@ -24,24 +24,24 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
- * Parent node to OtherCasesSearchChildren.
+ * Parent node to AllCasesSearchChildren.
  */
-class OtherCasesSearchNode extends AbstractNode {
+class AllCasesSearchNode extends AbstractNode {
 
     /**
-     * Create an instance of OtherCasesSearchNode.
+     * Create an instance of AllCasesSearchNode.
      * 
      * @param keys The list of CorrelationAttributeInstances.
      */
-    OtherCasesSearchNode(List<CorrelationAttributeInstance> keys) {
-        super(new OtherCasesSearchChildren(true, keys));
+    AllCasesSearchNode(List<CorrelationAttributeInstance> keys) {
+        super(new AllCasesSearchChildren(true, keys));
     }
 
     @Messages({
-        "OtherCasesSearchNode.getName.text=Other Cases Search"
+        "AllCasesSearchNode.getName.text=Other Cases Search"
     })
     @Override
     public String getName() {
-        return Bundle.OtherCasesSearchNode_getName_text();
+        return Bundle.AllCasesSearchNode_getName_text();
     }
 }

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.othercasessearch;
+package org.sleuthkit.autopsy.allcasessearch;
 
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
  * A <code>Children</code> implementation for a
  * <code>CorrelationPropertyFilterNode</code>.
  */
-final class OtherCasesFilterChildren extends FilterNode.Children {
+final class AllCasesFilterChildren extends FilterNode.Children {
     
     /**
      * Create a new Children instance.
@@ -41,7 +41,7 @@ final class OtherCasesFilterChildren extends FilterNode.Children {
     static Children createInstance(Node wrappedNode, boolean createChildren) {
 
         if (createChildren) {
-            return new OtherCasesFilterChildren(wrappedNode);
+            return new AllCasesFilterChildren(wrappedNode);
         } else {
             return Children.LEAF;
         }
@@ -53,7 +53,7 @@ final class OtherCasesFilterChildren extends FilterNode.Children {
      * 
      * @param wrappedNode The node wrapped by CorrelationPropertyFilterNode.
      */
-    OtherCasesFilterChildren(Node wrappedNode) {
+    AllCasesFilterChildren(Node wrappedNode) {
         super(wrappedNode);
     }
     
