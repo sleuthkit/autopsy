@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.S
  * org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT
  * @see org.openide.util.Lookup
  */
-public class DefaultReaderConfig {
+public class StringsConfig {
 
     private Boolean extractUTF8;
     private Boolean extractUTF16;

@@ -100,9 +100,9 @@ public class TextReaders {
      * @return Reader containing file text
      *
      * @throws NoTextReaderFound Encountered when there is no Reader was found
-     *                           for the given content type. Use
-     *                           getDefaultReader(Content,Lookup) method
-     *                           instead.
+                           for the given content type. Use
+                           getStringsReader(Content,Lookup) method
+                           instead.
      */
     public static Reader getReader(Content content)
             throws NoTextReaderFound {
@@ -110,7 +110,7 @@ public class TextReaders {
     }
 
     /**
-     * Returns a Reader containing the Content text. This method supports all
+     * Returns a Reader containing the Content strings. This method supports all
      * content types. This method should be used as a backup in the event that
      * no reader was found using getReader(Content) or getReader(Content,
      * Lookup).
@@ -122,7 +122,7 @@ public class TextReaders {
      *
      * @see org.openide.util.Lookup
      */
-    public static Reader getDefaultReader(Content content, Lookup context) {
+    public static Reader getStringsReader(Content content, Lookup context) {
         StringsTextExtractor stringsInstance = new StringsTextExtractor(content);
         stringsInstance.setExtractionSettings(context);
         return stringsInstance.getReader();

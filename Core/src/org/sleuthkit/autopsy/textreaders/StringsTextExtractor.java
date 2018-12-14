@@ -28,7 +28,7 @@ import java.util.Objects;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.autopsy.textreaders.textreaderconfigs.DefaultReaderConfig;
+import org.sleuthkit.autopsy.textreaders.textreaderconfigs.StringsConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -99,14 +99,14 @@ final class StringsTextExtractor {
      * Determines how the extraction process will proceed given the settings
      * stored in this context instance.
      *
-     * See the DefaultReaderConfig class in the extractionconfigs package
+     * See the StringsConfig class in the extractionconfigs package
  for available settings.
      *
      * @param context Lookup instance containing config classes
      */
     public void setExtractionSettings(Lookup context) {
         if (context != null) {
-            DefaultReaderConfig configInstance = context.lookup(DefaultReaderConfig.class);
+            StringsConfig configInstance = context.lookup(StringsConfig.class);
             if (configInstance == null) {
                 return;
             }

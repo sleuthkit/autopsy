@@ -128,7 +128,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             } catch (TextReaders.NoTextReaderFound | Ingester.IngesterException ex) {
                 try {
                     // Try the StringsTextExtractor if Tika extractions fails.
-                    ingester.indexText(TextReaders.getDefaultReader(content, null),content.getId(),content.getName(), content, null);
+                    ingester.indexText(TextReaders.getStringsReader(content, null),content.getId(),content.getName(), content, null);
                 } catch (Ingester.IngesterException ex1) {
                     throw new TskCoreException(ex.getCause().getMessage(), ex1);
                 }

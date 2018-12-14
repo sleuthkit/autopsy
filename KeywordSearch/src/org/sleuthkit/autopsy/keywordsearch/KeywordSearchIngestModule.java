@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textreaders.TextReaders;
 import org.sleuthkit.autopsy.textreaders.textreaderconfigs.ImageConfig;
-import org.sleuthkit.autopsy.textreaders.textreaderconfigs.DefaultReaderConfig;
+import org.sleuthkit.autopsy.textreaders.textreaderconfigs.StringsConfig;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
@@ -288,7 +288,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
         }
         
-        DefaultReaderConfig stringsConfig = new DefaultReaderConfig();
+        StringsConfig stringsConfig = new StringsConfig();
         Map<String, String> stringsOptions = KeywordSearchSettings.getStringExtractOptions();
         stringsConfig.setExtractUTF8(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF8.toString())));
         stringsConfig.setExtractUTF16(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF16.toString())));
@@ -502,7 +502,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return true;
                 }
-                Reader stringsReader = TextReaders.getDefaultReader(aFile, stringsExtractionContext);
+                Reader stringsReader = TextReaders.getStringsReader(aFile, stringsExtractionContext);
                 if (Ingester.getDefault().indexText(stringsReader,aFile.getId(),aFile.getName(), aFile, KeywordSearchIngestModule.this.context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
