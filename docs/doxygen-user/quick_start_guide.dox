@@ -32,10 +32,12 @@ You will next be prompted to configure the Ingest Modules. Ingest modules will r
 - <strong>\subpage keyword_search_page</strong> uses keyword lists to identify files with specific words in them. You can select the keyword lists to search for automatically and you can create new lists using the "Advanced" button. Note that with keyword search, you can always conduct searches after ingest has finished. The keyword lists that you select during ingest will be searched for at periodic intervals and you will get the results in real-time. You do not need to wait for all files to be indexed before performing a keyword search, however you will only get results from files that have already been indexed when you perform your search.
 - <strong>\subpage email_parser_page</strong> identifies Thunderbird MBOX files and PST format files based on file signatures, extracting the e-mails from them, adding the results to the Blackboard.
 - <strong>\subpage extension_mismatch_detector_page</strong> uses the results from the File Type Identification and flags files that have an extension not traditionally associated with the file's detected type. Ignores 'known' (NSRL) files. You can customize the MIME types and file extensions per MIME type in Tools, Options, File Extension Mismatch.
-- <strong>\subpage e01_verifier_page</strong> computes a checksum on E01 files and compares with the E01 file's internal checksum to ensure they match.
+- <strong>\subpage data_source_integrity_page</strong> computes a checksum on E01 files and compares with the E01 file's internal checksum to ensure they match.
 - <strong>\subpage android_analyzer_page</strong> allows you to parse common items from Android devices.  Places artifacts into the BlackBoard.
 - <strong>\subpage interesting_files_identifier_page</strong> searches for files and directories based on user-specified rules in Tools, Options, Interesting Files. It works as a "File Alerting Module". It generates messages in the inbox when specified files are found.
 - <strong>\subpage photorec_carver_page</strong> carves files from unallocated space and sends them through the file processing chain.
+- <strong>\subpage cr_ingest_module</strong> adds file hashes and other extracted properties to a central repository.
+- <strong>\subpage encryption_page</strong> looks for encrypted files.
 
 When you select a module, you will have the option to change its settings.  For example, you can configure which keyword search lists to use during ingest and which hash sets to use. Refer to the individual module help for details on configuring each module.
 
