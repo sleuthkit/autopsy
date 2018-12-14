@@ -588,6 +588,7 @@ public final class DrawableDB {
                         + " data_source_obj_id integer DEFAULT 0, "
                         + " value VARCHAR(255) not null, " //NON-NLS
                         + " attribute VARCHAR(255) not null, " //NON-NLS
+                        + " isAnalyzed integer DEFAULT 0, "
                         + " UNIQUE(data_source_obj_id, value, attribute) )"; //NON-NLS
 
                 tskCase.getCaseDbAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
@@ -830,6 +831,26 @@ public final class DrawableDB {
     }
 
     /**
+     * Sets the isAnalysed state in the groups table for the given group.
+     *
+     * @param groupKey group key.
+     * @param isAnalyzed
+     *
+     * @throws TskCoreException
+     */
+    public void markGroupAnalyzed(GroupKey<?> groupKey, boolean isAnalyzed) throws TskCoreException {
+
+        String updateSQL = String.format(" SET isAnalyzed = %d "
+                + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d ",
+                isAnalyzed ? 1 : 0,
+                SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
+                groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
+
+        tskCase.getCaseDbAccessManager().update(GROUPS_TABLENAME, updateSQL);
+    }
+    
+    /**
      * Removes a file from the drawables databse.
      *
      * @param id The object id of the file.
@@ -857,13 +878,22 @@ public final class DrawableDB {
         }
     }
 
-    public void updateFile(DrawableFile f) throws TskCoreException, SQLException {
+    /**
+     * Updates the image file.
+     * 
+     * @param f file to update.
+     * @param addGroups indicates whether or not to add groups for the file.
+     * 
+     * @throws TskCoreException
+     * @throws SQLException 
+     */
+    public void updateFile(DrawableFile f, boolean addGroups) throws TskCoreException, SQLException {
         DrawableTransaction trans = null;
         CaseDbTransaction caseDbTransaction = null;
         try {
             trans = beginTransaction();
             caseDbTransaction = tskCase.beginTransaction();
-            updateFile(f, trans, caseDbTransaction);
+            updateFile(f, trans, caseDbTransaction, addGroups);
             caseDbTransaction.commit();
             commitTransaction(trans, true);
         } catch (TskCoreException | SQLException ex) {
@@ -885,29 +915,19 @@ public final class DrawableDB {
         }
     }
 
-    /**
-     * Insert basic file data (no groups) into the DB during pre-population
-     * phase
-     *
-     * @param f
-     * @param tr
-     * @param caseDbTransaction
-     */
-    public void insertBasicFileData(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
-        insertOrUpdateFile(f, tr, caseDbTransaction, false);
-    }
-
+   
     /**
      * Update an existing entry (or make a new one) into the DB that includes
      * group information. Called when a file has been analyzed or during a bulk
      * rebuild
      *
-     * @param f
-     * @param tr
+     * @param f file to update
+     * @param tr 
      * @param caseDbTransaction
+     * @param addGroups specifies whether or not to add groups for the file 
      */
-    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
-        insertOrUpdateFile(f, tr, caseDbTransaction, true);
+    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction, boolean addGroups) {
+        insertOrUpdateFile(f, tr, caseDbTransaction, addGroups);
     }
 
     /**
@@ -1285,29 +1305,50 @@ public final class DrawableDB {
         }
     }
 
-    public Boolean isGroupAnalyzed(GroupKey<?> gk) throws SQLException, TskCoreException {
-        dbWriteLock();
-        try {
-            if (isClosed()) {
-                throw new SQLException("The drawables database is closed");
-            }
-            try (Statement stmt = con.createStatement()) {
-                // In testing, this method appears to be a lot faster than doing one large select statement
-                Set<Long> fileIDsInGroup = getFileIDsInGroup(gk);
-                for (Long fileID : fileIDsInGroup) {
-                    ResultSet analyzedQuery = stmt.executeQuery("SELECT analyzed FROM drawable_files WHERE obj_id = " + fileID); //NON-NLS
-                    while (analyzedQuery.next()) {
-                        if (analyzedQuery.getInt(ANALYZED) == 0) {
-                            return false;
+    /**
+     * Returns whether or not the given group is analyzed and ready to be viewed.
+     * 
+     * @param groupKey group key.
+     * @return true if the group is analyzed.
+     * @throws SQLException
+     * @throws TskCoreException 
+     */
+    public Boolean isGroupAnalyzed(GroupKey<?> groupKey) throws SQLException, TskCoreException {
+        
+        // Callback to process result of isAnalyzed query
+        class IsGroupAnalyzedQueryResultProcessor extends CompletableFuture<Boolean> implements CaseDbAccessQueryCallback {
+
+            @Override
+            public void process(ResultSet resultSet) {
+                try {
+                    if (resultSet != null) {
+                        while (resultSet.next()) {
+                            complete(resultSet.getInt("isAnalyzed") == 1 ? true: false); //NON-NLS;
+                            return;
                         }
                     }
-                    return true; // THIS APPEARS TO BE A BUG (see JIRA-1130), THE FOR LOOP EXECUTES AT MOST ONCE 
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to get group isAnalyzed", ex); //NON-NLS
                 }
             }
-            return false;
-        } finally {
-            dbWriteUnlock();
         }
+       
+        IsGroupAnalyzedQueryResultProcessor queryResultProcessor = new IsGroupAnalyzedQueryResultProcessor();
+        try {
+            String groupAnalyzedQueryStmt = String.format("isAnalyzed FROM " + GROUPS_TABLENAME
+                   + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d ",
+                SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
+                SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
+                groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
+               
+            tskCase.getCaseDbAccessManager().select(groupAnalyzedQueryStmt, queryResultProcessor);
+            return queryResultProcessor.get();
+        } catch (ExecutionException | InterruptedException | TskCoreException ex) {
+            String msg = String.format("Failed to get group isAnalyzed for group key %s", groupKey.getValueDisplayName()); //NON-NLS
+            logger.log(Level.WARNING, msg, ex);
+        }
+
+        return false;
     }
 
     /**
@@ -1497,8 +1538,9 @@ public final class DrawableDB {
             return;
         }
 
-        String insertSQL = String.format(" (data_source_obj_id, value, attribute) VALUES (%d, \'%s\', \'%s\')",
-                ds_obj_id, SleuthkitCase.escapeSingleQuotes(value), SleuthkitCase.escapeSingleQuotes(groupBy.attrName.toString()));
+        int isAnalyzed = (groupBy == DrawableAttribute.PATH) ? 0 : 1;  
+        String insertSQL = String.format(" (data_source_obj_id, value, attribute, isAnalyzed) VALUES (%d, \'%s\', \'%s\', %d)",
+                ds_obj_id, SleuthkitCase.escapeSingleQuotes(value), SleuthkitCase.escapeSingleQuotes(groupBy.attrName.toString()), isAnalyzed);
         if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
             insertSQL += " ON CONFLICT DO NOTHING";
         }

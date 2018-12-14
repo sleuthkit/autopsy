@@ -653,7 +653,7 @@ public final class ImageGalleryController {
         public void run() {
             try {
                 DrawableFile drawableFile = DrawableFile.create(getFile(), true, false);
-                getTaskDB().updateFile(drawableFile);
+                getTaskDB().updateFile(drawableFile, true);
             } catch (TskCoreException | SQLException ex) {
                 Logger.getLogger(UpdateFileTask.class.getName()).log(Level.SEVERE, "Error in update file task", ex); //NON-NLS
             }
@@ -873,7 +873,7 @@ public final class ImageGalleryController {
                 // NOTE: Files are being processed because they have the right MIME type,
                 // so we do not need to worry about this calculating them
                 if (FileTypeUtils.hasDrawableMIMEType(f)) {
-                    taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
+                    taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction, false);
                 } //unsupported mimtype => analyzed but shouldn't include
                 else {
                     taskDB.removeFile(f.getId(), tr);

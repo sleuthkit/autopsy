@@ -378,6 +378,7 @@ public class ImageGalleryModule {
                              * database.
                              */
                             if (controller.isListeningEnabled()) {
+                                controller.getGroupManager().resetLastUpdatedPathGroup();
                                 DrawableDB drawableDb = controller.getDatabase();
                                 if (drawableDb.getDataSourceDbBuildStatus(dataSourceObjId) == DrawableDB.DrawableDbBuildStatusEnum.IN_PROGRESS) {
 

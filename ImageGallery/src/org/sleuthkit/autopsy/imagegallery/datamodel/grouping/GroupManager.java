@@ -108,6 +108,11 @@ public class GroupManager {
     private final ImageGalleryController controller;
 
     /**
+     * Keeps track of the last path group
+     *  - a change in path indicates the last path group is analyzed
+     */
+    private GroupKey<?> lastUpdatedPathGroup = null;
+    /**
      * list of all analyzed groups
      */
     @GuardedBy("this") //NOPMD
@@ -238,7 +243,8 @@ public class GroupManager {
         setGroupBy(DrawableAttribute.PATH);
         setSortOrder(SortOrder.ASCENDING);
         setDataSource(null);
-
+        resetLastUpdatedPathGroup();
+        
         unSeenGroups.forEach(controller.getCategoryManager()::unregisterListener);
         unSeenGroups.clear();
         analyzedGroups.forEach(controller.getCategoryManager()::unregisterListener);
@@ -618,6 +624,8 @@ public class GroupManager {
             for (GroupKey<?> gk : groupsForFile) {
                 // see if a group has been created yet for the key
                 DrawableGroup g = getGroupForKey(gk);
+               
+                checkForPathGroupChange(gk);
                 addFileToGroup(g, gk, fileId);
             }
         }
@@ -625,7 +633,49 @@ public class GroupManager {
         //we fire this event for all files so that the category counts get updated during initial db population
         controller.getCategoryManager().fireChange(updatedFileIDs, null);
     }
+    
+    /**
+     * Checks if the given path is different from the last updated path group.
+     * If so, the last updated path group is marked as analyzed
+     * 
+     * @param groupKey 
+     */
+    private void checkForPathGroupChange(GroupKey<?> groupKey) {
+        try {
+            if (groupKey.getAttribute() == DrawableAttribute.PATH) {
+            
+                if (this.lastUpdatedPathGroup == null) {
+                    lastUpdatedPathGroup = groupKey;
+                }
+                else if (groupKey.getValue().toString().equalsIgnoreCase(this.lastUpdatedPathGroup.getValue().toString()) == false) {
+                    // mark the last path group as analyzed
+                    getDrawableDB().markGroupAnalyzed(lastUpdatedPathGroup, true);
+                    popuplateIfAnalyzed(lastUpdatedPathGroup, null);
+                    
+                    lastUpdatedPathGroup = groupKey;
+                }
+            }
+        }
+        catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Error setting isAnalyzed status for group: %s", groupKey.getValue().toString()), ex); //NON-NLS
+        } 
+    }
 
+    /**
+     * Resets the last updated path group, after marking the last path group as analyzed.
+     */
+    public void resetLastUpdatedPathGroup() {
+        try {
+            if (lastUpdatedPathGroup != null) {
+                getDrawableDB().markGroupAnalyzed(lastUpdatedPathGroup, true);
+                popuplateIfAnalyzed(lastUpdatedPathGroup, null);
+                lastUpdatedPathGroup = null;
+            }
+        }
+        catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Error resetting last path group: %s", lastUpdatedPathGroup.getValue().toString()), ex); //NON-NLS
+        }
+    }
     /**
      * If the group is analyzed (or other criteria based on grouping) and should
      * be shown to the user, then add it to the appropriate data structures so
