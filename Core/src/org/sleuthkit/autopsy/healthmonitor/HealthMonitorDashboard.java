@@ -46,10 +46,10 @@ import java.awt.GridLayout;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Dashboard for viewing metrics and controlling the health monitor.
@@ -58,8 +58,8 @@ public class HealthMonitorDashboard {
     
     private final static Logger logger = Logger.getLogger(HealthMonitorDashboard.class.getName());
     
-    private final static String ADMIN_ACCESS_FILE_NAME = "adminAccess"; // NON-NLS
-    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(Places.getUserDirectory().getAbsolutePath(), ADMIN_ACCESS_FILE_NAME).toString();
+    private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
+    private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
     
     Map<String, List<HealthMonitor.DatabaseTimingResult>> timingData;
     List<HealthMonitor.UserData> userData;
