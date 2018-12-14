@@ -29,7 +29,7 @@ The following topics are available here:
  - \subpage keyword_search_page
  - \subpage email_parser_page
  - \subpage extension_mismatch_detector_page
- - \subpage e01_verifier_page
+ - \subpage data_source_integrity_page
  - \subpage android_analyzer_page
  - \subpage interesting_files_identifier_page
  - \subpage photorec_carver_page
