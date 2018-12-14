@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.othercasessearch;
+package org.sleuthkit.autopsy.allcasessearch;
 
 import java.awt.event.ActionEvent;
 import org.openide.awt.ActionID;
@@ -27,16 +27,15 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.othercasessearch.Bundle;
 
 /**
  * Action for accessing the Search Other Cases dialog.
  */
-@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.othercasessearch.OtherCasesSearchAction")
-@ActionRegistration(displayName = "#CTL_OtherCasesSearchAction=Search Other Cases", lazy = false)
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.allcasessearch.AllCasesSearchAction")
+@ActionRegistration(displayName = "#CTL_OtherCasesSearchAction=Search All Cases", lazy = false)
 @ActionReference(path = "Menu/Tools", position = 201)
-@NbBundle.Messages({"CTL_OtherCasesSearchAction=Search Other Cases"})
-public class OtherCasesSearchAction extends CallableSystemAction {
+@NbBundle.Messages({"CTL_AllCasesSearchAction=Search All Cases"})
+public class AllCasesSearchAction extends CallableSystemAction {
 
     @Override
     public boolean isEnabled() {
@@ -50,15 +49,15 @@ public class OtherCasesSearchAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        OtherCasesSearchDialog dialog = new OtherCasesSearchDialog();
+        AllCasesSearchDialog dialog = new AllCasesSearchDialog();
         dialog.display();
     }
 
     @NbBundle.Messages({
-        "OtherCasesSearchAction.getName.text=Search Other Cases"})
+        "AllCasesSearchAction.getName.text=Search All Cases"})
     @Override
     public String getName() {
-        return Bundle.OtherCasesSearchAction_getName_text();
+        return Bundle.AllCasesSearchAction_getName_text();
     }
 
     @Override

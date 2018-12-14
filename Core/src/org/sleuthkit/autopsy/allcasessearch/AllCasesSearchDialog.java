@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.othercasessearch;
+package org.sleuthkit.autopsy.allcasessearch;
 
 import java.awt.Color;
 import java.awt.event.ItemEvent;
@@ -48,31 +48,31 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 
 @Messages({
-    "OtherCasesSearchDialog.dialogTitle.text=Search Other Cases",
-    "OtherCasesSearchDialog.resultsTitle.text=Other Cases",
-    "OtherCasesSearchDialog.resultsDescription.text=Other Cases Search",
-    "OtherCasesSearchDialog.emptyNode.text=No results found.",
-    "OtherCasesSearchDialog.validation.invalidHash=The supplied value is not a valid MD5 hash.",
-    "OtherCasesSearchDialog.validation.invalidEmail=The supplied value is not a valid e-mail address.",
-    "OtherCasesSearchDialog.validation.invalidDomain=The supplied value is not a valid domain.",
-    "OtherCasesSearchDialog.validation.invalidPhone=The supplied value is not a valid phone number.",
-    "OtherCasesSearchDialog.validation.invalidSsid=The supplied value is not a valid wireless network.",
-    "OtherCasesSearchDialog.validation.invalidMac=The supplied value is not a valid MAC address.",
-    "OtherCasesSearchDialog.validation.invalidImei=The supplied value is not a valid IMEI number.",
-    "OtherCasesSearchDialog.validation.invalidImsi=The supplied value is not a valid IMSI number.",
-    "OtherCasesSearchDialog.validation.invalidIccid=The supplied value is not a valid ICCID number.",
-    "OtherCasesSearchDialog.validation.genericMessage=The supplied value is not valid.",
+    "AllCasesSearchDialog.dialogTitle.text=Search All Cases",
+    "AllCasesSearchDialog.resultsTitle.text=All Cases",
+    "AllCasesSearchDialog.resultsDescription.text=All Cases Search",
+    "AllCasesSearchDialog.emptyNode.text=No results found.",
+    "AllCasesSearchDialog.validation.invalidHash=The supplied value is not a valid MD5 hash.",
+    "AllCasesSearchDialog.validation.invalidEmail=The supplied value is not a valid e-mail address.",
+    "AllCasesSearchDialog.validation.invalidDomain=The supplied value is not a valid domain.",
+    "AllCasesSearchDialog.validation.invalidPhone=The supplied value is not a valid phone number.",
+    "AllCasesSearchDialog.validation.invalidSsid=The supplied value is not a valid wireless network.",
+    "AllCasesSearchDialog.validation.invalidMac=The supplied value is not a valid MAC address.",
+    "AllCasesSearchDialog.validation.invalidImei=The supplied value is not a valid IMEI number.",
+    "AllCasesSearchDialog.validation.invalidImsi=The supplied value is not a valid IMSI number.",
+    "AllCasesSearchDialog.validation.invalidIccid=The supplied value is not a valid ICCID number.",
+    "AllCasesSearchDialog.validation.genericMessage=The supplied value is not valid.",
     "# {0} - number of cases",
-    "OtherCasesSearchDialog.caseLabel.text=The current Central Repository contains {0} case(s)."
+    "AllCasesSearchDialog.caseLabel.text=The current Central Repository contains {0} case(s)."
 })
 /**
- * The Search Other Cases dialog allows users to search for specific types of
+ * The Search All Cases dialog allows users to search for specific types of
  * correlation properties in the Central Repository.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final class OtherCasesSearchDialog extends javax.swing.JDialog {
+final class AllCasesSearchDialog extends javax.swing.JDialog {
 
-    private static final Logger logger = Logger.getLogger(OtherCasesSearchDialog.class.getName());
+    private static final Logger logger = Logger.getLogger(AllCasesSearchDialog.class.getName());
     private static final long serialVersionUID = 1L;
 
     private final List<CorrelationAttributeInstance.Type> correlationTypes;
@@ -82,8 +82,8 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
     /**
      * Creates a new instance of the Search Other Cases dialog.
      */
-    OtherCasesSearchDialog() {
-        super((JFrame) WindowManager.getDefault().getMainWindow(), Bundle.OtherCasesSearchDialog_dialogTitle_text(), true);
+    AllCasesSearchDialog() {
+        super((JFrame) WindowManager.getDefault().getMainWindow(), Bundle.AllCasesSearchDialog_dialogTitle_text(), true);
         this.correlationTypes = new ArrayList<>();
         initComponents();
         customizeComponents();
@@ -122,20 +122,20 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
                     Collection<DataResultViewer> viewers = new ArrayList<>(1);
                     viewers.add(table);
 
-                    OtherCasesSearchNode searchNode = new OtherCasesSearchNode(correlationInstances);
+                    AllCasesSearchNode searchNode = new AllCasesSearchNode(correlationInstances);
                     TableFilterNode tableFilterNode = new TableFilterNode(searchNode, true, searchNode.getName());
 
                     String resultsText = String.format("%s (%s; \"%s\")",
-                            Bundle.OtherCasesSearchDialog_resultsTitle_text(), type.getDisplayName(), value);
+                            Bundle.AllCasesSearchDialog_resultsTitle_text(), type.getDisplayName(), value);
                     final TopComponent searchResultWin;
                     if (correlationInstances.isEmpty()) {
                         Node emptyNode = new TableFilterNode(
-                                new EmptyNode(Bundle.OtherCasesSearchDialog_emptyNode_text()), true);
+                                new EmptyNode(Bundle.AllCasesSearchDialog_emptyNode_text()), true);
                         searchResultWin = DataResultTopComponent.createInstance(
-                                resultsText, Bundle.OtherCasesSearchDialog_resultsDescription_text(), emptyNode, 0);
+                                resultsText, Bundle.AllCasesSearchDialog_resultsDescription_text(), emptyNode, 0);
                     } else {
                         searchResultWin = DataResultTopComponent.createInstance(
-                                resultsText, Bundle.OtherCasesSearchDialog_resultsDescription_text(), tableFilterNode, correlationInstances.size(), viewers);
+                                resultsText, Bundle.AllCasesSearchDialog_resultsDescription_text(), tableFilterNode, correlationInstances.size(), viewers);
                     }
                     searchResultWin.requestActive(); // make it the active top component
                 } catch (ExecutionException | InterruptedException ex) {
@@ -166,16 +166,16 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setResizable(false);
 
-        org.openide.awt.Mnemonics.setLocalizedText(correlationValueLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationValueLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(correlationValueLabel, org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.correlationValueLabel.text")); // NOI18N
 
-        correlationValueTextField.setText(org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationValueTextField.text")); // NOI18N
+        correlationValueTextField.setText(org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.correlationValueTextField.text")); // NOI18N
         correlationValueTextField.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 valueFieldKeyReleaseListener(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.searchButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 searchButtonActionPerformed(evt);
@@ -188,15 +188,15 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(correlationTypeLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.correlationTypeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(correlationTypeLabel, org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.correlationTypeLabel.text")); // NOI18N
 
         errorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.errorLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.errorLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.descriptionLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(descriptionLabel, org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.descriptionLabel.text")); // NOI18N
 
         casesLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        org.openide.awt.Mnemonics.setLocalizedText(casesLabel, org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.casesLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(casesLabel, org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.casesLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -243,8 +243,8 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
-        searchButton.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.searchButton.AccessibleContext.accessibleName")); // NOI18N
-        searchButton.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(OtherCasesSearchDialog.class, "OtherCasesSearchDialog.searchButton.AccessibleContext.accessibleDescription")); // NOI18N
+        searchButton.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.searchButton.AccessibleContext.accessibleName")); // NOI18N
+        searchButton.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AllCasesSearchDialog.class, "AllCasesSearchDialog.searchButton.AccessibleContext.accessibleDescription")); // NOI18N
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -260,34 +260,34 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
             String validationMessage;
             switch (correlationType.getId()) {
                 case CorrelationAttributeInstance.FILES_TYPE_ID:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidHash();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_invalidHash();
                     break;
                 case CorrelationAttributeInstance.DOMAIN_TYPE_ID:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidDomain();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_invalidDomain();
                     break;
                 case CorrelationAttributeInstance.EMAIL_TYPE_ID:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidEmail();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_invalidEmail();
                     break;
                 case CorrelationAttributeInstance.PHONE_TYPE_ID:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidPhone();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_invalidPhone();
                     break;
                 case CorrelationAttributeInstance.SSID_TYPE_ID:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidSsid();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_invalidSsid();
                     break;
                 case CorrelationAttributeInstance.MAC_TYPE_ID:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidMac();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_invalidMac();
                     break;
                 case CorrelationAttributeInstance.IMEI_TYPE_ID:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidImei();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_invalidImei();
                     break;
                 case CorrelationAttributeInstance.IMSI_TYPE_ID:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidImsi();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_invalidImsi();
                     break;
                 case CorrelationAttributeInstance.ICCID_TYPE_ID:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_invalidIccid();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_invalidIccid();
                     break;
                 default:
-                    validationMessage = Bundle.OtherCasesSearchDialog_validation_genericMessage();
+                    validationMessage = Bundle.AllCasesSearchDialog_validation_genericMessage();
                     break;
 
             }
@@ -340,7 +340,7 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
             correlationTypes.clear();
             correlationTypes.addAll(dbManager.getDefinedCorrelationTypes());
             int numberOfCases = dbManager.getCases().size();
-            casesLabel.setText(Bundle.OtherCasesSearchDialog_caseLabel_text(numberOfCases));
+            casesLabel.setText(Bundle.AllCasesSearchDialog_caseLabel_text(numberOfCases));
         } catch (EamDbException ex) {
             logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex);
         }
@@ -385,16 +385,16 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
     }
 
     @Messages({
-        "OtherCasesSearchDialog.correlationValueTextField.filesExample=Example: \"f0e1d2c3b4a5968778695a4b3c2d1e0f\"",
-        "OtherCasesSearchDialog.correlationValueTextField.domainExample=Example: \"domain.com\"",
-        "OtherCasesSearchDialog.correlationValueTextField.emailExample=Example: \"user@host.com\"",
-        "OtherCasesSearchDialog.correlationValueTextField.phoneExample=Example: \"(800)123-4567\"",
-        "OtherCasesSearchDialog.correlationValueTextField.usbExample=Example: \"4&1234567&0\"",
-        "OtherCasesSearchDialog.correlationValueTextField.ssidExample=Example: \"WirelessNetwork-5G\"",
-        "OtherCasesSearchDialog.correlationValueTextField.macExample=Example: \"0C-14-F2-01-AF-45\"",
-        "OtherCasesSearchDialog.correlationValueTextField.imeiExample=Example: \"351756061523999\"",
-        "OtherCasesSearchDialog.correlationValueTextField.imsiExample=Example: \"310150123456789\"",
-        "OtherCasesSearchDialog.correlationValueTextField.iccidExample=Example: \"89 91 19 1299 99 329451 0\""
+        "AllCasesSearchDialog.correlationValueTextField.filesExample=Example: \"f0e1d2c3b4a5968778695a4b3c2d1e0f\"",
+        "AllCasesSearchDialog.correlationValueTextField.domainExample=Example: \"domain.com\"",
+        "AllCasesSearchDialog.correlationValueTextField.emailExample=Example: \"user@host.com\"",
+        "AllCasesSearchDialog.correlationValueTextField.phoneExample=Example: \"(800)123-4567\"",
+        "AllCasesSearchDialog.correlationValueTextField.usbExample=Example: \"4&1234567&0\"",
+        "AllCasesSearchDialog.correlationValueTextField.ssidExample=Example: \"WirelessNetwork-5G\"",
+        "AllCasesSearchDialog.correlationValueTextField.macExample=Example: \"0C-14-F2-01-AF-45\"",
+        "AllCasesSearchDialog.correlationValueTextField.imeiExample=Example: \"351756061523999\"",
+        "AllCasesSearchDialog.correlationValueTextField.imsiExample=Example: \"310150123456789\"",
+        "AllCasesSearchDialog.correlationValueTextField.iccidExample=Example: \"89 91 19 1299 99 329451 0\""
     })
     /**
      * Update the text prompt of the name text field based on the input type
@@ -407,34 +407,34 @@ final class OtherCasesSearchDialog extends javax.swing.JDialog {
         String text;
         switch (selectedCorrelationType.getId()) {
             case CorrelationAttributeInstance.FILES_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_filesExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_filesExample();
                 break;
             case CorrelationAttributeInstance.DOMAIN_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_domainExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_domainExample();
                 break;
             case CorrelationAttributeInstance.EMAIL_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_emailExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_emailExample();
                 break;
             case CorrelationAttributeInstance.PHONE_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_phoneExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_phoneExample();
                 break;
             case CorrelationAttributeInstance.USBID_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_usbExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_usbExample();
                 break;
             case CorrelationAttributeInstance.SSID_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_ssidExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_ssidExample();
                 break;
             case CorrelationAttributeInstance.MAC_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_macExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_macExample();
                 break;
             case CorrelationAttributeInstance.IMEI_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_imeiExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_imeiExample();
                 break;
             case CorrelationAttributeInstance.IMSI_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_imsiExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_imsiExample();
                 break;
             case CorrelationAttributeInstance.ICCID_TYPE_ID:
-                text = Bundle.OtherCasesSearchDialog_correlationValueTextField_iccidExample();
+                text = Bundle.AllCasesSearchDialog_correlationValueTextField_iccidExample();
                 break;
             default:
                 text = "";
