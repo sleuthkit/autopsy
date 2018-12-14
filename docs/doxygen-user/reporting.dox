@@ -32,7 +32,8 @@ Generating an Excel report is very similar to HTML reports - you select which ta
 \subsection report_tagged_hashes Add Tagged Hashes
 
 This is one of the report modules that doesn't generate an actual report. The purpose of this module is to easily add the hashes
-of some/all tagged files to an Autopsy hash set that can be used by the \ref hash_db_page.
+of some/all tagged files to an Autopsy hash set that can be used by the \ref hash_db_page. You can use the "Configure Hash Sets" button to create a new
+hash set to write to, or use an existing hash set.
 
 \image html reports_hashes_config.png
 
@@ -52,13 +53,25 @@ This report module allows you create a tab delimited text file from all files in
 
 \subsection report_kml Google Earth KML
 
+This report module generates a KML file from any GPS data in the case. This file can then be used with Google Earth.
+
+\image html reports_kml.png
+
 \subsection report_stix STIX
+
+The STIX module allows you to generate a report and Interesting File artifacts by running a STIX file (or files) against the data sources in the case.
+For more information see the \ref stix_page page.
 
 \subsection report_body_file TSK Body File
 
+This module generates a <a href="https://wiki.sleuthkit.org/index.php?title=Body_file">TSK Body File</a> from the files in your case, which looks similar to the following:
 
-
-
+<pre>7ff498a44e45e77374cc7c962b1b92f2|/img_image1.vhd/vol_vol2/$UpCase|10|rr-xr-xr-x|0|0|131072|1498757218|1498757218|1498757218|1498757218
+d41d8cd98f00b204e9800998ecf8427e|/img_image1.vhd/vol_vol2/$Volume|3|rr-xr-xr-x|48|0|0|1498757218|1498757218|1498757218|1498757218
+43fffda5c5edd8e9c647f1df476717de|/img_image1.vhd/vol_vol2/0000/0000_a.txt|63|rrwxrwxrwx|0|0|11|1498757454|1498176989|1498757454|1498757454
+411c8024a7c38ee3843ba8a07d048ec2|/img_image1.vhd/vol_vol2/0000/0000_b.txt|64|rrwxrwxrwx|0|0|11|1498757454|1498176990|1498757454|1498757454
+fcc958c5096889a222785ddb8c4bff80|/img_image1.vhd/vol_vol2/0000/0000_c.txt|65|rrwxrwxrwx|0|0|11|1498757454|1498176990|1498757454|1498757454
+b7cde263cc1b5df5a13aeec742637a89|/img_image1.vhd/vol_vol2/0000/0000_d.txt|66|rrwxrwxrwx|0|0|11|1498757454|1498176990|1498757454|1498757454</pre>
 
 
 
