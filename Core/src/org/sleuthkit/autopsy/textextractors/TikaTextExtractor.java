@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.textextractors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharSource;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -36,6 +37,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
@@ -120,7 +122,9 @@ final class TikaTextExtractor extends TextExtractor {
 
     private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
 
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private final ThreadFactory tikaThreadFactory = 
+            new ThreadFactoryBuilder().setNameFormat("tika-reader-%d").build();
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor(tikaThreadFactory);
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
     private final AutoDetectParser parser = new AutoDetectParser();
