@@ -338,8 +338,6 @@
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
-                <package>org.sleuthkit.autopsy.textextractors</package>
-                <package>org.sleuthkit.autopsy.textextractors.extractionconfigs</package>
                 <package>org.sleuthkit.autopsy.textreaders</package>
                 <package>org.sleuthkit.autopsy.textreaders.textreaderconfigs</package>
                 <package>org.sleuthkit.autopsy.texttranslation</package>
