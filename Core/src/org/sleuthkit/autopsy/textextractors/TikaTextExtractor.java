@@ -120,7 +120,7 @@ final class TikaTextExtractor extends TextExtractor {
 
     private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
 
-    private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
     private final AutoDetectParser parser = new AutoDetectParser();
@@ -132,6 +132,7 @@ final class TikaTextExtractor extends TextExtractor {
     private static final File TESSERACT_PATH = locateTesseractExecutable();
     private static final String LANGUAGE_PACKS = getLanguagePacks();
     private ProcessTerminator processTerminator;
+    private static final String TESSERACT_OUTPUT_FILE_NAME = "output";
 
     private static final List<String> TIKA_SUPPORTED_TYPES
             = new Tika().getParser().getSupportedTypes(new ParseContext())
@@ -141,6 +142,18 @@ final class TikaTextExtractor extends TextExtractor {
 
     public TikaTextExtractor(Content content) {
         this.content = content;
+    }
+
+    /**
+     * If Tesseract has been installed and is set to be used through
+     * configuration, then ocr is enabled. OCR can only currently be run on
+     * Windows OS.
+     *
+     * @return Flag indicating if OCR is set to be used.
+     */
+    private boolean ocrEnabled() {
+        return TESSERACT_PATH != null && tesseractOCREnabled
+                && PlatformUtil.isWindowsOS() == true;
     }
 
     /**
@@ -156,12 +169,48 @@ final class TikaTextExtractor extends TextExtractor {
      */
     @Override
     public Reader getReader() throws ExtractionException {
-        InputStream stream = new ReadContentInputStream(content);
+        InputStream stream = null;
 
-        Metadata metadata = new Metadata();
         ParseContext parseContext = new ParseContext();
         parseContext.set(Parser.class, parser);
 
+        if (ocrEnabled() && content instanceof AbstractFile) {
+            AbstractFile file = ((AbstractFile) content);
+            //Run OCR on images with Tesseract directly. 
+            if (file.getMIMEType().toLowerCase().startsWith("image/")) {
+                stream = runOcrAndGetOutputStream(file);
+            } else {
+                //Otherwise, go through Tika for PDFs so that it can
+                //extract images and run Tesseract on them.     
+                PDFParserConfig pdfConfig = new PDFParserConfig();
+
+                // Extracting the inline images and letting Tesseract run on each inline image.
+                // https://wiki.apache.org/tika/PDFParser%20%28Apache%20PDFBox%29
+                // https://tika.apache.org/1.7/api/org/apache/tika/parser/pdf/PDFParserConfig.html
+                pdfConfig.setExtractInlineImages(true);
+                // Multiple pages within a PDF file might refer to the same underlying image.
+                pdfConfig.setExtractUniqueInlineImagesOnly(true);
+                parseContext.set(PDFParserConfig.class, pdfConfig);
+
+                // Configure Tesseract parser to perform OCR
+                TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
+                String tesseractFolder = TESSERACT_PATH.getParent();
+                ocrConfig.setTesseractPath(tesseractFolder);
+                /*
+                 * Tesseract expects language data packs to be in a
+                 * subdirectory of tesseractFolder, in a folder called
+                 * "tessdata". If they are stored somewhere else, use
+                 * ocrConfig.setTessdataPath(String tessdataPath) to point
+                 * to them
+                 */
+                ocrConfig.setLanguage(LANGUAGE_PACKS);
+                parseContext.set(TesseractOCRConfig.class, ocrConfig);
+            }
+        } else {
+            stream = new ReadContentInputStream(content);
+        }
+
+        Metadata metadata = new Metadata();
         // Use the more memory efficient Tika SAX parsers for DOCX and
         // PPTX files (it already uses SAX for XLSX).
         OfficeParserConfig officeParserConfig = new OfficeParserConfig();
@@ -169,63 +218,39 @@ final class TikaTextExtractor extends TextExtractor {
         officeParserConfig.setUseSAXDocxExtractor(true);
         parseContext.set(OfficeParserConfig.class, officeParserConfig);
 
-        //If Tesseract has been and installed and is set to be used....
-        if (TESSERACT_PATH != null && tesseractOCREnabled && PlatformUtil.isWindowsOS() == true) {
-            if (content instanceof AbstractFile) {
-                AbstractFile file = ((AbstractFile) content);
-                //Run OCR on images with Tesseract directly. 
-                //Reassign the stream we will send to Tika to point to the
-                //output file produced by Tesseract.
-                if (file.getMIMEType().toLowerCase().contains("image")) {
-                    stream = runOcrAndGetOutputStream(file);
-                } else {
-                    //Otherwise, go through Tika for PDFs so that it can
-                    //extract images and run Tesseract on them.     
-                    PDFParserConfig pdfConfig = new PDFParserConfig();
-
-                    // Extracting the inline images and letting Tesseract run on each inline image.
-                    // https://wiki.apache.org/tika/PDFParser%20%28Apache%20PDFBox%29
-                    // https://tika.apache.org/1.7/api/org/apache/tika/parser/pdf/PDFParserConfig.html
-                    pdfConfig.setExtractInlineImages(true);
-                    // Multiple pages within a PDF file might refer to the same underlying image.
-                    pdfConfig.setExtractUniqueInlineImagesOnly(true);
-                    parseContext.set(PDFParserConfig.class, pdfConfig);
-
-                    // Configure Tesseract parser to perform OCR
-                    TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
-                    String tesseractFolder = TESSERACT_PATH.getParent();
-                    ocrConfig.setTesseractPath(tesseractFolder);
-                    // Tesseract expects language data packs to be in a subdirectory of tesseractFolder, in a folder called "tessdata".
-                    // If they are stored somewhere else, use ocrConfig.setTessdataPath(String tessdataPath) to point to them
-                    ocrConfig.setLanguage(LANGUAGE_PACKS);
-                    parseContext.set(TesseractOCRConfig.class, ocrConfig);
-                }
-            }
-        }
-
         //Make the creation of a TikaReader a cancellable future in case it takes too long
-        Future<Reader> future = tikaParseExecutor.submit(new GetTikaReader(parser, stream, metadata, parseContext));
+        Future<Reader> future = executorService.submit(
+                new GetTikaReader(parser, stream, metadata, parseContext));
         try {
-            final Reader tikaReader = future.get(getTimeout(content.getSize()), TimeUnit.SECONDS);
+            final Reader tikaReader = future.get(getTimeout(content.getSize()),
+                    TimeUnit.SECONDS);
             //check if the reader is empty
             PushbackReader pushbackReader = new PushbackReader(tikaReader);
             int read = pushbackReader.read();
             if (read == -1) {
-                throw new ExtractionException("Unable to extract text: Tika returned empty reader for " + content);
+                throw new ExtractionException("Unable to extract text: "
+                        + "Tika returned empty reader for " + content);
             }
             pushbackReader.unread(read);
 
             //concatenate parsed content and meta data into a single reader.
             CharSource metaDataCharSource = getMetaDataCharSource(metadata);
-            return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
+            return CharSource.concat(new ReaderCharSource(pushbackReader),
+                    metaDataCharSource).openStream();
         } catch (TimeoutException te) {
-            final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", content.getId(), content.getName());
+            final String msg = NbBundle.getMessage(this.getClass(),
+                    "AbstractFileTikaTextExtract.index.tikaParseTimeout.text",
+                    content.getId(), content.getName());
             throw new ExtractionException(msg, te);
         } catch (ExtractionException ex) {
             throw ex;
         } catch (Exception ex) {
-            tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the content" + content.getId() + ": " + content.getName(), ex.getCause()); //NON-NLS
-            final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", content.getId(), content.getName());
+            tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the "
+                    + "content" + content.getId() + ": " + content.getName(),
+                    ex.getCause()); //NON-NLS
+            final String msg = NbBundle.getMessage(this.getClass(),
+                    "AbstractFileTikaTextExtract.index.exception.tikaParse.msg",
+                    content.getId(), content.getName());
             throw new ExtractionException(msg, ex);
         } finally {
             future.cancel(true);
@@ -246,26 +271,24 @@ final class TikaTextExtractor extends TextExtractor {
         File inputFile = null;
         File outputFile = null;
         try {
-            //Write file to temp directory
-            String localDiskPath = Case.getCurrentCaseThrows().getTempDirectory()
-                    + File.separator + file.getId() + file.getName();
-            inputFile = new File(localDiskPath);
+            //Appending file id makes the name unique
+            String tempFileName = file.getId() + file.getName();
+            inputFile = Paths.get(Case.getCurrentCaseThrows().getTempDirectory(),
+                    tempFileName).toFile();
             ContentUtils.writeToFile(content, inputFile);
+
+            String tempOutputName = file.getId() + TESSERACT_OUTPUT_FILE_NAME;
+            String outputFilePath = Paths.get(Case.getCurrentCaseThrows().getTempDirectory(),
+                    tempOutputName).toString();
+            String executeablePath = TESSERACT_PATH.toString();
 
             //Build tesseract commands
             ProcessBuilder process = new ProcessBuilder();
-            String outputFilePath = Case.getCurrentCaseThrows().getTempDirectory()
-                    + File.separator + file.getId() + "output";
-
-            String executeablePath = TESSERACT_PATH.toString();
             process.command(executeablePath,
-                    //Source image path
                     String.format("\"%s\"", inputFile.getAbsolutePath()),
-                    //Output path
                     String.format("\"%s\"", outputFilePath),
                     //language pack command flag
-                    "-l",
-                    LANGUAGE_PACKS);
+                    "-l", LANGUAGE_PACKS);
 
             //If the ProcessTerminator was supplied during 
             //configuration apply it here.
@@ -274,12 +297,9 @@ final class TikaTextExtractor extends TextExtractor {
             } else {
                 ExecUtil.execute(process);
             }
-
-            //Open an input stream on the output file to send to tika.
-            //Tesseract spits out a .txt file
+            
             outputFile = new File(outputFilePath + ".txt");
-            //When CleanUpStream is closed, it automatically 
-            //deletes the outputFile in the temp directory.
+            //Open a stream of the Tesseract text file and send this to Tika
             return new CleanUpStream(outputFile);
         } catch (NoCurrentCaseException | IOException ex) {
             if (outputFile != null) {
@@ -298,7 +318,6 @@ final class TikaTextExtractor extends TextExtractor {
      * cancelled.
      */
     private class GetTikaReader implements Callable<Reader> {
-
         private final AutoDetectParser parser;
         private final InputStream stream;
         private final Metadata metadata;
@@ -327,11 +346,22 @@ final class TikaTextExtractor extends TextExtractor {
 
         private File file;
 
+        /**
+         * Store a reference to file on construction
+         * 
+         * @param file
+         * @throws FileNotFoundException 
+         */
         public CleanUpStream(File file) throws FileNotFoundException {
             super(file);
             this.file = file;
         }
 
+        /**
+         * Delete this underlying file when close is called.
+         * 
+         * @throws IOException 
+         */
         @Override
         public void close() throws IOException {
             try {
