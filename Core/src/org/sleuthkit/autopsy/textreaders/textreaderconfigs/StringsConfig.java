@@ -22,15 +22,14 @@ import java.util.List;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
- * Allows for configuration of the
- * {@link org.sleuthkit.autopsy.textextractors.TextExtractor} obtained from
- * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getDefaultExtractor(Content, Lookup)}.
+ * Allows for configuration of the Reader obtained from
+ * {@link org.sleuthkit.autopsy.textreaders.TextReader#getStringsReader(Content, Lookup)}.
  *
- * The default extractor will read strings from the Content instance. This class
- * allows for the configuration of the encoding language script to use during
- * extraction.
+ * The strings reader will read strings from the Content instance. This class
+ * allows for the configuration of the encoding and language scripts used during
+ * reading.
  *
- * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
+ * @see org.sleuthkit.autopsy.textreaders.TextReaders
  * @see
  * org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT
  * @see org.openide.util.Lookup
@@ -39,10 +38,10 @@ public class StringsConfig {
 
     private Boolean extractUTF8;
     private Boolean extractUTF16;
-    private List<SCRIPT> extractScripts;
+    private List<SCRIPT> languageScripts;
 
     /**
-     * Enables UTF-8 encoding to be used during extraction.
+     * Enables UTF-8 encoding to be used during reading.
      *
      * @param enabled Flag indicating if UTF-8 should be turned on
      */
@@ -51,7 +50,7 @@ public class StringsConfig {
     }
 
     /**
-     * Enables UTF-16 encoding to be used during extraction.
+     * Enables UTF-16 encoding to be used during reading.
      *
      * @param enabled Flag indicating if UTF-16 should be turned on
      */
@@ -60,7 +59,7 @@ public class StringsConfig {
     }
 
     /**
-     * Returns whether extracting with UTF-8 encoding should be done.
+     * Returns whether reading with UTF-8 encoding should be done.
      *
      * @return Flag indicating if UTF-8 has been turned on/off
      */
@@ -69,7 +68,7 @@ public class StringsConfig {
     }
 
     /**
-     * Return whether extracting with UTF-16 encoding should be done.
+     * Return whether reading with UTF-16 encoding should be done.
      *
      * @return Flag indicating if UTF-16 has been turned on/off
      */
@@ -78,23 +77,23 @@ public class StringsConfig {
     }
 
     /**
-     * Sets the type of extraction scripts that will be used during this
-     * extraction. See
+     * Sets the type of language scripts that will be used during this
+     * reading. See
      * {@link org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT}
      * for more information about available scripts.
      *
      * @param scripts Desired set of scripts to be used during extraction
      */
-    public void setExtractScripts(List<SCRIPT> scripts) {
-        this.extractScripts = scripts;
+    public void setLanguageScripts(List<SCRIPT> scripts) {
+        this.languageScripts = scripts;
     }
 
     /**
-     * Gets the desired set of scripts to be used during extraction.
+     * Gets the desired set of scripts to be used during reading.
      *
-     * @return Set of extraction scripts to be used
+     * @return Set of language scripts to be used
      */
-    public List<SCRIPT> getExtractScripts() {
-        return this.extractScripts;
+    public List<SCRIPT> getLanguageScripts() {
+        return this.languageScripts;
     }
 }

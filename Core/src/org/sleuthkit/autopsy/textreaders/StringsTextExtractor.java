@@ -116,8 +116,8 @@ final class StringsTextExtractor {
             if (Objects.nonNull(configInstance.getExtractUTF16())) {
                 extractUTF16 = configInstance.getExtractUTF16();
             }
-            if (Objects.nonNull(configInstance.getExtractScripts())) {
-                setScripts(configInstance.getExtractScripts());
+            if (Objects.nonNull(configInstance.getLanguageScripts())) {
+                setScripts(configInstance.getLanguageScripts());
             }
         }
     }

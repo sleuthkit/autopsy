@@ -292,7 +292,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         Map<String, String> stringsOptions = KeywordSearchSettings.getStringExtractOptions();
         stringsConfig.setExtractUTF8(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF8.toString())));
         stringsConfig.setExtractUTF16(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF16.toString())));
-        stringsConfig.setExtractScripts(KeywordSearchSettings.getStringExtractScripts());
+        stringsConfig.setLanguageScripts(KeywordSearchSettings.getStringExtractScripts());
         
         stringsExtractionContext = Lookups.fixed(stringsConfig);
         
