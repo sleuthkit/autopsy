@@ -38,6 +38,7 @@ You will next be prompted to configure the Ingest Modules. Ingest modules will r
 - <strong>\subpage photorec_carver_page</strong> carves files from unallocated space and sends them through the file processing chain.
 - <strong>\subpage cr_ingest_module</strong> adds file hashes and other extracted properties to a central repository.
 - <strong>\subpage encryption_page</strong> looks for encrypted files.
+- <strong>\subpage vm_extractor_page</strong> extracts data from virtual machine files
 
 When you select a module, you will have the option to change its settings.  For example, you can configure which keyword search lists to use during ingest and which hash sets to use. Refer to the individual module help for details on configuring each module.
 
