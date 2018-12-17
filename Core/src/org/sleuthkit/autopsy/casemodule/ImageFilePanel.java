@@ -156,6 +156,8 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         md5HashTextField = new javax.swing.JTextField();
         sha1HashLabel = new javax.swing.JLabel();
         md5HashLabel = new javax.swing.JLabel();
+        hashValuesLabel = new javax.swing.JLabel();
+        hashValuesNoteLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
@@ -195,6 +197,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
         org.openide.awt.Mnemonics.setLocalizedText(md5HashLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.md5HashLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(hashValuesLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.hashValuesLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(hashValuesNoteLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.hashValuesNoteLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -206,25 +212,37 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addGap(2, 2, 2))
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(sha256HashLabel)
-                    .addComponent(sha1HashLabel)
-                    .addComponent(md5HashLabel)
-                    .addComponent(sectorSizeLabel)
-                    .addComponent(timeZoneLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(sha256HashTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE)
-                    .addComponent(sha1HashTextField)
-                    .addComponent(md5HashTextField)
-                    .addComponent(sectorSizeComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(timeZoneComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(pathLabel)
+                    .addComponent(noFatOrphansCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 330, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pathLabel)
-                    .addComponent(errorLabel)
-                    .addComponent(noFatOrphansCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(0, 325, Short.MAX_VALUE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(sha256HashLabel)
+                                    .addComponent(sha1HashLabel)
+                                    .addComponent(md5HashLabel))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(sha256HashTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 455, Short.MAX_VALUE)
+                                    .addComponent(sha1HashTextField)
+                                    .addComponent(md5HashTextField)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(errorLabel)
+                                .addGap(275, 275, 275)))
+                        .addGroup(layout.createSequentialGroup()
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(sectorSizeLabel)
+                                .addComponent(timeZoneLabel))
+                            .addGap(26, 26, 26)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(sectorSizeComboBox, 0, 455, Short.MAX_VALUE)
+                                .addComponent(timeZoneComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addComponent(hashValuesLabel)
+                    .addComponent(hashValuesNoteLabel))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -244,6 +262,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(sectorSizeLabel))
+                .addGap(40, 40, 40)
+                .addComponent(hashValuesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(hashValuesNoteLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(md5HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -258,7 +280,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                     .addComponent(sha256HashLabel))
                 .addGap(18, 18, 18)
                 .addComponent(errorLabel)
-                .addContainerGap(23, Short.MAX_VALUE))
+                .addGap(58, 58, 58))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -286,6 +308,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                     }
                 }
             }
+            
             setContentPath(path);
         }
 
@@ -295,6 +318,8 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JLabel hashValuesLabel;
+    private javax.swing.JLabel hashValuesNoteLabel;
     private javax.swing.JLabel md5HashLabel;
     private javax.swing.JTextField md5HashTextField;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
@@ -310,6 +335,25 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Enable or disable all of the hash values components.
+     * 
+     * @param enabled Enable components if true; otherwise disable.
+     */
+    private void setHashValuesComponentsEnabled(boolean enabled) {
+        hashValuesLabel.setEnabled(enabled);
+        hashValuesNoteLabel.setEnabled(enabled);
+
+        md5HashLabel.setEnabled(enabled);
+        md5HashTextField.setEnabled(enabled);
+
+        sha1HashLabel.setEnabled(enabled);
+        sha1HashTextField.setEnabled(enabled);
+
+        sha256HashLabel.setEnabled(enabled);
+        sha256HashTextField.setEnabled(enabled);
+    }
+    
     /**
      * Get the path of the user selected image.
      *
@@ -453,6 +497,8 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         "ImageFilePanel.moduleErr.msg=A module caused an error listening to ImageFilePanel updates."
         + " See log to determine which module. Some data could be incomplete.\n"})
     private void updateHelper() {
+        setHashValuesComponentsEnabled(pathTextField.getText().toLowerCase().endsWith(".e01") == false);
+        
         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
