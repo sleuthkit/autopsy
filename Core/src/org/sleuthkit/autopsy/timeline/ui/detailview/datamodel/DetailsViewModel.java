@@ -27,7 +27,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -42,12 +41,12 @@ import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
-import static org.sleuthkit.autopsy.timeline.FilteredEventsModel.unGroupConcat;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils;
+import static org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils.unGroupConcat;
+import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -55,6 +54,8 @@ import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import static org.sleuthkit.datamodel.timeline.EventTypeZoomLevel.SUB_TYPE;
+import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
  * Model for the Details View. Uses FilteredEventsModel as underlying datamodel
@@ -76,34 +77,14 @@ final public class DetailsViewModel {
         eventStripeCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .build(new CacheLoaderImpl<>(params -> getEventStripes(params, TimeLineController.getJodaTimeZone())));
+                .build(new CacheLoaderImpl<>(params
+                        -> getEventStripes(params, TimeLineController.getJodaTimeZone())));
         eventsModel.registerForEvents(this);
     }
 
     @Subscribe
     void handleCacheInvalidation(FilteredEventsModel.CacheInvalidatedEvent event) {
         eventStripeCache.invalidateAll();
-    }
-
-    /**
-     *
-     * @return a list of event clusters at the requested zoom levels that are
-     *         within the requested time range and pass the requested filter
-     *
-     * @throws org.sleuthkit.datamodel.TskCoreException
-     */
-    public List<EventStripe> getEventStripes() throws TskCoreException {
-        final Interval range;
-        final RootFilterState filter;
-        final EventTypeZoomLevel zoom;
-        final DescriptionLoD lod;
-        synchronized (this) {
-            range = eventsModel.getTimeRange();
-            filter = eventsModel.getFilterState();
-            zoom = eventsModel.getEventTypeZoom();
-            lod = eventsModel.getDescriptionLOD();
-        }
-        return getEventStripes(new ZoomState(range, zoom, filter, lod));
     }
 
     /**
@@ -138,10 +119,10 @@ final public class DetailsViewModel {
      * @throws org.sleuthkit.datamodel.TskCoreException If there is an error
      *                                                  querying the db.
      */
-    public List<EventStripe> getEventStripes(ZoomState zoom, DateTimeZone timeZone) throws TskCoreException {
+    List<EventStripe> getEventStripes(ZoomState zoom, DateTimeZone timeZone) throws TskCoreException {
         //unpack params
         Interval timeRange = zoom.getTimeRange();
-        RootFilterState filterState = zoom.getFilterState();
+        TimelineFilter.RootFilter activeFilter = zoom.getFilterState().getActiveFilter();
         DescriptionLoD descriptionLOD = zoom.getDescriptionLOD();
         EventTypeZoomLevel typeZoomLevel = zoom.getTypeZoomLevel();
 
@@ -150,51 +131,48 @@ final public class DetailsViewModel {
 
         //ensure length of querried interval is not 0
         end = Math.max(end, start + 1);
-
         //get some info about the time range requested
-        RangeDivision rangeInfo = RangeDivision.getRangeDivision(timeRange, timeZone);
+        TimeUnits periodSize = RangeDivision.getRangeDivision(timeRange, timeZone).getPeriodSize();
 
         //build dynamic parts of query
-        String descriptionColumn = eventManager.getDescriptionColumn(descriptionLOD);
-        final boolean useSubTypes = typeZoomLevel.equals(EventTypeZoomLevel.SUB_TYPE);
-        String typeColumn = TimelineManager.typeColumnHelper(useSubTypes);
-
+        String typeColumn = TimelineManager.typeColumnHelper(typeZoomLevel.equals(SUB_TYPE));
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
-        String querySql = "SELECT " + formatTimeFunctionHelper(rangeInfo.getPeriodSize().toChronoUnit(), timeZone) + " AS interval, " // NON-NLS
+
+        String querySql = "SELECT " + formatTimeFunctionHelper(periodSize.toChronoUnit(), timeZone) + " AS interval, " // NON-NLS
                           + dbUtils.csvAggFunction("tsk_events.event_id") + " as event_ids, " //NON-NLS
                           + dbUtils.csvAggFunction("CASE WHEN hash_hit = 1 THEN tsk_events.event_id ELSE NULL END") + " as hash_hits, " //NON-NLS
                           + dbUtils.csvAggFunction("CASE WHEN tagged = 1 THEN tsk_events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
-                          + " min(time) AS minTime, max(time) AS maxTime,  " + typeColumn + ", " + descriptionColumn // NON-NLS
-                          + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(filterState.getActiveFilter()) // NON-NLS
-                          + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(filterState.getActiveFilter()) // NON-NLS
-                          + " GROUP BY interval, " + typeColumn + " , " + descriptionColumn // NON-NLS
+                          + " min(time) AS minTime, max(time) AS maxTime,  sub_type, base_type, full_description, med_description, short_description " // NON-NLS
+                          + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(activeFilter) // NON-NLS
+                          + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(activeFilter) // NON-NLS
+                          + " GROUP BY interval,  full_description, " + typeColumn // NON-NLS
                           + " ORDER BY min(time)"; // NON-NLS
 
-        // perform query and map results to AggregateEvent objects
-        List<EventCluster> events = new ArrayList<>();
+        // perform query and map results to EventCluster objects
+        List<EventCluster> eventClusters = new ArrayList<>();
 
         try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);
                 ResultSet resultSet = dbQuery.getResultSet();) {
             while (resultSet.next()) {
-                events.add(eventClusterHelper(resultSet, typeColumn, descriptionLOD, timeZone));
+                eventClusters.add(eventClusterHelper(resultSet, typeColumn, descriptionLOD, timeZone));
             }
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
         }
 
-        return mergeClustersToStripes(rangeInfo.getPeriodSize().toUnitPeriod(), events);
+        return mergeClustersToStripes(periodSize.toUnitPeriod(), eventClusters);
     }
 
     /**
-     * map a single row in a ResultSet to an EventCluster
+     * Map a single row in a ResultSet to an EventCluster
      *
      * @param resultSet      the result set whose current row should be mapped
-     * @param useSubTypes    use the sub_type column if true, else use the
-     *                       base_type column
+     * @param typeColumn     The type column (sub_type or base_type) to use as
+     *                       the type of the event cluster
      * @param descriptionLOD the description level of detail for this event
-     * @param filter
+     *                       cluster
      *
-     * @return an AggregateEvent corresponding to the current row in the given
+     * @return an EventCluster corresponding to the current row in the given
      *         result set
      *
      * @throws SQLException
@@ -203,41 +181,51 @@ final public class DetailsViewModel {
         Interval interval = new Interval(resultSet.getLong("minTime") * 1000, resultSet.getLong("maxTime") * 1000, timeZone);
 
         List<Long> eventIDs = unGroupConcat(resultSet.getString("event_ids"), Long::valueOf); // NON-NLS
-        String description = resultSet.getString(eventManager.getDescriptionColumn(descriptionLOD));
+        List<Long> hashHits = unGroupConcat(resultSet.getString("hash_hits"), Long::valueOf); //NON-NLS
+        List<Long> tagged = unGroupConcat(resultSet.getString("taggeds"), Long::valueOf); //NON-NLS
+
+        //The actual event type of this cluster
         int eventTypeID = resultSet.getInt(typeColumn);
         EventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
                 -> new TskCoreException("Error mapping event type id " + eventTypeID + "to EventType."));//NON-NLS
 
-        List<Long> hashHits = unGroupConcat(resultSet.getString("hash_hits"), Long::valueOf); //NON-NLS
-        List<Long> tagged = unGroupConcat(resultSet.getString("taggeds"), Long::valueOf); //NON-NLS
+        //the event tyepe to use to get the description.
+        int descEventTypeID = resultSet.getInt("sub_type");
+        EventType descEventType = eventManager.getEventType(descEventTypeID).orElseThrow(()
+                -> new TskCoreException("Error mapping event type id " + descEventTypeID + "to EventType."));//NON-NLS
+
+        String description = descEventType.getDescription(descriptionLOD,
+                resultSet.getString("full_description"),
+                resultSet.getString("med_description"),
+                resultSet.getString("short_description"));
 
         return new EventCluster(interval, eventType, eventIDs, hashHits, tagged, description, descriptionLOD);
     }
 
     /**
-     * merge the events in the given list if they are within the same period
+     * Merge the events in the given list if they are within the same period
      * General algorithm is as follows:
      *
-     * 1) sort them into a map from (type, description)-> List<aggevent>
+     * 1) sort them into a map from (type, description)-> List<EventCluster>
      * 2) for each key in map, merge the events and accumulate them in a list to
      * return
      *
      * @param timeUnitLength
-     * @param preMergedEvents
+     * @param eventClusters
      *
      * @return
      */
-    static private List<EventStripe> mergeClustersToStripes(Period timeUnitLength, List<EventCluster> preMergedEvents) {
+    static private List<EventStripe> mergeClustersToStripes(Period timeUnitLength, List<EventCluster> eventClusters) {
 
-        //effectively map from type to (map from description to events)
+        // type -> (description -> events)
         Map<EventType, SetMultimap< String, EventCluster>> typeMap = new HashMap<>();
 
-        for (EventCluster aggregateEvent : preMergedEvents) {
-            typeMap.computeIfAbsent(aggregateEvent.getEventType(), eventType -> HashMultimap.create())
-                    .put(aggregateEvent.getDescription(), aggregateEvent);
+        for (EventCluster cluster : eventClusters) {
+            typeMap.computeIfAbsent(cluster.getEventType(), eventType -> HashMultimap.create())
+                    .put(cluster.getDescription(), cluster);
         }
         //result list to return
-        ArrayList<EventCluster> aggEvents = new ArrayList<>();
+        ArrayList<EventCluster> mergedClusters = new ArrayList<>();
 
         //For each (type, description) key, merge agg events
         for (SetMultimap<String, EventCluster> descrMap : typeMap.values()) {
@@ -245,7 +233,7 @@ final public class DetailsViewModel {
             for (String descr : descrMap.keySet()) {
                 //run through the sorted events, merging together adjacent events
                 Iterator<EventCluster> iterator = descrMap.get(descr).stream()
-                        .sorted(Comparator.comparing(event -> event.getSpan().getStartMillis()))
+                        .sorted(new DetailViewEvent.StartComparator())
                         .iterator();
                 EventCluster current = iterator.next();
                 while (iterator.hasNext()) {
@@ -259,23 +247,25 @@ final public class DetailsViewModel {
                         current = EventCluster.merge(current, next);
                     } else {
                         //done merging into current, set next as new current
-                        aggEvents.add(current);
+                        mergedClusters.add(current);
                         current = next;
                     }
                 }
-                aggEvents.add(current);
+                mergedClusters.add(current);
             }
         }
 
         //merge clusters to stripes
         Map<ImmutablePair<EventType, String>, EventStripe> stripeDescMap = new HashMap<>();
 
-        for (EventCluster eventCluster : aggEvents) {
+        for (EventCluster eventCluster : mergedClusters) {
             stripeDescMap.merge(ImmutablePair.of(eventCluster.getEventType(), eventCluster.getDescription()),
                     new EventStripe(eventCluster), EventStripe::merge);
         }
 
-        return stripeDescMap.values().stream().sorted(Comparator.comparing(EventStripe::getStartMillis)).collect(Collectors.toList());
+        return stripeDescMap.values().stream()
+                .sorted(new DetailViewEvent.StartComparator())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -361,4 +351,5 @@ final public class DetailsViewModel {
                 return "YYYY-MM-DDTHH24:MI:SS"; // NON-NLS  
         }
     }
+
 }

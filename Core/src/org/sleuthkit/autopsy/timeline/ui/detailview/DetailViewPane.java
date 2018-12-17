@@ -402,7 +402,7 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
             updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
 
             //get the event stripes to be displayed
-            List<EventStripe> eventStripes = detailsViewModel.getEventStripes();
+            List<EventStripe> eventStripes = detailsViewModel.getEventStripes(newZoom);
             final int size = eventStripes.size();
             //if there are too many stipes show a confirmation dialog
             if (size > 2000) {

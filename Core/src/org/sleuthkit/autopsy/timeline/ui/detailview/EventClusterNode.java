@@ -168,7 +168,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         getChartLane().setCursor(Cursor.WAIT);
 
         /*
-         * make new ZoomState to query with
+         *Mmake new ZoomState to query with
          *
          * We need to extend end time for the query by one second, because it is
          * treated as an open interval but we want to include events at exactly
@@ -178,7 +178,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          */
         final RootFilterState subClusterFilter = eventsModel.getFilterState().copyOf();
         subClusterFilter.getFilter().getSubFilters().addAll(
-                new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
+                new DescriptionFilter(  getDescription(), DescriptionFilter.FilterMode.INCLUDE),
                 new EventTypeFilter(getEventType()));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
         final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();

@@ -698,33 +698,4 @@ public final class FilteredEventsModel {
         private CacheInvalidatedEvent() {
         }
     }
-
-    /**
-     * take the result of a group_concat SQLite operation and split it into a
-     * set of X using the mapper to to convert from string to X If groupConcat
-     * is empty, null, or all whitespace, returns an empty list.
-     *
-     * @param <X>         the type of elements to return
-     * @param groupConcat a string containing the group_concat result ( a comma
-     *                    separated list)
-     * @param mapper      a function from String to X
-     *
-     * @return a Set of X, each element mapped from one element of the original
-     *         comma delimited string
-     *
-     * @throws org.sleuthkit.datamodel.TskCoreException
-     */
-    public static <X> List<X> unGroupConcat(String groupConcat, CheckedFunction<String, X, TskCoreException> mapper) throws TskCoreException {
-
-        if (isBlank(groupConcat)) {
-            return Collections.emptyList();
-        }
-
-        List<X> result = new ArrayList<>();
-        String[] split = groupConcat.split(",");
-        for (String s : split) {
-            result.add(mapper.apply(s));
-        }
-        return result;
-    }
 }

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -119,4 +120,12 @@ public interface DetailViewEvent {
      * @return The EventClusters that make up this event.
      */
     SortedSet<EventCluster> getClusters();
+
+    static class StartComparator implements Comparator<DetailViewEvent> {
+
+        @Override
+        public int compare(DetailViewEvent o1, DetailViewEvent o2) {
+            return Long.compare(o1.getStartMillis(), o2.getStartMillis());
+        }
+    }
 }

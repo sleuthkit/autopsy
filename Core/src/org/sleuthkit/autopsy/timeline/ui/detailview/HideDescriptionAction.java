@@ -41,7 +41,7 @@ class HideDescriptionAction extends Action {
              */
             final FilterState<DescriptionFilter> testFilter
                     = new DefaultFilterState<>(
-                            new DescriptionFilter(descriptionLoD, description, EXCLUDE));
+                            new DescriptionFilter( description, EXCLUDE));
 
             FilterState<DescriptionFilter> descriptionFilter = chart.getController().getQuickHideFilters().stream()
                     .filter(testFilter::equals).findFirst()

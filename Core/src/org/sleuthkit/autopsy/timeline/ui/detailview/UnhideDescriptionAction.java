@@ -44,7 +44,7 @@ class UnhideDescriptionAction extends Action {
              * test one and checking all the existing filters against it.
              * Disable them.
              */
-            final DescriptionFilter testFilter = new DescriptionFilter(descriptionLoD, description, DescriptionFilter.FilterMode.EXCLUDE);
+            final DescriptionFilter testFilter = new DescriptionFilter( description, DescriptionFilter.FilterMode.EXCLUDE);
             chart.getController().getQuickHideFilters().stream()
                     .filter(testFilter::equals)
                     .forEach(descriptionfilter -> descriptionfilter.setSelected(false));
