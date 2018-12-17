@@ -35,6 +35,7 @@ The following topics are available here:
  - \subpage photorec_carver_page
  - \subpage cr_ingest_module
  - \subpage encryption_page
+ - \subpage vm_extractor_page
 - Manual Analysis
  - \subpage tree_viewer_page
  - \subpage result_viewer_page
@@ -48,6 +49,7 @@ The following topics are available here:
  - \subpage central_repo_page
  - \subpage communications_page
  - \subpage common_properties_page
+ - \subpage search_all_cases_page
  - \subpage logs_and_output_page
 - Reporting
  - \subpage tagging_page
