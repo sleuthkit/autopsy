@@ -291,7 +291,7 @@ public final class SqliteEamDbSettings {
         createDataSourcesTable.append("datasource_obj_id integer,");
         createDataSourcesTable.append("md5 text DEFAULT NULL,");
         createDataSourcesTable.append("sha1 text DEFAULT NULL,");
-        createDataSourcesTable.append("sha256 text DEFAULT NULL,");        
+        createDataSourcesTable.append("sha256 text DEFAULT NULL,");
         createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
         createDataSourcesTable.append(")");
@@ -348,13 +348,6 @@ public final class SqliteEamDbSettings {
         String instancesValueIdx = getAddValueIndexTemplate();
         String instancesKnownStatusIdx = getAddKnownStatusIndexTemplate();
         String instancesObjectIdIdx = getAddObjectIdIndexTemplate();
-        
-        StringBuilder createDbInfoTable = new StringBuilder();
-        createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
-        createDbInfoTable.append("id integer primary key NOT NULL,");
-        createDbInfoTable.append("name text NOT NULL,");
-        createDbInfoTable.append("value text NOT NULL");
-        createDbInfoTable.append(")");
 
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
@@ -387,11 +380,16 @@ public final class SqliteEamDbSettings {
 
             stmt.execute(createCorrelationTypesTable.toString());
 
-            stmt.execute(createDbInfoTable.toString());
+            /*
+             * Note that the essentially useless id column in the following
+             * table is required for backwards compatibility. Otherwise, the
+             * name column could be the primary key.
+             */
+            stmt.execute("CREATE TABLE db_info (id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
             stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
-            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATED_SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
 
             // Create a separate instance and reference table for each artifact type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
@@ -427,7 +425,7 @@ public final class SqliteEamDbSettings {
         }
         return true;
     }
-    
+
     /**
      * Get the template String for creating a new _instances table in a Sqlite
      * central repository. %s will exist in the template where the name of the
@@ -511,8 +509,8 @@ public final class SqliteEamDbSettings {
      * instance table. %s will exist in the template where the name of the new
      * table will be addedd.
      *
-     * @return a String which is a template for adding an index to the file_obj_id
-     *         column of a _instances table
+     * @return a String which is a template for adding an index to the
+     *         file_obj_id column of a _instances table
      */
     static String getAddObjectIdIndexTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.

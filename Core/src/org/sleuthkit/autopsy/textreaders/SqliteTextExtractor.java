@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textextractors;
+package org.sleuthkit.autopsy.textreaders;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -105,8 +105,8 @@ final class SqliteTextExtractor extends TextExtractor {
         public SQLiteStreamReader(AbstractFile file) {
             this.file = file;
             reader = new SQLiteTableReader.Builder(file)
-                    .onColumnNames(getColumnNameStrategy())
-                    .forAll(getForAllTableValuesStrategy()).build();
+                    .forAllColumnNames(getColumnNameStrategy())
+                    .forAllTableValues(getForAllTableValuesStrategy()).build();
         }
 
         /**

@@ -1,0 +1,11 @@
+/*! \page vm_extractor_page Virtual Machine Extractor Module
+
+The Virtual Machine Extractor Module adds any virtual machines it finds in a data source to the case as new data sources. This includes virtual 
+machine disk (.vmdk) files and virtual hard drive (.vhd) files. Note that each virtual disk will be extracted to the case folder.
+
+In the example below, the original data source "testImage.img" contained a VHD file. This VHD "alphaFiles.vhd" was added to the case as a new data source, and it was
+processed by the same ingest modules that were run on the original image.
+
+\image html virtual_machine_extractor_results.png
+
+*/

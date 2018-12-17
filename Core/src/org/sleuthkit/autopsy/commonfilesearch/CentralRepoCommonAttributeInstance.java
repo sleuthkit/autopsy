@@ -81,7 +81,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
                     // Find the correct data source
                     Optional<DataSource> dataSource = tskDb.getDataSources().stream()
-                            .filter(p -> p.getDeviceId().equals(currentAttribute.getCorrelationDataSource().getDeviceID()))
+                            .filter(p -> p.getId() == currentAttribute.getCorrelationDataSource().getDataSourceObjectID())
                             .findFirst();
                     if (!dataSource.isPresent()) {
                         LOGGER.log(Level.WARNING, String.format("Unable to find data source with device ID %s in the current case", currentAttribute.getCorrelationDataSource().getDeviceID()));

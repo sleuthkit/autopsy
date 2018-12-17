@@ -80,10 +80,10 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         commentsOccurencesColumnsCheckbox.setSelected(UserPreferences.hideCentralRepoCommentsAndOccurrences());
         
         hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
-        translateNamesInTableRadioButton.setSelected(UserPreferences.displayTranslatedFileNames());
+        fileNameTranslationColumnCheckbox.setSelected(UserPreferences.displayTranslatedFileNames());
         
         TextTranslationService tts = TextTranslationService.getInstance();
-        translateNamesInTableRadioButton.setEnabled(tts.hasProvider());
+        fileNameTranslationColumnCheckbox.setEnabled(tts.hasProvider());
 
         // Current Case Settings
         boolean caseIsOpen = Case.isCaseOpen();
@@ -113,7 +113,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCheckbox.isSelected());
         UserPreferences.setShowOnlyCurrentUserTags(hideOtherUsersTagsCheckbox.isSelected());
         UserPreferences.setHideCentralRepoCommentsAndOccurrences(commentsOccurencesColumnsCheckbox.isSelected());
-        UserPreferences.setDisplayTranslatedFileNames(translateNamesInTableRadioButton.isSelected());
+        UserPreferences.setDisplayTranslatedFileNames(fileNameTranslationColumnCheckbox.isSelected());
 
         storeGroupItemsInTreeByDataSource();
 
@@ -166,7 +166,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         timeZoneList = new javax.swing.JList<>();
         translateTextLabel = new javax.swing.JLabel();
         commentsOccurencesColumnWrapAroundText = new javax.swing.JLabel();
-        translateNamesInTableRadioButton = new javax.swing.JRadioButton();
+        fileNameTranslationColumnCheckbox = new javax.swing.JCheckBox();
         currentCaseSettingsPanel = new javax.swing.JPanel();
         groupByDataSourceCheckbox = new javax.swing.JCheckBox();
         currentSessionSettingsPanel = new javax.swing.JPanel();
@@ -277,10 +277,10 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(commentsOccurencesColumnWrapAroundText, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.commentsOccurencesColumnWrapAroundText.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(translateNamesInTableRadioButton, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.translateNamesInTableRadioButton.text")); // NOI18N
-        translateNamesInTableRadioButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(fileNameTranslationColumnCheckbox, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.fileNameTranslationColumnCheckbox.text")); // NOI18N
+        fileNameTranslationColumnCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                translateNamesInTableRadioButtonActionPerformed(evt);
+                fileNameTranslationColumnCheckboxActionPerformed(evt);
             }
         });
 
@@ -329,11 +329,11 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                             .addGroup(globalSettingsPanelLayout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(globalSettingsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(fileNameTranslationColumnCheckbox)
                                     .addComponent(keepCurrentViewerRadioButton)
                                     .addComponent(useBestViewerRadioButton)
                                     .addComponent(useLocalTimeRadioButton)
-                                    .addComponent(useAnotherTimeRadioButton)
-                                    .addComponent(translateNamesInTableRadioButton))))))
+                                    .addComponent(useAnotherTimeRadioButton))))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         globalSettingsPanelLayout.setVerticalGroup(
@@ -380,7 +380,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(translateTextLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(translateNamesInTableRadioButton)))
+                        .addComponent(fileNameTranslationColumnCheckbox)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -487,14 +487,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_hideRejectedResultsCheckboxActionPerformed
 
-    private void translateNamesInTableRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_translateNamesInTableRadioButtonActionPerformed
-        if (immediateUpdates) {
-            UserPreferences.setDisplayTranslatedFileNames(translateNamesInTableRadioButton.isSelected());
-        } else {
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-    }//GEN-LAST:event_translateNamesInTableRadioButtonActionPerformed
-
     private void timeZoneListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_timeZoneListValueChanged
         if (immediateUpdates && useAnotherTimeRadioButton.isSelected()) {
             UserPreferences.setTimeZoneForDisplays(timeZoneList.getSelectedValue().substring(11).trim());
@@ -593,6 +585,14 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         }
     }//GEN-LAST:event_useBestViewerRadioButtonActionPerformed
 
+    private void fileNameTranslationColumnCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileNameTranslationColumnCheckboxActionPerformed
+        if (immediateUpdates) {
+            UserPreferences.setDisplayTranslatedFileNames(fileNameTranslationColumnCheckbox.isSelected());
+        } else {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_fileNameTranslationColumnCheckboxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel centralRepoLabel;
@@ -603,6 +603,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JCheckBox dataSourcesHideKnownCheckbox;
     private javax.swing.JCheckBox dataSourcesHideSlackCheckbox;
     private javax.swing.JLabel displayTimeLabel;
+    private javax.swing.JCheckBox fileNameTranslationColumnCheckbox;
     private javax.swing.JPanel globalSettingsPanel;
     private javax.swing.JCheckBox groupByDataSourceCheckbox;
     private javax.swing.JLabel hideKnownFilesLabel;
@@ -614,7 +615,6 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
     private javax.swing.JRadioButton keepCurrentViewerRadioButton;
     private javax.swing.JLabel selectFileLabel;
     private javax.swing.JList<String> timeZoneList;
-    private javax.swing.JRadioButton translateNamesInTableRadioButton;
     private javax.swing.JLabel translateTextLabel;
     private javax.swing.JRadioButton useAnotherTimeRadioButton;
     private javax.swing.JRadioButton useBestViewerRadioButton;
