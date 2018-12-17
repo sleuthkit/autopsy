@@ -20,12 +20,33 @@ in an external application. Alternately you can browse to the "Reports" folder i
 
 \section report_types Report Types
 
-
 \subsection report_html HTML Report
+
+For HTML reports, you can first choose to enter a header and footer that will be displayed in your results. For example, you might want to add a classification banner.
+
+\image html reports_html_header.png
+
+There are two options when generating a report - include all results or only include tagged results.
+
+\image html reports_html_all_results.png
+
+If you choose "All Results", you can then optionally use the "Data Types" button to choose which types of data to include in the report.
+
+\image html reports_html_art_select.png
+
+If you choose "Tagged Results", you can select which tags you would like to include in the report. Note that you can't filter on data type when using this option. 
+
+\image html reports_html_tagged.png
+
+The completed report will look similar to this:
+
+\image html reports_html_display.png
+
+You can use the links on the left side to see the results for each data type.
 
 \subsection report_excel Excel Report
 
-Generating an Excel report is very similar to HTML reports - you select which tags and data types to export and Autopsy will create a .xlsx file.
+Generating an Excel report is very similar to an \ref report_html. You select which tags or data types to export and Autopsy will create a .xlsx file.
 
 \image html reports_excel.png
 
@@ -42,6 +63,10 @@ show up as Hashset Hits.
 
 \subsection report_case_uco CASE-UCO
 
+This module creates an JSON output file in <a href="https://github.com/ucoProject/CASE/wiki">CASE-UCO</a> format from a single data source. 
+
+\image html reports_case.png
+
 \subsection report_files Files - Text
 
 This report module allows you create a tab delimited text file from all files in the current case. You can select which fields should be exported.
@@ -49,7 +74,6 @@ This report module allows you create a tab delimited text file from all files in
 \image html reports_files_config.png
 <br>
 \image html reports_files_results.png
-
 
 \subsection report_kml Google Earth KML
 
@@ -72,46 +96,5 @@ d41d8cd98f00b204e9800998ecf8427e|/img_image1.vhd/vol_vol2/$Volume|3|rr-xr-xr-x|4
 411c8024a7c38ee3843ba8a07d048ec2|/img_image1.vhd/vol_vol2/0000/0000_b.txt|64|rrwxrwxrwx|0|0|11|1498757454|1498176990|1498757454|1498757454
 fcc958c5096889a222785ddb8c4bff80|/img_image1.vhd/vol_vol2/0000/0000_c.txt|65|rrwxrwxrwx|0|0|11|1498757454|1498176990|1498757454|1498757454
 b7cde263cc1b5df5a13aeec742637a89|/img_image1.vhd/vol_vol2/0000/0000_d.txt|66|rrwxrwxrwx|0|0|11|1498757454|1498176990|1498757454|1498757454</pre>
-
-
-
-Reporting 
-
-To create a report, go to "Tools", "Generate Report". You can choose several different types of reports. We will go through the HTML report here.
-\image html generate-report-1.PNG
-<br>
-
-When you have selected a report type, choose between
-- All Results
-- Tagged Results
-
-<br>
-\image html generate-report-2.PNG
-<br>
-
-If you select All Results, you can choose the Data Types (Artifact Types) you would like included.
-<br>
-\image html generate-report-3.PNG
-<br>
-
-If you select Tagged Results, you can choose the tags you would like included.
-<br>
-\image html generate-report-4.PNG
-<br>
-<br>
-In our case, an HTML report is generated.
-<br>
-<br>
-<b>All Results HTML Report:</b>
-<br>
-\image html generate-report-5.PNG
-<br>
-<br>
-<b>Tagged Results HTML Report:</b>
-<br>
-\image html generate-report-6.PNG
-<br>
-There are other types of reports to choose, but they operate on the same principle. Select either All Results or Tagged results to include.
-<br>
 
 */
