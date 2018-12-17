@@ -149,7 +149,7 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return Builder reference
          */
-        public Builder forAllLongVaues(Consumer<Long> action) {
+        public Builder forAllLongValues(Consumer<Long> action) {
             this.forAllLongValuesConsumer = action;
             return this;
         }
