@@ -9,7 +9,7 @@ of any coordinates found to load into software like Google Earth.
 \image html reports_select.png
 
 The different types of reports will be described below. The majority of the report modules will generate a report file which
-will be displayed in the case under the "Reports" node of the tree.
+will be displayed in the case under the "Reports" node of the \ref tree_viewer_page.
 
 \image html reports_result_viewer.png
 
