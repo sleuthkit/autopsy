@@ -100,8 +100,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 if (EamDb.isEnabled()) {
                     EamDb.getInstance().shutdownConnections();
                 }
-                FileUtils.deleteDirectory(testDirectory.toFile()); //DLG: Temporarily disable
-                //System.out.println(); //DLG: BREAKPOINT HERE! Go delete the directory!
+                FileUtils.deleteDirectory(testDirectory.toFile());
             } catch (IOException | EamDbException ex) {
                 Assert.fail(ex.getMessage());
             }
@@ -195,8 +194,7 @@ public class CentralRepoDatamodelTest extends TestCase {
             if (EamDb.isEnabled()) {
                 EamDb.getInstance().shutdownConnections();
             }
-            FileUtils.deleteDirectory(testDirectory.toFile()); //DLG: Temporarily disable
-            //System.out.println(); //DLG: BREAKPOINT HERE! Go delete the directory!
+            FileUtils.deleteDirectory(testDirectory.toFile());
         } catch (EamDbException | IOException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -241,11 +239,11 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(fileType, notableHashInBothCases, case1, dataSource1fromCase1, "path1",
                     "", TskData.FileKnown.BAD,
-                    0L); //DLG: This may not work!
+                    0L);
             EamDb.getInstance().addArtifactInstance(attr1);
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(fileType, notableHashInBothCases, case2, dataSource1fromCase2, "path2",
                     "", TskData.FileKnown.BAD,
-                    0L); //DLG: This may not work!
+                    0L);
 
             EamDb.getInstance().addArtifactInstance(attr2);
 
@@ -263,13 +261,13 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(fileType, notableHashInOneCaseKnownOther, case1, dataSource1fromCase1, "path3",
                     "", TskData.FileKnown.BAD,
-                    0L); //DLG: This may not work!
+                    0L);
 
             EamDb.getInstance().addArtifactInstance(attr1);
 
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(fileType, notableHashInOneCaseKnownOther, case2, dataSource1fromCase2, "path4",
                     "", TskData.FileKnown.KNOWN,
-                    0L); //DLG: This may not work!
+                    0L);
 
             EamDb.getInstance().addArtifactInstance(attr2);
 
@@ -293,7 +291,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, hashToChangeToNotable, case1, dataSource1fromCase2, "path5",
                     "", TskData.FileKnown.KNOWN,
-                    0L); //DLG: This may not work!
+                    0L);
 
             EamDb.getInstance().addArtifactInstance(attr);
 
@@ -311,10 +309,10 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(fileType, randomHash(), case1, dataSource1fromCase1, BAD_PATH,
                     "", TskData.FileKnown.KNOWN,
-                    0L); //DLG: This may not work!
+                    0L);
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(fileType, randomHash(), case1, dataSource1fromCase2, BAD_PATH,
                     "", TskData.FileKnown.KNOWN,
-                    0L); //DLG: This may not work!
+                    0L);
 
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr1, TskData.FileKnown.BAD);
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr2, TskData.FileKnown.BAD);
@@ -334,7 +332,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, randomHash(), case1, dataSource1fromCase1, BAD_PATH,
                     "", TskData.FileKnown.KNOWN,
-                    0L); //DLG: This may not work!
+                    0L);
 
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr, null);
             fail("setArtifactInstanceKnownStatus failed to throw exception for null known status");
@@ -349,7 +347,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, randomHash(), null, dataSource1fromCase1, BAD_PATH,
                     "", TskData.FileKnown.KNOWN,
-                    0L); //DLG: This may not work!
+                    0L);
 
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr, TskData.FileKnown.BAD);
             fail("setArtifactInstanceKnownStatus failed to throw exception for null case");
@@ -364,7 +362,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, randomHash(), case1, null, BAD_PATH,
                     "", TskData.FileKnown.KNOWN,
-                    0L); //DLG: This may not work!
+                    0L);
 
             EamDb.getInstance().setAttributeInstanceKnownStatus(attr, TskData.FileKnown.BAD);
             fail("setArtifactInstanceKnownStatus failed to throw exception for null case");
@@ -537,7 +535,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 String path = "C:\\bulkInsertPath1\\file" + String.valueOf(i);
 
                 CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, value, case1, dataSource1fromCase1, path,
-                        null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                        null, TskData.FileKnown.UNKNOWN, 0L);
                 list1.add(attr);
             }
 
@@ -557,7 +555,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                 String path = "C:\\bulkInsertPath2\\file" + String.valueOf(i);
 
                 CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, value, case1, dataSource1fromCase1, path,
-                        null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                        null, TskData.FileKnown.UNKNOWN, 0L);
                 list2.add(attr);
             }
 
@@ -583,7 +581,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test preparing artifact with null type
         try {
-            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(null, randomHash(), null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+            CorrelationAttributeInstance attr = new CorrelationAttributeInstance(null, randomHash(), null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addAttributeInstanceBulk(attr);
             fail("prepareBulkArtifact failed to throw exception for null type");
         } catch (EamDbException ex) {
@@ -597,7 +595,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test preparing artifact with null case
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, randomHash(), null, dataSource1fromCase1, "path",
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addAttributeInstanceBulk(attr);
             EamDb.getInstance().commitAttributeInstancesBulk();
             fail("bulkInsertArtifacts failed to throw exception for null case");
@@ -612,7 +610,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test preparing artifact with null data source
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, randomHash(), case1, null, "path",
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addAttributeInstanceBulk(attr);
             EamDb.getInstance().commitAttributeInstancesBulk();
             fail("prepareBulkArtifact failed to throw exception for null data source");
@@ -628,7 +626,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // CorrelationAttributeInstance will throw an exception
         try {
             new CorrelationAttributeInstance(fileType, randomHash(), case1, dataSource1fromCase1, null,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             fail("CorrelationAttributeInstance failed to throw exception for null path");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -641,7 +639,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test preparing artifact with null known status
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, randomHash(), case1, dataSource1fromCase1, "path", "comment", null,
-                    0L); //DLG: This may not work!
+                    0L);
             EamDb.getInstance().addAttributeInstanceBulk(attr);
             EamDb.getInstance().commitAttributeInstancesBulk();
             fail("prepareBulkArtifact failed to throw exception for null known status");
@@ -727,7 +725,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding attribute with one instance
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, onlyInDataSource3Hash, case2, dataSource1fromCase2, onlyInDataSource3Path,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
@@ -737,13 +735,13 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding attribute with an instance in each data source
         try {
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(fileType, inAllDataSourcesHash, case1, dataSource1fromCase1, inAllDataSourcesPath,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(attr1);
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(fileType, inAllDataSourcesHash, case1, dataSource2fromCase1, inAllDataSourcesPath,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(attr2);
             CorrelationAttributeInstance attr3 = new CorrelationAttributeInstance(fileType, inAllDataSourcesHash, case2, dataSource1fromCase2, inAllDataSourcesPath,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(attr3);
 
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
@@ -754,10 +752,10 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding attribute with two instances in one data source
         try {
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(fileType, inDataSource1twiceHash, case1, dataSource1fromCase1, inDataSource1twicePath1,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(attr1);
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(fileType, inDataSource1twiceHash, case1, dataSource1fromCase1, inDataSource1twicePath2,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(attr2);
 
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
@@ -769,7 +767,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding an email artifact
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(emailType, emailValue, case1, dataSource1fromCase1, emailPath,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
@@ -782,7 +780,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID),
                     phoneValue,
                     case1, dataSource1fromCase1, phonePath,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
 
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
@@ -798,7 +796,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     type,
                     domainValue,
                     case1, dataSource1fromCase1, domainPath,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
             Exceptions.printStackTrace(ex);
@@ -811,7 +809,7 @@ public class CentralRepoDatamodelTest extends TestCase {
                     EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.USBID_TYPE_ID),
                     devIdValue,
                     case1, dataSource1fromCase1, devIdPath,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
 
             EamDb.getInstance().addArtifactInstance(attr);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
@@ -822,7 +820,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test CorrelationAttributeInstance creation
         try {
             new CorrelationAttributeInstance(fileType, randomHash(),
-                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L);
         } catch (CorrelationAttributeNormalizationException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail("Error Creating correlation attribute instance " + ex.getMessage());
@@ -831,7 +829,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding instance with null case
         try {
             CorrelationAttributeInstance failAttrInst = new CorrelationAttributeInstance(fileType, "badInstances", null, dataSource1fromCase2, BAD_PATH,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(failAttrInst);
             fail("Error CorrelationAttributeNormalizationException was expected to be thrown making and adding a CorrelationAttributeInstance with null case and was not");
         } catch (EamDbException ex) {
@@ -844,7 +842,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationCase badCase = new CorrelationCase("badCaseUuid", "badCaseName");
             CorrelationAttributeInstance failAttrInst2 = new CorrelationAttributeInstance(fileType, randomHash(), badCase, dataSource1fromCase2, BAD_PATH,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(failAttrInst2);
             fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with invalid case ID and was not");
         } catch (EamDbException ex) {
@@ -856,7 +854,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding instance with null data source
         try {
             CorrelationAttributeInstance failAttrInst3 = new CorrelationAttributeInstance(fileType, randomHash(), case1, null, BAD_PATH,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(failAttrInst3);
             fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with null data source and was not");
         } catch (EamDbException ex) {
@@ -868,9 +866,9 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding instance with invalid data source ID
         try {
             CorrelationDataSource badDS = new CorrelationDataSource(case1, "badDSUuid", "badDSName",
-                    0L); //DLG: This may not work!
+                    0L);
             CorrelationAttributeInstance failAttrInst4 = new CorrelationAttributeInstance(fileType, randomHash(), case1, badDS, BAD_PATH,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(failAttrInst4);
             fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with invalid data source ID and was not");
         } catch (EamDbException ex) {
@@ -883,7 +881,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // This will fail in the CorrelationAttributeInstance constructor
         try {
             new CorrelationAttributeInstance(fileType, randomHash(), case1, dataSource1fromCase1, null,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             fail("Error EamDbException was expected to be thrown making a CorrelationAttributeInstance with null path and was not");
         } catch (EamDbException ex) {
             // This is the expected behavior
@@ -894,7 +892,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding instance with null known status
         try {
             CorrelationAttributeInstance failAttrInst5 = new CorrelationAttributeInstance(fileType, "badInstances", case1, dataSource1fromCase1, null, "comment", null,
-                    0L); //DLG: This may not work!
+                    0L);
             EamDb.getInstance().addArtifactInstance(failAttrInst5);
             fail("Error EamDbException was expected to be thrown making and adding a CorrelationAttributeInstance with null known status and was not");
         } catch (EamDbException ex) {
@@ -907,7 +905,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test null type
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(null, randomHash(),
-                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(attr);
             fail("Error CorrelationAttributeNormalizationException was expected to be thrown making and adding a CorrelationAttributeInstance with null type and was not");
         } catch (EamDbException ex) {
@@ -921,7 +919,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // This will fail in the CorrelationAttribute constructor
         try {
             new CorrelationAttributeInstance(fileType, null,
-                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L);
             fail("Error CorrelationAttributeNormalizationException was expected to be thrown making a CorrelationAttributeInstance with null type and was not");
         } catch (CorrelationAttributeNormalizationException ex) {
             // This is the expected behavior
@@ -1054,7 +1052,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting frequency of value that is in all three data sources
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, inAllDataSourcesHash,
-                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
             assertEquals("Unexpected frequency value of file type returned for value that should exist in all data sources", 100, freq);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
@@ -1065,7 +1063,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting frequency of value that appears twice in a single data source
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, inDataSource1twiceHash,
-                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
             assertEquals("Unexpected frequency value of file type returned for value that should exist in one of three data sources", 33, freq);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
@@ -1076,7 +1074,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting frequency of non-file type
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(emailType, emailValue,
-                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
             assertEquals("Unexpected frequency value of email type returned for value that should exist in one of three data sources", 33, freq);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
@@ -1087,7 +1085,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting frequency of non-existent value
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(fileType, unusedHashValue,
-                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L);
             int freq = EamDb.getInstance().getFrequencyPercentage(attr);
             assertEquals("Unexpected frequency value of file type returned for value that should not exist in any data sources", 0, freq);
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
@@ -1098,7 +1096,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test getting frequency with null type
         try {
             CorrelationAttributeInstance attr = new CorrelationAttributeInstance(null, "randomValue",
-                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, null, FILE_PATH, null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().getFrequencyPercentage(attr);
             fail("Error Exception was expected to be thrown when getting frequency of null type attribute");
         } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
@@ -1200,9 +1198,9 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             // Add two instances to the central repository and use the callback query to verify we can see them
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(fileType, callbackTestFileHash, case1, dataSource1fromCase1, callbackTestFilePath1,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(fileType, callbackTestFileHash, case1, dataSource1fromCase1, callbackTestFilePath2,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb DbManager = EamDb.getInstance();
             DbManager.addArtifactInstance(attr1);
             DbManager.addArtifactInstance(attr2);
@@ -1231,9 +1229,9 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             // Add two instances to the central repository and use the callback query to verify we can see them
             CorrelationAttributeInstance attr1 = new CorrelationAttributeInstance(fileType, callbackTestFileHash, case1, dataSource1fromCase1, callbackTestFilePath1,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             CorrelationAttributeInstance attr2 = new CorrelationAttributeInstance(fileType, callbackTestFileHash, case1, dataSource1fromCase1, callbackTestFilePath2,
-                    null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
+                    null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb DbManager = EamDb.getInstance();
             //these redundant addArtifactInstance calls allow code to be rearranged if necessary
             DbManager.addArtifactInstance(attr1);
@@ -2350,7 +2348,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with valid case, name, and ID
         try {
             dataSourceA = new CorrelationDataSource(case2, dataSourceAid, dataSourceAname,
-                    0L); //DLG: This may not work!
+                    0L);
             EamDb.getInstance().newDataSource(dataSourceA);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2361,7 +2359,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with the same case, name, and ID
         try {
             CorrelationDataSource temp = new CorrelationDataSource(case2, dataSourceAid, dataSourceAname,
-                    0L); //DLG: This may not work!
+                    0L);
             EamDb.getInstance().newDataSource(temp);
             fail("newDataSource did not throw exception from duplicate data source");
         } catch (EamDbException ex) {
@@ -2371,7 +2369,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with the same name and ID but different case
         try {
             dataSourceB = new CorrelationDataSource(case1, dataSourceAid, dataSourceAname,
-                    0L); //DLG: This may not work!
+                    0L);
             EamDb.getInstance().newDataSource(dataSourceB);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2383,7 +2381,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationCase correlationCase = new CorrelationCase("1", "test");
             CorrelationDataSource temp = new CorrelationDataSource(correlationCase, "tempID", "tempName",
-                    0L); //DLG: This may not work!
+                    0L);
             EamDb.getInstance().newDataSource(temp);
             fail("newDataSource did not throw exception from invalid case ID");
         } catch (EamDbException ex) {
@@ -2394,7 +2392,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with null device ID
         try {
             CorrelationDataSource temp = new CorrelationDataSource(case2, null, "tempName",
-                    0L); //DLG: This may not work!
+                    0L);
             EamDb.getInstance().newDataSource(temp);
             fail("newDataSource did not throw exception from null device ID");
         } catch (EamDbException ex) {
@@ -2405,7 +2403,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with null name
         try {
             CorrelationDataSource temp = new CorrelationDataSource(case2, "tempID", null,
-                    0L); //DLG: This may not work!
+                    0L);
             EamDb.getInstance().newDataSource(temp);
             fail("newDataSource did not throw exception from null name");
         } catch (EamDbException ex) {
@@ -2415,7 +2413,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting a data source with valid case and ID
         try {
-            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, /*dataSourceAid*/ 0L); //DLG: This may not work!
+            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, 0L);
             assertTrue("Failed to get data source", temp != null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2424,7 +2422,7 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting a data source with non-existent ID
         try {
-            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, /*"badID"*/ 9999L); //DLG: This may not work!
+            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, 9999L);
             assertTrue("getDataSource returned non-null value for non-existent data source", temp == null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2433,16 +2431,16 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Test getting a data source with a null case
         try {
-            EamDb.getInstance().getDataSource(null, /*dataSourceAid*/ 0L); //DLG: This may not work!
+            EamDb.getInstance().getDataSource(null, 0L);
             fail("getDataSource did not throw exception from null case");
         } catch (EamDbException ex) {
             // This is the expected behavior
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
-        // Test getting a data source with null ID //DLG: Fix this description?
+        // Test getting a data source with an invalid ID
         try {
-            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, -1L); //DLG: This might not work!
+            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, -1L);
             assertTrue("getDataSource returned non-null value for null data source", temp == null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
