@@ -90,6 +90,7 @@ class SampleFileIngestModuleWithUIFactory(IngestModuleFactoryAdapter):
         return True
 
     # TODO: Update class names to ones that you create below
+    # Note that you must use GenericIngestModuleJobSettings instead of making a custom settings class.
     def getIngestJobSettingsPanel(self, settings):
         if not isinstance(settings, GenericIngestModuleJobSettings):
             raise IllegalArgumentException("Expected settings argument to be instanceof GenericIngestModuleJobSettings")
