@@ -2,7 +2,7 @@
 
 \section reporting_overview Overview
 
-The report modules primarily allow the user to output some or all of the data from a case into a different format. This includes
+The report modules allow the user to extract key information from a case in a variety of formats. This includes
 making an HTML or Excel report containing all the extracted content, keyword hits, etc. from a case, or creating a KML file out
 of any coordinates found to load into software like Google Earth.
 
@@ -34,7 +34,8 @@ If you choose "All Results", you can then optionally use the "Data Types" button
 
 \image html reports_html_art_select.png
 
-If you choose "Tagged Results", you can select which tags you would like to include in the report. Note that you can't filter on data type when using this option. 
+If you choose "Tagged Results", you can restrict the files and results that appear in the report to only those tagged with the tags you select. 
+Note that you can't filter on data type when using this option. 
 
 \image html reports_html_tagged.png
 
