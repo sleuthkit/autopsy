@@ -241,6 +241,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public synchronized CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
 
+        if (eamCase.getCaseUUID() == null) {
+            throw new EamDbException("Case UUID is null");
+        }
+        
         // check if there is already an existing CorrelationCase for this Case
         CorrelationCase cRCase = getCaseByUUID(eamCase.getCaseUUID());
         if (cRCase != null) {

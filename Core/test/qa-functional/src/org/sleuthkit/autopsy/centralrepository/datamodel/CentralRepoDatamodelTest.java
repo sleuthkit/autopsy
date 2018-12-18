@@ -100,9 +100,9 @@ public class CentralRepoDatamodelTest extends TestCase {
                 if (EamDb.isEnabled()) {
                     EamDb.getInstance().shutdownConnections();
                 }
-                //FileUtils.deleteDirectory(testDirectory.toFile()); //DLG: Temporarily disable
-                System.out.println(); //DLG: BREAKPOINT HERE! Go delete the directory!
-            } catch (/*IOException |*/ EamDbException ex) {
+                FileUtils.deleteDirectory(testDirectory.toFile()); //DLG: Temporarily disable
+                //System.out.println(); //DLG: BREAKPOINT HERE! Go delete the directory!
+            } catch (IOException | EamDbException ex) {
                 Assert.fail(ex.getMessage());
             }
         }
@@ -192,10 +192,12 @@ public class CentralRepoDatamodelTest extends TestCase {
 
         // Close and delete the test case and central repo db
         try {
-            EamDb.getInstance().shutdownConnections();
-            //FileUtils.deleteDirectory(testDirectory.toFile()); //DLG: Temporarily disable
-            System.out.println(); //DLG: BREAKPOINT HERE! Go delete the directory!
-        } catch (EamDbException /*| IOException*/ ex) {
+            if (EamDb.isEnabled()) {
+                EamDb.getInstance().shutdownConnections();
+            }
+            FileUtils.deleteDirectory(testDirectory.toFile()); //DLG: Temporarily disable
+            //System.out.println(); //DLG: BREAKPOINT HERE! Go delete the directory!
+        } catch (EamDbException | IOException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
@@ -625,7 +627,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test preparing artifact with null path
         // CorrelationAttributeInstance will throw an exception
         try {
-            new CorrelationAttributeInstance(fileType, randomHash(), case1, dataSource1fromCase1, FILE_PATH,
+            new CorrelationAttributeInstance(fileType, randomHash(), case1, dataSource1fromCase1, null,
                     null, TskData.FileKnown.UNKNOWN, 0L); //DLG: This may not work!
             fail("CorrelationAttributeInstance failed to throw exception for null path");
         } catch (EamDbException ex) {
@@ -1145,15 +1147,6 @@ public class CentralRepoDatamodelTest extends TestCase {
             Assert.fail("Error EamDbException thrown when getting count of artifact instances for case 1, data source 1" + ex.getMessage());
         }
 
-        // Test getting count with null device ID
-        try {
-            long count = EamDb.getInstance().getCountArtifactInstancesByCaseDataSource(null); //DLG: This might not work!
-            assertEquals("Unexpected count of artifact instances retrieved when getting count for case 1, null data source", 0, count);
-        } catch (EamDbException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail("Error EamDbException thrown when getting count of artifact instances for case 1, null data source" + ex.getMessage());
-        }
-
         // Test getting data source count for entry that is in all three
         try {
             long count = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(fileType, inAllDataSourcesHash);
@@ -1340,8 +1333,8 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             List<CorrelationAttributeInstance.Type> types = EamDb.getInstance().getDefinedCorrelationTypes();
 
-            // We expect 6 total - 5 default and the custom one made earlier
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 6", types.size() == 6);
+            // We expect 11 total - 10 default and the custom one made earlier
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " entries - expected 11", types.size() == 11);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -1351,8 +1344,8 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             List<CorrelationAttributeInstance.Type> types = EamDb.getInstance().getEnabledCorrelationTypes();
 
-            // We expect 5 - the custom type is disabled
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 5", types.size() == 5);
+            // We expect 10 - the custom type is disabled
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " enabled entries - expected 10", types.size() == 10);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -1362,8 +1355,8 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             List<CorrelationAttributeInstance.Type> types = EamDb.getInstance().getSupportedCorrelationTypes();
 
-            // We expect 5 - the custom type is not supported
-            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 5", types.size() == 5);
+            // We expect 10 - the custom type is not supported
+            assertTrue("getDefinedCorrelationTypes returned " + types.size() + " supported entries - expected 10", types.size() == 10);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
@@ -2447,9 +2440,9 @@ public class CentralRepoDatamodelTest extends TestCase {
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
-        // Test getting a data source with null ID
+        // Test getting a data source with null ID //DLG: Fix this description?
         try {
-            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, null); //DLG: This might not work!
+            CorrelationDataSource temp = EamDb.getInstance().getDataSource(case2, -1L); //DLG: This might not work!
             assertTrue("getDataSource returned non-null value for null data source", temp == null);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
