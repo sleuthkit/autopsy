@@ -204,8 +204,6 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 Logger.getLogger(HashLookupSettingsPanel.class.getName()).log(Level.SEVERE, "Error getting index path of " + db.getHashSetName() + " hash set", ex); //NON-NLS
                 indexPathLabel.setText(ERROR_GETTING_PATH_TEXT);
             }
-            
-            //informationPanel.setPreferredSize(null); //DLG:
 
             // Update indexing components.
             try {
