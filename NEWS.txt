@@ -18,8 +18,8 @@ given value.
 - Data sources that fail hash verification are now flagged with interesting 
 item artifacts by the Data Source Integrity ingest module (formerly known as the 
 E01 Verifier ingest module).
-- Added report module to export data in CASE/UCO format.
-- Ingest filters and interesting file sets can be defined with multiple 
+- Added a report module to export data in CASE/UCO format.
+- Ingest filters and interesting file sets can now be defined with multiple 
 extensions included in a single condition/rule.
 
 Bug Fixes:
