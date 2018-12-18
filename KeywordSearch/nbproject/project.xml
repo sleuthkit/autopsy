@@ -119,7 +119,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.13</specification-version>
+                        <specification-version>10.14</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
