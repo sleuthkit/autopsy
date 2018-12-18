@@ -71,7 +71,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     
     /** generally text extractors should ignore archives and let unpacking
      * modules take care of them */
-    public static final List<String> ARCHIVE_MIME_TYPES
+    private static final List<String> ARCHIVE_MIME_TYPES
             = ImmutableList.of(
                     //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
                     "application/x-7z-compressed", //NON-NLS
