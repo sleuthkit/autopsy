@@ -48,6 +48,7 @@ from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.ingest import DataSourceIngestModule
 from org.sleuthkit.autopsy.ingest import FileIngestModule
+from org.sleuthkit.autopsy.ingest import GenericIngestModuleJobSettings
 from org.sleuthkit.autopsy.ingest import IngestMessage
 from org.sleuthkit.autopsy.ingest import IngestModule
 from org.sleuthkit.autopsy.ingest.IngestModule import IngestModuleException
@@ -82,7 +83,7 @@ class SampleFileIngestModuleWithUIFactory(IngestModuleFactoryAdapter):
 
     # TODO: Update class name to one that you create below
     def getDefaultIngestJobSettings(self):
-        return SampleFileIngestModuleWithUISettings()
+        return GenericIngestModuleJobSettings()
 
     # TODO: Keep enabled only if you need ingest job-specific settings UI
     def hasIngestJobSettingsPanel(self):
@@ -90,8 +91,8 @@ class SampleFileIngestModuleWithUIFactory(IngestModuleFactoryAdapter):
 
     # TODO: Update class names to ones that you create below
     def getIngestJobSettingsPanel(self, settings):
-        if not isinstance(settings, SampleFileIngestModuleWithUISettings):
-            raise IllegalArgumentException("Expected settings argument to be instanceof SampleIngestModuleSettings")
+        if not isinstance(settings, GenericIngestModuleJobSettings):
+            raise IllegalArgumentException("Expected settings argument to be instanceof GenericIngestModuleJobSettings")
         self.settings = settings
         return SampleFileIngestModuleWithUISettingsPanel(self.settings)
 
@@ -124,7 +125,7 @@ class SampleFileIngestModuleWithUI(FileIngestModule):
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
         # As an example, determine if user configured a flag in UI
-        if self.local_settings.getFlag():
+        if self.local_settings.getSetting("flag") == "true":
             self.log(Level.INFO, "flag is set")
         else:
             self.log(Level.INFO, "flag is not set")
@@ -143,25 +144,6 @@ class SampleFileIngestModuleWithUI(FileIngestModule):
     # TODO: Add any shutdown code that you need here.
     def shutDown(self):
         pass
-
-# Stores the settings that can be changed for each ingest job
-# All fields in here must be serializable.  It will be written to disk.
-# TODO: Rename this class
-class SampleFileIngestModuleWithUISettings(IngestModuleIngestJobSettings):
-    serialVersionUID = 1L
-
-    def __init__(self):
-        self.flag = False
-
-    def getVersionNumber(self):
-        return serialVersionUID
-
-    # TODO: Define getters and settings for data you want to store from UI
-    def getFlag(self):
-        return self.flag
-
-    def setFlag(self, flag):
-        self.flag = flag
 
 
 # UI that is shown to user for each ingest job so they can configure the job.
@@ -187,9 +169,9 @@ class SampleFileIngestModuleWithUISettingsPanel(IngestModuleIngestJobSettingsPan
     # TODO: Update this for your UI
     def checkBoxEvent(self, event):
         if self.checkbox.isSelected():
-            self.local_settings.setFlag(True)
+            self.local_settings.setSetting("flag", "true")
         else:
-            self.local_settings.setFlag(False)
+            self.local_settings.setSetting("flag", "false")
 
     # TODO: Update this for your UI
     def initComponents(self):
@@ -199,7 +181,7 @@ class SampleFileIngestModuleWithUISettingsPanel(IngestModuleIngestJobSettingsPan
 
     # TODO: Update this for your UI
     def customizeComponents(self):
-        self.checkbox.setSelected(self.local_settings.getFlag())
+        self.checkbox.setSelected(self.local_settings.getSetting("flag") == "true")
 
     # Return the settings used
     def getSettings(self):
