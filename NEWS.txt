@@ -1,11 +1,44 @@
+---------------- VERSION 4.10.0  --------------
+New Features:
+- Users can now view information on all cases/data sources in the Central 
+Repository.
+- SSID, MAC address, IMEI, IMSI, and ICCID properties can now be added to the 
+Central Repository by the Correlation Engine ingest module. 
+- The Correlation Engine ingest module can be configured to flag any occurrences 
+of SSID, MAC address, IMEI, IMSI, and ICCID properties that have been previously 
+added to the Central Repository.
+- File type filtering for common properties search is now supported.
+- Common properties search results can now be viewed by case and data source 
+within the case.
+- Users can now search the Central Repository for property instances with a 
+given value.
+- Added the ability for examiners to select the time zone for displaying dates.
+- Custom headers and footers can now be added to HTML reports.
+- Added ability to either enter or generate hashes of image data sources.
+- Data sources that fail hash verification are now flagged with interesting 
+item artifacts by the Data Source Integrity ingest module (formerly known as the 
+E01 Verifier ingest module).
+- Added report module to export data in CASE/UCO format.
+- Ingest filters and interesting file sets can be defined with multiple 
+extensions included in a single condition/rule.
+
+Bug Fixes:
+- The Images/Videos Gallery now works for multi-user cases.
+- Duplicate interesting item and EXIF metadata artifacts are no longer created 
+when you run the modules that generate them more than once.
+- The Application content viewer now displays SQLite table column names even 
+when the table is empty.
+- Assorted small bug fixes are included.
+
+
 ---------------- VERSION 4.9.1  --------------
 Bug Fixes:
 - Fixed possible ingest deadlock from Image Gallery database inserts.
 - Image Gallery does not need lock on Case DB during pre-population, which makes UI more responsive.
 - Other misc Image Gallery fixes.
 
----------------- VERSION 4.9.0  --------------
 
+---------------- VERSION 4.9.0  --------------
 New Features:
 - Removed data from table that are time intensive and can be found in content viewers (such as hash set hits)
 - Added ability to find common items (files, emails, etc.) between current case and past cases using the Central Repository. 
@@ -56,11 +89,11 @@ New Features:
 -- An interesting file artifact is now created when a "zip bomb" is detected.
 -- An object detection ingest module was added to the Experimental module. It requires an OpenCV trained model. 
 
-
 Bug Fixes:
 - Expanding the case tree is more efficient.
 - Improved "zip bomb" detection.
 - Assorted small bug fixes are included.
+
 
 ---------------- VERSION 4.7.0  --------------
 New Features: 
