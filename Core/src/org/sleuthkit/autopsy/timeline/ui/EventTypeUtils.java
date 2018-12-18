@@ -85,6 +85,10 @@ final public class EventTypeUtils {
             imageFileName = "message.png";
         } else if (typeID == EventType.RECENT_DOCUMENTS.getTypeID()) {
             imageFileName = "recent_docs.png";
+        } else if (typeID == EventType.REGISTRY.getTypeID()) {
+            imageFileName = "registry.png";
+        } else if (typeID == EventType.LOG_ENTRY.getTypeID()) {
+            imageFileName = "raw_access_logs.png";
         } else {
             imageFileName = "timeline_marker.png";
         }
