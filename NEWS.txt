@@ -12,6 +12,8 @@ added to the Central Repository.
 within the case.
 - Users can now search the Central Repository for property instances with a 
 given value.
+- OCR text extraction for keyword search now supports languages other than 
+English, if language packs are installed.
 - Added the ability for examiners to select the time zone for displaying dates.
 - Custom headers and footers can now be added to HTML reports.
 - Added ability to either enter or generate hashes of image data sources.
