@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.guiutils;
+package org.sleuthkit.autopsy.datamodel.utils;
 
 import java.io.File;
 import java.sql.ResultSet;

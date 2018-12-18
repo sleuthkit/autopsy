@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import javax.swing.ComboBoxModel;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.guiutils.DataSourceLoader;
+import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
 import org.sleuthkit.autopsy.guiutils.DataSourceComboBoxModel;
 import org.sleuthkit.datamodel.TskCoreException;
 
