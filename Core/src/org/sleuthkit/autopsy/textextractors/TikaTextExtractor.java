@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders;
+package org.sleuthkit.autopsy.textextractors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharSource;
@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.textreaders.textreaderconfigs.ImageConfig;
+import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -71,7 +71,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extracts text from Tika supported content. Protects against Tika parser hangs
  * (for unexpected/corrupt content) using a timeout mechanism.
  */
-final class TikaTextExtractor extends TextExtractor {
+final class TikaTextExtractor implements TextExtractor {
 
     //Mimetype groups to aassist extractor implementations in ignoring binary and 
     //archive files.
@@ -172,7 +172,7 @@ final class TikaTextExtractor extends TextExtractor {
      * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
     @Override
-    public Reader getReader() throws ExtractionException {
+    public Reader getReader() throws InitReaderException {
         InputStream stream = null;
 
         ParseContext parseContext = new ParseContext();
@@ -234,7 +234,7 @@ final class TikaTextExtractor extends TextExtractor {
             PushbackReader pushbackReader = new PushbackReader(tikaReader);
             int read = pushbackReader.read();
             if (read == -1) {
-                throw new ExtractionException("Unable to extract text: "
+                throw new InitReaderException("Unable to extract text: "
                         + "Tika returned empty reader for " + content);
             }
             pushbackReader.unread(read);
@@ -247,8 +247,8 @@ final class TikaTextExtractor extends TextExtractor {
             final String msg = NbBundle.getMessage(this.getClass(),
                     "AbstractFileTikaTextExtract.index.tikaParseTimeout.text",
                     content.getId(), content.getName());
-            throw new ExtractionException(msg, te);
-        } catch (ExtractionException ex) {
+            throw new InitReaderException(msg, te);
+        } catch (InitReaderException ex) {
             throw ex;
         } catch (Exception ex) {
             tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the "
@@ -257,7 +257,7 @@ final class TikaTextExtractor extends TextExtractor {
             final String msg = NbBundle.getMessage(this.getClass(),
                     "AbstractFileTikaTextExtract.index.exception.tikaParse.msg",
                     content.getId(), content.getName());
-            throw new ExtractionException(msg, ex);
+            throw new InitReaderException(msg, ex);
         } finally {
             future.cancel(true);
         }
@@ -271,9 +271,9 @@ final class TikaTextExtractor extends TextExtractor {
      * @return InputStream connected to the output file that Tesseract produced.
      *
      * @throws
-     * org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException
+     * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
      */
-    private InputStream runOcrAndGetOutputStream(AbstractFile file) throws ExtractionException {
+    private InputStream runOcrAndGetOutputStream(AbstractFile file) throws InitReaderException {
         File inputFile = null;
         File outputFile = null;
         try {
@@ -311,14 +311,14 @@ final class TikaTextExtractor extends TextExtractor {
             if (outputFile != null) {
                 outputFile.delete();
             }
-            throw new ExtractionException("Could not successfully run Tesseract", ex);
+            throw new InitReaderException("Could not successfully run Tesseract", ex);
         } finally {
             if (inputFile != null) {
                 inputFile.delete();
             }
         }
     }
-
+    
     /**
      * Wraps the creation of a TikaReader into a Future so that it can be
      * cancelled.
@@ -422,24 +422,27 @@ final class TikaTextExtractor extends TextExtractor {
     }
 
     /**
-     * Determines if Tika is supported for this content type and mimetype.
-     *
-     * @param content        Source content to read
-     * @param detectedFormat Mimetype of content
+     * Determines if Tika is enabled for this content
      *
      * @return Flag indicating support for reading content type
      */
     @Override
-    public boolean isSupported(Content content, String detectedFormat) {
-        if (detectedFormat == null
-                || BINARY_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
-                || ARCHIVE_MIME_TYPES.contains(detectedFormat)
-                || (detectedFormat.startsWith("video/") && !detectedFormat.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
-                || detectedFormat.equals(SQLITE_MIMETYPE) //Skip sqlite files, Tika cannot handle virtual tables and will fail with an exception. //NON-NLS
+    public boolean isSupported() {
+        if(!(content instanceof AbstractFile)) {
+            return false;
+        }
+        
+        String detectedType = ((AbstractFile)content).getMIMEType();
+        if (detectedType == null
+                || BINARY_MIME_TYPES.contains(detectedType) //any binary unstructured blobs (string extraction will be used)
+                || ARCHIVE_MIME_TYPES.contains(detectedType)
+                || (detectedType.startsWith("video/") && !detectedType.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
+                || detectedType.equals(SQLITE_MIMETYPE) //Skip sqlite files, Tika cannot handle virtual tables and will fail with an exception. //NON-NLS
                 ) {
             return false;
         }
-        return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
+        
+        return TIKA_SUPPORTED_TYPES.contains(detectedType);
     }
 
     /**

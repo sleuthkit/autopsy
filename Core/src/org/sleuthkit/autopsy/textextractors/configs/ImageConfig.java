@@ -16,11 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders.textreaderconfigs;
+package org.sleuthkit.autopsy.textextractors.configs;
 
 /**
- * Allows for configuration of OCR on image files. Readers that use ImageConfig
- * can be obtained through {@link org.sleuthkit.autopsy.textreaders.TextReaders}
+ * Allows for configuration of OCR on image files. Extractors that use ImageConfig
+ * can be obtained through TextExtractoryFactory.getExtractor().
  *
  * @see org.openide.util.Lookup
  */

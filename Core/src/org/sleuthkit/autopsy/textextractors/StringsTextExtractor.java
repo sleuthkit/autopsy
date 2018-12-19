@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +28,7 @@ import java.util.Objects;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
-import org.sleuthkit.autopsy.textreaders.textreaderconfigs.StringsConfig;
+import org.sleuthkit.autopsy.textextractors.configs.StringsConfig;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-final class StringsTextExtractor {
+final class StringsTextExtractor implements TextExtractor {
 
     private boolean extractUTF8;
     private boolean extractUTF16;
@@ -81,6 +81,7 @@ final class StringsTextExtractor {
      * @throws
      * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
+    @Override
     public InputStreamReader getReader() {
         InputStream stringStream = getInputStream(content);
         return new InputStreamReader(stringStream, Charset.forName(DEFAULT_INDEXED_TEXT_CHARSET));
@@ -104,6 +105,7 @@ final class StringsTextExtractor {
      *
      * @param context Lookup instance containing config classes
      */
+    @Override
     public void setExtractionSettings(Lookup context) {
         if (context != null) {
             StringsConfig configInstance = context.lookup(StringsConfig.class);
@@ -126,14 +128,11 @@ final class StringsTextExtractor {
      *
      * @return
      */
-    public boolean isEnabled() {
+    @Override
+    public boolean isSupported() {
         return extractUTF8 || extractUTF16;
     }
-
-    boolean isSupported(Content file, String detectedFormat) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    
     /**
      * Content input string stream reader/converter - given Content, extract
      * strings from it and return encoded bytes via read()
