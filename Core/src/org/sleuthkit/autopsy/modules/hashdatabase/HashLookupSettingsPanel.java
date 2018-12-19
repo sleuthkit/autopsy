@@ -579,12 +579,12 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         jButton3 = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
+        hashDatabasesLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         hashSetTable = new HashSetTable();
-        deleteDatabaseButton = new javax.swing.JButton();
-        importDatabaseButton = new javax.swing.JButton();
-        hashDatabasesLabel = new javax.swing.JLabel();
         createDatabaseButton = new javax.swing.JButton();
+        importDatabaseButton = new javax.swing.JButton();
+        deleteDatabaseButton = new javax.swing.JButton();
         informationLabel = new javax.swing.JLabel();
         informationScrollPanel = new javax.swing.JScrollPane();
         informationPanel = new javax.swing.JPanel();
@@ -621,6 +621,9 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         jButton3.setFont(jButton3.getFont().deriveFont(jButton3.getFont().getStyle() & ~java.awt.Font.BOLD, 14));
         org.openide.awt.Mnemonics.setLocalizedText(jButton3, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.jButton3.text")); // NOI18N
 
+        hashDatabasesLabel.setFont(hashDatabasesLabel.getFont().deriveFont(hashDatabasesLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(hashDatabasesLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDatabasesLabel.text")); // NOI18N
+
         hashSetTable.setFont(hashSetTable.getFont().deriveFont(hashSetTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         hashSetTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -639,14 +642,15 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
         });
         jScrollPane1.setViewportView(hashSetTable);
 
-        deleteDatabaseButton.setFont(deleteDatabaseButton.getFont().deriveFont(deleteDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        deleteDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/delete16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(deleteDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.deleteDatabaseButton.text")); // NOI18N
-        deleteDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
-        deleteDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
-        deleteDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
+        createDatabaseButton.setFont(createDatabaseButton.getFont().deriveFont(createDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        createDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/new16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(createDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.createDatabaseButton.text")); // NOI18N
+        createDatabaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.createDatabaseButton.toolTipText")); // NOI18N
+        createDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
+        createDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
+        createDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteDatabaseButtonActionPerformed(evt);
+                createDatabaseButtonActionPerformed(evt);
             }
         });
 
@@ -662,18 +666,14 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
             }
         });
 
-        hashDatabasesLabel.setFont(hashDatabasesLabel.getFont().deriveFont(hashDatabasesLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(hashDatabasesLabel, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.hashDatabasesLabel.text")); // NOI18N
-
-        createDatabaseButton.setFont(createDatabaseButton.getFont().deriveFont(createDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        createDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/new16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(createDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.createDatabaseButton.text")); // NOI18N
-        createDatabaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.createDatabaseButton.toolTipText")); // NOI18N
-        createDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
-        createDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
-        createDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
+        deleteDatabaseButton.setFont(deleteDatabaseButton.getFont().deriveFont(deleteDatabaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        deleteDatabaseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/delete16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(deleteDatabaseButton, org.openide.util.NbBundle.getMessage(HashLookupSettingsPanel.class, "HashLookupSettingsPanel.deleteDatabaseButton.text")); // NOI18N
+        deleteDatabaseButton.setMaximumSize(new java.awt.Dimension(140, 25));
+        deleteDatabaseButton.setMinimumSize(new java.awt.Dimension(140, 25));
+        deleteDatabaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                createDatabaseButtonActionPerformed(evt);
+                deleteDatabaseButtonActionPerformed(evt);
             }
         });
 
@@ -733,40 +733,37 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                 .addGroup(informationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(informationPanelLayout.createSequentialGroup()
                         .addComponent(locationLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
                         .addComponent(hashDbLocationLabel))
                     .addGroup(informationPanelLayout.createSequentialGroup()
-                        .addGroup(informationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(informationPanelLayout.createSequentialGroup()
-                                .addComponent(nameLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(hashDbNameLabel))
-                            .addGroup(informationPanelLayout.createSequentialGroup()
-                                .addComponent(typeLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(hashDbTypeLabel))
-                            .addGroup(informationPanelLayout.createSequentialGroup()
-                                .addComponent(versionLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(hashDbVersionLabel))
-                            .addGroup(informationPanelLayout.createSequentialGroup()
-                                .addComponent(orgLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(hashDbOrgLabel))
-                            .addGroup(informationPanelLayout.createSequentialGroup()
-                                .addComponent(readOnlyLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(hashDbReadOnlyLabel))
-                            .addGroup(informationPanelLayout.createSequentialGroup()
-                                .addComponent(indexLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(hashDbIndexStatusLabel))
-                            .addGroup(informationPanelLayout.createSequentialGroup()
-                                .addComponent(indexPathLabelLabel)
-                                .addGap(18, 18, 18)
-                                .addComponent(indexPathLabel)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(nameLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(hashDbNameLabel))
+                    .addGroup(informationPanelLayout.createSequentialGroup()
+                        .addComponent(typeLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(hashDbTypeLabel))
+                    .addGroup(informationPanelLayout.createSequentialGroup()
+                        .addComponent(versionLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(hashDbVersionLabel))
+                    .addGroup(informationPanelLayout.createSequentialGroup()
+                        .addComponent(orgLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(hashDbOrgLabel))
+                    .addGroup(informationPanelLayout.createSequentialGroup()
+                        .addComponent(readOnlyLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(hashDbReadOnlyLabel))
+                    .addGroup(informationPanelLayout.createSequentialGroup()
+                        .addComponent(indexLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(hashDbIndexStatusLabel))
+                    .addGroup(informationPanelLayout.createSequentialGroup()
+                        .addComponent(indexPathLabelLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(indexPathLabel)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         informationPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {indexLabel, indexPathLabelLabel, locationLabel, nameLabel, orgLabel, readOnlyLabel, typeLabel, versionLabel});
@@ -853,7 +850,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(informationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(informationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                                 .addGap(356, 356, 356))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(indexButton)
@@ -862,7 +859,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(informationScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                    .addComponent(informationScrollPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(sendIngestMessagesCheckBox)
