@@ -30,7 +30,6 @@ import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -154,13 +153,13 @@ final class TikaTextExtractor extends TextExtractor {
     /**
      * If Tesseract has been installed and is set to be used through
      * configuration, then ocr is enabled. OCR can only currently be run on
-     * Windows OS.
+     * 64 bit Windows OS.
      *
      * @return Flag indicating if OCR is set to be used.
      */
     private boolean ocrEnabled() {
         return TESSERACT_PATH != null && tesseractOCREnabled
-                && PlatformUtil.isWindowsOS() == true;
+                && PlatformUtil.isWindowsOS() == true && PlatformUtil.is64BitOS();
     }
 
     /**
