@@ -78,8 +78,6 @@ final class StringsTextExtractor implements TextExtractor {
      *
      * @return A reader instance that content text can be obtained from
      *
-     * @throws
-     * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
     @Override
     public InputStreamReader getReader() {
@@ -100,8 +98,8 @@ final class StringsTextExtractor implements TextExtractor {
      * Determines how the extraction process will proceed given the settings
      * stored in this context instance.
      *
-     * See the StringsConfig class in the extractionconfigs package
- for available settings.
+     * See the StringsConfig class in the extractionconfigs package for
+     * available settings.
      *
      * @param context Lookup instance containing config classes
      */
@@ -132,7 +130,7 @@ final class StringsTextExtractor implements TextExtractor {
     public boolean isSupported() {
         return extractUTF8 || extractUTF16;
     }
-    
+
     /**
      * Content input string stream reader/converter - given Content, extract
      * strings from it and return encoded bytes via read()
