@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders;
+package org.sleuthkit.autopsy.textextractors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharSource;
@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.textreaders.textreaderconfigs.ImageConfig;
+import org.sleuthkit.autopsy.textextractors.textextractorconfigs.ImageConfig;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -318,7 +318,7 @@ final class TikaTextExtractor extends TextExtractor {
             }
         }
     }
-
+    
     /**
      * Wraps the creation of a TikaReader into a Future so that it can be
      * cancelled.
@@ -422,24 +422,27 @@ final class TikaTextExtractor extends TextExtractor {
     }
 
     /**
-     * Determines if Tika is supported for this content type and mimetype.
-     *
-     * @param content        Source content to read
-     * @param detectedFormat Mimetype of content
+     * Determines if Tika is enabled for this content
      *
      * @return Flag indicating support for reading content type
      */
     @Override
-    public boolean isSupported(Content content, String detectedFormat) {
-        if (detectedFormat == null
-                || BINARY_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
-                || ARCHIVE_MIME_TYPES.contains(detectedFormat)
-                || (detectedFormat.startsWith("video/") && !detectedFormat.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
-                || detectedFormat.equals(SQLITE_MIMETYPE) //Skip sqlite files, Tika cannot handle virtual tables and will fail with an exception. //NON-NLS
+    public boolean isSupported() {
+        if(!(content instanceof AbstractFile)) {
+            return false;
+        }
+        
+        String detectedType = ((AbstractFile)content).getMIMEType();
+        if (detectedType == null
+                || BINARY_MIME_TYPES.contains(detectedType) //any binary unstructured blobs (string extraction will be used)
+                || ARCHIVE_MIME_TYPES.contains(detectedType)
+                || (detectedType.startsWith("video/") && !detectedType.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
+                || detectedType.equals(SQLITE_MIMETYPE) //Skip sqlite files, Tika cannot handle virtual tables and will fail with an exception. //NON-NLS
                 ) {
             return false;
         }
-        return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
+        
+        return TIKA_SUPPORTED_TYPES.contains(detectedType);
     }
 
     /**

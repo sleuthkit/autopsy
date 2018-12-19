@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -83,7 +83,7 @@ class ArtifactTextExtractor extends TextExtractor {
     }
 
     @Override
-    public boolean isSupported(Content file, String detectedFormat) {
+    public boolean isSupported() {
         return true;
     }
 }

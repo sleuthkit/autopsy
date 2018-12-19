@@ -16,38 +16,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.Reader;
 import org.openide.util.Lookup;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Extracts the text out of Content instances and exposes them as a Reader.
  * Concrete implementations can be obtained from
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
  */
-abstract class TextExtractor {
+public abstract class TextExtractor {
 
     /**
-     * Determines if the file content is supported by the extractor.
+     * Determines if this extractor supports the given Content and
+     * configurations passed into it in
+     * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}.
      *
-     * @param file           to test if its content should be supported
-     * @param detectedFormat mime-type with detected format (such as text/plain)
-     *                       or null if not detected
-     *
-     * @return true if the file content is supported, false otherwise
+     * @return true if content is supported, false otherwise
      */
-    abstract boolean isSupported(Content file, String detectedFormat);
-
-    /**
-     * Determines if the TextExtractor instance is enabled to read content.
-     *
-     * @return
-     */
-    boolean isEnabled() {
-        return true;
-    }
+    abstract boolean isSupported();
 
     /**
      * Get a Reader that will iterate over the text extracted from the Content
@@ -75,8 +63,7 @@ abstract class TextExtractor {
     }
 
     /**
-     * Exception encountered during
-     * {@link org.sleuthkit.autopsy.textextractors.TextExtractor#getReader()}.
+     * Exception encountered during TextExtractor.getReader().
      * This indicates that there was an internal parsing error that occurred
      * during the reading of Content text.
      */

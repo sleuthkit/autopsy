@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Extracts text from SQLite database files.
@@ -45,8 +44,8 @@ final class SqliteTextExtractor extends TextExtractor {
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
     private final AbstractFile file;
 
-    public SqliteTextExtractor(Content file) {
-        this.file = (AbstractFile) file;
+    public SqliteTextExtractor(AbstractFile file) {
+        this.file = file;
     }
     /**
      * Supports only the sqlite mimetypes
@@ -57,8 +56,8 @@ final class SqliteTextExtractor extends TextExtractor {
      * @return true if x-sqlite3
      */
     @Override
-    public boolean isSupported(Content file, String detectedFormat) {
-        return SQLITE_MIMETYPE.equals(detectedFormat);
+    public boolean isSupported() {
+        return SQLITE_MIMETYPE.equals(file.getMIMEType());
     }
 
     /**

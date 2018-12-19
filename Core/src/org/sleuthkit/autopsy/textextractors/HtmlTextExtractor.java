@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -32,6 +32,7 @@ import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -42,7 +43,7 @@ final class HtmlTextExtractor extends TextExtractor {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private final int MAX_SIZE;
-    private final Content file;
+    private final AbstractFile file;
 
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
             "application/javascript", //NON-NLS
@@ -62,7 +63,7 @@ final class HtmlTextExtractor extends TextExtractor {
      * Creates a default instance of the HtmlTextExtractor. Supported file size
      * is 50MB.
      */
-    public HtmlTextExtractor(Content file) {
+    public HtmlTextExtractor(AbstractFile file) {
         //Set default to be 50 MB.
         MAX_SIZE = 50_000_000;
         this.file = file;
@@ -77,10 +78,10 @@ final class HtmlTextExtractor extends TextExtractor {
      * @return flag indicating support
      */
     @Override
-    public boolean isSupported(Content content, String detectedFormat) {
-        return detectedFormat != null
-                && WEB_MIME_TYPES.contains(detectedFormat)
-                && content.getSize() <= MAX_SIZE;
+    public boolean isSupported() {
+        return file.getMIMEType() != null
+                && WEB_MIME_TYPES.contains(file.getMIMEType())
+                && file.getSize() <= MAX_SIZE;
     }
 
     /**

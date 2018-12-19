@@ -16,20 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders.textreaderconfigs;
+package org.sleuthkit.autopsy.textextractors.textextractorconfigs;
 
 import java.util.List;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
- * Allows for configuration of the Reader obtained from
- * {@link org.sleuthkit.autopsy.textreaders.TextReader#getStringsReader(Content, Lookup)}.
+ * Allows for configuration of the TextExtractor obtained from
+ * TextExtractorFactory.getExtractor().
  *
- * The strings reader will read strings from the Content instance. This class
+ * The strings extractor will extract strings from the Content instance. This class
  * allows for the configuration of the encoding and language scripts used during
  * reading.
  *
- * @see org.sleuthkit.autopsy.textreaders.TextReaders
+ * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
  * @see
  * org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT
  * @see org.openide.util.Lookup
@@ -77,8 +77,8 @@ public class StringsConfig {
     }
 
     /**
-     * Sets the type of language scripts that will be used during this
-     * reading. See
+     * Sets the type of language scripts that will be used during this reading.
+     * See
      * {@link org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT}
      * for more information about available scripts.
      *
