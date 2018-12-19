@@ -763,7 +763,7 @@ public final class HashLookupSettingsPanel extends IngestModuleGlobalSettingsPan
                         .addComponent(indexPathLabelLabel)
                         .addGap(18, 18, 18)
                         .addComponent(indexPathLabel)))
-                .addContainerGap(322, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         informationPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {indexLabel, indexPathLabelLabel, locationLabel, nameLabel, orgLabel, readOnlyLabel, typeLabel, versionLabel});
