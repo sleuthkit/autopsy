@@ -61,7 +61,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.textextractors.textextractorconfigs.ImageConfig;
+import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -172,7 +172,7 @@ final class TikaTextExtractor implements TextExtractor {
      * org.sleuthkit.autopsy.textextractors.TextExtractor.TextExtractorException
      */
     @Override
-    public Reader getReader() throws ExtractionException {
+    public Reader getReader() throws InitReaderException {
         InputStream stream = null;
 
         ParseContext parseContext = new ParseContext();
@@ -234,7 +234,7 @@ final class TikaTextExtractor implements TextExtractor {
             PushbackReader pushbackReader = new PushbackReader(tikaReader);
             int read = pushbackReader.read();
             if (read == -1) {
-                throw new ExtractionException("Unable to extract text: "
+                throw new InitReaderException("Unable to extract text: "
                         + "Tika returned empty reader for " + content);
             }
             pushbackReader.unread(read);
@@ -247,8 +247,8 @@ final class TikaTextExtractor implements TextExtractor {
             final String msg = NbBundle.getMessage(this.getClass(),
                     "AbstractFileTikaTextExtract.index.tikaParseTimeout.text",
                     content.getId(), content.getName());
-            throw new ExtractionException(msg, te);
-        } catch (ExtractionException ex) {
+            throw new InitReaderException(msg, te);
+        } catch (InitReaderException ex) {
             throw ex;
         } catch (Exception ex) {
             tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the "
@@ -257,7 +257,7 @@ final class TikaTextExtractor implements TextExtractor {
             final String msg = NbBundle.getMessage(this.getClass(),
                     "AbstractFileTikaTextExtract.index.exception.tikaParse.msg",
                     content.getId(), content.getName());
-            throw new ExtractionException(msg, ex);
+            throw new InitReaderException(msg, ex);
         } finally {
             future.cancel(true);
         }
@@ -271,9 +271,9 @@ final class TikaTextExtractor implements TextExtractor {
      * @return InputStream connected to the output file that Tesseract produced.
      *
      * @throws
-     * org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException
+     * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
      */
-    private InputStream runOcrAndGetOutputStream(AbstractFile file) throws ExtractionException {
+    private InputStream runOcrAndGetOutputStream(AbstractFile file) throws InitReaderException {
         File inputFile = null;
         File outputFile = null;
         try {
@@ -311,7 +311,7 @@ final class TikaTextExtractor implements TextExtractor {
             if (outputFile != null) {
                 outputFile.delete();
             }
-            throw new ExtractionException("Could not successfully run Tesseract", ex);
+            throw new InitReaderException("Could not successfully run Tesseract", ex);
         } finally {
             if (inputFile != null) {
                 inputFile.delete();

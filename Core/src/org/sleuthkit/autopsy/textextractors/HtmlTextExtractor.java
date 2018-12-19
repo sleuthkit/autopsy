@@ -93,7 +93,7 @@ final class HtmlTextExtractor implements TextExtractor {
      * @throws TextExtractorException
      */
     @Override
-    public Reader getReader() throws ExtractionException {
+    public Reader getReader() throws InitReaderException {
         //TODO JIRA-4467, there is only harm in excluding HTML documents greater
         //than 50MB due to our troubled approach of extraction.
         ReadContentInputStream stream = new ReadContentInputStream(file);
@@ -190,7 +190,7 @@ final class HtmlTextExtractor implements TextExtractor {
             return new StringReader(stringBuilder.toString());
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error extracting HTML from content.", ex);
-            throw new ExtractionException("Error extracting HTML from content.", ex);
+            throw new InitReaderException("Error extracting HTML from content.", ex);
         }
     }
 }

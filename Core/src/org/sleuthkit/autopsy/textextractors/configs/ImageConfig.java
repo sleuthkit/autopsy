@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textextractors.textextractorconfigs;
+package org.sleuthkit.autopsy.textextractors.configs;
 
 /**
  * Allows for configuration of OCR on image files. Extractors that use ImageConfig

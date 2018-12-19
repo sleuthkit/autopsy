@@ -16,18 +16,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textextractors.textextractorconfigs;
+package org.sleuthkit.autopsy.textextractors.configs;
 
 import java.util.List;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 
 /**
  * Allows for configuration of the TextExtractor obtained from
- * TextExtractorFactory.getExtractor().
+ * TextExtractorFactory.getStringsExtractor().
  *
- * The strings extractor will extract strings from the Content instance. This class
- * allows for the configuration of the encoding and language scripts used during
- * reading.
+ * The Strings extractor will extract strings from the Content instance. This
+ * class allows for the configuration of the encoding and language scripts that
+ * will be used.
  *
  * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
  * @see
@@ -50,7 +50,7 @@ public class StringsConfig {
     }
 
     /**
-     * Enables UTF-16 encoding to be used during reading.
+     * Enables UTF-16 encoding to be used during extraction.
      *
      * @param enabled Flag indicating if UTF-16 should be turned on
      */
@@ -59,7 +59,7 @@ public class StringsConfig {
     }
 
     /**
-     * Returns whether reading with UTF-8 encoding should be done.
+     * Returns whether extraction with UTF-8 encoding should be done.
      *
      * @return Flag indicating if UTF-8 has been turned on/off
      */
@@ -68,7 +68,7 @@ public class StringsConfig {
     }
 
     /**
-     * Return whether reading with UTF-16 encoding should be done.
+     * Return whether extraction with UTF-16 encoding should be done.
      *
      * @return Flag indicating if UTF-16 has been turned on/off
      */
@@ -77,7 +77,7 @@ public class StringsConfig {
     }
 
     /**
-     * Sets the type of language scripts that will be used during this reading.
+     * Sets the type of language scripts that will be used during extraction.
      * See
      * {@link org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT}
      * for more information about available scripts.
@@ -89,7 +89,7 @@ public class StringsConfig {
     }
 
     /**
-     * Gets the desired set of scripts to be used during reading.
+     * Gets the desired set of scripts to be used during extraction.
      *
      * @return Set of language scripts to be used
      */

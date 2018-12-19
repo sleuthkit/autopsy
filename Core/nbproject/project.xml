@@ -339,7 +339,7 @@
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
                 <package>org.sleuthkit.autopsy.textextractors</package>
-                <package>org.sleuthkit.autopsy.textextractors.textextractorconfigs</package>
+                <package>org.sleuthkit.autopsy.textextractors.configs</package>
                 <package>org.sleuthkit.autopsy.texttranslation</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>

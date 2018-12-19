@@ -45,12 +45,12 @@ public interface TextExtractor {
      * @return Reader that contains the text of the underlying Content
      *
      * @throws
-     * org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException
+     * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
      *
      * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
      *
      */
-    Reader getReader() throws ExtractionException;
+    Reader getReader() throws InitReaderException;
 
     /**
      * Determines how the extraction process will proceed given the settings
@@ -63,21 +63,19 @@ public interface TextExtractor {
     }
 
     /**
-     * Exception encountered during TextExtractor.getReader(). This indicates
-     * that there was an internal parsing error that occurred during the reading
-     * of Content text.
+     * System level exception for reader initialization. 
      */
-    public class ExtractionException extends Exception {
+    public class InitReaderException extends Exception {
 
-        public ExtractionException(String msg, Throwable ex) {
+        public InitReaderException(String msg, Throwable ex) {
             super(msg, ex);
         }
 
-        public ExtractionException(Throwable ex) {
+        public InitReaderException(Throwable ex) {
             super(ex);
         }
 
-        public ExtractionException(String msg) {
+        public InitReaderException(String msg) {
             super(msg);
         }
     }

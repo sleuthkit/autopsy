@@ -47,8 +47,8 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
-import org.sleuthkit.autopsy.textextractors.textextractorconfigs.ImageConfig;
-import org.sleuthkit.autopsy.textextractors.textextractorconfigs.StringsConfig;
+import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
+import org.sleuthkit.autopsy.textextractors.configs.StringsConfig;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
@@ -486,7 +486,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 Reader extractedTextReader = extractor.getReader();
                 //divide into chunks and index
                 return Ingester.getDefault().indexText(extractedTextReader,aFile.getId(),aFile.getName(), aFile, context);
-            } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.ExtractionException ex) {
+            } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
                 //No text extractor found... run the default instead
                 return false;
             }
@@ -515,7 +515,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     return false;
                 }
-            } catch (IngesterException | TextExtractor.ExtractionException ex) {
+            } catch (IngesterException | TextExtractor.InitReaderException ex) {
                 logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);  //NON-NLS
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 return false;

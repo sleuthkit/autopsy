@@ -41,7 +41,7 @@ class ArtifactTextExtractor implements TextExtractor {
     }
 
     @Override
-    public Reader getReader() throws ExtractionException {
+    public Reader getReader() throws InitReaderException {
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
@@ -50,10 +50,10 @@ class ArtifactTextExtractor implements TextExtractor {
         try {
             dataSource = artifact.getDataSource();
         } catch (TskCoreException tskCoreException) {
-            throw new ExtractionException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
+            throw new InitReaderException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
         }
         if (dataSource == null) {
-            throw new ExtractionException("Datasource was null for artifact: " + artifact.toString());
+            throw new InitReaderException("Datasource was null for artifact: " + artifact.toString());
         }
 
         try {
@@ -75,7 +75,7 @@ class ArtifactTextExtractor implements TextExtractor {
                 artifactContents.append(System.lineSeparator());
             }
         } catch (TskCoreException tskCoreException) {
-            throw new ExtractionException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
+            throw new InitReaderException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
         }
 
         return new InputStreamReader(IOUtils.toInputStream(artifactContents,

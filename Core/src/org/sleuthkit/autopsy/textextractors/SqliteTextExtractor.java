@@ -70,7 +70,7 @@ final class SqliteTextExtractor implements TextExtractor {
      * @throws TextExtractorException
      */
     @Override
-    public Reader getReader() throws ExtractionException {
+    public Reader getReader() throws InitReaderException {
         return new SQLiteStreamReader(file);
     }
     
