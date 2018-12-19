@@ -202,14 +202,9 @@ final class TikaTextExtractor extends TextExtractor {
                 TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
                 String tesseractFolder = TESSERACT_PATH.getParent();
                 ocrConfig.setTesseractPath(tesseractFolder);
-                /*
-                 * Tesseract expects language data packs to be in a subdirectory
-                 * of tesseractFolder, in a folder called "tessdata". If they
-                 * are stored somewhere else, use
-                 * ocrConfig.setTessdataPath(String tessdataPath) to point to
-                 * them
-                 */
+                
                 ocrConfig.setLanguage(LANGUAGE_PACKS);
+                ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
                 parseContext.set(TesseractOCRConfig.class, ocrConfig);
 
                 stream = new ReadContentInputStream(content);
@@ -292,6 +287,7 @@ final class TikaTextExtractor extends TextExtractor {
             process.command(executeablePath,
                     String.format("\"%s\"", inputFile.getAbsolutePath()),
                     String.format("\"%s\"", outputFilePath),
+                    "--tessdata-dir", PlatformUtil.getOcrLanguagePacksPath(),
                     //language pack command flag
                     "-l", LANGUAGE_PACKS);
 
@@ -450,10 +446,7 @@ final class TikaTextExtractor extends TextExtractor {
      * @return String of all language packs available for Tesseract to use
      */
     private static String getLanguagePacks() {
-        File languagePackRootDir = new File(TESSERACT_PATH.getParent(), "tessdata");
-        if (!languagePackRootDir.exists()) {
-            return "";
-        }
+        File languagePackRootDir = new File(PlatformUtil.getOcrLanguagePacksPath());
 
         List<String> languagePacks = new ArrayList<>();
         for (File languagePack : languagePackRootDir.listFiles()) {
