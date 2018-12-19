@@ -55,6 +55,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
@@ -168,7 +169,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         getChartLane().setCursor(Cursor.WAIT);
 
         /*
-         *Mmake new ZoomState to query with
+         * Make new ZoomState to query with:
          *
          * We need to extend end time for the query by one second, because it is
          * treated as an open interval but we want to include events at exactly
@@ -176,12 +177,13 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          * to the type and description of this cluster by intersecting a new
          * filter with the existing root filter.
          */
-        final RootFilterState subClusterFilter = eventsModel.getFilterState().copyOf();
-        subClusterFilter.getFilter().getSubFilters().addAll(
-                new DescriptionFilter(  getDescription(), DescriptionFilter.FilterMode.INCLUDE),
-                new EventTypeFilter(getEventType()));
+        RootFilterState subClusterFilter = eventsModel.getFilterState()
+                .intersect(new DefaultFilterState<>(
+                        new DescriptionFilter(getDescription(), DescriptionFilter.FilterMode.INCLUDE), true))
+                .intersect(new DefaultFilterState<>(
+                        new EventTypeFilter(getEventType()), true));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
-        final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
+        final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.getEventTypeZoom();
         final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
         /*

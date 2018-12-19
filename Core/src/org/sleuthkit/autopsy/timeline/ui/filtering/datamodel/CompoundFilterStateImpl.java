@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 import com.google.common.collect.Lists;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -119,7 +120,7 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType e
             //set this compound filter state selected af any of the subfilters are selected.
             setSelected(subFilterStates.stream().anyMatch(FilterState::isSelected));
         });
-        newSubFilterState.setDisabled(isActive() ==false);
+        newSubFilterState.setDisabled(isActive() == false);
     }
 
     @Override
@@ -156,4 +157,40 @@ class CompoundFilterStateImpl<SubFilterType extends TimelineFilter, FilterType e
 
         return copy;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 41 * hash + Objects.hashCode(this.subFilterStates);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+
+        final CompoundFilterStateImpl<?, ?> other = (CompoundFilterStateImpl<?, ?>) obj;
+        if (!Objects.equals(this.getFilter(), other.getFilter())) {
+            return false;
+        }
+        if (!Objects.equals(this.isSelected(), other.isSelected())) {
+            return false;
+        }
+        if (!Objects.equals(this.isDisabled(), other.isDisabled())) {
+            return false;
+        }
+        if (!Objects.equals(this.subFilterStates, other.subFilterStates)) {
+            return false;
+        }
+        return true;
+    }
+
 }

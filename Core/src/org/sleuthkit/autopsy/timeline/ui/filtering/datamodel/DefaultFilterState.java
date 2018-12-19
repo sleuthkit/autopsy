@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
+import java.util.Objects;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
@@ -35,7 +36,12 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
     private final FilterType filter;
 
     public DefaultFilterState(FilterType filter) {
+        this(filter, false);
+    }
+
+    public DefaultFilterState(FilterType filter, boolean selected) {
         this.filter = filter;
+        this.selected.set(selected);
     }
 
     private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
@@ -104,5 +110,38 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
     @Override
     public FilterType getActiveFilter() {
         return isActive() ? getFilter() : null;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 37 * hash + Objects.hashCode(this.filter);
+        hash = 37 * hash + Objects.hashCode(this.selected);
+        hash = 37 * hash + Objects.hashCode(this.disabled);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final DefaultFilterState<?> other = (DefaultFilterState<?>) obj;
+        if (!Objects.equals(this.filter, other.filter)) {
+            return false;
+        }
+        if (!Objects.equals(this.selected, other.selected)) {
+            return false;
+        }
+        if (!Objects.equals(this.disabled, other.disabled)) {
+            return false;
+        }
+        return true;
     }
 }

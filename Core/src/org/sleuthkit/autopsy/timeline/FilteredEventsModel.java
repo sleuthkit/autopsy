@@ -163,7 +163,7 @@ public final class FilteredEventsModel {
             syncFilters(rootFilter);
             requestedFilter.set(rootFilter.copyOf());
         };
- 
+
         datasourcesMap.addListener(filterSyncListener);
         hashSets.addListener(filterSyncListener);
         tagNames.addListener(filterSyncListener);
@@ -244,7 +244,7 @@ public final class FilteredEventsModel {
         SleuthkitCase skCase = autoCase.getSleuthkitCase();
         hashSets.addAll(eventManager.getHashSetNames());
         Set<Long> dataSourceIDs = eventManager.getDataSourceIDs();
- 
+
         //because there is no way to remove a datasource we only add to this map.
         for (Long id : dataSourceIDs) {
             try {
@@ -271,18 +271,18 @@ public final class FilteredEventsModel {
      */
     public void syncFilters(RootFilterState rootFilterState) {
         TagsFilterState tagsFilterState = rootFilterState.getTagsFilterState();
-         for (TagName tagName : tagNames) {
+        for (TagName tagName : tagNames) {
             tagsFilterState.getFilter().addSubFilter(new TagNameFilter(tagName));
         }
         for (FilterState<? extends TagNameFilter> tagFilterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
             tagFilterState.setDisabled(tagNames.contains(tagFilterState.getFilter().getTagName()) == false);
         }
-        
+
         DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
         for (Map.Entry<Long, DataSource> entry : datasourcesMap.entrySet()) {
             dataSourcesFilter.addSubFilter(new DataSourceFilter(entry.getValue().getName(), entry.getKey()));
         }
- 
+
         HashHitsFilter hashSetsFilter = rootFilterState.getHashHitsFilterState().getFilter();
         for (String hashSet : hashSets) {
             hashSetsFilter.addSubFilter(new HashSetFilter(hashSet));
@@ -404,16 +404,16 @@ public final class FilteredEventsModel {
         return eventManager.getTagCountsByTagName(eventIDsWithTags);
     }
 
-    public List<Long> getEventIDs(Interval timeRange, TimelineFilter filter) throws TskCoreException {
+    public List<Long> getEventIDs(Interval timeRange, FilterState<?> filter) throws TskCoreException {
 
         final Interval overlap;
-        RootFilterState intersection;
+        RootFilter intersection;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
-            intersection = getFilterState().intersect(filter);
+            intersection = getFilterState().intersect(filter).getActiveFilter();
         }
 
-        return eventManager.getEventIDs(overlap, intersection.getActiveFilter());
+        return eventManager.getEventIDs(overlap, intersection);
     }
 
     /**
@@ -680,8 +680,8 @@ public final class FilteredEventsModel {
     public synchronized void invalidateCaches(Collection<Long> updatedEventIDs) throws TskCoreException {
         minCache.invalidateAll();
         maxCache.invalidateAll();
-         idToEventCache.invalidateAll(emptyIfNull(updatedEventIDs));
-         eventCountsCache.invalidateAll();
+        idToEventCache.invalidateAll(emptyIfNull(updatedEventIDs));
+        eventCountsCache.invalidateAll();
 
         populateFilterData();
 
