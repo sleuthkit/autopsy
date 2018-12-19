@@ -68,13 +68,14 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
             }
         };
 
-        if (!PlatformUtil.isWindowsOS() || !PlatformUtil.is64BitOS()) {
-            enableOcrCheckbox.setText("Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)");
-            enableOcrCheckbox.setEnabled(false);
-        }
-
         initScriptsCheckBoxes();
         reloadScriptsCheckBoxes();
+        
+        if (!PlatformUtil.isWindowsOS() || !PlatformUtil.is64BitOS()) {
+            enableOcrCheckbox.setText("Enable Optical Character Recognition (OCR) (Requires Windows 64-bit)");
+            enableOcrCheckbox.setSelected(false);
+            enableOcrCheckbox.setEnabled(false);
+        }
 
         //allow panel to toggle its enabled status while it is open based on ingest events
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
