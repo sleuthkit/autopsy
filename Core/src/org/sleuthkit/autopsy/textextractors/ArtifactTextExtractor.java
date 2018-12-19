@@ -32,12 +32,12 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Extracts text from artifacts by concatenating the values of all of the
  * artifact's attributes.
  */
-class ArtifactTextExtractor extends TextExtractor {
+class ArtifactTextExtractor implements TextExtractor {
 
     private final BlackboardArtifact artifact;
 
-    public ArtifactTextExtractor(Content artifact) {
-        this.artifact = (BlackboardArtifact) artifact;
+    public ArtifactTextExtractor(BlackboardArtifact artifact) {
+        this.artifact = artifact;
     }
 
     @Override

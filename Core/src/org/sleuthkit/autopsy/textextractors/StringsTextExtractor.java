@@ -36,7 +36,7 @@ import org.sleuthkit.datamodel.TskException;
 /**
  * Extracts raw strings from content.
  */
-final class StringsTextExtractor extends TextExtractor {
+final class StringsTextExtractor implements TextExtractor {
 
     private boolean extractUTF8;
     private boolean extractUTF16;

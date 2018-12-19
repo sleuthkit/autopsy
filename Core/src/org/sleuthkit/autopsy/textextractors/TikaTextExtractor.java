@@ -71,7 +71,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * Extracts text from Tika supported content. Protects against Tika parser hangs
  * (for unexpected/corrupt content) using a timeout mechanism.
  */
-final class TikaTextExtractor extends TextExtractor {
+final class TikaTextExtractor implements TextExtractor {
 
     //Mimetype groups to aassist extractor implementations in ignoring binary and 
     //archive files.

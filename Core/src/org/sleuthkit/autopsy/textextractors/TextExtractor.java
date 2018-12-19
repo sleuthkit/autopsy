@@ -26,7 +26,7 @@ import org.openide.util.Lookup;
  * Concrete implementations can be obtained from
  * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
  */
-public abstract class TextExtractor {
+public interface TextExtractor {
 
     /**
      * Determines if this extractor supports the given Content and
@@ -35,7 +35,7 @@ public abstract class TextExtractor {
      *
      * @return true if content is supported, false otherwise
      */
-    abstract boolean isSupported();
+    boolean isSupported();
 
     /**
      * Get a Reader that will iterate over the text extracted from the Content
@@ -50,7 +50,7 @@ public abstract class TextExtractor {
      * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
      *
      */
-    public abstract Reader getReader() throws ExtractionException;
+    Reader getReader() throws ExtractionException;
 
     /**
      * Determines how the extraction process will proceed given the settings
@@ -58,14 +58,14 @@ public abstract class TextExtractor {
      *
      * @param context Instance containing file config classes
      */
-    void setExtractionSettings(Lookup context) {
+    default void setExtractionSettings(Lookup context) {
         //no-op by default
     }
 
     /**
-     * Exception encountered during TextExtractor.getReader().
-     * This indicates that there was an internal parsing error that occurred
-     * during the reading of Content text.
+     * Exception encountered during TextExtractor.getReader(). This indicates
+     * that there was an internal parsing error that occurred during the reading
+     * of Content text.
      */
     public class ExtractionException extends Exception {
 
