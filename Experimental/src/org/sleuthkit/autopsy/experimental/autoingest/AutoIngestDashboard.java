@@ -18,9 +18,8 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.logging.Level;
 import java.awt.Color;
 import java.awt.EventQueue;
@@ -31,6 +30,8 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
@@ -45,17 +46,20 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents
  * A dashboard for monitoring an automated ingest cluster.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final class AutoIngestDashboard extends JPanel implements Observer {
-    
+final class AutoIngestDashboard extends JPanel {
+
     private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
     private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
+    private final static String AID_REFRESH_THREAD_NAME = "AID-refresh-jobs-%d";
+    private final static int AID_REFRESH_INTERVAL_SECS = 30;
+    private final static int AID_DELAY_BEFORE_FIRST_REFRESH = 0;
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private AutoIngestMonitor autoIngestMonitor;
     private AutoIngestJobsPanel pendingJobsPanel;
     private AutoIngestJobsPanel runningJobsPanel;
     private AutoIngestJobsPanel completedJobsPanel;
-
+    private final ScheduledThreadPoolExecutor scheduledRefreshThreadPoolExecutor;
     /**
      * Maintain a mapping of each service to it's last status update.
      */
@@ -88,7 +92,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     private AutoIngestDashboard() {
         this.statusByService = new ConcurrentHashMap<>();
-
+        scheduledRefreshThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(AID_REFRESH_THREAD_NAME).build());
         initComponents();
         statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
@@ -236,7 +240,12 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         ServicesMonitor.getInstance().addSubscriber(servicesList, propChangeListener);
 
         autoIngestMonitor = new AutoIngestMonitor();
-        autoIngestMonitor.addObserver(this);
+
+        scheduledRefreshThreadPoolExecutor.scheduleWithFixedDelay(() -> {
+            EventQueue.invokeLater(() -> {
+                refreshTables();
+            });
+        }, AID_DELAY_BEFORE_FIRST_REFRESH, AID_REFRESH_INTERVAL_SECS, TimeUnit.SECONDS);
         new Thread(() -> {
             try {
                 autoIngestMonitor.startUp();
@@ -252,15 +261,6 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     void shutDown() {
         if (autoIngestMonitor != null) {
             autoIngestMonitor.shutDown();
-        }
-    }
-
-    @Override
-    public void update(Observable observable, Object arg) {
-        if (arg == null ) {
-            EventQueue.invokeLater(() -> {
-                refreshTables();
-            });
         }
     }
 
