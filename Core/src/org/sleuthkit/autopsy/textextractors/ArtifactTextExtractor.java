@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.textreaders;
+package org.sleuthkit.autopsy.textextractors;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -32,16 +32,16 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Extracts text from artifacts by concatenating the values of all of the
  * artifact's attributes.
  */
-class ArtifactTextExtractor extends TextExtractor {
+class ArtifactTextExtractor implements TextExtractor {
 
     private final BlackboardArtifact artifact;
 
-    public ArtifactTextExtractor(Content artifact) {
-        this.artifact = (BlackboardArtifact) artifact;
+    public ArtifactTextExtractor(BlackboardArtifact artifact) {
+        this.artifact = artifact;
     }
 
     @Override
-    public Reader getReader() throws ExtractionException {
+    public Reader getReader() throws InitReaderException {
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
@@ -50,10 +50,10 @@ class ArtifactTextExtractor extends TextExtractor {
         try {
             dataSource = artifact.getDataSource();
         } catch (TskCoreException tskCoreException) {
-            throw new ExtractionException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
+            throw new InitReaderException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
         }
         if (dataSource == null) {
-            throw new ExtractionException("Datasource was null for artifact: " + artifact.toString());
+            throw new InitReaderException("Datasource was null for artifact: " + artifact.toString());
         }
 
         try {
@@ -75,7 +75,7 @@ class ArtifactTextExtractor extends TextExtractor {
                 artifactContents.append(System.lineSeparator());
             }
         } catch (TskCoreException tskCoreException) {
-            throw new ExtractionException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
+            throw new InitReaderException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
         }
 
         return new InputStreamReader(IOUtils.toInputStream(artifactContents,
@@ -83,7 +83,7 @@ class ArtifactTextExtractor extends TextExtractor {
     }
 
     @Override
-    public boolean isSupported(Content file, String detectedFormat) {
+    public boolean isSupported() {
         return true;
     }
 }
