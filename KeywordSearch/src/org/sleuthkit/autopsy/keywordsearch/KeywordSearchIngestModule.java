@@ -32,6 +32,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -479,7 +480,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
             ImageConfig imageConfig = new ImageConfig();
             imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
-            Lookup extractionContext = Lookups.fixed(imageConfig);
+            ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
+            Lookup extractionContext = Lookups.fixed(imageConfig, terminator);
             
             try {
                 TextExtractor extractor = TextExtractorFactory.getExtractor(aFile,extractionContext);
