@@ -22,7 +22,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.logging.Level;
 import java.io.File;
 import javax.swing.JFileChooser;
@@ -261,7 +260,7 @@ class MissingImageDialog extends javax.swing.JDialog {
             this.dispose();
         } catch (TskCoreException ex) {
             lbWarning.setText(NbBundle.getMessage(this.getClass(), "MissingImageDialog.ErrorSettingImage"));
-            logger.log(Level.WARNING, "Error setting image paths", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error setting image paths", ex); //NON-NLS
         }
     }//GEN-LAST:event_selectButtonActionPerformed
 
