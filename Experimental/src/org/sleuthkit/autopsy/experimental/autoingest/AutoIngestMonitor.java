@@ -30,6 +30,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -58,7 +59,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeControlEvent.
  * An auto ingest monitor responsible for monitoring and reporting the
  * processing of auto ingest jobs.
  */
-final class AutoIngestMonitor implements PropertyChangeListener {
+final class AutoIngestMonitor extends Observable implements PropertyChangeListener {
 
     private static final Logger LOGGER = Logger.getLogger(AutoIngestMonitor.class.getName());
     private static final int DEFAULT_PRIORITY = 0;
@@ -171,6 +172,8 @@ final class AutoIngestMonitor implements PropertyChangeListener {
         synchronized (jobsLock) {
             jobsSnapshot.removePendingJob(event.getJob());
             jobsSnapshot.addOrReplaceRunningJob(event.getJob());
+            setChanged();
+            notifyObservers();
         }
     }
 
@@ -198,6 +201,8 @@ final class AutoIngestMonitor implements PropertyChangeListener {
                     break;
                 }
             }
+            setChanged();
+            notifyObservers();
         }
     }
 
@@ -212,6 +217,8 @@ final class AutoIngestMonitor implements PropertyChangeListener {
             jobsSnapshot.removePendingJob(job);
             jobsSnapshot.removeRunningJob(job);
             jobsSnapshot.addOrReplaceCompletedJob(job);
+            setChanged();
+            notifyObservers();
         }
     }
 
@@ -239,14 +246,18 @@ final class AutoIngestMonitor implements PropertyChangeListener {
      * @param event A node state change event.
      */
     private void handleAutoIngestNodeStateEvent(AutoIngestNodeStateEvent event) {
+        AutoIngestNodeState oldNodeState = null;
         if (event.getEventType() == AutoIngestManager.Event.SHUTDOWN) {
             // Remove node from collection.
-            nodeStates.remove(event.getNodeName());
+            oldNodeState = nodeStates.remove(event.getNodeName());
         } else {
             // Otherwise either create an entry for the given node name or update
             // an existing entry in the map.
             nodeStates.put(event.getNodeName(), new AutoIngestNodeState(event.getNodeName(), event.getEventType()));
         }
+        setChanged();
+        // Trigger a dashboard refresh.
+        notifyObservers(oldNodeState == null ? nodeStates.get(event.getNodeName()) : oldNodeState);
     }
 
     /**
@@ -786,6 +797,9 @@ final class AutoIngestMonitor implements PropertyChangeListener {
 
                 // Ask running auto ingest nodes to report their status.
                 refreshNodeState();
+
+                setChanged();
+                notifyObservers();
             }
         }
 

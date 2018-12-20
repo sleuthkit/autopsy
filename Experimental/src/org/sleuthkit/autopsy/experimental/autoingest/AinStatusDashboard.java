@@ -21,22 +21,26 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
 import java.awt.EventQueue;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitorDashboard;
 
 /**
  * A dashboard for monitoring the existing AutoIngestNodes and their status.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final class AinStatusDashboard extends javax.swing.JPanel {
+final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
 
     private final AutoIngestMonitor autoIngestMonitor;
     private final AinStatusPanel nodesPanel;
     private final static String AIN_REFRESH_THREAD_NAME = "AID-refresh-jobs-%d";
     private final static int AIN_REFRESH_INTERVAL_SECS = 30;
-    private final static int AIN_DELAY_BEFORE_FIRST_REFRESH = 1;
+    private final static int AIN_DELAY_BEFORE_FIRST_REFRESH = 0;
     private final ScheduledThreadPoolExecutor scheduledRefreshThreadPoolExecutor;
+    private AtomicBoolean scheduledRefreshStarted = new AtomicBoolean(false);
 
     /**
      * Creates new form AutoIngestNodeStatus
@@ -56,11 +60,7 @@ final class AinStatusDashboard extends javax.swing.JPanel {
      * Adds this panel as an observer of AutoIngestMonitor.
      */
     void startUp() {
-        scheduledRefreshThreadPoolExecutor.scheduleWithFixedDelay(() -> {
-            EventQueue.invokeLater(() -> {
-                refreshTables();
-            });
-        }, AIN_DELAY_BEFORE_FIRST_REFRESH, AIN_REFRESH_INTERVAL_SECS, TimeUnit.SECONDS);
+        autoIngestMonitor.addObserver(this);
     }
 
     AutoIngestMonitor getMonitor() {
@@ -179,4 +179,14 @@ final class AinStatusDashboard extends javax.swing.JPanel {
     private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables
 
+    @Override
+    public void update(Observable o, Object arg) {
+        if (!scheduledRefreshStarted.getAndSet(true)) {
+            scheduledRefreshThreadPoolExecutor.scheduleWithFixedDelay(() -> {
+                EventQueue.invokeLater(() -> {
+                    refreshTables();
+                });
+            }, AIN_DELAY_BEFORE_FIRST_REFRESH, AIN_REFRESH_INTERVAL_SECS, TimeUnit.SECONDS);
+        }
+    }
 }

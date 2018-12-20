@@ -28,10 +28,13 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
@@ -46,7 +49,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents
  * A dashboard for monitoring an automated ingest cluster.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final class AutoIngestDashboard extends JPanel {
+final class AutoIngestDashboard extends JPanel implements Observer {
 
     private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
     private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
@@ -60,6 +63,8 @@ final class AutoIngestDashboard extends JPanel {
     private AutoIngestJobsPanel runningJobsPanel;
     private AutoIngestJobsPanel completedJobsPanel;
     private final ScheduledThreadPoolExecutor scheduledRefreshThreadPoolExecutor;
+    private AtomicBoolean scheduledRefreshStarted = new AtomicBoolean(false);
+
     /**
      * Maintain a mapping of each service to it's last status update.
      */
@@ -240,14 +245,11 @@ final class AutoIngestDashboard extends JPanel {
         ServicesMonitor.getInstance().addSubscriber(servicesList, propChangeListener);
 
         autoIngestMonitor = new AutoIngestMonitor();
+        autoIngestMonitor.addObserver(this);
         new Thread(() -> {
             try {
                 autoIngestMonitor.startUp();
-                scheduledRefreshThreadPoolExecutor.scheduleWithFixedDelay(() -> {
-                    EventQueue.invokeLater(() -> {
-                        refreshTables();
-                    });
-                }, AID_DELAY_BEFORE_FIRST_REFRESH, AID_REFRESH_INTERVAL_SECS, TimeUnit.SECONDS);
+
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to start up Auto Ingest Monitor", ex);
             }
@@ -260,6 +262,17 @@ final class AutoIngestDashboard extends JPanel {
     void shutDown() {
         if (autoIngestMonitor != null) {
             autoIngestMonitor.shutDown();
+        }
+    }
+
+    @Override
+    public void update(Observable observable, Object arg) {
+        if (!scheduledRefreshStarted.getAndSet(true)) {
+            scheduledRefreshThreadPoolExecutor.scheduleWithFixedDelay(() -> {
+                EventQueue.invokeLater(() -> {
+                    refreshTables();
+                });
+            }, AID_DELAY_BEFORE_FIRST_REFRESH, AID_REFRESH_INTERVAL_SECS, TimeUnit.SECONDS);
         }
     }
 
