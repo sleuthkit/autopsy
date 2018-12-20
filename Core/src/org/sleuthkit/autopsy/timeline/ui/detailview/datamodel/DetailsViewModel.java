@@ -25,12 +25,13 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.eventbus.Subscribe;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -44,8 +45,6 @@ import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
-import org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils;
-import static org.sleuthkit.autopsy.timeline.utils.TimelineDBUtils.unGroupConcat;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
@@ -55,7 +54,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import static org.sleuthkit.datamodel.timeline.EventTypeZoomLevel.SUB_TYPE;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.IntersectionFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.UnionFilter;
 
 /**
  * Model for the Details View. Uses FilteredEventsModel as underlying datamodel
@@ -135,29 +138,38 @@ final public class DetailsViewModel {
         TimeUnits periodSize = RangeDivision.getRangeDivision(timeRange, timeZone).getPeriodSize();
 
         //build dynamic parts of query
-        String typeColumn = TimelineManager.typeColumnHelper(typeZoomLevel.equals(SUB_TYPE));
-        TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
-
-        String querySql = "SELECT " + formatTimeFunctionHelper(periodSize.toChronoUnit(), timeZone) + " AS interval, " // NON-NLS
-                          + dbUtils.csvAggFunction("tsk_events.event_id") + " as event_ids, " //NON-NLS
-                          + dbUtils.csvAggFunction("CASE WHEN hash_hit = 1 THEN tsk_events.event_id ELSE NULL END") + " as hash_hits, " //NON-NLS
-                          + dbUtils.csvAggFunction("CASE WHEN tagged = 1 THEN tsk_events.event_id ELSE NULL END") + " as taggeds, " //NON-NLS
-                          + " min(time) AS minTime, max(time) AS maxTime,  sub_type, base_type, full_description, med_description, short_description " // NON-NLS
+        String querySql = "SELECT time, file_obj_id, data_source_obj_id, artifact_id, " // NON-NLS
+                          + "  event_id, " //NON-NLS
+                          + " hash_hit, " //NON-NLS
+                          + " tagged, " //NON-NLS
+                          + " sub_type, base_type, "
+                          + " full_description, med_description, short_description " // NON-NLS
                           + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(activeFilter) // NON-NLS
                           + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(activeFilter) // NON-NLS
-                          + " GROUP BY interval,  full_description, " + typeColumn // NON-NLS
-                          + " ORDER BY min(time)"; // NON-NLS
+                          + " ORDER BY time"; // NON-NLS
 
-        // perform query and map results to EventCluster objects
-        List<EventCluster> eventClusters = new ArrayList<>();
+     
+        Map<EventType, SetMultimap< String, EventCluster>> eventClusters = new HashMap<>();
 
         try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);
                 ResultSet resultSet = dbQuery.getResultSet();) {
             while (resultSet.next()) {
-                eventClusters.add(eventClusterHelper(resultSet, typeColumn, descriptionLOD, timeZone));
+                TimelineEvent event = eventHelper(resultSet);
+                boolean passes = passes(activeFilter, event);
+                if (passes) {
+                    EventType clusterType = typeZoomLevel.equals(SUB_TYPE) ? event.getEventType() : event.getEventType().getBaseType();
+                    eventClusters.computeIfAbsent(clusterType, eventType -> HashMultimap.create())
+                            .put(event.getDescription(descriptionLOD), new EventCluster(event, clusterType, descriptionLOD));
+                } else {
+                    System.out.println("");
+                }
             }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
+            throw ex;
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
+            throw new TskCoreException("Failed to get events with query: " + querySql, ex);
         }
 
         return mergeClustersToStripes(periodSize.toUnitPeriod(), eventClusters);
@@ -177,29 +189,26 @@ final public class DetailsViewModel {
      *
      * @throws SQLException
      */
-    private EventCluster eventClusterHelper(ResultSet resultSet, String typeColumn, DescriptionLoD descriptionLOD, DateTimeZone timeZone) throws SQLException, TskCoreException {
-        Interval interval = new Interval(resultSet.getLong("minTime") * 1000, resultSet.getLong("maxTime") * 1000, timeZone);
+    private TimelineEvent eventHelper(ResultSet resultSet) throws SQLException, TskCoreException {
 
-        List<Long> eventIDs = unGroupConcat(resultSet.getString("event_ids"), Long::valueOf); // NON-NLS
-        List<Long> hashHits = unGroupConcat(resultSet.getString("hash_hits"), Long::valueOf); //NON-NLS
-        List<Long> tagged = unGroupConcat(resultSet.getString("taggeds"), Long::valueOf); //NON-NLS
-
-        //The actual event type of this cluster
-        int eventTypeID = resultSet.getInt(typeColumn);
+        //the event tyepe to use to get the description.
+        int eventTypeID = resultSet.getInt("sub_type");
         EventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
                 -> new TskCoreException("Error mapping event type id " + eventTypeID + "to EventType."));//NON-NLS
 
-        //the event tyepe to use to get the description.
-        int descEventTypeID = resultSet.getInt("sub_type");
-        EventType descEventType = eventManager.getEventType(descEventTypeID).orElseThrow(()
-                -> new TskCoreException("Error mapping event type id " + descEventTypeID + "to EventType."));//NON-NLS
-
-        String description = descEventType.getDescription(descriptionLOD,
-                resultSet.getString("full_description"),
-                resultSet.getString("med_description"),
-                resultSet.getString("short_description"));
-
-        return new EventCluster(interval, eventType, eventIDs, hashHits, tagged, description, descriptionLOD);
+        return new TimelineEvent(
+                resultSet.getLong("event_id"), // NON-NLS
+                resultSet.getLong("data_source_obj_id"), // NON-NLS
+                resultSet.getLong("file_obj_id"), // NON-NLS
+                resultSet.getLong("artifact_id"), // NON-NLS
+                resultSet.getLong("time"), // NON-NLS
+                eventType,
+                eventType.getDescription(
+                        resultSet.getString("full_description"), // NON-NLS
+                        resultSet.getString("med_description"), // NON-NLS
+                        resultSet.getString("short_description")), // NON-NLS
+                resultSet.getInt("hash_hit") != 0, //NON-NLS
+                resultSet.getInt("tagged") != 0);
     }
 
     /**
@@ -215,24 +224,20 @@ final public class DetailsViewModel {
      *
      * @return
      */
-    static private List<EventStripe> mergeClustersToStripes(Period timeUnitLength, List<EventCluster> eventClusters) {
+    static private List<EventStripe> mergeClustersToStripes(Period timeUnitLength, Map<EventType, SetMultimap< String, EventCluster>> eventClusters) {
 
-        // type -> (description -> events)
-        Map<EventType, SetMultimap< String, EventCluster>> typeMap = new HashMap<>();
-
-        for (EventCluster cluster : eventClusters) {
-            typeMap.computeIfAbsent(cluster.getEventType(), eventType -> HashMultimap.create())
-                    .put(cluster.getDescription(), cluster);
-        }
         //result list to return
         ArrayList<EventCluster> mergedClusters = new ArrayList<>();
 
         //For each (type, description) key, merge agg events
-        for (SetMultimap<String, EventCluster> descrMap : typeMap.values()) {
+        for (Map.Entry<EventType, SetMultimap<String, EventCluster>> typeMapEntry : eventClusters.entrySet()) {
+            EventType type = typeMapEntry.getKey();
+            SetMultimap<String, EventCluster> descrMap = typeMapEntry.getValue();
             //for each description ...
             for (String descr : descrMap.keySet()) {
+                Set<EventCluster> events = descrMap.get(descr);
                 //run through the sorted events, merging together adjacent events
-                Iterator<EventCluster> iterator = descrMap.get(descr).stream()
+                Iterator<EventCluster> iterator = events.stream()
                         .sorted(new DetailViewEvent.StartComparator())
                         .iterator();
                 EventCluster current = iterator.next();
@@ -268,88 +273,23 @@ final public class DetailsViewModel {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get a column specification that will allow us to group by the requested
-     * period size. That is, with all info more granular than that requested
-     * dropped (replaced with zeros). For use in the select clause of a sql
-     * query.
-     *
-     * @param periodSize The ChronoUnit describing what granularity to use.
-     * @param timeZone
-     *
-     * @return
-     */
-    private String formatTimeFunctionHelper(ChronoUnit periodSize, DateTimeZone timeZone) {
-        switch (sleuthkitCase.getDatabaseType()) {
-            case SQLITE:
-                String strfTimeFormat = getSQLIteTimeFormat(periodSize);
-                String useLocalTime = timeZone.equals(DateTimeZone.getDefault()) ? ", 'localtime'" : ""; // NON-NLS
-                return "strftime('" + strfTimeFormat + "', time , 'unixepoch'" + useLocalTime + ")";
-            case POSTGRESQL:
-                String formatString = getPostgresTimeFormat(periodSize);
-                return "to_char(to_timestamp(time) AT TIME ZONE '" + timeZone.getID() + "', '" + formatString + "')";
-            default:
-                throw new UnsupportedOperationException("Unsupported DB type: " + sleuthkitCase.getDatabaseType().name());
+    private boolean passes(TimelineFilter filter, TimelineEvent event) {
+        if (filter instanceof TimelineFilter.EventTypeFilter) {
+            return true;
+        } else if (filter instanceof IntersectionFilter) {
+            boolean allMatch = ((TimelineFilter.IntersectionFilter<?>) filter).getSubFilters().stream().allMatch(subFilter -> passes(subFilter, event));
+            return allMatch;
+        } else if (filter instanceof UnionFilter) {
+            boolean anyMatch = ((TimelineFilter.UnionFilter<?>) filter).getSubFilters().stream().anyMatch(subFilter -> passes(subFilter, event));
+            return anyMatch;
+        } else if (filter instanceof DescriptionFilter) {
+            DescriptionFilter descrFilter = (DescriptionFilter) filter;
+            String eventDescription = event.getDescription(descrFilter.getDescriptionLoD());
+            boolean passed = eventDescription.equalsIgnoreCase(descrFilter.getDescription());
+
+            return passed;
+        } else {
+            return true;
         }
     }
-
-    /*
-     * Get a format string that will allow us to group by the requested period
-     * size. That is, with all info more granular than that requested dropped
-     * (replaced with zeros).
-     *
-     * @param timeUnit The ChronoUnit describing what granularity to build a
-     * strftime string for
-     *
-     * @return a String formatted according to the sqlite strftime spec
-     *
-     * @see https://www.sqlite.org/lang_datefunc.html
-     */
-    private static String getSQLIteTimeFormat(ChronoUnit timeUnit) {
-        switch (timeUnit) {
-            case YEARS:
-                return "%Y-01-01T00:00:00"; // NON-NLS
-            case MONTHS:
-                return "%Y-%m-01T00:00:00"; // NON-NLS
-            case DAYS:
-                return "%Y-%m-%dT00:00:00"; // NON-NLS
-            case HOURS:
-                return "%Y-%m-%dT%H:00:00"; // NON-NLS
-            case MINUTES:
-                return "%Y-%m-%dT%H:%M:00"; // NON-NLS
-            case SECONDS:
-            default:    //seconds - should never happen
-                return "%Y-%m-%dT%H:%M:%S"; // NON-NLS  
-        }
-    }
-
-    /**
-     * Get a format string that will allow us to group by the requested period
-     * size. That is, with all info more granular than that requested dropped
-     * (replaced with zeros).
-     *
-     * @param timeUnit The ChronoUnit describing what granularity to build a
-     *                 strftime string for
-     *
-     * @return a String formatted according to the Postgres
-     *         to_char(to_timestamp(time) ... ) spec
-     */
-    private static String getPostgresTimeFormat(ChronoUnit timeUnit) {
-        switch (timeUnit) {
-            case YEARS:
-                return "YYYY-01-01T00:00:00"; // NON-NLS
-            case MONTHS:
-                return "YYYY-MM-01T00:00:00"; // NON-NLS
-            case DAYS:
-                return "YYYY-MM-DDT00:00:00"; // NON-NLS
-            case HOURS:
-                return "YYYY-MM-DDTHH24:00:00"; // NON-NLS
-            case MINUTES:
-                return "YYYY-MM-DDTHH24:MI:00"; // NON-NLS
-            case SECONDS:
-            default:    //seconds - should never happen
-                return "YYYY-MM-DDTHH24:MI:SS"; // NON-NLS  
-        }
-    }
-
 }

@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.function.Predicate;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
@@ -27,7 +26,6 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
-import static org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter.FilterMode.EXCLUDE;
 
 /**
  * An Action that hides, in the given chart, events that have the given
@@ -55,7 +53,7 @@ class HideDescriptionAction extends Action {
              */
             final FilterState<DescriptionFilter> testFilter
                     = new DefaultFilterState<>(
-                            new DescriptionFilter(description, EXCLUDE));
+                            new DescriptionFilter(descriptionLoD, description));
 
             FilterState<DescriptionFilter> descriptionFilter = chart.getController().getQuickHideFilters().stream()
                     .filter(otherFilterState -> testFilter.getFilter().equals(otherFilterState.getFilter()))

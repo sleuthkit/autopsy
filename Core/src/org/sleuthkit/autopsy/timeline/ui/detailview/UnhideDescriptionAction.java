@@ -18,14 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import javafx.event.ActionEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 
@@ -48,7 +44,7 @@ class UnhideDescriptionAction extends Action {
              * test one and checking all the existing filters against it.
              * Disable them.
              */
-            final DescriptionFilter testFilter = new DescriptionFilter(description, DescriptionFilter.FilterMode.EXCLUDE);
+            final DescriptionFilter testFilter = new DescriptionFilter(descriptionLoD, description);
             chart.getController().getQuickHideFilters().stream()
                     .filter(otherFilterState -> testFilter.equals(otherFilterState.getFilter()))
                     .forEach(descriptionfilter -> descriptionfilter.setSelected(false));
