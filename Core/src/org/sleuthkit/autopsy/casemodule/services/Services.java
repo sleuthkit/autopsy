@@ -54,6 +54,7 @@ public class Services implements Closeable {
         tagsManager = new TagsManager(caseDb);
         services.add(tagsManager);
 
+        //This may be null for feature tests!
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         services.add(keywordSearchService);
 
@@ -105,7 +106,9 @@ public class Services implements Closeable {
     @Override
     public void close() throws IOException {
         for (Closeable service : services) {
-            service.close();
+            if(service != null) {
+                 service.close();
+             }
         }
     }
 

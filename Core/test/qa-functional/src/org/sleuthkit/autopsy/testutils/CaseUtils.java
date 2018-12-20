@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 
 /**
  * Class with utility methods for opening and closing cases for functional
@@ -53,11 +54,8 @@ public final class CaseUtils {
         Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), caseName);
         File caseDirectory = caseDirectoryPath.toFile();
         if (caseDirectory.exists()) {
-            try {
-                FileUtils.deleteDirectory(caseDirectory);
-            } catch (IOException ex) {
-                Assert.fail(String.format("Failed to delete existing case %s at %s: %s", caseName, caseDirectoryPath, ex.getMessage()));
-                Exceptions.printStackTrace(ex);
+            if(!FileUtil.deleteDir(caseDirectory)){
+                Assert.fail(String.format("Failed to delete existing case %s at %s", caseName, caseDirectoryPath));
             }
         }
 
@@ -97,14 +95,9 @@ public final class CaseUtils {
         try {
             Case.closeCurrentCase();
             if (deleteCase) {
-                /*
-                 * TODO (JIRA-4241): Restore the code to delete the case
-                 * directory when the Image Gallery tool cleans up its drawable
-                 * database connection deterministically, instead of in a
-                 * finalizer. As it is now, case deletion can fail due to an
-                 * open drawable database file handles.
-                 */
-                //FileUtils.deleteDirectory(caseDirectory);
+                if(!FileUtil.deleteDir(new File(caseDirectory))){
+                    Assert.fail(String.format("Failed to delete case directory for case %s at %s", caseName, caseDirectory));  
+                }
             }
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
