@@ -52,7 +52,7 @@ final class AutoIngestDashboard extends JPanel {
     private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
     private final static String AID_REFRESH_THREAD_NAME = "AID-refresh-jobs-%d";
     private final static int AID_REFRESH_INTERVAL_SECS = 30;
-    private final static int AID_DELAY_BEFORE_FIRST_REFRESH = 1;
+    private final static int AID_DELAY_BEFORE_FIRST_REFRESH = 0;
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private AutoIngestMonitor autoIngestMonitor;
@@ -240,19 +240,18 @@ final class AutoIngestDashboard extends JPanel {
         ServicesMonitor.getInstance().addSubscriber(servicesList, propChangeListener);
 
         autoIngestMonitor = new AutoIngestMonitor();
-
         new Thread(() -> {
             try {
                 autoIngestMonitor.startUp();
+                scheduledRefreshThreadPoolExecutor.scheduleWithFixedDelay(() -> {
+                    EventQueue.invokeLater(() -> {
+                        refreshTables();
+                    });
+                }, AID_DELAY_BEFORE_FIRST_REFRESH, AID_REFRESH_INTERVAL_SECS, TimeUnit.SECONDS);
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to start up Auto Ingest Monitor", ex);
             }
         }).start();
-        scheduledRefreshThreadPoolExecutor.scheduleWithFixedDelay(() -> {
-            EventQueue.invokeLater(() -> {
-                refreshTables();
-            });
-        }, AID_DELAY_BEFORE_FIRST_REFRESH, AID_REFRESH_INTERVAL_SECS, TimeUnit.SECONDS);
     }
 
     /**
