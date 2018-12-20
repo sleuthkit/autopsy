@@ -33,7 +33,6 @@ import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -57,13 +56,13 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
 
 /**
@@ -180,13 +179,12 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          */
         RootFilterState subClusterFilter = eventsModel.getFilterState()
                 .intersect(new DefaultFilterState<>(
-                        new DescriptionFilter(getEvent().getDescriptionLoD(),getDescription() ), true))
-                .intersect(new DefaultFilterState<>(
                         new EventTypeFilter(getEventType()), true));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
         final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.getEventTypeZoom();
         final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
+        DescriptionFilter descriptionFilter = new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription());
         /*
          * task to load sub-stripes in a background thread
          */
@@ -209,7 +207,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                     }
 
                     //query for stripes at the desired level of detail
-                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(zoom.withDescrLOD(loadedDescriptionLoD));
+                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(descriptionFilter, zoom.withDescrLOD(loadedDescriptionLoD));
                     //setup next for subsequent go through the "do" loop
                     next = withRelativeDetail(loadedDescriptionLoD, relativeDetail);
                 } while (stripes.size() == 1 && nonNull(next)); //keep going while there was only on stripe and we havne't reached the end of the LoD continuum.
@@ -246,7 +244,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                     }
                 } catch (TskCoreException | InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
-                
+
                 }
 
                 getChartLane().requestChartLayout();

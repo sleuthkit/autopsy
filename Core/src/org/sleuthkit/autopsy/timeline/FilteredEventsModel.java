@@ -22,7 +22,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.EventBus;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,7 +39,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -61,7 +59,6 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.TagsFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
-import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
 import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -404,7 +401,7 @@ public final class FilteredEventsModel {
         return eventManager.getTagCountsByTagName(eventIDsWithTags);
     }
 
-    public List<Long> getEventIDs(Interval timeRange, FilterState<?> filter) throws TskCoreException {
+    public List<Long> getEventIDs(Interval timeRange, FilterState<? extends TimelineFilter> filter) throws TskCoreException {
 
         final Interval overlap;
         RootFilter intersection;

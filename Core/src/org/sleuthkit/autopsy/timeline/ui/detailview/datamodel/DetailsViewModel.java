@@ -26,7 +26,6 @@ import com.google.common.eventbus.Subscribe;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -43,6 +42,7 @@ import org.joda.time.Period;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.UIFilter;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
@@ -53,12 +53,8 @@ import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import static org.sleuthkit.datamodel.timeline.EventTypeZoomLevel.SUB_TYPE;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.IntersectionFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.UnionFilter;
 
 /**
  * Model for the Details View. Uses FilteredEventsModel as underlying datamodel
@@ -69,7 +65,7 @@ final public class DetailsViewModel {
     private final static Logger logger = Logger.getLogger(DetailsViewModel.class.getName());
 
     private final FilteredEventsModel eventsModel;
-    private final LoadingCache<ZoomState, List<EventStripe>> eventStripeCache;
+    private final LoadingCache<ZoomState, List<TimelineEvent>> eventCache;
     private final TimelineManager eventManager;
     private final SleuthkitCase sleuthkitCase;
 
@@ -77,21 +73,21 @@ final public class DetailsViewModel {
         this.eventsModel = eventsModel;
         this.eventManager = eventsModel.getEventManager();
         this.sleuthkitCase = eventsModel.getSleuthkitCase();
-        eventStripeCache = CacheBuilder.newBuilder()
+        eventCache = CacheBuilder.newBuilder()
                 .maximumSize(1000L)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .build(new CacheLoaderImpl<>(params
-                        -> getEventStripes(params, TimeLineController.getJodaTimeZone())));
+                        -> getEvents(params, TimeLineController.getJodaTimeZone())));
         eventsModel.registerForEvents(this);
     }
 
     @Subscribe
     void handleCacheInvalidation(FilteredEventsModel.CacheInvalidatedEvent event) {
-        eventStripeCache.invalidateAll();
+        eventCache.invalidateAll();
     }
 
     /**
-     * @param params
+     * @param zoom
      *
      * @return a list of aggregated events that are within the requested time
      *         range and pass the requested filter, using the given aggregation
@@ -99,11 +95,42 @@ final public class DetailsViewModel {
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<EventStripe> getEventStripes(ZoomState params) throws TskCoreException {
+    public List<EventStripe> getEventStripes(ZoomState zoom) throws TskCoreException {
+        return getEventStripes(UIFilter.getAllPassFilter(), zoom);
+    }
+
+    /**
+     * @param zoom
+     *
+     * @return a list of aggregated events that are within the requested time
+     *         range and pass the requested filter, using the given aggregation
+     *         to control the grouping of events
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
+    public List<EventStripe> getEventStripes(UIFilter uiFilter, ZoomState zoom) throws TskCoreException {
+        DateTimeZone timeZone = TimeLineController.getJodaTimeZone();
+        //unpack params
+        Interval timeRange = zoom.getTimeRange();
+        DescriptionLoD descriptionLOD = zoom.getDescriptionLOD();
+        EventTypeZoomLevel typeZoomLevel = zoom.getTypeZoomLevel();
+
+        //intermediate results 
+        Map<EventType, SetMultimap< String, EventCluster>> eventClusters = new HashMap<>();
         try {
-            return eventStripeCache.get(params);
+            eventCache.get(zoom).stream()
+                    .filter(uiFilter)
+                    .forEach(event -> {
+                        EventType clusterType = event.getEventType(typeZoomLevel);
+                        eventClusters.computeIfAbsent(clusterType, eventType -> HashMultimap.create())
+                                .put(event.getDescription(descriptionLOD), new EventCluster(event, clusterType, descriptionLOD));
+                    });
+            //get some info about the time range requested
+            TimeUnits periodSize = RangeDivision.getRangeDivision(timeRange, timeZone).getPeriodSize();
+            return mergeClustersToStripes(periodSize.toUnitPeriod(), eventClusters);
+
         } catch (ExecutionException ex) {
-            throw new TskCoreException("Failed to load Event Stripes from cache for " + params.toString(), ex); //NON-NLS
+            throw new TskCoreException("Failed to load Event Stripes from cache for " + zoom.toString(), ex); //NON-NLS
         }
     }
 
@@ -122,20 +149,16 @@ final public class DetailsViewModel {
      * @throws org.sleuthkit.datamodel.TskCoreException If there is an error
      *                                                  querying the db.
      */
-    List<EventStripe> getEventStripes(ZoomState zoom, DateTimeZone timeZone) throws TskCoreException {
+    List<TimelineEvent> getEvents(ZoomState zoom, DateTimeZone timeZone) throws TskCoreException {
         //unpack params
         Interval timeRange = zoom.getTimeRange();
         TimelineFilter.RootFilter activeFilter = zoom.getFilterState().getActiveFilter();
-        DescriptionLoD descriptionLOD = zoom.getDescriptionLOD();
-        EventTypeZoomLevel typeZoomLevel = zoom.getTypeZoomLevel();
 
         long start = timeRange.getStartMillis() / 1000;
         long end = timeRange.getEndMillis() / 1000;
 
         //ensure length of querried interval is not 0
         end = Math.max(end, start + 1);
-        //get some info about the time range requested
-        TimeUnits periodSize = RangeDivision.getRangeDivision(timeRange, timeZone).getPeriodSize();
 
         //build dynamic parts of query
         String querySql = "SELECT time, file_obj_id, data_source_obj_id, artifact_id, " // NON-NLS
@@ -148,21 +171,12 @@ final public class DetailsViewModel {
                           + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(activeFilter) // NON-NLS
                           + " ORDER BY time"; // NON-NLS
 
-     
-        Map<EventType, SetMultimap< String, EventCluster>> eventClusters = new HashMap<>();
+        List<TimelineEvent> events = new ArrayList<>();
 
         try (SleuthkitCase.CaseDbQuery dbQuery = sleuthkitCase.executeQuery(querySql);
                 ResultSet resultSet = dbQuery.getResultSet();) {
             while (resultSet.next()) {
-                TimelineEvent event = eventHelper(resultSet);
-                boolean passes = passes(activeFilter, event);
-                if (passes) {
-                    EventType clusterType = typeZoomLevel.equals(SUB_TYPE) ? event.getEventType() : event.getEventType().getBaseType();
-                    eventClusters.computeIfAbsent(clusterType, eventType -> HashMultimap.create())
-                            .put(event.getDescription(descriptionLOD), new EventCluster(event, clusterType, descriptionLOD));
-                } else {
-                    System.out.println("");
-                }
+                events.add(eventHelper(resultSet));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
@@ -171,8 +185,7 @@ final public class DetailsViewModel {
             logger.log(Level.SEVERE, "Failed to get events with query: " + querySql, ex); // NON-NLS
             throw new TskCoreException("Failed to get events with query: " + querySql, ex);
         }
-
-        return mergeClustersToStripes(periodSize.toUnitPeriod(), eventClusters);
+        return events;
     }
 
     /**
@@ -273,23 +286,4 @@ final public class DetailsViewModel {
                 .collect(Collectors.toList());
     }
 
-    private boolean passes(TimelineFilter filter, TimelineEvent event) {
-        if (filter instanceof TimelineFilter.EventTypeFilter) {
-            return true;
-        } else if (filter instanceof IntersectionFilter) {
-            boolean allMatch = ((TimelineFilter.IntersectionFilter<?>) filter).getSubFilters().stream().allMatch(subFilter -> passes(subFilter, event));
-            return allMatch;
-        } else if (filter instanceof UnionFilter) {
-            boolean anyMatch = ((TimelineFilter.UnionFilter<?>) filter).getSubFilters().stream().anyMatch(subFilter -> passes(subFilter, event));
-            return anyMatch;
-        } else if (filter instanceof DescriptionFilter) {
-            DescriptionFilter descrFilter = (DescriptionFilter) filter;
-            String eventDescription = event.getDescription(descrFilter.getDescriptionLoD());
-            boolean passed = eventDescription.equalsIgnoreCase(descrFilter.getDescription());
-
-            return passed;
-        } else {
-            return true;
-        }
-    }
 }

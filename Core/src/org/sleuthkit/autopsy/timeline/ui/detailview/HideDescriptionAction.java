@@ -22,10 +22,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.UIFilter;
 import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 
 /**
  * An Action that hides, in the given chart, events that have the given
@@ -51,11 +52,11 @@ class HideDescriptionAction extends Action {
              * as the new filter for the given description. Set the (new) filter
              * active.
              */
-            final FilterState<DescriptionFilter> testFilter
-                    = new DefaultFilterState<>(
+            final DescriptionFilterState testFilter
+                    = new DescriptionFilterState(
                             new DescriptionFilter(descriptionLoD, description));
 
-            FilterState<DescriptionFilter> descriptionFilter = chart.getController().getQuickHideFilters().stream()
+            DescriptionFilterState descriptionFilter = chart.getController().getQuickHideFilters().stream()
                     .filter(otherFilterState -> testFilter.getFilter().equals(otherFilterState.getFilter()))
                     .findFirst()
                     .orElseGet(() -> {

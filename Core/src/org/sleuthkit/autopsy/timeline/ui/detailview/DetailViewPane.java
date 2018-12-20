@@ -60,10 +60,11 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.UIFilter;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Controller class for a DetailsChart based implementation of a timeline view.

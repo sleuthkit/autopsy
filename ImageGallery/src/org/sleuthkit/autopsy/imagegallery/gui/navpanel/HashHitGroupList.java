@@ -19,6 +19,9 @@
 package org.sleuthkit.autopsy.imagegallery.gui.navpanel;
 
 import java.util.function.Function;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -45,7 +48,7 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
      * sorting in the ListView.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private SortedList<DrawableGroup> sorted;
+    private SortedList<DrawableGroup> sorted = FXCollections.<DrawableGroup>observableArrayList().sorted();
 
     public HashHitGroupList(ImageGalleryController controller) {
         super(controller);
@@ -78,9 +81,24 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
         setGraphic(new ImageView("org/sleuthkit/autopsy/imagegallery/images/hashset_hits.png")); //NON-NLS
 
         getBorderPane().setCenter(groupList);
-        sorted = getController().getGroupManager().getAnalyzedGroups()
-                .filtered(group -> group.getHashSetHitsCount() > 0)
-                .sorted(getDefaultComparator());
+        getController().getGroupManager().getAnalyzedGroups().addListener(new ListChangeListener<DrawableGroup>() {
+            @Override
+            public void onChanged(ListChangeListener.Change<? extends DrawableGroup> c) {
+
+                while (c.next()) {
+
+                    c.getAddedSubList().forEach((DrawableGroup t) -> {
+                        if (t.getHashSetHitsCount() > 0) {
+                            Platform.runLater(() -> sorted.add(t));
+                        }
+                    });
+                    c.getRemoved().forEach((DrawableGroup t) -> {
+                        Platform.runLater(() -> sorted.remove(t));
+                    });
+
+                }
+            }
+        });
 
         GroupCellFactory groupCellFactory = new GroupCellFactory(getController(), comparatorProperty());
         groupList.setCellFactory(groupCellFactory::getListCell);
@@ -89,7 +107,8 @@ final public class HashHitGroupList extends NavPanel<DrawableGroup> {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
-    void setFocusedGroup(DrawableGroup grouping) {
+    void setFocusedGroup(DrawableGroup grouping
+    ) {
         groupList.getSelectionModel().select(grouping);
     }
 

@@ -43,10 +43,9 @@ import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
-import org.sleuthkit.datamodel.timeline.TimelineFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 
 /**
  * The FXML controller for the filter ui.
@@ -74,7 +73,7 @@ final public class FilterSetPanel extends BorderPane {
     private TreeTableColumn<FilterState<?>, FilterState<?>> legendColumn;
 
     @FXML
-    private ListView<FilterState<DescriptionFilter>> hiddenDescriptionsListView;
+    private ListView<DescriptionFilterState> hiddenDescriptionsListView;
     @FXML
     private TitledPane hiddenDescriptionsPane;
     @FXML
@@ -87,7 +86,7 @@ final public class FilterSetPanel extends BorderPane {
      * Map from filter to its expansion state in the ui, used to restore the
      * expansion state as we navigate back and forward in the history
      */
-    private final ObservableMap< TimelineFilter, Boolean> expansionMap = FXCollections.observableHashMap();
+    private final ObservableMap< Object, Boolean> expansionMap = FXCollections.observableHashMap();
     private double dividerPosition;
 
     @NbBundle.Messages({
@@ -119,14 +118,13 @@ final public class FilterSetPanel extends BorderPane {
         expansionMap.put(filteredEvents.getFilterState().getFilter(), true);
         expansionMap.put(filteredEvents.getFilterState().getEventTypeFilterState().getFilter(), true);
 
- 
         InvalidationListener applyFiltersListener = observable -> applyFilters();
 
         filteredEvents.eventTypeZoomProperty().addListener(applyFiltersListener);
         filteredEvents.descriptionLODProperty().addListener(applyFiltersListener);
         filteredEvents.timeRangeProperty().addListener(applyFiltersListener);
 
-        filteredEvents.filterProperty().addListener(observable -> refresh()); 
+        filteredEvents.filterProperty().addListener(observable -> refresh());
         refresh();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
@@ -166,9 +164,8 @@ final public class FilterSetPanel extends BorderPane {
     }
 
     private void refresh() {
-        Platform.runLater(() -> {
-            filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filterProperty().get().copyOf(), expansionMap));
-        });
+        Platform.runLater(()
+                -> filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filterProperty().get().copyOf(), expansionMap)));
     }
 
     private void applyFilters() {
@@ -177,8 +174,8 @@ final public class FilterSetPanel extends BorderPane {
         });
     }
 
-    private ListCell<FilterState<DescriptionFilter>> getNewDiscriptionFilterListCell() {
-        final ListCell<FilterState<DescriptionFilter>> cell = new FilterCheckBoxCellFactory<  FilterState<DescriptionFilter>>().forList();
+    private ListCell<DescriptionFilterState> getNewDiscriptionFilterListCell() {
+        final ListCell<DescriptionFilterState> cell = new FilterCheckBoxCellFactory< DescriptionFilterState>().forList();
         cell.itemProperty().addListener(itemProperty -> {
             if (cell.getItem() == null) {
                 cell.setContextMenu(null);
@@ -210,7 +207,7 @@ final public class FilterSetPanel extends BorderPane {
 
         private static final Image SHOW = new Image("/org/sleuthkit/autopsy/timeline/images/eye--plus.png"); // NON-NLS
 
-        RemoveDescriptionFilterAction(TimeLineController controller, Cell<FilterState<DescriptionFilter>> cell) {
+        RemoveDescriptionFilterAction(TimeLineController controller, Cell<DescriptionFilterState> cell) {
             super(actionEvent -> controller.getQuickHideFilters().remove(cell.getItem()));
             setGraphic(new ImageView(SHOW));
             textProperty().bind(

@@ -80,8 +80,10 @@ import org.sleuthkit.autopsy.timeline.events.TimelineEventAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.UIFilter;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
@@ -91,7 +93,6 @@ import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
 
 /**
@@ -158,9 +159,9 @@ public class TimeLineController {
     private final Case autoCase;
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    private final ObservableList<FilterState<DescriptionFilter>> quickHideFilters = FXCollections.observableArrayList();
+    private final ObservableList<DescriptionFilterState> quickHideFilters = FXCollections.observableArrayList();
 
-    public ObservableList<FilterState<DescriptionFilter>> getQuickHideFilters() {
+    public ObservableList<DescriptionFilterState> getQuickHideFilters() {
         return quickHideFilters;
     }
 

@@ -53,8 +53,8 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
     private static final ReadOnlyBooleanProperty ALWAYS_TRUE = new ReadOnlyBooleanWrapper(true).getReadOnlyProperty();
     private final static ReadOnlyBooleanProperty ALWAYS_FALSE = new ReadOnlyBooleanWrapper(false).getReadOnlyProperty();
 
-    private final ObservableList<   FilterState< ?>> subFilterStates = FXCollections.observableArrayList();
-    private final ObservableSet<   FilterState< ?>> namedFilterStates = FXCollections.observableSet();
+    private final ObservableList<   FilterState< ? extends TimelineFilter>> subFilterStates = FXCollections.observableArrayList();
+    private final ObservableSet<   FilterState< ? extends TimelineFilter>> namedFilterStates = FXCollections.observableSet();
     private final RootFilter delegate;
 
     public RootFilterState(RootFilter delegate) {
@@ -104,13 +104,13 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
      * @return A new RootFilter model that intersects the given filter with this
      *         one.
      */
-    public RootFilterState intersect(FilterState<?> otherFilter) {
+    public RootFilterState intersect(FilterState<? extends TimelineFilter> otherFilter) {
         RootFilterState copyOf = copyOf();
         copyOf.addSubFilterState(otherFilter);
         return copyOf;
     }
 
-    public void addSubFilterState(FilterState<?> newSubFilterState) {
+    public void addSubFilterState(FilterState<? extends TimelineFilter> newSubFilterState) {
         if (subFilterStates.contains(newSubFilterState) == false) {
             subFilterStates.add(newSubFilterState);
         }
