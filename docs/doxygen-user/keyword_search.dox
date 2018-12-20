@@ -60,7 +60,7 @@ and move them to the right location. The following steps breakdown this process 
 <li>Navigate to https://github.com/tesseract-ocr/tesseract/wiki/Data-Files.
 <li>Under the section titled "Data Files for Version 4.00 (November 29, 2016)" you will find a table containing files that represent each language. These files have the extension ".traineddata".
 <li>To download the desired language, click on the links in the far right-hand column of the table. You may download as many as you like. Note that you must only choose from this table. Language files under any other sections are not guaranteed to work in Autopsy.
-<li>Once you've downloaded your language files, simply drag and drop them into the "\autopsy\Tesseract-OCR\tessdata" folder of your Autopsy install location (typically in Program Files).
+<li>Once you've downloaded your language files, simply drag and drop them into the "AppData\Roaming\autopsy\ocr_language_packs" folder under your user folder.
 <li>Start up Autopsy and you will be all set. If Autopsy was running, this will require a restart to take effect.
 </ol>
 
