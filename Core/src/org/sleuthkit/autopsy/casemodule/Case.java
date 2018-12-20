@@ -1120,12 +1120,7 @@ public class Case {
                 /*
                  * Enable the case-specific actions.
                  */
-                
-                //Deny ability to add a data source if the special admin access file is present.
-                File denyAddDataSourcePermissions = new File(PlatformUtil.getUserConfigDirectory(), "_ndsp");
-                if(!denyAddDataSourcePermissions.exists()) {
-                    CallableSystemAction.get(AddImageAction.class).setEnabled(true);
-                }
+                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
