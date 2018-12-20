@@ -18,27 +18,32 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
 import java.awt.EventQueue;
-import java.util.Observable;
-import java.util.Observer;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.AutoIngestNodeState;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitorDashboard;
 
 /**
  * A dashboard for monitoring the existing AutoIngestNodes and their status.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
+final class AinStatusDashboard extends javax.swing.JPanel {
 
     private final AutoIngestMonitor autoIngestMonitor;
     private final AinStatusPanel nodesPanel;
+    private final static String AIN_REFRESH_THREAD_NAME = "AID-refresh-jobs-%d";
+    private final static int AIN_REFRESH_INTERVAL_SECS = 30;
+    private final static int AIN_DELAY_BEFORE_FIRST_REFRESH = 1;
+    private final ScheduledThreadPoolExecutor scheduledRefreshThreadPoolExecutor;
 
     /**
      * Creates new form AutoIngestNodeStatus
      */
     AinStatusDashboard(AutoIngestMonitor monitor) {
         initComponents();
+        scheduledRefreshThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(AIN_REFRESH_THREAD_NAME).build());
         autoIngestMonitor = monitor;
         nodesPanel = new AinStatusPanel();
         nodesPanel.setSize(nodesPanel.getSize());
@@ -51,7 +56,11 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
      * Adds this panel as an observer of AutoIngestMonitor.
      */
     void startUp() {
-        autoIngestMonitor.addObserver(this);
+        scheduledRefreshThreadPoolExecutor.scheduleWithFixedDelay(() -> {
+            EventQueue.invokeLater(() -> {
+                refreshTables();
+            });
+        }, AIN_DELAY_BEFORE_FIRST_REFRESH, AIN_REFRESH_INTERVAL_SECS, TimeUnit.SECONDS);
     }
 
     AutoIngestMonitor getMonitor() {
@@ -170,12 +179,4 @@ final class AinStatusDashboard extends javax.swing.JPanel implements Observer {
     private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public void update(Observable o, Object arg) {
-        if (arg instanceof AutoIngestNodeState) {
-            EventQueue.invokeLater(() -> {
-                refreshTables();
-            });
-        }
-    }
 }
