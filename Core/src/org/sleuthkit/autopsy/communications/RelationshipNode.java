@@ -24,6 +24,7 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -74,12 +75,12 @@ final class RelationshipNode extends BlackboardArtifactNode {
         addScoreProperty(sheetSet, tags);
         
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
         
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
         final BlackboardArtifact artifact = getArtifact();

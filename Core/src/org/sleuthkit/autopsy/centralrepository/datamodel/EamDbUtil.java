@@ -25,11 +25,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.CURRENT_DB_SCHEMA_VERSION;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.SOFTWARE_CR_DB_SCHEMA_VERSION;
 
 /**
  *
@@ -134,8 +134,8 @@ public class EamDbUtil {
      */
     static void updateSchemaVersion(Connection conn) throws SQLException {
         try (Statement statement = conn.createStatement()) {
-            statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
-            statement.execute("UPDATE db_info SET value = '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
+            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
+            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
         }
     }
 
@@ -200,6 +200,7 @@ public class EamDbUtil {
                 LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex);
             }
             setUseCentralRepo(false);
+
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
             EamDbPlatformEnum.saveSelectedPlatform();
 
@@ -268,12 +269,15 @@ public class EamDbUtil {
     }
 
     /**
-     * If the Central Repos use has been enabled.
+     * If the option to use a central repository has been selected, does not
+     * indicate the central repository is configured for use.
      *
      * @return true if the Central Repo may be configured, false if it should
      *         not be able to be
      */
     public static boolean useCentralRepo() {
+        //In almost all situations EamDb.isEnabled() should be used instead of this method
+        //as will call this as well as checking that the selected type of central repository is not DISABLED
         return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
     }
 

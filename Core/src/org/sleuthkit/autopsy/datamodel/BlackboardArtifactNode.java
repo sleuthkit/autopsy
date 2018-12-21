@@ -572,7 +572,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo()) {
+        if (EamDb.isEnabled()) {
             correlationAttribute = EamArtifactUtil.getInstanceFromContent(associated);
         }
         return correlationAttribute;
