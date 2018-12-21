@@ -149,9 +149,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         org.openide.awt.Mnemonics.setLocalizedText(lbCentralRepository, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbCentralRepository.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(cbUseCentralRepo, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.cbUseCentralRepo.text")); // NOI18N
-        cbUseCentralRepo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cbUseCentralRepoActionPerformed(evt);
+        cbUseCentralRepo.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                useCentralRepoPropertyChange(evt);
             }
         });
 
@@ -433,15 +433,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         }
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
-    private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
-        //if saved setting is disabled checkbox should be disabled already 
-        store();
-        updateDatabase();
-        load();
-        this.ingestStateUpdated(Case.isCaseOpen());
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_cbUseCentralRepoActionPerformed
-
     private void manageOrganizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageOrganizationButtonActionPerformed
         store();
         ManageOrganizationsDialog manageOrganizationsDialog = new ManageOrganizationsDialog();
@@ -452,13 +443,22 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ManageCasesDialog.displayManageCasesDialog();
     }//GEN-LAST:event_showCasesButtonActionPerformed
 
+    private void useCentralRepoPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_useCentralRepoPropertyChange
+        //if saved setting is disabled checkbox should be disabled already 
+        store();
+        updateDatabase();
+        load();
+        this.ingestStateUpdated(Case.isCaseOpen());
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_useCentralRepoPropertyChange
+
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
     public void load() {
         tbOops.setText("");
         enableButtonSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        cbUseCentralRepo.setSelected(EamDbUtil.ableToConfigureCentralRepo()); // NON-NLS
+        cbUseCentralRepo.setSelected(EamDbUtil.allowUseOfCentralRepository()); // NON-NLS
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
