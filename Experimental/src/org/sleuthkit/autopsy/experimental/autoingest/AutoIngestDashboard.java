@@ -18,9 +18,8 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.logging.Level;
 import java.awt.Color;
 import java.awt.EventQueue;
@@ -29,8 +28,13 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
@@ -46,15 +50,20 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AutoIngestDashboard extends JPanel implements Observer {
-    
+
     private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
     private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
+    private final static String AID_REFRESH_THREAD_NAME = "AID-refresh-jobs-%d";
+    private final static int AID_REFRESH_INTERVAL_SECS = 30;
+    private final static int AID_DELAY_BEFORE_FIRST_REFRESH = 0;
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private AutoIngestMonitor autoIngestMonitor;
     private AutoIngestJobsPanel pendingJobsPanel;
     private AutoIngestJobsPanel runningJobsPanel;
     private AutoIngestJobsPanel completedJobsPanel;
+    private final ScheduledThreadPoolExecutor scheduledRefreshThreadPoolExecutor;
+    private AtomicBoolean scheduledRefreshStarted = new AtomicBoolean(false);
 
     /**
      * Maintain a mapping of each service to it's last status update.
@@ -88,7 +97,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     private AutoIngestDashboard() {
         this.statusByService = new ConcurrentHashMap<>();
-
+        scheduledRefreshThreadPoolExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat(AID_REFRESH_THREAD_NAME).build());
         initComponents();
         statusByService.put(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
         statusByService.put(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString(), NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down"));
@@ -240,6 +249,7 @@ final class AutoIngestDashboard extends JPanel implements Observer {
         new Thread(() -> {
             try {
                 autoIngestMonitor.startUp();
+
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
                 LOGGER.log(Level.SEVERE, "Unable to start up Auto Ingest Monitor", ex);
             }
@@ -257,18 +267,19 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
-        if (arg == null ) {
-            EventQueue.invokeLater(() -> {
-                refreshTables();
-            });
+        if (!scheduledRefreshStarted.getAndSet(true)) {
+            scheduledRefreshThreadPoolExecutor.scheduleWithFixedDelay(() -> {
+                EventQueue.invokeLater(() -> {
+                    refreshTables();
+                });
+            }, AID_DELAY_BEFORE_FIRST_REFRESH, AID_REFRESH_INTERVAL_SECS, TimeUnit.SECONDS);
         }
     }
 
     /**
-     * Reloads the table models using a jobs snapshot and refreshes the JTables
+     * Reloads the table models using a RefreshChildrenEvent and refreshes the JTables
      * that use the models.
      *
-     * @param nodeStateSnapshot The jobs snapshot.
      */
     void refreshTables() {
         pendingJobsPanel.refresh(new RefreshChildrenEvent(autoIngestMonitor));

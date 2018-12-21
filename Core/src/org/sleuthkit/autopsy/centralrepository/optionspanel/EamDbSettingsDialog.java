@@ -90,7 +90,7 @@ public class EamDbSettingsDialog extends JDialog {
         initComponents();
         fcDatabasePath.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         fcDatabasePath.setAcceptAllFileFilterUsed(false);
-         fcDatabasePath.setDialogTitle(Bundle.EamDbSettingsDialog_fcDatabasePath_title());
+        fcDatabasePath.setDialogTitle(Bundle.EamDbSettingsDialog_fcDatabasePath_title());
         fcDatabasePath.setFileFilter(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
@@ -369,7 +369,7 @@ public class EamDbSettingsDialog extends JDialog {
             case POSTGRESQL:
                 if (dbSettingsPostgres.verifyConnection()) {
                     if (dbSettingsPostgres.verifyDatabaseExists()) {
-                        if( dbSettingsPostgres.verifyDatabaseSchema()) {
+                        if (dbSettingsPostgres.verifyDatabaseSchema()) {
                             testingStatus = DatabaseTestResult.TESTEDOK;
                         } else {
                             testingStatus = DatabaseTestResult.SCHEMA_INVALID;
@@ -382,8 +382,8 @@ public class EamDbSettingsDialog extends JDialog {
                 }
                 break;
             case SQLITE:
-                if (dbSettingsSqlite.dbFileExists()){
-                    if(dbSettingsSqlite.verifyConnection()) {
+                if (dbSettingsSqlite.dbFileExists()) {
+                    if (dbSettingsSqlite.verifyConnection()) {
                         if (dbSettingsSqlite.verifyDatabaseSchema()) {
                             testingStatus = DatabaseTestResult.TESTEDOK;
                         } else {
@@ -418,10 +418,10 @@ public class EamDbSettingsDialog extends JDialog {
                 }
                 if (!result) {
                     // Remove the incomplete database
-                    if(dbCreated){
+                    if (dbCreated) {
                         dbSettingsPostgres.deleteDatabase();
                     }
-                    
+
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
@@ -439,10 +439,10 @@ public class EamDbSettingsDialog extends JDialog {
                             && dbSettingsSqlite.insertDefaultDatabaseContent();
                 }
                 if (!result) {
-                    if(dbCreated){
+                    if (dbCreated) {
                         dbSettingsSqlite.deleteDatabase();
                     }
-                                        
+
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
@@ -455,10 +455,13 @@ public class EamDbSettingsDialog extends JDialog {
         testingStatus = DatabaseTestResult.TESTEDOK;
         valid();
     }
+
     /**
-     * Returns if changes to the central repository configuration were successfully applied
-     * 
-     * @return true if the database configuration was successfully changed false if it was not
+     * Returns if changes to the central repository configuration were
+     * successfully applied
+     *
+     * @return true if the database configuration was successfully changed false
+     *         if it was not
      */
     boolean wasConfigurationChanged() {
         return configurationChanged;
@@ -481,12 +484,12 @@ public class EamDbSettingsDialog extends JDialog {
                     Bundle.EamDbSettingsDialog_okButton_databaseConnectionFailed_message(),
                     Bundle.EamDbSettingsDialog_okButton_databaseConnectionFailed_title(),
                     JOptionPane.WARNING_MESSAGE);
-        } else if (testingStatus == DatabaseTestResult.SCHEMA_INVALID){
+        } else if (testingStatus == DatabaseTestResult.SCHEMA_INVALID) {
             // There's an existing database or file, but it's not in our format. 
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                     Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_message(),
                     Bundle.EamDbSettingsDialog_okButton_corruptDatabaseExists_title(),
-                    JOptionPane.WARNING_MESSAGE);           
+                    JOptionPane.WARNING_MESSAGE);
         } else if (testingStatus == DatabaseTestResult.DB_DOES_NOT_EXIST) {
             //database doesn't exist do you want to create
             if (JOptionPane.YES_OPTION == JOptionPane.showConfirmDialog(WindowManager.getDefault().getMainWindow(),
@@ -580,10 +583,10 @@ public class EamDbSettingsDialog extends JDialog {
         customizeComponents();
     }//GEN-LAST:event_cbDatabaseTypeActionPerformed
 
-    private void updateFullDbPath(){
+    private void updateFullDbPath() {
         lbFullDbPath.setText(tfDatabasePath.getText() + File.separator + CENTRAL_REPO_DB_NAME + CENTRAL_REPO_SQLITE_EXT);
     }
-    
+
     private void displayDatabaseSettings(boolean isPostgres) {
         lbDatabasePath.setVisible(!isPostgres);
         tfDatabasePath.setVisible(!isPostgres);

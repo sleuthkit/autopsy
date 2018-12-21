@@ -26,7 +26,7 @@ import javax.swing.JPanel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
@@ -75,8 +75,8 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         dataSourcesHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInDataSourcesTree());
         viewsHideSlackCheckbox.setSelected(UserPreferences.hideSlackFilesInViewsTree());
 
-        commentsOccurencesColumnsCheckbox.setEnabled(EamDbUtil.useCentralRepo());
-        commentsOccurencesColumnWrapAroundText.setEnabled(EamDbUtil.useCentralRepo());
+        commentsOccurencesColumnsCheckbox.setEnabled(EamDb.isEnabled());
+        commentsOccurencesColumnWrapAroundText.setEnabled(EamDb.isEnabled());
         commentsOccurencesColumnsCheckbox.setSelected(UserPreferences.hideCentralRepoCommentsAndOccurrences());
         
         hideOtherUsersTagsCheckbox.setSelected(UserPreferences.showOnlyCurrentUserTags());
