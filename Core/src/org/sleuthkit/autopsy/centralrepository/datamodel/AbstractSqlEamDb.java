@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -3170,6 +3171,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws EamDbException
      */
+    @Messages({"AbstractSqlEamDb.upgradeSchema.incompatible=The selected Central Repository is not compatable with the current version of the application, please upgrade the application if you wish to use this Central Repository"})
     @Override
     public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException {
 
@@ -3225,7 +3227,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             //we can not use the CaseDbSchemaVersionNumber.isCompatible method 
             //because it is specific to case db schema versions only supporting major versions greater than 1
             if (SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() < dbSchemaVersion.getMajor()) {
-                throw new IncompatibleCentralRepoException("The selected Central Repository is not compatable with the current version of the application, please upgrade the application if you wish to use this Central Repository");
+                throw new IncompatibleCentralRepoException(Bundle.AbstractSqlEamDb_upgradeSchema_incompatible());
             }
             if (dbSchemaVersion.equals(SOFTWARE_CR_DB_SCHEMA_VERSION)) {
                 logger.log(Level.INFO, "Central Repository is up to date");
