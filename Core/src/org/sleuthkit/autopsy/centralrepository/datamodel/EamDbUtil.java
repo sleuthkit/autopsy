@@ -198,8 +198,8 @@ public class EamDbUtil {
                 if (null != EamDb.getInstance()) {
                     EamDb.getInstance().shutdownConnections();
                 }
-            } catch (EamDbException ignored) {
-                LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex);
+            } catch (EamDbException ex2) {
+                LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
             }
             setUseCentralRepo(false);
 
