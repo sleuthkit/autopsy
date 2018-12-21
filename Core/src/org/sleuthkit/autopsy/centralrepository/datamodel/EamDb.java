@@ -710,7 +710,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public void upgradeSchema() throws EamDbException, SQLException;
+    public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException;
 
     /**
      * Gets an exclusive lock (if applicable). Will return the lock if

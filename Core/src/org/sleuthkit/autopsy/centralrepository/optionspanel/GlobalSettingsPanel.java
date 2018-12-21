@@ -30,6 +30,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -75,9 +76,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ingestStateUpdated(Case.isCaseOpen());
     }
 
-    @Messages({"GlobalSettingsPanel.updateFailed.title=Update failed",
-        "GlobalSettingsPanel.updateFailed.message=Failed to update database. Central repository has been disabled."
-    })
+    @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository upgrade failed"})
     private void updateDatabase() {
 
         if (EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED)) {
@@ -86,16 +85,15 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
-            boolean result = EamDbUtil.upgradeDatabase();
+            EamDbUtil.upgradeDatabase();
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            if (!result) {
-                JOptionPane.showMessageDialog(this,
-                        NbBundle.getMessage(this.getClass(),
-                                "GlobalSettingsPanel.updateFailed.message"),
-                        NbBundle.getMessage(this.getClass(),
-                                "GlobalSettingsPanel.updateFailed.title"),
-                        JOptionPane.WARNING_MESSAGE);
-            }
+        } catch (EamDbException ex) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            JOptionPane.showMessageDialog(this,
+                    ex.getMessage(),
+                    NbBundle.getMessage(this.getClass(),
+                            "GlobalSettingsPanel.updateFailed.title"),
+                    JOptionPane.WARNING_MESSAGE);
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }

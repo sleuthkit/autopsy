@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -172,9 +173,10 @@ public class EamDbUtil {
      *
      * @return true if the upgrade succeeds, false otherwise.
      */
-    public static boolean upgradeDatabase() {
+    @Messages({"EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade central repository. It has been disabled."})
+    public static void upgradeDatabase() throws EamDbException {
         if (!EamDb.isEnabled()) {
-            return true;
+            return;
         }
 
         CoordinationService.Lock lock = null;
@@ -188,7 +190,7 @@ public class EamDbUtil {
 
             db.upgradeSchema();
 
-        } catch (EamDbException | SQLException ex) {
+        } catch (EamDbException | SQLException | IncompatibleCentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
 
             // Disable the central repo and clear the current settings.
@@ -196,15 +198,18 @@ public class EamDbUtil {
                 if (null != EamDb.getInstance()) {
                     EamDb.getInstance().shutdownConnections();
                 }
-            } catch (EamDbException ex2) {
+            } catch (EamDbException ignored) {
                 LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex);
             }
             setUseCentralRepo(false);
 
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
             EamDbPlatformEnum.saveSelectedPlatform();
-
-            return false;
+            String messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message();
+            if (ex instanceof IncompatibleCentralRepoException) {
+                messageForDialog = ex.getMessage() + "\n\n" + messageForDialog;
+            }
+            throw new EamDbException(messageForDialog);
         } finally {
             if (lock != null) {
                 try {
@@ -214,7 +219,6 @@ public class EamDbUtil {
                 }
             }
         }
-        return true;
     }
 
     /**

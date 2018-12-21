@@ -3171,7 +3171,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public void upgradeSchema() throws EamDbException, SQLException {
+    public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException {
 
         ResultSet resultSet = null;
         Statement statement = null;
@@ -3225,7 +3225,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             //we can not use the CaseDbSchemaVersionNumber.isCompatible method 
             //because it is specific to case db schema versions only supporting major versions greater than 1
             if (SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() < dbSchemaVersion.getMajor()) {
-                throw new EamDbException("The selected Central Repository is not compatable with the current version of the application, please upgrade the application if you wish to use this Central Repository");
+                throw new IncompatibleCentralRepoException("The selected Central Repository is not compatable with the current version of the application, please upgrade the application if you wish to use this Central Repository");
             }
             if (dbSchemaVersion.equals(SOFTWARE_CR_DB_SCHEMA_VERSION)) {
                 logger.log(Level.INFO, "Central Repository is up to date");
