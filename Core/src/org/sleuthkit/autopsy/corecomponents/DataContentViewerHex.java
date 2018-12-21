@@ -21,6 +21,9 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
@@ -29,9 +32,14 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Utilities;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskException;
@@ -105,6 +113,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         goToPageLabel = new javax.swing.JLabel();
         goToOffsetLabel = new javax.swing.JLabel();
         goToOffsetTextField = new javax.swing.JTextField();
+        launchHxDButton = new javax.swing.JButton();
 
         copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
@@ -187,6 +196,13 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             }
         });
 
+        launchHxDButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerHex.class, "DataContentViewerHex.launchHxDButton.text")); // NOI18N
+        launchHxDButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                launchHxDButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout hexViewerPanelLayout = new javax.swing.GroupLayout(hexViewerPanel);
         hexViewerPanel.setLayout(hexViewerPanelLayout);
         hexViewerPanelLayout.setHorizontalGroup(
@@ -214,7 +230,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 .addComponent(goToOffsetLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(goToOffsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(32, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(launchHxDButton)
+                .addContainerGap(39, Short.MAX_VALUE))
         );
         hexViewerPanelLayout.setVerticalGroup(
             hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -231,7 +249,9 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                     .addComponent(goToPageLabel)
                     .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(goToOffsetLabel)
-                    .addComponent(goToOffsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(goToOffsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(launchHxDButton)))
                 .addGap(0, 0, 0))
         );
 
@@ -241,7 +261,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 686, Short.MAX_VALUE)
             .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -249,7 +269,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -334,6 +354,27 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         }
     }//GEN-LAST:event_goToOffsetTextFieldActionPerformed
 
+    private void launchHxDButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_launchHxDButtonActionPerformed
+        try {
+            String tempDirectory = Case.getCurrentCaseThrows().getTempDirectory();
+            File dataSourceInTempDirectory = Paths.get(tempDirectory, dataSource.getId() + dataSource.getName()).toFile();
+            ContentUtils.writeToFile(dataSource, dataSourceInTempDirectory);
+            
+            String HdXExecutableToFind = Paths.get("HxD", "HxD64.exe").toString();
+            File HdXExecutable = InstalledFileLocator.getDefault().locate(HdXExecutableToFind, DataContentViewerHex.class.getPackage().getName(), false);
+            if (null == HdXExecutable) {
+                throw new IOException(String.format("Could not find HdXExecutable at %s", HdXExecutableToFind));
+            }
+            
+            ProcessBuilder launchHdXExecutable = new ProcessBuilder();
+            launchHdXExecutable.command(String.format("%s \"%s\"", HdXExecutable.getAbsolutePath(), dataSourceInTempDirectory.getAbsolutePath()));
+            ExecUtil.execute(launchHdXExecutable);
+        } catch (NoCurrentCaseException | IOException ex) {
+            logger.log(Level.SEVERE, "Unable to launch HxD Editor", ex);
+            //TODO - Make pop-up appear saying there were problems attempting to launch editor
+        }
+    }//GEN-LAST:event_launchHxDButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
@@ -344,6 +385,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     private javax.swing.JPanel hexViewerPanel;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JButton launchHxDButton;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel ofLabel;
     private javax.swing.JTextArea outputTextArea;
@@ -527,18 +569,5 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     @Override
     public Component getComponent() {
         return this;
-    }
-
-    /*
-     * Show the right click menu only if evt is the correct mouse event
-     */
-    private void maybeShowPopup(java.awt.event.MouseEvent evt) {
-        if (evt.isPopupTrigger()) {
-            rightClickMenu.setLocation(evt.getLocationOnScreen());
-            rightClickMenu.setVisible(true);
-            copyMenuItem.setEnabled(outputTextArea.getSelectedText() != null);
-        } else {
-            rightClickMenu.setVisible(false);
-        }
     }
 }

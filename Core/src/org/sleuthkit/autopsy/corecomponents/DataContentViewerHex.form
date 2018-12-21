@@ -45,7 +45,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jScrollPane2" pref="100" max="32767" attributes="0"/>
+          <Component id="jScrollPane2" pref="686" max="32767" attributes="0"/>
           <Component id="jScrollPane3" alignment="0" pref="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
@@ -54,7 +54,7 @@
           <Group type="102" alignment="1" attributes="0">
               <Component id="jScrollPane2" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane3" pref="27" max="32767" attributes="0"/>
+              <Component id="jScrollPane3" pref="267" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -120,7 +120,9 @@
                       <Component id="goToOffsetLabel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="goToOffsetTextField" min="-2" pref="79" max="-2" attributes="0"/>
-                      <EmptySpace pref="32" max="32767" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="launchHxDButton" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="39" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -140,7 +142,10 @@
                           <Component id="goToPageLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="goToPageTextField" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="goToOffsetLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                          <Component id="goToOffsetTextField" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                              <Component id="goToOffsetTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="launchHxDButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
                       <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                   </Group>
@@ -287,6 +292,16 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="goToOffsetTextFieldActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="launchHxDButton">
+              <Properties>
+                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                  <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataContentViewerHex.launchHxDButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="launchHxDButtonActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>
