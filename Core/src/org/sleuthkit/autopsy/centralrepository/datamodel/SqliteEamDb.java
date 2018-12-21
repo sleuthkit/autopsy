@@ -1118,7 +1118,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public void upgradeSchema() throws EamDbException, SQLException {
+    public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException {
         try {
             acquireExclusiveLock();
             super.upgradeSchema();

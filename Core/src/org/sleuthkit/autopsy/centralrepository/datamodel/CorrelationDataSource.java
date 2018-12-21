@@ -98,7 +98,7 @@ public class CorrelationDataSource implements Serializable {
         }
 
         CorrelationDataSource correlationDataSource = null;
-        boolean useCR = EamDbUtil.useCentralRepo();
+        boolean useCR = EamDb.isEnabled();
         if (useCR) {
             correlationDataSource = EamDb.getInstance().getDataSource(correlationCase, dataSource.getId());
         }
