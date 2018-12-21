@@ -768,11 +768,11 @@ public final class DrawableDB {
                         }
                     }
                 } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Failed to get group seen", ex); //NON-NLS
+                    completeExceptionally(ex);
                 }
             }
         }
-// Callback to process result of seen query
+        // Callback to process result of seen query
         GroupSeenQueryResultProcessor queryResultProcessor = new GroupSeenQueryResultProcessor();
 
         try {
@@ -785,7 +785,7 @@ public final class DrawableDB {
             return queryResultProcessor.get();
         } catch (ExecutionException | InterruptedException | TskCoreException ex) {
             String msg = String.format("Failed to get is group seen for group key %s", groupKey.getValueDisplayName()); //NON-NLS
-            logger.log(Level.WARNING, msg, ex);
+            logger.log(Level.SEVERE, msg, ex);
         }
 
         return false;

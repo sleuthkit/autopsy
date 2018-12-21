@@ -243,12 +243,15 @@ class ReportCaseUco implements GeneralReportModule {
         catalog.writeStringField("@type", "Trace");
 
         catalog.writeFieldName("propertyBundle");
-        catalog.writeStartArray();
-
+        catalog.writeStartArray();        
         catalog.writeStartObject();
+        
+        // replace double slashes with single ones
+        caseDirPath = caseDirPath.replaceAll("\\\\", "/");
+        
         catalog.writeStringField("@type", "File");
         if (dbType == TskData.DbType.SQLITE) {
-            catalog.writeStringField("filePath", caseDirPath + java.io.File.separator + dbFileName);
+            catalog.writeStringField("filePath", caseDirPath + "/" + dbFileName);
             catalog.writeBooleanField("isDirectory", false);
         } else {
             catalog.writeStringField("filePath", caseDirPath);
@@ -300,7 +303,7 @@ class ReportCaseUco implements GeneralReportModule {
                 }
             }
         }
-
+        
         return saveDataSourceInCaseUcoFormat(jsonGenerator, imageName, imageSize, selectedDataSourceId, caseTraceId);
     }
     
@@ -317,6 +320,10 @@ class ReportCaseUco implements GeneralReportModule {
         
         catalog.writeStartObject();
         catalog.writeStringField("@type", "File");
+        
+        // replace double back slashes with single ones
+        imageName = imageName.replaceAll("\\\\", "/");
+        
         catalog.writeStringField("filePath", imageName);
         catalog.writeEndObject();
         
@@ -391,7 +398,7 @@ class ReportCaseUco implements GeneralReportModule {
             catalog.writeStartArray();
             catalog.writeStartObject();
             catalog.writeStringField("@type", "Hash");
-            catalog.writeStringField("hashMethod", "SHA256");
+            catalog.writeStringField("hashMethod", "MD5");
             catalog.writeStringField("hashValue", md5Hash);
             catalog.writeEndObject();
             catalog.writeEndArray();

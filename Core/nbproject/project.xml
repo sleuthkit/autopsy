@@ -339,7 +339,7 @@
                 <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
                 <package>org.sleuthkit.autopsy.textextractors</package>
-                <package>org.sleuthkit.autopsy.textextractors.extractionconfigs</package>
+                <package>org.sleuthkit.autopsy.textextractors.configs</package>
                 <package>org.sleuthkit.autopsy.texttranslation</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
@@ -500,8 +500,8 @@
                 <binary-origin>release/modules/ext/isoparser-1.1.18.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.4.jar</binary-origin>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-core-0.8.jar</runtime-relative-path>

@@ -199,7 +199,7 @@ public class ImageGalleryModule {
             if (currentController.isListeningEnabled() == false) {
                 return;
             }
-            
+
             String eventType = event.getPropertyName();
             switch (IngestManager.IngestModuleEvent.valueOf(eventType)) {
                 case FILE_DONE:
@@ -354,6 +354,11 @@ public class ImageGalleryModule {
 
             DataSourceAnalysisEvent dataSourceEvent = (DataSourceAnalysisEvent) event;
             Content dataSource = dataSourceEvent.getDataSource();
+            if (dataSource == null) {
+                logger.log(Level.SEVERE, String.format("Failed to handle %s event", event.getPropertyName())); //NON-NLS
+                return;
+            }
+
             long dataSourceObjId = dataSource.getId();
             String eventType = dataSourceEvent.getPropertyName();
             try {

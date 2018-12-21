@@ -49,7 +49,7 @@ public class DataContentViewerOtherCasesTableCellRenderer implements TableCellRe
             foreground = Color.WHITE;
             background = Color.BLUE;
         } else {
-            String known_status = (String) table.getModel().getValueAt(row, 
+            String known_status = (String) table.getModel().getValueAt(table.convertRowIndexToModel(row), 
                     table.getColumn(DataContentViewerOtherCasesTableModel.TableColumns.KNOWN.columnName()).getModelIndex());
             if (known_status.equals(TskData.FileKnown.BAD.getName())) {
                     foreground = Color.WHITE;

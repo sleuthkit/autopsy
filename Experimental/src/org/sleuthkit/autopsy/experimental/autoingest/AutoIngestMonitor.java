@@ -365,8 +365,9 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                             LOGGER.log(Level.SEVERE, "Unknown AutoIngestJobData.ProcessingStatus");
                             break;
                     }
-                } catch (InterruptedException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Unexpected interrupt while retrieving coordination service node data for '%s'", node), ex);
+                } catch (InterruptedException ignore) {
+                    LOGGER.log(Level.WARNING, "Interrupt while retrieving coordination service node data");
+                    return newJobsSnapshot;
                 } catch (AutoIngestJobNodeData.InvalidDataException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Unable to use node data for '%s'", node), ex);
                 } catch (AutoIngestJob.AutoIngestJobException ex) {

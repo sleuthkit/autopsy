@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.core;
 
 import java.awt.Cursor;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -29,6 +30,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import org.apache.commons.io.FileUtils;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -285,12 +288,34 @@ public class Installer extends ModuleInstall {
         File pythonModulesDir = new File(PlatformUtil.getUserPythonModulesPath());
         pythonModulesDir.mkdir();
     }
+    
+    /**
+     * Make a folder in the config directory for Ocr Language Packs if one does
+     * not exist.
+     */
+    private static void ensureOcrLanguagePacksFolderExists() {
+        File ocrLanguagePacksDir = new File(PlatformUtil.getOcrLanguagePacksPath());
+        boolean createDirectory = ocrLanguagePacksDir.mkdir();
+        
+        //If the directory did not exist, copy the tessdata folder over so we 
+        //support english.
+        if(createDirectory) {
+            File tessdataDir = InstalledFileLocator.getDefault().locate(
+                    "Tesseract-OCR/tessdata", Installer.class.getPackage().getName(), false);
+            try {
+                FileUtils.copyDirectory(tessdataDir, ocrLanguagePacksDir);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Copying over default language packs for Tesseract failed.", ex);
+            }
+        }
+    }
 
     @Override
     public void restored() {
         super.restored();
         ensurePythonModulesFolderExists();
         ensureClassifierFolderExists();
+        ensureOcrLanguagePacksFolderExists();
         initJavaFx();
         for (ModuleInstall mi : packageInstallers) {
             try {
