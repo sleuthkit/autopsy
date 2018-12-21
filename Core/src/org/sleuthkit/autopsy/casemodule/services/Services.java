@@ -54,7 +54,9 @@ public class Services implements Closeable {
         tagsManager = new TagsManager(caseDb);
         services.add(tagsManager);
 
-        //This may be null for feature tests!
+        //This lookup fails in the functional test code. See JIRA-4571 for details.
+        //For the time being, the closing of this service at line 108 will be made
+        //null safe so that the functional tests run with no issues.
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
         services.add(keywordSearchService);
 

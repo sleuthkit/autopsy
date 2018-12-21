@@ -53,10 +53,8 @@ public final class CaseUtils {
          */
         Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), caseName);
         File caseDirectory = caseDirectoryPath.toFile();
-        if (caseDirectory.exists()) {
-            if(!FileUtil.deleteDir(caseDirectory)){
-                Assert.fail(String.format("Failed to delete existing case %s at %s", caseName, caseDirectoryPath));
-            }
+        if(caseDirectory.exists() && !FileUtil.deleteDir(caseDirectory)){
+            Assert.fail(String.format("Failed to delete existing case %s at %s", caseName, caseDirectoryPath));
         }
 
         /*
@@ -94,10 +92,8 @@ public final class CaseUtils {
         String caseDirectory = currentCase.getCaseDirectory();
         try {
             Case.closeCurrentCase();
-            if (deleteCase) {
-                if(!FileUtil.deleteDir(new File(caseDirectory))){
-                    Assert.fail(String.format("Failed to delete case directory for case %s at %s", caseName, caseDirectory));  
-                }
+            if(deleteCase && !FileUtil.deleteDir(new File(caseDirectory))){
+                Assert.fail(String.format("Failed to delete case directory for case %s at %s", caseName, caseDirectory));  
             }
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
