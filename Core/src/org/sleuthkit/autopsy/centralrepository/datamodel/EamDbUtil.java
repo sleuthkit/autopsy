@@ -270,14 +270,15 @@ public class EamDbUtil {
 
     /**
      * If the option to use a central repository has been selected, does not
-     * indicate the central repository is configured for use.
+     * indicate the central repository is configured for use simply that the
+     * checkbox allowing configuration is checked on the options panel.
      *
      * @return true if the Central Repo may be configured, false if it should
      *         not be able to be
      */
-    public static boolean useCentralRepo() {
+    public static boolean allowUseOfCentralRepository() {
         //In almost all situations EamDb.isEnabled() should be used instead of this method
-        //as will call this as well as checking that the selected type of central repository is not DISABLED
+        //as EamDb.isEnabled() will call this method as well as checking that the selected type of central repository is not DISABLED
         return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
     }
 

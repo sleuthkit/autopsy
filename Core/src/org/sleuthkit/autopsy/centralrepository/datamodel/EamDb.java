@@ -41,7 +41,7 @@ public interface EamDb {
     static EamDb getInstance() throws EamDbException {
 
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.DISABLED;
-        if (EamDbUtil.useCentralRepo()) {
+        if (EamDbUtil.allowUseOfCentralRepository()) {
             selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         }
         switch (selectedPlatform) {
@@ -92,7 +92,7 @@ public interface EamDb {
      * @return Is the database enabled
      */
     static boolean isEnabled() {
-        return EamDbUtil.useCentralRepo()
+        return EamDbUtil.allowUseOfCentralRepository()
                 && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
     }
 

@@ -458,7 +458,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         tbOops.setText("");
         enableButtonSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        cbUseCentralRepo.setSelected(EamDbUtil.useCentralRepo()); // NON-NLS
+        cbUseCentralRepo.setSelected(EamDbUtil.ableToConfigureCentralRepo()); // NON-NLS
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
