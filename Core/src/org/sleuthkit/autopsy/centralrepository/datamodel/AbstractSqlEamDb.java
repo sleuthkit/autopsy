@@ -3171,7 +3171,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws EamDbException
      */
-    @Messages({"AbstractSqlEamDb.upgradeSchema.incompatible=The selected Central Repository is not compatable with the current version of the application, please upgrade the application if you wish to use this Central Repository"})
+    @Messages({"AbstractSqlEamDb.upgradeSchema.incompatible=The selected Central Repository is not compatible with the current version of the application, please upgrade the application if you wish to use this Central Repository"})
     @Override
     public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException {
 
