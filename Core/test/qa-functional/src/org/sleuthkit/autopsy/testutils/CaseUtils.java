@@ -92,21 +92,13 @@ public final class CaseUtils {
         String caseDirectory = currentCase.getCaseDirectory();
         try {
             Case.closeCurrentCase();
-<<<<<<< HEAD
-            if (deleteCase) {
-                FileUtils.deleteDirectory(new File(caseDirectory));
-=======
             if(deleteCase && !FileUtil.deleteDir(new File(caseDirectory))){
                 Assert.fail(String.format("Failed to delete case directory for case %s at %s", caseName, caseDirectory));  
->>>>>>> upstream/develop
             }
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(String.format("Failed to close case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
-        } catch (IOException ex) {
-            Exceptions.printStackTrace(ex);
-            Assert.fail(String.format("Failed to delete case directory for case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));            
-        }
+        } 
     }
 
     /**

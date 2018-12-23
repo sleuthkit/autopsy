@@ -323,50 +323,50 @@ public class IngestFileFiltersTest extends NbTestCase {
         testSucceeded = true;
     }
 
-//    public void testEmbeddedModule() {
-//        Case currentCase = CaseUtils.createAsCurrentCase("testEmbeddedModule");
-//        LocalFilesDSProcessor dataSourceProcessor = new LocalFilesDSProcessor();
-//        IngestUtils.addDataSource(dataSourceProcessor, ZIPFILE_PATH);
-//        
-//        //Build the filter to find jpg files
-//        HashMap<String, Rule> rules = new HashMap<>();
-//        //Extension condition for jpg files
-//        rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
-//        //Extension condition for zip files, because we want test jpg extension filter for extracted files from a zip file 
-//        rules.put("rule2", new Rule("ZipExtention", new ExtensionCondition("zip"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
-//        FilesSet embeddedFilter = new FilesSet("Filter", "Filter to files with .jpg extension.", false, false, rules);
-//                  
-//        try {
-//            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
-//            templates.add(IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory()));
-//            templates.add(IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory()));
-//            IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates, embeddedFilter);
-//            IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings);
-//            FileManager fileManager = currentCase.getServices().getFileManager();
-//            //get all .jpg files in zip file
-//            List<AbstractFile> results = fileManager.findFiles("%%");
-//            assertEquals(39, results.size());
-//            int numTypeJpgFiles = 0;
-//            for (AbstractFile file : results) {
-//                if (file.getNameExtension().equalsIgnoreCase("jpg") || file.getNameExtension().equalsIgnoreCase("zip")) {
-//                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
-//                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
-//                    numTypeJpgFiles++;
-//                } else if (file.isDir() && (file.getType() == TSK_DB_FILES_TYPE_ENUM.DERIVED || file.getType() == TSK_DB_FILES_TYPE_ENUM.LOCAL)) {
-//                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
-//                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
-//                } else {
-//                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
-//                    assertTrue(errMsg, file.getMIMEType() == null);
-//                }
-//            }
-//            //Make sure 10 jpg files and 1 zip file have been typed
-//            assertEquals(11, numTypeJpgFiles);
-//        } catch (TskCoreException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
-//        
-//        testSucceeded = true;
-//    }
+    public void testEmbeddedModule() {
+        Case currentCase = CaseUtils.createAsCurrentCase("testEmbeddedModule");
+        LocalFilesDSProcessor dataSourceProcessor = new LocalFilesDSProcessor();
+        IngestUtils.addDataSource(dataSourceProcessor, ZIPFILE_PATH);
+        
+        //Build the filter to find jpg files
+        HashMap<String, Rule> rules = new HashMap<>();
+        //Extension condition for jpg files
+        rules.put("rule1", new Rule("FindJpgExtention", new ExtensionCondition("jpg"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        //Extension condition for zip files, because we want test jpg extension filter for extracted files from a zip file 
+        rules.put("rule2", new Rule("ZipExtention", new ExtensionCondition("zip"), new MetaTypeCondition(MetaTypeCondition.Type.FILES), null, null, null, null));
+        FilesSet embeddedFilter = new FilesSet("Filter", "Filter to files with .jpg extension.", false, false, rules);
+                  
+        try {
+            ArrayList<IngestModuleTemplate> templates =  new ArrayList<>();
+            templates.add(IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory()));
+            templates.add(IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory()));
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestFileFiltersTest.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates, embeddedFilter);
+            IngestUtils.runIngestJob(currentCase.getDataSources(), ingestJobSettings);
+            FileManager fileManager = currentCase.getServices().getFileManager();
+            //get all .jpg files in zip file
+            List<AbstractFile> results = fileManager.findFiles("%%");
+            assertEquals(39, results.size());
+            int numTypeJpgFiles = 0;
+            for (AbstractFile file : results) {
+                if (file.getNameExtension().equalsIgnoreCase("jpg") || file.getNameExtension().equalsIgnoreCase("zip")) {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                    numTypeJpgFiles++;
+                } else if (file.isDir() && (file.getType() == TSK_DB_FILES_TYPE_ENUM.DERIVED || file.getType() == TSK_DB_FILES_TYPE_ENUM.LOCAL)) {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly blocked by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() != null && !file.getMIMEType().isEmpty());
+                } else {
+                    String errMsg = String.format("File %s (objId=%d) unexpectedly passed by the file filter.", file.getName(), file.getId());
+                    assertTrue(errMsg, file.getMIMEType() == null);
+                }
+            }
+            //Make sure 10 jpg files and 1 zip file have been typed
+            assertEquals(11, numTypeJpgFiles);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+        
+        testSucceeded = true;
+    }
 }
