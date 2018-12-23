@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.commonfilesearch.AbstractCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.AllInterCaseCommonAttributeSearcher;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE1;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE2;
 import static org.sleuthkit.autopsy.commonfilessearch.InterCaseTestUtils.CASE3;
@@ -118,7 +118,7 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 
             AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, type, 0);
 
-            CommonAttributeSearchResults metadata = builder.findMatches();
+            CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
 
             metadata.size();
 
@@ -151,20 +151,20 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 //        try {
 //
 //            AbstractCommonAttributeSearcher builder;
-//            CommonAttributeSearchResults metadata;
+//            CommonAttributeCountSearchResults metadata;
 //
 //            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 100);
-//            metadata = builder.findMatches();
+//            metadata = builder.findMatchesByCount();
 //            metadata.size();
 //            //assertTrue("This should yield 13 results.", verifyInstanceCount(metadata, 13));
 //
 //            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 20);
-//            metadata = builder.findMatches();
+//            metadata = builder.findMatchesByCount();
 //            metadata.size();
 //            //assertTrue("This should yield no results.", verifyInstanceCount(metadata, 0));
 //
 //            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 90);
-//            metadata = builder.findMatches();
+//            metadata = builder.findMatchesByCount();
 //            metadata.size();
 //            //assertTrue("This should yield 2 results.", verifyInstanceCount(metadata, 2));
 //

@@ -38,7 +38,7 @@ PROJECT_NAME           = "Autopsy"
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = 4.9.1
+PROJECT_NUMBER = 4.10.0
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears a the top of each page and should give viewer a
@@ -1063,7 +1063,7 @@ GENERATE_HTML          = YES
 # The default directory is: html.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_OUTPUT            = api-docs/4.9.0/
+HTML_OUTPUT = api-docs/4.10.0/
 
 # The HTML_FILE_EXTENSION tag can be used to specify the file extension for each
 # generated HTML page (for example: .htm, .php, .asp).

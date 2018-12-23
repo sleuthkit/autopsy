@@ -32,7 +32,7 @@ import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.commonfilesearch.AllIntraCaseCommonAttributeSearcher;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResults;
+import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
 import org.sleuthkit.autopsy.commonfilesearch.IntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.commonfilesearch.SingleIntraCaseCommonAttributeSearcher;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -102,7 +102,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
 //            Map<Long, String> dataSources = this.utils.getDataSourceMap();
 //
 //            IntraCaseCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, true, false, 0);
-//            CommonAttributeSearchResults metadata = allSourcesBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = allSourcesBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 //
@@ -126,7 +126,7 @@ public class IngestedWithNoFileTypesIntraCaseTests extends NbTestCase {
 //            Long third = IntraCaseTestUtils.getDataSourceIdByName(IntraCaseTestUtils.SET3, dataSources);
 //
 //            IntraCaseCommonAttributeSearcher singleSourceBuilder = new SingleIntraCaseCommonAttributeSearcher(third, dataSources, true, false, 0);
-//            CommonAttributeSearchResults metadata = singleSourceBuilder.findMatches();
+//            CommonAttributeCountSearchResults metadata = singleSourceBuilder.findMatches();
 //
 //            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
 //

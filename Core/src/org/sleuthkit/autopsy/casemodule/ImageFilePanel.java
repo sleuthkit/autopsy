@@ -21,23 +21,21 @@ package org.sleuthkit.autopsy.casemodule;
 import java.io.File;
 import java.util.Calendar;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
-import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
+import org.sleuthkit.datamodel.HashUtility;
 
 /**
  * Panel for adding an image file such as .img, .E0x, .00x, etc. Allows the user
@@ -47,15 +45,10 @@ import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ImageFilePanel extends JPanel implements DocumentListener {
 
-    private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
+    private static final long serialVersionUID = 1L;
     private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
     private static final String[] SECTOR_SIZE_CHOICES = {"Auto Detect", "512", "1024", "2048", "4096"};
-
     private final JFileChooser fileChooser = new JFileChooser();
-
-    /**
-     * Externally supplied name is used to store settings
-     */
     private final String contextName;
 
     /**
@@ -79,7 +72,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
         sectorSizeComboBox.setSelectedIndex(0);
 
-        pathErrorLabel.setVisible(false);
+        errorLabel.setVisible(false);
 
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -117,8 +110,27 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     public static synchronized ImageFilePanel createInstance(String context, List<FileFilter> fileChooserFilters) {
         ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters);
         // post-constructor initialization of listener support without leaking references of uninitialized objects
-        instance.pathTextField.getDocument().addDocumentListener(instance);
+        instance.getPathTextField().getDocument().addDocumentListener(instance);
+        instance.getMd5TextFieldField().getDocument().addDocumentListener(instance);
+        instance.getSha1TextField().getDocument().addDocumentListener(instance);
+        instance.getSha256TextField().getDocument().addDocumentListener(instance);
         return instance;
+    }
+
+    private JTextField getPathTextField() {
+        return pathTextField;
+    }
+
+    private JTextField getMd5TextFieldField() {
+        return md5HashTextField;
+    }
+
+    private JTextField getSha1TextField() {
+        return sha1HashTextField;
+    }
+
+    private JTextField getSha256TextField() {
+        return sha256HashTextField;
     }
 
     /**
@@ -135,10 +147,17 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         timeZoneLabel = new javax.swing.JLabel();
         timeZoneComboBox = new javax.swing.JComboBox<>();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
-        descLabel = new javax.swing.JLabel();
-        pathErrorLabel = new javax.swing.JLabel();
+        errorLabel = new javax.swing.JLabel();
         sectorSizeLabel = new javax.swing.JLabel();
         sectorSizeComboBox = new javax.swing.JComboBox<>();
+        sha256HashLabel = new javax.swing.JLabel();
+        sha256HashTextField = new javax.swing.JTextField();
+        sha1HashTextField = new javax.swing.JTextField();
+        md5HashTextField = new javax.swing.JTextField();
+        sha1HashLabel = new javax.swing.JLabel();
+        md5HashLabel = new javax.swing.JLabel();
+        hashValuesLabel = new javax.swing.JLabel();
+        hashValuesNoteLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(403, 65));
@@ -161,12 +180,34 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         org.openide.awt.Mnemonics.setLocalizedText(noFatOrphansCheckbox, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.text")); // NOI18N
         noFatOrphansCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.noFatOrphansCheckbox.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.descLabel.text")); // NOI18N
-
-        pathErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(pathErrorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.pathErrorLabel.text")); // NOI18N
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.errorLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(sectorSizeLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sectorSizeLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(sha256HashLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sha256HashLabel.text")); // NOI18N
+        sha256HashLabel.setEnabled(false);
+
+        sha256HashTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sha256HashTextField.text")); // NOI18N
+        sha256HashTextField.setEnabled(false);
+
+        sha1HashTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sha1HashTextField.text")); // NOI18N
+        sha1HashTextField.setEnabled(false);
+
+        md5HashTextField.setText(org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.md5HashTextField.text")); // NOI18N
+        md5HashTextField.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(sha1HashLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.sha1HashLabel.text")); // NOI18N
+        sha1HashLabel.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(md5HashLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.md5HashLabel.text")); // NOI18N
+        md5HashLabel.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(hashValuesLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.hashValuesLabel.text")); // NOI18N
+        hashValuesLabel.setEnabled(false);
+
+        org.openide.awt.Mnemonics.setLocalizedText(hashValuesNoteLabel, org.openide.util.NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.hashValuesNoteLabel.text")); // NOI18N
+        hashValuesNoteLabel.setEnabled(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -179,21 +220,36 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addGap(2, 2, 2))
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(timeZoneLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(pathLabel)
-                    .addComponent(noFatOrphansCheckbox)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
-                        .addComponent(descLabel))
-                    .addComponent(pathErrorLabel)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(sectorSizeLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addGap(0, 20, Short.MAX_VALUE))
+                    .addComponent(noFatOrphansCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 368, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(errorLabel)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(timeZoneLabel)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(sectorSizeLabel)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(md5HashLabel)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(md5HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(sha1HashLabel)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(sha1HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(sha256HashLabel)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(sha256HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 455, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(hashValuesNoteLabel)
+                    .addComponent(hashValuesLabel))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -203,21 +259,35 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(browseButton)
                     .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(3, 3, 3)
-                .addComponent(pathErrorLabel)
-                .addGap(1, 1, 1)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(timeZoneLabel)
-                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(noFatOrphansCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(descLabel)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(sectorSizeLabel)
-                    .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(43, Short.MAX_VALUE))
+                    .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(timeZoneLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(sectorSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sectorSizeLabel))
+                .addGap(39, 39, 39)
+                .addComponent(hashValuesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(md5HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(md5HashLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(sha1HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sha1HashLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(sha256HashTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sha256HashLabel))
+                .addGap(18, 18, 18)
+                .addComponent(hashValuesNoteLabel)
+                .addGap(18, 18, 18)
+                .addComponent(errorLabel)
+                .addContainerGap(51, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -245,6 +315,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                     }
                 }
             }
+            
             setContentPath(path);
         }
 
@@ -253,17 +324,43 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
-    private javax.swing.JLabel descLabel;
+    private javax.swing.JLabel errorLabel;
+    private javax.swing.JLabel hashValuesLabel;
+    private javax.swing.JLabel hashValuesNoteLabel;
+    private javax.swing.JLabel md5HashLabel;
+    private javax.swing.JTextField md5HashTextField;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
-    private javax.swing.JLabel pathErrorLabel;
     private javax.swing.JLabel pathLabel;
     private javax.swing.JTextField pathTextField;
     private javax.swing.JComboBox<String> sectorSizeComboBox;
     private javax.swing.JLabel sectorSizeLabel;
+    private javax.swing.JLabel sha1HashLabel;
+    private javax.swing.JTextField sha1HashTextField;
+    private javax.swing.JLabel sha256HashLabel;
+    private javax.swing.JTextField sha256HashTextField;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Enable or disable all of the hash values components.
+     * 
+     * @param enabled Enable components if true; otherwise disable.
+     */
+    private void setHashValuesComponentsEnabled(boolean enabled) {
+        hashValuesLabel.setEnabled(enabled);
+        hashValuesNoteLabel.setEnabled(enabled);
+
+        md5HashLabel.setEnabled(enabled);
+        md5HashTextField.setEnabled(enabled);
+
+        sha1HashLabel.setEnabled(enabled);
+        sha1HashTextField.setEnabled(enabled);
+
+        sha256HashLabel.setEnabled(enabled);
+        sha256HashTextField.setEnabled(enabled);
+    }
+    
     /**
      * Get the path of the user selected image.
      *
@@ -306,6 +403,18 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         return noFatOrphansCheckbox.isSelected();
     }
 
+    String getMd5() {
+        return this.md5HashTextField.getText();
+    }
+
+    String getSha1() {
+        return this.sha1HashTextField.getText();
+    }
+
+    String getSha256() {
+        return this.sha256HashTextField.getText();
+    }
+
     public void reset() {
         //reset the UI elements to default 
         pathTextField.setText(null);
@@ -316,30 +425,53 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      *
      * @return true if a proper image has been selected, false otherwise
      */
-    @NbBundle.Messages({"ImageFilePanel.pathValidation.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive",
-            "ImageFilePanel.pathValidation.getOpenCase.Error=Warning: Exception while getting open case."
-            })
+    @NbBundle.Messages({
+        "ImageFilePanel.validatePanel.dataSourceOnCDriveError=Warning: Path to multi-user data source is on \"C:\" drive",
+        "ImageFilePanel.validatePanel.invalidMD5=Invalid MD5 hash",
+        "ImageFilePanel.validatePanel.invalidSHA1=Invalid SHA1 hash",
+        "ImageFilePanel.validatePanel.invalidSHA256=Invalid SHA256 hash",})
     public boolean validatePanel() {
-        pathErrorLabel.setVisible(false);
+        errorLabel.setVisible(false);
+
         String path = getContentPaths();
-        if (StringUtils.isBlank(path)) {
+        if (!isImagePathValid()) {
             return false;
         }
 
-        // Display warning if there is one (but don't disable "next" button)
-        try {
-            if (false == PathValidator.isValidForMultiUserCase(path, Case.getCurrentCaseThrows().getCaseType())) {
-                pathErrorLabel.setVisible(true);
-                pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_dataSourceOnCDriveError());
-            }
-        } catch (NoCurrentCaseException ex) {
-            pathErrorLabel.setVisible(true);
-            pathErrorLabel.setText(Bundle.ImageFilePanel_pathValidation_getOpenCase_Error());
+        if (!StringUtils.isBlank(getMd5()) && !HashUtility.isValidMd5Hash(getMd5())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_invalidMD5());
+            return false;
         }
 
-        return new File(path).isFile()
-                || DriveUtils.isPhysicalDrive(path)
-                || DriveUtils.isPartition(path);
+        if (!StringUtils.isBlank(getSha1()) && !HashUtility.isValidSha1Hash(getSha1())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_invalidSHA1());
+            return false;
+        }
+
+        if (!StringUtils.isBlank(getSha256()) && !HashUtility.isValidSha256Hash(getSha256())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_invalidSHA256());
+            return false;
+        }
+
+        if (!PathValidator.isValidForMultiUserCase(path, Case.getCurrentCase().getCaseType())) {
+            errorLabel.setVisible(true);
+            errorLabel.setText(Bundle.ImageFilePanel_validatePanel_dataSourceOnCDriveError());
+        }
+
+        return true;
+    }
+    
+    private boolean isImagePathValid() {
+        String path = getContentPaths();
+        
+        if (StringUtils.isBlank(path) || (!(new File(path).isFile() || DriveUtils.isPhysicalDrive(path) || DriveUtils.isPartition(path)))) {
+            return false;
+        }
+        
+        return true;
     }
 
     public void storeSettings() {
@@ -375,19 +507,20 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     /**
      * Update functions are called by the pathTextField which has this set as
      * it's DocumentEventListener. Each update function fires a property change
-     * to be caught by the parent panel.
-     *
+     * to be caught by the parent panel. Additionally, the hash values will be
+     * enabled or disabled depending on the pathTextField input.
      */
     @NbBundle.Messages({"ImageFilePanel.moduleErr=Module Error",
         "ImageFilePanel.moduleErr.msg=A module caused an error listening to ImageFilePanel updates."
         + " See log to determine which module. Some data could be incomplete.\n"})
     private void updateHelper() {
-        try {
-            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.error(ImageFilePanel_moduleErr(), ImageFilePanel_moduleErr_msg());
+        if (isImagePathValid() && !getContentPaths().toLowerCase().endsWith(".e01")) {
+            setHashValuesComponentsEnabled(true);
+        } else {
+            setHashValuesComponentsEnabled(false);
         }
+        
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
     /**

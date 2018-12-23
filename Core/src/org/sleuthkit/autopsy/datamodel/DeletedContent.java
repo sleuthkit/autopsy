@@ -29,8 +29,6 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -38,14 +36,11 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.datamodel.Bundle.*;
-import org.sleuthkit.autopsy.deletedFiles.DeletedFilePreferences;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -57,6 +52,7 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  * deleted content view nodes
@@ -404,25 +400,8 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
-            @NbBundle.Messages({"# {0} - The deleted files threshold",
-                "DeletedContent.createKeys.maxObjects.msg="
-                + "There are more Deleted Files than can be displayed."
-                + " Only the first {0} Deleted Files will be shown."})
             protected boolean createKeys(List<AbstractFile> list) {
-                DeletedFilePreferences deletedPreferences = DeletedFilePreferences.getDefault();
-                List<AbstractFile> queryList = runFsQuery();
-                if (deletedPreferences.getShouldLimitDeletedFiles() && queryList.size() == deletedPreferences.getDeletedFilesLimit()) {
-                    queryList.remove(queryList.size() - 1);
-                    // only show the dialog once - not each time we refresh
-                    if (maxFilesDialogShown == false) {
-                        maxFilesDialogShown = true;
-                        SwingUtilities.invokeLater(()
-                                -> JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                                        DeletedContent_createKeys_maxObjects_msg(deletedPreferences.getDeletedFilesLimit() - 1))
-                        );
-                    }
-                } 
-                list.addAll(queryList);
+                list.addAll(runFsQuery());
                 return true;
             }
 
@@ -466,10 +445,6 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                 if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                     query += " AND data_source_obj_id = " + filteringDSObjId;
-                }
-                DeletedFilePreferences deletedPreferences = DeletedFilePreferences.getDefault();
-                if (deletedPreferences.getShouldLimitDeletedFiles()) {
-                    query += " LIMIT " + deletedPreferences.getDeletedFilesLimit(); //NON-NLS
                 }
                 return query;
             }
@@ -528,6 +503,11 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                     @Override
                     public FileNode visit(Directory f) {
+                        return new FileNode(f, false);
+                    }
+
+                    @Override
+                    public FileNode visit(VirtualDirectory f) {
                         return new FileNode(f, false);
                     }
 

@@ -429,6 +429,7 @@
                     <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                       <Dimension value="[10, 22]"/>
                     </Property>
+                    <Property name="opaque" type="boolean" value="false"/>
                   </Properties>
                 </Component>
               </SubComponents>
@@ -814,6 +815,7 @@
                       <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetDefsPanel.interesting.jTextArea1.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                     <Property name="wrapStyleWord" type="boolean" value="true"/>
+                    <Property name="opaque" type="boolean" value="false"/>
                   </Properties>
                 </Component>
               </SubComponents>

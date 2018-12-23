@@ -215,11 +215,15 @@ final class CustomFileTypesManager {
             signatureList.add(new Signature(byteArray, 522L));
             fileType = new FileType("image/x-pict", signatureList); //NON-NLS
             autopsyDefinedFileTypes.add(fileType);
+            
+            /* NOTE: see JIRA-4269. This MIME type seems to match a lot of random file types,
+            including ZIP archives. As a result those files get assigned this MIME type instead 
+            of having their MIME type detected by Tika.
             byteArray = DatatypeConverter.parseHexBinary("1100"); //NON-NLS
             signatureList.clear();
             signatureList.add(new Signature(byteArray, 522L));
             fileType = new FileType("image/x-pict", signatureList); //NON-NLS
-            autopsyDefinedFileTypes.add(fileType);
+            autopsyDefinedFileTypes.add(fileType);*/
 
             /*
              * Add type for pam.

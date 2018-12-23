@@ -96,6 +96,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * A container for an AbstractTimelineView. Has a Toolbar on top to hold
@@ -349,8 +350,8 @@ final public class ViewFrame extends BorderPane {
         viewModeToggleGroup.add(detailsToggle, ViewMode.DETAIL);
         viewModeToggleGroup.add(countsToggle, ViewMode.COUNTS);
         modeSegButton.setToggleGroup(viewModeToggleGroup);
-        viewModeToggleGroup.valueProperty().addListener((observable, oldViewMode, newViewVode) ->
-                controller.setViewMode(newViewVode != null ? newViewVode : (oldViewMode != null ? oldViewMode : ViewMode.COUNTS))
+        viewModeToggleGroup.valueProperty().addListener((observable, oldViewMode, newViewVode)
+                -> controller.setViewMode(newViewVode != null ? newViewVode : (oldViewMode != null ? oldViewMode : ViewMode.COUNTS))
         );
 
         controller.viewModeProperty().addListener(viewMode -> syncViewMode());
@@ -501,8 +502,11 @@ final public class ViewFrame extends BorderPane {
         "ViewFrame.notification.analysisComplete=Analysis has finished for {0}.  The Timeline DB may be out of date."})
     public void handleAnalysisCompleted(DataSourceAnalysisCompletedEvent event) {
         Platform.runLater(() -> {
-            notificationPane.getActions().setAll(new UpdateDB(controller));
-            notificationPane.show(Bundle.ViewFrame_notification_analysisComplete(event.getDataSource().getName()), new ImageView(WARNING));
+            Content dataSource = event.getDataSource();
+            if (dataSource != null) {
+                notificationPane.getActions().setAll(new UpdateDB(controller));
+                notificationPane.show(Bundle.ViewFrame_notification_analysisComplete(dataSource.getName()), new ImageView(WARNING));
+            }
         });
     }
 

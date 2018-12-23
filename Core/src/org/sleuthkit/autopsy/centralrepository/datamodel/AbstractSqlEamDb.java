@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -56,6 +57,11 @@ import org.sleuthkit.datamodel.TskData;
 abstract class AbstractSqlEamDb implements EamDb {
 
     private final static Logger logger = Logger.getLogger(AbstractSqlEamDb.class.getName());
+    static final String SCHEMA_MAJOR_VERSION_KEY = "SCHEMA_VERSION";
+    static final String SCHEMA_MINOR_VERSION_KEY = "SCHEMA_MINOR_VERSION";
+    static final String CREATION_SCHEMA_MAJOR_VERSION_KEY = "CREATION_SCHEMA_MAJOR_VERSION";
+    static final String CREATION_SCHEMA_MINOR_VERSION_KEY = "CREATION_SCHEMA_MINOR_VERSION";
+    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 2);
 
     protected final List<CorrelationAttributeInstance.Type> defaultCorrelationTypes;
 
@@ -3165,8 +3171,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws EamDbException
      */
+    @Messages({"AbstractSqlEamDb.upgradeSchema.incompatible=The selected Central Repository is not compatible with the current version of the application, please upgrade the application if you wish to use this Central Repository."})
     @Override
-    public void upgradeSchema() throws EamDbException, SQLException {
+    public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException {
 
         ResultSet resultSet = null;
         Statement statement = null;
@@ -3179,38 +3186,63 @@ abstract class AbstractSqlEamDb implements EamDb {
             statement = conn.createStatement();
 
             int minorVersion = 0;
-            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
+            String minorVersionStr = null;
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
             if (resultSet.next()) {
-                String minorVersionStr = resultSet.getString("value");
+                minorVersionStr = resultSet.getString("value");
                 try {
                     minorVersion = Integer.parseInt(minorVersionStr);
                 } catch (NumberFormatException ex) {
                     throw new EamDbException("Bad value for schema minor version (" + minorVersionStr + ") - database is corrupt", ex);
                 }
+            } else {
+                throw new EamDbException("Failed to read schema minor version from db_info table");
             }
 
             int majorVersion = 0;
-            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='SCHEMA_VERSION'");
+            String majorVersionStr = null;
+            resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
             if (resultSet.next()) {
-                String majorVersionStr = resultSet.getString("value");
+                majorVersionStr = resultSet.getString("value");
                 try {
                     majorVersion = Integer.parseInt(majorVersionStr);
                 } catch (NumberFormatException ex) {
                     throw new EamDbException("Bad value for schema version (" + majorVersionStr + ") - database is corrupt", ex);
                 }
+            } else {
+                throw new EamDbException("Failed to read schema major version from db_info table");
             }
 
+            /*
+             * IMPORTANT: The code that follows had a bug in it prior to Autopsy
+             * 4.10.0. The consequence of the bug is that the schema version
+             * number is always reset to 1.0 or 1.1 if a Central Repository is
+             * opened by an Autopsy 4.9.1 or earlier client. To cope with this,
+             * there is an effort in updates to 1.2 and greater to not retry
+             * schema updates that may already have been done once.
+             */
             CaseDbSchemaVersionNumber dbSchemaVersion = new CaseDbSchemaVersionNumber(majorVersion, minorVersion);
-            if (dbSchemaVersion.equals(CURRENT_DB_SCHEMA_VERSION)) {
+
+            //compare the major versions for compatability 
+            //we can not use the CaseDbSchemaVersionNumber.isCompatible method 
+            //because it is specific to case db schema versions only supporting major versions greater than 1
+            if (SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() < dbSchemaVersion.getMajor()) {
+                throw new IncompatibleCentralRepoException(Bundle.AbstractSqlEamDb_upgradeSchema_incompatible());
+            }
+            if (dbSchemaVersion.equals(SOFTWARE_CR_DB_SCHEMA_VERSION)) {
                 logger.log(Level.INFO, "Central Repository is up to date");
                 return;
             }
-            if (dbSchemaVersion.compareTo(CURRENT_DB_SCHEMA_VERSION) > 0) {
+            if (dbSchemaVersion.compareTo(SOFTWARE_CR_DB_SCHEMA_VERSION) > 0) {
                 logger.log(Level.INFO, "Central Repository is of newer version than software creates");
                 return;
             }
 
-            // Update from 1.0 to 1.1
+            EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+
+            /*
+             * Update to 1.1
+             */
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 1)) < 0) {
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN known_status INTEGER;"); //NON-NLS
                 statement.execute("ALTER TABLE reference_sets ADD COLUMN read_only BOOLEAN;"); //NON-NLS
@@ -3221,9 +3253,11 @@ abstract class AbstractSqlEamDb implements EamDb {
                 // regardless of whether this succeeds.
                 EamDbUtil.insertDefaultOrganization(conn);
             }
-            //Update to 1.2
+
+            /*
+             * Update to 1.2
+             */
             if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 2)) < 0) {
-                EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
                 final String addIntegerColumnTemplate = "ALTER TABLE %s ADD COLUMN %s INTEGER;";  //NON-NLS
                 final String addSsidTableTemplate;
                 final String addCaseIdIndexTemplate;
@@ -3342,20 +3376,65 @@ abstract class AbstractSqlEamDb implements EamDb {
                     }
                     statement.execute(String.format(addObjectIdIndexTemplate, instance_type_dbname, instance_type_dbname));
                 }
-            }
-            if (!updateSchemaVersion(conn)) {
-                throw new EamDbException("Error updating schema version");
+
+                /*
+                 * Add hash columns to the data_sources table.
+                 */
+                if (!doesColumnExist(conn, dataSourcesTableName, "md5")) {
+                    statement.execute("ALTER TABLE data_sources ADD COLUMN md5 TEXT DEFAULT NULL");
+                }
+                if (!doesColumnExist(conn, dataSourcesTableName, "sha1")) {
+                    statement.execute("ALTER TABLE data_sources ADD COLUMN sha1 TEXT DEFAULT NULL");
+                }
+                if (!doesColumnExist(conn, dataSourcesTableName, "sha256")) {
+                    statement.execute("ALTER TABLE data_sources ADD COLUMN sha256 TEXT DEFAULT NULL");
+                }
+
+                /*
+                 * Drop the db_info table and add it back in with the name
+                 * column having a UNIQUE constraint. The name column could now
+                 * be used as the primary key, but the essentially useless id
+                 * column is retained for the sake of backwards compatibility.
+                 * Note that the creation schema version number is set to 0.0 to
+                 * indicate that it is unknown.
+                 */
+                String creationMajorVer;
+                resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name = '" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "'");
+                if (resultSet.next()) {
+                    creationMajorVer = resultSet.getString("value");
+                } else {
+                    creationMajorVer = "0";
+                }
+                String creationMinorVer;
+                resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name = '" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "'");
+                if (resultSet.next()) {
+                    creationMinorVer = resultSet.getString("value");
+                } else {
+                    creationMinorVer = "0";
+                }
+                statement.execute("DROP TABLE db_info");
+                if (selectedPlatform == EamDbPlatformEnum.POSTGRESQL) {
+                    statement.execute("CREATE TABLE db_info (id SERIAL, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
+                } else {
+                    statement.execute("CREATE TABLE db_info (id INTEGER PRIMARY KEY, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
+                }
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "','" + majorVersionStr + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "','" + minorVersionStr + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','" + creationMajorVer + "')");
+                statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "','" + creationMinorVer + "')");
             }
 
+            updateSchemaVersion(conn);
             conn.commit();
-            logger.log(Level.INFO, "Central Repository upgraded to version " + CURRENT_DB_SCHEMA_VERSION);
+            logger.log(Level.INFO, String.format("Central Repository schema updated to version %s", SOFTWARE_CR_DB_SCHEMA_VERSION));
+
         } catch (SQLException | EamDbException ex) {
             try {
                 if (conn != null) {
                     conn.rollback();
                 }
             } catch (SQLException ex2) {
-                logger.log(Level.SEVERE, "Database rollback failed", ex2);
+                logger.log(Level.SEVERE, String.format("Central Repository rollback of failed schema update to %s failed", SOFTWARE_CR_DB_SCHEMA_VERSION), ex2);
             }
             throw ex;
         } finally {

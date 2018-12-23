@@ -54,7 +54,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNor
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -322,11 +321,10 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     }
     
     @NbBundle.Messages({
-        "BlackboardArtifactNode.createSheet.artifactType.displayName=Artifact Type",
-        "BlackboardArtifactNode.createSheet.artifactType.name=Artifact Type",
-        "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Artifact Details",
-        "BlackboardArtifactNode.createSheet.artifactDetails.name=Artifact Details",
-        "BlackboardArtifactNode.artifact.displayName=Artifact",
+        "BlackboardArtifactNode.createSheet.artifactType.displayName=Result Type",
+        "BlackboardArtifactNode.createSheet.artifactType.name=Result Type",
+        "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Result Details",
+        "BlackboardArtifactNode.createSheet.artifactDetails.name=Result Details",
         "BlackboardArtifactNode.createSheet.artifactMD5.displayName=MD5 Hash",
         "BlackboardArtifactNode.createSheet.artifactMD5.name=MD5 Hash",
         "BlackboardArtifactNode.createSheet.fileSize.name=Size",
@@ -356,12 +354,12 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         addScoreProperty(sheetSet, tags);
 
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
 
-        if (EamDbUtil.useCentralRepo() && UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
@@ -372,7 +370,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                     sheetSet.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.name"),
                             NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.displayName"),
                             NO_DESCR,
-                            associatedArtifact.getDisplayName() + " " + NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.artifact.displayName")));
+                            associatedArtifact.getDisplayName()));
                     sheetSet.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactDetails.name"),
                             NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactDetails.displayName"),
                             NO_DESCR,
@@ -573,7 +571,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo()) {
+        if (EamDb.isEnabled()) {
             correlationAttribute = EamArtifactUtil.getInstanceFromContent(associated);
         }
         return correlationAttribute;

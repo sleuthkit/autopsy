@@ -25,11 +25,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
-import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDb.CURRENT_DB_SCHEMA_VERSION;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.SOFTWARE_CR_DB_SCHEMA_VERSION;
 
 /**
  *
@@ -126,43 +127,17 @@ public class EamDbUtil {
     }
 
     /**
-     * Store the schema version into the db_info table.
-     *
-     * This should be called immediately following the database schema being
-     * loaded.
+     * Writes the current schema version into the database.
      *
      * @param conn Open connection to use.
      *
-     * @return true on success, else false
+     * @throws SQLException If there is an error doing the update.
      */
-    static boolean updateSchemaVersion(Connection conn) {
-
-        Statement statement;
-        ResultSet resultSet;
-        String sql = "INSERT INTO db_info (name, value) VALUES (?, ?)";
-        try {
-            statement = conn.createStatement();
-            resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_VERSION'");
-            if (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMajor() + " WHERE id=" + id);
-            } else {
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMajor() + "')");
-            }
-
-            resultSet = statement.executeQuery("SELECT id FROM db_info WHERE name='SCHEMA_MINOR_VERSION'");
-            if (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                statement.execute("UPDATE db_info SET value=" + CURRENT_DB_SCHEMA_VERSION.getMinor() + " WHERE id=" + id);
-            } else {
-                statement.execute("INSERT INTO db_info (name, value) VALUES ('SCHEMA_MINOR_VERSION', '" + CURRENT_DB_SCHEMA_VERSION.getMinor() + "')");
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error adding schema version to db_info.", ex);
-            return false;
+    static void updateSchemaVersion(Connection conn) throws SQLException {
+        try (Statement statement = conn.createStatement()) {
+            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "'");
+            statement.execute("UPDATE db_info SET value = '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "' WHERE name = '" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
         }
-
-        return true;
     }
 
     /**
@@ -192,17 +167,18 @@ public class EamDbUtil {
     }
 
     /**
-     * Upgrade the current central reposity to the newest version. If the upgrade
-     * fails, the central repository will be disabled and the current settings
-     * will be cleared.
+     * Upgrade the current Central Reposity schema to the newest version. If the
+     * upgrade fails, the Central Repository will be disabled and the current
+     * settings will be cleared.
      *
      * @return true if the upgrade succeeds, false otherwise.
      */
-    public static boolean upgradeDatabase() {
+    @Messages({"EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade central repository. It has been disabled."})
+    public static void upgradeDatabase() throws EamDbException {
         if (!EamDb.isEnabled()) {
-            return true;
+            return;
         }
-        
+
         CoordinationService.Lock lock = null;
         try {
             EamDb db = EamDb.getInstance();
@@ -214,32 +190,35 @@ public class EamDbUtil {
 
             db.upgradeSchema();
 
-        } catch (EamDbException | SQLException ex) {
+        } catch (EamDbException | SQLException | IncompatibleCentralRepoException ex) {
             LOGGER.log(Level.SEVERE, "Error updating central repository", ex);
 
             // Disable the central repo and clear the current settings.
-            try{
+            try {
                 if (null != EamDb.getInstance()) {
                     EamDb.getInstance().shutdownConnections();
                 }
-            } catch (EamDbException ex2){
-                LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex);
-            } 
+            } catch (EamDbException ex2) {
+                LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
+            }
             setUseCentralRepo(false);
+
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
             EamDbPlatformEnum.saveSelectedPlatform();
-            
-            return false;
+            String messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message();
+            if (ex instanceof IncompatibleCentralRepoException) {
+                messageForDialog = ex.getMessage() + "\n\n" + messageForDialog;
+            }
+            throw new EamDbException(messageForDialog);
         } finally {
-            if(lock != null){
-                try{
+            if (lock != null) {
+                try {
                     lock.release();
-                } catch (CoordinationServiceException ex){
+                } catch (CoordinationServiceException ex) {
                     LOGGER.log(Level.SEVERE, "Error releasing database lock", ex);
                 }
             }
         }
-        return true;
     }
 
     /**
@@ -255,6 +234,7 @@ public class EamDbUtil {
      * Check whether the given org is the default organization.
      *
      * @param org
+     *
      * @return true if it is the default org, false otherwise
      */
     public static boolean isDefaultOrg(EamOrganization org) {
@@ -265,6 +245,7 @@ public class EamDbUtil {
      * Add the default organization to the database
      *
      * @param conn
+     *
      * @return true if successful, false otherwise
      */
     static boolean insertDefaultOrganization(Connection conn) {
@@ -292,12 +273,16 @@ public class EamDbUtil {
     }
 
     /**
-     * If the Central Repos use has been enabled.
+     * If the option to use a central repository has been selected, does not
+     * indicate the central repository is configured for use simply that the
+     * checkbox allowing configuration is checked on the options panel.
      *
      * @return true if the Central Repo may be configured, false if it should
-     * not be able to be
+     *         not be able to be
      */
-    public static boolean useCentralRepo() {
+    public static boolean allowUseOfCentralRepository() {
+        //In almost all situations EamDb.isEnabled() should be used instead of this method
+        //as EamDb.isEnabled() will call this method as well as checking that the selected type of central repository is not DISABLED
         return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
     }
 
@@ -306,7 +291,7 @@ public class EamDbUtil {
      * configured.
      *
      * @param centralRepoCheckBoxIsSelected - true if the central repo can be
-     * used
+     *                                      used
      */
     public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected) {
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));
@@ -365,7 +350,7 @@ public class EamDbUtil {
      * Close the prepared statement.
      *
      * @param preparedStatement The prepared statement to be closed.
-     * 
+     *
      * @deprecated Use closeStatement() instead.
      *
      * @throws EamDbException

@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Prototype for an object which finds files with common attributes. Subclass
- * this and implement findMatches in order
+ * this and implement findMatchesByCount in order
  */
 public abstract class AbstractCommonAttributeSearcher {
 
@@ -51,7 +50,7 @@ public abstract class AbstractCommonAttributeSearcher {
 
     /**
      * Implement this to search for files with common attributes. Creates an
-     * object (CommonAttributeSearchResults) which contains all of the
+     * object (CommonAttributeCountSearchResults) which contains all of the
      * information required to display a tree view in the UI. The view will
      * contain 3 layers: a top level node, indicating the number matches each of
      * it's children possess, a mid level node indicating the matched attribute,
@@ -63,7 +62,25 @@ public abstract class AbstractCommonAttributeSearcher {
      * @throws SQLException
      * @throws EamDbException
      */
-    public abstract CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
+    public abstract CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
+
+    /**
+     * Implement this to search for files with common attributes. Creates an
+     * object (CommonAttributeCountSearchResults) which contains all of the
+     * information required to display a tree view in the UI. The view will
+     * contain 3 layers: a top level node, indicating the name of the case the
+     * results were found in, a mid level node indicating what data source the
+     * match was found in, and a bottom level which shows the files the match
+     * was found in
+     *
+     * @return An object containing the results of the search
+     *
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     * @throws SQLException
+     * @throws EamDbException
+     */
+    public abstract CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException;
 
     /**
      * Implement this to create a descriptive string for the tab which will
@@ -97,9 +114,10 @@ public abstract class AbstractCommonAttributeSearcher {
     /**
      * Get the portion of the title that will display the frequency percentage
      * threshold. Items that existed in over this percent of data sources were
-     * ommited from the results. 
+     * ommited from the results.
      *
-     * @return A string providing the frequency percentage threshold, or an empty string if no threshold was set
+     * @return A string providing the frequency percentage threshold, or an
+     *         empty string if no threshold was set
      */
     @NbBundle.Messages({
         "# {0} - threshold percent",

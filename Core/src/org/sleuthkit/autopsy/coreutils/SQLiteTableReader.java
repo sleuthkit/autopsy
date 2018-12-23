@@ -42,30 +42,14 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Reads row by row through SQLite tables and performs user-defined actions on
- * the row values. Table values are processed by data type. Users configure
- * these actions for certain data types in the Builder. Example usage:
- *
- * SQLiteTableReader reader = new SQLiteTableReader.Builder(file)
- *    .onInteger((i)
- *       -> { System.out.println(i); }) 
- *    .build();
- *
- * reader.read(tableName);
- *
- * or
- *
- * SQLiteTableReader reader = new SQLiteTableReader.Builder(file) 
- * .onInteger(new Consumer<Integer>() {
- *      (atSymbol)Override public void accept(Integer i) { 
- *          System.out.println(i); 
- *      }
- * }).build(); 
+ * Reads through SQLite tables row by row. Functions performed on the 
+ * data must be declared up front to the Builder. For example:
  * 
- * reader.reader(tableName);
- *
- * Invocation of read(String tableName) reads row by row. When an Integer is
- * encountered, its value will be passed to the Consumer that was defined above.
+ * tableReader = new SQLiteTableReader.Builder(file).forAllColumnNames(System.out::println);
+ * tableReader.read("Sample Table X");
+ * 
+ * By declaring the functions up front, the SQLiteTableReader instance can stream the 
+ * table contents in the most memory efficient manner. 
  */
 public class SQLiteTableReader implements AutoCloseable {
 
@@ -76,13 +60,13 @@ public class SQLiteTableReader implements AutoCloseable {
 
         private final AbstractFile file;
 
-        private Consumer<String> onColumnNameAction;
-        private Consumer<String> onStringAction;
-        private Consumer<Long> onLongAction;
-        private Consumer<Integer> onIntegerAction;
-        private Consumer<Double> onFloatAction;
-        private Consumer<byte[]> onBlobAction;
-        private Consumer<Object> forAllAction;
+        private Consumer<String> forAllColumnNamesConsumer;
+        private Consumer<String> forAllStringValuesConsumer;
+        private Consumer<Long> forAllLongValuesConsumer;
+        private Consumer<Integer> forAllIntegerValuesConsumer;
+        private Consumer<Double> forAllFloatValuesConsumer;
+        private Consumer<byte[]> forAllBlobValuesConsumer;
+        private Consumer<Object> forAllTableValuesConsumer;
         
         static <T> Consumer<T> doNothing() {
             return NOOP -> {};
@@ -96,13 +80,13 @@ public class SQLiteTableReader implements AutoCloseable {
         public Builder(AbstractFile file) {
             this.file = file;
 
-            this.onColumnNameAction = Builder.doNothing();
-            this.onStringAction = Builder.doNothing();
-            this.onLongAction = Builder.doNothing();
-            this.onIntegerAction = Builder.doNothing();
-            this.onFloatAction = Builder.doNothing();
-            this.onBlobAction = Builder.doNothing();
-            this.forAllAction = Builder.doNothing();
+            this.forAllColumnNamesConsumer = Builder.doNothing();
+            this.forAllStringValuesConsumer = Builder.doNothing();
+            this.forAllLongValuesConsumer = Builder.doNothing();
+            this.forAllIntegerValuesConsumer = Builder.doNothing();
+            this.forAllFloatValuesConsumer = Builder.doNothing();
+            this.forAllBlobValuesConsumer = Builder.doNothing();
+            this.forAllTableValuesConsumer = Builder.doNothing();
         }
 
         /**
@@ -113,8 +97,8 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return Builder reference
          */
-        public Builder onColumnNames(Consumer<String> action) {
-            this.onColumnNameAction = action;
+        public Builder forAllColumnNames(Consumer<String> action) {
+            this.forAllColumnNamesConsumer = action;
             return this;
         }
 
@@ -126,8 +110,8 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return Builder reference
          */
-        public Builder onString(Consumer<String> action) {
-            this.onStringAction = action;
+        public Builder forAllStringValues(Consumer<String> action) {
+            this.forAllStringValuesConsumer = action;
             return this;
         }
 
@@ -139,8 +123,8 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return Builder reference
          */
-        public Builder onInteger(Consumer<Integer> action) {
-            this.onIntegerAction = action;
+        public Builder forAllIntegerValues(Consumer<Integer> action) {
+            this.forAllIntegerValuesConsumer = action;
             return this;
         }
 
@@ -152,8 +136,8 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return Builder reference
          */
-        public Builder onFloat(Consumer<Double> action) {
-            this.onFloatAction = action;
+        public Builder forAllFloatValues(Consumer<Double> action) {
+            this.forAllFloatValuesConsumer = action;
             return this;
         }
 
@@ -165,8 +149,8 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return Builder reference
          */
-        public Builder onLong(Consumer<Long> action) {
-            this.onLongAction = action;
+        public Builder forAllLongValues(Consumer<Long> action) {
+            this.forAllLongValuesConsumer = action;
             return this;
         }
 
@@ -178,8 +162,8 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return Builder reference
          */
-        public Builder onBlob(Consumer<byte[]> action) {
-            this.onBlobAction = action;
+        public Builder forAllBlobValues(Consumer<byte[]> action) {
+            this.forAllBlobValuesConsumer = action;
             return this;
         }
 
@@ -192,8 +176,8 @@ public class SQLiteTableReader implements AutoCloseable {
          *
          * @return Builder reference
          */
-        public Builder forAll(Consumer<Object> action) {
-            this.forAllAction = action;
+        public Builder forAllTableValues(Consumer<Object> action) {
+            this.forAllTableValuesConsumer = action;
             return this;
         }
 
@@ -366,7 +350,7 @@ public class SQLiteTableReader implements AutoCloseable {
                 if (condition.getAsBoolean()) {
                     return;
                 }
-                builder.onColumnNameAction.accept(currentMetadata
+                builder.forAllColumnNamesConsumer.accept(currentMetadata
                         .getColumnName(++columnNameIndex));
             }
 
@@ -379,18 +363,18 @@ public class SQLiteTableReader implements AutoCloseable {
 
                     Object item = queryResults.getObject(++currRowColumnIndex);
                     if (item instanceof String) {
-                        builder.onStringAction.accept((String) item);
+                        builder.forAllStringValuesConsumer.accept((String) item);
                     } else if (item instanceof Integer) {
-                        builder.onIntegerAction.accept((Integer) item);
+                        builder.forAllIntegerValuesConsumer.accept((Integer) item);
                     } else if (item instanceof Double) {
-                        builder.onFloatAction.accept((Double) item);
+                        builder.forAllFloatValuesConsumer.accept((Double) item);
                     } else if (item instanceof Long) {
-                        builder.onLongAction.accept((Long) item);
+                        builder.forAllLongValuesConsumer.accept((Long) item);
                     } else if (item instanceof byte[]) {
-                        builder.onBlobAction.accept((byte[]) item);
+                        builder.forAllBlobValuesConsumer.accept((byte[]) item);
                     }
 
-                    builder.forAllAction.accept(item);
+                    builder.forAllTableValuesConsumer.accept(item);
                 }
                 unfinishedRow = false;
                 //Wrap column index back around if we've reached the end of the row

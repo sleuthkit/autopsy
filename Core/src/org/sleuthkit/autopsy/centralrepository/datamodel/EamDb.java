@@ -31,10 +31,6 @@ import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
  */
 public interface EamDb {
 
-    public static final int SCHEMA_VERSION = 2;
-    public static final CaseDbSchemaVersionNumber CURRENT_DB_SCHEMA_VERSION
-            = new CaseDbSchemaVersionNumber(1, 2);
-
     /**
      * Get the instance
      *
@@ -45,7 +41,7 @@ public interface EamDb {
     static EamDb getInstance() throws EamDbException {
 
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.DISABLED;
-        if (EamDbUtil.useCentralRepo()) {
+        if (EamDbUtil.allowUseOfCentralRepository()) {
             selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         }
         switch (selectedPlatform) {
@@ -96,7 +92,7 @@ public interface EamDb {
      * @return Is the database enabled
      */
     static boolean isEnabled() {
-        return EamDbUtil.useCentralRepo()
+        return EamDbUtil.allowUseOfCentralRepository()
                 && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
     }
 
@@ -714,7 +710,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public void upgradeSchema() throws EamDbException, SQLException;
+    public void upgradeSchema() throws EamDbException, SQLException, IncompatibleCentralRepoException;
 
     /**
      * Gets an exclusive lock (if applicable). Will return the lock if

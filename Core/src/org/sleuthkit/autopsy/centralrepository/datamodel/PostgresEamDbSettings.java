@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb.SOFTWARE_CR_DB_SCHEMA_VERSION;
 
 /**
  * Settings for the Postgres implementation of the Central Repository database
@@ -345,6 +346,9 @@ public final class PostgresEamDbSettings {
         createDataSourcesTable.append("device_id text NOT NULL,");
         createDataSourcesTable.append("name text NOT NULL,");
         createDataSourcesTable.append("datasource_obj_id integer,");
+        createDataSourcesTable.append("md5 text DEFAULT NULL,");
+        createDataSourcesTable.append("sha1 text DEFAULT NULL,");
+        createDataSourcesTable.append("sha256 text DEFAULT NULL,");
         createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
         createDataSourcesTable.append(")");
@@ -402,13 +406,6 @@ public final class PostgresEamDbSettings {
         String instancesKnownStatusIdx = getAddKnownStatusIndexTemplate();
         String instancesObjectIdIdx = getAddObjectIdIndexTemplate();
 
-        StringBuilder createDbInfoTable = new StringBuilder();
-        createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
-        createDbInfoTable.append("id SERIAL PRIMARY KEY NOT NULL,");
-        createDbInfoTable.append("name text NOT NULL,");
-        createDbInfoTable.append("value text NOT NULL");
-        createDbInfoTable.append(")");
-
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
         Connection conn = null;
@@ -434,7 +431,16 @@ public final class PostgresEamDbSettings {
 
             stmt.execute(createCorrelationTypesTable.toString());
 
-            stmt.execute(createDbInfoTable.toString());
+            /*
+             * Note that the essentially useless id column in the following
+             * table is required for backwards compatibility. Otherwise, the
+             * name column could be the primary key.
+             */
+            stmt.execute("CREATE TABLE db_info (id SERIAL, name TEXT UNIQUE NOT NULL, value TEXT NOT NULL)");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMajor() + "')");
+            stmt.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "', '" + SOFTWARE_CR_DB_SCHEMA_VERSION.getMinor() + "')");
 
             // Create a separate instance and reference table for each correlation type
             List<CorrelationAttributeInstance.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttributeInstance.getDefaultCorrelationTypes();
@@ -569,9 +575,7 @@ public final class PostgresEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
-                && EamDbUtil.updateSchemaVersion(conn)
-                && EamDbUtil.insertDefaultOrganization(conn);
+        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn) && EamDbUtil.insertDefaultOrganization(conn);
         EamDbUtil.closeConnection(conn);
 
         return result;

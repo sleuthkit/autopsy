@@ -45,11 +45,15 @@ By default, the \ref content_viewer_page attempts to select the most relevant ta
 
 \subsection view_options_time Time format
 
-Timestamps can be viewed in either local time or GMT.
+Timestamps can be viewed in either local time or in a time zone selected in the drop down list.
 
 \image html view_options_local_time.png
 <br>
 \image html view_options_gmt.png
+
+\subsection view_options_translate Translate text
+
+If you have a custom translation module installed, this option will add a column to the \ref result_viewer_page to show the translated name of files and folders. 
 
 \section view_options_case Current Case Settings
 

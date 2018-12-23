@@ -19,26 +19,28 @@
 package org.sleuthkit.autopsy.commonfilesearch;
 
 import java.util.List;
-import java.util.logging.Level;
+import java.util.Map;
 import java.util.logging.Logger;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
 /**
- * Top-level node to store common file search results.  Current structure is:
- * - node for number of matches 
- * -- node for MD5/commmon attribute
- * --- node for instance. 
+ * Top-level node to store common file search results. Current structure is: -
+ * node for number of matches -- node for MD5/commmon attribute --- node for
+ * instance.
  */
 final public class CommonAttributeSearchResultRootNode extends DisplayableItemNode {
 
-    CommonAttributeSearchResultRootNode(CommonAttributeSearchResults metadataList) {
+    CommonAttributeSearchResultRootNode(CommonAttributeCountSearchResults metadataList) {
         super(Children.create(new InstanceCountNodeFactory(metadataList), true));
+    }
+
+    CommonAttributeSearchResultRootNode(CommonAttributeCaseSearchResults metadataList) {
+        super(Children.create(new InstanceCaseNodeFactory(metadataList), true));
     }
 
     @NbBundle.Messages({
@@ -62,39 +64,70 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
     public String getItemType() {
         return getClass().getName();
     }
-    
+
     /**
      * Used to generate <code>InstanceCountNode</code>s.
      */
-    static class InstanceCountNodeFactory extends ChildFactory<Integer>{
+    static class InstanceCountNodeFactory extends ChildFactory<Integer> {
 
         private static final Logger LOGGER = Logger.getLogger(InstanceCountNodeFactory.class.getName());
-        
-        private final CommonAttributeSearchResults searchResults;
-        
+
+        private final CommonAttributeCountSearchResults searchResults;
+
         /**
-         * Build a factory which converts a <code>CommonAttributeSearchResults</code> 
-         * object into <code>DisplayableItemNode</code>s.
-         * @param searchResults 
+         * Build a factory which converts a
+         * <code>CommonAttributeCountSearchResults</code> object into
+         * <code>DisplayableItemNode</code>s.
+         *
+         * @param searchResults
          */
-        InstanceCountNodeFactory(CommonAttributeSearchResults searchResults){
+        InstanceCountNodeFactory(CommonAttributeCountSearchResults searchResults) {
             this.searchResults = searchResults;
         }
 
         @Override
         protected boolean createKeys(List<Integer> list) {
-            try {
-                list.addAll(this.searchResults.getMetadata().keySet());
-            } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Unable to create keys.", ex);
-            }
+            list.addAll(this.searchResults.getMetadata().keySet());
             return true;
         }
-        
+
         @Override
-        protected Node createNodeForKey(Integer instanceCount){
-            CommonAttributeValueList attributeValues =  this.searchResults.getAttributeValuesForInstanceCount(instanceCount);
+        protected Node createNodeForKey(Integer instanceCount) {
+            CommonAttributeValueList attributeValues = this.searchResults.getAttributeValuesForInstanceCount(instanceCount);
             return new InstanceCountNode(instanceCount, attributeValues);
+        }
+    }
+
+    /**
+     * Used to generate <code>InstanceCaseNode</code>s.
+     */
+    static class InstanceCaseNodeFactory extends ChildFactory<String> {
+
+        private static final Logger LOGGER = Logger.getLogger(InstanceCaseNodeFactory.class.getName());
+
+        private final CommonAttributeCaseSearchResults searchResults;
+
+        /**
+         * Build a factory which converts a
+         * <code>CommonAttributeCaseSearchResults</code> object into
+         * <code>DisplayableItemNode</code>s.
+         *
+         * @param searchResults
+         */
+        InstanceCaseNodeFactory(CommonAttributeCaseSearchResults searchResults) {
+            this.searchResults = searchResults;
+        }
+
+        @Override
+        protected boolean createKeys(List<String> list) {
+            list.addAll(this.searchResults.getMetadata().keySet());
+            return true;
+        }
+
+        @Override
+        protected Node createNodeForKey(String caseName) {
+            Map<String, CommonAttributeValueList> dataSourceNameToInstances = this.searchResults.getAttributeValuesForCaseName(caseName);
+            return new InstanceCaseNode(caseName, dataSourceNameToInstances);
         }
     }
 }

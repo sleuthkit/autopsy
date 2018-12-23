@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -183,10 +185,10 @@ class SevenZipExtractor {
         //As a result, many corrupted files have wonky compression ratios and could flood the UI
         //with false zip bomb notifications. The decision was made to skip compression ratio checks 
         //for unallocated zip files. Instead, we let the depth be an indicator of a zip bomb.
-        if(archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
+        if (archiveFile.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.UNALLOC)) {
             return false;
         }
-        
+
         try {
             final Long archiveItemSize = (Long) inArchive.getProperty(
                     inArchiveItemIndex, PropID.SIZE);
@@ -242,28 +244,41 @@ class SevenZipExtractor {
         String msg = NbBundle.getMessage(SevenZipExtractor.class,
                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnMsg", archiveFile.getName(), escapedFilePath);
         try {
-            BlackboardArtifact artifact = rootArchive.getArchiveFile().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, EmbeddedFileExtractorModuleFactory.getModuleName(),
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, EmbeddedFileExtractorModuleFactory.getModuleName(),
                     "Possible Zip Bomb"));
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                     EmbeddedFileExtractorModuleFactory.getModuleName(),
                     Bundle.SevenZipExtractor_zipBombArtifactCreation_text(archiveFile.getName())));
-            artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                     EmbeddedFileExtractorModuleFactory.getModuleName(),
                     details));
-            try {
-                // index the artifact for keyword search
-                blackboard.indexArtifact(artifact);
-            } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
-                MessageNotifyUtil.Notify.error(
-                        Bundle.SevenZipExtractor_indexError_message(), artifact.getDisplayName());
+
+            SleuthkitCase tskCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
+            // Create artifact if it doesn't already exist.
+            if (!tskBlackboard.artifactExists(archiveFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, attributes)) {
+                BlackboardArtifact artifact = archiveFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                artifact.addAttributes(attributes);
+
+                try {
+                    // index the artifact for keyword search
+                    blackboard.indexArtifact(artifact);
+                } catch (Blackboard.BlackboardException ex) {
+                    logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(
+                            Bundle.SevenZipExtractor_indexError_message(), artifact.getDisplayName());
+                }
+
+                services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
+
+                services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
             }
-            services.fireModuleDataEvent(new ModuleDataEvent(EmbeddedFileExtractorModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creating blackboard artifact for Zip Bomb Detection for file: " + escapedFilePath, ex); //NON-NLS
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
-        services.postMessage(IngestMessage.createWarningMessage(EmbeddedFileExtractorModuleFactory.getModuleName(), msg, details));
     }
 
     /**
@@ -355,11 +370,7 @@ class SevenZipExtractor {
      * @return the archiveFilePath to be used by the unpack method
      */
     private String getArchiveFilePath(AbstractFile archiveFile) {
-        try {
-            return archiveFile.getUniquePath();
-        } catch (TskCoreException ex) {
-            return archiveFile.getParentPath() + archiveFile.getName();
-        }
+        return archiveFile.getParentPath() + archiveFile.getName();
     }
 
     /**
@@ -695,6 +706,7 @@ class SevenZipExtractor {
                         parentAr.addChild(child);
                         depthMap.put(unpackedFile.getId(), child);
                     }
+                    unpackedFile.close();
                 }
 
             } catch (TskCoreException | NoCurrentCaseException e) {
@@ -793,37 +805,37 @@ class SevenZipExtractor {
                 .mapToInt(Integer::intValue)
                 .toArray();
     }
-    
+
     /**
-     * UnpackStream used by the SevenZipBindings to do archive extraction. A memory
-     * leak exists in the SevenZip library that will not let go of the streams until
-     * the entire archive extraction is complete. Instead of creating a new UnpackStream
-     * for every file in the archive, instead we just rebase our EncodedFileOutputStream pointer
-     * for every new file.
+     * UnpackStream used by the SevenZipBindings to do archive extraction. A
+     * memory leak exists in the SevenZip library that will not let go of the
+     * streams until the entire archive extraction is complete. Instead of
+     * creating a new UnpackStream for every file in the archive, instead we
+     * just rebase our EncodedFileOutputStream pointer for every new file.
      */
     private final static class UnpackStream implements ISequentialOutStream {
 
         private EncodedFileOutputStream output;
         private String localAbsPath;
         private int bytesWritten;
-        
+
         UnpackStream(String localAbsPath) throws IOException {
             this.output = new EncodedFileOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
             this.localAbsPath = localAbsPath;
             this.bytesWritten = 0;
-        } 
-        
+        }
+
         public void setNewOutputStream(String localAbsPath) throws IOException {
             this.output.close();
             this.output = new EncodedFileOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
             this.localAbsPath = localAbsPath;
             this.bytesWritten = 0;
         }
-        
+
         public int getSize() {
             return bytesWritten;
         }
-        
+
         @Override
         public int write(byte[] bytes) throws SevenZipException {
             try {
@@ -831,19 +843,19 @@ class SevenZipExtractor {
                 this.bytesWritten += bytes.length;
             } catch (IOException ex) {
                 throw new SevenZipException(
-                    NbBundle.getMessage(SevenZipExtractor.class, 
-                            "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.exception.msg",
-                            localAbsPath), ex);
+                        NbBundle.getMessage(SevenZipExtractor.class,
+                                "EmbeddedFileExtractorIngestModule.ArchiveExtractor.UnpackStream.write.exception.msg",
+                                localAbsPath), ex);
             }
             return bytes.length;
         }
-        
+
         public void close() throws IOException {
-           try(EncodedFileOutputStream out = output) {
-               out.flush();
-           }
+            try (EncodedFileOutputStream out = output) {
+                out.flush();
+            }
         }
-        
+
     }
 
     /**
@@ -940,7 +952,7 @@ class SevenZipExtractor {
 
             final String localAbsPath = archiveDetailsMap.get(
                     inArchiveItemIndex).getLocalAbsPath();
-            
+
             //If the Unpackstream has been allocated, then set the Outputstream 
             //to another file rather than creating a new unpack stream. The 7Zip 
             //binding has a memory leak, so creating new unpack streams will not be

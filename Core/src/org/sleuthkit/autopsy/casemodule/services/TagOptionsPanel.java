@@ -176,6 +176,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         panelDescriptionTextArea.setText(org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.panelDescriptionTextArea.text")); // NOI18N
         panelDescriptionTextArea.setWrapStyleWord(true);
         panelDescriptionTextArea.setFocusable(false);
+        panelDescriptionTextArea.setOpaque(false);
         panelDescriptionScrollPane.setViewportView(panelDescriptionTextArea);
 
         javax.swing.GroupLayout modifyTagTypesListPanelLayout = new javax.swing.GroupLayout(modifyTagTypesListPanel);
@@ -230,6 +231,7 @@ final class TagOptionsPanel extends javax.swing.JPanel implements OptionsPanel {
         descriptionTextArea.setRows(5);
         descriptionTextArea.setWrapStyleWord(true);
         descriptionTextArea.setFocusable(false);
+        descriptionTextArea.setOpaque(false);
         descriptionScrollPane.setViewportView(descriptionTextArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(isNotableLabel, org.openide.util.NbBundle.getMessage(TagOptionsPanel.class, "TagOptionsPanel.isNotableLabel.text")); // NOI18N

@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
+import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
 
@@ -274,7 +275,7 @@ class AddArchiveTask implements Runnable {
     }
 
     /**
-     * Get a list of data source processors. LocalFiles, and
+     * Get a list of data source processors. LocalFiles, RawDSProcessor, and
      * ArchiveDSP are removed from the list.
      *
      * @return List of data source processors
@@ -289,8 +290,11 @@ class AddArchiveTask implements Runnable {
             AutoIngestDataSourceProcessor selectedProcessor = iterator.next();
 
             // skip local files, only looking for "valid" data sources.
+            // also skip RawDSP as we don't want to add random "bin" and "raw" files that may be inside archive 
+            // as individual data sources.
             // also skip nested archive files, those will be ingested as logical files and extracted during ingest
             if ((selectedProcessor instanceof LocalFilesDSProcessor)
+                    || (selectedProcessor instanceof RawDSProcessor)
                     || (selectedProcessor instanceof ArchiveExtractorDSProcessor)) {
                 iterator.remove();
             }

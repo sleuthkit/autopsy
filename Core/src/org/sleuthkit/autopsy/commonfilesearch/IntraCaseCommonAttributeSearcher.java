@@ -1,16 +1,16 @@
 /*
- * 
+ *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,11 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  * Generates a <code>List<CommonFilesMetadata></code> when
- * <code>findMatches()</code> is called, which organizes files by md5 to prepare
+ * <code>findMatchesByCount()</code> is called, which organizes files by md5 to prepare
  * to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
@@ -48,22 +48,21 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
     private static final String FILTER_BY_MIME_TYPES_WHERE_CLAUSE = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
 
     private final Map<Long, String> dataSourceIdToNameMap;
-    
+
     /**
      * Subclass this to implement different algorithms for getting common files.
      *
-     * @param dataSourceIdMap a map of obj_id to datasource name
+     * @param dataSourceIdMap       a map of obj_id to datasource name
      * @param filterByMediaMimeType match only on files whose mime types can be
-     * broadly categorized as media types
-     * @param filterByDocMimeType match only on files whose mime types can be
-     * broadly categorized as document types
+     *                              broadly categorized as media types
+     * @param filterByDocMimeType   match only on files whose mime types can be
+     *                              broadly categorized as document types
      */
     IntraCaseCommonAttributeSearcher(Map<Long, String> dataSourceIdMap, boolean filterByMediaMimeType, boolean filterByDocMimeType, int percentageThreshold) {
         super(filterByMediaMimeType, filterByDocMimeType, percentageThreshold);
         this.dataSourceIdToNameMap = dataSourceIdMap;
     }
-    
-    
+
     Map<Long, String> getDataSourceIdToNameMap() {
         return Collections.unmodifiableMap(this.dataSourceIdToNameMap);
     }
@@ -96,13 +95,14 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * tree table tab to the top component.
      *
      * @return a data object with all of the matched files in a hierarchical
-     * format
+     *         format
+     *
      * @throws TskCoreException
      * @throws NoCurrentCaseException
      * @throws SQLException
      */
     @Override
-    public CommonAttributeSearchResults findMatches() throws TskCoreException, NoCurrentCaseException, SQLException {
+    public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException {
         Map<String, CommonAttributeValue> commonFiles = new HashMap<>();
 
         final Case currentCase = Case.getCurrentCaseThrows();
@@ -128,10 +128,10 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
                 if (commonFiles.containsKey(md5)) {
                     final CommonAttributeValue commonAttributeValue = commonFiles.get(md5);
-                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName));
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName, md5));
                 } else {
                     final CommonAttributeValue commonAttributeValue = new CommonAttributeValue(md5);
-                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName));
+                    commonAttributeValue.addInstance(new CaseDBCommonAttributeInstance(objectId, dataSource, caseName, md5));
                     commonFiles.put(md5, commonAttributeValue);
                 }
             }
@@ -139,7 +139,12 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
 
         Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
 
-        return new CommonAttributeSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
+        return new CommonAttributeCountSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
+    }
+
+    @Override
+    public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
+        throw new EamDbException("Not Supported at the moment");
     }
 
     /**
@@ -149,8 +154,8 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      * expression will be conjoined to base query with an AND operator.
      *
      * @return sql fragment of the form: 'and "mime_type" in ( [comma delimited
-     * list of mime types] )' or empty string in the event that no types to
-     * filter on were given.
+     *         list of mime types] )' or empty string in the event that no types
+     *         to filter on were given.
      */
     String determineMimeTypeFilter() {
 

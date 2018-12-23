@@ -117,7 +117,7 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbUseCentralRepoActionPerformed"/>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="useCentralRepoStateChanged"/>
               </Events>
             </Component>
             <Container class="javax.swing.JPanel" name="pnDatabaseConfiguration">
@@ -309,6 +309,7 @@
                         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                           <Border info="null"/>
                         </Property>
+                        <Property name="opaque" type="boolean" value="false"/>
                       </Properties>
                     </Component>
                   </SubComponents>
@@ -397,6 +398,7 @@
                         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                           <Border info="null"/>
                         </Property>
+                        <Property name="opaque" type="boolean" value="false"/>
                       </Properties>
                     </Component>
                   </SubComponents>
@@ -491,6 +493,7 @@
                         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                           <Border info="null"/>
                         </Property>
+                        <Property name="opaque" type="boolean" value="false"/>
                       </Properties>
                     </Component>
                   </SubComponents>

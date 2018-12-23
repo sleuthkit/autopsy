@@ -858,14 +858,17 @@ public class KeywordHits implements AutopsyVisitableItem {
         try {
             BlackboardArtifact art = skCase.getBlackboardArtifact(artifactId);
             BlackboardArtifactNode n = new BlackboardArtifactNode(art);
-            AbstractFile file;
-            try {
-                file = skCase.getAbstractFileById(art.getObjectID());
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren", ex); //NON-NLS
-                return n;
+            // The associated file should be available through the Lookup that
+            // gets created when the BlackboardArtifactNode is constructed.
+            AbstractFile file = n.getLookup().lookup(AbstractFile.class);
+            if (file == null) {
+                try {
+                    file = skCase.getAbstractFileById(art.getObjectID());
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren", ex); //NON-NLS
+                    return n;
+                }
             }
-
             /*
              * It is possible to get a keyword hit on artifacts generated for
              * the underlying image in which case MAC times are not
