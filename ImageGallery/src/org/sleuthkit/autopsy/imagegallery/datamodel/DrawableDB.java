@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import static java.util.Objects.isNull;
@@ -831,18 +832,18 @@ public final class DrawableDB {
     }
 
     /**
-     * Sets the isAnalysed state in the groups table for the given group.
+     * Sets the isAnalysed flag in the groups table for the given group to true.
      *
      * @param groupKey group key.
-     * @param isAnalyzed
      *
      * @throws TskCoreException
      */
-    public void markGroupAnalyzed(GroupKey<?> groupKey, boolean isAnalyzed) throws TskCoreException {
+    public void markGroupAnalyzed(GroupKey<?> groupKey) throws TskCoreException {
 
+        
         String updateSQL = String.format(" SET isAnalyzed = %d "
                 + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d ",
-                isAnalyzed ? 1 : 0,
+                1,
                 SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
                 SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
@@ -882,18 +883,17 @@ public final class DrawableDB {
      * Updates the image file.
      * 
      * @param f file to update.
-     * @param addGroups indicates whether or not to add groups for the file.
      * 
      * @throws TskCoreException
      * @throws SQLException 
      */
-    public void updateFile(DrawableFile f, boolean addGroups) throws TskCoreException, SQLException {
+    public void updateFile(DrawableFile f) throws TskCoreException, SQLException {
         DrawableTransaction trans = null;
         CaseDbTransaction caseDbTransaction = null;
         try {
             trans = beginTransaction();
             caseDbTransaction = tskCase.beginTransaction();
-            updateFile(f, trans, caseDbTransaction, addGroups);
+            updateFile(f, trans, caseDbTransaction);
             caseDbTransaction.commit();
             commitTransaction(trans, true);
         } catch (TskCoreException | SQLException ex) {
@@ -924,10 +924,9 @@ public final class DrawableDB {
      * @param f file to update
      * @param tr 
      * @param caseDbTransaction
-     * @param addGroups specifies whether or not to add groups for the file 
      */
-    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction, boolean addGroups) {
-        insertOrUpdateFile(f, tr, caseDbTransaction, addGroups);
+    public void updateFile(DrawableFile f, DrawableTransaction tr, CaseDbTransaction caseDbTransaction) {
+        insertOrUpdateFile(f, tr, caseDbTransaction, true);
     }
 
     /**
@@ -1316,16 +1315,19 @@ public final class DrawableDB {
     public Boolean isGroupAnalyzed(GroupKey<?> groupKey) throws SQLException, TskCoreException {
         
         // Callback to process result of isAnalyzed query
-        class IsGroupAnalyzedQueryResultProcessor extends CompletableFuture<Boolean> implements CaseDbAccessQueryCallback {
+        class IsGroupAnalyzedQueryResultProcessor implements CaseDbAccessQueryCallback {
 
+            private boolean isAnalyzed = false;
+            
+            boolean getIsAnalyzed() { 
+                return isAnalyzed;
+            }
+            
             @Override
             public void process(ResultSet resultSet) {
-                try {
-                    if (resultSet != null) {
-                        while (resultSet.next()) {
-                            complete(resultSet.getInt("isAnalyzed") == 1 ? true: false); //NON-NLS;
-                            return;
-                        }
+                try { 
+                    if (resultSet.next()) {                     
+                        isAnalyzed = resultSet.getInt("isAnalyzed") == 1 ? true: false;
                     }
                 } catch (SQLException ex) {
                     logger.log(Level.SEVERE, "Failed to get group isAnalyzed", ex); //NON-NLS
@@ -1342,10 +1344,10 @@ public final class DrawableDB {
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
                
             tskCase.getCaseDbAccessManager().select(groupAnalyzedQueryStmt, queryResultProcessor);
-            return queryResultProcessor.get();
-        } catch (ExecutionException | InterruptedException | TskCoreException ex) {
+            return queryResultProcessor.getIsAnalyzed();
+        } catch ( TskCoreException ex) {
             String msg = String.format("Failed to get group isAnalyzed for group key %s", groupKey.getValueDisplayName()); //NON-NLS
-            logger.log(Level.WARNING, msg, ex);
+            logger.log(Level.SEVERE, msg, ex);
         }
 
         return false;
@@ -1817,8 +1819,13 @@ public final class DrawableDB {
      */
     public class DrawableTransaction {
 
-        private final Set<Long> updatedFiles = new HashSet<>();
-        private final Set<Long> removedFiles = new HashSet<>();
+        // The files are processed ORDERED BY parent path
+        // We want to preserve that order here, so that we can detect a 
+		// change in path, and thus mark the path group as analyzed
+		// Hence we use a LinkedHashSet here.
+        private final Set<Long> updatedFiles = new LinkedHashSet<>();
+        private final Set<Long> removedFiles = new LinkedHashSet<>();
+        
         private boolean completed;
 
         private DrawableTransaction() throws TskCoreException, SQLException {

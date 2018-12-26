@@ -243,7 +243,6 @@ public class GroupManager {
         setGroupBy(DrawableAttribute.PATH);
         setSortOrder(SortOrder.ASCENDING);
         setDataSource(null);
-        resetLastUpdatedPathGroup();
         
         unSeenGroups.forEach(controller.getCategoryManager()::unregisterListener);
         unSeenGroups.clear();
@@ -636,7 +635,14 @@ public class GroupManager {
     
     /**
      * Checks if the given path is different from the last updated path group.
-     * If so, the last updated path group is marked as analyzed
+     * 
+     * The idea is that when the path of the files being processed changes, 
+     * we have moved from one folder to the next, and the group for the 
+     * previous PATH can be considered as analyzed and can be displayed.
+     * 
+     * NOTE: this a close approximation for when all files in a folder have been processed, 
+     * but there's some room for error - files may go down the ingest pipleline  
+     * out of order or the events may not always arrive in the same order
      * 
      * @param groupKey 
      */
@@ -649,7 +655,7 @@ public class GroupManager {
                 }
                 else if (groupKey.getValue().toString().equalsIgnoreCase(this.lastUpdatedPathGroup.getValue().toString()) == false) {
                     // mark the last path group as analyzed
-                    getDrawableDB().markGroupAnalyzed(lastUpdatedPathGroup, true);
+                    getDrawableDB().markGroupAnalyzed(lastUpdatedPathGroup);
                     popuplateIfAnalyzed(lastUpdatedPathGroup, null);
                     
                     lastUpdatedPathGroup = groupKey;
@@ -667,7 +673,7 @@ public class GroupManager {
     public void resetLastUpdatedPathGroup() {
         try {
             if (lastUpdatedPathGroup != null) {
-                getDrawableDB().markGroupAnalyzed(lastUpdatedPathGroup, true);
+                getDrawableDB().markGroupAnalyzed(lastUpdatedPathGroup);
                 popuplateIfAnalyzed(lastUpdatedPathGroup, null);
                 lastUpdatedPathGroup = null;
             }

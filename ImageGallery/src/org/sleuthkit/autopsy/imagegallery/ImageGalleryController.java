@@ -653,7 +653,7 @@ public final class ImageGalleryController {
         public void run() {
             try {
                 DrawableFile drawableFile = DrawableFile.create(getFile(), true, false);
-                getTaskDB().updateFile(drawableFile, true);
+                getTaskDB().updateFile(drawableFile);
             } catch (TskCoreException | SQLException ex) {
                 Logger.getLogger(UpdateFileTask.class.getName()).log(Level.SEVERE, "Error in update file task", ex); //NON-NLS
             }
@@ -700,7 +700,8 @@ public final class ImageGalleryController {
                     //grab files with supported mime-types
                     + MIMETYPE_CLAUSE //NON-NLS
                     //grab files with image or video mime-types even if we don't officially support them
-                    + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"; //NON-NLS
+                    + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"  //NON-NLS
+                    + " ORDER BY parent_path ";
         }
 
         /**
@@ -873,7 +874,7 @@ public final class ImageGalleryController {
                 // NOTE: Files are being processed because they have the right MIME type,
                 // so we do not need to worry about this calculating them
                 if (FileTypeUtils.hasDrawableMIMEType(f)) {
-                    taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction, false);
+                    taskDB.updateFile(DrawableFile.create(f, true, false), tr, caseDbTransaction);
                 } //unsupported mimtype => analyzed but shouldn't include
                 else {
                     taskDB.removeFile(f.getId(), tr);
