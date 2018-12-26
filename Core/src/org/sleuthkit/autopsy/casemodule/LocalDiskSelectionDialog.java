@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Window;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -423,6 +424,21 @@ final class LocalDiskSelectionDialog extends JDialog {
                         if (disks.size() > 0) {
                             localDiskTable.setEnabled(true);
                             localDiskTable.clearSelection();
+                            
+                            // Remove the partition the application is running on.
+                            String userConfigPath = PlatformUtil.getUserConfigDirectory();
+                            for (LocalDisk disk : disks) {
+                                String diskPath = disk.getPath();
+                                if (diskPath.startsWith("\\\\.\\")) {
+                                    // Strip out UNC prefix to get the drive letter.
+                                    diskPath = diskPath.substring(4);
+                                }
+                                if (userConfigPath.startsWith(diskPath)) {
+                                    disks.remove(disk);
+                                }
+                            }
+                            
+                            Collections.sort(disks, (LocalDisk disk1, LocalDisk disk2) -> disk1.getName().compareToIgnoreCase(disk2.getName()));
                         }
                         fireUpdateEvent();
                         ready = true;

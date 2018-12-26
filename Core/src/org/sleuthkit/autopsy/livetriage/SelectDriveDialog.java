@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.util.Collections;
-import java.util.Comparator;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -348,19 +347,6 @@ class SelectDriveDialog extends javax.swing.JDialog {
                 // Populate the lists
                 partitions = new ArrayList<>();
                 partitions = PlatformUtil.getPartitions();
-                
-                // Remove the partition the application is running on.
-                String userConfigPath = PlatformUtil.getUserConfigDirectory();
-                for (LocalDisk disk : partitions) {
-                    String diskPath = disk.getPath();
-                    if (diskPath.startsWith("\\\\.\\")) {
-                        // Strip out UNC prefix to get the drive letter.
-                        diskPath = diskPath.substring(4);
-                    }
-                    if (userConfigPath.startsWith(diskPath)) {
-                        partitions.remove(disk);
-                    }
-                }
                 return null;
             }
 
@@ -408,12 +394,7 @@ class SelectDriveDialog extends javax.swing.JDialog {
                             diskTable.setEnabled(true);
                             diskTable.clearSelection();
                             
-                            Collections.sort(disks, new Comparator<LocalDisk>(){
-                                @Override
-                                public int compare(LocalDisk disk1, LocalDisk disk2){
-                                    return disk1.getName().compareToIgnoreCase(disk2.getName());
-                                }
-                            });
+                            Collections.sort(disks, (LocalDisk disk1, LocalDisk disk2) -> disk1.getName().compareToIgnoreCase(disk2.getName()));
                         }
                         
                         ready = true;
