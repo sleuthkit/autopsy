@@ -152,6 +152,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 useCentralRepoStateChanged(evt);
             }
         });
+        cbUseCentralRepo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbUseCentralRepoActionPerformed(evt);
+            }
+        });
 
         pnDatabaseConfiguration.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnDatabaseConfiguration.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
@@ -442,13 +447,22 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_showCasesButtonActionPerformed
 
     private void useCentralRepoStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_useCentralRepoStateChanged
-        //if saved setting is disabled checkbox should be disabled already 
+        //store the changed state and update the dependent settings
+        reloadCrOptionsPanel();
+    }//GEN-LAST:event_useCentralRepoStateChanged
+
+    private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
+        //ensure state is accurate when options panel is opened
+        reloadCrOptionsPanel();
+    }//GEN-LAST:event_cbUseCentralRepoActionPerformed
+
+    private synchronized void reloadCrOptionsPanel() {
         store();
         updateDatabase();
         load();
         this.ingestStateUpdated(Case.isCaseOpen());
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_useCentralRepoStateChanged
+    }
 
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
