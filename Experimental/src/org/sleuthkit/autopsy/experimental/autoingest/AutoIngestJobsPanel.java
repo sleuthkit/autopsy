@@ -164,7 +164,7 @@ final class AutoIngestJobsPanel extends javax.swing.JPanel implements ExplorerMa
      * Update the contents of this AutoIngestJobsPanel while retaining currently
      * selected node.
      *
-     * @param jobsSnapshot - the JobsSnapshot which will provide the new
+     * @param refreshEvent - the AutoIngestRefreshEvent which will provide the new
      *                     contents
      */
     void refresh(AutoIngestRefreshEvent refreshEvent) {

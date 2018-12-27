@@ -144,11 +144,11 @@
                                       <Group type="102" attributes="0">
                                           <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
                                           <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="fileNameTranslationColumnCheckbox" min="-2" max="-2" attributes="0"/>
                                               <Component id="keepCurrentViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                               <Component id="useBestViewerRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                               <Component id="useLocalTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
                                               <Component id="useAnotherTimeRadioButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              <Component id="translateNamesInTableRadioButton" min="-2" max="-2" attributes="0"/>
                                           </Group>
                                       </Group>
                                   </Group>
@@ -203,7 +203,7 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="translateTextLabel" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="translateNamesInTableRadioButton" min="-2" max="-2" attributes="0"/>
+                                  <Component id="fileNameTranslationColumnCheckbox" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <EmptySpace max="32767" attributes="0"/>
@@ -397,14 +397,14 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JRadioButton" name="translateNamesInTableRadioButton">
+                <Component class="javax.swing.JCheckBox" name="fileNameTranslationColumnCheckbox">
                   <Properties>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.translateNamesInTableRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="ViewPreferencesPanel.fileNameTranslationColumnCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="translateNamesInTableRadioButtonActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fileNameTranslationColumnCheckboxActionPerformed"/>
                   </Events>
                 </Component>
               </SubComponents>

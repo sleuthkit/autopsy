@@ -79,6 +79,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -96,6 +97,7 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -515,8 +517,7 @@ final public class ViewFrame extends BorderPane {
      */
     @Subscribe
     @NbBundle.Messages({
-        "# {0} - datasource name",
-        "ViewFrame.notification.analysisComplete=The event data has changed, the visualization may be out of date."})
+        "ViewFrame.notification.cacheInvalidated=The event data has changed, the visualization may be out of date."})
     public void handleCacheInvalidated(FilteredEventsModel.CacheInvalidatedEvent event) {
         Platform.runLater(() -> {
             if (hostedView.needsRefresh() == false) {
@@ -525,12 +526,12 @@ final public class ViewFrame extends BorderPane {
                     case Paused:
                         break;
                     case Ready:
-                        notificationPane.show(Bundle.ViewFrame_notification_analysisComplete("x"));
+                        notificationPane.show(Bundle.ViewFrame_notification_cacheInvalidated());
                         notificationState = NotificationState.Showing;
                         notificationTimer.restart();
                         break;
                     case Showing:
-                        notificationPane.setText(Bundle.ViewFrame_notification_analysisComplete("x"));
+                        notificationPane.setText(Bundle.ViewFrame_notification_cacheInvalidated());
                         notificationTimer.restart();
                         break;
                 }
@@ -538,12 +539,6 @@ final public class ViewFrame extends BorderPane {
         });
     }
 
-    /**
-     * Display the given message in the notificationPane and then autohide it
-     * after 30 seconds.
-     *
-     * @param message The message to display.
-     */
     /**
      * Refresh the Histogram to represent the current state of the DB.
      */

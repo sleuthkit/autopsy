@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.coreutils.SQLiteTableReaderException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.SQLiteTableReader;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 
 /**
  * Extracts text from SQLite database files.
@@ -39,14 +38,14 @@ import org.sleuthkit.datamodel.Content;
  *  2) Tables that contain spaces in their name are not extracted
  *  3) Table names are not included in its output text
  */
-final class SqliteTextExtractor extends TextExtractor {
+final class SqliteTextExtractor implements TextExtractor {
 
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
     private static final Logger logger = Logger.getLogger(SqliteTextExtractor.class.getName());
     private final AbstractFile file;
 
-    public SqliteTextExtractor(Content file) {
-        this.file = (AbstractFile) file;
+    public SqliteTextExtractor(AbstractFile file) {
+        this.file = file;
     }
     /**
      * Supports only the sqlite mimetypes
@@ -57,8 +56,8 @@ final class SqliteTextExtractor extends TextExtractor {
      * @return true if x-sqlite3
      */
     @Override
-    public boolean isSupported(Content file, String detectedFormat) {
-        return SQLITE_MIMETYPE.equals(detectedFormat);
+    public boolean isSupported() {
+        return SQLITE_MIMETYPE.equals(file.getMIMEType());
     }
 
     /**
@@ -71,7 +70,7 @@ final class SqliteTextExtractor extends TextExtractor {
      * @throws TextExtractorException
      */
     @Override
-    public Reader getReader() throws ExtractionException {
+    public Reader getReader() throws InitReaderException {
         return new SQLiteStreamReader(file);
     }
     
@@ -105,8 +104,8 @@ final class SqliteTextExtractor extends TextExtractor {
         public SQLiteStreamReader(AbstractFile file) {
             this.file = file;
             reader = new SQLiteTableReader.Builder(file)
-                    .onColumnNames(getColumnNameStrategy())
-                    .forAll(getForAllTableValuesStrategy()).build();
+                    .forAllColumnNames(getColumnNameStrategy())
+                    .forAllTableValues(getForAllTableValuesStrategy()).build();
         }
 
         /**

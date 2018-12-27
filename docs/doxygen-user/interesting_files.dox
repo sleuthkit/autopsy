@@ -21,7 +21,7 @@ Sets can be renamed, edited, copied, and imported and exported from the left sid
 
 Rules specify what to look for in a data source.  Each rule specifies:
 - Type: If the rule should be applied to only files, only directories, or both files and directories. 
-- Name Pattern: String to match the file name against.
+- Name Pattern: String to match the file name against. Note that you can enter multiple extensions in a comma-separated list.
 - Name Pattern Type: Should the pattern be matched against the full file type or just the extension. 
 - Path Pattern: A substring of the parent path that must be matched. This allows you to restrict generic names to a specific structure (such as an application name). A substring match is performed. 
 - Rule Name: Additional details that are displayed in the UI when that rule is matched. This allows you to determine which rule in the set matched.

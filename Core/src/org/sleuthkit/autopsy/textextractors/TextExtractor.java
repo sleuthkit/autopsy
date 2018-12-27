@@ -20,55 +20,37 @@ package org.sleuthkit.autopsy.textextractors;
 
 import java.io.Reader;
 import org.openide.util.Lookup;
-import org.sleuthkit.datamodel.Content;
 
 /**
- * Extracts the text out of {@link org.sleuthkit.datamodel.Content} instances
- * and exposes them as a {@link java.io.Reader}. Concrete implementations can be
- * obtained from
- * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content)}
- * or
- * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory#getExtractor(org.sleuthkit.datamodel.Content, org.openide.util.Lookup)}.
- *
- * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
+ * Extracts the text out of Content instances and exposes them as a Reader.
+ * Concrete implementations can be obtained from
+ * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}
  */
-public abstract class TextExtractor {
+public interface TextExtractor {
 
     /**
-     * Determines if the file content is supported by the extractor.
-     *
-     * @param file           to test if its content should be supported
-     * @param detectedFormat mime-type with detected format (such as text/plain)
-     *                       or null if not detected
-     *
-     * @return true if the file content is supported, false otherwise
-     */
-    abstract boolean isSupported(Content file, String detectedFormat);
-
-    /**
-     * Determines if the TextExtractor instance is enabled to read content.
-     *
-     * @return
-     */
-    boolean isEnabled() {
-        return true;
-    }
-
-    /**
-     * Get a {@link java.io.Reader} that will iterate over the text extracted
-     * from the {@link org.sleuthkit.datamodel.Content} passed into
+     * Determines if this extractor supports the given Content and
+     * configurations passed into it in
      * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}.
      *
-     * @return {@link java.io.Reader} that contains the text of the underlying
-     *         {@link org.sleuthkit.datamodel.Content}
+     * @return true if content is supported, false otherwise
+     */
+    boolean isSupported();
+
+    /**
+     * Get a Reader that will iterate over the text extracted from the Content
+     * passed into
+     * {@link org.sleuthkit.autopsy.textextractors.TextExtractorFactory}.
+     *
+     * @return Reader that contains the text of the underlying Content
      *
      * @throws
-     * org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException
+     * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
      *
      * @see org.sleuthkit.autopsy.textextractors.TextExtractorFactory
      *
      */
-    public abstract Reader getReader() throws ExtractionException;
+    Reader getReader() throws InitReaderException;
 
     /**
      * Determines how the extraction process will proceed given the settings
@@ -76,27 +58,24 @@ public abstract class TextExtractor {
      *
      * @param context Instance containing file config classes
      */
-    void setExtractionSettings(Lookup context) {
+    default void setExtractionSettings(Lookup context) {
         //no-op by default
     }
 
     /**
-     * Exception encountered during
-     * {@link org.sleuthkit.autopsy.textextractors.TextExtractor#getReader()}.
-     * This indicates that there was an internal parsing error that occurred
-     * during the reading of Content text.
+     * System level exception for reader initialization. 
      */
-    public class ExtractionException extends Exception {
+    public class InitReaderException extends Exception {
 
-        public ExtractionException(String msg, Throwable ex) {
+        public InitReaderException(String msg, Throwable ex) {
             super(msg, ex);
         }
 
-        public ExtractionException(Throwable ex) {
+        public InitReaderException(Throwable ex) {
             super(ex);
         }
 
-        public ExtractionException(String msg) {
+        public InitReaderException(String msg) {
             super(msg);
         }
     }

@@ -117,7 +117,7 @@
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbUseCentralRepoActionPerformed"/>
+                <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="useCentralRepoStateChanged"/>
               </Events>
             </Component>
             <Container class="javax.swing.JPanel" name="pnDatabaseConfiguration">

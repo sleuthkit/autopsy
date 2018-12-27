@@ -53,7 +53,7 @@
               <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
               <Component id="keywordListsLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="jScrollPane1" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="354" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="newListButton" linkSize="5" alignment="3" min="-2" max="-2" attributes="0"/>

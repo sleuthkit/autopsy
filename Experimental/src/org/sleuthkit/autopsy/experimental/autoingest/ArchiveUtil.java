@@ -39,6 +39,7 @@ import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 
 /**
  * Set of utilities that handles archive file extraction. Uses 7zip library.
@@ -235,7 +236,7 @@ final class ArchiveUtil {
 
             for (ISimpleInArchiveItem entry : simpleInArchive.getArchiveItems()) {
                 String entryPathInArchive = entry.getPath();
-                Path fullPath = Paths.get(destinationFolder, entryPathInArchive);
+                Path fullPath = Paths.get(destinationFolder, FileUtil.escapeFileName(entryPathInArchive)); // remove illegal characters from file name
                 File destFile = new File(fullPath.toString());
                 File destinationParent = destFile.getParentFile();
                 destinationParent.mkdirs();

@@ -52,6 +52,7 @@ public class PlatformUtil {
 
     private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules"; //NON-NLS
     private static final String CLASSIFIERS_SUBDIRECTORY = "object_detection_classifiers"; //NON-NLS
+    private static final String OCR_LANGUAGE_SUBDIRECTORY = "ocr_language_packs"; //NON-NLS
     private static String javaPath = null;
     public static final String OS_NAME_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.nameUnknown");
     public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
@@ -115,6 +116,15 @@ public class PlatformUtil {
      */
     public static String getUserPythonModulesPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + PYTHON_MODULES_SUBDIRECTORY;
+    }
+    
+    /**
+     * Get root path where the user's Ocr language packs are stored.
+     * 
+     * @return Absolute path to the Ocr language packs root directory.
+     */
+    public static String getOcrLanguagePacksPath() {
+        return getUserDirectory().getAbsolutePath() + File.separator + OCR_LANGUAGE_SUBDIRECTORY;
     }
 
     /**

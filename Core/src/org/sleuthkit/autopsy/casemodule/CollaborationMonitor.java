@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * A collaboration monitor listens to local events and translates them into
@@ -231,9 +232,12 @@ final class CollaborationMonitor {
          * @param event A data source analysis started event.
          */
         synchronized void addDataSourceAnalysisTask(DataSourceAnalysisStartedEvent event) {
-            String status = NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.analyzingDataSourceStatus.msg", hostName, event.getDataSource().getName());
-            jobIdsTodataSourceAnalysisTasks.put(event.getDataSourceIngestJobId(), new Task(++nextTaskId, status));
-            eventPublisher.publishRemotely(new CollaborationEvent(hostName, getCurrentTasks()));
+            Content dataSource = event.getDataSource();
+            if (dataSource != null) {
+                String status = NbBundle.getMessage(CollaborationMonitor.class, "CollaborationMonitor.analyzingDataSourceStatus.msg", hostName, dataSource.getName());
+                jobIdsTodataSourceAnalysisTasks.put(event.getDataSourceIngestJobId(), new Task(++nextTaskId, status));
+                eventPublisher.publishRemotely(new CollaborationEvent(hostName, getCurrentTasks()));
+            }
         }
 
         /**

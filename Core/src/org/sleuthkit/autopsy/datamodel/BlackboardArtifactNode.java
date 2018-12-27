@@ -54,7 +54,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNor
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -572,7 +571,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     protected final CorrelationAttributeInstance getCorrelationAttributeInstance() {
         CorrelationAttributeInstance correlationAttribute = null;
-        if (EamDbUtil.useCentralRepo()) {
+        if (EamDb.isEnabled()) {
             correlationAttribute = EamArtifactUtil.getInstanceFromContent(associated);
         }
         return correlationAttribute;
