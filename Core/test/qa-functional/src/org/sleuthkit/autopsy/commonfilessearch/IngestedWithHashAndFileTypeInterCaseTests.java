@@ -96,42 +96,41 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testOne() {
         try {
-            //note that the params false and false are presently meaningless because that feature is not supported yet
             AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.FILE_TYPE, 0);
             CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
 
             assertTrue("Results should not be empty", metadata.size() != 0);
 
             //case 1 data set 1
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_1, CASE1", 1, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_1, CASE1", 1, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1));
 
             //case 1 data set 2
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 1));
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_2, CASE1", 1, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_2, CASE1", 1, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1));
 
             //case 2 data set 1
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
+            assertEquals("Verify Existence or Count failed for HASH_B_PDF, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_B_JPG, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2));
 
             //case 2 data set 2
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2));
 
             //case 3 data set 1
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE3_DATASET_1, CASE3", 1, getInstanceCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE3_DATASET_1, CASE3", 1, getInstanceCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3));
 
             //case 3 data set 2
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1));
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE3_DATASET_2, CASE3", 1, getInstanceCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3));
 
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -144,7 +143,6 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testTwo() {
         try {
-
             int matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(CASE2);
             CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
             AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false, fileType, 0);
@@ -154,35 +152,35 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
             assertTrue("Results should not be empty", metadata.size() != 0);
 
             //case 1 data set 1
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_1, CASE1", 1, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_1, CASE1", 1, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1));
 
             //case 1 data set 2
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 1));
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_2, CASE1", 1, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_2, CASE1", 1, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1));
 
             //case 2 data set 1
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
+            assertEquals("Verify Existence or Count failed for HASH_B_PDF, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_B_JPG, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2));
 
             //case 2 data set 2
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2));
 
             //case 3 data set 1
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 1));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE3_DATASET_1, CASE3", 1, getInstanceCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE3_DATASET_1, CASE3", 1, getInstanceCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3));
 
             //case 3 data set 2
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1));
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE3_DATASET_2, CASE3", 1, getInstanceCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3));
 
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -192,49 +190,48 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
 
     /**
      * We should be able to observe that certain files are no longer returned in
-     * the result set since they do not appear frequently enough.
+     * the result set since they exist too frequently
      */
     public void testThree() {
         try {
 
-            //note that the params false and false are presently meaningless because that feature is not supported yet
             CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
             AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, fileType, 50);
 
             CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
-
+            metadata.filterMetadata();
             assertTrue("Results should not be empty", metadata.size() != 0);
 
             //case 1 data set 1
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 0));
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1));
 
             //case 1 data set 2
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 0));
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1));
 
             //case 2 data set 1
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
+            assertEquals("Verify Existence or Count failed for HASH_B_PDF, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_B_JPG, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2));
 
             //case 2 data set 2
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE2_DATASET_2, CASE2", 0, getInstanceCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE2_DATASET_2, CASE2", 0, getInstanceCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2));
 
             //case 3 data set 1
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3));
 
             //case 3 data set 2
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
-            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1));
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE3_DATASET_2, CASE3", 1, getInstanceCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3));
 
         } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
             Exceptions.printStackTrace(ex);
