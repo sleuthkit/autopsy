@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.nio.file.Paths;
 import java.util.logging.Level;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -112,19 +111,6 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         repaint();
     }
 
-    @Messages({"CasePropertiesPanel.casePanel.border.title=Case",
-        "CasePropertiesPanel.lbCaseUUIDLabel.text=Case UUID:",
-        "CasePropertiesPanel.examinerPanel.border.title=Examiner",
-        "CasePropertiesPanel.examinerLabel.text=Name:",
-        "CasePropertiesPanel.lbExaminerPhoneLabel.text=Phone:",
-        "CasePropertiesPanel.lbExaminerEmailLabel.text=Email:",
-        "CasePropertiesPanel.lbNotesLabel.text=Notes:",
-        "CasePropertiesPanel.pnOrganization.border.title=Organization",
-        "CasePropertiesPanel.lbOrganizationNameLabel.text=Name:",
-        "CasePropertiesPanel.lbPointOfContactNameLabel.text=Point of Contact:",
-        "CasePropertiesPanel.lbPointOfContactPhoneLabel.text=Phone:",
-        "CasePropertiesPanel.lbPointOfContactEmailLabel.text=Email:"})
-
     /**
      * In this generated code below, there are 2 strings "Path" and "Remove"
      * that are table column headers in the DefaultTableModel. When this model
@@ -161,12 +147,12 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         lbCaseUIDText = new javax.swing.JLabel();
         lbCaseNameText = new javax.swing.JLabel();
         lbCaseNumberText = new javax.swing.JLabel();
-        examinerPanel = new javax.swing.JPanel();
-        lbExaminerNameText = new javax.swing.JLabel();
         lbNotesLabel = new javax.swing.JLabel();
-        examinerLabel = new javax.swing.JLabel();
         caseNotesScrollPane = new javax.swing.JScrollPane();
         taNotesText = new javax.swing.JTextArea();
+        examinerPanel = new javax.swing.JPanel();
+        lbExaminerNameText = new javax.swing.JLabel();
+        examinerLabel = new javax.swing.JLabel();
         lbExaminerEmailLabel = new javax.swing.JLabel();
         lbExaminerPhoneLabel = new javax.swing.JLabel();
         lbExaminerPhoneText = new javax.swing.JLabel();
@@ -235,6 +221,26 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
 
         lbCaseNumberText.setMinimumSize(new java.awt.Dimension(25, 14));
 
+        lbNotesLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbNotesLabel.text")); // NOI18N
+        lbNotesLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbNotesLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbNotesLabel.setPreferredSize(new java.awt.Dimension(82, 14));
+        lbNotesLabel.setRequestFocusEnabled(false);
+
+        caseNotesScrollPane.setBorder(null);
+
+        taNotesText.setEditable(false);
+        taNotesText.setBackground(new java.awt.Color(240, 240, 240));
+        taNotesText.setColumns(20);
+        taNotesText.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        taNotesText.setLineWrap(true);
+        taNotesText.setRows(2);
+        taNotesText.setWrapStyleWord(true);
+        taNotesText.setBorder(null);
+        taNotesText.setFocusable(false);
+        taNotesText.setOpaque(false);
+        caseNotesScrollPane.setViewportView(taNotesText);
+
         javax.swing.GroupLayout casePanelLayout = new javax.swing.GroupLayout(casePanel);
         casePanel.setLayout(casePanelLayout);
         casePanelLayout.setHorizontalGroup(
@@ -264,7 +270,11 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                             .addComponent(caseDirField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(caseTypeField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(dbNameField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lbCaseUIDText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(lbCaseUIDText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(casePanelLayout.createSequentialGroup()
+                        .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(caseNotesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 704, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -273,7 +283,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         casePanelLayout.setVerticalGroup(
             casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(casePanelLayout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(caseNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbCaseNameText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -301,36 +311,19 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                 .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lbCaseUUIDLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbCaseUIDText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(caseNotesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         examinerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
-
-        lbNotesLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbNotesLabel.text")); // NOI18N
-        lbNotesLabel.setMaximumSize(new java.awt.Dimension(82, 14));
-        lbNotesLabel.setMinimumSize(new java.awt.Dimension(82, 14));
-        lbNotesLabel.setPreferredSize(new java.awt.Dimension(82, 14));
-        lbNotesLabel.setRequestFocusEnabled(false);
 
         examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         examinerLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerLabel.text")); // NOI18N
         examinerLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         examinerLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         examinerLabel.setPreferredSize(new java.awt.Dimension(82, 14));
-
-        caseNotesScrollPane.setBorder(null);
-
-        taNotesText.setEditable(false);
-        taNotesText.setBackground(new java.awt.Color(240, 240, 240));
-        taNotesText.setColumns(20);
-        taNotesText.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
-        taNotesText.setLineWrap(true);
-        taNotesText.setRows(2);
-        taNotesText.setWrapStyleWord(true);
-        taNotesText.setBorder(null);
-        taNotesText.setFocusable(false);
-        taNotesText.setOpaque(false);
-        caseNotesScrollPane.setViewportView(taNotesText);
 
         lbExaminerEmailLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbExaminerEmailLabel.text")); // NOI18N
         lbExaminerEmailLabel.setMaximumSize(new java.awt.Dimension(82, 14));
@@ -350,13 +343,9 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(examinerPanelLayout.createSequentialGroup()
-                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lbExaminerPhoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(lbExaminerPhoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(6, 6, 6)
-                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbExaminerPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(caseNotesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 704, Short.MAX_VALUE)))
+                        .addComponent(lbExaminerPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, 704, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, examinerPanelLayout.createSequentialGroup()
                         .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(lbExaminerEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -368,7 +357,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        examinerPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {examinerLabel, lbExaminerEmailLabel, lbExaminerPhoneLabel, lbNotesLabel});
+        examinerPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {examinerLabel, lbExaminerEmailLabel, lbExaminerPhoneLabel});
 
         examinerPanelLayout.setVerticalGroup(
             examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -385,11 +374,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                 .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lbExaminerEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbExaminerEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(caseNotesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pnOrganization.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.pnOrganization.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
@@ -475,12 +460,14 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
             detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, detailsPanelLayout.createSequentialGroup()
                 .addComponent(casePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(examinerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        examinerPanel.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerPanel.AccessibleContext.accessibleName")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -495,8 +482,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

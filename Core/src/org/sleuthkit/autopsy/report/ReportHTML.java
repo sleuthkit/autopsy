@@ -51,6 +51,7 @@ import javax.swing.JPanel;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Services;
@@ -1226,6 +1227,10 @@ class ReportHTML implements TableReportModule {
         }
     }
 
+    @Messages({
+        "ReportHTML.writeSum.caseNotes=Case Notes:",
+        "ReportHTML.writeSum.noCaseNotes=<i>No case notes</i>"
+    })
     /**
      * Write the case details section of the summary for this report.
      *
@@ -1236,6 +1241,7 @@ class ReportHTML implements TableReportModule {
         String caseName = currentCase.getDisplayName();
         String caseNumber = currentCase.getNumber();
         String examiner = currentCase.getExaminer();
+        String caseNotes = currentCase.getCaseNotes();
         final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null && !reportBranding.getAgencyLogoPath().isEmpty();
         int imagecount;
         try {
@@ -1265,6 +1271,9 @@ class ReportHTML implements TableReportModule {
                 .append("</td></tr>\n"); //NON-NLS
         summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages")) //NON-NLS
                 .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNotes()).append("</td><td>") //NON-NLS
+                .append(!caseNotes.isEmpty() ? formatHtmlString(caseNotes) : Bundle.ReportHTML_writeSum_noCaseNotes())
+                .append("</td></tr>\n"); //NON-NLS
         summary.append("</table>\n"); //NON-NLS
         summary.append("</div>\n"); //NON-NLS
         summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
@@ -1412,6 +1421,19 @@ class ReportHTML implements TableReportModule {
         }
         return THUMBS_REL_PATH
                 + thumbFile.getName();
+    }
+
+    /**
+     * Apply escape sequence to special characters. Line feed and carriage
+     * return character combinations will be converted to HTML line breaks.
+     *
+     * @param text The text to format.
+     *
+     * @return The formatted text.
+     */
+    private String formatHtmlString(String text) {
+        String formattedString = StringEscapeUtils.escapeHtml4(text);
+        return formattedString.replaceAll("(\r\n|\r|\n|\n\r)", "<br>");
     }
 
 }
