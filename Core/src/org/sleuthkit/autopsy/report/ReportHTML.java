@@ -56,6 +56,10 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -1228,8 +1232,29 @@ class ReportHTML implements TableReportModule {
     }
 
     @Messages({
-        "ReportHTML.writeSum.caseNotes=Case Notes:",
-        "ReportHTML.writeSum.noCaseNotes=<i>No case notes</i>"
+        "ReportHTML.writeSum.case=Case:",
+        "ReportHTML.writeSum.caseNumber=Case Number:",
+        "ReportHTML.writeSum.caseNumImages=Number of Images:",
+        "ReportHTML.writeSum.caseNotes=Notes:",
+        
+        "ReportHTML.writeSum.examiner=Examiner:",
+        "ReportHTML.writeSum.examinerPhone=Phone:",
+        "ReportHTML.writeSum.examinerEmail=Email:",
+        
+        "ReportHTML.writeSum.org=Organization:",
+        "ReportHTML.writeSum.orgPoc=Point of Contact:",
+        "ReportHTML.writeSum.orgPhone=Phone:",
+        "ReportHTML.writeSum.orgEmail=Email:",
+        
+        "ReportHTML.writeSum.noCaseNumber=<i>No case number</i>",
+        "ReportHTML.writeSum.noCaseNotes=<i>No notes</i>",
+        "ReportHTML.writeSum.noExaminer=<i>No examiner</i>",
+        "ReportHTML.writeSum.noExaminerPhone=<i>No phone</i>",
+        "ReportHTML.writeSum.noExaminerEmail=<i>No email</i>",
+        "ReportHTML.writeSum.noOrg=<i>No organization</i>",
+        "ReportHTML.writeSum.noOrgPoc=<i>No point of contact</i>",
+        "ReportHTML.writeSum.noOrgPhone=<i>No phone</i>",
+        "ReportHTML.writeSum.noOrgEmail=<i>No email</i>",
     })
     /**
      * Write the case details section of the summary for this report.
@@ -1238,17 +1263,52 @@ class ReportHTML implements TableReportModule {
      */
     private StringBuilder writeSummaryCaseDetails() {
         StringBuilder summary = new StringBuilder();
+        
+        final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null && !reportBranding.getAgencyLogoPath().isEmpty();
+        
+        // Case
         String caseName = currentCase.getDisplayName();
         String caseNumber = currentCase.getNumber();
-        String examiner = currentCase.getExaminer();
-        String caseNotes = currentCase.getCaseNotes();
-        final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null && !reportBranding.getAgencyLogoPath().isEmpty();
         int imagecount;
         try {
             imagecount = currentCase.getDataSources().size();
         } catch (TskCoreException ex) {
             imagecount = 0;
         }
+        String caseNotes = currentCase.getCaseNotes();
+        
+        // Examiner
+        String examinerName = currentCase.getExaminer();
+        String examinerPhone = currentCase.getExaminerPhone();
+        String examinerEmail = currentCase.getExaminerEmail();
+        
+        // Organization
+        String orgName = "";
+        String orgPoc = "";
+        String orgPhone = "";
+        String orgEmail = "";
+        if (EamDb.isEnabled()) {
+            try {
+                EamDb dbManager = EamDb.getInstance();
+                if (dbManager != null) {
+                    CorrelationCase correlationCase = dbManager.getCase(currentCase);
+                    if (null == correlationCase) {
+                        correlationCase = dbManager.newCase(currentCase);
+                    }
+                    EamOrganization organization = correlationCase.getOrg();
+                    if (organization != null) {
+                        orgName = organization.getName();
+                        orgPoc = organization.getPocName();
+                        orgPhone = organization.getPocPhone();
+                        orgEmail = organization.getPocEmail();
+                    }
+                }
+            } catch (EamDbException ex) {
+                logger.log(Level.SEVERE, "Unable to access Correlation Case when Central Repo is enabled", ex);
+            }
+        }
+        
+        // Start the layout.
         summary.append("<div class=\"title\">\n"); //NON-NLS
         if (agencyLogoSet) {
             summary.append("<div class=\"left\">\n"); //NON-NLS
@@ -1260,20 +1320,49 @@ class ReportHTML implements TableReportModule {
         final String align = agencyLogoSet ? "right" : "left"; //NON-NLS NON-NLS
         summary.append("<div class=\"").append(align).append("\">\n"); //NON-NLS
         summary.append("<table>\n"); //NON-NLS
-        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName")) //NON-NLS
-                .append("</td><td>").append(caseName).append("</td></tr>\n"); //NON-NLS NON-NLS
-        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum")) //NON-NLS
-                .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle //NON-NLS
-                .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
-        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>") //NON-NLS
-                .append(!examiner.isEmpty() ? examiner : NbBundle
-                        .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
+        
+        // Case details
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_case()).append("</td><td>") //NON-NLS
+                .append(formatHtmlString(caseName))
                 .append("</td></tr>\n"); //NON-NLS
-        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages")) //NON-NLS
-                .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNumber()).append("</td><td>") //NON-NLS
+                .append(!caseNumber.isEmpty() ? formatHtmlString(caseNumber) : Bundle.ReportHTML_writeSum_noCaseNumber())
+                .append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNumImages()).append("</td><td>") //NON-NLS
+                .append(imagecount)
+                .append("</td></tr>\n"); //NON-NLS
         summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNotes()).append("</td><td>") //NON-NLS
                 .append(!caseNotes.isEmpty() ? formatHtmlString(caseNotes) : Bundle.ReportHTML_writeSum_noCaseNotes())
                 .append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td></td><td></td></tr>\n"); //NON-NLS
+        
+        // Examiner details
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_examiner()).append("</td><td>") //NON-NLS
+                .append(!examinerName.isEmpty() ? formatHtmlString(examinerName) : Bundle.ReportHTML_writeSum_noExaminer())
+                .append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_examinerPhone()).append("</td><td>") //NON-NLS
+                .append(!examinerPhone.isEmpty() ? formatHtmlString(examinerPhone) : Bundle.ReportHTML_writeSum_noExaminerPhone())
+                .append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_examinerEmail()).append("</td><td>") //NON-NLS
+                .append(!examinerEmail.isEmpty() ? formatHtmlString(examinerEmail) : Bundle.ReportHTML_writeSum_noExaminerEmail())
+                .append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td></td><td></td></tr>\n"); //NON-NLS
+        
+        // Organization details
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_org()).append("</td><td>") //NON-NLS
+                .append(!orgName.isEmpty() ? formatHtmlString(orgName) : Bundle.ReportHTML_writeSum_noOrg())
+                .append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_orgPoc()).append("</td><td>") //NON-NLS
+                .append(!orgPoc.isEmpty() ? formatHtmlString(orgPoc) : Bundle.ReportHTML_writeSum_noOrgPoc())
+                .append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_orgPhone()).append("</td><td>") //NON-NLS
+                .append(!orgPhone.isEmpty() ? formatHtmlString(orgPhone) : Bundle.ReportHTML_writeSum_noOrgPhone())
+                .append("</td></tr>\n"); //NON-NLS
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_orgEmail()).append("</td><td>") //NON-NLS
+                .append(!orgEmail.isEmpty() ? formatHtmlString(orgEmail) : Bundle.ReportHTML_writeSum_noOrgEmail())
+                .append("</td></tr>\n"); //NON-NLS
+        
+        // End the layout.
         summary.append("</table>\n"); //NON-NLS
         summary.append("</div>\n"); //NON-NLS
         summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
