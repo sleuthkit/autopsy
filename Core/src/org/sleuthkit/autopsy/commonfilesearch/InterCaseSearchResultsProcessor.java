@@ -331,8 +331,8 @@ final class InterCaseSearchResultsProcessor {
                     CorrelationCase correlationCase = EamDb.getInstance().getCaseById(InstanceTableCallback.getCaseId(resultSet));
                     String caseName = correlationCase.getDisplayName();
                     CorrelationDataSource correlationDatasource = EamDb.getInstance().getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
-//                    String dataSourceName = correlationDatasource.getName();
-                    String dataSourceNameKey = correlationDatasource.getName() + correlationDatasource.getDataSourceObjectID();
+                    //label datasource with it's id for uniqueness done in same manner as ImageGallery does in the DataSourceCell class
+                    String dataSourceNameKey = correlationDatasource.getName() + " (Id: " + correlationDatasource.getDataSourceObjectID() + ")";
                     if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
                         caseCollatedDataSourceCollections.put(caseName, new HashMap<String, CommonAttributeValueList>());
                     }

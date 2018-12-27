@@ -198,6 +198,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     runningJob.setModuleRuntimesSnapshot(job.getModuleRunTimes());
                     runningJob.setProcessingStage(job.getProcessingStage(), job.getProcessingStageStartDate());
                     runningJob.setProcessingStatus(job.getProcessingStatus());
+                    break;
                 }
             }
             setChanged();
@@ -365,8 +366,9 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                             LOGGER.log(Level.SEVERE, "Unknown AutoIngestJobData.ProcessingStatus");
                             break;
                     }
-                } catch (InterruptedException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Unexpected interrupt while retrieving coordination service node data for '%s'", node), ex);
+                } catch (InterruptedException ignore) {
+                    LOGGER.log(Level.WARNING, "Interrupt while retrieving coordination service node data");
+                    return newJobsSnapshot;
                 } catch (AutoIngestJobNodeData.InvalidDataException ex) {
                     LOGGER.log(Level.SEVERE, String.format("Unable to use node data for '%s'", node), ex);
                 } catch (AutoIngestJob.AutoIngestJobException ex) {
@@ -733,7 +735,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             stopWatch.start();
             eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
             stopWatch.stop();
-            LOGGER.log(Level.INFO, String.format("Used %d s to publish job deletion event for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName,caseDirectoryPath));
+            LOGGER.log(Level.INFO, String.format("Used %d s to publish job deletion event for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName, caseDirectoryPath));
         }
 
         return CaseDeletionResult.FULLY_DELETED;

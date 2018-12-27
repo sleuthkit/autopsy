@@ -51,7 +51,7 @@ public class DataSourceUpdateService implements AutopsyService {
                         //ResultSet.getLong has a value of 0 when the value is null
                         if (correlationDataSource.getCaseID() == correlationCase.getID() && correlationDataSource.getDataSourceObjectID() == 0) {
                             for (Content dataSource : context.getCase().getDataSources()) {
-                                if (((DataSource) dataSource).getDeviceId().equals(correlationDataSource.getDeviceID())) {
+                                if (((DataSource) dataSource).getDeviceId().equals(correlationDataSource.getDeviceID()) && dataSource.getName().equals(correlationDataSource.getName())) {
                                     centralRepository.addDataSourceObjectId(correlationDataSource.getID(), dataSource.getId());
                                     break;
                                 }
