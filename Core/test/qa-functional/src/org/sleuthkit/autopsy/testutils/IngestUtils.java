@@ -20,9 +20,12 @@ package org.sleuthkit.autopsy.testutils;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.UUID;
 import static junit.framework.Assert.assertEquals;
 import org.openide.util.Exceptions;
 import junit.framework.Assert;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -60,14 +63,18 @@ public final class IngestUtils {
             if (!dataSourcePath.toFile().exists()) {
                 Assert.fail("Data source not found: " + dataSourcePath.toString());
             }
-            
+            UUID taskId = UUID.randomUUID();
+            Case.getCurrentCaseThrows().notifyAddingDataSource(taskId);
             DataSourceProcessorRunner.ProcessorCallback callBack = DataSourceProcessorRunner.runDataSourceProcessor(dataSourceProcessor, dataSourcePath);
             result = callBack.getResult();
             if (result.equals(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS)) {
                 String joinedErrors = String.join(System.lineSeparator(), callBack.getErrorMessages());
                 Assert.fail(String.format("Error(s) occurred while running the data source processor: %s", joinedErrors));
             }
-        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | InterruptedException ex) {
+            for (Content c:callBack.getDataSourceContent()) {
+                Case.getCurrentCaseThrows().notifyDataSourceAdded(c, taskId);
+            }
+        } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | NoCurrentCaseException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
