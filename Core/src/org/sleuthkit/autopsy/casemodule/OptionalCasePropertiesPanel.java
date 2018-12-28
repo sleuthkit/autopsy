@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,10 +36,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  * Panel which allows for editing and setting of the case details which are
  * optional or otherwise able to be edited.
  */
-@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
-    private final static Logger logger = Logger.getLogger(OptionalCasePropertiesPanel.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(OptionalCasePropertiesPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private EamOrganization selectedOrg = null;
     private java.util.List<EamOrganization> orgs = null;
@@ -63,19 +62,12 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
     OptionalCasePropertiesPanel(boolean editCurrentCase) {
         initComponents();
         if (editCurrentCase) {
-            Case openCase;
-            try {
-                openCase = Case.getCurrentCaseThrows();
-            } catch (NoCurrentCaseException ex) { 
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex);
-                return;
-            }
-            caseDisplayNameTextField.setText(openCase.getDisplayName());
-            caseNumberTextField.setText(openCase.getNumber());
-            examinerTextField.setText(openCase.getExaminer());
-            tfExaminerEmailText.setText(openCase.getExaminerEmail());
-            tfExaminerPhoneText.setText(openCase.getExaminerPhone());
-            taNotesText.setText(openCase.getCaseNotes());
+            caseDisplayNameTextField.setText(Case.getCurrentCase().getDisplayName());
+            caseNumberTextField.setText(Case.getCurrentCase().getNumber());
+            examinerTextField.setText(Case.getCurrentCase().getExaminer());
+            tfExaminerEmailText.setText(Case.getCurrentCase().getExaminerEmail());
+            tfExaminerPhoneText.setText(Case.getCurrentCase().getExaminerPhone());
+            taNotesText.setText(Case.getCurrentCase().getCaseNotes());
             setUpCaseDetailsFields();
             setUpOrganizationData();
         } else {
@@ -94,18 +86,15 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
     private void setUpOrganizationData() {
         if (EamDb.isEnabled()) {
-            try {
-                Case currentCase = Case.getCurrentCaseThrows();
-                if (currentCase != null) {
+            Case currentCase = Case.getCurrentCase();
+            if (currentCase != null) {
+                try {
                     EamDb dbManager = EamDb.getInstance();
                     selectedOrg = dbManager.getCase(currentCase).getOrg();
+                } catch (EamDbException ex) {
+                    LOGGER.log(Level.SEVERE, "Unable to get Organization associated with the case from Central Repo", ex);
                 }
-            } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Unable to get Organization associated with the case from Central Repo", ex);
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex);
             }
-            
             if (selectedOrg != null) {
                 setCurrentlySelectedOrganization(selectedOrg.getName());
             }
@@ -146,7 +135,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             });
             comboBoxOrgName.setSelectedItem(selectedBeforeLoad);
         } catch (EamDbException ex) {
-            logger.log(Level.WARNING, "Unable to populate list of Organizations from Central Repo", ex);
+            LOGGER.log(Level.WARNING, "Unable to populate list of Organizations from Central Repo", ex);
         }
     }
 
@@ -205,6 +194,21 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         taNotesText.setText(caseNotes == null ? "" : caseNotes);
     }
 
+    @Messages({"OptionalCasePropertiesPanel.caseDisplayNameLabel.text=Name:",
+        "OptionalCasePropertiesPanel.lbPointOfContactEmailLabel.text=Email:",
+        "OptionalCasePropertiesPanel.lbOrganizationNameLabel.text=Organization analysis is being done for:",
+        "OptionalCasePropertiesPanel.bnNewOrganization.text=Manage Organizations",
+        "OptionalCasePropertiesPanel.lbPointOfContactNameLabel.text=Point of Contact:",
+        "OptionalCasePropertiesPanel.lbPointOfContactPhoneLabel.text=Phone:",
+        "OptionalCasePropertiesPanel.orgainizationPanel.border.title=Organization",
+        "OptionalCasePropertiesPanel.lbNotesLabel.text=Notes:",
+        "OptionalCasePropertiesPanel.examinerLabel.text=Name:",
+        "OptionalCasePropertiesPanel.lbExaminerEmailLabel.text=Email:",
+        "OptionalCasePropertiesPanel.lbExaminerPhoneLabel.text=Phone:",
+        "OptionalCasePropertiesPanel.examinerPanel.border.title=Examiner",
+        "OptionalCasePropertiesPanel.caseNumberLabel.text=Number:",
+        "OptionalCasePropertiesPanel.casePanel.border.title=Case"
+    })
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -219,16 +223,16 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         caseNumberTextField = new javax.swing.JTextField();
         caseDisplayNameLabel = new javax.swing.JLabel();
         caseDisplayNameTextField = new javax.swing.JTextField();
-        caseNotesScrollPane = new javax.swing.JScrollPane();
-        taNotesText = new javax.swing.JTextArea();
-        lbNotesLabel = new javax.swing.JLabel();
         examinerPanel = new javax.swing.JPanel();
         tfExaminerPhoneText = new javax.swing.JTextField();
         lbExaminerPhoneLabel = new javax.swing.JLabel();
+        caseNotesScrollPane = new javax.swing.JScrollPane();
+        taNotesText = new javax.swing.JTextArea();
         tfExaminerEmailText = new javax.swing.JTextField();
         examinerTextField = new javax.swing.JTextField();
         lbExaminerEmailLabel = new javax.swing.JLabel();
         examinerLabel = new javax.swing.JLabel();
+        lbNotesLabel = new javax.swing.JLabel();
         orgainizationPanel = new javax.swing.JPanel();
         lbPointOfContactPhoneLabel = new javax.swing.JLabel();
         comboBoxOrgName = new javax.swing.JComboBox<>();
@@ -244,6 +248,9 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
         caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(caseNumberLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.caseNumberLabel.text")); // NOI18N
+        caseNumberLabel.setMaximumSize(new java.awt.Dimension(41, 14));
+        caseNumberLabel.setMinimumSize(new java.awt.Dimension(41, 14));
+        caseNumberLabel.setPreferredSize(new java.awt.Dimension(41, 14));
 
         caseNumberTextField.setFont(caseNumberTextField.getFont().deriveFont(caseNumberTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -256,21 +263,6 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
         caseDisplayNameTextField.setFont(caseDisplayNameTextField.getFont().deriveFont(caseDisplayNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
-        caseNotesScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-
-        taNotesText.setColumns(20);
-        taNotesText.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
-        taNotesText.setLineWrap(true);
-        taNotesText.setRows(2);
-        taNotesText.setWrapStyleWord(true);
-        taNotesText.setBorder(null);
-        caseNotesScrollPane.setViewportView(taNotesText);
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbNotesLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbNotesLabel.text")); // NOI18N
-        lbNotesLabel.setMaximumSize(new java.awt.Dimension(41, 14));
-        lbNotesLabel.setMinimumSize(new java.awt.Dimension(41, 14));
-        lbNotesLabel.setPreferredSize(new java.awt.Dimension(41, 14));
-
         javax.swing.GroupLayout casePanelLayout = new javax.swing.GroupLayout(casePanel);
         casePanel.setLayout(casePanelLayout);
         casePanelLayout.setHorizontalGroup(
@@ -279,12 +271,10 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(caseNumberLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
-                    .addComponent(caseDisplayNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lbNotesLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(caseDisplayNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(caseNotesScrollPane)
-                    .addComponent(caseNumberTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 425, Short.MAX_VALUE)
+                    .addComponent(caseNumberTextField)
                     .addComponent(caseDisplayNameTextField))
                 .addContainerGap())
         );
@@ -297,13 +287,9 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                     .addComponent(caseDisplayNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(caseNumberLabel)
+                    .addComponent(caseNumberLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(caseNumberTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(casePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(caseNotesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(6, 6, 6))
         );
 
         examinerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.examinerPanel.border.title"))); // NOI18N
@@ -312,6 +298,16 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         lbExaminerPhoneLabel.setMaximumSize(new java.awt.Dimension(41, 14));
         lbExaminerPhoneLabel.setMinimumSize(new java.awt.Dimension(41, 14));
         lbExaminerPhoneLabel.setPreferredSize(new java.awt.Dimension(41, 14));
+
+        caseNotesScrollPane.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+
+        taNotesText.setColumns(20);
+        taNotesText.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        taNotesText.setLineWrap(true);
+        taNotesText.setRows(2);
+        taNotesText.setWrapStyleWord(true);
+        taNotesText.setBorder(null);
+        caseNotesScrollPane.setViewportView(taNotesText);
 
         examinerTextField.setFont(examinerTextField.getFont().deriveFont(examinerTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -326,6 +322,11 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         examinerLabel.setMinimumSize(new java.awt.Dimension(41, 14));
         examinerLabel.setPreferredSize(new java.awt.Dimension(41, 14));
 
+        org.openide.awt.Mnemonics.setLocalizedText(lbNotesLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbNotesLabel.text")); // NOI18N
+        lbNotesLabel.setMaximumSize(new java.awt.Dimension(41, 14));
+        lbNotesLabel.setMinimumSize(new java.awt.Dimension(41, 14));
+        lbNotesLabel.setPreferredSize(new java.awt.Dimension(41, 14));
+
         javax.swing.GroupLayout examinerPanelLayout = new javax.swing.GroupLayout(examinerPanel);
         examinerPanel.setLayout(examinerPanelLayout);
         examinerPanelLayout.setHorizontalGroup(
@@ -334,9 +335,13 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(examinerPanelLayout.createSequentialGroup()
-                        .addComponent(lbExaminerPhoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbExaminerPhoneLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tfExaminerPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, 424, Short.MAX_VALUE))
+                        .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(caseNotesScrollPane)
+                            .addComponent(tfExaminerPhoneText)))
                     .addGroup(examinerPanelLayout.createSequentialGroup()
                         .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lbExaminerEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -348,7 +353,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 .addGap(11, 11, 11))
         );
 
-        examinerPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {examinerLabel, lbExaminerEmailLabel, lbExaminerPhoneLabel});
+        examinerPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {examinerLabel, lbExaminerEmailLabel, lbExaminerPhoneLabel, lbNotesLabel});
 
         examinerPanelLayout.setVerticalGroup(
             examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -365,7 +370,11 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tfExaminerEmailText, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbExaminerEmailLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(examinerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(caseNotesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(6, 6, 6))
         );
 
         orgainizationPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.orgainizationPanel.border.title"))); // NOI18N
@@ -382,9 +391,15 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactNameLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbPointOfContactNameLabel.text")); // NOI18N
+        lbPointOfContactNameLabel.setMaximumSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactNameLabel.setMinimumSize(new java.awt.Dimension(82, 14));
+        lbPointOfContactNameLabel.setPreferredSize(new java.awt.Dimension(82, 14));
 
         org.openide.awt.Mnemonics.setLocalizedText(bnNewOrganization, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.bnNewOrganization.text")); // NOI18N
         bnNewOrganization.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        bnNewOrganization.setMaximumSize(new java.awt.Dimension(123, 23));
+        bnNewOrganization.setMinimumSize(new java.awt.Dimension(123, 23));
+        bnNewOrganization.setPreferredSize(new java.awt.Dimension(123, 23));
         bnNewOrganization.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnNewOrganizationActionPerformed(evt);
@@ -392,6 +407,9 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(lbOrganizationNameLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbOrganizationNameLabel.text")); // NOI18N
+        lbOrganizationNameLabel.setMaximumSize(new java.awt.Dimension(189, 14));
+        lbOrganizationNameLabel.setMinimumSize(new java.awt.Dimension(189, 14));
+        lbOrganizationNameLabel.setPreferredSize(new java.awt.Dimension(189, 14));
 
         org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactEmailLabel, org.openide.util.NbBundle.getMessage(OptionalCasePropertiesPanel.class, "OptionalCasePropertiesPanel.lbPointOfContactEmailLabel.text")); // NOI18N
         lbPointOfContactEmailLabel.setMaximumSize(new java.awt.Dimension(82, 14));
@@ -403,14 +421,9 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         orgainizationPanelLayout.setHorizontalGroup(
             orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(orgainizationPanelLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(orgainizationPanelLayout.createSequentialGroup()
-                        .addComponent(lbOrganizationNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 206, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addComponent(comboBoxOrgName, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(157, 157, 157))
-                    .addGroup(orgainizationPanelLayout.createSequentialGroup()
+                        .addGap(106, 106, 106)
                         .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lbPointOfContactPhoneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbPointOfContactEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -421,8 +434,12 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                             .addComponent(lbPointOfContactNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbPointOfContactEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(orgainizationPanelLayout.createSequentialGroup()
-                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addContainerGap()
+                        .addComponent(lbOrganizationNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 206, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(comboBoxOrgName, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -433,12 +450,13 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             .addGroup(orgainizationPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbOrganizationNameLabel)
-                    .addComponent(comboBoxOrgName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                    .addComponent(lbOrganizationNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(comboBoxOrgName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(bnNewOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lbPointOfContactNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lbPointOfContactNameLabel))
+                    .addComponent(lbPointOfContactNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lbPointOfContactPhoneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -447,9 +465,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 .addGroup(orgainizationPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lbPointOfContactEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbPointOfContactEmailText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(bnNewOrganization)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(6, 6, 6))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -469,10 +485,11 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(casePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(0, 0, 0)
                 .addComponent(examinerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(orgainizationPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(0, 0, 0)
+                .addComponent(orgainizationPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -516,8 +533,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
 
     @Messages({
         "OptionalCasePropertiesPanel.errorDialog.emptyCaseNameMessage=No case name entered.",
-        "OptionalCasePropertiesPanel.errorDialog.invalidCaseNameMessage=Case names cannot include the following symbols: \\, /, :, *, ?, \", <, >, |",
-        "OptionalCasePropertiesPanel.errorDialog.noOpenCase.errMsg=Exception while getting open case."
+        "OptionalCasePropertiesPanel.errorDialog.invalidCaseNameMessage=Case names cannot include the following symbols: \\, /, :, *, ?, \", <, >, |"
     })
     void saveUpdatedCaseDetails() {
         if (caseDisplayNameTextField.getText().trim().isEmpty()) {
@@ -528,19 +544,14 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
             MessageNotifyUtil.Message.error(Bundle.OptionalCasePropertiesPanel_errorDialog_invalidCaseNameMessage());
             return;
         }
-        try {
-            updateCaseDetails();
-        } catch (NoCurrentCaseException ex) {
-            MessageNotifyUtil.Message.error(Bundle.OptionalCasePropertiesPanel_errorDialog_noOpenCase_errMsg());
-            return;
-        }
+        updateCaseDetails();
         updateCorrelationCase();
     }
 
-    private void updateCaseDetails() throws NoCurrentCaseException {
+    private void updateCaseDetails() {
         if (caseDisplayNameTextField.isVisible()) {
             try {
-                Case.getCurrentCaseThrows().updateCaseDetails(new CaseDetails(
+                Case.getCurrentCase().updateCaseDetails(new CaseDetails(
                         caseDisplayNameTextField.getText(), caseNumberTextField.getText(),
                         examinerTextField.getText(), tfExaminerPhoneText.getText(),
                         tfExaminerEmailText.getText(), taNotesText.getText()));
@@ -559,7 +570,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
         if (EamDb.isEnabled()) {
             try {
                 EamDb dbManager = EamDb.getInstance();
-                CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCaseThrows());
+                CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCase());
                 if (caseDisplayNameTextField.isVisible()) {
                     correlationCase.setDisplayName(caseDisplayNameTextField.getText());
                 }
@@ -571,9 +582,7 @@ final class OptionalCasePropertiesPanel extends javax.swing.JPanel {
                 correlationCase.setNotes(taNotesText.getText());
                 dbManager.updateCase(correlationCase);
             } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error connecting to central repository database", ex); // NON-NLS  
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error connecting to central repository database", ex); // NON-NLS
             } finally {
                 setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             }
