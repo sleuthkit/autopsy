@@ -20,8 +20,12 @@ package org.sleuthkit.autopsy.testutils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Properties;
+import java.util.logging.Level;
 import org.openide.util.Exceptions;
 import junit.framework.Assert;
 import org.apache.commons.io.FileUtils;
@@ -30,6 +34,8 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * Class with utility methods for opening and closing cases for functional
@@ -68,6 +74,48 @@ public final class CaseUtils {
             Exceptions.printStackTrace(ex);
             Assert.fail(String.format("Failed to create case %s at %s: %s", caseName, caseDirectoryPath, ex.getMessage()));
         }
+        
+        // Disable Image Gallery
+        Path propPath = Paths.get(currentCase.getModuleDirectory(), "Image Gallery", currentCase.getName() + ".properties");
+        Path parent = propPath.getParent();
+
+        Properties props = new Properties();
+        try {
+            if (!Files.exists(parent)) {
+                Files.createDirectories(parent);
+            }
+            
+            if (!Files.exists(propPath)) {
+                Files.createFile(propPath);
+            }
+            
+
+            try (OutputStream fos = Files.newOutputStream(propPath)) {
+                props.setProperty("enabled", "false");
+                props.store(fos, "Disabled Image Gallery (functional test)"); //NON-NLS
+            }
+        } catch (IOException e) {
+            Assert.fail(String.format("Was not able to create a new properties file %s : %s", propPath.toAbsolutePath(), e.getMessage())); //NON-NLS
+        }
+        
+        String autFilePath = Paths.get(caseDirectoryPath.toString(), caseName + ".aut").toString();
+        
+        // Close and reopen to load the new Image Gallery setting
+        try {
+            Case.closeCurrentCase();
+        } catch (CaseActionException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(String.format("Failed to close case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
+        }
+        
+        try {
+            Case.openAsCurrentCase(autFilePath);
+            currentCase = Case.getCurrentCaseThrows();
+        } catch (CaseActionException | NoCurrentCaseException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(String.format("Failed to reopen case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
+        }       
+        
         return currentCase;
     }
 
@@ -90,6 +138,7 @@ public final class CaseUtils {
 
         String caseName = currentCase.getName();
         String caseDirectory = currentCase.getCaseDirectory();
+        
         try {
             Case.closeCurrentCase();
             if(deleteCase && !FileUtil.deleteDir(new File(caseDirectory))){
@@ -98,7 +147,7 @@ public final class CaseUtils {
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(String.format("Failed to close case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
-        } 
+        }
     }
 
     /**
