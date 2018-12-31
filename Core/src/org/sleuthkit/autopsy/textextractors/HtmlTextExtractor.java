@@ -32,17 +32,17 @@ import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
  * Extracts text from HTML content.
  */
-final class HtmlTextExtractor extends TextExtractor {
+final class HtmlTextExtractor implements TextExtractor {
 
     static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private final int MAX_SIZE;
-    private final Content file;
+    private final AbstractFile file;
 
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
             "application/javascript", //NON-NLS
@@ -62,7 +62,7 @@ final class HtmlTextExtractor extends TextExtractor {
      * Creates a default instance of the HtmlTextExtractor. Supported file size
      * is 50MB.
      */
-    public HtmlTextExtractor(Content file) {
+    public HtmlTextExtractor(AbstractFile file) {
         //Set default to be 50 MB.
         MAX_SIZE = 50_000_000;
         this.file = file;
@@ -77,10 +77,10 @@ final class HtmlTextExtractor extends TextExtractor {
      * @return flag indicating support
      */
     @Override
-    public boolean isSupported(Content content, String detectedFormat) {
-        return detectedFormat != null
-                && WEB_MIME_TYPES.contains(detectedFormat)
-                && content.getSize() <= MAX_SIZE;
+    public boolean isSupported() {
+        return file.getMIMEType() != null
+                && WEB_MIME_TYPES.contains(file.getMIMEType())
+                && file.getSize() <= MAX_SIZE;
     }
 
     /**
@@ -93,7 +93,7 @@ final class HtmlTextExtractor extends TextExtractor {
      * @throws TextExtractorException
      */
     @Override
-    public Reader getReader() throws ExtractionException {
+    public Reader getReader() throws InitReaderException {
         //TODO JIRA-4467, there is only harm in excluding HTML documents greater
         //than 50MB due to our troubled approach of extraction.
         ReadContentInputStream stream = new ReadContentInputStream(file);
@@ -190,7 +190,7 @@ final class HtmlTextExtractor extends TextExtractor {
             return new StringReader(stringBuilder.toString());
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error extracting HTML from content.", ex);
-            throw new ExtractionException("Error extracting HTML from content.", ex);
+            throw new InitReaderException("Error extracting HTML from content.", ex);
         }
     }
 }

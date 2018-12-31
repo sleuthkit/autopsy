@@ -89,6 +89,7 @@ This section lists some helpful tips that we have found.  These are all now in t
 - We haven't found a good way to debug while running inside of Autopsy.  So, logging becomes critical. You need to go through a bunch of steps to get the logger to display your module name.  See the sample module for a log() method that does all of this for you.
 - When you name the file with your Python module in it, restrict its name to letters, numbers, and underscore (_).
 - Python modules using external libraries which load native code (SciPy, NumPy, etc.) are currently NOT supported. RuntimeError will be thrown.
+- If your module needs ingest job settings, you must use the GenericIngestModuleJobSettings class instead of making a custom IngestModuleIngestJobSettings class
 
 
 \section mod_dev_py_distribute Distribution

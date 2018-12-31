@@ -47,7 +47,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
     private final Map<String, FileTypeViewer> mimeTypeToViewerMap = new HashMap<>();
 
     // TBD: This hardcoded list of viewers should be replaced with a dynamic lookup
-    private static final FileTypeViewer[] KNOWN_VIEWERS = new FileTypeViewer[]{
+    private final FileTypeViewer[] KNOWN_VIEWERS = new FileTypeViewer[]{
         new SQLiteViewer(),
         new PListViewer(),
         new MediaFileViewer()

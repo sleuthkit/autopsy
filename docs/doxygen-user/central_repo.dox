@@ -79,6 +79,16 @@ Descriptions of the property types:
  - Phone numbers are currently only extracted from call logs, contact lists and message, which come from the Android Analyzer module.
 - <b>USB Devices</b>
  - USB device properties come from the registry parsing in the Recent Activity Module.
+- <b>Wireless Networks</b>
+ - Wireless networks are correlated on SSIDs, and come from the registry parsing in the Recent Activity Module.
+- <b>MAC Addresses</b>
+ - MAC address properties are currently only created by custom Autopsy modules
+- <b>IMEI Number</b>
+ - IMEIs properties are currently only created by custom Autopsy modules
+- <b>IMSI Number</b>
+ - IMSI properties are currently only created by custom Autopsy modules
+- <b>ICCID Number</b>
+ - ICCID properties are currently only created by custom Autopsy modules
 
 \subsection cr_manage_orgs Manage Organizations
 
@@ -90,9 +100,9 @@ One default org, "Not Specified" will always be present in the list. New organiz
 
 \image html central_repo_new_org.png
 
-\subsection cr_show_cases Show Cases
+\subsection cr_show_cases Manage Cases
 
-Displays a list of all cases that are in the central repository database.
+Displays a list of all cases that are in the central repository database and details about each case.
 
 \image html central_repo_details.png
 
@@ -106,6 +116,15 @@ Engine. For example, if Hash Lookup is not run then the Correlation Engine modul
 database. If the Correlation Engine module is not run on a particular case but a central repository is enabled, 
 there will still be some limited functionality. The Content Viewer will still display matching properties from 
 other cases/data sources where the Correlation Engine was run.
+
+\image html central_repo_ingest_settings.png
+
+There are three settings for the Correlation Engine ingest module:
+<ul>
+<li><b>Save items to the Central Repository</b> - This should only be unselected in the rare case that you don't want to add any properties from the current data source to the central repository, but still want to flag past occurrences.
+<li><b>Flag items previously tagged as notable</b> - Enabling this causes Interesting Item/File artifacts to be created when properties matching those previously flagged are found. See the next section \ref cr_tagging for details.
+<li><b>Flag previously seen devices</b> - When this is enabled, an Interesting Item artifact will be created if any device-related property (USB, MAC Address, IMSI, IMEI, ICCID) is found that is already in the central repository, regardless of whether they have been flagged.
+</li>
 
 \subsection cr_tagging Tagging Files and Artifacts
 

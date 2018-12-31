@@ -553,14 +553,12 @@ public final class ImageGalleryController {
         return dbTaskQueueSize.getReadOnlyProperty();
     }
 
-    public synchronized SleuthkitCase getSleuthKitCase() {
+    public SleuthkitCase getSleuthKitCase() {
         return sleuthKitCase;
-
     }
 
     public ThumbnailCache getThumbsCache() {
         return thumbnailCache;
-
     }
 
     /**

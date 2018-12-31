@@ -358,6 +358,24 @@ public final class CoordinationService {
     }
 
     /**
+     * Deletes a specified node.
+     *
+     * @param category The desired category in the namespace.
+     * @param nodePath The node to be deleted.
+     *
+     * @throws CoordinationServiceException If there is an error deleting the
+     *                                      node.
+     */
+    void deleteNode(CategoryNode category, String nodePath) throws CoordinationServiceException {
+        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
+        try {
+            curator.delete().forPath(fullNodePath);
+        } catch (Exception ex) {
+            throw new CoordinationServiceException(String.format("Failed to delete node %s", fullNodePath), ex);
+        }
+    }
+
+    /**
      * Gets a list of the child nodes of a category in the namespace.
      *
      * @param category The desired category in the namespace.

@@ -250,6 +250,7 @@ class SevenZipExtractor {
         String msg = NbBundle.getMessage(SevenZipExtractor.class,
                 "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnMsg", archiveFile.getName(), escapedFilePath);//NON-NLS
         try {
+
             Collection<BlackboardAttribute> attributes = Arrays.asList(
                     new BlackboardAttribute(
                             TSK_SET_NAME, MODULE_NAME,
@@ -372,11 +373,7 @@ class SevenZipExtractor {
      * @return the archiveFilePath to be used by the unpack method
      */
     private String getArchiveFilePath(AbstractFile archiveFile) {
-        try {
-            return archiveFile.getUniquePath();
-        } catch (TskCoreException ex) {
-            return archiveFile.getParentPath() + archiveFile.getName();
-        }
+        return archiveFile.getParentPath() + archiveFile.getName();
     }
 
     /**
@@ -710,6 +707,7 @@ class SevenZipExtractor {
                         parentAr.addChild(child);
                         depthMap.put(unpackedFile.getId(), child);
                     }
+                    unpackedFile.close();
                 }
 
             } catch (TskCoreException | NoCurrentCaseException e) {

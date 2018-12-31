@@ -32,6 +32,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
@@ -46,10 +47,9 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
-import org.sleuthkit.autopsy.textextractors.TextExtractor.ExtractionException;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
-import org.sleuthkit.autopsy.textextractors.extractionconfigs.ImageFileExtractionConfig;
-import org.sleuthkit.autopsy.textextractors.extractionconfigs.DefaultExtractionConfig;
+import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
+import org.sleuthkit.autopsy.textextractors.configs.StringsConfig;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
@@ -74,7 +74,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     
     /** generally text extractors should ignore archives and let unpacking
      * modules take care of them */
-    public static final List<String> ARCHIVE_MIME_TYPES
+    private static final List<String> ARCHIVE_MIME_TYPES
             = ImmutableList.of(
                     //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
                     "application/x-7z-compressed", //NON-NLS
@@ -291,11 +291,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
         }
         
-        DefaultExtractionConfig stringsConfig = new DefaultExtractionConfig();
+        StringsConfig stringsConfig = new StringsConfig();
         Map<String, String> stringsOptions = KeywordSearchSettings.getStringExtractOptions();
         stringsConfig.setExtractUTF8(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF8.toString())));
         stringsConfig.setExtractUTF16(Boolean.parseBoolean(stringsOptions.get(StringsExtractOptions.EXTRACT_UTF16.toString())));
-        stringsConfig.setExtractScripts(KeywordSearchSettings.getStringExtractScripts());
+        stringsConfig.setLanguageScripts(KeywordSearchSettings.getStringExtractScripts());
         
         stringsExtractionContext = Lookups.fixed(stringsConfig);
         
@@ -478,15 +478,17 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            ImageFileExtractionConfig imageConfig = new ImageFileExtractionConfig();
+            ImageConfig imageConfig = new ImageConfig();
             imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
-            Lookup extractionContext = Lookups.fixed(imageConfig);
+            ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
+            Lookup extractionContext = Lookups.fixed(imageConfig, terminator);
             
             try {
-                Reader specializedReader = TextExtractorFactory.getExtractor(aFile,extractionContext).getReader();
+                TextExtractor extractor = TextExtractorFactory.getExtractor(aFile,extractionContext);
+                Reader extractedTextReader = extractor.getReader();
                 //divide into chunks and index
-                return Ingester.getDefault().indexText(specializedReader,aFile.getId(),aFile.getName(), aFile, context);
-            } catch (TextExtractorFactory.NoTextExtractorFound | ExtractionException ex) {
+                return Ingester.getDefault().indexText(extractedTextReader,aFile.getId(),aFile.getName(), aFile, context);
+            } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
                 //No text extractor found... run the default instead
                 return false;
             }
@@ -505,8 +507,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return true;
                 }
-                Reader stringsReader = TextExtractorFactory.getDefaultExtractor(aFile, stringsExtractionContext).getReader();
-                if (Ingester.getDefault().indexText(stringsReader,aFile.getId(),aFile.getName(), aFile, KeywordSearchIngestModule.this.context)) {
+                TextExtractor stringsExtractor = TextExtractorFactory.getStringsExtractor(aFile, stringsExtractionContext);
+                Reader extractedTextReader = stringsExtractor.getReader();
+                if (Ingester.getDefault().indexText(extractedTextReader,aFile.getId(),aFile.getName(), aFile, KeywordSearchIngestModule.this.context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {
@@ -514,7 +517,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                     return false;
                 }
-            } catch (IngesterException | ExtractionException ex) {
+            } catch (IngesterException | TextExtractor.InitReaderException ex) {
                 logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);  //NON-NLS
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 return false;

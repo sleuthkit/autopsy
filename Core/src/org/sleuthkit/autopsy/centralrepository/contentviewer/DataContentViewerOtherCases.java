@@ -71,7 +71,6 @@ import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskData;
 
@@ -891,7 +890,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
         boolean enableCentralRepoActions = false;
 
-        if (EamDbUtil.useCentralRepo() && otherCasesTable.getSelectedRowCount() == 1) {
+        if (EamDb.isEnabled() && otherCasesTable.getSelectedRowCount() == 1) {
             int rowIndex = otherCasesTable.getSelectedRow();
             OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(rowIndex);
             if (selectedNode instanceof OtherOccurrenceNodeInstanceData) {

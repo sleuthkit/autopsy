@@ -457,10 +457,10 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
      */
     private void initReader() {
         viewReader = new SQLiteTableReader.Builder(sqliteDbFile)
-                .onColumnNames((columnName) -> {
+                .forAllColumnNames((columnName) -> {
                     currentTableHeader.add(columnName);
                 })
-                .forAll(getForAllStrategy()).build();
+                .forAllTableValues(getForAllStrategy()).build();
     }
 
     /**
@@ -510,8 +510,8 @@ class SQLiteViewer extends javax.swing.JPanel implements FileTypeViewer {
         String tableName = (String) this.tablesDropdownList.getSelectedItem();
         try (FileOutputStream out = new FileOutputStream(csvFile, false)) {
             try (SQLiteTableReader sqliteStream = new SQLiteTableReader.Builder(sqliteDbFile)
-                    .onColumnNames(getColumnNameCSVStrategy(out))
-                    .forAll(getForAllCSVStrategy(out)).build()) {
+                    .forAllColumnNames(getColumnNameCSVStrategy(out))
+                    .forAllTableValues(getForAllCSVStrategy(out)).build()) {
                 totalColumnCount = sqliteStream.getColumnCount(tableName);
                 sqliteStream.read(tableName);
             }

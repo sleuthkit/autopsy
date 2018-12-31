@@ -67,40 +67,34 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void setUp() {
-//        testSucceeded = false;
-//
-//        /*
-//         * TODO (JIRA-4241): Revisit this when the Image Gallery tool cleans up
-//         * its drawable database connection deterministically, instead of in a
-//         * finalizer. As it is now, case deletion can fail due to an open
-//         * drawable database file handles, and that makes the tests fail.
-//         */
-//        openCase = CaseUtils.createAsCurrentCase(CASE_NAME + "_" + System.currentTimeMillis());
-//        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
-//        IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
-//
-//        IngestModuleTemplate embeddedTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
-//        IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
-//
-//        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
-//        templates.add(embeddedTemplate);
-//        templates.add(hashLookupTemplate);
-//        IngestJobSettings ingestJobSettings = new IngestJobSettings(EmbeddedFileTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
-//
-//        try {
-//            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
-//        } catch (TskCoreException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
+        testSucceeded = false;
+
+        openCase = CaseUtils.createAsCurrentCase(CASE_NAME + "_" + System.currentTimeMillis());
+        ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
+        IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
+
+        IngestModuleTemplate embeddedTemplate = IngestUtils.getIngestModuleTemplate(new EmbeddedFileExtractorModuleFactory());
+        IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+
+        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+        templates.add(embeddedTemplate);
+        templates.add(hashLookupTemplate);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(EmbeddedFileTest.class.getCanonicalName(), IngestType.FILES_ONLY, templates);
+
+        try {
+            IngestUtils.runIngestJob(openCase.getDataSources(), ingestJobSettings);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 
     @Override
     public void tearDown() {
-//        CaseUtils.closeCurrentCase(testSucceeded);
+        CaseUtils.closeCurrentCase(testSucceeded);
     }
 
-    public void testEncryptionAndZipBomb() {
+//    public void testEncryptionAndZipBomb() {
 //        try {
 //            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name LIKE '%%'");
 //            final String zipBombSetName = "Possible Zip Bomb";
@@ -146,122 +140,122 @@ public class EmbeddedFileTest extends NbTestCase {
 //        }
 //
 //        testSucceeded = true;
-    }
+//    }
 
     public void testBigFolder() {
-//        final int numOfFilesToTest = 1000;
-//        try {
-//            //Get all files under 'big folder' directory except '.' '..' 'slack' files
-//            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("parent_path LIKE '%big folder/' and name != '.' and name != '..' and extension NOT LIKE '%slack'");
-//            assertEquals(numOfFilesToTest, results.size()); //There are 1000 files 
-//            int numOfFilesTested = 0;
-//            for (AbstractFile file : results) {
-//                String fileName = file.getName();
-//                //File name should like file1.txt, file2.txt ... file1000.txt
-//                String errMsg = String.format("File name %s doesn't follow the expected naming convention: fileNaturalNumber.txt, eg. file234.txt.", fileName);
-//                assertTrue(errMsg, file.getName().matches("file[1-9]\\d*.txt"));
-//                String hashValue = file.getMd5Hash();
-//                //All files have the same hash value
-//                assertEquals(HASH_VALUE, hashValue);
-//                numOfFilesTested++;
-//            }
-//            //Make sure 1000 files have been tested
-//            assertEquals(numOfFilesToTest, numOfFilesTested);
-//        } catch (TskCoreException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
-//
-//        testSucceeded = true;
+        final int numOfFilesToTest = 1000;
+        try {
+            //Get all files under 'big folder' directory except '.' '..' 'slack' files
+            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("parent_path LIKE '%big folder/' and name != '.' and name != '..' and extension NOT LIKE '%slack'");
+            assertEquals(numOfFilesToTest, results.size()); //There are 1000 files 
+            int numOfFilesTested = 0;
+            for (AbstractFile file : results) {
+                String fileName = file.getName();
+                //File name should like file1.txt, file2.txt ... file1000.txt
+                String errMsg = String.format("File name %s doesn't follow the expected naming convention: fileNaturalNumber.txt, eg. file234.txt.", fileName);
+                assertTrue(errMsg, file.getName().matches("file[1-9]\\d*.txt"));
+                String hashValue = file.getMd5Hash();
+                //All files have the same hash value
+                assertEquals(HASH_VALUE, hashValue);
+                numOfFilesTested++;
+            }
+            //Make sure 1000 files have been tested
+            assertEquals(numOfFilesToTest, numOfFilesTested);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+
+        testSucceeded = true;
     }
 
     public void testDeepFolder() {
-//        try {
-//            //Get all files under 'deep folder' directory except '.' '..'
-//            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("parent_path LIKE '%deep folder/' and name != '.' and name != '..'");
-//            assertEquals(1, results.size());
-//            StringBuffer dirReached = new StringBuffer();
-//            ArrayList<String> fileReached = new ArrayList<>();
-//            checkEachFileInDeepFolder(results.get(0), dirReached, fileReached, 0);
-//            //Check that all 25 folders/files have been reached
-//            assertEquals(DEEP_FOLDER_COUNT, fileReached.size());
-//            //Make sure the test reached the last directory 'dir25'. The whole directory is dir1/dir2...dir24/dir25/
-//            assertTrue(dirReached.toString().startsWith("dir1/dir2/"));
-//            assertTrue(dirReached.toString().endsWith("dir24/dir25/"));
-//            //Make sure the test reached the last file.txt in dir1/dir2...dir24/dir25/
-//            assertTrue(fileReached.get(0).endsWith(dirReached.toString() + "file.txt"));
-//        } catch (TskCoreException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
-//
-//        testSucceeded = true;
+        try {
+            //Get all files under 'deep folder' directory except '.' '..'
+            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("parent_path LIKE '%deep folder/' and name != '.' and name != '..'");
+            assertEquals(1, results.size());
+            StringBuffer dirReached = new StringBuffer();
+            ArrayList<String> fileReached = new ArrayList<>();
+            checkEachFileInDeepFolder(results.get(0), dirReached, fileReached, 0);
+            //Check that all 25 folders/files have been reached
+            assertEquals(DEEP_FOLDER_COUNT, fileReached.size());
+            //Make sure the test reached the last directory 'dir25'. The whole directory is dir1/dir2...dir24/dir25/
+            assertTrue(dirReached.toString().startsWith("dir1/dir2/"));
+            assertTrue(dirReached.toString().endsWith("dir24/dir25/"));
+            //Make sure the test reached the last file.txt in dir1/dir2...dir24/dir25/
+            assertTrue(fileReached.get(0).endsWith(dirReached.toString() + "file.txt"));
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+
+        testSucceeded = true;
     }
 
     public void testEmbeddedFile() {
-//        try {
-//            //Query level3.txt under '/ZIP/embedded/level3.zip/'
-//            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name = 'level3.txt' and parent_path = '/ZIP/embedded/level3.zip/'");
-//            assertEquals(1, results.size());
-//
-//            //Query level2.txt under '/ZIP/embedded/level3.zip/level2.zip/'
-//            results = openCase.getSleuthkitCase().findAllFilesWhere("name = 'level2.txt' and parent_path = '/ZIP/embedded/level3.zip/level2.zip/'");
-//            assertEquals(1, results.size());
-//
-//            //Query level1.txt under '/ZIP/embedded/level3.zip/level2.zip/level1.zip/'
-//            results = openCase.getSleuthkitCase().findAllFilesWhere("name = 'level1.txt' and parent_path = '/ZIP/embedded/level3.zip/level2.zip/level1.zip/'");
-//            assertEquals(1, results.size());
-//
-//            //Confirm that we can reach level1.txt from the embedded folder
-//            results = openCase.getSleuthkitCase().findAllFilesWhere("parent_path LIKE '%embedded/' and name != '.' and name != '..' and extension NOT LIKE '%slack%'");
-//            assertEquals(1, results.size());
-//            assertTrue(checkFileInEmbeddedFolder(results.get(0)));
-//        } catch (TskCoreException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
-//
-//        testSucceeded = true;
+        try {
+            //Query level3.txt under '/ZIP/embedded/level3.zip/'
+            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name = 'level3.txt' and parent_path = '/ZIP/embedded/level3.zip/'");
+            assertEquals(1, results.size());
+
+            //Query level2.txt under '/ZIP/embedded/level3.zip/level2.zip/'
+            results = openCase.getSleuthkitCase().findAllFilesWhere("name = 'level2.txt' and parent_path = '/ZIP/embedded/level3.zip/level2.zip/'");
+            assertEquals(1, results.size());
+
+            //Query level1.txt under '/ZIP/embedded/level3.zip/level2.zip/level1.zip/'
+            results = openCase.getSleuthkitCase().findAllFilesWhere("name = 'level1.txt' and parent_path = '/ZIP/embedded/level3.zip/level2.zip/level1.zip/'");
+            assertEquals(1, results.size());
+
+            //Confirm that we can reach level1.txt from the embedded folder
+            results = openCase.getSleuthkitCase().findAllFilesWhere("parent_path LIKE '%embedded/' and name != '.' and name != '..' and extension NOT LIKE '%slack%'");
+            assertEquals(1, results.size());
+            assertTrue(checkFileInEmbeddedFolder(results.get(0)));
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+
+        testSucceeded = true;
     }
 
     public void testContent() {
-//        final int numOfFilesToTest = 1029;
-//        try {
-//            //All files with txt extension should have the same hash value, 
-//            //except the zip file with txt extension and the .txt files extracted from password protected zip shouldn't have hash value
-//            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere(
-//                    "extension = 'txt' and name != 'zipFileWithTxtExtension.txt' and parent_path NOT LIKE '%_protected%'");
-//            assertEquals(numOfFilesToTest, results.size());
-//            int numOfHashTested = 0;
-//            for (AbstractFile file : results) {
-//                String fileName = file.getName();
-//                String errMsg = String.format("File name %s doesn't have the extected hash value %s.", fileName, HASH_VALUE);
-//                assertEquals(errMsg, HASH_VALUE, file.getMd5Hash());
-//                numOfHashTested++;
-//            }
-//            //Make sure the hash value of 1029 files have been tested
-//            assertEquals(numOfFilesToTest, numOfHashTested);
-//
-//        } catch (TskCoreException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
-//
-//        testSucceeded = true;
+        final int numOfFilesToTest = 1029;
+        try {
+            //All files with txt extension should have the same hash value, 
+            //except the zip file with txt extension and the .txt files extracted from password protected zip shouldn't have hash value
+            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere(
+                    "extension = 'txt' and name != 'zipFileWithTxtExtension.txt' and parent_path NOT LIKE '%_protected%'");
+            assertEquals(numOfFilesToTest, results.size());
+            int numOfHashTested = 0;
+            for (AbstractFile file : results) {
+                String fileName = file.getName();
+                String errMsg = String.format("File name %s doesn't have the extected hash value %s.", fileName, HASH_VALUE);
+                assertEquals(errMsg, HASH_VALUE, file.getMd5Hash());
+                numOfHashTested++;
+            }
+            //Make sure the hash value of 1029 files have been tested
+            assertEquals(numOfFilesToTest, numOfHashTested);
+
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+
+        testSucceeded = true;
     }
 
     public void testExtension() {
-//        try {
-//            //Query zipFileWithTxtExtension.txt at extension folder
-//            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("extension = 'txt' and parent_path = '/ZIP/extension/zipFileWithTxtExtension.txt/'");
-//            assertEquals(1, results.size());
-//            assertEquals("file.txt wasn't extracted from the file: zipFileWithTxtExtension.txt", "file.txt", results.get(0).getName());
-//        } catch (TskCoreException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
-//
-//        testSucceeded = true;
+        try {
+            //Query zipFileWithTxtExtension.txt at extension folder
+            List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("extension = 'txt' and parent_path = '/ZIP/extension/zipFileWithTxtExtension.txt/'");
+            assertEquals(1, results.size());
+            assertEquals("file.txt wasn't extracted from the file: zipFileWithTxtExtension.txt", "file.txt", results.get(0).getName());
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
+
+        testSucceeded = true;
     }
 
     private void checkEachFileInDeepFolder(AbstractFile file, StringBuffer dirReached, ArrayList<String> fileReached, int numOfDir) {

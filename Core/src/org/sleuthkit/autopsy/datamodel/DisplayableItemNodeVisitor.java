@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNod
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
-import org.sleuthkit.autopsy.othercasessearch.CorrelationAttributeInstanceNode;
+import org.sleuthkit.autopsy.allcasessearch.CorrelationAttributeInstanceNode;
 
 /**
  * Visitor pattern that goes over all nodes in the directory tree. This includes
