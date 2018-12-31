@@ -163,7 +163,7 @@ class InterCaseTestUtils {
 
         this.case1DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE1_DATASET_1);
         this.case1DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE1_DATASET_2);
-        this.case2DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE1_DATASET_1);
+        this.case2DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE2_DATASET_1);
         this.case2DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE2_DATASET_2);
         this.case3DataSet1Path = Paths.get(testCase.getDataDir().toString(), CASE3_DATASET_1);
         this.case3DataSet2Path = Paths.get(testCase.getDataDir().toString(), CASE3_DATASET_2);
@@ -274,12 +274,14 @@ class InterCaseTestUtils {
 
         if (EamDb.isEnabled()) {
             Map<String, Integer> mapOfCaseIdsToCase = new HashMap<>();
-
-            for (CorrelationCase caze : EamDb.getInstance().getCases()) {
-                mapOfCaseIdsToCase.put(caze.getDisplayName(), caze.getID());
+            
+            for (CorrelationCase correlationCase : EamDb.getInstance().getCases()) {
+                mapOfCaseIdsToCase.put(correlationCase.getDisplayName(), correlationCase.getID());
             }
+            System.out.println("EAM IS ENABLED");
             return mapOfCaseIdsToCase;
         } else {
+            System.out.println("EAMDB NOT ENABLED");
             //it is reasonable that this might happen...
             //  for example when we test the feature in the absence of an enabled eamdb 
             return new HashMap<>(0);
@@ -300,6 +302,7 @@ class InterCaseTestUtils {
 
     void enableCentralRepo() throws EamDbException {
 
+        EamDbUtil.setUseCentralRepo(true);
         SqliteEamDbSettings crSettings = new SqliteEamDbSettings();
         crSettings.setDbName(CR_DB_NAME);
         crSettings.setDbDirectory(CENTRAL_REPO_DIRECTORY_PATH.toString());
@@ -309,10 +312,7 @@ class InterCaseTestUtils {
 
         crSettings.initializeDatabaseSchema();
         crSettings.insertDefaultDatabaseContent();
-
         crSettings.saveSettings();
-
-        EamDbUtil.setUseCentralRepo(true);
         EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.name());
         EamDbPlatformEnum.saveSelectedPlatform();
     }
@@ -371,31 +371,6 @@ class InterCaseTestUtils {
     }
 
     private Case createCase(String caseName, IngestJobSettings ingestJobSettings, boolean keepAlive, Path... dataSetPaths) throws TskCoreException {
-        /*
-         * TODO (JIRA-4241): If the case already exists, do not recreate it.
-         * Delete this code when the Image Gallery tool cleans up its drawable
-         * database connection deterministically, instead of in a finalizer. As
-         * it is now, case deletion can fail due to an open drawable database
-         * file handles, so this unchanging case may still be hanging around.
-         */
-        Case existingCase = null;
-        Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), caseName);
-        File caseDirectory = caseDirectoryPath.toFile();
-        if (caseDirectory.exists()) {
-            if (keepAlive) {
-                String metadataFileName = caseName + ".aut";
-                Path metadataFilePath = Paths.get(caseDirectoryPath.toString(), metadataFileName);
-                try {
-                    Case.openAsCurrentCase(metadataFilePath.toString());
-                    existingCase = Case.getCurrentCaseThrows();
-                } catch (CaseActionException | NoCurrentCaseException ex) {
-                    Exceptions.printStackTrace(ex);
-                    Assert.fail(String.format("Failed to open case %s at %s: %s", caseName, caseDirectoryPath, ex.getMessage()));
-                }
-            }
-            return existingCase;
-        }
-
         Case caze = CaseUtils.createAsCurrentCase(caseName);
         for (Path dataSetPath : dataSetPaths) {
             IngestUtils.addDataSource(this.imageDSProcessor, dataSetPath);
@@ -412,77 +387,77 @@ class InterCaseTestUtils {
     }
 
     static boolean verifyInstanceCount(CommonAttributeCountSearchResults searchDomain, int instanceCount) {
-            int tally = 0;
-            for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
-                entry.getValue().displayDelayedMetadata();
-                for (CommonAttributeValue value : entry.getValue().getMetadataList()) {
+        int tally = 0;
+        for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
+            entry.getValue().displayDelayedMetadata();
+            for (CommonAttributeValue value : entry.getValue().getMetadataList()) {
 
-                    tally += value.getInstanceCount();
-                }
+                tally += value.getInstanceCount();
             }
-            return tally == instanceCount;
+        }
+        return tally == instanceCount;
     }
 
-    static boolean verifyInstanceExistenceAndCount(CommonAttributeCountSearchResults searchDomain, String fileName, String dataSource, String crCase, int instanceCount) {
-            int tally = 0;
-            for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
-                entry.getValue().displayDelayedMetadata();
-                for (CommonAttributeValue value : entry.getValue().getMetadataList()) {
+    static int getInstanceCount(CommonAttributeCountSearchResults searchDomain, String fileName, String dataSource, String crCase) {
+        int tally = 0;
+        for (Map.Entry<Integer, CommonAttributeValueList> entry : searchDomain.getMetadata().entrySet()) {
+            entry.getValue().displayDelayedMetadata();
+            for (CommonAttributeValue value : entry.getValue().getMetadataList()) {
 
-                    for (AbstractCommonAttributeInstance commonAttribute : value.getInstances()) {
+                for (AbstractCommonAttributeInstance commonAttribute : value.getInstances()) {
 
-                        if (commonAttribute instanceof CentralRepoCommonAttributeInstance) {
-                            CentralRepoCommonAttributeInstance results = (CentralRepoCommonAttributeInstance) commonAttribute;
-                            for (DisplayableItemNode din : results.generateNodes()) {
+                    if (commonAttribute instanceof CentralRepoCommonAttributeInstance) {
+                        CentralRepoCommonAttributeInstance results = (CentralRepoCommonAttributeInstance) commonAttribute;
+                        for (DisplayableItemNode din : results.generateNodes()) {
 
-                                if (din instanceof CentralRepoCommonAttributeInstanceNode) {
+                            if (din instanceof CentralRepoCommonAttributeInstanceNode) {
 
-                                    CentralRepoCommonAttributeInstanceNode node = (CentralRepoCommonAttributeInstanceNode) din;
-                                    CorrelationAttributeInstance instance = node.getCorrelationAttributeInstance();
+                                CentralRepoCommonAttributeInstanceNode node = (CentralRepoCommonAttributeInstanceNode) din;
+                                CorrelationAttributeInstance instance = node.getCorrelationAttributeInstance();
 
-                                    final String fullPath = instance.getFilePath();
-                                    final File testFile = new File(fullPath);
+                                final String fullPath = instance.getFilePath();
+                                final File testFile = new File(fullPath);
 
-                                    final String testCaseName = instance.getCorrelationCase().getDisplayName();
+                                final String testCaseName = instance.getCorrelationCase().getDisplayName();
 
-                                    final String testFileName = testFile.getName();
+                                final String testFileName = testFile.getName();
 
-                                    final String testDataSource = instance.getCorrelationDataSource().getName();
+                                final String testDataSource = instance.getCorrelationDataSource().getName();
 
-                                    boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                    boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-                                    boolean sameCrCase = testCaseName.equalsIgnoreCase(crCase);
+                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
+                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
+                                boolean sameCrCase = testCaseName.equalsIgnoreCase(crCase);
 
-                                    if (sameFileName && sameDataSource && sameCrCase) {
-                                        tally++;
-                                    }
-                                }
-
-                                if (din instanceof CaseDBCommonAttributeInstanceNode) {
-
-                                    CaseDBCommonAttributeInstanceNode node = (CaseDBCommonAttributeInstanceNode) din;
-                                    AbstractFile file = node.getContent();
-
-                                    final String testFileName = file.getName();
-                                    final String testCaseName = node.getCase();
-                                    final String testDataSource = node.getDataSource();
-
-                                    boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                    boolean sameCaseName = testCaseName.equalsIgnoreCase(crCase);
-                                    boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-
-                                    if (sameFileName && sameDataSource && sameCaseName) {
-                                        tally++;
-                                    }
+                                if (sameFileName && sameDataSource && sameCrCase) {
+                                    tally++;
                                 }
                             }
-                        } else {
-                            Assert.fail("Unable to cast AbstractCommonAttributeInstanceNode to InterCaseCommonAttributeSearchResults.");
+
+                            if (din instanceof CaseDBCommonAttributeInstanceNode) {
+
+                                CaseDBCommonAttributeInstanceNode node = (CaseDBCommonAttributeInstanceNode) din;
+                                AbstractFile file = node.getContent();
+
+                                final String testFileName = file.getName();
+                                final String testCaseName = node.getCase();
+                                final String testDataSource = node.getDataSource();
+
+                                boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
+                                boolean sameCaseName = testCaseName.equalsIgnoreCase(crCase);
+                                boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
+
+                                if (sameFileName && sameDataSource && sameCaseName) {
+                                    tally++;
+                                }
+                            }
                         }
+                    } else {
+                        Assert.fail("Unable to cast AbstractCommonAttributeInstanceNode to InterCaseCommonAttributeSearchResults.");
                     }
                 }
             }
-            return tally == instanceCount;
+        }
+        return tally;
     }
 
     /**
@@ -502,15 +477,15 @@ class InterCaseTestUtils {
      * @return true if yes, else false
      */
     boolean areAllResultsOfType(CommonAttributeCountSearchResults metadata, CorrelationAttributeInstance.Type attributeType) {
-            for (CommonAttributeValueList matches : metadata.getMetadata().values()) {
-                for (CommonAttributeValue value : matches.getMetadataList()) {
-                    return value
-                            .getInstances()
-                            .stream()
-                            .allMatch(inst -> inst.getCorrelationAttributeInstanceType().equals(attributeType));
-                }
-                return false;
+        for (CommonAttributeValueList matches : metadata.getMetadata().values()) {
+            for (CommonAttributeValue value : matches.getMetadataList()) {
+                return value
+                        .getInstances()
+                        .stream()
+                        .allMatch(inst -> inst.getCorrelationAttributeInstanceType().equals(attributeType));
             }
             return false;
+        }
+        return false;
     }
 }
