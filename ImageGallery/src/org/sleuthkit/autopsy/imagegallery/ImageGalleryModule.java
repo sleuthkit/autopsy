@@ -77,6 +77,32 @@ public class ImageGalleryModule {
     private static ImageGalleryController controller;
 
     /**
+     * Creates an image gallery controller for a case, assumed to be the current
+     * case. As a result, creates/opens a local drawables database and
+     * creates/updates the Image Gallery tables in the case database.
+     *
+     * @param currentCase The current case.
+     *
+     * @throws TskCoreException
+     */
+    static void createController(Case currentCase) throws TskCoreException {
+        synchronized (controllerLock) {
+            controller = new ImageGalleryController(currentCase);
+        }
+    }
+
+    /**
+     * Shuts down the current image gallery controller.
+     */
+    static void shutDownController() {
+        synchronized (controllerLock) {
+            if (controller != null) {
+                controller.shutDown();
+            }
+        }
+    }
+
+    /**
      * Gets the per case image gallery controller for the current case. The
      * controller is changed in the case event listener.
      *
@@ -88,10 +114,9 @@ public class ImageGalleryModule {
         synchronized (controllerLock) {
             if (controller == null) {
                 try {
-                    Case currentCase = Case.getCurrentCaseThrows();
-                    controller = new ImageGalleryController(currentCase);
+                    createController(Case.getCurrentCaseThrows());
                 } catch (NoCurrentCaseException ex) {
-                    throw new TskCoreException("Failed to get ", ex);
+                    throw new TskCoreException("Failed to get current case", ex);
                 }
             }
             return controller;
@@ -178,7 +203,6 @@ public class ImageGalleryModule {
              * node that is running the ingest job. On a remote node, image
              * files are processed as a group when the ingest job is complete.
              */
-            // RJCTODO: DO we need to handle any events at all on an auot ingest node?
             if (((AutopsyEvent) event).getSourceType() != AutopsyEvent.SourceType.LOCAL) {
                 return;
             }
@@ -245,28 +269,9 @@ public class ImageGalleryModule {
 
         @Override
         public void propertyChange(PropertyChangeEvent event) {
-            // RJCTODO: DO we need to handle any events at all on an auot ingest node?
             Case.Events eventType = Case.Events.valueOf(event.getPropertyName());
-            if (eventType == Case.Events.CURRENT_CASE) {
-                synchronized (controllerLock) {
-                    if (event.getNewValue() != null) {
-                        /*
-                         * CURRENT_CASE(_OPENED) event.
-                         */
-                        Case newCase = (Case) event.getNewValue();
-                        try {
-                            controller = new ImageGalleryController(newCase);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to construct controller for new case %s (%s)", newCase.getDisplayName(), newCase.getName()), ex);
-                        }
-                    } else if (event.getOldValue() != null) {
-                        /*
-                         * CURRENT_CASE(_CLOSED) event.
-                         */
-                        SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
-                        controller.shutDown();
-                    }
-                }
+            if (eventType == Case.Events.CURRENT_CASE && event.getOldValue() != null) {
+                SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
             } else {
                 ImageGalleryController currentController;
                 try {
@@ -330,7 +335,6 @@ public class ImageGalleryModule {
             /*
              * Only handling data source analysis events.
              */
-            // RJCTODO: Do we need to handle any events at all on an auto ingest node?
             // RJCTODO: This would be less messy if IngestManager supported 
             // subscribing for a subset of events the way case does, and it the 
             // conditional blocks became method calls. 
