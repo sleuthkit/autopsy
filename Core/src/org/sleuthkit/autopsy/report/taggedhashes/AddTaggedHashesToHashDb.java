@@ -24,11 +24,13 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.report.GeneralReportModule;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
@@ -45,6 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @ServiceProvider(service = GeneralReportModule.class)
 public class AddTaggedHashesToHashDb implements GeneralReportModule {
 
+    private static final Logger logger = Logger.getLogger(AddTaggedHashesToHashDb.class.getName());
     private AddTaggedHashesToHashDbConfigPanel configPanel;
 
     public AddTaggedHashesToHashDb() {
@@ -65,6 +68,10 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
         return "";
     }
 
+    @Messages({
+        "AddTaggedHashesToHashDb.error.noHashSetsSelected=No hash set selected for export.",
+        "AddTaggedHashesToHashDb.error.noTagsSelected=No tags selected for export."
+    })
     @Override
     public void generateReport(String reportPath, ReportProgressPanel progressPanel) {
         Case openCase;
@@ -80,56 +87,71 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
         progressPanel.updateStatusLabel("Adding hashes...");
 
         HashDb hashSet = configPanel.getSelectedHashDatabase();
-        if (hashSet != null) {
-            progressPanel.updateStatusLabel("Adding hashes to " + hashSet.getHashSetName() + " hash set...");
+        if (hashSet == null) {
+            logger.log(Level.WARNING, "No hash set selected for export."); //NON-NLS
+            MessageNotifyUtil.Message.error(Bundle.AddTaggedHashesToHashDb_error_noHashSetsSelected());
+            progressPanel.setIndeterminate(false);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            return;
+        }
+        
+        progressPanel.updateStatusLabel("Adding hashes to " + hashSet.getHashSetName() + " hash set...");
 
-            TagsManager tagsManager = openCase.getServices().getTagsManager();
-            List<TagName> tagNames = configPanel.getSelectedTagNames();
-            ArrayList<String> failedExports = new ArrayList<>();
-            for (TagName tagName : tagNames) {
-                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
-                    break;
-                }
+        TagsManager tagsManager = openCase.getServices().getTagsManager();
+        List<TagName> tagNames = configPanel.getSelectedTagNames();
+        if (tagNames.isEmpty()) {
+            logger.log(Level.WARNING, "No tags selected for export."); //NON-NLS
+            MessageNotifyUtil.Message.error(Bundle.AddTaggedHashesToHashDb_error_noTagsSelected());
+            progressPanel.setIndeterminate(false);
+            progressPanel.complete(ReportProgressPanel.ReportStatus.ERROR);
+            return;
+        }
+        
+        ArrayList<String> failedExports = new ArrayList<>();
+        for (TagName tagName : tagNames) {
+            if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                break;
+            }
 
-                progressPanel.updateStatusLabel("Adding " + tagName.getDisplayName() + " hashes to " + hashSet.getHashSetName() + " hash set...");
-                try {
-                    List<ContentTag> tags = tagsManager.getContentTagsByTagName(tagName);
-                    for (ContentTag tag : tags) {
-                        // TODO: Currently only AbstractFiles have md5 hashes. Here only files matter. 
-                        Content content = tag.getContent();
-                        if (content instanceof AbstractFile) {
-                            if (null != ((AbstractFile) content).getMd5Hash()) {
-                                try {
-                                    hashSet.addHashes(tag.getContent(), openCase.getDisplayName());
-                                } catch (TskCoreException ex) {
-                                    Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash set " + hashSet.getHashSetName(), ex);
-                                    failedExports.add(tag.getContent().getName());
-                                }
-                            } else {
-                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Set Error", JOptionPane.ERROR_MESSAGE);
-                                break;
+            progressPanel.updateStatusLabel("Adding " + tagName.getDisplayName() + " hashes to " + hashSet.getHashSetName() + " hash set...");
+            try {
+                List<ContentTag> tags = tagsManager.getContentTagsByTagName(tagName);
+                for (ContentTag tag : tags) {
+                    // TODO: Currently only AbstractFiles have md5 hashes. Here only files matter. 
+                    Content content = tag.getContent();
+                    if (content instanceof AbstractFile) {
+                        if (null != ((AbstractFile) content).getMd5Hash()) {
+                            try {
+                                hashSet.addHashes(tag.getContent(), openCase.getDisplayName());
+                            } catch (TskCoreException ex) {
+                                Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash set " + hashSet.getHashSetName(), ex);
+                                failedExports.add(tag.getContent().getName());
                             }
+                        } else {
+                            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Unable to add the " + (tags.size() > 1 ? "files" : "file") + " to the hash set. Hashes have not been calculated. Please configure and run an appropriate ingest module.", "Add to Hash Set Error", JOptionPane.ERROR_MESSAGE);
+                            break;
                         }
                     }
-                } catch (TskCoreException ex) {
-                    Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
-                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Error getting selected tags for case.", "Hash Export Error", JOptionPane.ERROR_MESSAGE);
                 }
-            }
-            if (!failedExports.isEmpty()) {
-                StringBuilder errorMessage = new StringBuilder("Failed to export hashes for the following files: ");
-                for (int i = 0; i < failedExports.size(); ++i) {
-                    errorMessage.append(failedExports.get(i));
-                    if (failedExports.size() > 1 && i < failedExports.size() - 1) {
-                        errorMessage.append(",");
-                    }
-                    if (i == failedExports.size() - 1) {
-                        errorMessage.append(".");
-                    }
-                }
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), errorMessage.toString(), "Hash Export Error", JOptionPane.ERROR_MESSAGE);
+            } catch (TskCoreException ex) {
+                Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding to hash set", ex);
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), "Error getting selected tags for case.", "Hash Export Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+        if (!failedExports.isEmpty()) {
+            StringBuilder errorMessage = new StringBuilder("Failed to export hashes for the following files: ");
+            for (int i = 0; i < failedExports.size(); ++i) {
+                errorMessage.append(failedExports.get(i));
+                if (failedExports.size() > 1 && i < failedExports.size() - 1) {
+                    errorMessage.append(",");
+                }
+                if (i == failedExports.size() - 1) {
+                    errorMessage.append(".");
+                }
+            }
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), errorMessage.toString(), "Hash Export Error", JOptionPane.ERROR_MESSAGE);
+        }
+        
         progressPanel.setIndeterminate(false);
         progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }

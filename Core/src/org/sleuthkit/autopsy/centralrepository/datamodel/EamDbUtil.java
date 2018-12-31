@@ -170,8 +170,6 @@ public class EamDbUtil {
      * Upgrade the current Central Reposity schema to the newest version. If the
      * upgrade fails, the Central Repository will be disabled and the current
      * settings will be cleared.
-     *
-     * @return true if the upgrade succeeds, false otherwise.
      */
     @Messages({"EamDbUtil.centralRepoUpgradeFailed.message=Failed to upgrade central repository. It has been disabled."})
     public static void upgradeDatabase() throws EamDbException {
@@ -201,8 +199,6 @@ public class EamDbUtil {
             } catch (EamDbException ex2) {
                 LOGGER.log(Level.SEVERE, "Error shutting down central repo connection pool", ex2);
             }
-            setUseCentralRepo(false);
-
             EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.name());
             EamDbPlatformEnum.saveSelectedPlatform();
             String messageForDialog = Bundle.EamDbUtil_centralRepoUpgradeFailed_message();

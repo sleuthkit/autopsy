@@ -98,7 +98,7 @@ public final class CaseUtils {
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(String.format("Failed to close case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
-        }
+        } 
     }
 
     /**
