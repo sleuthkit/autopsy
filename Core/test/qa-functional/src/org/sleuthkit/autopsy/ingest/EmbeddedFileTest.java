@@ -52,8 +52,6 @@ public class EmbeddedFileTest extends NbTestCase {
     private static final int DEEP_FOLDER_COUNT = 25;
     private Case openCase;
 
-    private boolean testSucceeded;
-
     public static Test suite() {
         NbModuleSuite.Configuration conf = NbModuleSuite.createConfiguration(EmbeddedFileTest.class).
                 clusters(".*").
@@ -67,8 +65,6 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void setUp() {
-        testSucceeded = false;
-
         openCase = CaseUtils.createAsCurrentCase(CASE_NAME + "_" + System.currentTimeMillis());
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
@@ -91,7 +87,7 @@ public class EmbeddedFileTest extends NbTestCase {
 
     @Override
     public void tearDown() {
-        CaseUtils.closeCurrentCase(testSucceeded);
+        CaseUtils.closeCurrentCase();
     }
 
 //    public void testEncryptionAndZipBomb() {
@@ -138,8 +134,6 @@ public class EmbeddedFileTest extends NbTestCase {
 //            Exceptions.printStackTrace(ex);
 //            Assert.fail(ex.getMessage());
 //        }
-//
-//        testSucceeded = true;
 //    }
 
     public void testBigFolder() {
@@ -165,8 +159,6 @@ public class EmbeddedFileTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-
-        testSucceeded = true;
     }
 
     public void testDeepFolder() {
@@ -188,8 +180,6 @@ public class EmbeddedFileTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-
-        testSucceeded = true;
     }
 
     public void testEmbeddedFile() {
@@ -214,8 +204,6 @@ public class EmbeddedFileTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-
-        testSucceeded = true;
     }
 
     public void testContent() {
@@ -240,8 +228,6 @@ public class EmbeddedFileTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-
-        testSucceeded = true;
     }
 
     public void testExtension() {
@@ -254,8 +240,6 @@ public class EmbeddedFileTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-
-        testSucceeded = true;
     }
 
     private void checkEachFileInDeepFolder(AbstractFile file, StringBuffer dirReached, ArrayList<String> fileReached, int numOfDir) {

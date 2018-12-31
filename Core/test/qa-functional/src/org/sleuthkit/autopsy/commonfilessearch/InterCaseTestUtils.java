@@ -406,7 +406,7 @@ class InterCaseTestUtils {
         if (keepAlive) {
             return caze;
         } else {
-            CaseUtils.closeCurrentCase(false);
+            CaseUtils.closeCurrentCase();
             return null;
         }
     }
@@ -490,7 +490,7 @@ class InterCaseTestUtils {
      * central repo db.
      */
     void tearDown() {
-        CaseUtils.closeCurrentCase(false);
+        CaseUtils.closeCurrentCase();
     }
 
     /**
