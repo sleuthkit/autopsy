@@ -18,13 +18,10 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
-import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.datamodel.TskCoreException;
 
