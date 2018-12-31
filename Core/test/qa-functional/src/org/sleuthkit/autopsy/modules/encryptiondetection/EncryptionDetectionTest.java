@@ -76,13 +76,8 @@ public class EncryptionDetectionTest extends NbTestCase {
     }
     
     @Override
-    public void setUp() {
-        testSucceeded = false;
-    }
-
-    @Override
     public void tearDown() {
-        CaseUtils.closeCurrentCase(testSucceeded);
+        CaseUtils.closeCurrentCase();
     }
     
     /**
@@ -153,8 +148,6 @@ public class EncryptionDetectionTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-        
-        testSucceeded = true;
     }
 
     /**
@@ -240,8 +233,6 @@ public class EncryptionDetectionTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-        
-        testSucceeded = true;
     }
 
     /**
@@ -295,8 +286,6 @@ public class EncryptionDetectionTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-        
-        testSucceeded = true;
     }
 
     /**
@@ -360,8 +349,6 @@ public class EncryptionDetectionTest extends NbTestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
         }
-
-        testSucceeded = true;
     }    
     
 }
