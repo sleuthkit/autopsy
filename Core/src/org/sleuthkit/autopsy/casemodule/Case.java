@@ -765,7 +765,7 @@ public class Case {
     }
 
     /**
-     * Deletes teh coordination nodes for a multi-user case.
+     * Deletes the coordination nodes for a multi-user case.
      *
      * @param metadata          The metadata for the case to delete.
      * @param progressIndicator The progress indicator for the deletion
