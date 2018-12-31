@@ -426,7 +426,7 @@ class InterCaseTestUtils {
 
                                 boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
                                 boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-                                boolean sameCrCase = testCaseName.equalsIgnoreCase(crCase);
+                                boolean sameCrCase = testCaseName.substring(0, testCaseName.length() - 20).equalsIgnoreCase(crCase);
 
                                 if (sameFileName && sameDataSource && sameCrCase) {
                                     tally++;
@@ -443,7 +443,7 @@ class InterCaseTestUtils {
                                 final String testDataSource = node.getDataSource();
 
                                 boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                boolean sameCaseName = testCaseName.equalsIgnoreCase(crCase);
+                                boolean sameCaseName = testCaseName.substring(0, testCaseName.length() - 20).equalsIgnoreCase(crCase);
                                 boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
 
                                 if (sameFileName && sameDataSource && sameCaseName) {

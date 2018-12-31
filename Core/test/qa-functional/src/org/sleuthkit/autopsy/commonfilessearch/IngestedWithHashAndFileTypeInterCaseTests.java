@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.commonfilessearch;
 
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Set;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
@@ -96,7 +97,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testOne() {
         try {
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.FILE_TYPE, 0);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.FILE_TYPE, 100);
             CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
 
             assertTrue("Results should not be empty", metadata.size() != 0);
@@ -143,9 +144,18 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testTwo() {
         try {
-            int matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(CASE2);
+            int matchesMustAlsoBeFoundInThisCase = 0;
+            
+            // Filter out the time stamp to get the correct case name.
+            Set<String> caseNames = this.utils.getCaseMap().keySet();
+            for (String caseName : caseNames) {
+                if (caseName.substring(0, caseName.length() - 20).equalsIgnoreCase(CASE2)) {
+                    // Case match found. Get the number of matches.
+                    matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(caseName);
+                }
+            }
             CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
-            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false, fileType, 0);
+            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false, fileType, 100);
 
             CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
 
