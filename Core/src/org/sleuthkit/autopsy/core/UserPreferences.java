@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.core;
 
+import java.nio.file.Paths;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
 import java.util.prefs.BackingStoreException;
 import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
@@ -75,6 +76,7 @@ public final class UserPreferences {
     public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
     public static final String HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES = "HideCentralRepoCommentsAndOccurrences";
     public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
+    public static final String HDX_EDITOR_PATH = "HdXEditorPath";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -470,5 +472,21 @@ public final class UserPreferences {
      */
     public static void setLogFileCount(int count) {
         preferences.putInt(MAX_NUM_OF_LOG_FILE, count);
+    }
+    
+    /**
+     * 
+     * @param executablePath 
+     */
+    public static void setHdXEditorPath(String executablePath) {
+        preferences.put(HDX_EDITOR_PATH, executablePath);
+    }
+    
+    /**
+     * 
+     * @return 
+     */
+    public static String getHdXEditorPath() {
+        return preferences.get(HDX_EDITOR_PATH, Paths.get("C:", "Program Files", "HxD", "HxD.exe").toString());
     }
 }

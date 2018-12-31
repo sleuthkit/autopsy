@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import javax.swing.JFileChooser;
@@ -27,7 +28,7 @@ import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * An options panel for the user to create, edit, and delete associations for
@@ -39,8 +40,6 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
     private RulesTableModel rulesTableModel;
     private java.util.List<ExternalViewerRule> rules;
-    private static final String MODULE_NAME = ExternalViewerGlobalSettingsPanel.class.getName();
-    private static final String HXD_PATH_NAME = "HxDExecutablePath";
 
     /**
      * Creates new form ExternalViewerGlobalSettingsPanel
@@ -171,7 +170,6 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         );
 
         HxDPath.setEditable(false);
-        HxDPath.setText(org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.HxDPath.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jLabel1.text")); // NOI18N
 
@@ -245,25 +243,6 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void browseHxDDirectoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseHxDDirectoryActionPerformed
-        JFileChooser fileWindow = new JFileChooser();
-        fileWindow.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        GeneralFilter exeFilter = new GeneralFilter(GeneralFilter.EXECUTABLE_EXTS, GeneralFilter.EXECUTABLE_DESC);
-        File HxDPathFile = new File(HxDPath.getText());
-        if(HxDPathFile.exists() && HxDPathFile.canExecute()) {
-            fileWindow.setCurrentDirectory(new File(HxDPath.getText()));   
-        }
-        fileWindow.setDragEnabled(false);
-        fileWindow.setFileFilter(exeFilter);
-        fileWindow.setMultiSelectionEnabled(false);
-        int returnVal = fileWindow.showSaveDialog(this);
-        if(returnVal == JFileChooser.APPROVE_OPTION) {
-            File HxDExecutable = fileWindow.getSelectedFile();
-            HxDPath.setText(HxDExecutable.getAbsolutePath());
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-    }//GEN-LAST:event_browseHxDDirectoryActionPerformed
-
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
         AddExternalViewerRuleDialog dialog = new AddExternalViewerRuleDialog();
         AddExternalViewerRuleDialog.BUTTON_PRESSED result = dialog.getResult();
@@ -321,18 +300,43 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 
+    private void browseHxDDirectoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseHxDDirectoryActionPerformed
+        JFileChooser fileWindow = new JFileChooser();
+        fileWindow.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        GeneralFilter exeFilter = new GeneralFilter(GeneralFilter.EXECUTABLE_EXTS, GeneralFilter.EXECUTABLE_DESC);
+        File HxDPathFile = new File(HxDPath.getText());
+        if(HxDPathFile.exists() && HxDPathFile.canExecute()) {
+            fileWindow.setCurrentDirectory(new File(HxDPath.getText()));
+        }
+        fileWindow.setDragEnabled(false);
+        fileWindow.setFileFilter(exeFilter);
+        fileWindow.setMultiSelectionEnabled(false);
+        int returnVal = fileWindow.showSaveDialog(this);
+        if(returnVal == JFileChooser.APPROVE_OPTION) {
+            File HxDExecutable = fileWindow.getSelectedFile();
+            HxDPath.setForeground(Color.BLACK);
+            HxDPath.setText(HxDExecutable.getAbsolutePath());
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_browseHxDDirectoryActionPerformed
+
     @Override
     public void store() {
         ExternalViewerRulesManager.getInstance().setUserRules(rules);
-        ModuleSettings.setConfigSetting(MODULE_NAME, HXD_PATH_NAME, HxDPath.getText());
+        UserPreferences.setHdXEditorPath(HxDPath.getText());
     }
 
     @Override
     public void load() {
         rules = ExternalViewerRulesManager.getInstance().getUserRules();
-        if(ModuleSettings.settingExists(MODULE_NAME, HXD_PATH_NAME)) {
-            HxDPath.setText(ModuleSettings.getConfigSetting(MODULE_NAME, HXD_PATH_NAME));   
-        }
+        String editorPath = UserPreferences.getHdXEditorPath();
+        File HdXExecutable = new File(editorPath);
+        if(HdXExecutable.exists() || HdXExecutable.canExecute()) {
+            HxDPath.setText(editorPath);    
+        } else {
+            HxDPath.setForeground(Color.RED);
+            HxDPath.setText(editorPath);
+        }  
         rulesTableModel.fireTableDataChanged();
         checkButtons();
     }

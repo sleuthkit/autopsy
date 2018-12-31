@@ -32,13 +32,12 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Utilities;
-import org.openide.modules.InstalledFileLocator;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
@@ -356,22 +355,33 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
     private void launchHxDButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_launchHxDButtonActionPerformed
         try {
+            File HdXExecutable = new File(UserPreferences.getHdXEditorPath());
+            if(!HdXExecutable.exists() || !HdXExecutable.canExecute()) {
+                JOptionPane.showMessageDialog(null, "Unable to launch HxD Editor. "
+                        + "Please set-up the HdX install location in Tools -> "
+                        + "Options -> External Viewer");
+                return;
+            }
+            
             String tempDirectory = Case.getCurrentCaseThrows().getTempDirectory();
             File dataSourceInTempDirectory = Paths.get(tempDirectory, dataSource.getId() + dataSource.getName()).toFile();
             ContentUtils.writeToFile(dataSource, dataSourceInTempDirectory);
             
-            String HdXExecutableToFind = Paths.get("HxD", "HxD64.exe").toString();
-            File HdXExecutable = InstalledFileLocator.getDefault().locate(HdXExecutableToFind, DataContentViewerHex.class.getPackage().getName(), false);
-            if (null == HdXExecutable) {
-                throw new IOException(String.format("Could not find HdXExecutable at %s", HdXExecutableToFind));
+            try {
+                ProcessBuilder launchHdXExecutable = new ProcessBuilder();
+                launchHdXExecutable.command(String.format("\"%s\" \"%s\"", 
+                        HdXExecutable.getAbsolutePath(), 
+                        dataSourceInTempDirectory.getAbsolutePath()));
+                launchHdXExecutable.start();
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Unable to launch HxD Editor. "
+                        + "Please set-up the HdX install location in Tools -> "
+                        + "Options -> External Viewer");
+                dataSourceInTempDirectory.delete();
             }
-            
-            ProcessBuilder launchHdXExecutable = new ProcessBuilder();
-            launchHdXExecutable.command(String.format("%s \"%s\"", HdXExecutable.getAbsolutePath(), dataSourceInTempDirectory.getAbsolutePath()));
-            ExecUtil.execute(launchHdXExecutable);
         } catch (NoCurrentCaseException | IOException ex) {
-            logger.log(Level.SEVERE, "Unable to launch HxD Editor", ex);
-            //TODO - Make pop-up appear saying there were problems attempting to launch editor
+            logger.log(Level.SEVERE, "Unable to copy file into temp directory", ex);
+            //Should we add a pop-up for this?
         }
     }//GEN-LAST:event_launchHxDButtonActionPerformed
 
@@ -546,6 +556,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         goToPageLabel.setVisible(isVisible);
         goToOffsetTextField.setVisible(isVisible);
         goToOffsetLabel.setVisible(isVisible);
+        launchHxDButton.setVisible(isVisible);
     }
 
     @Override
