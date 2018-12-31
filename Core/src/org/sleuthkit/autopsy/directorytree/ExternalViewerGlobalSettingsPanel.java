@@ -18,13 +18,16 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.JFileChooser;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import javax.swing.JOptionPane;
+import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.sleuthkit.autopsy.casemodule.GeneralFilter;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * An options panel for the user to create, edit, and delete associations for
@@ -34,8 +37,10 @@ import org.netbeans.spi.options.OptionsPanelController;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private DefaultTableModel rulesTableModel;
+    private RulesTableModel rulesTableModel;
     private java.util.List<ExternalViewerRule> rules;
+    private static final String MODULE_NAME = ExternalViewerGlobalSettingsPanel.class.getName();
+    private static final String HXD_PATH_NAME = "HxDExecutablePath";
 
     /**
      * Creates new form ExternalViewerGlobalSettingsPanel
@@ -50,6 +55,10 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
      */
     private void customizeComponents() {
         rules = new ArrayList<>();
+        rulesTableModel = new RulesTableModel(new String[] {
+            "Mime type/Extension", "Application"});
+        jTable1.setModel(rulesTableModel);
+        jTable1.setAutoCreateRowSorter(true);
     }
 
     /**
@@ -72,10 +81,10 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         deleteRuleButton = new javax.swing.JButton();
         editRuleButton = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
-        jTextField1 = new javax.swing.JTextField();
+        HxDPath = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
+        browseHxDDirectory = new javax.swing.JButton();
 
         newRuleButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newRuleButton1, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.newRuleButton1.text")); // NOI18N
@@ -100,20 +109,6 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
         jScrollPane4.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
 
-        rulesTableModel = new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Mime type/Extension", "Application"
-            }
-        ) {
-            @Override
-            public boolean isCellEditable(int i, int i1) {
-                return false;
-            }
-        };
-        jTable1.setModel(rulesTableModel);
         jScrollPane4.setViewportView(jTable1);
         if (jTable1.getColumnModel().getColumnCount() > 0) {
             jTable1.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jTable1.columnModel.title0")); // NOI18N
@@ -175,21 +170,17 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                 .addContainerGap())
         );
 
-        jTextField1.setText(org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jTextField1.text")); // NOI18N
-        jTextField1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField1ActionPerformed(evt);
-            }
-        });
+        HxDPath.setEditable(false);
+        HxDPath.setText(org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.HxDPath.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jLabel1.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jLabel2.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(browseHxDDirectory, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.browseHxDDirectory.text")); // NOI18N
+        browseHxDDirectory.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                browseHxDDirectoryActionPerformed(evt);
             }
         });
 
@@ -204,9 +195,9 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                 .addGap(21, 21, 21)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
+                .addComponent(HxDPath, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(browseHxDDirectory, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -214,9 +205,9 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(HxDPath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1))
+                    .addComponent(browseHxDDirectory))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -254,13 +245,24 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton1ActionPerformed
-
-    private void jTextField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField1ActionPerformed
+    private void browseHxDDirectoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseHxDDirectoryActionPerformed
+        JFileChooser fileWindow = new JFileChooser();
+        fileWindow.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        GeneralFilter exeFilter = new GeneralFilter(GeneralFilter.EXECUTABLE_EXTS, GeneralFilter.EXECUTABLE_DESC);
+        File HxDPathFile = new File(HxDPath.getText());
+        if(HxDPathFile.exists() && HxDPathFile.canExecute()) {
+            fileWindow.setCurrentDirectory(new File(HxDPath.getText()));   
+        }
+        fileWindow.setDragEnabled(false);
+        fileWindow.setFileFilter(exeFilter);
+        fileWindow.setMultiSelectionEnabled(false);
+        int returnVal = fileWindow.showSaveDialog(this);
+        if(returnVal == JFileChooser.APPROVE_OPTION) {
+            File HxDExecutable = fileWindow.getSelectedFile();
+            HxDPath.setText(HxDExecutable.getAbsolutePath());
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+    }//GEN-LAST:event_browseHxDDirectoryActionPerformed
 
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
         AddExternalViewerRuleDialog dialog = new AddExternalViewerRuleDialog();
@@ -275,60 +277,135 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                         JOptionPane.ERROR_MESSAGE);
             } else {
                 rules.add(newRule);
-                updateRulesTableModel();
+                rulesTableModel.fireTableDataChanged();
                 int index = rules.indexOf(newRule);
+                jTable1.getSelectionModel().clearSelection();
                 jTable1.getSelectionModel().setSelectionInterval(index, index);
-                enableButtons();
+                checkButtons();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
-        // TODO add your handling code here:
+        int selectedIndex = jTable1.convertRowIndexToModel(jTable1.getSelectedRow());
+        ExternalViewerRule selectedRule = rulesTableModel.getRuleAt(selectedIndex);
+        AddExternalViewerRuleDialog dialog = new AddExternalViewerRuleDialog(selectedRule);
+        AddExternalViewerRuleDialog.BUTTON_PRESSED result = dialog.getResult();
+        if (result == AddExternalViewerRuleDialog.BUTTON_PRESSED.OK) {
+            ExternalViewerRule newRule = dialog.getRule();
+            // Only allow one association for each MIME type or extension.
+            if (rules.contains(newRule)) {
+                JOptionPane.showMessageDialog(this,
+                        NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.message"),
+                        NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.title"),
+                        JOptionPane.ERROR_MESSAGE);
+            } else {
+                rules.set(selectedIndex, dialog.getRule());
+                rulesTableModel.fireTableDataChanged();
+                jTable1.getSelectionModel().clearSelection();
+                int tableIndex = jTable1.convertRowIndexToView(selectedIndex);
+                jTable1.getSelectionModel().setSelectionInterval(tableIndex, tableIndex);
+                checkButtons();
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            }
+        }
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
-        // TODO add your handling code here:
+        ExternalViewerRule selectedRule = rulesTableModel.getRuleAt(jTable1.convertRowIndexToModel(jTable1.getSelectedRow()));
+        rules.remove(selectedRule);
+        rulesTableModel.fireTableDataChanged();
+        jTable1.getSelectionModel().clearSelection();
+        checkButtons();
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 
     @Override
     public void store() {
         ExternalViewerRulesManager.getInstance().setUserRules(rules);
+        ModuleSettings.setConfigSetting(MODULE_NAME, HXD_PATH_NAME, HxDPath.getText());
     }
 
     @Override
     public void load() {
         rules = ExternalViewerRulesManager.getInstance().getUserRules();
-        updateRulesTableModel();
-        enableButtons();
+        if(ModuleSettings.settingExists(MODULE_NAME, HXD_PATH_NAME)) {
+            HxDPath.setText(ModuleSettings.getConfigSetting(MODULE_NAME, HXD_PATH_NAME));   
+        }
+        rulesTableModel.fireTableDataChanged();
+        checkButtons();
     }
 
     /**
      * Enable edit and delete buttons if there is a rule selected.
      */
-    private void enableButtons() {
-        boolean ruleIsSelected = jTable1.getSelectedRow() != -1;
+    private void checkButtons() {
+        boolean ruleIsSelected = jTable1.getRowCount() > 0;
         editRuleButton.setEnabled(ruleIsSelected);
         deleteRuleButton.setEnabled(ruleIsSelected);
     }
-
+    
     /**
-     * Sets the list model for the rules list component, sorted by the MIME type
-     * or extension alphabetically.
+     * 
      */
-    private void updateRulesTableModel() {
-        Collections.sort(rules);
-        rules.forEach((rule) -> {
-            rulesTableModel.addRow(new Object[]{rule.getName(), rule.getExePath()});
-        });
+    private class RulesTableModel extends AbstractTableModel {
+        private final String[] columnNames;
+        
+        public RulesTableModel(String[] columnNames) {
+            this.columnNames = columnNames;
+        }
+        
+        public void addRule(ExternalViewerRule rule) {
+            rules.add(rule);
+            fireTableRowsInserted(rules.size()-1, rules.size()-1);
+        }
+
+        @Override
+        public int getRowCount() {
+            return rules.size();
+        }
+        
+        @Override
+        public String getColumnName(int columnIndex) {
+            return columnNames[columnIndex];
+        }
+        
+        @Override
+        public Class<String> getColumnClass(int columnIndex) {
+            return String.class;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnNames.length;
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            if(columnIndex == 0) {
+                return rules.get(rowIndex).getName();
+            } else {
+                return rules.get(rowIndex).getExePath();
+            }
+        }
+        
+        public ExternalViewerRule getRuleAt(int rowIndex) {
+            return rules.get(rowIndex);
+        }
+        
+        @Override
+        public boolean isCellEditable(int rowIndex, int colIndex) {
+            return false;
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTextField HxDPath;
+    private javax.swing.JButton browseHxDDirectory;
     private javax.swing.JButton deleteRuleButton;
     private javax.swing.JButton editRuleButton;
     private javax.swing.JLabel externalViewerTitleLabel;
-    private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -337,7 +414,6 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField1;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JButton newRuleButton1;
     // End of variables declaration//GEN-END:variables
