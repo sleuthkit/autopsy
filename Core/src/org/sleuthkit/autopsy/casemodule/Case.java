@@ -757,7 +757,7 @@ public class Case {
             try {
                 deleteCoordinationServiceNodes(metadata, progressIndicator);
             } catch (CoordinationServiceException ex) {
-                throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
+                throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock(), ex);
             }
         } finally {
             progressIndicator.finish();
