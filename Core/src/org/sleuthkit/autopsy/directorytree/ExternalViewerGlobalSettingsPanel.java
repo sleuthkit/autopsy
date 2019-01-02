@@ -19,12 +19,12 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.Color;
+import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JFileChooser;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import javax.swing.JOptionPane;
-import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
@@ -38,28 +38,34 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel implements OptionsPanel {
 
-    private RulesTableModel rulesTableModel;
-    private java.util.List<ExternalViewerRule> rules;
+    private ExternalViewerGlobalSettingsTableModel tableModel;
 
     /**
      * Creates new form ExternalViewerGlobalSettingsPanel
      */
     public ExternalViewerGlobalSettingsPanel() {
+        this(new ExternalViewerGlobalSettingsTableModel(new String[] {"Mime type/Extension", "Application"}));
+    }
+    
+    public ExternalViewerGlobalSettingsPanel(ExternalViewerGlobalSettingsTableModel tableModel) {
         initComponents();
-        customizeComponents();
+        this.tableModel = tableModel;
+        customizeComponents(tableModel);
     }
 
     /**
      * Initializes field variables. Adds a listener to the list of rules.
      */
-    private void customizeComponents() {
-        rules = new ArrayList<>();
-        rulesTableModel = new RulesTableModel(new String[] {
-            "Mime type/Extension", "Application"});
-        jTable1.setModel(rulesTableModel);
+    private void customizeComponents(ExternalViewerGlobalSettingsTableModel tableModel) {
+        jTable1.setModel(tableModel);
         jTable1.setAutoCreateRowSorter(true);
     }
-
+    
+    public void deleteRuleButtonClick(int selectedIndex) {
+        jTable1.getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
+        deleteRuleButton.getListeners(ActionListener.class)[0].actionPerformed(null);
+    }
+            
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -109,10 +115,6 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         jScrollPane4.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
 
         jScrollPane4.setViewportView(jTable1);
-        if (jTable1.getColumnModel().getColumnCount() > 0) {
-            jTable1.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jTable1.columnModel.title0")); // NOI18N
-            jTable1.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jTable1.columnModel.title1")); // NOI18N
-        }
 
         org.openide.awt.Mnemonics.setLocalizedText(externalViewerTitleLabel, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.externalViewerTitleLabel.text")); // NOI18N
 
@@ -249,18 +251,14 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         if (result == AddExternalViewerRuleDialog.BUTTON_PRESSED.OK) {
             ExternalViewerRule newRule = dialog.getRule();
             // Only allow one association for each MIME type or extension.
-            if (rules.contains(newRule)) {
+            if (tableModel.containsRule(newRule)) {
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.message"),
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.title"),
                         JOptionPane.ERROR_MESSAGE);
             } else {
-                rules.add(newRule);
-                rulesTableModel.fireTableDataChanged();
-                int index = rules.indexOf(newRule);
-                jTable1.getSelectionModel().clearSelection();
-                jTable1.getSelectionModel().setSelectionInterval(index, index);
-                checkButtons();
+                tableModel.addRule(newRule);
+                enableButtons();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
@@ -268,35 +266,28 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
         int selectedIndex = jTable1.convertRowIndexToModel(jTable1.getSelectedRow());
-        ExternalViewerRule selectedRule = rulesTableModel.getRuleAt(selectedIndex);
+        ExternalViewerRule selectedRule = tableModel.getRuleAt(selectedIndex);
         AddExternalViewerRuleDialog dialog = new AddExternalViewerRuleDialog(selectedRule);
         AddExternalViewerRuleDialog.BUTTON_PRESSED result = dialog.getResult();
         if (result == AddExternalViewerRuleDialog.BUTTON_PRESSED.OK) {
             ExternalViewerRule newRule = dialog.getRule();
             // Only allow one association for each MIME type or extension.
-            if (rules.contains(newRule)) {
+            if (tableModel.containsRule(newRule)) {
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.message"),
                         NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.JOptionPane.ruleAlreadyExists.title"),
                         JOptionPane.ERROR_MESSAGE);
             } else {
-                rules.set(selectedIndex, dialog.getRule());
-                rulesTableModel.fireTableDataChanged();
-                jTable1.getSelectionModel().clearSelection();
-                int tableIndex = jTable1.convertRowIndexToView(selectedIndex);
-                jTable1.getSelectionModel().setSelectionInterval(tableIndex, tableIndex);
-                checkButtons();
+                tableModel.setRule(selectedIndex, dialog.getRule());
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             }
         }
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
-        ExternalViewerRule selectedRule = rulesTableModel.getRuleAt(jTable1.convertRowIndexToModel(jTable1.getSelectedRow()));
-        rules.remove(selectedRule);
-        rulesTableModel.fireTableDataChanged();
+        tableModel.removeRule(jTable1.convertRowIndexToModel(jTable1.getSelectedRow()));
         jTable1.getSelectionModel().clearSelection();
-        checkButtons();
+        enableButtons();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 
@@ -322,13 +313,14 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
     @Override
     public void store() {
-        ExternalViewerRulesManager.getInstance().setUserRules(rules);
+        ExternalViewerRulesManager.getInstance().setUserRules(tableModel.getRules());
         UserPreferences.setHdXEditorPath(HxDPath.getText());
     }
 
     @Override
     public void load() {
-        rules = ExternalViewerRulesManager.getInstance().getUserRules();
+        List<ExternalViewerRule> rules = ExternalViewerRulesManager.getInstance().getUserRules();
+        rules.forEach((rule) -> tableModel.addRule(rule));
         String editorPath = UserPreferences.getHdXEditorPath();
         File HdXExecutable = new File(editorPath);
         if(HdXExecutable.exists() || HdXExecutable.canExecute()) {
@@ -336,72 +328,18 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         } else {
             HxDPath.setForeground(Color.RED);
             HxDPath.setText(editorPath);
-        }  
-        rulesTableModel.fireTableDataChanged();
-        checkButtons();
+        }
+        enableButtons();
     }
 
     /**
      * Enable edit and delete buttons if there is a rule selected.
      */
-    private void checkButtons() {
+    boolean enableButtons() {
         boolean ruleIsSelected = jTable1.getRowCount() > 0;
         editRuleButton.setEnabled(ruleIsSelected);
         deleteRuleButton.setEnabled(ruleIsSelected);
-    }
-    
-    /**
-     * 
-     */
-    private class RulesTableModel extends AbstractTableModel {
-        private final String[] columnNames;
-        
-        public RulesTableModel(String[] columnNames) {
-            this.columnNames = columnNames;
-        }
-        
-        public void addRule(ExternalViewerRule rule) {
-            rules.add(rule);
-            fireTableRowsInserted(rules.size()-1, rules.size()-1);
-        }
-
-        @Override
-        public int getRowCount() {
-            return rules.size();
-        }
-        
-        @Override
-        public String getColumnName(int columnIndex) {
-            return columnNames[columnIndex];
-        }
-        
-        @Override
-        public Class<String> getColumnClass(int columnIndex) {
-            return String.class;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnNames.length;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            if(columnIndex == 0) {
-                return rules.get(rowIndex).getName();
-            } else {
-                return rules.get(rowIndex).getExePath();
-            }
-        }
-        
-        public ExternalViewerRule getRuleAt(int rowIndex) {
-            return rules.get(rowIndex);
-        }
-        
-        @Override
-        public boolean isCellEditable(int rowIndex, int colIndex) {
-            return false;
-        }
+        return ruleIsSelected;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
