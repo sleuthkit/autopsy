@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JFileChooser;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -40,13 +41,13 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
     private ExternalViewerGlobalSettingsTableModel tableModel;
 
-    /**
-     * Creates new form ExternalViewerGlobalSettingsPanel
-     */
     public ExternalViewerGlobalSettingsPanel() {
         this(new ExternalViewerGlobalSettingsTableModel(new String[] {"Mime type/Extension", "Application"}));
     }
     
+    /**
+     * Creates new form ExternalViewerGlobalSettingsPanel
+     */
     public ExternalViewerGlobalSettingsPanel(ExternalViewerGlobalSettingsTableModel tableModel) {
         initComponents();
         this.tableModel = tableModel;
@@ -57,12 +58,17 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
      * Initializes field variables. Adds a listener to the list of rules.
      */
     private void customizeComponents(ExternalViewerGlobalSettingsTableModel tableModel) {
-        jTable1.setModel(tableModel);
-        jTable1.setAutoCreateRowSorter(true);
+        ExternalViewerRulesTable.setModel(tableModel);
+        ExternalViewerRulesTable.setAutoCreateRowSorter(true);
     }
     
+    /**
+     * Simulate the delete rule button click action.
+     * 
+     * @param selectedIndex Index to delete in JTable
+     */
     public void deleteRuleButtonClick(int selectedIndex) {
-        jTable1.getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
+        ExternalViewerRulesTable.getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
         deleteRuleButton.getListeners(ActionListener.class)[0].actionPerformed(null);
     }
             
@@ -81,14 +87,14 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         jPanel2 = new javax.swing.JPanel();
         newRuleButton = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        ExternalViewerRulesTable = new javax.swing.JTable();
         externalViewerTitleLabel = new javax.swing.JLabel();
         deleteRuleButton = new javax.swing.JButton();
         editRuleButton = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         HxDPath = new javax.swing.JTextField();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        HxDLabel = new javax.swing.JLabel();
+        ContentViewerExtensionLabel = new javax.swing.JLabel();
         browseHxDDirectory = new javax.swing.JButton();
 
         newRuleButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
@@ -114,7 +120,11 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
         jScrollPane4.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(204, 204, 204)));
 
-        jScrollPane4.setViewportView(jTable1);
+        jScrollPane4.setViewportView(ExternalViewerRulesTable);
+        if (ExternalViewerRulesTable.getColumnModel().getColumnCount() > 0) {
+            ExternalViewerRulesTable.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.ExternalViewerRulesTable.columnModel.title0")); // NOI18N
+            ExternalViewerRulesTable.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.ExternalViewerRulesTable.columnModel.title1")); // NOI18N
+        }
 
         org.openide.awt.Mnemonics.setLocalizedText(externalViewerTitleLabel, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.externalViewerTitleLabel.text")); // NOI18N
 
@@ -173,9 +183,9 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
         HxDPath.setEditable(false);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(HxDLabel, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.HxDLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.jLabel2.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ContentViewerExtensionLabel, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.ContentViewerExtensionLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(browseHxDDirectory, org.openide.util.NbBundle.getMessage(ExternalViewerGlobalSettingsPanel.class, "ExternalViewerGlobalSettingsPanel.browseHxDDirectory.text")); // NOI18N
         browseHxDDirectory.addActionListener(new java.awt.event.ActionListener() {
@@ -189,11 +199,11 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(jLabel2)
+                .addComponent(ContentViewerExtensionLabel)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(21, 21, 21)
-                .addComponent(jLabel1)
+                .addComponent(HxDLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(HxDPath, javax.swing.GroupLayout.DEFAULT_SIZE, 441, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -202,11 +212,11 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(jLabel2)
+                .addComponent(ContentViewerExtensionLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(HxDPath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(HxDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(browseHxDDirectory))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -265,7 +275,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
-        int selectedIndex = jTable1.convertRowIndexToModel(jTable1.getSelectedRow());
+        int selectedIndex = ExternalViewerRulesTable.convertRowIndexToModel(ExternalViewerRulesTable.getSelectedRow());
         ExternalViewerRule selectedRule = tableModel.getRuleAt(selectedIndex);
         AddExternalViewerRuleDialog dialog = new AddExternalViewerRuleDialog(selectedRule);
         AddExternalViewerRuleDialog.BUTTON_PRESSED result = dialog.getResult();
@@ -285,8 +295,8 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
-        tableModel.removeRule(jTable1.convertRowIndexToModel(jTable1.getSelectedRow()));
-        jTable1.getSelectionModel().clearSelection();
+        tableModel.removeRule(ExternalViewerRulesTable.convertRowIndexToModel(ExternalViewerRulesTable.getSelectedRow()));
+        ExternalViewerRulesTable.getSelectionModel().clearSelection();
         enableButtons();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
@@ -313,7 +323,12 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
 
     @Override
     public void store() {
-        ExternalViewerRulesManager.getInstance().setUserRules(tableModel.getRules());
+        //Dump rules from table model into a list to be stored by the rules manager.
+        List<ExternalViewerRule> rules = new ArrayList<>();
+        for(int i = 0; i < tableModel.getRowCount(); i++) {
+            rules.add(tableModel.getRuleAt(i));
+        }
+        ExternalViewerRulesManager.getInstance().setUserRules(rules);
         UserPreferences.setHdXEditorPath(HxDPath.getText());
     }
 
@@ -336,26 +351,26 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
      * Enable edit and delete buttons if there is a rule selected.
      */
     boolean enableButtons() {
-        boolean ruleIsSelected = jTable1.getRowCount() > 0;
+        boolean ruleIsSelected = ExternalViewerRulesTable.getRowCount() > 0;
         editRuleButton.setEnabled(ruleIsSelected);
         deleteRuleButton.setEnabled(ruleIsSelected);
         return ruleIsSelected;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel ContentViewerExtensionLabel;
+    private javax.swing.JTable ExternalViewerRulesTable;
+    private javax.swing.JLabel HxDLabel;
     private javax.swing.JTextField HxDPath;
     private javax.swing.JButton browseHxDDirectory;
     private javax.swing.JButton deleteRuleButton;
     private javax.swing.JButton editRuleButton;
     private javax.swing.JLabel externalViewerTitleLabel;
     private javax.swing.JButton jButton2;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JTable jTable1;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JButton newRuleButton1;
     // End of variables declaration//GEN-END:variables

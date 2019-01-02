@@ -22,6 +22,9 @@ import junit.framework.Assert;
 import org.junit.Test;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerRule.RuleType;
 
+/**
+ * 72% code coverage of ExternalViewerGlobalSettingsPanel
+ */
 public class ExternalViewerGlobalSettingsPanelTest {
     
     static final String[] testColumnNames = {"A", "B"};

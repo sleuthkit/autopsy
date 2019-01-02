@@ -18,14 +18,12 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import java.util.List;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerRule.RuleType;
 
 /**
- *
- * @author dsmyda
+ * 100% code coverage of ExternalViewerGlobalSettingsTableModel
  */
 public class ExternalViewerGlobalSettingsTableModelTest {
     
@@ -42,10 +40,9 @@ public class ExternalViewerGlobalSettingsTableModelTest {
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
         testModel.addRule(new ExternalViewerRule("image/png", "test.exe", RuleType.MIME));
         
-        List<ExternalViewerRule> rules = testModel.getRules();
-        Assert.assertEquals(1, rules.size());
+        Assert.assertEquals(1, testModel.getRowCount());
         
-        ExternalViewerRule rule = rules.get(0);
+        ExternalViewerRule rule = testModel.getRuleAt(0);
         Assert.assertEquals("image/png", rule.getName());
         Assert.assertEquals("test.exe", rule.getExePath());
         Assert.assertEquals(RuleType.MIME, rule.getRuleType());
@@ -170,10 +167,10 @@ public class ExternalViewerGlobalSettingsTableModelTest {
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
         ExternalViewerRule rule = new ExternalViewerRule("image/png", "test.ext", RuleType.MIME);
         testModel.addRule(rule);
-        Assert.assertEquals(1, testModel.getRules().size());
+        Assert.assertEquals(1, testModel.getRowCount());
         
         testModel.removeRule(0);
-        Assert.assertEquals(0, testModel.getRules().size());
+        Assert.assertEquals(0, testModel.getRowCount());
         Assert.assertFalse(testModel.containsRule(rule));
     }
 
@@ -184,23 +181,6 @@ public class ExternalViewerGlobalSettingsTableModelTest {
     public void testIsCellEditable() {
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
         Assert.assertFalse(testModel.isCellEditable(0, 0));
-    }
-
-    /**
-     * Test of getRules method, of class ExternalViewerGlobalSettingsTableModel.
-     */
-    @Test
-    public void testGetRules() {
-        ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
-        Assert.assertNotNull(testModel.getRules());
-        Assert.assertEquals(0, testModel.getRules().size());
-        
-        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
-        Assert.assertEquals(1, testModel.getRules().size());
-        ExternalViewerRule rule = testModel.getRuleAt(0);
-        Assert.assertEquals(".txt", rule.getName());
-        Assert.assertEquals("notepad.exe", rule.getExePath());
-        Assert.assertEquals(RuleType.EXT, rule.getRuleType());
     }
 
     /**
