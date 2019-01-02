@@ -270,8 +270,14 @@ public class ImageGalleryModule {
         @Override
         public void propertyChange(PropertyChangeEvent event) {
             Case.Events eventType = Case.Events.valueOf(event.getPropertyName());
-            if (eventType == Case.Events.CURRENT_CASE && event.getOldValue() != null) {
-                SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
+            if (eventType == Case.Events.CURRENT_CASE) {
+                if (event.getOldValue() != null) {
+                    /*
+                     * The old value is set, then the CURRENT_CASE event is a
+                     * case closed event.
+                     */
+                    SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
+                }
             } else {
                 ImageGalleryController currentController;
                 try {
