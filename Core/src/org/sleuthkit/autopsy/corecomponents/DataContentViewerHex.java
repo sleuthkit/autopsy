@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -231,7 +232,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 .addComponent(goToOffsetTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(launchHxDButton)
-                .addContainerGap(39, Short.MAX_VALUE))
+                .addContainerGap(146, Short.MAX_VALUE))
         );
         hexViewerPanelLayout.setVerticalGroup(
             hexViewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -254,13 +255,15 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 .addGap(0, 0, 0))
         );
 
+        launchHxDButton.setEnabled(PlatformUtil.isWindowsOS());
+
         jScrollPane2.setViewportView(hexViewerPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 686, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 827, Short.MAX_VALUE)
             .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -268,7 +271,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE))
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 239, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
