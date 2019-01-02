@@ -475,16 +475,19 @@ public final class UserPreferences {
     }
     
     /**
+     * Set the HdX path.
      * 
-     * @param executablePath 
+     * @param executablePath User-inputted path to HxD executable
      */
     public static void setHdXEditorPath(String executablePath) {
         preferences.put(HDX_EDITOR_PATH, executablePath);
     }
     
     /**
+     * Retrieves the HdXEditor path set by the User. If not found, the default
+     * will be the default install location of HxD.
      * 
-     * @return 
+     * @return Path to HdX
      */
     public static String getHdXEditorPath() {
         return preferences.get(HDX_EDITOR_PATH, Paths.get("C:", "Program Files", "HxD", "HxD.exe").toString());
