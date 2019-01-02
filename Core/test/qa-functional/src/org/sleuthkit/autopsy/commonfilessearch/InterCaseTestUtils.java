@@ -59,6 +59,7 @@ import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeCountSearchResults;
 import org.sleuthkit.autopsy.datamodel.utils.DataSourceLoader;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValue;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueList;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.modules.dataSourceIntegrity.DataSourceIntegrityModuleFactory;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.EmbeddedFileExtractorModuleFactory;
@@ -426,7 +427,7 @@ class InterCaseTestUtils {
 
                                 boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
                                 boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
-                                boolean sameCrCase = testCaseName.substring(0, testCaseName.length() - 20).equalsIgnoreCase(crCase);
+                                boolean sameCrCase = TimeStampUtils.removeTimeStamp(testCaseName).equalsIgnoreCase(crCase);
 
                                 if (sameFileName && sameDataSource && sameCrCase) {
                                     tally++;
@@ -443,7 +444,7 @@ class InterCaseTestUtils {
                                 final String testDataSource = node.getDataSource();
 
                                 boolean sameFileName = testFileName.equalsIgnoreCase(fileName);
-                                boolean sameCaseName = testCaseName.substring(0, testCaseName.length() - 20).equalsIgnoreCase(crCase);
+                                boolean sameCaseName = TimeStampUtils.removeTimeStamp(testCaseName).equalsIgnoreCase(crCase);
                                 boolean sameDataSource = testDataSource.equalsIgnoreCase(dataSource);
 
                                 if (sameFileName && sameDataSource && sameCaseName) {

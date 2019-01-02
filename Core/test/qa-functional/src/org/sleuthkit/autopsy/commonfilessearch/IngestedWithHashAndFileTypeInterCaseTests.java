@@ -97,7 +97,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
      */
     public void testOne() {
         try {
-            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.FILE_TYPE, 100);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.FILE_TYPE, 0);
             CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
 
             assertTrue("Results should not be empty", metadata.size() != 0);
@@ -155,7 +155,7 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
                 }
             }
             CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
-            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false, fileType, 100);
+            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false, fileType, 0);
 
             CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
 
