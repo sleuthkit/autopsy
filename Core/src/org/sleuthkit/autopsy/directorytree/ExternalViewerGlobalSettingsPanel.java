@@ -30,6 +30,7 @@ import org.openide.util.NbBundle;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * An options panel for the user to create, edit, and delete associations for
@@ -220,6 +221,8 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                     .addComponent(browseHxDDirectory))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        browseHxDDirectory.setEnabled(PlatformUtil.isWindowsOS());
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);

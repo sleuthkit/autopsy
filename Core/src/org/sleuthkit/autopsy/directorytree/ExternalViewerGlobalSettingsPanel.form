@@ -307,6 +307,9 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="browseHxDDirectoryActionPerformed"/>
               </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_AddingCodePost" type="java.lang.String" value="browseHxDDirectory.setEnabled(PlatformUtil.isWindowsOS());"/>
+              </AuxValues>
             </Component>
           </SubComponents>
         </Container>
