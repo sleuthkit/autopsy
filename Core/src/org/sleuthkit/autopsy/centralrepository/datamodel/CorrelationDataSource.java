@@ -57,7 +57,7 @@ public class CorrelationDataSource implements Serializable {
      * @param dataSourceObjectId The object ID for the datasource
      */
     public CorrelationDataSource(CorrelationCase correlationCase, String deviceId, String name, long dataSourceObjectId) {
-        this(correlationCase.getID(), -1, deviceId, name, dataSourceObjectId);
+        this(correlationCase.getID(), -1, deviceId, name, dataSourceObjectId, null, null, null);
     }
 
     /**
@@ -159,25 +159,22 @@ public class CorrelationDataSource implements Serializable {
 
         if (correlationDataSource == null) {
             String deviceId;
-            try {
-                deviceId = curCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
-            } catch (TskDataException | TskCoreException ex) {
-                throw new EamDbException("Error getting data source info: " + ex.getMessage());
-            }
             String md5 = null;
             String sha1 = null;
             String sha256 = null;
-            if (dataSource instanceof Image) {
-                try {
+            try {
+                deviceId = curCase.getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
+                
+                if (dataSource instanceof Image) {
                     Image image = (Image) dataSource;
-                    //DLG: These need to be stored in a CorrelationDataSource instance.
                     md5 = image.getMd5();
                     sha1 = image.getSha1();
                     sha256 = image.getSha256();
-                } catch (TskCoreException ex) {
-                    Exceptions.printStackTrace(ex); //DLG: Replace this with something meaningful!
                 }
+            } catch (TskDataException | TskCoreException ex) {
+                throw new EamDbException("Error getting data source info: " + ex.getMessage());
             }
+
             correlationDataSource = new CorrelationDataSource(correlationCase, deviceId, dataSource.getName(), dataSource.getId(), md5, sha1, sha256);
             if (useCR) {
                 //add the correlation data source to the central repository and fill in the Central repository data source id in the object
