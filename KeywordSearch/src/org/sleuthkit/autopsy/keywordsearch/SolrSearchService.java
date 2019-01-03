@@ -124,7 +124,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 ingester.indexMetaDataOnly(artifact, sourceName);
                 ingester.indexText(blackboardExtractedTextReader, artifact.getArtifactID(), sourceName, content, null);
             } catch (Ingester.IngesterException | TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
-                throw new TskCoreException(ex.getCause().getMessage(), ex);
+                throw new TskCoreException("Error indexing artifact", ex);
             }
         } else {
             try {
@@ -138,7 +138,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     Reader stringsExtractedTextReader = stringsExtractor.getReader();
                     ingester.indexText(stringsExtractedTextReader,content.getId(),content.getName(), content, null);
                 } catch (Ingester.IngesterException | TextExtractor.InitReaderException ex1) {
-                    throw new TskCoreException(ex.getCause().getMessage(), ex1);
+                    throw new TskCoreException("Error indexing content", ex1);
                 }
             }
             ingester.commit();
