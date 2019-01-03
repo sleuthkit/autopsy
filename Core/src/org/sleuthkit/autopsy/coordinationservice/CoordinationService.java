@@ -366,7 +366,7 @@ public final class CoordinationService {
      * @throws CoordinationServiceException If there is an error deleting the
      *                                      node.
      */
-    void deleteNode(CategoryNode category, String nodePath) throws CoordinationServiceException {
+    public void deleteNode(CategoryNode category, String nodePath) throws CoordinationServiceException {
         String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
         try {
             curator.delete().forPath(fullNodePath);

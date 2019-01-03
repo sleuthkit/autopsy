@@ -18,18 +18,15 @@
  */
 package org.sleuthkit.autopsy.testutils;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.openide.util.Exceptions;
 import junit.framework.Assert;
-import org.apache.commons.io.FileUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 
 /**
  * Class with utility methods for opening and closing cases for functional
@@ -38,47 +35,34 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 public final class CaseUtils {
 
     /**
-     * Creates a case as the current case in the temp directory (system
-     * property: java.io.tmpdir). Deletes any previous version of the case in
-     * the same location, if it exists. Asserts if there is an error creating
-     * the case.
+     * Appends a time stamp to the given case name for uniqueness and creates a
+     * case as the current case in the temp directory. Asserts if there is an
+     * error creating the case.
      *
      * @param caseName The case name.
      *
      * @return The new case.
      */
     public static Case createAsCurrentCase(String caseName) {
-        /*
-         * Try to delete a previous version of the case, if it exists.
-         */
-        Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), caseName);
-        File caseDirectory = caseDirectoryPath.toFile();
-        if(caseDirectory.exists() && !FileUtil.deleteDir(caseDirectory)){
-            Assert.fail(String.format("Failed to delete existing case %s at %s", caseName, caseDirectoryPath));
-        }
-
-        /*
-         * Try to create the case.
-         */
+        String uniqueCaseName = caseName + "_" + TimeStampUtils.createTimeStamp();
+        Path caseDirectoryPath = Paths.get(System.getProperty("java.io.tmpdir"), uniqueCaseName);
         Case currentCase = null;
         try {
-            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails(caseName));
+            Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), new CaseDetails(uniqueCaseName));
             currentCase = Case.getCurrentCaseThrows();
         } catch (CaseActionException | NoCurrentCaseException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(String.format("Failed to create case %s at %s: %s", caseName, caseDirectoryPath, ex.getMessage()));
+            Assert.fail(String.format("Failed to create case %s at %s: %s", uniqueCaseName, caseDirectoryPath, ex.getMessage()));
         }
         return currentCase;
     }
 
     /**
      * Closes the current case, and optionally deletes it. Asserts if there is
-     * no current case or if there is an error closing or deleting the current
+     * no current case or if there is an error closing the current
      * case.
-     *
-     * @param deleteCase True if the case should be deleted after closing it.
      */
-    public static void closeCurrentCase(boolean deleteCase) {
+    public static void closeCurrentCase() {
         Case currentCase;
         try {
             currentCase = Case.getCurrentCaseThrows();
@@ -92,13 +76,10 @@ public final class CaseUtils {
         String caseDirectory = currentCase.getCaseDirectory();
         try {
             Case.closeCurrentCase();
-            if(deleteCase && !FileUtil.deleteDir(new File(caseDirectory))){
-                Assert.fail(String.format("Failed to delete case directory for case %s at %s", caseName, caseDirectory));  
-            }
         } catch (CaseActionException ex) {
             Exceptions.printStackTrace(ex);
             Assert.fail(String.format("Failed to close case %s at %s: %s", caseName, caseDirectory, ex.getMessage()));
-        } 
+        }
     }
 
     /**

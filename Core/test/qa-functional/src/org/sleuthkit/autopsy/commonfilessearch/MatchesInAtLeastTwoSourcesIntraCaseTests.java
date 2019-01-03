@@ -72,58 +72,58 @@ public class MatchesInAtLeastTwoSourcesIntraCaseTests extends NbTestCase {
 
     @Override
     public void setUp() {
-//        this.utils.createAsCurrentCase();
-//
-//        final ImageDSProcessor imageDSProcessor = new ImageDSProcessor();
-//
-//        this.utils.addImageOne(imageDSProcessor);
-//        this.utils.addImageFour(imageDSProcessor);
-//
-//        IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
-//        IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
-//
-//        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
-//        templates.add(hashLookupTemplate);
-//        templates.add(mimeTypeLookupTemplate);
-//
-//        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileTypeIntraCaseTests.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
-//
-//        try {
-//            IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
-//        } catch (NoCurrentCaseException | TskCoreException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
+        this.utils.createAsCurrentCase();
+
+        final ImageDSProcessor imageDSProcessor = new ImageDSProcessor();
+
+        this.utils.addImageOne(imageDSProcessor);
+        this.utils.addImageFour(imageDSProcessor);
+
+        IngestModuleTemplate hashLookupTemplate = IngestUtils.getIngestModuleTemplate(new HashLookupModuleFactory());
+        IngestModuleTemplate mimeTypeLookupTemplate = IngestUtils.getIngestModuleTemplate(new FileTypeIdModuleFactory());
+
+        ArrayList<IngestModuleTemplate> templates = new ArrayList<>();
+        templates.add(hashLookupTemplate);
+        templates.add(mimeTypeLookupTemplate);
+
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(IngestedWithHashAndFileTypeIntraCaseTests.class.getCanonicalName(), IngestJobSettings.IngestType.FILES_ONLY, templates);
+
+        try {
+            IngestUtils.runIngestJob(Case.getCurrentCaseThrows().getDataSources(), ingestJobSettings);
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 
     @Override
     public void tearDown() {
-//        this.utils.tearDown();
+        this.utils.tearDown();
     }
 
     public void testOne() {
-//        try {
-//            Map<Long, String> dataSources = this.utils.getDataSourceMap();
-//
-//            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
-//            CommonAttributeCountSearchResults metadata = allSourcesBuilder.findMatches();
-//
-//            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
-//
-//            List<AbstractFile> files = IntraCaseTestUtils.getFiles(objectIdToDataSource.keySet());
-//
-//            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET1, 0));
-//            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET4, 0));
-//
-//            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET1, 0));
-//            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET4, 0));
-//
-//            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET1, 0));
-//            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET4, 0));
-//
-//        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
+        try {
+            Map<Long, String> dataSources = this.utils.getDataSourceMap();
+
+            AbstractCommonAttributeSearcher allSourcesBuilder = new AllIntraCaseCommonAttributeSearcher(dataSources, false, false, 0);
+            CommonAttributeCountSearchResults metadata = allSourcesBuilder.findMatchesByCount();
+
+            Map<Long, String> objectIdToDataSource = IntraCaseTestUtils.mapFileInstancesToDataSources(metadata);
+
+            List<AbstractFile> files = IntraCaseTestUtils.getFiles(objectIdToDataSource.keySet());
+
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET1, 0));
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, IMG, SET4, 0));
+
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET1, 0));
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, DOC, SET4, 0));
+
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET1, 0));
+            assertTrue(IntraCaseTestUtils.verifyInstanceExistanceAndCount(files, dataSources, EMPTY, SET4, 0));
+
+        } catch (NoCurrentCaseException | TskCoreException | SQLException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 }
