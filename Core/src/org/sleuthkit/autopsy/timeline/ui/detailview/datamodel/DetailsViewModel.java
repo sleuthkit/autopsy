@@ -165,7 +165,7 @@ final public class DetailsViewModel {
                           + "  event_id, " //NON-NLS
                           + " hash_hit, " //NON-NLS
                           + " tagged, " //NON-NLS
-                          + " sub_type, base_type, "
+                          + " event_type_id, super_type_id, "
                           + " full_description, med_description, short_description " // NON-NLS
                           + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(activeFilter) // NON-NLS
                           + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(activeFilter) // NON-NLS
@@ -205,7 +205,7 @@ final public class DetailsViewModel {
     private TimelineEvent eventHelper(ResultSet resultSet) throws SQLException, TskCoreException {
 
         //the event tyepe to use to get the description.
-        int eventTypeID = resultSet.getInt("sub_type");
+        int eventTypeID = resultSet.getInt("event_type_id");
         EventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
                 -> new TskCoreException("Error mapping event type id " + eventTypeID + "to EventType."));//NON-NLS
 

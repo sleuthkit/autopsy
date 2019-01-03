@@ -48,7 +48,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
      *                   this tree item
      */
     BaseTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
-        super(EventType.getCommonSuperType(event.getEventTypes()).getBaseType(), comparator);
+        super (event.getEventType().getBaseType(), comparator);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -62,8 +62,8 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
          * if the stripe and this tree item have the same type, create a
          * description tree item, else create a sub-type tree item
          */
-        if (EventType.getCommonSuperType(head.getEventTypes()).getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
-            descriptionKey = EventType.getCommonSuperType(head.getEventTypes()).getDisplayName();
+        if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
+            descriptionKey = head.getEventType().getDisplayName();
             treeItemConstructor = () -> configureNewTreeItem(new SubTypeTreeItem(head, getComparator()));
         } else {
             descriptionKey = head.getDescription();
@@ -88,8 +88,8 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
          * if the stripe and this tree item have the same type, get the child
          * item keyed on event type, else keyed on description.
          */
-        if (EventType.getCommonSuperType(head.getEventTypes()).getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
-            descTreeItem = childMap.get(EventType.getCommonSuperType(head.getEventTypes()).getDisplayName());
+        if (head.getEventType().getZoomLevel() == EventTypeZoomLevel.SUB_TYPE) {
+            descTreeItem = childMap.get(head.getEventType().getDisplayName());
         } else {
             path.remove(0); //remove head of list if we are going straight to description
             descTreeItem = childMap.get(head.getDescription());

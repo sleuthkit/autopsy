@@ -126,7 +126,6 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
     @NbBundle.Messages({
         "ShowInTimelineDialog.amountValidator.message=The entered amount must only contain digits."})
     private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) throws TskCoreException {
-        this.controller = controller;
 
         //load dialog content fxml
         final String name = "nbres:/" + StringUtils.replace(ShowInTimelineDialog.class.getPackage().getName(), ".", "/") + "/ShowInTimelineDialog.fxml"; // NON-NLS
