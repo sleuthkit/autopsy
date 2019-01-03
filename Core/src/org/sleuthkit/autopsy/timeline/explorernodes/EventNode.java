@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.timeline.explorernodes;
 
+import com.google.common.collect.Iterables;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.logging.Level;
+import static java.util.stream.Collectors.joining;
 import javax.swing.Action;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -50,14 +53,13 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
  * * Explorer Node for a TimelineEvent.
  */
 public class EventNode extends DisplayableItemNode {
-
-    private static final long serialVersionUID = 1L;
 
     private static final Logger LOGGER = Logger.getLogger(EventNode.class.getName());
 
@@ -66,13 +68,15 @@ public class EventNode extends DisplayableItemNode {
     EventNode(TimelineEvent event, Content file, BlackboardArtifact artifact) {
         super(Children.LEAF, Lookups.fixed(event, file, artifact));
         this.event = event;
-        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
+        EventType evenType = event.getEventType();
+        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(evenType));
     }
 
     EventNode(TimelineEvent event, Content file) {
         super(Children.LEAF, Lookups.fixed(event, file));
         this.event = event;
-        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(event.getEventType())); // NON-NLS
+        EventType evenType = event.getEventType();
+        this.setIconBaseWithExtension(EventTypeUtils.getImagePath(evenType));
     }
 
     @Override
@@ -94,9 +98,10 @@ public class EventNode extends DisplayableItemNode {
         properties.put(new NodeProperty<>("icon", Bundle.NodeProperty_displayName_icon(), "icon", true)); // NON-NLS //gets overridden with icon
         properties.put(new TimeProperty("time", Bundle.NodeProperty_displayName_dateTime(), "time ", getDateTimeString()));// NON-NLS
         properties.put(new NodeProperty<>("description", Bundle.NodeProperty_displayName_description(), "description", event.getFullDescription())); // NON-NLS
-        properties.put(new NodeProperty<>("eventBaseType", Bundle.NodeProperty_displayName_baseType(), "base type", event.getEventType().getSuperType().getDisplayName())); // NON-NLS
-        properties.put(new NodeProperty<>("eventSubType", Bundle.NodeProperty_displayName_subType(), "sub type", event.getEventType().getDisplayName())); // NON-NLS
-        
+        // todo: change filesystem events to use MACB notation.    
+        properties.put(new NodeProperty<>("eventSubType", Bundle.NodeProperty_displayName_subType(), "sub type",
+                event.getEventType())); // NON-NLS
+
         return sheet;
     }
 
@@ -225,7 +230,7 @@ public class EventNode extends DisplayableItemNode {
              * Look up the event by id and creata an EventNode with the
              * appropriate data in the lookup.
              */
-        final TimelineEvent eventById = eventsModel.getEventById(eventID);
+            final TimelineEvent eventById = eventsModel.getEventById(eventID);
 
             Content file = sleuthkitCase.getContentById(eventById.getFileObjID());
 

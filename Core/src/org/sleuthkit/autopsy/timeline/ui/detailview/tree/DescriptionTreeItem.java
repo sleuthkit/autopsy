@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-18 Basis Technology Corp.
+ * Copyright 2014-19 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -103,7 +103,7 @@ class DescriptionTreeItem extends EventsTreeItem {
     @Override
     public EventsTreeItem findTreeItemForEvent(DetailViewEvent event) {
         if (getValue().getEventType() == event.getEventType()
-                && getValue().getDescription().equals(event.getDescription())) {
+            && getValue().getDescription().equals(event.getDescription())) {
             //if this tree item match the given event, return this.
             return this;
         } else {

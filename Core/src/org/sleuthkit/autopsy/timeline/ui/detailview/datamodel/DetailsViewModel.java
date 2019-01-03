@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -216,12 +216,12 @@ final public class DetailsViewModel {
                 resultSet.getLong("artifact_id"), // NON-NLS
                 resultSet.getLong("time"), // NON-NLS
                 eventType,
-                eventType.getDescription(
-                        resultSet.getString("full_description"), // NON-NLS
-                        resultSet.getString("med_description"), // NON-NLS
-                        resultSet.getString("short_description")), // NON-NLS
+                resultSet.getString("full_description"), // NON-NLS
+                resultSet.getString("med_description"), // NON-NLS
+                resultSet.getString("short_description"), // NON-NLS
                 resultSet.getInt("hash_hit") != 0, //NON-NLS
                 resultSet.getInt("tagged") != 0);
+
     }
 
     /**
@@ -285,5 +285,4 @@ final public class DetailsViewModel {
                 .sorted(new DetailViewEvent.StartComparator())
                 .collect(Collectors.toList());
     }
-
 }

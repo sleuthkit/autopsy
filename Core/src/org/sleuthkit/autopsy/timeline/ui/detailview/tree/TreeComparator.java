@@ -19,9 +19,11 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.tree;
 
 import java.util.Comparator;
+import java.util.function.Function;
 import javafx.scene.control.TreeItem;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
  * Comparators of TreeItems: these are the ways the EventsTree can be sorted.
