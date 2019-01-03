@@ -19,9 +19,11 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.io.Serializable;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskDataException;
 
@@ -39,6 +41,9 @@ public class CorrelationDataSource implements Serializable {
     private final Long dataSourceObjectID; //< Id for data source in the caseDB 
     private final String deviceID;  //< Unique to its associated case (not necessarily globally unique)
     private final String name;
+    private final String md5Hash;
+    private final String sha1Hash;
+    private final String sha256Hash;
 
     /**
      * Create a CorrelationDataSource object, the object will not have the data
@@ -69,11 +74,60 @@ public class CorrelationDataSource implements Serializable {
             String deviceId,
             String name,
             Long dataSourceObjectId) {
+        this(caseId, dataSourceId, deviceId, name, dataSourceObjectId, null, null, null);
+    }
+
+    /**
+     * Create a CorrelationDataSource object.
+     *
+     * @param correlationCase    CorrelationCase object data source is
+     *                           associated with. Must have been created by
+     *                           EamDB and have a valid ID.
+     * @param deviceId           User specified ID for device (unique per case)
+     * @param name               User specified name
+     * @param dataSourceObjectId The object ID for the datasource
+     * @param md5Hash            The MD5 hash value
+     * @param sha1Hash           The SHA-1 hash value
+     * @param sha256Hash         The SHA-256 hash value
+     */
+    CorrelationDataSource(CorrelationCase correlationCase,
+            String deviceId,
+            String name,
+            Long dataSourceObjectId,
+            String md5Hash,
+            String sha1Hash,
+            String sha256Hash) {
+        this(correlationCase.getID(), -1, deviceId, name, dataSourceObjectId, md5Hash, sha1Hash, sha256Hash);
+    }
+
+    /**
+     * Create a CorrelationDataSource object.
+     *
+     * @param caseId             Row ID for Case in DB
+     * @param dataSourceId       Row ID for this data source in DB (or -1)
+     * @param deviceId           User specified ID for device (unique per case)
+     * @param name               User specified name
+     * @param dataSourceObjectId The object ID for the datasource
+     * @param md5Hash            The MD5 hash value
+     * @param sha1Hash           The SHA-1 hash value
+     * @param sha256Hash         The SHA-256 hash value
+     */
+    CorrelationDataSource(int caseId,
+            int dataSourceId,
+            String deviceId,
+            String name,
+            Long dataSourceObjectId,
+            String md5Hash,
+            String sha1Hash,
+            String sha256Hash) {
         this.caseID = caseId;
         this.dataSourceID = dataSourceId;
         this.deviceID = deviceId;
         this.name = name;
         this.dataSourceObjectID = dataSourceObjectId;
+        this.md5Hash = md5Hash;
+        this.sha1Hash = sha1Hash;
+        this.sha256Hash = sha256Hash;
     }
 
     /**
@@ -110,7 +164,21 @@ public class CorrelationDataSource implements Serializable {
             } catch (TskDataException | TskCoreException ex) {
                 throw new EamDbException("Error getting data source info: " + ex.getMessage());
             }
-            correlationDataSource = new CorrelationDataSource(correlationCase, deviceId, dataSource.getName(), dataSource.getId());
+            String md5 = null;
+            String sha1 = null;
+            String sha256 = null;
+            if (dataSource instanceof Image) {
+                try {
+                    Image image = (Image) dataSource;
+                    //DLG: These need to be stored in a CorrelationDataSource instance.
+                    md5 = image.getMd5();
+                    sha1 = image.getSha1();
+                    sha256 = image.getSha256();
+                } catch (TskCoreException ex) {
+                    Exceptions.printStackTrace(ex); //DLG: Replace this with something meaningful!
+                }
+            }
+            correlationDataSource = new CorrelationDataSource(correlationCase, deviceId, dataSource.getName(), dataSource.getId(), md5, sha1, sha256);
             if (useCR) {
                 //add the correlation data source to the central repository and fill in the Central repository data source id in the object
                 correlationDataSource = EamDb.getInstance().newDataSource(correlationDataSource);
@@ -172,5 +240,26 @@ public class CorrelationDataSource implements Serializable {
      */
     public String getName() {
         return name;
+    }
+    
+    /**
+     * @return the MD5 hash value
+     */
+    String getMd5Hash() {
+        return md5Hash;
+    }
+    
+    /**
+     * @return the SHA-1 hash value
+     */
+    String getSha1Hash() {
+        return sha1Hash;
+    }
+    
+    /**
+     * @return the SHA-256 hash value
+     */
+    String getSha256Hash() {
+        return sha256Hash;
     }
 }

@@ -622,7 +622,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         PreparedStatement preparedStatement = null;
 
-        String sql = "INSERT INTO data_sources(device_id, case_id, name, datasource_obj_id) VALUES (?, ?, ?, ?) "
+        String sql = "INSERT INTO data_sources(device_id, case_id, name, datasource_obj_id) VALUES (?, ?, ?, ?, ?, ?, ?) "
                 + getConflictClause();
         ResultSet resultSet = null;
         try {
@@ -632,6 +632,9 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setInt(2, eamDataSource.getCaseID());
             preparedStatement.setString(3, eamDataSource.getName());
             preparedStatement.setLong(4, eamDataSource.getDataSourceObjectID());
+            preparedStatement.setString(5, eamDataSource.getMd5Hash());
+            preparedStatement.setString(6, eamDataSource.getSha1Hash());
+            preparedStatement.setString(7, eamDataSource.getSha256Hash());
 
             preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
@@ -639,7 +642,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                 throw new EamDbException(String.format("Failed to INSERT data source %s in central repo", eamDataSource.getName()));
             }
             int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
-            CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID());
+            CorrelationDataSource dataSource = new CorrelationDataSource(
+                    eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID(),
+                    eamDataSource.getMd5Hash(), eamDataSource.getSha1Hash(), eamDataSource.getSha256Hash());
             dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(dataSource.getCaseID(), dataSource.getDataSourceObjectID()), dataSource);
             dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
             return dataSource;
