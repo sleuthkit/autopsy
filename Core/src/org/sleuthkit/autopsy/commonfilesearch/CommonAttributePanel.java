@@ -277,8 +277,9 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
 
                 }
                 metadata = builder.findMatchesByCount();
+                metadata.filterMetadata();
                 this.tabTitle = builder.getTabTitle();
-                return metadata;
+                return metadata;      
             }
 
             @Override

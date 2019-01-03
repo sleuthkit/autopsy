@@ -50,12 +50,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * with a dependency on the Autopsy-Core NBM; the otherwise obvious solution of
  * publicly exposing the keyword search module settings fails due to a circular
  * dependency.
- *
- * TODO (JIRA-4241): All of the tests in this class are commented out until the
- * Image Gallery tool cleans up its drawable database connection
- * deterministically, instead of in a finalizer. As it is now, case deletion can
- * fail due to an open drawable database file handles, and that makes the tests
- * fail.
  */
 public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 
@@ -75,33 +69,33 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
 
     @Override
     public void setUp() {
-//        this.utils.clearTestDir();
-//        try {
-//            this.utils.enableCentralRepo();
-//
-//            String[] cases = new String[]{
-//                CASE1,
-//                CASE2,
-//                CASE3,
-//                CASE4};
-//
-//            Path[][] paths = {
-//                {this.utils.attrCase1Path},
-//                {this.utils.attrCase2Path},
-//                {this.utils.attrCase3Path},
-//                {this.utils.attrCase4Path}};
-//
-//            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForKitchenSink(), InterCaseTestUtils.CASE1);
-//        } catch (TskCoreException | EamDbException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
+        this.utils.clearTestDir();
+        try {
+            this.utils.enableCentralRepo();
+
+            String[] cases = new String[]{
+                CASE1,
+                CASE2,
+                CASE3,
+                CASE4};
+
+            Path[][] paths = {
+                {this.utils.attrCase1Path},
+                {this.utils.attrCase2Path},
+                {this.utils.attrCase3Path},
+                {this.utils.attrCase4Path}};
+
+            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForKitchenSink(), InterCaseTestUtils.CASE1);
+        } catch (TskCoreException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 
     @Override
     public void tearDown() {
-//        this.utils.clearTestDir();
-//        this.utils.tearDown();
+        this.utils.clearTestDir();
+        this.utils.tearDown();
     }
 
     /**
@@ -148,29 +142,29 @@ public class CommonAttributeSearchInterCaseTests extends NbTestCase {
      * than the file type.
      */
     public void testTwo() {
-//        try {
-//
-//            AbstractCommonAttributeSearcher builder;
-//            CommonAttributeCountSearchResults metadata;
-//
-//            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 100);
-//            metadata = builder.findMatchesByCount();
-//            metadata.size();
-//            //assertTrue("This should yield 13 results.", verifyInstanceCount(metadata, 13));
-//
-//            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 20);
-//            metadata = builder.findMatchesByCount();
-//            metadata.size();
-//            //assertTrue("This should yield no results.", verifyInstanceCount(metadata, 0));
-//
-//            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 90);
-//            metadata = builder.findMatchesByCount();
-//            metadata.size();
-//            //assertTrue("This should yield 2 results.", verifyInstanceCount(metadata, 2));
-//
-//        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
+        try {
+
+            AbstractCommonAttributeSearcher builder;
+            CommonAttributeCountSearchResults metadata;
+
+            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 100);
+            metadata = builder.findMatchesByCount();
+            metadata.size();
+            //assertTrue("This should yield 13 results.", verifyInstanceCount(metadata, 13));
+
+            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 20);
+            metadata = builder.findMatchesByCount();
+            metadata.size();
+            //assertTrue("This should yield no results.", verifyInstanceCount(metadata, 0));
+
+            builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.USB_ID_TYPE, 90);
+            metadata = builder.findMatchesByCount();
+            metadata.size();
+            //assertTrue("This should yield 2 results.", verifyInstanceCount(metadata, 2));
+
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 }

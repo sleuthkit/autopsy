@@ -130,7 +130,7 @@ class IntraCaseTestUtils {
     }
 
     void tearDown() {
-        CaseUtils.closeCurrentCase(false);
+        CaseUtils.closeCurrentCase();
     }
 
     /**
