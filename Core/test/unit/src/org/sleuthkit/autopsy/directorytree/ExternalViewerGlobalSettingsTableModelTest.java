@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import junit.framework.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerRule.RuleType;
 
@@ -28,8 +29,22 @@ import org.sleuthkit.autopsy.directorytree.ExternalViewerRule.RuleType;
 public class ExternalViewerGlobalSettingsTableModelTest {
     
     static final String[] testColumnNames = {"A", "B"};
+    private ExternalViewerRule pngMime;
+    private ExternalViewerRule txtExt;
+    private ExternalViewerRule wavExt;
     
+    /**
+     * Initialize JUnit test
+     */
     public ExternalViewerGlobalSettingsTableModelTest() {
+        //Empty constructor
+    }
+    
+    @Before
+    public void setUp() {
+        pngMime = new ExternalViewerRule("image/png", "test.exe", RuleType.MIME);
+        txtExt = new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT);
+        wavExt = new ExternalViewerRule(".wav", "video.exe", RuleType.EXT);
     }
 
     /**
@@ -38,7 +53,7 @@ public class ExternalViewerGlobalSettingsTableModelTest {
     @Test
     public void testAddRule() {
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
-        testModel.addRule(new ExternalViewerRule("image/png", "test.exe", RuleType.MIME));
+        testModel.addRule(pngMime);
         
         Assert.assertEquals(1, testModel.getRowCount());
         
@@ -56,9 +71,9 @@ public class ExternalViewerGlobalSettingsTableModelTest {
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
         Assert.assertEquals(0, testModel.getRowCount());
         
-        testModel.addRule(new ExternalViewerRule("image/png", "test.exe", RuleType.MIME));
-        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
-        testModel.addRule(new ExternalViewerRule(".wav", "video.exe", RuleType.EXT));
+        testModel.addRule(pngMime);
+        testModel.addRule(txtExt);
+        testModel.addRule(wavExt);
         
         Assert.assertEquals(3, testModel.getRowCount());
     }
@@ -105,9 +120,9 @@ public class ExternalViewerGlobalSettingsTableModelTest {
     @Test
     public void testGetValueAt() {
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
-        testModel.addRule(new ExternalViewerRule("image/png", "test.exe", RuleType.MIME));
-        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
-        testModel.addRule(new ExternalViewerRule(".wav", "video.exe", RuleType.EXT));
+        testModel.addRule(pngMime);
+        testModel.addRule(txtExt);
+        testModel.addRule(wavExt);
         
         Assert.assertEquals(".txt", testModel.getValueAt(1,0));
         Assert.assertEquals("notepad.exe", testModel.getValueAt(1,1));
@@ -121,9 +136,9 @@ public class ExternalViewerGlobalSettingsTableModelTest {
     @Test
     public void testGetRuleAt() {
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
-        testModel.addRule(new ExternalViewerRule("image/png", "test.exe", RuleType.MIME));
-        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
-        testModel.addRule(new ExternalViewerRule(".wav", "video.exe", RuleType.EXT));
+        testModel.addRule(pngMime);
+        testModel.addRule(txtExt);
+        testModel.addRule(wavExt);
         
         ExternalViewerRule rule = testModel.getRuleAt(1);
         Assert.assertEquals(".txt", rule.getName());
@@ -142,17 +157,17 @@ public class ExternalViewerGlobalSettingsTableModelTest {
     @Test
     public void testSetRule() {
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
-        testModel.addRule(new ExternalViewerRule("image/png", "test.exe", RuleType.MIME));
-        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
-        testModel.addRule(new ExternalViewerRule(".wav", "video.exe", RuleType.EXT));
+        testModel.addRule(pngMime);
+        testModel.addRule(txtExt);
+        testModel.addRule(wavExt);
         
-        testModel.setRule(0, new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
+        testModel.setRule(0, txtExt);
         ExternalViewerRule rule = testModel.getRuleAt(1);
         Assert.assertEquals(".txt", rule.getName());
         Assert.assertEquals("notepad.exe", rule.getExePath());
         Assert.assertEquals(RuleType.EXT, rule.getRuleType());
         
-        testModel.setRule(2, new ExternalViewerRule("image/png", "test.exe", RuleType.MIME));
+        testModel.setRule(2, pngMime);
         ExternalViewerRule ruleTwo = testModel.getRuleAt(2);
         Assert.assertEquals("image/png", ruleTwo.getName());
         Assert.assertEquals("test.exe", ruleTwo.getExePath());
@@ -165,13 +180,12 @@ public class ExternalViewerGlobalSettingsTableModelTest {
     @Test
     public void testRemoveRule() {
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
-        ExternalViewerRule rule = new ExternalViewerRule("image/png", "test.ext", RuleType.MIME);
-        testModel.addRule(rule);
+        testModel.addRule(pngMime);
         Assert.assertEquals(1, testModel.getRowCount());
         
         testModel.removeRule(0);
         Assert.assertEquals(0, testModel.getRowCount());
-        Assert.assertFalse(testModel.containsRule(rule));
+        Assert.assertFalse(testModel.containsRule(pngMime));
     }
 
     /**
@@ -188,17 +202,15 @@ public class ExternalViewerGlobalSettingsTableModelTest {
      */
     @Test
     public void testContainsRule() {
-        ExternalViewerRule rule = new ExternalViewerRule("image/png", "test.exe", RuleType.MIME);
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
-        testModel.addRule(rule);
-        Assert.assertTrue(testModel.containsRule(rule));
+        testModel.addRule(pngMime);
+        Assert.assertTrue(testModel.containsRule(pngMime));
     }
     
     @Test
     public void testNotContains() {
-        ExternalViewerRule rule = new ExternalViewerRule("image/png", "test.exe", RuleType.MIME);
         ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
-        testModel.addRule(rule);
+        testModel.addRule(pngMime);
         Assert.assertFalse(testModel.containsRule(new ExternalViewerRule("not", "a rule", RuleType.EXT)));
         Assert.assertFalse(testModel.containsRule(null));
     }

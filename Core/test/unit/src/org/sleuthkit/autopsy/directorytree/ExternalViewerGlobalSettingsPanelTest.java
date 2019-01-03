@@ -29,7 +29,11 @@ public class ExternalViewerGlobalSettingsPanelTest {
     
     static final String[] testColumnNames = {"A", "B"};
     
+    /**
+     * Default constructor for JUnit
+     */
     public ExternalViewerGlobalSettingsPanelTest(){
+        //Codacy complains if there is no comment here
     }
     
     @Test

@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -27,11 +29,11 @@ import javax.swing.table.AbstractTableModel;
  */
 class ExternalViewerGlobalSettingsTableModel extends AbstractTableModel {
 
-    private final ArrayList<ExternalViewerRule> rules;
+    private final List<ExternalViewerRule> rules;
     private final String[] columnNames;
 
-    public ExternalViewerGlobalSettingsTableModel(String[] columnNames) {
-        this.columnNames = columnNames;
+    public ExternalViewerGlobalSettingsTableModel(String... columnNames) {
+        this.columnNames = Arrays.copyOf(columnNames, columnNames.length);
         this.rules = new ArrayList<>();
     }
 
