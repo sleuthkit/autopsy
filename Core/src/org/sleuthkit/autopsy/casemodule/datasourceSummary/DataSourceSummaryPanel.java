@@ -36,6 +36,7 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 public class DataSourceSummaryPanel extends javax.swing.JPanel {
 
@@ -115,9 +116,11 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         ingestHistoryButton = new javax.swing.JButton();
 
         dataSourcesTable.setModel(dataSourceTableModel);
+        dataSourcesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         dataSourcesScrollPane.setViewportView(dataSourcesTable);
 
         ingestJobsTable.setModel(ingestJobTableModel);
+        ingestJobsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         ingestJobsScrollPane.setViewportView(ingestJobsTable);
 
         fileCountsTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -261,6 +264,8 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         "DataSourceSummaryPanel.IngestJobTableModel.IngestStatus.header=Ingest Status"})
     private class IngestJobTableModel extends AbstractTableModel {
 
+        private static final long serialVersionUID = 1L;
+
         private final List<String> columnHeaders = new ArrayList<>();
 
         IngestJobTableModel() {
@@ -313,6 +318,8 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         "DataSourceSummaryPanel.DataSourceTableModel.tags.header=Tags"})
     private class DataSourceTableModel extends AbstractTableModel {
 
+        private static final long serialVersionUID = 1L;
+
         private final List<String> columnHeaders = new ArrayList<>();
 
         DataSourceTableModel() {
@@ -341,28 +348,48 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
                     return currentDataSource.getName();
                 case 1:
                     return "";
-                case 2: {
-                    return "";
-//                    try {
-//                        return currentDataSource.getChildrenCount();
-//                    } catch (TskCoreException ex) {
-//                        return "UNABLE TO GET DS CHILD SIZE";
-//                    }
-                }
-                case 3: {
-                    return "";
-//                    try {
-//                        return currentDataSource.getAllArtifactsCount();
-//                    } catch (TskCoreException ex) {
-//                        return "UNABLE TO GET ARTIFACT COUNT";
-//                    }
-                }
+                case 2:
+                    return getCountOfFiles(currentDataSource);
+                case 3: 
+                    return getCountOfArtifacts(currentDataSource);
                 case 4:
-                    return "";
+                    return getCountOfTags(currentDataSource);
                 default:
                     break;
             }
             return null;
+        }
+
+        private long getCountOfFiles(DataSource currentDataSource) {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                return skCase.countFilesWhere("data_source_obj_id=" + currentDataSource.getId()
+                        + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                        + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
+                        + " AND name<>''");
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                return 0;
+            }
+        }
+
+        private long getCountOfArtifacts(DataSource currentDataSource) {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                return skCase.getBlackboardArtifactsCountForDatasource(currentDataSource.getId());
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                return 0;
+            }
+        }
+
+        private long getCountOfTags(DataSource currentDataSource) {
+            long countOfTags = 0;
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                countOfTags = skCase.getBlackboardArtifactTagsCountForDataSource(currentDataSource.getId());
+                countOfTags += skCase.getContentTagsCountForDataSource(currentDataSource.getId());
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+            }
+            return countOfTags;
         }
 
         @Override
