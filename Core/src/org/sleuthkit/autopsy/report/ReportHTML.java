@@ -51,10 +51,15 @@ import javax.swing.JPanel;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -1226,6 +1231,13 @@ class ReportHTML implements TableReportModule {
         }
     }
 
+    @Messages({
+        "ReportHTML.writeSum.case=Case:",
+        "ReportHTML.writeSum.caseNumber=Case Number:",
+        "ReportHTML.writeSum.caseNumImages=Number of Images:",
+        "ReportHTML.writeSum.caseNotes=Notes:",
+        "ReportHTML.writeSum.examiner=Examiner:"
+    })
     /**
      * Write the case details section of the summary for this report.
      *
@@ -1233,16 +1245,24 @@ class ReportHTML implements TableReportModule {
      */
     private StringBuilder writeSummaryCaseDetails() {
         StringBuilder summary = new StringBuilder();
+        
+        final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null && !reportBranding.getAgencyLogoPath().isEmpty();
+        
+        // Case
         String caseName = currentCase.getDisplayName();
         String caseNumber = currentCase.getNumber();
-        String examiner = currentCase.getExaminer();
-        final boolean agencyLogoSet = reportBranding.getAgencyLogoPath() != null && !reportBranding.getAgencyLogoPath().isEmpty();
         int imagecount;
         try {
             imagecount = currentCase.getDataSources().size();
         } catch (TskCoreException ex) {
             imagecount = 0;
         }
+        String caseNotes = currentCase.getCaseNotes();
+        
+        // Examiner
+        String examinerName = currentCase.getExaminer();
+        
+        // Start the layout.
         summary.append("<div class=\"title\">\n"); //NON-NLS
         if (agencyLogoSet) {
             summary.append("<div class=\"left\">\n"); //NON-NLS
@@ -1254,17 +1274,31 @@ class ReportHTML implements TableReportModule {
         final String align = agencyLogoSet ? "right" : "left"; //NON-NLS NON-NLS
         summary.append("<div class=\"").append(align).append("\">\n"); //NON-NLS
         summary.append("<table>\n"); //NON-NLS
-        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseName")) //NON-NLS
-                .append("</td><td>").append(caseName).append("</td></tr>\n"); //NON-NLS NON-NLS
-        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum")) //NON-NLS
-                .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle //NON-NLS
-                .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
-        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>") //NON-NLS
-                .append(!examiner.isEmpty() ? examiner : NbBundle
-                        .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
-                .append("</td></tr>\n"); //NON-NLS
-        summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages")) //NON-NLS
-                .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS
+        
+        // Case details
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_case()).append("</td><td>") //NON-NLS
+                .append(formatHtmlString(caseName)).append("</td></tr>\n"); //NON-NLS
+        
+        if (!caseNumber.isEmpty()) {
+            summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNumber()).append("</td><td>") //NON-NLS
+                    .append(formatHtmlString(caseNumber)).append("</td></tr>\n"); //NON-NLS
+        }
+        
+        summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNumImages()).append("</td><td>") //NON-NLS
+                .append(imagecount).append("</td></tr>\n"); //NON-NLS
+        
+        if (!caseNotes.isEmpty()) {
+            summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_caseNotes()).append("</td><td>") //NON-NLS
+                    .append(formatHtmlString(caseNotes)).append("</td></tr>\n"); //NON-NLS
+        }
+        
+        // Examiner details
+        if (!examinerName.isEmpty()) {
+            summary.append("<tr><td>").append(Bundle.ReportHTML_writeSum_examiner()).append("</td><td>") //NON-NLS
+                    .append(formatHtmlString(examinerName)).append("</td></tr>\n"); //NON-NLS
+        }
+        
+        // End the layout.
         summary.append("</table>\n"); //NON-NLS
         summary.append("</div>\n"); //NON-NLS
         summary.append("<div class=\"clear\"></div>\n"); //NON-NLS
@@ -1412,6 +1446,19 @@ class ReportHTML implements TableReportModule {
         }
         return THUMBS_REL_PATH
                 + thumbFile.getName();
+    }
+
+    /**
+     * Apply escape sequence to special characters. Line feed and carriage
+     * return character combinations will be converted to HTML line breaks.
+     *
+     * @param text The text to format.
+     *
+     * @return The formatted text.
+     */
+    private String formatHtmlString(String text) {
+        String formattedString = StringEscapeUtils.escapeHtml4(text);
+        return formattedString.replaceAll("(\r\n|\r|\n|\n\r)", "<br>");
     }
 
 }
