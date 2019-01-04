@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -32,6 +33,7 @@ import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -44,6 +46,7 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
     private List<IngestJobInfo> ingestJobs = new ArrayList<>();
     private DataSourceTableModel dataSourceTableModel = new DataSourceTableModel();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
+    private FilesTableModel filesTableModel = new FilesTableModel();
     private final List<DataSource> dataSources = new ArrayList<>();
     private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final Logger logger = Logger.getLogger(DataSourceSummaryPanel.class.getName());
@@ -69,6 +72,9 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         dataSourcesTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 updateIngestJobs();
+                filesTableModel = new FilesTableModel();
+                fileCountsTable.setModel(filesTableModel);
+                this.repaint();
             }
         });
     }
@@ -87,7 +93,6 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         }
         ingestJobTableModel = new IngestJobTableModel();
         ingestJobsTable.setModel(ingestJobTableModel);
-        this.repaint();
     }
 
     /**
@@ -123,18 +128,7 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         ingestJobsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         ingestJobsScrollPane.setViewportView(ingestJobsTable);
 
-        fileCountsTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {"Images", "0"},
-                {"Videos", "0"},
-                {"Audio", "0"},
-                {"Documents", "0"},
-                {"Executables", "0"}
-            },
-            new String [] {
-                "File type", "Count"
-            }
-        ));
+        fileCountsTable.setModel(filesTableModel);
         fileCountsScrollPane.setViewportView(fileCountsTable);
 
         org.openide.awt.Mnemonics.setLocalizedText(opperatingSystemLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.opperatingSystemLabel.text")); // NOI18N
@@ -311,6 +305,89 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
 
     }
 
+    @Messages({"DataSourceSummaryPanel.FilesTableModel.type.header=File Type",
+        "DataSourceSummaryPanel.FilesTableModel.count.header=Count"})
+    private class FilesTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
+
+        private final List<String> columnHeaders = new ArrayList<>();
+
+        FilesTableModel() {
+            columnHeaders.add(Bundle.DataSourceSummaryPanel_FilesTableModel_type_header());
+            columnHeaders.add(Bundle.DataSourceSummaryPanel_FilesTableModel_count_header());
+        }
+
+        @Override
+        public int getRowCount() {
+            return 5;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnHeaders.size();
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            if (columnIndex == 0) {
+                switch (rowIndex) {
+                    case 0:
+                        return "Images";
+                    case 1:
+                        return "Videos";
+                    case 2:
+                        return "Audio";
+                    case 3:
+                        return "Documents";
+                    case 4:
+                        return "Executables";
+                    default:
+                        break;
+                }
+            } else if (columnIndex == 1) {
+                DataSource currentDataSource = (dataSourcesTable.getSelectedRow() < 0 ? null : dataSources.get(dataSourcesTable.getSelectedRow()));
+                if (currentDataSource != null) {
+                    switch (rowIndex) {
+                        case 0:
+                            return getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.IMAGE.getMediaTypes());
+                        case 1:
+                            return getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.VIDEO.getMediaTypes());
+                        case 2:
+                            return getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes());
+                        case 3:
+                            return getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes());
+                        case 4:
+                            return getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes());
+                        default:
+                            break;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private long getCountOfFiles(DataSource currentDataSource, Set<String> setOfMimeTypes) {
+            try {
+                String inClause = String.join("', '", setOfMimeTypes);
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                return skCase.countFilesWhere("data_source_obj_id=" + currentDataSource.getId()
+                        + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                        + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
+                        + " AND mime_type IN ('" + inClause + "')"
+                        + " AND name<>''");
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                return 0;
+            }
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return columnHeaders.get(column);
+        }
+
+    }
+
     @Messages({"DataSourceSummaryPanel.DataSourceTableModel.dataSourceName.header=Data Source Name",
         "DataSourceSummaryPanel.DataSourceTableModel.type.header=Type",
         "DataSourceSummaryPanel.DataSourceTableModel.files.header=Files",
@@ -350,7 +427,7 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
                     return "";
                 case 2:
                     return getCountOfFiles(currentDataSource);
-                case 3: 
+                case 3:
                     return getCountOfArtifacts(currentDataSource);
                 case 4:
                     return getCountOfTags(currentDataSource);
