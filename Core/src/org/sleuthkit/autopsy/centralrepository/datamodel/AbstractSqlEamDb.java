@@ -632,9 +632,9 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setInt(2, eamDataSource.getCaseID());
             preparedStatement.setString(3, eamDataSource.getName());
             preparedStatement.setLong(4, eamDataSource.getDataSourceObjectID());
-            preparedStatement.setString(5, eamDataSource.getMd5Hash());
-            preparedStatement.setString(6, eamDataSource.getSha1Hash());
-            preparedStatement.setString(7, eamDataSource.getSha256Hash());
+            preparedStatement.setString(5, eamDataSource.getMd5());
+            preparedStatement.setString(6, eamDataSource.getSha1());
+            preparedStatement.setString(7, eamDataSource.getSha256());
 
             preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
@@ -644,7 +644,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
             CorrelationDataSource dataSource = new CorrelationDataSource(
                     eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID(),
-                    eamDataSource.getMd5Hash(), eamDataSource.getSha1Hash(), eamDataSource.getSha256Hash());
+                    eamDataSource.getMd5(), eamDataSource.getSha1(), eamDataSource.getSha256());
             dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(dataSource.getCaseID(), dataSource.getDataSourceObjectID()), dataSource);
             dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
             return dataSource;
@@ -846,9 +846,9 @@ abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql);
             
-            preparedStatement.setString(1, eamDataSource.getMd5Hash());
-            preparedStatement.setString(2, eamDataSource.getSha1Hash());
-            preparedStatement.setString(3, eamDataSource.getSha256Hash());
+            preparedStatement.setString(1, eamDataSource.getMd5());
+            preparedStatement.setString(2, eamDataSource.getSha1());
+            preparedStatement.setString(3, eamDataSource.getSha256());
             preparedStatement.setInt(4, eamDataSource.getID());
             
             preparedStatement.executeUpdate();

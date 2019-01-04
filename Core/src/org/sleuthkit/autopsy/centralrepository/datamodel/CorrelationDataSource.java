@@ -224,7 +224,7 @@ public class CorrelationDataSource implements Serializable {
     /**
      * @return the MD5 hash value
      */
-    String getMd5Hash() {
+    String getMd5() {
         return md5Hash;
     }
     
@@ -233,14 +233,14 @@ public class CorrelationDataSource implements Serializable {
      * 
      * @param md5Hash The MD5 hash value.
      */
-    public void setMd5Hash(String md5Hash) {
+    public void setMd5(String md5Hash) {
         this.md5Hash = md5Hash;
     }
     
     /**
      * @return the SHA-1 hash value
      */
-    String getSha1Hash() {
+    String getSha1() {
         return sha1Hash;
     }
     
@@ -249,14 +249,14 @@ public class CorrelationDataSource implements Serializable {
      * 
      * @param sha1Hash The SHA-1 hash value.
      */
-    public void setSha1Hash(String sha1Hash) {
+    public void setSha1(String sha1Hash) {
         this.sha1Hash = sha1Hash;
     }
     
     /**
      * @return the SHA-256 hash value
      */
-    String getSha256Hash() {
+    String getSha256() {
         return sha256Hash;
     }
     
@@ -265,7 +265,7 @@ public class CorrelationDataSource implements Serializable {
      * 
      * @param sha256Hash The SHA-256 hash value.
      */
-    public void setSha256Hash(String sha256Hash) {
+    public void setSha256(String sha256Hash) {
         this.sha256Hash = sha256Hash;
     }
 }

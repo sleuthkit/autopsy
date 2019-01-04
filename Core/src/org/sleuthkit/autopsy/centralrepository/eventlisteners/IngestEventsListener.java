@@ -469,9 +469,9 @@ public class IngestEventsListener {
                 } else {
                     // Update the hash values for the existing data source.
                     Image image = (Image) dataSource;
-                    correlationDataSource.setMd5Hash(image.getMd5());
-                    correlationDataSource.setSha1Hash(image.getSha1());
-                    correlationDataSource.setSha256Hash(image.getSha256());
+                    correlationDataSource.setMd5(image.getMd5());
+                    correlationDataSource.setSha1(image.getSha1());
+                    correlationDataSource.setSha256(image.getSha256());
                     dbManager.updateDataSource(correlationDataSource);
                 }
             } catch (EamDbException ex) {
