@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
@@ -38,11 +37,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskDataException;
@@ -345,31 +340,11 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                         default:
                             break;
                     }
-                    //DLG: This needs to update the hash values in the Central Repository.
-                    if (EamDb.isEnabled()) {
-                        try {
-                            EamDb dbManager = EamDb.getInstance();
-                            Case openCase = Case.getCurrentCaseThrows();
-                            
-                            CorrelationCase correlationCase = dbManager.getCase(openCase);
-                            if (null == correlationCase) {
-                                correlationCase = dbManager.newCase(openCase);
-                            }
-                            
-                            CorrelationDataSource correlationDataSource = dbManager.getDataSource(correlationCase, dataSource.getId());
-                            if (correlationDataSource == null) {
-                                CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource);
-                            } else {
-                                //DLG: Set hash values. Then update.
-                            }
-                        } catch (EamDbException ex) {
-                            Exceptions.printStackTrace(ex); //DLG:
-                        } catch (NoCurrentCaseException ex) {
-                            Exceptions.printStackTrace(ex); //DLG:
-                        }
-                    }
                     results += Bundle.DataSourceIntegrityIngestModule_process_calcHashWithType(hashData.type.name, hashData.calculatedHash);
                 }
+                
+                // Fire an event to signal the hash values have been updated.
+                services.fireModuleContentEvent(new ModuleContentEvent(dataSource));
                 
                 // Write the inbox message
                 services.postMessage(IngestMessage.createMessage(MessageType.INFO, DataSourceIntegrityModuleFactory.getModuleName(), 

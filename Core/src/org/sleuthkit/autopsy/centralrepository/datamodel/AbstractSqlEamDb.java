@@ -826,6 +826,44 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Updates an existing data source in the database
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+        if (eamDataSource == null) {
+            throw new EamDbException("Correlation data source is null");
+        }
+
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "UPDATE data_sources "
+                + "SET md5=?, sha1=?, sha256=? "
+                + "WHERE id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            
+            preparedStatement.setString(1, eamDataSource.getMd5Hash());
+            preparedStatement.setString(2, eamDataSource.getSha1Hash());
+            preparedStatement.setString(3, eamDataSource.getSha256Hash());
+            preparedStatement.setInt(4, eamDataSource.getID());
+            
+            preparedStatement.executeUpdate();
+            //update the case in the cache
+            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()), eamDataSource);
+            dataSourceCacheById.put(getDataSourceByIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getID()), eamDataSource);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error updating data source.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
      * Data Source first.
      *
@@ -937,7 +975,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".value,"
                 + tableName
                 + ".file_obj_id,"
-                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -1002,7 +1040,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".value,"
                 + tableName
                 + ".file_obj_id,"
-                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -1730,7 +1768,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".value, "
                 + tableName
                 + ".file_obj_id,"
-                + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
+                + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -1787,7 +1825,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
-                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, file_obj_id, data_sources.datasource_obj_id FROM "
+                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, file_obj_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -3070,7 +3108,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("id"),
                 resultSet.getString("device_id"),
                 resultSet.getString("name"),
-                resultSet.getLong("datasource_obj_id")
+                resultSet.getLong("datasource_obj_id"),
+                resultSet.getString("md5"),
+                resultSet.getString("sha1"),
+                resultSet.getString("sha256")
         );
 
         return eamDataSource;
@@ -3111,7 +3152,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getString("value"),
                 resultSet.getInt("id"),
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
-                new CorrelationDataSource(resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name"), resultSet.getLong("datasource_obj_id")),
+                new CorrelationDataSource(
+                        resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name"),
+                        resultSet.getLong("datasource_obj_id"), resultSet.getString("md5"), resultSet.getString("sha1"), resultSet.getString("sha256")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status")),

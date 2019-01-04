@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,6 +40,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -48,6 +50,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
+import org.sleuthkit.autopsy.ingest.events.ContentChangedEvent;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -294,6 +299,12 @@ public class IngestEventsListener {
                         jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable, flagPrevious, createAttributes));
                         break;
                     }
+                    case CONTENT_CHANGED: {
+                        jobProcessingExecutor.submit(new ContentChangedTask(dbManager, evt));
+                        break;
+                    }
+                    default:
+                        break;
                 }
             }
         }
@@ -409,6 +420,71 @@ public class IngestEventsListener {
                     }
                 }
             } // DATA_ADDED
+        }
+    }
+    
+    private final class ContentChangedTask implements Runnable {
+        
+        private final EamDb dbManager;
+        private final PropertyChangeEvent event;
+        
+        private ContentChangedTask(EamDb db, PropertyChangeEvent evt) {
+            dbManager = db;
+            event = evt;
+        }
+        
+        @Override
+        public void run() {
+            if (!EamDb.isEnabled()) {
+                return;
+            }
+            
+            Content dataSource;
+            String dataSourceName = "";
+            long dataSourceId = -1;
+            try {
+                dataSource = ((ContentChangedEvent) event).getAssociatedContent();
+                
+                /*
+                 * We only care about Images for the purpose of
+                 * updating hash values.
+                 */
+                if (!(dataSource instanceof Image)) {
+                    return;
+                }
+                
+                dataSourceName = dataSource.getName();
+                dataSourceId = dataSource.getId();
+
+                Case openCase = Case.getCurrentCaseThrows();
+
+                CorrelationCase correlationCase = dbManager.getCase(openCase);
+                if (null == correlationCase) {
+                    correlationCase = dbManager.newCase(openCase);
+                }
+
+                CorrelationDataSource correlationDataSource = dbManager.getDataSource(correlationCase, dataSource.getId());
+                if (correlationDataSource == null) {
+                    CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource);
+                } else {
+                    // Update the hash values for the existing data source.
+                    Image image = (Image) dataSource;
+                    correlationDataSource.setMd5Hash(image.getMd5());
+                    correlationDataSource.setSha1Hash(image.getSha1());
+                    correlationDataSource.setSha256Hash(image.getSha256());
+                    dbManager.updateDataSource(correlationDataSource);
+                }
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, String.format(
+                        "Unable to fetch data from the Central Repository for data source '%s' (id=%d)",
+                        dataSourceName, dataSourceId), ex);
+            } catch (NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, "No current case opened.");
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, String.format(
+                        "Unable to fetch data from the case database for data source '%s' (id=%d)",
+                        dataSourceName, dataSourceId), ex);
+            } // CONTENT_CHANGED
         }
     }
 }

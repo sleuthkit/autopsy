@@ -435,6 +435,21 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     /**
+     * Updates an existing data source in the database
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSource(eamDataSource);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+
+    /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
      * Data Source first.
      *

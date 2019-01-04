@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.io.Serializable;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Content;
@@ -41,9 +40,9 @@ public class CorrelationDataSource implements Serializable {
     private final Long dataSourceObjectID; //< Id for data source in the caseDB 
     private final String deviceID;  //< Unique to its associated case (not necessarily globally unique)
     private final String name;
-    private final String md5Hash;
-    private final String sha1Hash;
-    private final String sha256Hash;
+    private String md5Hash;
+    private String sha1Hash;
+    private String sha256Hash;
 
     /**
      * Create a CorrelationDataSource object, the object will not have the data
@@ -58,23 +57,6 @@ public class CorrelationDataSource implements Serializable {
      */
     public CorrelationDataSource(CorrelationCase correlationCase, String deviceId, String name, long dataSourceObjectId) {
         this(correlationCase.getID(), -1, deviceId, name, dataSourceObjectId, null, null, null);
-    }
-
-    /**
-     * Create a CorrelationDataSource object.
-     *
-     * @param caseId             Row ID for Case in DB
-     * @param dataSourceId       Row ID for this data source in DB (or -1)
-     * @param deviceId           User specified ID for device (unique per case)
-     * @param name               User specified name
-     * @param dataSourceObjectId The object ID for the datasource
-     */
-    CorrelationDataSource(int caseId,
-            int dataSourceId,
-            String deviceId,
-            String name,
-            Long dataSourceObjectId) {
-        this(caseId, dataSourceId, deviceId, name, dataSourceObjectId, null, null, null);
     }
 
     /**
@@ -247,6 +229,15 @@ public class CorrelationDataSource implements Serializable {
     }
     
     /**
+     * Set the MD5 hash value.
+     * 
+     * @param md5Hash The MD5 hash value.
+     */
+    public void setMd5Hash(String md5Hash) {
+        this.md5Hash = md5Hash;
+    }
+    
+    /**
      * @return the SHA-1 hash value
      */
     String getSha1Hash() {
@@ -254,9 +245,27 @@ public class CorrelationDataSource implements Serializable {
     }
     
     /**
+     * Set the SHA-1 hash value.
+     * 
+     * @param sha1Hash The SHA-1 hash value.
+     */
+    public void setSha1Hash(String sha1Hash) {
+        this.sha1Hash = sha1Hash;
+    }
+    
+    /**
      * @return the SHA-256 hash value
      */
     String getSha256Hash() {
         return sha256Hash;
+    }
+    
+    /**
+     * Set the SHA-256 hash value.
+     * 
+     * @param sha256Hash The SHA-256 hash value.
+     */
+    public void setSha256Hash(String sha256Hash) {
+        this.sha256Hash = sha256Hash;
     }
 }

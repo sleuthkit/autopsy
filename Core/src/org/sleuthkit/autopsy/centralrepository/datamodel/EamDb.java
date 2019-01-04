@@ -204,6 +204,13 @@ public interface EamDb {
      * @return - A CorrelationDataSource object with data source's central repository id
      */
     CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
+    
+    /**
+     * Updates an existing data source in the database
+     *
+     * @param eamDataSource The data source to update
+     */
+    void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source device ID
