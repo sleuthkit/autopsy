@@ -19,11 +19,16 @@
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
 import java.awt.event.ActionListener;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -34,6 +39,8 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -398,6 +405,9 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         private static final long serialVersionUID = 1L;
 
         private final List<String> columnHeaders = new ArrayList<>();
+        private final Map<Long, Long> fileCountsMap;
+        private final Map<Long, Long> artifactCountsMap;
+        private final Map<Long, Long> tagCountsMap;
 
         DataSourceTableModel() {
             columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_dataSourceName_header());
@@ -405,6 +415,10 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
             columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_files_header());
             columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_results_header());
             columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_tags_header());
+            fileCountsMap = getCountsOfFiles();
+            artifactCountsMap = getCountsOfArtifacts();
+            tagCountsMap = getCountsOfTags();
+
         }
 
         @Override
@@ -420,58 +434,111 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             DataSource currentDataSource = dataSources.get(rowIndex);
+            Long count; 
             switch (columnIndex) {
                 case 0:
                     return currentDataSource.getName();
                 case 1:
                     return "";
                 case 2:
-                    return getCountOfFiles(currentDataSource);
+                    count = fileCountsMap.get(currentDataSource.getId());
+                    return count == null ? 0 : count;
                 case 3:
-                    return getCountOfArtifacts(currentDataSource);
+                    count = artifactCountsMap.get(currentDataSource.getId());
+                    return count == null ? 0 : count;
                 case 4:
-                    return getCountOfTags(currentDataSource);
+                    count = tagCountsMap.get(currentDataSource.getId());
+                    return count == null ? 0 : count;
                 default:
                     break;
             }
             return null;
         }
 
-        private long getCountOfFiles(DataSource currentDataSource) {
+        private Map<Long, Long> getCountsOfFiles() {
             try {
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                return skCase.countFilesWhere("data_source_obj_id=" + currentDataSource.getId()
-                        + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                DataSourceCountsCallback callback = new DataSourceCountsCallback();
+                String countFilesQuery = "data_source_obj_id, COUNT(*) AS count"
+                        + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                         + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
-                        + " AND name<>''");
+                        + " AND name<>'' GROUP BY data_source_obj_id";
+                skCase.getCaseDbAccessManager().select(countFilesQuery, callback);
+                return callback.getMapOfCounts();
             } catch (TskCoreException | NoCurrentCaseException ex) {
-                return 0;
+                return Collections.emptyMap();
             }
         }
 
-        private long getCountOfArtifacts(DataSource currentDataSource) {
+        private Map<Long, Long> getCountsOfArtifacts() {
             try {
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                return skCase.getBlackboardArtifactsCountForDatasource(currentDataSource.getId());
+                DataSourceCountsCallback callback = new DataSourceCountsCallback();
+                String countArtifactsQuery = "data_source_obj_id, COUNT(*) AS count"
+                        + " FROM blackboard_artifacts WHERE review_status_id !=" + BlackboardArtifact.ReviewStatus.REJECTED.getID()
+                        + " GROUP BY data_source_obj_id";
+                skCase.getCaseDbAccessManager().select(countArtifactsQuery, callback);
+                return callback.getMapOfCounts();
             } catch (TskCoreException | NoCurrentCaseException ex) {
-                return 0;
+                return Collections.emptyMap();
             }
         }
 
-        private long getCountOfTags(DataSource currentDataSource) {
-            long countOfTags = 0;
+        private Map<Long, Long> getCountsOfTags() {
             try {
                 SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                countOfTags = skCase.getBlackboardArtifactTagsCountForDataSource(currentDataSource.getId());
-                countOfTags += skCase.getContentTagsCountForDataSource(currentDataSource.getId());
+                DataSourceCountsCallback fileCountcallback = new DataSourceCountsCallback();
+                String countFileTagsQuery = "data_source_obj_id, COUNT(*) AS count"
+                        + " FROM content_tags as content_tags, tsk_files as tsk_files"
+                        + " WHERE content_tags.obj_id = tsk_files.obj_id"
+                        + " GROUP BY data_source_obj_id";
+                skCase.getCaseDbAccessManager().select(countFileTagsQuery, fileCountcallback);
+                Map<Long, Long> tagCountMap = new HashMap<>(fileCountcallback.getMapOfCounts());
+                DataSourceCountsCallback artifactCountcallback = new DataSourceCountsCallback();
+                String countArtifactTagsQuery = "data_source_obj_id, COUNT(*) AS count"
+                        + " FROM blackboard_artifact_tags as artifact_tags,  blackboard_artifacts AS arts"
+                        + " WHERE artifact_tags.artifact_id = arts.artifact_id"
+                        + " GROUP BY data_source_obj_id";
+                skCase.getCaseDbAccessManager().select(countArtifactTagsQuery, artifactCountcallback);
+                //combine the results from the count artifact tags query into the copy of the mapped results from the count file tags query
+                artifactCountcallback.getMapOfCounts().forEach((key, value) -> tagCountMap.merge(key, value, (value1, value2) -> value1 + value2));
+                return tagCountMap;
             } catch (TskCoreException | NoCurrentCaseException ex) {
+                return Collections.emptyMap();
             }
-            return countOfTags;
+
         }
 
         @Override
         public String getColumnName(int column) {
             return columnHeaders.get(column);
+        }
+
+        private class DataSourceCountsCallback implements CaseDbAccessQueryCallback {
+
+            Map<Long, Long> dataSourceObjIdCounts = new HashMap<>();
+
+            @Override
+            public void process(ResultSet rs) {
+                try {
+                    while (rs.next()) {
+                        try {
+                            long dataSourceObjectId = rs.getLong("data_source_obj_id");
+                            long count = rs.getLong("count");
+                            dataSourceObjIdCounts.put(dataSourceObjectId, count);
+                        } catch (SQLException ex) {
+                            System.out.println("UNABLE TO GET COUNT FOR DS " + ex.getMessage());
+                        }
+                    }
+                } catch (SQLException ex) {
+                    System.out.println("Failed to get next result" + ex.getMessage());
+                }
+            }
+
+            Map<Long, Long> getMapOfCounts() {
+                return Collections.unmodifiableMap(dataSourceObjIdCounts);
+            }
+
         }
 
     }
