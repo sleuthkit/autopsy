@@ -479,7 +479,7 @@ public class IngestEventsListener {
                         "Unable to fetch data from the Central Repository for data source '%s' (id=%d)",
                         dataSourceName, dataSourceId), ex);
             } catch (NoCurrentCaseException ex) {
-                LOGGER.log(Level.SEVERE, "No current case opened.");
+                LOGGER.log(Level.SEVERE, "No current case opened.", ex);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, String.format(
                         "Unable to fetch data from the case database for data source '%s' (id=%d)",
