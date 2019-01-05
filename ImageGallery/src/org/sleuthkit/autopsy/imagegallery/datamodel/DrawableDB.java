@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,6 +78,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.DbType;
 import org.sleuthkit.datamodel.TskDataException;
+import org.sleuthkit.datamodel.VersionNumber;
 import org.sqlite.SQLiteJDBCLoader;
 
 /**
@@ -98,6 +99,16 @@ public final class DrawableDB {
     private static final String GROUPS_TABLENAME = "image_gallery_groups"; //NON-NLS
     private static final String GROUPS_SEEN_TABLENAME = "image_gallery_groups_seen"; //NON-NLS
 
+    private static final String IG_DB_INFO_TABLE = "image_gallery_db_info";
+    
+    private static final String IG_SCHEMA_MAJOR_VERSION_KEY = "IG_SCHEMA_MAJOR_VERSION";
+    private static final String IG_SCHEMA_MINOR_VERSION_KEY = "IG_SCHEMA_MINOR_VERSION";
+    private static final String IG_CREATION_SCHEMA_MAJOR_VERSION_KEY = "IG_CREATION_SCHEMA_MAJOR_VERSION";
+    private static final String IG_CREATION_SCHEMA_MINOR_VERSION_KEY = "IG_CREATION_SCHEMA_MINOR_VERSION";
+    
+    private static final VersionNumber IG_STARTING_SCHEMA_VERSION = new VersionNumber(1, 0, 0);    // IG Schema Starting version
+    private static final VersionNumber IG_SCHEMA_VERSION = new VersionNumber(1, 1, 0);    // IG Schema Current version
+        
     private PreparedStatement insertHashSetStmt;
 
     private List<PreparedStatement> preparedStatements = new ArrayList<>();
@@ -217,7 +228,7 @@ public final class DrawableDB {
         dbWriteLock();
         try {
             con = DriverManager.getConnection("jdbc:sqlite:" + dbPath.toString()); //NON-NLS
-            if (!initializeDBSchema() || !prepareStatements() || !initializeStandardGroups() || !initializeImageList()) {
+            if (!initializeDBSchema() || !upgradeDBSchema() || !prepareStatements() || !initializeStandardGroups() || !initializeImageList()) {
                 close();
                 throw new TskCoreException("Failed to initialize drawables database for Image Gallery use"); //NON-NLS
             }
@@ -391,6 +402,34 @@ public final class DrawableDB {
         }
     }
 
+    /**
+     * Checks if the specified table exists in Drawable DB
+     * 
+     * @param tableName table to check
+     * @return true if the table exists in the database
+     * 
+     * @throws SQLException 
+     */
+    private boolean doesTableExist(String tableName) throws SQLException {
+        ResultSet tableQueryResults = null;
+        boolean tableExists = false;
+        try (Statement stmt = con.createStatement()) {
+            tableQueryResults = stmt.executeQuery("SELECT name FROM sqlite_master WHERE type='table'");  //NON-NLS
+            while (tableQueryResults.next()) {
+                if (tableQueryResults.getString("name").equalsIgnoreCase(tableName)) {
+                    tableExists = true;
+                    break;
+                }
+            }
+        }
+        finally {
+            if (tableQueryResults != null) {
+                tableQueryResults.close();
+            } 
+        }
+        return tableExists;
+    }
+    
     private static void deleteDatabaseIfOlderVersion(Path dbPath) throws SQLException, IOException {
         if (Files.exists(dbPath)) {
             boolean hasDrawableFilesTable = false;
@@ -475,6 +514,8 @@ public final class DrawableDB {
     private boolean initializeDBSchema() {
         dbWriteLock();
         try {
+            boolean existingDB = true;
+                                  
             if (isClosed()) {
                 logger.log(Level.SEVERE, "The drawables database is closed"); //NON-NLS
                 return false;
@@ -491,6 +532,31 @@ public final class DrawableDB {
              * Create tables in the drawables database.
              */
             try (Statement stmt = con.createStatement()) {
+                
+                // Check if the database is a new or existing database
+                existingDB = doesTableExist("datasources");
+                if (false == doesTableExist(IG_DB_INFO_TABLE)) {
+                    try {
+                         VersionNumber ig_creation_schema_version = existingDB 
+                                                    ? IG_STARTING_SCHEMA_VERSION
+                                                    : IG_SCHEMA_VERSION;
+                         
+                        stmt.execute("CREATE TABLE IF NOT EXISTS " + IG_DB_INFO_TABLE + " (name TEXT PRIMARY KEY, value TEXT NOT NULL)");
+                        
+                        // backfill creation schema ver
+                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", IG_DB_INFO_TABLE, IG_CREATION_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor() ));
+                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", IG_DB_INFO_TABLE, IG_CREATION_SCHEMA_MINOR_VERSION_KEY, ig_creation_schema_version.getMinor() ));
+                        
+                        // set current schema ver: at DB initialization - current version is same as starting version
+                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", IG_DB_INFO_TABLE, IG_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor() ));
+                        stmt.execute(String.format("INSERT INTO %s (name, value) VALUES ('%s', '%s')", IG_DB_INFO_TABLE, IG_SCHEMA_MINOR_VERSION_KEY, ig_creation_schema_version.getMinor() ));
+                        
+                    } catch (SQLException ex) {
+                        logger.log(Level.SEVERE, "Failed to create ig_db_info table", ex); //NON-NLS
+                        return false;
+                    }
+                }
+                        
                 try {
                     String sql = "CREATE TABLE IF NOT EXISTS datasources " //NON-NLS
                             + "( id INTEGER PRIMARY KEY, " //NON-NLS
@@ -583,6 +649,44 @@ public final class DrawableDB {
              * Create tables in the case database.
              */
             String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "BIGSERIAL" : "INTEGER";
+            
+            try {
+                    VersionNumber ig_creation_schema_version = existingDB 
+                            ? IG_STARTING_SCHEMA_VERSION
+                            : IG_SCHEMA_VERSION;
+                                                    
+                    String tableSchema = "( id " + autogenKeyType + " PRIMARY KEY, "
+                            + " name TEXT UNIQUE NOT NULL,"
+                            + " value TEXT NOT NULL )";
+                    tskCase.getCaseDbAccessManager().createTable(IG_DB_INFO_TABLE, tableSchema);
+                    
+                    // backfill creation version
+                    String creationMajorVerSQL = String.format(" (name, value) VALUES ('%s', '%s')", IG_CREATION_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor());
+                    String creationMinorVerSQL = String.format(" (name, value) VALUES ('%s', '%s')", IG_CREATION_SCHEMA_MINOR_VERSION_KEY, ig_creation_schema_version.getMinor());
+                    
+                    // set current version - at the onset, current version is same as creation version
+                    String currentMajorVerSQL = String.format(" (name, value) VALUES ('%s', '%s')", IG_SCHEMA_MAJOR_VERSION_KEY, ig_creation_schema_version.getMajor());
+                    String currentMinorVerSQL = String.format(" (name, value) VALUES ('%s', '%s')", IG_SCHEMA_MINOR_VERSION_KEY, ig_creation_schema_version.getMinor());
+                    
+                    if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
+                        creationMajorVerSQL += " ON CONFLICT DO NOTHING ";
+                        creationMinorVerSQL += " ON CONFLICT DO NOTHING ";
+                        
+                        currentMajorVerSQL += " ON CONFLICT DO NOTHING ";
+                        currentMinorVerSQL += " ON CONFLICT DO NOTHING ";
+                    }
+                    
+                    tskCase.getCaseDbAccessManager().insert(IG_DB_INFO_TABLE, creationMajorVerSQL);
+                    tskCase.getCaseDbAccessManager().insert(IG_DB_INFO_TABLE, creationMinorVerSQL);
+                    
+                    tskCase.getCaseDbAccessManager().insert(IG_DB_INFO_TABLE, currentMajorVerSQL);
+                    tskCase.getCaseDbAccessManager().insert(IG_DB_INFO_TABLE, currentMinorVerSQL);
+                    
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to create ig_db_info table in Case database", ex); //NON-NLS
+                    return false;
+                } 
+                  
             try {
                 String tableSchema
                         = "( group_id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
@@ -622,6 +726,219 @@ public final class DrawableDB {
         }
     }
 
+    /**
+     * Gets the Schema version from DrawableDB
+     * 
+     * @return image gallery schema version in DrawableDB
+     * @throws SQLException
+     * @throws TskCoreException 
+     */
+    private VersionNumber getDrawableDbIgSchemaVersion() throws SQLException, TskCoreException {
+        
+        Statement statement = con.createStatement();
+        ResultSet resultSet = null;
+
+        try { 
+            int majorVersion = -1;
+            String majorVersionStr = null;
+            resultSet = statement.executeQuery(String.format("SELECT value FROM %s  WHERE name='%s'", IG_DB_INFO_TABLE,  IG_SCHEMA_MAJOR_VERSION_KEY));
+            if (resultSet.next()) {
+                majorVersionStr = resultSet.getString("value");
+                try {
+                    majorVersion = Integer.parseInt(majorVersionStr);
+                } catch (NumberFormatException ex) {
+                    throw new TskCoreException("Bad value for schema major version = " + majorVersionStr, ex);
+                }
+            } else {
+                 throw new TskCoreException("Failed to read schema major version from ig_db_info table");
+            }
+        
+            int minorVersion = -1;
+            String minorVersionStr = null;
+            resultSet = statement.executeQuery(String.format("SELECT value FROM %s  WHERE name='%s'", IG_DB_INFO_TABLE,  IG_SCHEMA_MINOR_VERSION_KEY));
+            if (resultSet.next()) {
+                minorVersionStr = resultSet.getString("value");
+                try {
+                    minorVersion = Integer.parseInt(minorVersionStr);
+                } catch (NumberFormatException ex) {
+                    throw new TskCoreException("Bad value for schema minor version = " + minorVersionStr, ex);
+                }
+            } else {
+                throw new TskCoreException("Failed to read schema minor version from ig_db_info table");
+            }
+
+            return new VersionNumber(majorVersion, minorVersion, 0 );
+        } 
+        finally {
+            if (resultSet != null) {
+                resultSet.close();
+            }
+            if (statement != null) {
+                statement.close();
+            }
+        }
+    }
+
+    /**
+     * Gets the ImageGallery schema version from CaseDB
+     * 
+     * @return image gallery schema version in CaseDB
+     * @throws SQLException
+     * @throws TskCoreException 
+     */
+    private VersionNumber getCaseDbIgSchemaVersion() throws TskCoreException {
+        
+        // Callback to process result of get version query
+        class GetSchemaVersionQueryResultProcessor implements CaseDbAccessQueryCallback {
+
+            private int version = -1;
+            
+            int getVersion() { 
+                return version;
+            }
+            
+            @Override
+            public void process(ResultSet resultSet) {
+                try { 
+                    if (resultSet.next()) {            
+                        String  versionStr = resultSet.getString("value");
+                        try {
+                            version = Integer.parseInt(versionStr);
+                        } catch (NumberFormatException ex) {
+                            logger.log(Level.SEVERE, "Bad value for version = " + versionStr, ex);
+                        }
+                    } else {
+                        logger.log(Level.SEVERE, "Failed to get version");
+                    }
+                }
+                catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Failed to get version", ex); //NON-NLS
+                }
+            }
+        }
+       
+        GetSchemaVersionQueryResultProcessor majorVersionResultProcessor = new GetSchemaVersionQueryResultProcessor();
+        GetSchemaVersionQueryResultProcessor minorVersionResultProcessor = new GetSchemaVersionQueryResultProcessor();
+        
+        String versionQueryTemplate = "value FROM %s WHERE name = \'%s\' ";    
+        tskCase.getCaseDbAccessManager().select(String.format(versionQueryTemplate, IG_DB_INFO_TABLE, IG_SCHEMA_MAJOR_VERSION_KEY), majorVersionResultProcessor);
+        tskCase.getCaseDbAccessManager().select(String.format(versionQueryTemplate, IG_DB_INFO_TABLE, IG_SCHEMA_MINOR_VERSION_KEY), minorVersionResultProcessor);
+         
+        return new VersionNumber(majorVersionResultProcessor.getVersion(), minorVersionResultProcessor.getVersion(), 0);
+    }
+    
+    /**
+     * Updates the IG schema version in the Drawable DB
+     * 
+     * @param version
+     * 
+     * @throws SQLException
+     */
+    private void updateDrawableDbIgSchemaVersion(VersionNumber version) throws SQLException {
+        
+        dbWriteLock();
+        try {
+            Statement statement = con.createStatement();
+            
+            // update schema version
+            statement.execute(String.format("UPDATE %s  SET value = '%s' WHERE name = '%s'", IG_DB_INFO_TABLE, version.getMajor(), IG_SCHEMA_MAJOR_VERSION_KEY ));
+            statement.execute(String.format("UPDATE %s  SET value = '%s' WHERE name = '%s'", IG_DB_INFO_TABLE, version.getMinor(), IG_SCHEMA_MINOR_VERSION_KEY ));
+                
+            statement.close();
+            return;
+        }
+        finally {
+            dbWriteUnlock();
+        }
+    }
+    
+    /**
+     * Updates the IG schema version in CaseDB
+     * 
+     * @param version
+     * 
+     * @throws SQLException
+     */
+    private void updateCaseDbIgSchemaVersion(VersionNumber version) throws TskCoreException {
+        
+        String updateSQLTemplate = " SET value = %s  WHERE name = '%s' ";
+        tskCase.getCaseDbAccessManager().update(IG_DB_INFO_TABLE, String.format(updateSQLTemplate, version.getMajor(), IG_SCHEMA_MAJOR_VERSION_KEY));
+        tskCase.getCaseDbAccessManager().update(IG_DB_INFO_TABLE, String.format(updateSQLTemplate, version.getMinor(), IG_SCHEMA_MINOR_VERSION_KEY));          
+    }
+    
+    
+    /**
+     * Upgrades the DB schema.
+     *
+     * @return true if the upgrade is successful
+     * 
+     * @throws SQLException
+     * 
+     */
+    private boolean upgradeDBSchema() throws TskCoreException, SQLException {
+        
+        // Read current version from the DBs
+        VersionNumber drawableDbIgSchemaVersion  = getDrawableDbIgSchemaVersion();
+        VersionNumber caseDbIgSchemaVersion = getCaseDbIgSchemaVersion();
+
+        // Upgrade Schema in both DrawableDB and CaseDB
+        caseDbIgSchemaVersion = upgradeCaseDbIgSchema1dot0TO1dot1(caseDbIgSchemaVersion);
+        drawableDbIgSchemaVersion = upgradeDrawableDbIgSchema1dot0TO1dot1(caseDbIgSchemaVersion);
+
+        // update the versions in the tables
+        updateDrawableDbIgSchemaVersion(drawableDbIgSchemaVersion);      
+        updateCaseDbIgSchemaVersion(caseDbIgSchemaVersion);
+
+        return true;    
+    }
+    
+    /**
+     * Upgrades IG tables in CaseDB from 1.0 to 1.1
+     * Does nothing if the incoming version is not 1.0 
+     * 
+     * @param currVersion version to upgrade from 
+     * 
+     * @return new version number
+     * @throws TskCoreException 
+     */
+    private VersionNumber upgradeCaseDbIgSchema1dot0TO1dot1(VersionNumber currVersion ) throws TskCoreException  {
+        
+        if (currVersion.getMajor() != 1 || 
+            currVersion.getMinor() != 0) {  
+            return currVersion;
+        }
+                
+        // 1.0 -> 1.1 upgrade
+        // Add a 'isAnalyzed' column to groups table in CaseDB
+        String alterSQL = " ADD COLUMN isAnalyzed integer DEFAULT 1 "; //NON-NLS
+        if (false == tskCase.getCaseDbAccessManager().doesColumnExist(GROUPS_TABLENAME, "isAnalyzed")) {
+            tskCase.getCaseDbAccessManager().alterTable(GROUPS_TABLENAME, alterSQL);
+        }    
+
+        return new VersionNumber(1,1,0);
+    }
+    
+    /**
+     * Upgrades IG tables in DrawableDB from 1.0 to 1.1
+     * Does nothing if the incoming version is not 1.0 
+     * 
+     * @param currVersion version to upgrade from 
+     * 
+     * @return new version number
+     * @throws TskCoreException 
+     */
+    private VersionNumber upgradeDrawableDbIgSchema1dot0TO1dot1(VersionNumber currVersion ) throws TskCoreException  {
+        
+        if (currVersion.getMajor() != 1 || 
+            currVersion.getMinor() != 0) {  
+            return currVersion;
+        }
+ 
+        // There are no changes in DrawableDB schema in 1.0 -> 1.1
+
+        return new VersionNumber(1,1,0);
+    }
+    
     @Override
     protected void finalize() throws Throwable {
         /*
