@@ -43,7 +43,8 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     private ExternalViewerGlobalSettingsTableModel tableModel;
 
     public ExternalViewerGlobalSettingsPanel() {
-        this(new ExternalViewerGlobalSettingsTableModel(new String[] {"Mime type/Extension", "Application"}));
+        this(new ExternalViewerGlobalSettingsTableModel(new String[] {
+            "Mime type/Extension", "Application"}));
     }
     
     /**
@@ -338,7 +339,11 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     @Override
     public void load() {
         List<ExternalViewerRule> rules = ExternalViewerRulesManager.getInstance().getUserRules();
-        rules.forEach((rule) -> tableModel.addRule(rule));
+        for(ExternalViewerRule rule : rules) {
+            if(!tableModel.containsRule(rule)) {
+                tableModel.addRule(rule);
+            }
+        }
         String editorPath = UserPreferences.getHdXEditorPath();
         File HdXExecutable = new File(editorPath);
         if(HdXExecutable.exists() || HdXExecutable.canExecute()) {
