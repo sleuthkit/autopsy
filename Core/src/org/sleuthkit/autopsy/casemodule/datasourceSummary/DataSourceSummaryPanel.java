@@ -88,6 +88,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         dataSourcesTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = (dataSourcesTable.getSelectedRow() < 0 ? null : dataSources.get(dataSourcesTable.getSelectedRow()));
+                gotoDataSourceButton.setEnabled(selectedDataSource != null);
                 updateIngestJobs(selectedDataSource);
                 filesTableModel = new FilesTableModel(selectedDataSource);
                 fileCountsTable.setModel(filesTableModel);
@@ -122,7 +123,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                     }
                 } catch (TskCoreException ignored) {
                     //unable to get datasource for the OSInfo Object 
-                    //continue checking for OSInfo objects which we can get the desired information from
+                    //continue checking for OSInfo objects to try and get get the desired information
                 }
             }
         }
@@ -193,6 +194,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.closeButton.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(gotoDataSourceButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.gotoDataSourceButton.text")); // NOI18N
+        gotoDataSourceButton.setEnabled(false);
         gotoDataSourceButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 gotoDataSourceButtonActionPerformed(evt);
@@ -248,8 +250,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(opperatingSystemLabel, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(opperatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(opperatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(10, 10, 10)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(closeButton)
@@ -412,6 +413,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 skCase.getCaseDbAccessManager().select(countFilesQuery, callback);
                 return callback.getMapOfCounts();
             } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
                 return Collections.emptyMap();
             }
         }
@@ -434,6 +436,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 skCase.getCaseDbAccessManager().select(countArtifactsQuery, callback);
                 return callback.getMapOfCounts();
             } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to get counts of artifacts for all datasources, providing empty results", ex);
                 return Collections.emptyMap();
             }
         }
@@ -468,6 +471,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 artifactCountcallback.getMapOfCounts().forEach((key, value) -> tagCountMap.merge(key, value, (value1, value2) -> value1 + value2));
                 return tagCountMap;
             } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to get counts of tags for all datasources, providing empty results", ex);
                 return Collections.emptyMap();
             }
 
@@ -494,11 +498,11 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                         try {
                             dataSourceObjIdCounts.put(rs.getLong("data_source_obj_id"), rs.getLong("count"));
                         } catch (SQLException ex) {
-                            System.out.println("UNABLE TO GET COUNT FOR DS " + ex.getMessage());
+                            logger.log(Level.WARNING, "Unable to get data_source_obj_id or count from result set", ex);
                         }
                     }
                 } catch (SQLException ex) {
-                    System.out.println("Failed to get next result" + ex.getMessage());
+                    logger.log(Level.WARNING, "Failed to get next result for counts by datasource", ex);
                 }
             }
 
@@ -677,7 +681,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                             + " AND mime_type IN ('" + inClause + "')"
                             + " AND name<>''");
                 } catch (TskCoreException | NoCurrentCaseException ex) {
-                    logger.log(Level.INFO, "Unable to get count of files for specified mime types", ex);
+                    logger.log(Level.WARNING, "Unable to get count of files for specified mime types", ex);
                     //unable to get count of files for the specified mimetypes cell will be displayed as empty
                 }
             }
