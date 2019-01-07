@@ -21,11 +21,17 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Sets;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.stream.Stream;
+import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 
@@ -37,7 +43,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
 
     private final EventCluster parent;
 
-    private final ImmutableSortedSet<EventCluster> clusters;
+    private final SortedSet<EventCluster> clusters;
 
     /**
      * the type of all the events
@@ -87,12 +93,14 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         return new EventStripe(parent, this.type, this.description, this.lod, clusters, eventIDs, tagged, hashHits);
     }
 
-    private EventStripe(EventCluster parent, EventType type, String description, DescriptionLoD lod, SortedSet<EventCluster> clusters, Set<Long> eventIDs, Set<Long> tagged, Set<Long> hashHits) {
+    private EventStripe(EventCluster parent, EventType type, String description,
+                        DescriptionLoD lod, SortedSet<EventCluster> clusters,
+                        Set<Long> eventIDs, Set<Long> tagged, Set<Long> hashHits) {
         this.parent = parent;
         this.type = type;
         this.description = description;
         this.lod = lod;
-        this.clusters = ImmutableSortedSet.copyOf(Comparator.comparing(EventCluster::getStartMillis), clusters);
+        this.clusters = clusters;
 
         this.eventIDs = eventIDs;
         this.tagged = tagged;
@@ -100,8 +108,10 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     public EventStripe(EventCluster cluster) {
-        this.clusters = ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis))
-                .add(cluster.withParent(this)).build();
+        this.clusters = ImmutableSortedSet
+                .orderedBy(Comparator.comparing(EventCluster::getStartMillis))
+                .add(cluster.withParent(this))
+                .build();
 
         type = cluster.getEventType();
         description = cluster.getDescription();
@@ -112,27 +122,16 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         this.parent = null;
     }
 
-    private EventStripe(EventStripe u, EventStripe v) { //NOPMD
-        clusters = ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis))
-                .addAll(u.getClusters())
-                .addAll(v.getClusters())
-                .build();
+    private EventStripe(EventStripe u, EventStripe v) {
+        clusters = Sets.union(u.getClusters(), v.getClusters())
+                .copyInto(new TreeSet<>(Comparator.comparing(EventCluster::getStartMillis)));
 
         type = u.getEventType();
         description = u.getDescription();
         lod = u.getDescriptionLoD();
-        eventIDs = ImmutableSet.<Long>builder()
-                .addAll(u.getEventIDs())
-                .addAll(v.getEventIDs())
-                .build();
-        tagged = ImmutableSet.<Long>builder()
-                .addAll(u.getEventIDsWithTags())
-                .addAll(v.getEventIDsWithTags())
-                .build();
-        hashHits = ImmutableSet.<Long>builder()
-                .addAll(u.getEventIDsWithHashHits())
-                .addAll(v.getEventIDsWithHashHits())
-                .build();
+        eventIDs = Sets.union(u.getEventIDs(), v.getEventIDs());
+        tagged = Sets.union(u.getEventIDsWithTags(), v.getEventIDsWithTags());
+        hashHits = Sets.union(u.getEventIDsWithHashHits(), v.getEventIDsWithHashHits());
         parent = u.getParent().orElse(v.getParent().orElse(null));
     }
 
@@ -191,7 +190,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     @Override
-    public ImmutableSortedSet< EventCluster> getClusters() {
+    public SortedSet< EventCluster> getClusters() {
         return clusters;
     }
 

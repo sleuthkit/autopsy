@@ -18,14 +18,11 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import static com.google.common.collect.Sets.union;
-import java.util.Collection;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -68,19 +65,19 @@ public class EventCluster implements MultiEvent<EventStripe> {
     /**
      * the set of ids of the clustered events
      */
-    final private  Set<Long> eventIDs;
+    final private Set<Long> eventIDs;
 
     /**
      * the ids of the subset of clustered events that have at least one tag
      * applied to them
      */
-    private final  Set<Long> tagged;
+    private final Set<Long> tagged;
 
     /**
      * the ids of the subset of clustered events that have at least one hash set
      * hit
      */
-    private final  Set<Long> hashHits;
+    private final Set<Long> hashHits;
 
     /**
      * merge two event clusters into one new event cluster.
@@ -103,33 +100,33 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
         Interval spanningInterval = IntervalUtils.span(cluster1.span, cluster2.span);
 
-        Set<Long> idsUnion = union(cluster1.getEventIDs(), cluster2.getEventIDs());
-        Set<Long> hashHitsUnion = union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
-        Set<Long> taggedUnion = union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
+        Set<Long> idsUnion = union(cluster1.getEventIDs(), cluster2.getEventIDs()).immutableCopy();
+        Set<Long> hashHitsUnion = union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits()).immutableCopy();
+        Set<Long> taggedUnion = union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags()).immutableCopy();
 
         return new EventCluster(spanningInterval,
                 cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion,
                 cluster1.getDescription(), cluster1.lod);
     }
 
-    private EventCluster(Interval spanningInterval, EventType type, Collection<Long> eventIDs,
-                         Collection<Long> hashHits, Collection<Long> tagged, String description, DescriptionLoD lod,
+    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+                         Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod,
                          EventStripe parent) {
 
         this.span = spanningInterval;
 
         this.type = type;
 
-        this.hashHits = new HashSet<>(hashHits);
-        this.tagged = new HashSet<>(tagged);
+        this.hashHits = hashHits;
+        this.tagged = tagged;
         this.description = description;
-        this.eventIDs = new HashSet<>(eventIDs);
+        this.eventIDs = eventIDs;
         this.lod = lod;
         this.parent = parent;
     }
 
-    public EventCluster(Interval spanningInterval, EventType type, Collection<Long> eventIDs,
-                        Collection<Long> hashHits, Collection<Long> tagged, String description, DescriptionLoD lod) {
+    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+                        Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod) {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
@@ -182,17 +179,17 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     @Override
-    public  Set<Long> getEventIDs() {
+    public Set<Long> getEventIDs() {
         return eventIDs;
     }
 
     @Override
-    public  Set<Long> getEventIDsWithHashHits() {
+    public Set<Long> getEventIDsWithHashHits() {
         return hashHits;
     }
 
     @Override
-    public  Set<Long> getEventIDsWithTags() {
+    public Set<Long> getEventIDsWithTags() {
         return tagged;
     }
 
