@@ -224,12 +224,15 @@ public class CorrelationDataSource implements Serializable {
     /**
      * @return the MD5 hash value
      */
-    String getMd5() {
+    public String getMd5() {
         return md5Hash;
     }
     
     /**
      * Set the MD5 hash value.
+     * 
+     * Note: This does not add the hash value to Central Repository. A method,
+     * such as EamDb.updateDataSource(), can be called to persist hash values.
      * 
      * @param md5Hash The MD5 hash value.
      */
@@ -240,12 +243,15 @@ public class CorrelationDataSource implements Serializable {
     /**
      * @return the SHA-1 hash value
      */
-    String getSha1() {
+    public String getSha1() {
         return sha1Hash;
     }
     
     /**
      * Set the SHA-1 hash value.
+     * 
+     * Note: This does not add the hash value to Central Repository. A method,
+     * such as EamDb.updateDataSource(), can be called to persist hash values.
      * 
      * @param sha1Hash The SHA-1 hash value.
      */
@@ -256,12 +262,15 @@ public class CorrelationDataSource implements Serializable {
     /**
      * @return the SHA-256 hash value
      */
-    String getSha256() {
+    public String getSha256() {
         return sha256Hash;
     }
     
     /**
      * Set the SHA-256 hash value.
+     * 
+     * Note: This does not add the hash value to Central Repository. A method,
+     * such as EamDb.updateDataSource(), can be called to persist hash values.
      * 
      * @param sha256Hash The SHA-256 hash value.
      */

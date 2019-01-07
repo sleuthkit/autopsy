@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,30 +84,15 @@ public final class ContentChangedEvent extends AutopsyEvent implements Serializa
         if (null != eventData) {
             return eventData;
         }
-        
         try {
-            Content content = getAssociatedContent();
             SerializableEventData data = (SerializableEventData) super.getOldValue();
+            Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(data.contentId);
             eventData = new ModuleContentEvent(data.moduleName, content);
             return eventData;
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, "Error doing lazy load for remote event", ex); //NON-NLS
             return null;
         }
-    }
-    
-    /**
-     * Get the Content object associated with the event.
-     * 
-     * @return The Content object.
-     * 
-     * @throws NoCurrentCaseException if no case is open.
-     * @throws TskCoreException       if there was an issue retrieving the
-     *                                Content from the case database.
-     */
-    public Content getAssociatedContent() throws NoCurrentCaseException, TskCoreException {
-        SerializableEventData data = (SerializableEventData) super.getOldValue();
-        return Case.getCurrentCaseThrows().getSleuthkitCase().getContentById(data.contentId);
     }
 
     /**

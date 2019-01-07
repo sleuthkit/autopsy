@@ -343,9 +343,6 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                     results += Bundle.DataSourceIntegrityIngestModule_process_calcHashWithType(hashData.type.name, hashData.calculatedHash);
                 }
                 
-                // Fire an event to signal the hash values have been updated.
-                services.fireModuleContentEvent(new ModuleContentEvent(dataSource));
-                
                 // Write the inbox message
                 services.postMessage(IngestMessage.createMessage(MessageType.INFO, DataSourceIntegrityModuleFactory.getModuleName(), 
                         imgName + Bundle.DataSourceIntegrityIngestModule_process_hashesCalculated(), results));
