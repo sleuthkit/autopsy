@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -97,14 +97,14 @@ abstract class Extract {
      *
      * @param type         is a blackboard.artifact_type enum to determine which
      *                     type the artifact should be
-     * @param content      is the AbstractFile object that needs to have the
+     * @param content      is the Content object that needs to have the
      *                     artifact added for it
      * @param bbattributes is the collection of blackboard attributes that need
      *                     to be added to the artifact after the artifact has
      *                     been created
      * @return The newly-created artifact, or null on error
      */
-    protected BlackboardArtifact addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile content, Collection<BlackboardAttribute> bbattributes) {
+    protected BlackboardArtifact addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, Content content, Collection<BlackboardAttribute> bbattributes) {
         try {
             BlackboardArtifact bbart = content.newArtifact(type);
             bbart.addAttributes(bbattributes);

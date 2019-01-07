@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -23,7 +23,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -71,11 +70,13 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract chrome = new Chrome();
         Extract firefox = new Firefox();
         Extract SEUQA = new SearchEngineURLQueryAnalyzer();
+        Extract dataSourceProfiler = new DataSourceProfiler();
 
         extracters.add(chrome);
         extracters.add(firefox);
         extracters.add(iexplore);
         extracters.add(recentDocuments);
+        extracters.add(dataSourceProfiler);
         extracters.add(SEUQA); // this needs to run after the web browser modules
         extracters.add(registry); // this runs last because it is slowest
 
