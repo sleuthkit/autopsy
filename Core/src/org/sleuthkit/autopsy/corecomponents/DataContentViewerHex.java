@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
@@ -356,13 +357,13 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         }
     }//GEN-LAST:event_goToOffsetTextFieldActionPerformed
 
+    @NbBundle.Messages({"DataContentViewerHex.launchError=Unable to launch HxD Editor. "
+                        + "Please set-up the HdX install location in Tools -> Options -> External Viewer"})
     private void launchHxDButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_launchHxDButtonActionPerformed
         try {
             File HdXExecutable = new File(UserPreferences.getHdXEditorPath());
             if(!HdXExecutable.exists() || !HdXExecutable.canExecute()) {
-                JOptionPane.showMessageDialog(null, "Unable to launch HxD Editor. "
-                        + "Please set-up the HdX install location in Tools -> "
-                        + "Options -> External Viewer");
+                JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
                 return;
             }
             
@@ -377,14 +378,12 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                         dataSourceInTempDirectory.getAbsolutePath()));
                 launchHdXExecutable.start();
             } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, "Unable to launch HxD Editor. "
-                        + "Please set-up the HdX install location in Tools -> "
-                        + "Options -> External Viewer");
+                JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
                 dataSourceInTempDirectory.delete();
             }
         } catch (NoCurrentCaseException | IOException ex) {
             logger.log(Level.SEVERE, "Unable to copy file into temp directory", ex);
-            //Should we add a pop-up for this?
+            JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
         }
     }//GEN-LAST:event_launchHxDButtonActionPerformed
 
