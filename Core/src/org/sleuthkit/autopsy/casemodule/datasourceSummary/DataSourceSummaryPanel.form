@@ -23,7 +23,7 @@
                   <Component id="dataSourcesScrollPane" alignment="1" max="32767" attributes="0"/>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="openButton" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      <Component id="gotoDataSourceButton" linkSize="1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="closeButton" linkSize="1" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -66,14 +66,16 @@
                   <Component id="ingestJobsScrollPane" pref="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="opperatingSystemLabel" alignment="1" min="-2" max="-2" attributes="0"/>
-                  <Component id="opperatingSystemValueLabel" alignment="3" min="-2" pref="14" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="opperatingSystemValueLabel" alignment="3" min="-2" pref="14" max="-2" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="closeButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="openButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="gotoDataSourceButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
           </Group>
@@ -167,14 +169,14 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="openButton">
+    <Component class="javax.swing.JButton" name="gotoDataSourceButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryPanel.openButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryPanel.gotoDataSourceButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="gotoDataSourceButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

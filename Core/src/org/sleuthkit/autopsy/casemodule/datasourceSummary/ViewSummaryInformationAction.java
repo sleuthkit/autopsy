@@ -23,12 +23,12 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 
 /**
- *
- * @author wschaefer
+ * ViewSummaryInformationAction action for opening a Data Source Summary Panel
+ * with the specified data source selected if it is present.
  */
 public final class ViewSummaryInformationAction extends AbstractAction {
 
@@ -36,14 +36,20 @@ public final class ViewSummaryInformationAction extends AbstractAction {
     private static Long selectDataSource;
     private static final long serialVersionUID = 1L;
 
-    @NbBundle.Messages({"ViewSummaryInformationAction.name.text=View Summary Information"})
+    /**
+     * Create a ViewSummaryInformationAction for the selected datasource.
+     *
+     * @param selectedDataSource - the data source which is currently selected
+     *                           and will be selected initially when the
+     *                           DataSourceSummaryPanel opens.
+     */
+    @Messages({"ViewSummaryInformationAction.name.text=View Summary Information"})
     public ViewSummaryInformationAction(Long selectedDataSource) {
         super(Bundle.ViewSummaryInformationAction_name_text());
-        this.setEnabled(true);
         selectDataSource = selectedDataSource;
     }
-    
-    @NbBundle.Messages({"ViewSummaryInformationAction.window.title=Data Source Summary"})
+
+    @Messages({"ViewSummaryInformationAction.window.title=Data Source Summary"})
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         SwingUtilities.invokeLater(() -> {
@@ -51,9 +57,11 @@ public final class ViewSummaryInformationAction extends AbstractAction {
             Frame mainWindow = WindowManager.getDefault().getMainWindow();
             dataSourceSummaryDialog = new JDialog(mainWindow, title, true);
             DataSourceSummaryPanel dataSourceSummaryPanel = new DataSourceSummaryPanel();
+            //allow the buttons in DataSourceSummaryPanel to close this dialog
             dataSourceSummaryPanel.addCloseButtonAction((ActionEvent event) -> {
                 dataSourceSummaryDialog.dispose();
             });
+            //select the specifed data source
             dataSourceSummaryPanel.selectDataSource(selectDataSource);
             dataSourceSummaryDialog.add(dataSourceSummaryPanel);
             dataSourceSummaryDialog.setResizable(true);

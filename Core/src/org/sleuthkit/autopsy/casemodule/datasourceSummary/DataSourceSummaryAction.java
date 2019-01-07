@@ -32,22 +32,29 @@ import org.sleuthkit.autopsy.casemodule.Case;
 @ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction")
 @ActionRegistration(displayName = "#CTL_DataSourceSummaryAction", lazy = false)
 @Messages({"CTL_DataSourceSummaryAction=Data Source Summary"})
+/**
+ * DataSourceSummaryAction action for the Case menu to activate a ViewSummaryInformationAction selecting the first data source.
+ */
 public class DataSourceSummaryAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-    
+
+    /**
+     * Create a datasource summary action which will be disabled when no case is
+     * open.
+     */
     DataSourceSummaryAction() {
         putValue(Action.NAME, Bundle.CTL_DataSourceSummaryAction());
         this.setEnabled(false);
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             setEnabled(null != evt.getNewValue());
-        });   
+        });
     }
-    
+
     @Override
     public void performAction() {
-           //perform the action of a ViewSummaryInformationAction with a ActionEvent which will not be used
-           new ViewSummaryInformationAction(null).actionPerformed(new ActionEvent(Boolean.TRUE, 0, ""));
+        //perform the action of a ViewSummaryInformationAction with a ActionEvent which will not be used
+        new ViewSummaryInformationAction(null).actionPerformed(new ActionEvent(Boolean.TRUE, 0, ""));
     }
 
     @Override
@@ -59,10 +66,4 @@ public class DataSourceSummaryAction extends CallableSystemAction {
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
-    @Override
-    public boolean asynchronous(){
-        return false;
-    }
-
 }

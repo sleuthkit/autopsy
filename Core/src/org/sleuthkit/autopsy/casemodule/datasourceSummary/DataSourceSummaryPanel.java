@@ -51,8 +51,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-public class DataSourceSummaryPanel extends javax.swing.JPanel {
+final class DataSourceSummaryPanel extends javax.swing.JPanel {
 
+    private static final long serialVersionUID = 1L;
     private final List<IngestJobInfo> allIngestJobs = new ArrayList<>();
     private List<IngestJobInfo> ingestJobs = new ArrayList<>();
     private DataSourceTableModel dataSourceTableModel = new DataSourceTableModel();
@@ -64,11 +65,13 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
     private List<OSInfo> osInfoList;
 
     /**
-     * Creates new form DataSourceSummary
+     * Creates new form DataSourceSummaryPanel for displaying a summary of the
+     * data sources for the fcurrent case and the contents found for each
+     * datasource.
      */
     @Messages({"DataSourceSummaryPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
         "DataSourceSummaryPanel.getDataSources.error.title=Load Failure"})
-    public DataSourceSummaryPanel() {
+    DataSourceSummaryPanel() {
         initComponents();
         ingestJobsTable.getTableHeader().setReorderingAllowed(false);
         fileCountsTable.getTableHeader().setReorderingAllowed(false);
@@ -94,25 +97,44 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Get the name of the operating system if it is available. Otherwise get
+     * and empty string.
+     *
+     * @param selectedDataSource the datasource to get the OS information for
+     *
+     * @return the name of the opperating system on the specified datasource,
+     *         empty string if no opperating system info found
+     */
     private String getOSName(DataSource selectedDataSource) {
         String osName = "";
         if (selectedDataSource != null) {
             for (OSInfo osInfo : osInfoList) {
                 try {
+                    //assumes only one Opperating System per datasource
+                    //get the datasource id from the OSInfo's first artifact if it has artifacts
                     if (!osInfo.getArtifacts().isEmpty() && osInfo.getArtifacts().get(0).getDataSource().getId() == selectedDataSource.getId()) {
                         osName = osInfo.getOSName();
+                        //if this OSInfo object has a name use it otherwise keep checking OSInfo objects
                         if (!osName.isEmpty()) {
                             break;
                         }
                     }
-                } catch (TskCoreException ex) {
-
+                } catch (TskCoreException ignored) {
+                    //unable to get datasource for the OSInfo Object 
+                    //continue checking for OSInfo objects which we can get the desired information from
                 }
             }
         }
         return osName;
     }
 
+    /**
+     * Update the ingestJobs list with the ingest jobs for the
+     * selectedDataSource
+     *
+     * @param selectedDataSource the datasource to find the ingest jobs for
+     */
     @Messages({"DataSourceSummaryPanel.loadIngestJob.error.text=Failed to load ingest jobs.",
         "DataSourceSummaryPanel.loadIngestJob.error.title=Load Failure"})
     private void updateIngestJobs(DataSource selectedDataSource) {
@@ -149,7 +171,7 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         fileCountsLabel = new javax.swing.JLabel();
         ingestJobsLabel = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
-        openButton = new javax.swing.JButton();
+        gotoDataSourceButton = new javax.swing.JButton();
 
         dataSourcesTable.setModel(dataSourceTableModel);
         dataSourcesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -170,10 +192,10 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.closeButton.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(openButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.openButton.text")); // NOI18N
-        openButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(gotoDataSourceButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.gotoDataSourceButton.text")); // NOI18N
+        gotoDataSourceButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                openButtonActionPerformed(evt);
+                gotoDataSourceButtonActionPerformed(evt);
             }
         });
 
@@ -188,7 +210,7 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
                     .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(openButton)
+                        .addComponent(gotoDataSourceButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(closeButton))
                     .addGroup(layout.createSequentialGroup()
@@ -206,7 +228,7 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {closeButton, openButton});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {closeButton, gotoDataSourceButton});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -224,13 +246,14 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
                     .addComponent(fileCountsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(ingestJobsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(opperatingSystemLabel)
-                    .addComponent(opperatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(opperatingSystemLabel, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(opperatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(10, 10, 10)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(closeButton)
-                    .addComponent(openButton))
+                    .addComponent(gotoDataSourceButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -242,30 +265,46 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
      */
     void addCloseButtonAction(ActionListener action) {
         this.closeButton.addActionListener(action);
-        this.openButton.addActionListener(action);
+        //the gotoDataSourceButton should also close the dialog
+        this.gotoDataSourceButton.addActionListener(action);
     }
 
+    /**
+     * Select the data source with the specicied data source id. If no data
+     * source matches the dataSourceID it will select the first datasource.
+     *
+     * @param dataSourceID the ID of the datasource to select, null will cause
+     *                     the first datasource to be selected
+     */
     void selectDataSource(Long dataSourceID) {
         if (dataSourceID != null) {
             for (int i = 0; i < dataSources.size(); i++) {
                 if (dataSources.get(i).getId() == dataSourceID) {
                     dataSourcesTable.setRowSelectionInterval(i, i);
+                    //scroll down from top of table to where selected datasource is
                     dataSourcesTable.scrollRectToVisible(new Rectangle(dataSourcesTable.getCellRect(i, 0, true)));
                     return;
                 }
             }
-        } 
+        }
+        //if there are data sources in the list and none were found that matched the specied dataSourceID select the first one
         if (!dataSources.isEmpty()) {
             dataSourcesTable.setRowSelectionInterval(0, 0);
         }
     }
 
-    private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
+    /**
+     * Performed when the Goto Data Source button is clicked, will cause the
+     * window to be closed and the data source which was selected to be
+     * navigated to in the tree.
+     */
+    private void gotoDataSourceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoDataSourceButtonActionPerformed
+        //the dialog will be closed due to the action listener added in addCloseButtonAction
         DataSource selectedDataSource = (dataSourcesTable.getSelectedRow() < 0 ? null : dataSources.get(dataSourcesTable.getSelectedRow()));
         if (selectedDataSource != null) {
             new ViewContextAction("", selectedDataSource).actionPerformed(evt);
         }
-    }//GEN-LAST:event_openButtonActionPerformed
+    }//GEN-LAST:event_gotoDataSourceButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -275,15 +314,214 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
     private javax.swing.JLabel fileCountsLabel;
     private javax.swing.JScrollPane fileCountsScrollPane;
     private javax.swing.JTable fileCountsTable;
+    private javax.swing.JButton gotoDataSourceButton;
     private javax.swing.JLabel ingestJobsLabel;
     private javax.swing.JScrollPane ingestJobsScrollPane;
     private javax.swing.JTable ingestJobsTable;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JButton openButton;
     private javax.swing.JLabel opperatingSystemLabel;
     private javax.swing.JLabel opperatingSystemValueLabel;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Table model for the Data source table, to display all data sources for
+     * the current case.
+     */
+    @Messages({"DataSourceSummaryPanel.DataSourceTableModel.dataSourceName.header=Data Source Name",
+        "DataSourceSummaryPanel.DataSourceTableModel.type.header=Type",
+        "DataSourceSummaryPanel.DataSourceTableModel.files.header=Files",
+        "DataSourceSummaryPanel.DataSourceTableModel.results.header=Results",
+        "DataSourceSummaryPanel.DataSourceTableModel.tags.header=Tags"})
+    private class DataSourceTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
+
+        private final List<String> columnHeaders = new ArrayList<>();
+        private final Map<Long, Long> fileCountsMap;
+        private final Map<Long, Long> artifactCountsMap;
+        private final Map<Long, Long> tagCountsMap;
+
+        /**
+         * Create a new DataSourceTableModel for the current case.
+         */
+        DataSourceTableModel() {
+            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_dataSourceName_header());
+            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_type_header());
+            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_files_header());
+            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_results_header());
+            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_tags_header());
+            fileCountsMap = getCountsOfFiles();
+            artifactCountsMap = getCountsOfArtifacts();
+            tagCountsMap = getCountsOfTags();
+
+        }
+
+        @Override
+        public int getRowCount() {
+            return dataSources.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnHeaders.size();
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            DataSource currentDataSource = dataSources.get(rowIndex);
+            Long count;
+            switch (columnIndex) {
+                case 0:
+                    return currentDataSource.getName();
+                case 1:
+                    return "";
+                case 2:
+                    //display 0 if no count is found
+                    count = fileCountsMap.get(currentDataSource.getId());
+                    return count == null ? 0 : count;
+                case 3:
+                    //display 0 if no count is found
+                    count = artifactCountsMap.get(currentDataSource.getId());
+                    return count == null ? 0 : count;
+                case 4:
+                    //display 0 if no count is found
+                    count = tagCountsMap.get(currentDataSource.getId());
+                    return count == null ? 0 : count;
+                default:
+                    break;
+            }
+            return null;
+        }
+
+        /**
+         * Get a map containing the number of files in each data source in the
+         * current case.
+         *
+         * @return Collection which maps datasource id to a count for the number
+         *         of files in the datasource, will only contain entries for
+         *         datasources which have at least 1 file
+         */
+        private Map<Long, Long> getCountsOfFiles() {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                DataSourceCountsCallback callback = new DataSourceCountsCallback();
+                final String countFilesQuery = "data_source_obj_id, COUNT(*) AS count"
+                        + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                        + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
+                        + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
+                skCase.getCaseDbAccessManager().select(countFilesQuery, callback);
+                return callback.getMapOfCounts();
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                return Collections.emptyMap();
+            }
+        }
+
+        /**
+         * Get a map containing the number of artifacts in each data source in
+         * the current case.
+         *
+         * @return Collection which maps datasource id to a count for the number
+         *         of artifacts in the datasource, will only contain entries for
+         *         datasources which have at least 1 artifact
+         */
+        private Map<Long, Long> getCountsOfArtifacts() {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                DataSourceCountsCallback callback = new DataSourceCountsCallback();
+                final String countArtifactsQuery = "data_source_obj_id, COUNT(*) AS count"
+                        + " FROM blackboard_artifacts WHERE review_status_id !=" + BlackboardArtifact.ReviewStatus.REJECTED.getID()
+                        + " GROUP BY data_source_obj_id"; //NON-NLS
+                skCase.getCaseDbAccessManager().select(countArtifactsQuery, callback);
+                return callback.getMapOfCounts();
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                return Collections.emptyMap();
+            }
+        }
+
+        /**
+         * Get a map containing the number of tags which have been applied in
+         * each data source in the current case. Not necessarily the same as the
+         * number of items tagged, as an item can have any number of tags.
+         *
+         * @return Collection which maps datasource id to a count for the number
+         *         of tags which have been applied in the datasource, will only
+         *         contain entries for datasources which have at least 1 item
+         *         tagged.
+         */
+        private Map<Long, Long> getCountsOfTags() {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                DataSourceCountsCallback fileCountcallback = new DataSourceCountsCallback();
+                final String countFileTagsQuery = "data_source_obj_id, COUNT(*) AS count"
+                        + " FROM content_tags as content_tags, tsk_files as tsk_files"
+                        + " WHERE content_tags.obj_id = tsk_files.obj_id"
+                        + " GROUP BY data_source_obj_id"; //NON-NLS
+                skCase.getCaseDbAccessManager().select(countFileTagsQuery, fileCountcallback);
+                Map<Long, Long> tagCountMap = new HashMap<>(fileCountcallback.getMapOfCounts());
+                DataSourceCountsCallback artifactCountcallback = new DataSourceCountsCallback();
+                final String countArtifactTagsQuery = "data_source_obj_id, COUNT(*) AS count"
+                        + " FROM blackboard_artifact_tags as artifact_tags,  blackboard_artifacts AS arts"
+                        + " WHERE artifact_tags.artifact_id = arts.artifact_id"
+                        + " GROUP BY data_source_obj_id"; //NON-NLS
+                skCase.getCaseDbAccessManager().select(countArtifactTagsQuery, artifactCountcallback);
+                //combine the results from the count artifact tags query into the copy of the mapped results from the count file tags query
+                artifactCountcallback.getMapOfCounts().forEach((key, value) -> tagCountMap.merge(key, value, (value1, value2) -> value1 + value2));
+                return tagCountMap;
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                return Collections.emptyMap();
+            }
+
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return columnHeaders.get(column);
+        }
+
+        /**
+         * Get the map of Data Source ID to counts of items found for a query
+         * which selects data_source_obj_id and count(*) with a group by
+         * data_source_obj_id clause.
+         */
+        private class DataSourceCountsCallback implements CaseDbAccessQueryCallback {
+
+            Map<Long, Long> dataSourceObjIdCounts = new HashMap<>();
+
+            @Override
+            public void process(ResultSet rs) {
+                try {
+                    while (rs.next()) {
+                        try {
+                            dataSourceObjIdCounts.put(rs.getLong("data_source_obj_id"), rs.getLong("count"));
+                        } catch (SQLException ex) {
+                            System.out.println("UNABLE TO GET COUNT FOR DS " + ex.getMessage());
+                        }
+                    }
+                } catch (SQLException ex) {
+                    System.out.println("Failed to get next result" + ex.getMessage());
+                }
+            }
+
+            /**
+             * Get the processed results
+             *
+             * @return Collection which maps datasource id to a count for the
+             *         number of items found with that datasource id, only
+             *         contains entries for datasources with at least 1 item
+             *         found.
+             */
+            Map<Long, Long> getMapOfCounts() {
+                return Collections.unmodifiableMap(dataSourceObjIdCounts);
+            }
+
+        }
+
+    }
+
+    /**
+     * Table model for the Ingest Job table to display ingest jobs for the
+     * selected datasource.
+     */
     @Messages({"DataSourceSummaryPanel.IngestJobTableModel.StartTime.header=Start Time",
         "DataSourceSummaryPanel.IngestJobTableModel.EndTime.header=End Time",
         "DataSourceSummaryPanel.IngestJobTableModel.IngestStatus.header=Ingest Status"})
@@ -293,6 +531,9 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
 
         private final List<String> columnHeaders = new ArrayList<>();
 
+        /**
+         * Create a new IngestJobTableModel
+         */
         IngestJobTableModel() {
             columnHeaders.add(Bundle.DataSourceSummaryPanel_IngestJobTableModel_StartTime_header());
             columnHeaders.add(Bundle.DataSourceSummaryPanel_IngestJobTableModel_EndTime_header());
@@ -336,6 +577,10 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
 
     }
 
+    /**
+     * Table model for the files table model to display counts of specific file
+     * types found in the currently selected data source.
+     */
     @Messages({"DataSourceSummaryPanel.FilesTableModel.type.header=File Type",
         "DataSourceSummaryPanel.FilesTableModel.count.header=Count"})
     private class FilesTableModel extends AbstractTableModel {
@@ -344,6 +589,12 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         private final DataSource currentDataSource;
         private final List<String> columnHeaders = new ArrayList<>();
 
+        /**
+         * Create a FilesTableModel for the speicified datasource.
+         *
+         * @param selectedDataSource the datasource which this filesTablemodel
+         *                           will represent
+         */
         FilesTableModel(DataSource selectedDataSource) {
             columnHeaders.add(Bundle.DataSourceSummaryPanel_FilesTableModel_type_header());
             columnHeaders.add(Bundle.DataSourceSummaryPanel_FilesTableModel_count_header());
@@ -352,6 +603,7 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
+            //should be kept equal to the number of types we are displaying in the tables
             return 5;
         }
 
@@ -403,6 +655,17 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
             return null;
         }
 
+        /**
+         * Get the number of files in the case database for the current data
+         * source which have the specified mimetypes.
+         *
+         * @param setOfMimeTypes the set of mime types which we are finding the
+         *                       number of occurences of
+         *
+         * @return a Long value which represents the number of occurrences of
+         *         the specified mime types in the current case for the
+         *         specified data source, null if no count was retrieved
+         */
         private Long getCountOfFiles(Set<String> setOfMimeTypes) {
             if (currentDataSource != null) {
                 try {
@@ -414,7 +677,8 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
                             + " AND mime_type IN ('" + inClause + "')"
                             + " AND name<>''");
                 } catch (TskCoreException | NoCurrentCaseException ex) {
-
+                    logger.log(Level.INFO, "Unable to get count of files for specified mime types", ex);
+                    //unable to get count of files for the specified mimetypes cell will be displayed as empty
                 }
             }
             return null;
@@ -423,152 +687,6 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
         @Override
         public String getColumnName(int column) {
             return columnHeaders.get(column);
-        }
-
-    }
-
-    @Messages({"DataSourceSummaryPanel.DataSourceTableModel.dataSourceName.header=Data Source Name",
-        "DataSourceSummaryPanel.DataSourceTableModel.type.header=Type",
-        "DataSourceSummaryPanel.DataSourceTableModel.files.header=Files",
-        "DataSourceSummaryPanel.DataSourceTableModel.results.header=Results",
-        "DataSourceSummaryPanel.DataSourceTableModel.tags.header=Tags"})
-    private class DataSourceTableModel extends AbstractTableModel {
-
-        private static final long serialVersionUID = 1L;
-
-        private final List<String> columnHeaders = new ArrayList<>();
-        private final Map<Long, Long> fileCountsMap;
-        private final Map<Long, Long> artifactCountsMap;
-        private final Map<Long, Long> tagCountsMap;
-
-        DataSourceTableModel() {
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_dataSourceName_header());
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_type_header());
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_files_header());
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_results_header());
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_DataSourceTableModel_tags_header());
-            fileCountsMap = getCountsOfFiles();
-            artifactCountsMap = getCountsOfArtifacts();
-            tagCountsMap = getCountsOfTags();
-
-        }
-
-        @Override
-        public int getRowCount() {
-            return dataSources.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnHeaders.size();
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            DataSource currentDataSource = dataSources.get(rowIndex);
-            Long count;
-            switch (columnIndex) {
-                case 0:
-                    return currentDataSource.getName();
-                case 1:
-                    return "";
-                case 2:
-                    count = fileCountsMap.get(currentDataSource.getId());
-                    return count == null ? 0 : count;
-                case 3:
-                    count = artifactCountsMap.get(currentDataSource.getId());
-                    return count == null ? 0 : count;
-                case 4:
-                    count = tagCountsMap.get(currentDataSource.getId());
-                    return count == null ? 0 : count;
-                default:
-                    break;
-            }
-            return null;
-        }
-
-        private Map<Long, Long> getCountsOfFiles() {
-            try {
-                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                DataSourceCountsCallback callback = new DataSourceCountsCallback();
-                final String countFilesQuery = "data_source_obj_id, COUNT(*) AS count"
-                        + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
-                        + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
-                        + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
-                skCase.getCaseDbAccessManager().select(countFilesQuery, callback);
-                return callback.getMapOfCounts();
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                return Collections.emptyMap();
-            }
-        }
-
-        private Map<Long, Long> getCountsOfArtifacts() {
-            try {
-                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                DataSourceCountsCallback callback = new DataSourceCountsCallback();
-                final String countArtifactsQuery = "data_source_obj_id, COUNT(*) AS count"
-                        + " FROM blackboard_artifacts WHERE review_status_id !=" + BlackboardArtifact.ReviewStatus.REJECTED.getID()
-                        + " GROUP BY data_source_obj_id"; //NON-NLS
-                skCase.getCaseDbAccessManager().select(countArtifactsQuery, callback);
-                return callback.getMapOfCounts();
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                return Collections.emptyMap();
-            }
-        }
-
-        private Map<Long, Long> getCountsOfTags() {
-            try {
-                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                DataSourceCountsCallback fileCountcallback = new DataSourceCountsCallback();
-                final String countFileTagsQuery = "data_source_obj_id, COUNT(*) AS count"
-                        + " FROM content_tags as content_tags, tsk_files as tsk_files"
-                        + " WHERE content_tags.obj_id = tsk_files.obj_id"
-                        + " GROUP BY data_source_obj_id"; //NON-NLS
-                skCase.getCaseDbAccessManager().select(countFileTagsQuery, fileCountcallback);
-                Map<Long, Long> tagCountMap = new HashMap<>(fileCountcallback.getMapOfCounts());
-                DataSourceCountsCallback artifactCountcallback = new DataSourceCountsCallback();
-                final String countArtifactTagsQuery = "data_source_obj_id, COUNT(*) AS count"
-                        + " FROM blackboard_artifact_tags as artifact_tags,  blackboard_artifacts AS arts"
-                        + " WHERE artifact_tags.artifact_id = arts.artifact_id"
-                        + " GROUP BY data_source_obj_id"; //NON-NLS
-                skCase.getCaseDbAccessManager().select(countArtifactTagsQuery, artifactCountcallback);
-                //combine the results from the count artifact tags query into the copy of the mapped results from the count file tags query
-                artifactCountcallback.getMapOfCounts().forEach((key, value) -> tagCountMap.merge(key, value, (value1, value2) -> value1 + value2));
-                return tagCountMap;
-            } catch (TskCoreException | NoCurrentCaseException ex) {
-                return Collections.emptyMap();
-            }
-
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return columnHeaders.get(column);
-        }
-
-        private class DataSourceCountsCallback implements CaseDbAccessQueryCallback {
-
-            Map<Long, Long> dataSourceObjIdCounts = new HashMap<>();
-
-            @Override
-            public void process(ResultSet rs) {
-                try {
-                    while (rs.next()) {
-                        try {
-                            dataSourceObjIdCounts.put(rs.getLong("data_source_obj_id"), rs.getLong("count"));
-                        } catch (SQLException ex) {
-                            System.out.println("UNABLE TO GET COUNT FOR DS " + ex.getMessage());
-                        }
-                    }
-                } catch (SQLException ex) {
-                    System.out.println("Failed to get next result" + ex.getMessage());
-                }
-            }
-
-            Map<Long, Long> getMapOfCounts() {
-                return Collections.unmodifiableMap(dataSourceObjIdCounts);
-            }
-
         }
 
     }
