@@ -254,6 +254,8 @@ final public class DetailsViewModel {
                         .sorted(new DetailViewEvent.StartComparator())
                         .iterator();
                 EventCluster current = iterator.next();
+                
+                //JM Todo: maybe we can collect all clusters to merge in one go, rather than piece by piece for performance.
                 while (iterator.hasNext()) {
                     EventCluster next = iterator.next();
                     Interval gap = current.getSpan().gap(next.getSpan());
