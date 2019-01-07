@@ -526,7 +526,7 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * Get a List of event IDs for the events that are derived from the given
+     * Get a Set of event IDs for the events that are derived from the given
      * file.
      *
      * @param file                    The AbstractFile to get derived event IDs
@@ -537,12 +537,12 @@ public final class FilteredEventsModel {
      *                                directly from this file (file system
      *                                timestamps).
      *
-     * @return A List of event IDs for the events that are derived from the
+     * @return A Set of event IDs for the events that are derived from the
      *         given file.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
+    public Set<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
         return eventManager.getEventIDsForFile(file, includeDerivedArtifacts);
     }
 

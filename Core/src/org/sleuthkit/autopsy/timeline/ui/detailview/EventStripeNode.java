@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
+import java.util.Set;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -117,7 +118,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
 
     @Override
     protected EventNodeBase<?> createChildNode(EventCluster cluster) throws TskCoreException {
-        ImmutableSet<Long> eventIDs = cluster.getEventIDs();
+        Set<Long> eventIDs = cluster.getEventIDs();
         if (eventIDs.size() == 1) {
             TimelineEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
             SingleDetailsViewEvent singleDetailEvent = new SingleDetailsViewEvent(singleEvent).withParent(cluster);

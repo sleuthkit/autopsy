@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedSet;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
@@ -56,18 +57,18 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     /**
      * the set of ids of the events
      */
-    private final ImmutableSet<Long> eventIDs;
+    private final Set<Long> eventIDs;
 
     /**
      * the ids of the subset of events that have at least one tag applied to
      * them
      */
-    private final ImmutableSet<Long> tagged;
+    private final Set<Long> tagged;
 
     /**
      * the ids of the subset of events that have at least one hash set hit
      */
-    private final ImmutableSet<Long> hashHits;
+    private final Set<Long> hashHits;
 
     public static EventStripe merge(EventStripe u, EventStripe v) { //NOPMD
         Preconditions.checkNotNull(u);
@@ -86,7 +87,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         return new EventStripe(parent, this.type, this.description, this.lod, clusters, eventIDs, tagged, hashHits);
     }
 
-    private EventStripe(EventCluster parent, EventType type, String description, DescriptionLoD lod, SortedSet<EventCluster> clusters, ImmutableSet<Long> eventIDs, ImmutableSet<Long> tagged, ImmutableSet<Long> hashHits) {
+    private EventStripe(EventCluster parent, EventType type, String description, DescriptionLoD lod, SortedSet<EventCluster> clusters, Set<Long> eventIDs, Set<Long> tagged, Set<Long> hashHits) {
         this.parent = parent;
         this.type = type;
         this.description = description;
@@ -165,17 +166,17 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     @Override
-    public ImmutableSet<Long> getEventIDs() {
+    public Set<Long> getEventIDs() {
         return eventIDs;
     }
 
     @Override
-    public ImmutableSet<Long> getEventIDsWithHashHits() {
+    public Set<Long> getEventIDsWithHashHits() {
         return hashHits;
     }
 
     @Override
-    public ImmutableSet<Long> getEventIDsWithTags() {
+    public Set<Long> getEventIDsWithTags() {
         return tagged;
     }
 

@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -125,7 +126,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      */
     @NbBundle.Messages({
         "ShowInTimelineDialog.amountValidator.message=The entered amount must only contain digits."})
-    private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) throws TskCoreException {
+    private ShowInTimelineDialog(TimeLineController controller, Collection<Long> eventIDS) throws TskCoreException {
 
         //load dialog content fxml
         final String name = "nbres:/" + StringUtils.replace(ShowInTimelineDialog.class.getPackage().getName(), ".", "/") + "/ShowInTimelineDialog.fxml"; // NON-NLS

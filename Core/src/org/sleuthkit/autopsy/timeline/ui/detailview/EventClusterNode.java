@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import static java.util.Objects.nonNull;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -259,7 +259,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
 
     @Override
     EventNodeBase<?> createChildNode(EventStripe stripe) throws TskCoreException {
-        ImmutableSet<Long> eventIDs = stripe.getEventIDs();
+         Set<Long> eventIDs = stripe.getEventIDs();
         if (eventIDs.size() == 1) {
             //If the stripe is a single event, make a single event node rather than a stripe node.
             TimelineEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));

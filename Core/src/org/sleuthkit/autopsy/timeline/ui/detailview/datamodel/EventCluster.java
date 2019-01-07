@@ -25,6 +25,7 @@ import java.util.Collection;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -67,19 +68,19 @@ public class EventCluster implements MultiEvent<EventStripe> {
     /**
      * the set of ids of the clustered events
      */
-    final private ImmutableSet<Long> eventIDs;
+    final private  Set<Long> eventIDs;
 
     /**
      * the ids of the subset of clustered events that have at least one tag
      * applied to them
      */
-    private final ImmutableSet<Long> tagged;
+    private final  Set<Long> tagged;
 
     /**
      * the ids of the subset of clustered events that have at least one hash set
      * hit
      */
-    private final ImmutableSet<Long> hashHits;
+    private final  Set<Long> hashHits;
 
     /**
      * merge two event clusters into one new event cluster.
@@ -119,10 +120,10 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
         this.type = type;
 
-        this.hashHits = ImmutableSet.copyOf(hashHits);
-        this.tagged = ImmutableSet.copyOf(tagged);
+        this.hashHits = new HashSet<>(hashHits);
+        this.tagged = new HashSet<>(tagged);
         this.description = description;
-        this.eventIDs = ImmutableSet.copyOf(eventIDs);
+        this.eventIDs = new HashSet<>(eventIDs);
         this.lod = lod;
         this.parent = parent;
     }
@@ -181,17 +182,17 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     @Override
-    public ImmutableSet<Long> getEventIDs() {
+    public  Set<Long> getEventIDs() {
         return eventIDs;
     }
 
     @Override
-    public ImmutableSet<Long> getEventIDsWithHashHits() {
+    public  Set<Long> getEventIDsWithHashHits() {
         return hashHits;
     }
 
     @Override
-    public ImmutableSet<Long> getEventIDsWithTags() {
+    public  Set<Long> getEventIDsWithTags() {
         return tagged;
     }
 
