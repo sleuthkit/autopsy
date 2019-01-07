@@ -164,8 +164,6 @@ public class DataSourceSummaryPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(opperatingSystemLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.opperatingSystemLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(opperatingSystemValueLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.opperatingSystemValueLabel.text")); // NOI18N
-
         org.openide.awt.Mnemonics.setLocalizedText(fileCountsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.fileCountsLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(ingestJobsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.ingestJobsLabel.text")); // NOI18N

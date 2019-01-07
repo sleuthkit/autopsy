@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction;
+import org.sleuthkit.autopsy.casemodule.datasourceSummary.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
@@ -64,7 +64,7 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
         actions.add(null); // creates a menu separator
         actions.add(new FileSearchAction(Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
         if (content.isDataSource()) {
-            actions.add(new DataSourceSummaryAction(true, content.getId()));
+            actions.add(new ViewSummaryInformationAction(content.getId()));
             actions.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         } else {
             actions.add(new RunIngestModulesAction(content));

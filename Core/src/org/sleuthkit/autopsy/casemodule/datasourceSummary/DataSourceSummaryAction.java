@@ -18,70 +18,51 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.EnumSet;
 import javax.swing.Action;
-import javax.swing.JDialog;
-import javax.swing.SwingUtilities;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionRegistration;
 import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 
+@ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction")
+@ActionRegistration(displayName = "#CTL_DataSourceSummaryAction", lazy = false)
+@Messages({"CTL_DataSourceSummaryAction=Data Source Summary"})
 public class DataSourceSummaryAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-    private static JDialog dataSourceSummaryDialog;
-    private final Long selectDataSource;
-
-    @Messages({"DataSourceSummaryAction.caseMenuName.text=Data Source Summary"})
+    
     DataSourceSummaryAction() {
-        this(false, null);
-        putValue(Action.NAME, Bundle.DataSourceSummaryAction_caseMenuName_text());
-    }
-
-    public DataSourceSummaryAction(boolean enabled, Long selectedDataSource) {
-        putValue(Action.NAME, NbBundle.getMessage(DataSourceSummaryAction.class, "CTL_DataSourceSummaryAction"));
-        this.setEnabled(enabled);
-        selectDataSource = selectedDataSource;
+        putValue(Action.NAME, Bundle.CTL_DataSourceSummaryAction());
+        this.setEnabled(false);
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             setEnabled(null != evt.getNewValue());
-        });
+        });   
     }
-
-    @Messages({"DataSourceSummaryAction.window.title=Data Source Summary"})
+    
     @Override
     public void performAction() {
-        SwingUtilities.invokeLater(() -> {
-            String title = NbBundle.getMessage(this.getClass(), "DataSourceSummaryAction.window.title");
-            Frame mainWindow = WindowManager.getDefault().getMainWindow();
-            dataSourceSummaryDialog = new JDialog(mainWindow, title, true);
-            DataSourceSummaryPanel dataSourceSummaryPanel = new DataSourceSummaryPanel();
-            dataSourceSummaryPanel.addCloseButtonAction((ActionEvent e) -> {
-                dataSourceSummaryDialog.dispose();
-            });
-            dataSourceSummaryPanel.selectDataSource(selectDataSource);
-            dataSourceSummaryDialog.add(dataSourceSummaryPanel);
-            dataSourceSummaryDialog.setResizable(true);
-            dataSourceSummaryDialog.pack();
-            dataSourceSummaryDialog.setLocationRelativeTo(mainWindow);
-            dataSourceSummaryDialog.setVisible(true);
-            dataSourceSummaryDialog.toFront();
-        });
+           //perform the action of a ViewSummaryInformationAction with a ActionEvent which will not be used
+           new ViewSummaryInformationAction(null).actionPerformed(new ActionEvent(Boolean.TRUE, 0, ""));
     }
 
     @Override
     public String getName() {
-        return NbBundle.getMessage(DataSourceSummaryAction.class, "CTL_DataSourceSummaryAction");
+        return Bundle.CTL_DataSourceSummaryAction();
     }
 
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
+    }
+    
+    @Override
+    public boolean asynchronous(){
+        return false;
     }
 
 }
