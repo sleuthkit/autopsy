@@ -51,7 +51,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
-import org.sleuthkit.autopsy.ingest.events.ContentChangedEvent;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -325,6 +324,8 @@ public class IngestEventsListener {
                     jobProcessingExecutor.submit(new AnalysisCompleteTask(dbManager, evt));
                     break;
                 }
+                default:
+                    break;
             }
         }
 
