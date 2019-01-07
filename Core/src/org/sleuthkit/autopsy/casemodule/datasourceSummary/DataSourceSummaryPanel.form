@@ -27,25 +27,20 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="closeButton" linkSize="1" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="fileCountsLabel" pref="140" max="32767" attributes="0"/>
-                          <Group type="102" alignment="0" attributes="0">
+                          <Component id="fileCountsLabel" max="32767" attributes="0"/>
+                          <Component id="fileCountsScrollPane" alignment="1" min="-2" pref="140" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="ingestJobsLabel" max="32767" attributes="0"/>
+                          <Component id="ingestJobsScrollPane" pref="474" max="32767" attributes="0"/>
+                          <Group type="102" alignment="1" attributes="0">
                               <Component id="opperatingSystemLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="opperatingSystemValueLabel" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="fileCountsScrollPane" alignment="1" pref="0" max="32767" attributes="0"/>
-                      </Group>
-                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="ingestHistoryDetailsLabel" max="32767" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="ingestHistoryButton" linkSize="1" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="ingestJobsLabel" max="32767" attributes="0"/>
-                          <Component id="ingestJobsScrollPane" pref="474" max="32767" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -57,7 +52,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
-              <Component id="dataSourcesScrollPane" pref="102" max="32767" attributes="0"/>
+              <Component id="dataSourcesScrollPane" pref="120" max="32767" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="jSeparator1" min="-2" pref="5" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -67,25 +62,15 @@
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Component id="fileCountsScrollPane" min="-2" pref="107" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="opperatingSystemLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="opperatingSystemValueLabel" alignment="3" min="-2" pref="14" max="-2" attributes="0"/>
-                      </Group>
-                  </Group>
-                  <Group type="102" attributes="0">
-                      <Component id="ingestJobsScrollPane" pref="105" max="32767" attributes="0"/>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="ingestHistoryButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="ingestHistoryDetailsLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                  </Group>
+                  <Component id="fileCountsScrollPane" min="-2" pref="107" max="-2" attributes="0"/>
+                  <Component id="ingestJobsScrollPane" pref="0" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="3" attributes="0">
+                  <Component id="opperatingSystemLabel" alignment="1" min="-2" max="-2" attributes="0"/>
+                  <Component id="opperatingSystemValueLabel" alignment="3" min="-2" pref="14" max="-2" attributes="0"/>
+              </Group>
+              <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="closeButton" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="openButton" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -180,13 +165,6 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="ingestHistoryDetailsLabel">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryPanel.ingestHistoryDetailsLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JButton" name="closeButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -203,13 +181,6 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openButtonActionPerformed"/>
       </Events>
-    </Component>
-    <Component class="javax.swing.JButton" name="ingestHistoryButton">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryPanel.ingestHistoryButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
     </Component>
   </SubComponents>
 </Form>

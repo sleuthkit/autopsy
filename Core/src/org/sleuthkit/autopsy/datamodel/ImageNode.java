@@ -34,6 +34,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
@@ -108,6 +109,7 @@ public class ImageNode extends AbstractContentNode<Image> {
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
         actionsList.add(new FileSearchAction(
                 Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+        actionsList.add(new DataSourceSummaryAction(true, content.getId()));
         actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
