@@ -52,10 +52,7 @@ public class DataSourceProfiler extends Extract {
 
     /**
      * Check if the data source contains files which would indicate a windows
-     * volume is present in it.
-     *
-     * @param bbattributes the list of blackboard attributes to add to if a
-     *                     windows volume is present
+     * volume is present in it, and create an artifact for that volume if detected.
      *
      * @throws TskCoreException
      */
