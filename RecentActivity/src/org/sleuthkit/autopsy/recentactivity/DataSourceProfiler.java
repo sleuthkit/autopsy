@@ -35,28 +35,40 @@ import org.sleuthkit.datamodel.TskCoreException;
 @Messages({"DataSourceProfiler.parentModuleName=Recent Activity"})
 public class DataSourceProfiler extends Extract {
 
+    private static final Logger logger = Logger.getLogger(Firefox.class.getName());
     private Content dataSource;
-     private static final Logger logger = Logger.getLogger(Firefox.class.getName());
 
     @Override
     void process(Content dataSource, IngestJobContext context) {
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         this.dataSource = dataSource;
         try {
-            checkForWindowsVolume();
+            checkForWindowsVolume(bbattributes);
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained Windows volume.", ex);
         }
+        //create an artifact if any attributes were added
+        if (!bbattributes.isEmpty()) {
+            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_PROFILE, dataSource, bbattributes);
+        }
     }
 
-    void checkForWindowsVolume() throws TskCoreException {
+    /**
+     * Check if the data source contains files which would indicate a windows
+     * volume is present in it.
+     *
+     * @param bbattributes the list of blackboard attributes to add to if a windows volume is present
+     *
+     * @throws TskCoreException
+     */
+    private void checkForWindowsVolume(Collection<BlackboardAttribute> bbattributes) throws TskCoreException {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> files = fileManager.findFilesByParentPath(dataSource.getId(), "/windows/system32");
+        //create an attribute if any files with the windows/system32 path were found
         if (!files.isEmpty()) {
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<BlackboardAttribute>();
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATA_SOURCE_DESCRIPTOR,
                     Bundle.DataSourceProfiler_parentModuleName(),
                     "Windows volume")); //NON-NLS
-            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_PROFILE, dataSource, bbattributes);
         }
     }
 
