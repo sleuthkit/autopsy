@@ -44,6 +44,8 @@ public class ExternalViewerGlobalSettingsPanelTest {
         
         testModel.addRule(new ExternalViewerRule("image/png", "fake.exe", RuleType.MIME));
         
+        Assert.assertFalse(panel.enableButtons());
+        panel.selectRowIndex(0);
         Assert.assertTrue(panel.enableButtons());
     }
     
@@ -53,6 +55,8 @@ public class ExternalViewerGlobalSettingsPanelTest {
         ExternalViewerGlobalSettingsPanel panel = new ExternalViewerGlobalSettingsPanel(testModel);
         
         testModel.addRule(new ExternalViewerRule("image/png", "fake.exe", RuleType.MIME));
+        Assert.assertFalse(panel.enableButtons());
+        panel.selectRowIndex(0);
         Assert.assertTrue(panel.enableButtons());
         
         testModel.removeRule(0);
@@ -66,6 +70,7 @@ public class ExternalViewerGlobalSettingsPanelTest {
         Assert.assertFalse(testPanel.enableButtons());
         
         testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
+        testPanel.selectRowIndex(0);
         Assert.assertTrue(testPanel.enableButtons());
         Assert.assertEquals(1, testModel.getRowCount());
         
@@ -73,5 +78,13 @@ public class ExternalViewerGlobalSettingsPanelTest {
         
         Assert.assertFalse(testPanel.enableButtons());
         Assert.assertEquals(0, testModel.getRowCount());
+    }
+    
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void testDeleteButtonClickFail() {
+        ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
+        ExternalViewerGlobalSettingsPanel testPanel = new ExternalViewerGlobalSettingsPanel(testModel);
+        
+        testPanel.deleteRuleButtonClick(-1);
     }
 }

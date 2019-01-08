@@ -26,6 +26,8 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import javax.swing.JOptionPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
@@ -62,6 +64,12 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
     private void customizeComponents(ExternalViewerGlobalSettingsTableModel tableModel) {
         ExternalViewerRulesTable.setModel(tableModel);
         ExternalViewerRulesTable.setAutoCreateRowSorter(true);
+        ExternalViewerRulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ListSelectionModel selectionModel = ExternalViewerRulesTable.getSelectionModel();
+
+        selectionModel.addListSelectionListener((ListSelectionEvent e) -> {
+            enableButtons();
+        });
     }
     
     /**
@@ -70,8 +78,17 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
      * @param selectedIndex Index to delete in JTable
      */
     public void deleteRuleButtonClick(int selectedIndex) {
-        ExternalViewerRulesTable.getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
+        selectRowIndex(selectedIndex);
         deleteRuleButton.getListeners(ActionListener.class)[0].actionPerformed(null);
+    }
+    
+    /**
+     * Simulate selecting an entry in the JTable.
+     * 
+     * @param rowIndex Index to select
+     */
+    public void selectRowIndex(int rowIndex) {
+        ExternalViewerRulesTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
     }
             
     /**
@@ -359,7 +376,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
      * Enable edit and delete buttons if there is a rule selected.
      */
     boolean enableButtons() {
-        boolean ruleIsSelected = ExternalViewerRulesTable.getRowCount() > 0;
+        boolean ruleIsSelected = ExternalViewerRulesTable.getSelectedRow() >= 0;
         editRuleButton.setEnabled(ruleIsSelected);
         deleteRuleButton.setEnabled(ruleIsSelected);
         return ruleIsSelected;

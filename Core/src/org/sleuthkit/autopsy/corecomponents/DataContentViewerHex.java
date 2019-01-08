@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
@@ -368,7 +369,8 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             }
             
             String tempDirectory = Case.getCurrentCaseThrows().getTempDirectory();
-            File dataSourceInTempDirectory = Paths.get(tempDirectory, dataSource.getId() + dataSource.getName()).toFile();
+            File dataSourceInTempDirectory = Paths.get(tempDirectory, 
+                    FileUtil.escapeFileName(dataSource.getId() + dataSource.getName())).toFile();
             ContentUtils.writeToFile(dataSource, dataSourceInTempDirectory);
             
             try {
