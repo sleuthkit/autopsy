@@ -63,7 +63,7 @@ public class DataSourceUsageAnalyzer extends Extract {
         //create an artifact if any files with the windows/system32 path were found
         if (!files.isEmpty()) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATA_SOURCE_USE_DETAILS,
-                    Bundle.DataSourceProfiler_parentModuleName(),
+                    Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                     "Windows volume")); //NON-NLS
             addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
         }
