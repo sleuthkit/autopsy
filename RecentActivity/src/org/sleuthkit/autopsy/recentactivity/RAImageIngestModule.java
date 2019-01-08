@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 public final class RAImageIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
-    private final List<Extract> extracters = new ArrayList<>();
+    private final List<Extract> extractors = new ArrayList<>();
     private final List<Extract> browserExtracters = new ArrayList<>();
     private IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
@@ -70,21 +70,21 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract chrome = new Chrome();
         Extract firefox = new Firefox();
         Extract SEUQA = new SearchEngineURLQueryAnalyzer();
-        Extract dataSourceProfiler = new DataSourceProfiler();
+        Extract dataSourceProfiler = new DataSourceUsageAnalyzer();
 
-        extracters.add(chrome);
-        extracters.add(firefox);
-        extracters.add(iexplore);
-        extracters.add(recentDocuments);
-        extracters.add(dataSourceProfiler);
-        extracters.add(SEUQA); // this needs to run after the web browser modules
-        extracters.add(registry); // this runs last because it is slowest
+        extractors.add(chrome);
+        extractors.add(firefox);
+        extractors.add(iexplore);
+        extractors.add(recentDocuments);
+        extractors.add(dataSourceProfiler);
+        extractors.add(SEUQA); // this needs to run after the web browser modules
+        extractors.add(registry); // this runs last because it is slowest
 
         browserExtracters.add(chrome);
         browserExtracters.add(firefox);
         browserExtracters.add(iexplore);
 
-        for (Extract extracter : extracters) {
+        for (Extract extracter : extractors) {
             extracter.init();
         }
     }
@@ -96,12 +96,12 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
                         "RAImageIngestModule.process.started",
                         dataSource.getName())));
 
-        progressBar.switchToDeterminate(extracters.size());
+        progressBar.switchToDeterminate(extractors.size());
 
         ArrayList<String> errors = new ArrayList<>();
 
-        for (int i = 0; i < extracters.size(); i++) {
-            Extract extracter = extracters.get(i);
+        for (int i = 0; i < extractors.size(); i++) {
+            Extract extracter = extractors.get(i);
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
                 break;
@@ -174,8 +174,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
             return ProcessResult.OK;
         }
 
-        for (int i = 0; i < extracters.size(); i++) {
-            Extract extracter = extracters.get(i);
+        for (int i = 0; i < extractors.size(); i++) {
+            Extract extracter = extractors.get(i);
             try {
                 extracter.complete();
             } catch (Exception ex) {

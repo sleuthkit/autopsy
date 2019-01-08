@@ -32,8 +32,8 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
-@Messages({"DataSourceProfiler.parentModuleName=Recent Activity"})
-public class DataSourceProfiler extends Extract {
+@Messages({"DataSourceUsageAnalyzer.parentModuleName=Recent Activity"})
+public class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(Firefox.class.getName());
     private Content dataSource;
@@ -62,10 +62,10 @@ public class DataSourceProfiler extends Extract {
         List<AbstractFile> files = fileManager.findFilesByParentPath(dataSource.getId(), "/windows/system32");
         //create an artifact if any files with the windows/system32 path were found
         if (!files.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATA_SOURCE_DESCRIPTOR,
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATA_SOURCE_USE_DETAILS,
                     Bundle.DataSourceProfiler_parentModuleName(),
                     "Windows volume")); //NON-NLS
-            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_PROFILE, dataSource, bbattributes);
+            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
         }
     }
 
