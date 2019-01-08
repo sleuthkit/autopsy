@@ -45,7 +45,7 @@ public class ExternalViewerGlobalSettingsPanelTest {
         testModel.addRule(new ExternalViewerRule("image/png", "fake.exe", RuleType.MIME));
         
         Assert.assertFalse(panel.enableButtons());
-        panel.selectRowIndex(0);
+        panel.setSelectionInterval(0, 0);
         Assert.assertTrue(panel.enableButtons());
     }
     
@@ -56,7 +56,7 @@ public class ExternalViewerGlobalSettingsPanelTest {
         
         testModel.addRule(new ExternalViewerRule("image/png", "fake.exe", RuleType.MIME));
         Assert.assertFalse(panel.enableButtons());
-        panel.selectRowIndex(0);
+        panel.setSelectionInterval(0, 0);
         Assert.assertTrue(panel.enableButtons());
         
         testModel.removeRule(0);
@@ -70,7 +70,7 @@ public class ExternalViewerGlobalSettingsPanelTest {
         Assert.assertFalse(testPanel.enableButtons());
         
         testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
-        testPanel.selectRowIndex(0);
+        testPanel.setSelectionInterval(0, 0);
         Assert.assertTrue(testPanel.enableButtons());
         Assert.assertEquals(1, testModel.getRowCount());
         
@@ -86,5 +86,22 @@ public class ExternalViewerGlobalSettingsPanelTest {
         ExternalViewerGlobalSettingsPanel testPanel = new ExternalViewerGlobalSettingsPanel(testModel);
         
         testPanel.deleteRuleButtonClick(-1);
+    }
+    
+    @Test
+    public void testSingleSelection() {
+        ExternalViewerGlobalSettingsTableModel testModel = new ExternalViewerGlobalSettingsTableModel(testColumnNames);
+        ExternalViewerGlobalSettingsPanel testPanel = new ExternalViewerGlobalSettingsPanel(testModel);
+        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
+        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
+        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
+        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
+        testModel.addRule(new ExternalViewerRule(".txt", "notepad.exe", RuleType.EXT));
+        
+        testPanel.setSelectionInterval(0, 2);
+        
+        Assert.assertFalse(testPanel.isSelected(0));
+        Assert.assertFalse(testPanel.isSelected(1));
+        Assert.assertTrue(testPanel.isSelected(2));
     }
 }

@@ -78,17 +78,29 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
      * @param selectedIndex Index to delete in JTable
      */
     public void deleteRuleButtonClick(int selectedIndex) {
-        selectRowIndex(selectedIndex);
+        setSelectionInterval(selectedIndex, selectedIndex);
         deleteRuleButton.getListeners(ActionListener.class)[0].actionPerformed(null);
     }
     
     /**
      * Simulate selecting an entry in the JTable.
      * 
+     * In single selection mode, only the endIndex is used.
+     * 
      * @param rowIndex Index to select
      */
-    public void selectRowIndex(int rowIndex) {
-        ExternalViewerRulesTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
+    public void setSelectionInterval(int startingIndex, int endIndex) {
+        ExternalViewerRulesTable.getSelectionModel().setSelectionInterval(startingIndex, endIndex);
+    }
+    
+    /**
+     * Tests whether the index is selected.
+     * 
+     * @param index
+     * @return 
+     */
+    public boolean isSelected(int index) {
+        return ExternalViewerRulesTable.getSelectionModel().isSelectedIndex(index);
     }
             
     /**
