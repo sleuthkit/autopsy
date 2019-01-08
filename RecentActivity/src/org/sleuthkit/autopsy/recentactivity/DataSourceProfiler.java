@@ -40,35 +40,35 @@ public class DataSourceProfiler extends Extract {
 
     @Override
     void process(Content dataSource, IngestJobContext context) {
-        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+        
         this.dataSource = dataSource;
         try {
-            checkForWindowsVolume(bbattributes);
+            checkForWindowsVolume();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained Windows volume.", ex);
         }
-        //create an artifact if any attributes were added
-        if (!bbattributes.isEmpty()) {
-            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_PROFILE, dataSource, bbattributes);
-        }
+
     }
 
     /**
      * Check if the data source contains files which would indicate a windows
      * volume is present in it.
      *
-     * @param bbattributes the list of blackboard attributes to add to if a windows volume is present
+     * @param bbattributes the list of blackboard attributes to add to if a
+     *                     windows volume is present
      *
      * @throws TskCoreException
      */
-    private void checkForWindowsVolume(Collection<BlackboardAttribute> bbattributes) throws TskCoreException {
+    private void checkForWindowsVolume() throws TskCoreException {
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> files = fileManager.findFilesByParentPath(dataSource.getId(), "/windows/system32");
-        //create an attribute if any files with the windows/system32 path were found
+        //create an artifact if any files with the windows/system32 path were found
         if (!files.isEmpty()) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATA_SOURCE_DESCRIPTOR,
                     Bundle.DataSourceProfiler_parentModuleName(),
                     "Windows volume")); //NON-NLS
+            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_PROFILE, dataSource, bbattributes);
         }
     }
 
