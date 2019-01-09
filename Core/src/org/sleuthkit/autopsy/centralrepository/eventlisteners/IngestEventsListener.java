@@ -401,7 +401,6 @@ public class IngestEventsListener {
                             correlationDataSource.setMd5(imageMd5Hash);
                             correlationDataSource.setSha1(imageSha1Hash);
                             correlationDataSource.setSha256(imageSha256Hash);
-                            dbManager.updateDataSource(correlationDataSource);
                         }
                     }
                 }

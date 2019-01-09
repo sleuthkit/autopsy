@@ -826,7 +826,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Updates an existing data source in the database
+     * Updates an existing data source in the database.
      *
      * @param eamDataSource The data source to update
      */
@@ -850,6 +850,73 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(2, eamDataSource.getSha1());
             preparedStatement.setString(3, eamDataSource.getSha256());
             preparedStatement.setInt(4, eamDataSource.getID());
+            
+            preparedStatement.executeUpdate();
+            //update the case in the cache
+            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()), eamDataSource);
+            dataSourceCacheById.put(getDataSourceByIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getID()), eamDataSource);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error updating data source.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+    
+    /**
+     * Updates the MD5 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        updateDataSourceStringValue(eamDataSource, "md5", eamDataSource.getMd5());
+    }
+    
+    /**
+     * Updates the SHA-1 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        updateDataSourceStringValue(eamDataSource, "sha1", eamDataSource.getSha1());
+    }
+    
+    /**
+     * Updates the SHA-256 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        updateDataSourceStringValue(eamDataSource, "sha256", eamDataSource.getSha256());
+    }
+    
+    /**
+     * Updates the specified value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     * @param column The name of the column to be updated
+     * @param value The value to assign to the specified column
+     */
+    private void updateDataSourceStringValue(CorrelationDataSource eamDataSource, String column, String value) throws EamDbException {
+        if (eamDataSource == null) {
+            throw new EamDbException("Correlation data source is null");
+        }
+
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "UPDATE data_sources "
+                + "SET " + column + "=? "
+                + "WHERE id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            
+            preparedStatement.setString(1, value);
+            preparedStatement.setInt(2, eamDataSource.getID());
             
             preparedStatement.executeUpdate();
             //update the case in the cache

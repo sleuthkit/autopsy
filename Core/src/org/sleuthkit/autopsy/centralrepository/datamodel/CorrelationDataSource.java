@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.io.Serializable;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Content;
@@ -229,15 +230,20 @@ public class CorrelationDataSource implements Serializable {
     }
     
     /**
-     * Set the MD5 hash value.
-     * 
-     * Note: This does not add the hash value to Central Repository. A method,
-     * such as EamDb.updateDataSource(), can be called to persist hash values.
+     * Set the MD5 hash value and persist to the Central Repository if available.
      * 
      * @param md5Hash The MD5 hash value.
+     * 
+     * @exception EamDbException If there's an issue updating the Central
+     *                           Repository.
      */
-    public void setMd5(String md5Hash) {
+    public void setMd5(String md5Hash) throws EamDbException {
         this.md5Hash = md5Hash;
+        
+        boolean useCR = EamDb.isEnabled();
+        if (useCR) {
+            EamDb.getInstance().updateDataSourceMd5Hash(this);
+        }
     }
     
     /**
@@ -248,15 +254,18 @@ public class CorrelationDataSource implements Serializable {
     }
     
     /**
-     * Set the SHA-1 hash value.
-     * 
-     * Note: This does not add the hash value to Central Repository. A method,
-     * such as EamDb.updateDataSource(), can be called to persist hash values.
+     * Set the SHA-1 hash value and persist to the Central Repository if
+     * available.
      * 
      * @param sha1Hash The SHA-1 hash value.
      */
-    public void setSha1(String sha1Hash) {
+    public void setSha1(String sha1Hash) throws EamDbException {
         this.sha1Hash = sha1Hash;
+        
+        boolean useCR = EamDb.isEnabled();
+        if (useCR) {
+            EamDb.getInstance().updateDataSourceSha1Hash(this);
+        }
     }
     
     /**
@@ -267,14 +276,17 @@ public class CorrelationDataSource implements Serializable {
     }
     
     /**
-     * Set the SHA-256 hash value.
-     * 
-     * Note: This does not add the hash value to Central Repository. A method,
-     * such as EamDb.updateDataSource(), can be called to persist hash values.
+     * Set the SHA-256 hash value and persist to the Central Repository if
+     * available.
      * 
      * @param sha256Hash The SHA-256 hash value.
      */
-    public void setSha256(String sha256Hash) {
+    public void setSha256(String sha256Hash) throws EamDbException {
         this.sha256Hash = sha256Hash;
+        
+        boolean useCR = EamDb.isEnabled();
+        if (useCR) {
+            EamDb.getInstance().updateDataSourceSha256Hash(this);
+        }
     }
 }

@@ -448,6 +448,51 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }
     }
+    
+    /**
+     * Updates the MD5 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSourceMd5Hash(eamDataSource);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+    
+    /**
+     * Updates the SHA-1 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSourceSha1Hash(eamDataSource);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+    
+    /**
+     * Updates the SHA-256 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSourceSha256Hash(eamDataSource);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
 
     /**
      * Inserts new Artifact(s) into the database. Should add associated Case and

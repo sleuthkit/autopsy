@@ -211,6 +211,27 @@ public interface EamDb {
      * @param eamDataSource The data source to update
      */
     void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
+    
+    /**
+     * Updates the MD5 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException;
+    
+    /**
+     * Updates the SHA-1 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException;
+    
+    /**
+     * Updates the SHA-256 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source device ID
