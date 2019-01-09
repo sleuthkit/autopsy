@@ -830,11 +830,16 @@ public final class DrawableDB {
     /**
      * Updates the IG schema version in the Drawable DB
      * 
-     * @param version
+     * @param version new version number
+     * @param transaction transaction under which the update happens
      * 
      * @throws SQLException
      */
-    private void updateDrawableDbIgSchemaVersion(VersionNumber version) throws SQLException {
+    private void updateDrawableDbIgSchemaVersion(VersionNumber version, DrawableTransaction transaction) throws SQLException, TskCoreException {
+        
+        if (transaction == null) {
+           throw new TskCoreException("Schema version update must be done in a transaction");
+        }
         
         dbWriteLock();
         try {
@@ -845,7 +850,6 @@ public final class DrawableDB {
             statement.execute(String.format("UPDATE %s  SET value = '%s' WHERE name = '%s'", IG_DB_INFO_TABLE, version.getMinor(), IG_SCHEMA_MINOR_VERSION_KEY ));
                 
             statement.close();
-            return;
         }
         finally {
             dbWriteUnlock();
@@ -855,15 +859,16 @@ public final class DrawableDB {
     /**
      * Updates the IG schema version in CaseDB
      * 
-     * @param version
+     * @param version new version number
+     * @param caseDbTransaction transaction to use to update the CaseDB
      * 
      * @throws SQLException
      */
-    private void updateCaseDbIgSchemaVersion(VersionNumber version) throws TskCoreException {
+    private void updateCaseDbIgSchemaVersion(VersionNumber version, CaseDbTransaction caseDbTransaction) throws TskCoreException {
         
         String updateSQLTemplate = " SET value = %s  WHERE name = '%s' ";
-        tskCase.getCaseDbAccessManager().update(IG_DB_INFO_TABLE, String.format(updateSQLTemplate, version.getMajor(), IG_SCHEMA_MAJOR_VERSION_KEY));
-        tskCase.getCaseDbAccessManager().update(IG_DB_INFO_TABLE, String.format(updateSQLTemplate, version.getMinor(), IG_SCHEMA_MINOR_VERSION_KEY));          
+        tskCase.getCaseDbAccessManager().update(IG_DB_INFO_TABLE, String.format(updateSQLTemplate, version.getMajor(), IG_SCHEMA_MAJOR_VERSION_KEY), caseDbTransaction);
+        tskCase.getCaseDbAccessManager().update(IG_DB_INFO_TABLE, String.format(updateSQLTemplate, version.getMinor(), IG_SCHEMA_MINOR_VERSION_KEY), caseDbTransaction);          
     }
     
     
@@ -882,13 +887,39 @@ public final class DrawableDB {
         VersionNumber caseDbIgSchemaVersion = getCaseDbIgSchemaVersion();
 
         // Upgrade Schema in both DrawableDB and CaseDB
-        caseDbIgSchemaVersion = upgradeCaseDbIgSchema1dot0TO1dot1(caseDbIgSchemaVersion);
-        drawableDbIgSchemaVersion = upgradeDrawableDbIgSchema1dot0TO1dot1(caseDbIgSchemaVersion);
+        CaseDbTransaction caseDbTransaction = tskCase.beginTransaction();
+        DrawableTransaction transaction = beginTransaction();
+         
+        try {
+            caseDbIgSchemaVersion = upgradeCaseDbIgSchema1dot0TO1dot1(caseDbIgSchemaVersion, caseDbTransaction);
+            drawableDbIgSchemaVersion = upgradeDrawableDbIgSchema1dot0TO1dot1(drawableDbIgSchemaVersion, transaction);
 
-        // update the versions in the tables
-        updateDrawableDbIgSchemaVersion(drawableDbIgSchemaVersion);      
-        updateCaseDbIgSchemaVersion(caseDbIgSchemaVersion);
-
+            // update the versions in the tables
+            updateCaseDbIgSchemaVersion(caseDbIgSchemaVersion, caseDbTransaction );
+            updateDrawableDbIgSchemaVersion(drawableDbIgSchemaVersion, transaction);      
+           
+            caseDbTransaction.commit();
+            caseDbTransaction = null;
+            commitTransaction(transaction, false);
+            transaction = null;
+        }
+        catch (TskCoreException | SQLException ex) {
+            if (null != caseDbTransaction) {
+                try {
+                    caseDbTransaction.rollback();
+                } catch (TskCoreException ex2) {
+                    logger.log(Level.SEVERE, String.format("Failed to roll back case db transaction after error: %s", ex.getMessage()), ex2); //NON-NLS
+                }
+            }
+            if (null != transaction) {
+                try {
+                    rollbackTransaction(transaction);
+                } catch (SQLException ex2) {
+                    logger.log(Level.SEVERE, String.format("Failed to roll back drawables db transaction after error: %s", ex.getMessage()), ex2); //NON-NLS
+                }
+            }
+            throw ex;
+        }
         return true;    
     }
     
@@ -897,11 +928,12 @@ public final class DrawableDB {
      * Does nothing if the incoming version is not 1.0 
      * 
      * @param currVersion version to upgrade from 
+     * @param caseDbTransaction transaction to use for all updates
      * 
      * @return new version number
      * @throws TskCoreException 
      */
-    private VersionNumber upgradeCaseDbIgSchema1dot0TO1dot1(VersionNumber currVersion ) throws TskCoreException  {
+    private VersionNumber upgradeCaseDbIgSchema1dot0TO1dot1(VersionNumber currVersion, CaseDbTransaction caseDbTransaction ) throws TskCoreException  {
         
         if (currVersion.getMajor() != 1 || 
             currVersion.getMinor() != 0) {  
@@ -911,11 +943,10 @@ public final class DrawableDB {
         // 1.0 -> 1.1 upgrade
         // Add a 'isAnalyzed' column to groups table in CaseDB
         String alterSQL = " ADD COLUMN isAnalyzed integer DEFAULT 1 "; //NON-NLS
-        if (false == tskCase.getCaseDbAccessManager().doesColumnExist(GROUPS_TABLENAME, "isAnalyzed")) {
-            tskCase.getCaseDbAccessManager().alterTable(GROUPS_TABLENAME, alterSQL);
+        if (false == tskCase.getCaseDbAccessManager().columnExists(GROUPS_TABLENAME, "isAnalyzed", caseDbTransaction )) {
+            tskCase.getCaseDbAccessManager().alterTable(GROUPS_TABLENAME, alterSQL, caseDbTransaction);
         }    
-
-        return new VersionNumber(1,1,0);
+         return new VersionNumber(1,1,0);
     }
     
     /**
@@ -923,11 +954,12 @@ public final class DrawableDB {
      * Does nothing if the incoming version is not 1.0 
      * 
      * @param currVersion version to upgrade from 
+     * @param transaction transaction to use for all updates
      * 
      * @return new version number
      * @throws TskCoreException 
      */
-    private VersionNumber upgradeDrawableDbIgSchema1dot0TO1dot1(VersionNumber currVersion ) throws TskCoreException  {
+    private VersionNumber upgradeDrawableDbIgSchema1dot0TO1dot1(VersionNumber currVersion, DrawableTransaction transaction ) throws TskCoreException  {
         
         if (currVersion.getMajor() != 1 || 
             currVersion.getMinor() != 0) {  
@@ -935,7 +967,6 @@ public final class DrawableDB {
         }
  
         // There are no changes in DrawableDB schema in 1.0 -> 1.1
-
         return new VersionNumber(1,1,0);
     }
     
