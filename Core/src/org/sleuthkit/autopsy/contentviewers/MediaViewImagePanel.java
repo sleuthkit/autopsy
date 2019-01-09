@@ -32,6 +32,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.embed.swing.JFXPanel;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -71,6 +72,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private BorderPane borderpane;
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
+    
+    private double zoomRatio = 1.0; // 100%
 
     static {
         ImageIO.scanForPlugins();
@@ -267,10 +270,120 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jToolBar1 = new javax.swing.JToolBar();
+        rotateLeftButton = new javax.swing.JButton();
+        rotateRightButton = new javax.swing.JButton();
+        zoomInButton = new javax.swing.JButton();
+        zoomOutButton = new javax.swing.JButton();
+
         setBackground(new java.awt.Color(0, 0, 0));
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS));
+
+        jToolBar1.setRollover(true);
+        jToolBar1.setMaximumSize(null);
+        jToolBar1.setMinimumSize(null);
+        jToolBar1.setName(""); // NOI18N
+        jToolBar1.setPreferredSize(new java.awt.Dimension(95, 23));
+
+        org.openide.awt.Mnemonics.setLocalizedText(rotateLeftButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.rotateLeftButton.text")); // NOI18N
+        rotateLeftButton.setFocusable(false);
+        rotateLeftButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        rotateLeftButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        rotateLeftButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rotateLeftButtonActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(rotateLeftButton);
+
+        org.openide.awt.Mnemonics.setLocalizedText(rotateRightButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.rotateRightButton.text")); // NOI18N
+        rotateRightButton.setFocusable(false);
+        rotateRightButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        rotateRightButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        rotateRightButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rotateRightButtonActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(rotateRightButton);
+
+        org.openide.awt.Mnemonics.setLocalizedText(zoomInButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.zoomInButton.text")); // NOI18N
+        zoomInButton.setFocusable(false);
+        zoomInButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        zoomInButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        zoomInButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zoomInButtonActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(zoomInButton);
+
+        org.openide.awt.Mnemonics.setLocalizedText(zoomOutButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.zoomOutButton.text")); // NOI18N
+        zoomOutButton.setFocusable(false);
+        zoomOutButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        zoomOutButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        zoomOutButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zoomOutButtonActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(zoomOutButton);
+
+        add(jToolBar1);
     }// </editor-fold>//GEN-END:initComponents
+
+    private void rotateLeftButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateLeftButtonActionPerformed
+        fxImageView.setRotate(fxImageView.getRotate() - 90);
+    }//GEN-LAST:event_rotateLeftButtonActionPerformed
+
+    private void rotateRightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateRightButtonActionPerformed
+        fxImageView.setRotate(fxImageView.getRotate() + 90);
+    }//GEN-LAST:event_rotateRightButtonActionPerformed
+
+    private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
+        if (zoomRatio >= 1.0) {
+            zoomRatio += 1.0;
+            if (zoomRatio == 8.0) {
+                zoomInButton.setEnabled(false);
+            }
+        } else {
+            zoomRatio *= 2;
+        }
+        
+        //double x = 0;
+        //double y = 0;
+        //double width = 0;
+        //double height = 0;
+        //fxImageView.setViewport(new Rectangle2D(x, y, width, height));
+        fxImageView.setScaleX(zoomRatio);
+        fxImageView.setScaleY(zoomRatio);
+    }//GEN-LAST:event_zoomInButtonActionPerformed
+
+    private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
+        if (zoomRatio <= 1.0) {
+            zoomRatio /= 2;
+            if (zoomRatio == 0.125) {
+                zoomOutButton.setEnabled(false);
+            }
+        } else {
+            zoomRatio -= 1.0;
+        }
+        
+        //double x = 0;
+        //double y = 0;
+        //double width = 0;
+        //double height = 0;
+        //fxImageView.setViewport(new Rectangle2D(x, y, width, height));
+        fxImageView.setScaleX(zoomRatio);
+        fxImageView.setScaleY(zoomRatio);
+    }//GEN-LAST:event_zoomOutButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JButton rotateLeftButton;
+    private javax.swing.JButton rotateRightButton;
+    private javax.swing.JButton zoomInButton;
+    private javax.swing.JButton zoomOutButton;
     // End of variables declaration//GEN-END:variables
 
 }
