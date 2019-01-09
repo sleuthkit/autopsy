@@ -221,6 +221,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
             this.setDisplayName(evt.getNewValue().toString());
+            //Set the tooltip
             this.setShortDescription(content.getName());
             updateSheet(new NodeProperty<>(ORIGINAL_NAME.toString(), ORIGINAL_NAME.toString(), NO_DESCR, content.getName()));
         }
