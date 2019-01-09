@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -136,7 +137,8 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         "Metadata.tableRowTitle.sectorSize=Sector Size",
         "Metadata.tableRowTitle.timezone=Time Zone",
         "Metadata.tableRowTitle.deviceId=Device ID",
-        "Metadata.tableRowTitle.acquisitionDetails=Acquisition Details"})
+        "Metadata.tableRowTitle.acquisitionDetails=Acquisition Details",
+        "Metadata.nodeText.unknown=Unknown"})
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
@@ -275,8 +277,8 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         if (dataSource != null) {
             try {
                 String details = dataSource.getAcquisitionDetails();
-                if (details == null) {
-                    details = "";
+                if (StringUtils.isEmpty(details)) {
+                    details = Bundle.Metadata_nodeText_unknown();
                 }
                 details = details.replaceAll("\n", "<br>");
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.acquisitionDetails"), details);
