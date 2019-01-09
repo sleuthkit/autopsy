@@ -50,6 +50,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import java.nio.file.Path;
+import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
@@ -80,6 +81,9 @@ class ExtractRegistry extends Extract {
     final private static UsbDeviceIdMapper USB_MAPPER = new UsbDeviceIdMapper();
     final private static String RIP_EXE = "rip.exe";
     final private static String RIP_PL = "rip.pl";
+    final private static int MS_IN_SEC = 1000;
+    final private static String NEVER_DATE = "Never";
+    final private static String SECTION_DIVIDER = "-------------------------";
     private final List<String> rrCmd = new ArrayList<>();
     private final List<String> rrFullCmd = new ArrayList<>();
 
@@ -400,7 +404,7 @@ class ExtractRegistry extends Extract {
                         Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(etime).getTime();
                         mtime = epochtime;
                         String Tempdate = mtime.toString();
-                        mtime = Long.valueOf(Tempdate) / 1000;
+                        mtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                     } catch (ParseException ex) {
                         logger.log(Level.WARNING, "Failed to parse epoch time when parsing the registry."); //NON-NLS
                     }
@@ -459,7 +463,7 @@ class ExtractRegistry extends Extract {
                                             Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(value).getTime();
                                             installtime = epochtime;
                                             String Tempdate = installtime.toString();
-                                            installtime = Long.valueOf(Tempdate) / 1000;
+                                            installtime = Long.valueOf(Tempdate) / MS_IN_SEC;
                                         } catch (ParseException e) {
                                             logger.log(Level.SEVERE, "RegRipper::Conversion on DateTime -> ", e); //NON-NLS
                                         }
@@ -643,7 +647,7 @@ class ExtractRegistry extends Extract {
                                         try {
                                             Long epochtime = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy").parse(artnode.getAttribute("mtime")).getTime(); //NON-NLS
                                             itemMtime = epochtime;
-                                            itemMtime = itemMtime / 1000;
+                                            itemMtime = itemMtime / MS_IN_SEC;
                                         } catch (ParseException e) {
                                             logger.log(Level.WARNING, "Failed to parse epoch time for installed program artifact."); //NON-NLS
                                         }
@@ -794,20 +798,23 @@ class ExtractRegistry extends Extract {
 
     private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile) {
         File regfile = new File(regFilePath);
+
         String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
+        SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
+        regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(regfile))) {
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             // Read the file in and create a Document and elements
             String userInfoSection = "User Information";
             String groupMembershipSection = "Group Membership Information";
-            String sectionDivider = "-------------------------";
+            
 
             String previousLine = null;
             String line = bufferedReader.readLine();
             Set<UserInfo> userSet = new HashSet<>();
             String userIdPrefix = "";
             while (line != null) {
-                if (line.contains(sectionDivider)) {
+                if (line.contains(SECTION_DIVIDER)) {
                     if (previousLine == null || previousLine.isEmpty()) {
                         //do nothing
                     } else if (previousLine.contains(userInfoSection)) {
@@ -823,7 +830,7 @@ class ExtractRegistry extends Extract {
 
             Map<String, UserInfo> userInfoMap = new HashMap<>();
             for (UserInfo userInfo : userSet) {
-                String fullUserId = userIdPrefix + userInfo.getUserId();
+                String fullUserId = userIdPrefix + "-" + userInfo.getUserId();
                 userInfoMap.put(fullUserId.trim(), userInfo);
             }
             List<BlackboardArtifact> existingOsAccounts = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
@@ -833,13 +840,13 @@ class ExtractRegistry extends Extract {
                     UserInfo userInfo = userInfoMap.remove(existingUserId.getValueString().trim());
                     if (userInfo != null) {
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                        if (userInfo.getLastLoginDate() != null) {
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                                    parentModuleName, userInfo.getLastLoginDate()));
-                        }
-                        if (userInfo.getAccountCreatedDate() != null) {
+                        if (userInfo.getAccountCreatedDate() != null && !userInfo.getAccountCreatedDate().equals(NEVER_DATE)) {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                                    parentModuleName, userInfo.getAccountCreatedDate()));
+                                    parentModuleName, regRipperTimeFormat.parse(userInfo.getAccountCreatedDate()).getTime() / MS_IN_SEC));
+                        }
+                        if (userInfo.getLastLoginDate() != null && !userInfo.getLastLoginDate().equals(NEVER_DATE)) {
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                                    parentModuleName, regRipperTimeFormat.parse(userInfo.getLastLoginDate()).getTime() / MS_IN_SEC));
                         }
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
                                 parentModuleName, userInfo.getLoginCount()));
@@ -856,13 +863,13 @@ class ExtractRegistry extends Extract {
                         parentModuleName, userInfo.getUserName()));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
                         parentModuleName, userId));
-                if (userInfo.getLastLoginDate() != null) {
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
-                            parentModuleName, userInfo.getLastLoginDate()));
+                if (userInfo.getAccountCreatedDate() != null && !userInfo.getAccountCreatedDate().equals(NEVER_DATE)) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                            parentModuleName, regRipperTimeFormat.parse(userInfo.getAccountCreatedDate()).getTime() / MS_IN_SEC));
                 }
-                if (userInfo.getAccountCreatedDate() != null) {
-                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                            parentModuleName, userInfo.getAccountCreatedDate()));
+                if (userInfo.getLastLoginDate() != null && !userInfo.getLastLoginDate().equals(NEVER_DATE)) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                            parentModuleName, regRipperTimeFormat.parse(userInfo.getLastLoginDate()).getTime() / MS_IN_SEC));
                 }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
                         parentModuleName, userInfo.getLoginCount()));
@@ -878,8 +885,8 @@ class ExtractRegistry extends Extract {
 //            logger.log(Level.SEVERE, "Error parsing the registry XML: {0}", ex); //NON-NLS
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
-//        } catch (ParserConfigurationException ex) {
-//            logger.log(Level.SEVERE, "Error configuring the registry parser: {0}", ex); //NON-NLS
+        } catch (ParseException ex) {
+            logger.log(Level.SEVERE, "Error parsing the the date from the registry file", ex); //NON-NLS
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
         }
@@ -887,14 +894,13 @@ class ExtractRegistry extends Extract {
     }
 
     private Set<UserInfo> readUsers(BufferedReader bufferedReader, Set<UserInfo> users) throws IOException {
-        String sectionDivider = "-------------------------";
         String userNameLabel = "Username        :";
         String accountCreatedLabel = "Account Created :";
         String loginCountLabel = "Login Count     :";
         String lastLoginLabel = "Last Login Date :";
         String line = bufferedReader.readLine();
         //read until end of file or next section divider
-        while (line != null && !line.contains(sectionDivider)) {
+        while (line != null && !line.contains(SECTION_DIVIDER)) {
             //when a user name field exists read the name and id number
             if (line.contains(userNameLabel)) {
                 String userNameAndIdString = line.replace(userNameLabel, "");
@@ -923,9 +929,8 @@ class ExtractRegistry extends Extract {
 
     private String readUserIdPrefix(BufferedReader bufferedReader) throws IOException {
         String userPrefixStart = "S-1-5-21";
-        String sectionDivider = "-------------------------";
         String line = bufferedReader.readLine();
-        while (line != null && !line.contains(sectionDivider)) {
+        while (line != null && !line.contains(SECTION_DIVIDER)) {
             if (line.contains(userPrefixStart)) {
                 //return string minus the numbers after the last dash 
                 return line.substring(0, line.lastIndexOf('-')).trim();
