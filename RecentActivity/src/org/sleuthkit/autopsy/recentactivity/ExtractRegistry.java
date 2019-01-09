@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -50,6 +50,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import java.nio.file.Path;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -228,6 +229,14 @@ class ExtractRegistry extends Extract {
 
             // create a report for the full output
             if (!regOutputFiles.fullPlugins.isEmpty()) {
+                //parse the full regripper output from SAM hive files
+                if (regFileNameLocal.toLowerCase().contains("sam")) {
+                    if (parseSamPluginOutput(regOutputFiles.fullPlugins, regFile) == false) {
+                        this.addErrorMessage(
+                                NbBundle.getMessage(this.getClass(), "ExtractRegistry.analyzeRegFiles.failedParsingResults",
+                                        this.getName(), regFileName));
+                    }
+                }
                 try {
                     Report report = currentCase.addReport(regOutputFiles.fullPlugins,
                             NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"),
@@ -287,6 +296,7 @@ class ExtractRegistry extends Extract {
             autopsyType = "autopsyntuser"; //NON-NLS
             fullType = "ntuser"; //NON-NLS
         } else if (regFilePath.toLowerCase().contains("sam")) { //NON-NLS
+            //fullType sam output files are parsed for user information
             fullType = "sam"; //NON-NLS
         } else if (regFilePath.toLowerCase().contains("security")) { //NON-NLS
             fullType = "security"; //NON-NLS
@@ -759,7 +769,7 @@ class ExtractRegistry extends Extract {
             if (!usbBBartifacts.isEmpty()) {
                 IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, usbBBartifacts));
             }
-            if (!wifiBBartifacts.isEmpty()){
+            if (!wifiBBartifacts.isEmpty()) {
                 IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK, wifiBBartifacts));
             }
             return true;
@@ -782,10 +792,222 @@ class ExtractRegistry extends Extract {
         return false;
     }
 
+    private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile) {
+        File regfile = new File(regFilePath);
+        String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(regfile))) {
+            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
+            // Read the file in and create a Document and elements
+            String userInfoSection = "User Information";
+            String groupMembershipSection = "Group Membership Information";
+            String sectionDivider = "-------------------------";
+
+            String previousLine = null;
+            String line = bufferedReader.readLine();
+            Set<UserInfo> userSet = new HashSet<>();
+            String userIdPrefix = "";
+            while (line != null) {
+                if (line.contains(sectionDivider)) {
+                    if (previousLine == null || previousLine.isEmpty()) {
+                        //do nothing
+                    } else if (previousLine.contains(userInfoSection)) {
+                        readUsers(bufferedReader, userSet);
+                    } else if (previousLine.contains(groupMembershipSection)) {
+                        userIdPrefix = readUserIdPrefix(bufferedReader);
+                    }
+                    //other sections
+                }
+                previousLine = line;
+                line = bufferedReader.readLine();
+            }
+
+            Map<String, UserInfo> userInfoMap = new HashMap<>();
+            for (UserInfo userInfo : userSet) {
+                String fullUserId = userIdPrefix + userInfo.getUserId();
+                userInfoMap.put(fullUserId.trim(), userInfo);
+            }
+            List<BlackboardArtifact> existingOsAccounts = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
+            for (BlackboardArtifact osAccount : existingOsAccounts) {
+                BlackboardAttribute existingUserId = osAccount.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
+                if (existingUserId != null) {
+                    UserInfo userInfo = userInfoMap.remove(existingUserId.getValueString().trim());
+                    if (userInfo != null) {
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                        if (userInfo.getLastLoginDate() != null) {
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                                    parentModuleName, userInfo.getLastLoginDate()));
+                        }
+                        if (userInfo.getAccountCreatedDate() != null) {
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                                    parentModuleName, userInfo.getAccountCreatedDate()));
+                        }
+                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+                                parentModuleName, userInfo.getLoginCount()));
+                        osAccount.addAttributes(bbattributes);
+                    }
+                }
+            }
+            //add remaining userinfos as accounts;
+            for (String userId : userInfoMap.keySet()) {
+                UserInfo userInfo = userInfoMap.get(userId);
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                BlackboardArtifact bbart = regAbstractFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                        parentModuleName, userInfo.getUserName()));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
+                        parentModuleName, userId));
+                if (userInfo.getLastLoginDate() != null) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
+                            parentModuleName, userInfo.getLastLoginDate()));
+                }
+                if (userInfo.getAccountCreatedDate() != null) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                            parentModuleName, userInfo.getAccountCreatedDate()));
+                }
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+                        parentModuleName, userInfo.getLoginCount()));
+                bbart.addAttributes(bbattributes);
+                // index the artifact for keyword search
+                this.indexArtifact(bbart);
+            }
+            //store set of attributes to make artifact for later in collection of artifact like objects
+            return true;
+        } catch (FileNotFoundException ex) {
+            logger.log(Level.SEVERE, "Error finding the registry file."); //NON-NLS
+//        } catch (SAXException ex) {
+//            logger.log(Level.SEVERE, "Error parsing the registry XML: {0}", ex); //NON-NLS
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
+//        } catch (ParserConfigurationException ex) {
+//            logger.log(Level.SEVERE, "Error configuring the registry parser: {0}", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+        return false;
+    }
+
+    private Set<UserInfo> readUsers(BufferedReader bufferedReader, Set<UserInfo> users) throws IOException {
+        String sectionDivider = "-------------------------";
+        String userNameLabel = "Username        :";
+        String accountCreatedLabel = "Account Created :";
+        String loginCountLabel = "Login Count     :";
+        String lastLoginLabel = "Last Login Date :";
+        String line = bufferedReader.readLine();
+        //read until end of file or next section divider
+        while (line != null && !line.contains(sectionDivider)) {
+            //when a user name field exists read the name and id number
+            if (line.contains(userNameLabel)) {
+                String userNameAndIdString = line.replace(userNameLabel, "");
+                int idBracketIndex = userNameAndIdString.lastIndexOf('[');
+                String userName = userNameAndIdString.substring(0, idBracketIndex).trim();
+                String userIdString = userNameAndIdString.substring(idBracketIndex + 1, userNameAndIdString.lastIndexOf(']')).trim();
+                UserInfo userInfo = new UserInfo(userName, userIdString);
+                //continue reading this users information until end of file or a blank line between users
+                line = bufferedReader.readLine();
+                while (line != null && !line.isEmpty()) {
+                    if (line.contains(accountCreatedLabel)) {
+                        userInfo.setAccountCreatedDate(line.replace(accountCreatedLabel, "").trim());
+                    } else if (line.contains(loginCountLabel)) {
+                        userInfo.setLoginCount(Integer.parseInt(line.replace(loginCountLabel, "").trim()));
+                    } else if (line.contains(lastLoginLabel)) {
+                        userInfo.setLastLoginDate(line.replace(lastLoginLabel, "").trim());
+                    }
+                    line = bufferedReader.readLine();
+                }
+                users.add(userInfo);
+            }
+            line = bufferedReader.readLine();
+        }
+        return users;
+    }
+
+    private String readUserIdPrefix(BufferedReader bufferedReader) throws IOException {
+        String userPrefixStart = "S-1-5-21";
+        String sectionDivider = "-------------------------";
+        String line = bufferedReader.readLine();
+        while (line != null && !line.contains(sectionDivider)) {
+            if (line.contains(userPrefixStart)) {
+                //return string minus the numbers after the last dash 
+                return line.substring(0, line.lastIndexOf('-')).trim();
+            }
+            line = bufferedReader.readLine();
+        }
+        return ""; //no prefix deteremined return empty string
+    }
+
     @Override
     public void process(Content dataSource, IngestJobContext context) {
         this.dataSource = dataSource;
         this.context = context;
         analyzeRegistryFiles();
+
+    }
+
+    private class UserInfo {
+
+        private final String userName;
+        private final String userId;
+        private String lastLoginDate;
+        private String accountCreatedDate;
+        private int loginCount = 0;
+
+        private UserInfo(String name, String userIdString) {
+            userName = name;
+            userId = userIdString;
+        }
+
+        /**
+         * @return the userName
+         */
+        String getUserName() {
+            return userName;
+        }
+
+        String getUserId() {
+            return userId;
+        }
+
+        /**
+         * @return the lastLoginDate
+         */
+        String getLastLoginDate() {
+            return lastLoginDate;
+        }
+
+        /**
+         * @param lastLoginDate the lastLoginDate to set
+         */
+        void setLastLoginDate(String lastLoginDate) {
+            this.lastLoginDate = lastLoginDate;
+        }
+
+        /**
+         * @return the accountCreatedDate
+         */
+        String getAccountCreatedDate() {
+            return accountCreatedDate;
+        }
+
+        /**
+         * @param accountCreatedDate the accountCreatedDate to set
+         */
+        void setAccountCreatedDate(String accountCreatedDate) {
+            this.accountCreatedDate = accountCreatedDate;
+        }
+
+        /**
+         * @return the loginCount
+         */
+        int getLoginCount() {
+            return loginCount;
+        }
+
+        /**
+         * @param loginCount the loginCount to set
+         */
+        void setLoginCount(int loginCount) {
+            this.loginCount = loginCount;
+        }
+
     }
 }
