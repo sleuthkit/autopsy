@@ -206,8 +206,8 @@
                 <binary-origin>release/modules/ext/quartz-2.2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.19.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.19.3.jar</binary-origin>
+                <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sqlite-jdbc-3.25.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/guava-17.0.jar</runtime-relative-path>
