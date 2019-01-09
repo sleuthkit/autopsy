@@ -98,6 +98,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 IngestManager.getInstance().addIngestModuleEventListener(weakPcl);
             }
         }
+        
+        if (UserPreferences.displayTranslatedFileNames()) {
+            this.translationPool.submit(new TranslationTask(
+                new WeakReference<>(this), weakPcl));
+            this.setShortDescription(content.getName());
+        }
         // Listen for case events so that we can detect when the case is closed
         // or when tags are added.
         Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
@@ -214,7 +220,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 updateSheet(new NodeProperty<>(COMMENT.toString(), COMMENT.toString(),NO_DESCR,getCommentProperty(tags, attribute)));
             }
         } else if (eventType.equals(NodeSpecificEvents.TRANSLATION_AVAILABLE.toString())) {
-            updateSheet(new NodeProperty<>(TRANSLATION.toString(),TRANSLATION.toString(),NO_DESCR,evt.getNewValue()));
+            this.setDisplayName(evt.getNewValue().toString());
+            updateSheet(new NodeProperty<>(TRANSLATION.toString(),TRANSLATION.toString(),NO_DESCR,content.getName()));
         }
     };
     /**
@@ -242,7 +249,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     private synchronized void updateSheet(NodeProperty<?>... newProps) {
         //Refresh ONLY those properties in the sheet currently. Subclasses may have 
-        //only added a subset of our properties or their own props. Let's keep their UI correct.
+        //only added a subset of our properties or their own props.s
         Sheet visibleSheet = this.getSheet();
         Sheet.Set visibleSheetSet = visibleSheet.get(Sheet.PROPERTIES);
         Property<?>[] visibleProps = visibleSheetSet.getProperties();
@@ -276,18 +283,12 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         newProperties.forEach((property) -> {
             sheetSet.put(property);
         });
-        
-        /*
-         * Submit the translation task ASAP. Keep all weak references so
-         * this task doesn't block the ability of this node to be GC'd.
-         */
-        translationPool.submit(new TranslationTask(new WeakReference<>(this), weakPcl));
 
         return sheet;
     }
 
     @NbBundle.Messages({"AbstractAbstractFileNode.nameColLbl=Name",
-        "AbstractAbstractFileNode.translateFileName=Translated Name",
+        "AbstractAbstractFileNode.translateFileName=Original Name",
         "AbstractAbstractFileNode.createSheet.score.name=S",
         "AbstractAbstractFileNode.createSheet.comment.name=C",
         "AbstractAbstractFileNode.createSheet.count.name=O",
