@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
- *
+ * A Filter over TimelineEvents that is applied in the UI, not the DB. *
  */
 public interface UIFilter extends Predicate<TimelineEvent> {
 

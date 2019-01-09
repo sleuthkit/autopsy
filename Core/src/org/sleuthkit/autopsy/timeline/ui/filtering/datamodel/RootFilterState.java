@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import com.google.common.collect.Lists;
-import java.util.function.Predicate;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;

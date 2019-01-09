@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2018 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
@@ -13,70 +26,80 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 
 /**
- *
- *
+ * A FilterState implementation for DescriptionFilters
  */
 public class DescriptionFilterState implements FilterState<DescriptionFilter> {
-    
+
     private final DescriptionFilter filter;
-    
+
     public DescriptionFilterState(DescriptionFilter filter) {
         this(filter, false);
     }
-    
+
     public DescriptionFilterState(DescriptionFilter filter, boolean selected) {
         this.filter = filter;
         this.selected.set(selected);
     }
-    
+
     private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
     private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
     private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
-    
+
+    @Override
     public BooleanProperty selectedProperty() {
         return selected;
     }
-    
+
+    @Override
     public BooleanProperty disabledProperty() {
         return disabled;
     }
-    
+
+    @Override
     public void setSelected(Boolean act) {
         selected.set(act);
     }
-    
+
+    @Override
     public boolean isSelected() {
         return selected.get();
     }
-    
+
+    @Override
     public void setDisabled(Boolean act) {
         disabled.set(act);
     }
-    
+
+    @Override
     public boolean isDisabled() {
         return disabledProperty().get();
     }
-    
+
+    @Override
     public boolean isActive() {
         return activeProperty().get();
     }
-    
+
+    @Override
     public BooleanExpression activeProperty() {
         return activeProp;
     }
-    
+
+    @Override
     public String getDisplayName() {
         return filter.getDescription();
     }
-    
+
+    @Override
     public DescriptionFilter getFilter() {
         return filter;
     }
-    
+
+    @Override
     public DescriptionFilter getActiveFilter() {
         return isActive() ? getFilter() : null;
     }
-    
+
     @Override
     public int hashCode() {
         int hash = 7;
@@ -85,7 +108,7 @@ public class DescriptionFilterState implements FilterState<DescriptionFilter> {
         hash = 37 * hash + Objects.hashCode(this.disabled);
         return hash;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -109,7 +132,7 @@ public class DescriptionFilterState implements FilterState<DescriptionFilter> {
         }
         return true;
     }
-    
+
     @Override
     public DescriptionFilterState copyOf() {
         DescriptionFilterState copy = new DescriptionFilterState(filter);
