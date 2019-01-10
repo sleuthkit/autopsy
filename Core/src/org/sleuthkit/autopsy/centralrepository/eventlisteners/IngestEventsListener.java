@@ -358,7 +358,7 @@ public class IngestEventsListener {
             }
             Content dataSource;
             String dataSourceName = "";
-            long dataSourceId = -1;
+            long dataSourceObjectId = -1;
             try {
                 dataSource = ((DataSourceAnalysisCompletedEvent) event).getDataSource();
                 
@@ -371,7 +371,7 @@ public class IngestEventsListener {
                 }
                 
                 dataSourceName = dataSource.getName();
-                dataSourceId = dataSource.getId();
+                dataSourceObjectId = dataSource.getId();
 
                 Case openCase = Case.getCurrentCaseThrows();
 
@@ -388,32 +388,45 @@ public class IngestEventsListener {
                     // Sync the data source hash values if necessary.
                     if (dataSource instanceof Image) {
                         Image image = (Image) dataSource;
+
                         String imageMd5Hash = image.getMd5();
-                        String imageSha1Hash = image.getSha1();
-                        String imageSha256Hash = image.getSha256();
-
+                        if (imageMd5Hash == null) {
+                            imageMd5Hash = "";
+                        }
                         String crMd5Hash = correlationDataSource.getMd5();
-                        String crSha1Hash = correlationDataSource.getSha1();
-                        String crSha256Hash = correlationDataSource.getSha256();
-
-                        if (StringUtils.equals(imageMd5Hash, crMd5Hash) == false || StringUtils.equals(imageSha1Hash, crSha1Hash) == false
-                                || StringUtils.equals(imageSha256Hash, crSha256Hash) == false) {
+                        if (StringUtils.equals(imageMd5Hash, crMd5Hash) == false) {
                             correlationDataSource.setMd5(imageMd5Hash);
+                        }
+                        
+                        String imageSha1Hash = image.getSha1();
+                        if (imageSha1Hash == null) {
+                            imageSha1Hash = "";
+                        }
+                        String crSha1Hash = correlationDataSource.getSha1();
+                        if (StringUtils.equals(imageSha1Hash, crSha1Hash) == false) {
                             correlationDataSource.setSha1(imageSha1Hash);
+                        }
+                        
+                        String imageSha256Hash = image.getSha256();
+                        if (imageSha256Hash == null) {
+                            imageSha256Hash = "";
+                        }
+                        String crSha256Hash = correlationDataSource.getSha256();
+                        if (StringUtils.equals(imageSha256Hash, crSha256Hash) == false) {
                             correlationDataSource.setSha256(imageSha256Hash);
                         }
                     }
                 }
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, String.format(
-                        "Unable to fetch data from the Central Repository for data source '%s' (id=%d)",
-                        dataSourceName, dataSourceId), ex);
+                        "Unable to fetch data from the Central Repository for data source '%s' (obj_id=%d)",
+                        dataSourceName, dataSourceObjectId), ex);
             } catch (NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, "No current case opened.", ex);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, String.format(
-                        "Unable to fetch data from the case database for data source '%s' (id=%d)",
-                        dataSourceName, dataSourceId), ex);
+                        "Unable to fetch data from the case database for data source '%s' (obj_id=%d)",
+                        dataSourceName, dataSourceObjectId), ex);
             }
         } // DATA_SOURCE_ANALYSIS_COMPLETED
     }

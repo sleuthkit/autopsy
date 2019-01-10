@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.io.Serializable;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.Content;
@@ -44,21 +43,6 @@ public class CorrelationDataSource implements Serializable {
     private String md5Hash;
     private String sha1Hash;
     private String sha256Hash;
-
-    /**
-     * Create a CorrelationDataSource object, the object will not have the data
-     * source id for the row in the central repository.
-     *
-     * @param correlationCase    CorrelationCase object data source is
-     *                           associated with. Must have been created by
-     *                           EamDB and have a valid ID.
-     * @param deviceId           User specified case-specific ID
-     * @param name               Display name of data source
-     * @param dataSourceObjectId The object ID for the datasource
-     */
-    public CorrelationDataSource(CorrelationCase correlationCase, String deviceId, String name, long dataSourceObjectId) {
-        this(correlationCase.getID(), -1, deviceId, name, dataSourceObjectId, null, null, null);
-    }
 
     /**
      * Create a CorrelationDataSource object.
@@ -226,7 +210,7 @@ public class CorrelationDataSource implements Serializable {
      * @return the MD5 hash value
      */
     public String getMd5() {
-        return md5Hash;
+        return (md5Hash == null ? "" : md5Hash);
     }
     
     /**
@@ -240,8 +224,7 @@ public class CorrelationDataSource implements Serializable {
     public void setMd5(String md5Hash) throws EamDbException {
         this.md5Hash = md5Hash;
         
-        boolean useCR = EamDb.isEnabled();
-        if (useCR) {
+        if (dataSourceObjectID != -1) {
             EamDb.getInstance().updateDataSourceMd5Hash(this);
         }
     }
@@ -250,7 +233,7 @@ public class CorrelationDataSource implements Serializable {
      * @return the SHA-1 hash value
      */
     public String getSha1() {
-        return sha1Hash;
+        return (sha1Hash == null ? "" : sha1Hash);
     }
     
     /**
@@ -262,8 +245,7 @@ public class CorrelationDataSource implements Serializable {
     public void setSha1(String sha1Hash) throws EamDbException {
         this.sha1Hash = sha1Hash;
         
-        boolean useCR = EamDb.isEnabled();
-        if (useCR) {
+        if (dataSourceObjectID != -1) {
             EamDb.getInstance().updateDataSourceSha1Hash(this);
         }
     }
@@ -272,7 +254,7 @@ public class CorrelationDataSource implements Serializable {
      * @return the SHA-256 hash value
      */
     public String getSha256() {
-        return sha256Hash;
+        return (sha256Hash == null ? "" : sha256Hash);
     }
     
     /**
@@ -284,8 +266,7 @@ public class CorrelationDataSource implements Serializable {
     public void setSha256(String sha256Hash) throws EamDbException {
         this.sha256Hash = sha256Hash;
         
-        boolean useCR = EamDb.isEnabled();
-        if (useCR) {
+        if (dataSourceObjectID != -1) {
             EamDb.getInstance().updateDataSourceSha256Hash(this);
         }
     }

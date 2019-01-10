@@ -206,13 +206,6 @@ public interface EamDb {
     CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
     
     /**
-     * Updates an existing data source in the database
-     *
-     * @param eamDataSource The data source to update
-     */
-    void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
-    
-    /**
      * Updates the MD5 hash value in an existing data source in the database.
      *
      * @param eamDataSource The data source to update

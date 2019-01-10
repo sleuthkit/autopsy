@@ -824,44 +824,6 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         return dataSources;
     }
-
-    /**
-     * Updates an existing data source in the database.
-     *
-     * @param eamDataSource The data source to update
-     */
-    @Override
-    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
-        if (eamDataSource == null) {
-            throw new EamDbException("Correlation data source is null");
-        }
-
-        Connection conn = connect();
-
-        PreparedStatement preparedStatement = null;
-        String sql = "UPDATE data_sources "
-                + "SET md5=?, sha1=?, sha256=? "
-                + "WHERE id=?";
-
-        try {
-            preparedStatement = conn.prepareStatement(sql);
-            
-            preparedStatement.setString(1, eamDataSource.getMd5());
-            preparedStatement.setString(2, eamDataSource.getSha1());
-            preparedStatement.setString(3, eamDataSource.getSha256());
-            preparedStatement.setInt(4, eamDataSource.getID());
-            
-            preparedStatement.executeUpdate();
-            //update the case in the cache
-            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()), eamDataSource);
-            dataSourceCacheById.put(getDataSourceByIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getID()), eamDataSource);
-        } catch (SQLException ex) {
-            throw new EamDbException("Error updating data source.", ex); // NON-NLS
-        } finally {
-            EamDbUtil.closeStatement(preparedStatement);
-            EamDbUtil.closeConnection(conn);
-        }
-    }
     
     /**
      * Updates the MD5 hash value in an existing data source in the database.
@@ -923,7 +885,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()), eamDataSource);
             dataSourceCacheById.put(getDataSourceByIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getID()), eamDataSource);
         } catch (SQLException ex) {
-            throw new EamDbException("Error updating data source.", ex); // NON-NLS
+            throw new EamDbException(String.format("Error updating data source (id=%d).", eamDataSource.getID()), ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
