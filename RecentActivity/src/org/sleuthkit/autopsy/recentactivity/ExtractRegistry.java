@@ -796,9 +796,17 @@ class ExtractRegistry extends Extract {
         return false;
     }
 
+    /**
+     * Parse the output of the SAM regripper plugin to get additional Account
+     * information
+     *
+     * @param regFilePath     the path to the registry file being parsed
+     * @param regAbstractFile the file to associate newly created artifacts with
+     *
+     * @return true if successful, false if parsing failed at some point
+     */
     private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile) {
         File regfile = new File(regFilePath);
-
         String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
@@ -807,50 +815,51 @@ class ExtractRegistry extends Extract {
             // Read the file in and create a Document and elements
             String userInfoSection = "User Information";
             String groupMembershipSection = "Group Membership Information";
-            
-
             String previousLine = null;
             String line = bufferedReader.readLine();
             Set<UserInfo> userSet = new HashSet<>();
             String userIdPrefix = "";
             while (line != null) {
-                if (line.contains(SECTION_DIVIDER)) {
-                    if (previousLine == null || previousLine.isEmpty()) {
-                        //do nothing
-                    } else if (previousLine.contains(userInfoSection)) {
+                if (line.contains(SECTION_DIVIDER) && previousLine != null) {
+                    if (previousLine.contains(userInfoSection)) {
                         readUsers(bufferedReader, userSet);
                     } else if (previousLine.contains(groupMembershipSection)) {
                         userIdPrefix = readUserIdPrefix(bufferedReader);
                     }
-                    //other sections
                 }
                 previousLine = line;
                 line = bufferedReader.readLine();
             }
 
             Map<String, UserInfo> userInfoMap = new HashMap<>();
+            //load all the user info which was read into a map
             for (UserInfo userInfo : userSet) {
                 String fullUserId = userIdPrefix + "-" + userInfo.getUserId();
                 userInfoMap.put(fullUserId.trim(), userInfo);
             }
+            //get all existing OS account artifacts
             List<BlackboardArtifact> existingOsAccounts = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
             for (BlackboardArtifact osAccount : existingOsAccounts) {
-                BlackboardAttribute existingUserId = osAccount.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
-                if (existingUserId != null) {
-                    UserInfo userInfo = userInfoMap.remove(existingUserId.getValueString().trim());
-                    if (userInfo != null) {
-                        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                        if (userInfo.getAccountCreatedDate() != null && !userInfo.getAccountCreatedDate().equals(NEVER_DATE)) {
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                                    parentModuleName, regRipperTimeFormat.parse(userInfo.getAccountCreatedDate()).getTime() / MS_IN_SEC));
+                //if the OS Account artifact was from the same data source check the user id
+                if (osAccount.getDataSource().getId() == regAbstractFile.getDataSourceObjectId()) {
+                    BlackboardAttribute existingUserId = osAccount.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
+                    if (existingUserId != null) {
+                        UserInfo userInfo = userInfoMap.remove(existingUserId.getValueString().trim());
+                        //if the existing user id matches a user id which we parsed information for check if that information exists and if it doesn't add it
+                        if (userInfo != null) {
+                            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                            if (userInfo.getAccountCreatedDate() != null && !userInfo.getAccountCreatedDate().equals(NEVER_DATE)) {
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                                        parentModuleName, regRipperTimeFormat.parse(userInfo.getAccountCreatedDate()).getTime() / MS_IN_SEC));
+                            }
+                            if (userInfo.getLastLoginDate() != null && !userInfo.getLastLoginDate().equals(NEVER_DATE)) {
+                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                                        parentModuleName, regRipperTimeFormat.parse(userInfo.getLastLoginDate()).getTime() / MS_IN_SEC));
+                            }
+                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+                                    parentModuleName, userInfo.getLoginCount()));
+                            osAccount.addAttributes(bbattributes);
                         }
-                        if (userInfo.getLastLoginDate() != null && !userInfo.getLastLoginDate().equals(NEVER_DATE)) {
-                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                                    parentModuleName, regRipperTimeFormat.parse(userInfo.getLastLoginDate()).getTime() / MS_IN_SEC));
-                        }
-                        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
-                                parentModuleName, userInfo.getLoginCount()));
-                        osAccount.addAttributes(bbattributes);
                     }
                 }
             }
@@ -881,8 +890,6 @@ class ExtractRegistry extends Extract {
             return true;
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Error finding the registry file."); //NON-NLS
-//        } catch (SAXException ex) {
-//            logger.log(Level.SEVERE, "Error parsing the registry XML: {0}", ex); //NON-NLS
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
         } catch (ParseException ex) {
@@ -893,7 +900,18 @@ class ExtractRegistry extends Extract {
         return false;
     }
 
-    private Set<UserInfo> readUsers(BufferedReader bufferedReader, Set<UserInfo> users) throws IOException {
+    /**
+     * Read the User Information section of the SAM regripper plugin's output
+     * and collect user account information from the file.
+     *
+     * @param bufferedReader a buffered reader for the file which contains the
+     *                       user information
+     * @param users          the set to add UserInfo objects representing the
+     *                       users found to
+     *
+     * @throws IOException
+     */
+    private void readUsers(BufferedReader bufferedReader, Set<UserInfo> users) throws IOException {
         String userNameLabel = "Username        :";
         String accountCreatedLabel = "Account Created :";
         String loginCountLabel = "Login Count     :";
@@ -924,9 +942,18 @@ class ExtractRegistry extends Extract {
             }
             line = bufferedReader.readLine();
         }
-        return users;
     }
 
+    /**
+     * Read the common part of the security identifier for user accounts.
+     *
+     * @param bufferedReader a buffered reader for the file which contains the
+     *                       Group Membership Information
+     *
+     * @return the common part of the SID for user accounts
+     *
+     * @throws IOException
+     */
     private String readUserIdPrefix(BufferedReader bufferedReader) throws IOException {
         String userPrefixStart = "S-1-5-21";
         String line = bufferedReader.readLine();
@@ -948,6 +975,10 @@ class ExtractRegistry extends Extract {
 
     }
 
+    /**
+     * Class for organizing information associated with a TSK_OS_ACCOUNT before
+     * the artifact is created.
+     */
     private class UserInfo {
 
         private final String userName;
@@ -956,23 +987,39 @@ class ExtractRegistry extends Extract {
         private String accountCreatedDate;
         private int loginCount = 0;
 
+        /**
+         * Create a UserInfo object
+         *
+         * @param name         - the os user account name
+         * @param userIdString - the last digits of the users SID which are
+         *                     unique for each user on this system
+         */
         private UserInfo(String name, String userIdString) {
             userName = name;
             userId = userIdString;
         }
 
         /**
+         * Get the user name.
+         *
          * @return the userName
          */
         String getUserName() {
             return userName;
         }
 
+        /**
+         * Get the user id.
+         *
+         * @return the user id
+         */
         String getUserId() {
             return userId;
         }
 
         /**
+         * Get the last login date for the user
+         *
          * @return the lastLoginDate
          */
         String getLastLoginDate() {
@@ -980,6 +1027,8 @@ class ExtractRegistry extends Extract {
         }
 
         /**
+         * Set the last login date for the users
+         *
          * @param lastLoginDate the lastLoginDate to set
          */
         void setLastLoginDate(String lastLoginDate) {
@@ -987,6 +1036,8 @@ class ExtractRegistry extends Extract {
         }
 
         /**
+         * Get the account creation date.
+         *
          * @return the accountCreatedDate
          */
         String getAccountCreatedDate() {
@@ -994,6 +1045,8 @@ class ExtractRegistry extends Extract {
         }
 
         /**
+         * Set the account creation date.
+         *
          * @param accountCreatedDate the accountCreatedDate to set
          */
         void setAccountCreatedDate(String accountCreatedDate) {
@@ -1001,6 +1054,8 @@ class ExtractRegistry extends Extract {
         }
 
         /**
+         * Get the number of times the user logged in.
+         *
          * @return the loginCount
          */
         int getLoginCount() {
@@ -1008,6 +1063,8 @@ class ExtractRegistry extends Extract {
         }
 
         /**
+         * Set the number of times the user logged in.
+         *
          * @param loginCount the loginCount to set
          */
         void setLoginCount(int loginCount) {
