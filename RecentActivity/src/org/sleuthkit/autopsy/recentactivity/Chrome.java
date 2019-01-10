@@ -79,7 +79,6 @@ class Chrome extends Extract {
         this.getHistory();
         this.getBookmark();
         this.getCookie();
-        this.getLogin();
         this.getDownload();
     }
 
@@ -516,108 +515,6 @@ class Chrome extends Extract {
         IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
-    }
-
-    /**
-     * Queries for login files and adds artifacts
-     */
-    private void getLogin() {
-        FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> signonFiles;
-        try {
-            signonFiles = fileManager.findFiles(dataSource, "signons.sqlite", "Chrome"); //NON-NLS
-        } catch (TskCoreException ex) {
-            String msg = NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errGettingFiles");
-            logger.log(Level.SEVERE, msg, ex);
-            this.addErrorMessage(this.getName() + ": " + msg);
-            return;
-        }
-
-        if (signonFiles.isEmpty()) {
-            logger.log(Level.INFO, "Didn't find any Chrome signon files."); //NON-NLS
-            return;
-        }
-
-        dataFound = true;
-        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
-        int j = 0;
-        while (j < signonFiles.size()) {
-            AbstractFile signonFile = signonFiles.get(j++);
-            if (signonFile.getSize() == 0) {
-                continue;
-            }
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + signonFile.getName() + j + ".db"; //NON-NLS
-            try {
-                ContentUtils.writeToFile(signonFile, new File(temps), context::dataSourceIngestIsCancelled);
-            } catch (ReadContentInputStreamException ex) {
-                logger.log(Level.WARNING, String.format("Error reading Chrome login artifacts file '%s' (id=%d).",
-                        signonFile.getName(), signonFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
-                        this.getName(), signonFile.getName()));
-                continue;
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome login artifacts file '%s' (id=%d).",
-                        temps, signonFile.getName(), signonFile.getId()), ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
-                        this.getName(), signonFile.getName()));
-                continue;
-            }
-            File dbFile = new File(temps);
-            if (context.dataSourceIngestIsCancelled()) {
-                dbFile.delete();
-                break;
-            }
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, LOGIN_QUERY);
-            logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
-            for (HashMap<String, Object> result : tempList) {
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                        ((result.get("origin_url").toString() != null) ? result.get("origin_url").toString() : ""))); //NON-NLS
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "Recent Activity", ((result.get("origin_url").toString() != null) ? EscapeUtil.decodeURL(result.get("origin_url").toString()) : "")));
-                //TODO Revisit usage of deprecated constructor as per TSK-583
-                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID(), "Recent Activity", "Last Visited", ((Long.valueOf(result.get("last_visit_time").toString())) / 1000000)));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                        (Long.valueOf(result.get("last_visit_time").toString()) / 1000000) - Long.valueOf("11644473600"))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                        ((result.get("from_visit").toString() != null) ? result.get("from_visit").toString() : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                        ((result.get("title").toString() != null) ? result.get("title").toString() : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                        NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED,
-                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                        (NetworkUtils.extractDomain((result.get("origin_url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                        ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : ""))); //NON-NLS
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                        result.get("signon_realm").toString())); //NON-NLS
-
-                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, signonFile, bbattributes);
-                if (bbart != null) {
-                    bbartifacts.add(bbart);
-                }
-
-                // Don't add TSK_OS_ACCOUNT artifacts to the ModuleDataEvent
-                Collection<BlackboardAttribute> osAcctAttributes = new ArrayList<>();
-                osAcctAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                        ((result.get("username_value").toString() != null) ? result.get("username_value").toString().replaceAll("'", "''") : ""))); //NON-NLS
-                this.addArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT, signonFile, osAcctAttributes);
-            }
-
-            dbFile.delete();
-        }
-
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
     }
 
     private boolean isChromePreVersion30(String temps) {
