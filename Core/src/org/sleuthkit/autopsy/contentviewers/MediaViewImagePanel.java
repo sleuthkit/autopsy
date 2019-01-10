@@ -29,8 +29,11 @@ import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.beans.property.DoubleProperty;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.JFXPanel;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
@@ -41,7 +44,9 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.transform.Transform;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import org.controlsfx.control.MaskerPane;
@@ -69,7 +74,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private JFXPanel fxPanel;
     private ImageView fxImageView;
-    private BorderPane borderpane;
+    private Pane pane;
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
     
@@ -105,10 +110,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
-                borderpane = new BorderPane(fxImageView); // centers and sizes imageview
-                borderpane.getStyleClass().add("bg"); //NOI18N
+                pane = new Pane(fxImageView); // centers and sizes imageview //DLG:
+                pane.getStyleClass().add("bg"); //NOI18N
+                
                 fxPanel = new JFXPanel(); // bridge jfx-swing
-                Scene scene = new Scene(borderpane); //root of jfx tree
+                Scene scene = new Scene(pane); //root of jfx tree
                 scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm()); //NOI18N
                 fxPanel.setScene(scene);
 
@@ -136,7 +142,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     public void reset() {
         Platform.runLater(() -> {
             fxImageView.setImage(null);
-            borderpane.setCenter(null);
+            //DLG: borderpane.setsetCenter(null);
         });
     }
 
@@ -153,7 +159,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
         final VBox errorNode = new VBox(10, new Label(errorMessage), externalViewerButton);
         errorNode.setAlignment(Pos.CENTER);
-        borderpane.setCenter(errorNode);
+        //DLG: borderpane.setCenter(errorNode);
     }
 
     /**
@@ -189,14 +195,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     if (nonNull(fxImage)) {
                         //we have non-null image show it
                         fxImageView.setImage(fxImage);
-                        borderpane.setCenter(fxImageView);
+                        //DLG: borderpane.setCenter(fxImageView);
                     } else {
                         showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                 }
-                borderpane.setCursor(Cursor.DEFAULT);
+                pane.setCursor(Cursor.DEFAULT);
             });
             readImageTask.setOnFailed(failed -> {
                 if (!Case.isCaseOpen()) {
@@ -217,14 +223,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                 }
 
-                borderpane.setCursor(Cursor.DEFAULT);
+                pane.setCursor(Cursor.DEFAULT);
             });
 
             maskerPane.setProgressNode(progressBar);
             progressBar.progressProperty().bind(readImageTask.progressProperty());
             maskerPane.textProperty().bind(readImageTask.messageProperty());
-            borderpane.setCenter(maskerPane);
-            borderpane.setCursor(Cursor.WAIT);
+            //DLG: borderpane.setCenter(maskerPane);
+            pane.setCursor(Cursor.WAIT);
             new Thread(readImageTask).start();
         });
     }
@@ -273,15 +279,16 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         jToolBar1 = new javax.swing.JToolBar();
         rotateLeftButton = new javax.swing.JButton();
         rotateRightButton = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JToolBar.Separator();
         zoomInButton = new javax.swing.JButton();
         zoomOutButton = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(0, 0, 0));
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS));
 
+        jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
-        jToolBar1.setMaximumSize(null);
-        jToolBar1.setMinimumSize(null);
+        jToolBar1.setMaximumSize(new java.awt.Dimension(84, 23));
         jToolBar1.setName(""); // NOI18N
         jToolBar1.setPreferredSize(new java.awt.Dimension(95, 23));
 
@@ -306,6 +313,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             }
         });
         jToolBar1.add(rotateRightButton);
+
+        jSeparator1.setMaximumSize(new java.awt.Dimension(6, 20));
+        jToolBar1.add(jSeparator1);
 
         org.openide.awt.Mnemonics.setLocalizedText(zoomInButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.zoomInButton.text")); // NOI18N
         zoomInButton.setFocusable(false);
@@ -334,10 +344,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private void rotateLeftButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateLeftButtonActionPerformed
         fxImageView.setRotate(fxImageView.getRotate() - 90);
+        
+        test();
     }//GEN-LAST:event_rotateLeftButtonActionPerformed
 
     private void rotateRightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateRightButtonActionPerformed
         fxImageView.setRotate(fxImageView.getRotate() + 90);
+        
+        test();
     }//GEN-LAST:event_rotateRightButtonActionPerformed
 
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
@@ -349,12 +363,16 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         } else {
             zoomRatio *= 2;
         }
+        zoomOutButton.setEnabled(true);
         
         //double x = 0;
         //double y = 0;
         //double width = 0;
         //double height = 0;
         //fxImageView.setViewport(new Rectangle2D(x, y, width, height));
+        
+        test();
+        
         fxImageView.setScaleX(zoomRatio);
         fxImageView.setScaleY(zoomRatio);
     }//GEN-LAST:event_zoomInButtonActionPerformed
@@ -368,6 +386,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         } else {
             zoomRatio -= 1.0;
         }
+        zoomInButton.setEnabled(true);
+        
+        test();
         
         //double x = 0;
         //double y = 0;
@@ -379,6 +400,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JButton rotateLeftButton;
     private javax.swing.JButton rotateRightButton;
@@ -386,4 +408,21 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private javax.swing.JButton zoomOutButton;
     // End of variables declaration//GEN-END:variables
 
+    //DLG: Remove this!
+    private void test() {
+        double layoutX = fxImageView.getLayoutX();
+        double layoutY = fxImageView.getLayoutY();
+        
+        Bounds layoutBounds = fxImageView.getLayoutBounds();
+        
+        DoubleProperty scaleXProperty = fxImageView.scaleXProperty();
+        DoubleProperty scaleYProperty = fxImageView.scaleXProperty();
+        
+        ObservableList<Transform> transforms = fxImageView.getTransforms();
+        
+        double translateX = fxImageView.getTranslateX();
+        double translateY = fxImageView.getTranslateY();
+        
+        System.out.println();
+    }
 }
