@@ -55,7 +55,7 @@ final class CasePropertiesAction extends CallableSystemAction {
             casePropertiesDialog = new JDialog(mainWindow, title, true);
             CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
             caseInformationPanel.addCloseButtonAction((ActionEvent e) -> {
-                casePropertiesDialog.setVisible(false);
+                casePropertiesDialog.dispose();
             });
             casePropertiesDialog.add(caseInformationPanel);
             casePropertiesDialog.setResizable(true);

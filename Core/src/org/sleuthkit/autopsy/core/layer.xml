@@ -48,6 +48,7 @@
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
+            <file name="org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseSaveAction"/>
@@ -181,6 +182,10 @@
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
                 <attr name="position" intvalue="301"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.instance"/>
+                <attr name="position" intvalue="302"/>
             </file>
             <file name="org-netbeans-modules-print-action-PageSetupAction.shadow_hidden"/>
             <file name="org-netbeans-modules-print-action-PrintAction.shadow_hidden"/>
