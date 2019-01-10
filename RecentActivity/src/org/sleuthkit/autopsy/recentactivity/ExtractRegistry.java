@@ -51,7 +51,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import java.nio.file.Path;
 import static java.util.TimeZone.getTimeZone;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -778,7 +777,7 @@ class ExtractRegistry extends Extract {
             }
             return true;
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Error finding the registry file."); //NON-NLS
+            logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
         } catch (SAXException ex) {
             logger.log(Level.SEVERE, "Error parsing the registry XML: {0}", ex); //NON-NLS
         } catch (IOException ex) {
@@ -889,13 +888,13 @@ class ExtractRegistry extends Extract {
             //store set of attributes to make artifact for later in collection of artifact like objects
             return true;
         } catch (FileNotFoundException ex) {
-            logger.log(Level.SEVERE, "Error finding the registry file."); //NON-NLS
+            logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
         } catch (ParseException ex) {
             logger.log(Level.SEVERE, "Error parsing the the date from the registry file", ex); //NON-NLS
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+             logger.log(Level.SEVERE, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
         }
         return false;
     }
