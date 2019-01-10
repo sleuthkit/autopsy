@@ -55,13 +55,14 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DefaultFilterState;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.timeline.TimelineEvent;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
 
 /**
@@ -168,7 +169,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
         getChartLane().setCursor(Cursor.WAIT);
 
         /*
-         * make new ZoomState to query with
+         * Make new ZoomState to query with:
          *
          * We need to extend end time for the query by one second, because it is
          * treated as an open interval but we want to include events at exactly
@@ -176,14 +177,14 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
          * to the type and description of this cluster by intersecting a new
          * filter with the existing root filter.
          */
-        final RootFilterState subClusterFilter = eventsModel.getFilterState().copyOf();
-        subClusterFilter.getFilter().getSubFilters().addAll(
-                new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription(), DescriptionFilter.FilterMode.INCLUDE),
-                new EventTypeFilter(getEventType()));
+        RootFilterState subClusterFilter = eventsModel.getFilterState()
+                .intersect(new DefaultFilterState<>(
+                        new EventTypeFilter(getEventType()), true));
         final Interval subClusterSpan = new Interval(getStartMillis(), getEndMillis() + 1000);
-        final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.eventTypeZoomProperty().get();
+        final EventTypeZoomLevel eventTypeZoomLevel = eventsModel.getEventTypeZoom();
         final ZoomState zoom = new ZoomState(subClusterSpan, eventTypeZoomLevel, subClusterFilter, getDescriptionLoD());
 
+        DescriptionFilter descriptionFilter = new DescriptionFilter(getEvent().getDescriptionLoD(), getDescription());
         /*
          * task to load sub-stripes in a background thread
          */
@@ -199,7 +200,6 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                 //next LoD in diraction of given relativeDetail
                 DescriptionLoD next = loadedDescriptionLoD;
                 do {
-
                     loadedDescriptionLoD = next;
                     if (loadedDescriptionLoD == getEvent().getDescriptionLoD()) {
                         //if we are back at the level of detail of the original cluster, return empty list to inidicate.
@@ -207,7 +207,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                     }
 
                     //query for stripes at the desired level of detail
-                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(zoom.withDescrLOD(loadedDescriptionLoD));
+                    stripes = chartLane.getParentChart().getDetailsViewModel().getEventStripes(descriptionFilter, zoom.withDescrLOD(loadedDescriptionLoD));
                     //setup next for subsequent go through the "do" loop
                     next = withRelativeDetail(loadedDescriptionLoD, relativeDetail);
                 } while (stripes.size() == 1 && nonNull(next)); //keep going while there was only on stripe and we havne't reached the end of the LoD continuum.
@@ -244,6 +244,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
                     }
                 } catch (TskCoreException | InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error loading subnodes", ex); //NON-NLS
+
                 }
 
                 getChartLane().requestChartLayout();

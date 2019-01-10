@@ -22,7 +22,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.EventBus;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,7 +39,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
-import static org.apache.commons.lang3.StringUtils.isBlank;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -61,7 +59,6 @@ import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.RootFilterState;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.TagsFilterState;
 import org.sleuthkit.autopsy.timeline.utils.CacheLoaderImpl;
-import org.sleuthkit.autopsy.timeline.utils.CheckedFunction;
 import org.sleuthkit.autopsy.timeline.utils.FilterUtils;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -163,7 +160,7 @@ public final class FilteredEventsModel {
             syncFilters(rootFilter);
             requestedFilter.set(rootFilter.copyOf());
         };
- 
+
         datasourcesMap.addListener(filterSyncListener);
         hashSets.addListener(filterSyncListener);
         tagNames.addListener(filterSyncListener);
@@ -244,7 +241,7 @@ public final class FilteredEventsModel {
         SleuthkitCase skCase = autoCase.getSleuthkitCase();
         hashSets.addAll(eventManager.getHashSetNames());
         Set<Long> dataSourceIDs = eventManager.getDataSourceIDs();
- 
+
         //because there is no way to remove a datasource we only add to this map.
         for (Long id : dataSourceIDs) {
             try {
@@ -271,18 +268,18 @@ public final class FilteredEventsModel {
      */
     public void syncFilters(RootFilterState rootFilterState) {
         TagsFilterState tagsFilterState = rootFilterState.getTagsFilterState();
-         for (TagName tagName : tagNames) {
+        for (TagName tagName : tagNames) {
             tagsFilterState.getFilter().addSubFilter(new TagNameFilter(tagName));
         }
         for (FilterState<? extends TagNameFilter> tagFilterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
             tagFilterState.setDisabled(tagNames.contains(tagFilterState.getFilter().getTagName()) == false);
         }
-        
+
         DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
         for (Map.Entry<Long, DataSource> entry : datasourcesMap.entrySet()) {
             dataSourcesFilter.addSubFilter(new DataSourceFilter(entry.getValue().getName(), entry.getKey()));
         }
- 
+
         HashHitsFilter hashSetsFilter = rootFilterState.getHashHitsFilterState().getFilter();
         for (String hashSet : hashSets) {
             hashSetsFilter.addSubFilter(new HashSetFilter(hashSet));
@@ -404,16 +401,16 @@ public final class FilteredEventsModel {
         return eventManager.getTagCountsByTagName(eventIDsWithTags);
     }
 
-    public List<Long> getEventIDs(Interval timeRange, TimelineFilter filter) throws TskCoreException {
+    public List<Long> getEventIDs(Interval timeRange, FilterState<? extends TimelineFilter> filter) throws TskCoreException {
 
         final Interval overlap;
-        RootFilterState intersection;
+        RootFilter intersection;
         synchronized (this) {
             overlap = getSpanningInterval().overlap(timeRange);
-            intersection = getFilterState().intersect(filter);
+            intersection = getFilterState().intersect(filter).getActiveFilter();
         }
 
-        return eventManager.getEventIDs(overlap, intersection.getActiveFilter());
+        return eventManager.getEventIDs(overlap, intersection);
     }
 
     /**
@@ -680,8 +677,8 @@ public final class FilteredEventsModel {
     public synchronized void invalidateCaches(Collection<Long> updatedEventIDs) throws TskCoreException {
         minCache.invalidateAll();
         maxCache.invalidateAll();
-         idToEventCache.invalidateAll(emptyIfNull(updatedEventIDs));
-         eventCountsCache.invalidateAll();
+        idToEventCache.invalidateAll(emptyIfNull(updatedEventIDs));
+        eventCountsCache.invalidateAll();
 
         populateFilterData();
 
@@ -697,34 +694,5 @@ public final class FilteredEventsModel {
 
         private CacheInvalidatedEvent() {
         }
-    }
-
-    /**
-     * take the result of a group_concat SQLite operation and split it into a
-     * set of X using the mapper to to convert from string to X If groupConcat
-     * is empty, null, or all whitespace, returns an empty list.
-     *
-     * @param <X>         the type of elements to return
-     * @param groupConcat a string containing the group_concat result ( a comma
-     *                    separated list)
-     * @param mapper      a function from String to X
-     *
-     * @return a Set of X, each element mapped from one element of the original
-     *         comma delimited string
-     *
-     * @throws org.sleuthkit.datamodel.TskCoreException
-     */
-    public static <X> List<X> unGroupConcat(String groupConcat, CheckedFunction<String, X, TskCoreException> mapper) throws TskCoreException {
-
-        if (isBlank(groupConcat)) {
-            return Collections.emptyList();
-        }
-
-        List<X> result = new ArrayList<>();
-        String[] split = groupConcat.split(",");
-        for (String s : split) {
-            result.add(mapper.apply(s));
-        }
-        return result;
     }
 }

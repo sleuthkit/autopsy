@@ -24,22 +24,19 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
- *
- *
- * @param <FilterType>
+ * A FilterState implementation for DescriptionFilters
  */
-public class DefaultFilterState<FilterType extends TimelineFilter> implements FilterState<FilterType> {
+public class DescriptionFilterState implements FilterState<DescriptionFilter> {
 
-    private final FilterType filter;
+    private final DescriptionFilter filter;
 
-    public DefaultFilterState(FilterType filter) {
+    public DescriptionFilterState(DescriptionFilter filter) {
         this(filter, false);
     }
 
-    public DefaultFilterState(FilterType filter, boolean selected) {
+    public DescriptionFilterState(DescriptionFilter filter, boolean selected) {
         this.filter = filter;
         this.selected.set(selected);
     }
@@ -90,25 +87,16 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
 
     @Override
     public String getDisplayName() {
-        return filter.getDisplayName();
+        return filter.getDescription();
     }
 
     @Override
-    public DefaultFilterState<FilterType> copyOf() {
-        @SuppressWarnings("unchecked")
-        DefaultFilterState<FilterType> copy = new DefaultFilterState<>((FilterType) filter.copyOf());
-        copy.setSelected(isSelected());
-        copy.setDisabled(isDisabled());
-        return copy;
-    }
-
-    @Override
-    public FilterType getFilter() {
+    public DescriptionFilter getFilter() {
         return filter;
     }
 
     @Override
-    public FilterType getActiveFilter() {
+    public DescriptionFilter getActiveFilter() {
         return isActive() ? getFilter() : null;
     }
 
@@ -132,7 +120,7 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final DefaultFilterState<?> other = (DefaultFilterState<?>) obj;
+        final DescriptionFilterState other = (DescriptionFilterState) obj;
         if (!Objects.equals(this.filter, other.filter)) {
             return false;
         }
@@ -143,5 +131,13 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
             return false;
         }
         return true;
+    }
+
+    @Override
+    public DescriptionFilterState copyOf() {
+        DescriptionFilterState copy = new DescriptionFilterState(filter);
+        copy.setSelected(isSelected());
+        copy.setDisabled(isDisabled());
+        return copy;
     }
 }

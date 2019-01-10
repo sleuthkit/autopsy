@@ -18,38 +18,15 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
-import javafx.beans.binding.BooleanExpression;
-import javafx.beans.property.ReadOnlyBooleanProperty;
+import java.util.function.Predicate;
+import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
- * The state of a filter: selected, disabled, active, etc.
- *
- * @param <FilterType> The type of filter this is the state for.
+ * A Filter over TimelineEvents that is applied in the UI, not the DB. *
  */
-public interface FilterState<FilterType> {
+public interface UIFilter extends Predicate<TimelineEvent> {
 
-    String getDisplayName();
-
-    FilterType getFilter();
-
-    FilterType getActiveFilter();
-
-    FilterState<FilterType> copyOf();
-
-    BooleanExpression activeProperty();
-
-    boolean isActive();
-
-    ReadOnlyBooleanProperty disabledProperty();
-
-    boolean isDisabled();
-
-    void setDisabled(Boolean act);
-
-    ReadOnlyBooleanProperty selectedProperty();
-
-    boolean isSelected();
-
-    void setSelected(Boolean act);
-
+    static UIFilter getAllPassFilter() {
+        return event -> true;
+    }
 }

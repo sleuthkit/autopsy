@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-16 Basis Technology Corp.
+ * Copyright 2014-18 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
 import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.DescriptionFilter;
 
 /**
  * An Action that un-hides, in the given chart, events with the given
@@ -44,9 +44,9 @@ class UnhideDescriptionAction extends Action {
              * test one and checking all the existing filters against it.
              * Disable them.
              */
-            final DescriptionFilter testFilter = new DescriptionFilter(descriptionLoD, description, DescriptionFilter.FilterMode.EXCLUDE);
+            final DescriptionFilter testFilter = new DescriptionFilter(descriptionLoD, description);
             chart.getController().getQuickHideFilters().stream()
-                    .filter(testFilter::equals)
+                    .filter(otherFilterState -> testFilter.equals(otherFilterState.getFilter()))
                     .forEach(descriptionfilter -> descriptionfilter.setSelected(false));
         });
     }

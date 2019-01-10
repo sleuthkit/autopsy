@@ -23,6 +23,7 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
@@ -51,7 +52,8 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
     private static final ReadOnlyBooleanProperty ALWAYS_TRUE = new ReadOnlyBooleanWrapper(true).getReadOnlyProperty();
     private final static ReadOnlyBooleanProperty ALWAYS_FALSE = new ReadOnlyBooleanWrapper(false).getReadOnlyProperty();
 
-    private final ObservableList<   FilterState< ?>> subFilterStates = FXCollections.observableArrayList();
+    private final ObservableList<   FilterState< ? extends TimelineFilter>> subFilterStates = FXCollections.observableArrayList();
+    private final ObservableSet<   FilterState< ? extends TimelineFilter>> namedFilterStates = FXCollections.observableSet();
     private final RootFilter delegate;
 
     public RootFilterState(RootFilter delegate) {
@@ -89,7 +91,8 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
                 hashHitsFilterState,
                 dataSourcesFilterState,
                 fileTypesFilterState,
-                 eventTypeFilterState);
+                eventTypeFilterState);
+        namedFilterStates.addAll(subFilterStates);
     }
 
     /**
@@ -100,28 +103,24 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
      * @return A new RootFilter model that intersects the given filter with this
      *         one.
      */
-    public RootFilterState intersect(TimelineFilter otherFilter) {
+    public RootFilterState intersect(FilterState<? extends TimelineFilter> otherFilter) {
         RootFilterState copyOf = copyOf();
         copyOf.addSubFilterState(otherFilter);
         return copyOf;
     }
 
-    private void addSubFilterState(TimelineFilter subFilter) {
-
-        if (subFilter instanceof TimelineFilter.CompoundFilter<?>) {
-            CompoundFilterStateImpl<? extends TimelineFilter, ? extends TimelineFilter.CompoundFilter<? extends TimelineFilter>> compoundFilterStateImpl = new CompoundFilterStateImpl<>((TimelineFilter.CompoundFilter<?>) subFilter);
-            getSubFilterStates().add(compoundFilterStateImpl);
-            compoundFilterStateImpl.setSelected(Boolean.TRUE);
-        } else {
-            DefaultFilterState<TimelineFilter> defaultFilterState = new DefaultFilterState<>(subFilter);
-            getSubFilterStates().add(defaultFilterState);
-            defaultFilterState.setSelected(Boolean.TRUE);
+    public void addSubFilterState(FilterState<? extends TimelineFilter> newSubFilterState) {
+        if (subFilterStates.contains(newSubFilterState) == false) {
+            subFilterStates.add(newSubFilterState);
+        }
+        if (delegate.getSubFilters().contains(newSubFilterState.getFilter())) {
+            getFilter().getSubFilters().add(newSubFilterState.getFilter());
         }
     }
 
     @Override
     public RootFilterState copyOf() {
-        return new RootFilterState(getFilter().copyOf(),
+        RootFilterState copy = new RootFilterState(getFilter().copyOf(),
                 getEventTypeFilterState().copyOf(),
                 getKnownFilterState().copyOf(),
                 getTextFilterState().copyOf(),
@@ -130,6 +129,10 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
                 getDataSourcesFilterState().copyOf(),
                 getFileTypesFilterState().copyOf()
         );
+        this.getSubFilterStates().stream()
+                .filter(filterState -> namedFilterStates.contains(filterState) == false)
+                .forEach(copy::addSubFilterState);
+        return copy;
     }
 
     public CompoundFilterState<EventTypeFilter, EventTypeFilter> getEventTypeFilterState() {

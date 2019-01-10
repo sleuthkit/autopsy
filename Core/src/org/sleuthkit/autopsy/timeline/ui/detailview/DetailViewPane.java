@@ -62,8 +62,8 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailsViewModel;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.utils.MappedList;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.DescriptionLoD;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Controller class for a DetailsChart based implementation of a timeline view.
@@ -402,7 +402,7 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
             updateMessage(Bundle.DetailViewPane_loggedTask_queryDb());
 
             //get the event stripes to be displayed
-            List<EventStripe> eventStripes = detailsViewModel.getEventStripes();
+            List<EventStripe> eventStripes = detailsViewModel.getEventStripes(newZoom);
             final int size = eventStripes.size();
             //if there are too many stipes show a confirmation dialog
             if (size > 2000) {

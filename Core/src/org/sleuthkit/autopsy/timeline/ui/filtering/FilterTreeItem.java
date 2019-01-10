@@ -40,7 +40,7 @@ final public class FilterTreeItem extends TreeItem<FilterState<?>> {
      *                     children of this FilterTreeItem
      * @param expansionMap Map from filter to whether it is expanded or not.
      */
-    public FilterTreeItem(FilterState<?> filterState, ObservableMap<TimelineFilter, Boolean> expansionMap) {
+    public FilterTreeItem(FilterState<?> filterState, ObservableMap<Object, Boolean> expansionMap) {
         super(filterState);
 
         //keep expanion map upto date if user expands/collapses filter
@@ -72,7 +72,7 @@ final public class FilterTreeItem extends TreeItem<FilterState<?>> {
                 }
             });
 
-            compoundFilter.selectedProperty().addListener( observable -> {
+            compoundFilter.selectedProperty().addListener(observable -> {
                 if (compoundFilter.isSelected()) {
                     setExpanded(true);
                 }
