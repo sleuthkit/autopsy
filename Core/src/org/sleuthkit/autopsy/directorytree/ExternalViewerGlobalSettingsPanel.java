@@ -362,7 +362,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
             rules.add(tableModel.getRuleAt(i));
         }
         ExternalViewerRulesManager.getInstance().setUserRules(rules);
-        UserPreferences.setHdXEditorPath(HxDPath.getText());
+        UserPreferences.setExternalHexEditorPath(HxDPath.getText());
     }
 
     @Override
@@ -373,7 +373,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
                 tableModel.addRule(rule);
             }
         }
-        String editorPath = UserPreferences.getHdXEditorPath();
+        String editorPath = UserPreferences.getExternalHexEditorPath();
         File HdXExecutable = new File(editorPath);
         if(HdXExecutable.exists() || HdXExecutable.canExecute()) {
             HxDPath.setText(editorPath);    

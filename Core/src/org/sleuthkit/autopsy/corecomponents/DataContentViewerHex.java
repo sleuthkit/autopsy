@@ -362,7 +362,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                         + "Please set-up the HdX install location in Tools -> Options -> External Viewer"})
     private void launchHxDButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_launchHxDButtonActionPerformed
         try {
-            File HdXExecutable = new File(UserPreferences.getHdXEditorPath());
+            File HdXExecutable = new File(UserPreferences.getExternalHexEditorPath());
             if(!HdXExecutable.exists() || !HdXExecutable.canExecute()) {
                 JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
                 return;

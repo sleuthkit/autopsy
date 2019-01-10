@@ -39,7 +39,6 @@ import org.sleuthkit.datamodel.TskData.DbType;
  */
 public final class UserPreferences {
 
-    private static final boolean IS_WINDOWS_OS = PlatformUtil.isWindowsOS();
     private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
     public static final String KEEP_PREFERRED_VIEWER = "KeepPreferredViewer"; // NON-NLS    
     public static final String HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE = "HideKnownFilesInDataSourcesTree"; //NON-NLS 
@@ -76,7 +75,7 @@ public final class UserPreferences {
     public static final String SHOW_ONLY_CURRENT_USER_TAGS = "ShowOnlyCurrentUserTags";
     public static final String HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES = "HideCentralRepoCommentsAndOccurrences";
     public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
-    public static final String HDX_EDITOR_PATH = "HdXEditorPath";
+    public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -479,8 +478,8 @@ public final class UserPreferences {
      * 
      * @param executablePath User-inputted path to HxD executable
      */
-    public static void setHdXEditorPath(String executablePath) {
-        preferences.put(HDX_EDITOR_PATH, executablePath);
+    public static void setExternalHexEditorPath(String executablePath) {
+        preferences.put(EXTERNAL_HEX_EDITOR_PATH, executablePath);
     }
     
     /**
@@ -489,7 +488,7 @@ public final class UserPreferences {
      * 
      * @return Path to HdX
      */
-    public static String getHdXEditorPath() {
-        return preferences.get(HDX_EDITOR_PATH, Paths.get("C:", "Program Files", "HxD", "HxD.exe").toString());
+    public static String getExternalHexEditorPath() {
+        return preferences.get(EXTERNAL_HEX_EDITOR_PATH, Paths.get("C:", "Program Files", "HxD", "HxD.exe").toString());
     }
 }
