@@ -885,7 +885,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()), eamDataSource);
             dataSourceCacheById.put(getDataSourceByIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getID()), eamDataSource);
         } catch (SQLException ex) {
-            throw new EamDbException(String.format("Error updating data source (id=%d).", eamDataSource.getID()), ex); // NON-NLS
+            throw new EamDbException(String.format("Error updating data source (obj_id=%d).", eamDataSource.getDataSourceObjectID()), ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
