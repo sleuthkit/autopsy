@@ -198,6 +198,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                     runningJob.setModuleRuntimesSnapshot(job.getModuleRunTimes());
                     runningJob.setProcessingStage(job.getProcessingStage(), job.getProcessingStageStartDate());
                     runningJob.setProcessingStatus(job.getProcessingStatus());
+                    break;
                 }
             }
             setChanged();
@@ -734,7 +735,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
             stopWatch.start();
             eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, AutoIngestManager.getSystemUserNameProperty()));
             stopWatch.stop();
-            LOGGER.log(Level.INFO, String.format("Used %d s to publish job deletion event for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName,caseDirectoryPath));
+            LOGGER.log(Level.INFO, String.format("Used %d s to publish job deletion event for case %s at %s", stopWatch.getElapsedTimeSecs(), caseName, caseDirectoryPath));
         }
 
         return CaseDeletionResult.FULLY_DELETED;

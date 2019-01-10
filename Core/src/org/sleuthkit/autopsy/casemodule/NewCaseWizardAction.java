@@ -92,9 +92,6 @@ final class NewCaseWizardAction extends CallableSystemAction {
                             EamDb dbManager = EamDb.getInstance();
                             if (dbManager != null) {
                                 CorrelationCase cRCase = dbManager.getCase(Case.getCurrentCaseThrows());
-                                if (cRCase == null) {
-                                    cRCase = dbManager.newCase(Case.getCurrentCaseThrows());
-                                }
                                 if (!organizationName.isEmpty()) {
                                     for (EamOrganization org : dbManager.getOrganizations()) {
                                         if (org.getName().equals(organizationName)) {

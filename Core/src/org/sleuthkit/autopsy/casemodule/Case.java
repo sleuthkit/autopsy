@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -705,8 +705,8 @@ public class Case {
         "Case.progressIndicatorTitle.deletingCase=Deleting Case",
         "Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first.",
         "Case.progressMessage.checkingForOtherUser=Checking to see if another user has the case open...",
-        "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or there is a problem with the coordination service."
-    })
+        "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or there is a problem with the coordination service.",
+        "Case.exceptionMessage.failedToDeleteCoordinationServiceNodes=Failed to delete the coordination service nodes for the case.",})
     public static void deleteCase(CaseMetadata metadata) throws CaseActionException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -751,11 +751,53 @@ public class Case {
                 } catch (CoordinationServiceException ex) {
                     stopWatch.stop();
                     logger.log(Level.INFO, String.format("Used %d s to fail to acquire case directory coordination service lock for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-                    throw new CaseActionException(Bundle.Case_exceptionMessage_cannotGetLockToDeleteCase(), ex);
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_failedToDeleteCoordinationServiceNodes(), ex);
                 }
+            }
+            try {
+                deleteCoordinationServiceNodes(metadata, progressIndicator);
+            } catch (CoordinationServiceException ex) {
+                throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock(), ex);
             }
         } finally {
             progressIndicator.finish();
+        }
+    }
+
+    /**
+     * Deletes the coordination nodes for a multi-user case.
+     *
+     * @param metadata          The metadata for the case to delete.
+     * @param progressIndicator The progress indicator for the deletion
+     *                          operation.
+     *
+     * @throws CoordinationServiceException If there is a problem getting the
+     *                                      coordination service.
+     */
+    @Messages({
+        "Case.progressMessage.deletingCoordinationServiceNodes=Deleting coordination service nodes..."
+    })
+    static void deleteCoordinationServiceNodes(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CoordinationServiceException {
+        progressIndicator.progress(Bundle.Case_progressMessage_deletingCoordinationServiceNodes());
+        CoordinationService coordinationService;
+        coordinationService = CoordinationService.getInstance();
+        String resourcesLockNodePath = metadata.getCaseDirectory() + "_resources";
+        try {
+            coordinationService.deleteNode(CategoryNode.CASES, resourcesLockNodePath);
+        } catch (CoordinationServiceException ex) {
+            /*
+             * Log but do not notify the user.
+             */
+            logger.log(Level.SEVERE, String.format("Failed to delete resources lock coordination service node for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
+        }
+        String caseDirectoryLockNodePath = metadata.getCaseDirectory();
+        try {
+            coordinationService.deleteNode(CategoryNode.CASES, caseDirectoryLockNodePath);
+        } catch (CoordinationServiceException ex) {
+            /*
+             * Log but do not notify the user.
+             */
+            logger.log(Level.SEVERE, String.format("Failed to delete case directory lock coordination service node for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
         }
     }
 
@@ -1835,7 +1877,7 @@ public class Case {
                 progressIndicator.progress(Bundle.Case_progressMessage_preparingToOpenCaseResources());
                 acquireSharedCaseDirLock(metadata.getCaseDirectory());
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
-                    assert(resourcesLock != null); // Use reference to avoid compile time warning.
+                    assert (resourcesLock != null); // Use reference to avoid compile time warning.
                     open(isNewCase, progressIndicator);
                 } catch (CaseActionException ex) {
                     releaseSharedCaseDirLock(getMetadata().getCaseDirectory());

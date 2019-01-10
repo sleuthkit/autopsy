@@ -30,6 +30,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -75,9 +76,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ingestStateUpdated(Case.isCaseOpen());
     }
 
-    @Messages({"GlobalSettingsPanel.updateFailed.title=Update failed",
-        "GlobalSettingsPanel.updateFailed.message=Failed to update database. Central repository has been disabled."
-    })
+    @Messages({"GlobalSettingsPanel.updateFailed.title=Central repository upgrade failed"})
     private void updateDatabase() {
 
         if (EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED)) {
@@ -86,16 +85,15 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         try {
-            boolean result = EamDbUtil.upgradeDatabase();
+            EamDbUtil.upgradeDatabase();
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            if (!result) {
-                JOptionPane.showMessageDialog(this,
-                        NbBundle.getMessage(this.getClass(),
-                                "GlobalSettingsPanel.updateFailed.message"),
-                        NbBundle.getMessage(this.getClass(),
-                                "GlobalSettingsPanel.updateFailed.title"),
-                        JOptionPane.WARNING_MESSAGE);
-            }
+        } catch (EamDbException ex) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            JOptionPane.showMessageDialog(this,
+                    ex.getMessage(),
+                    NbBundle.getMessage(this.getClass(),
+                            "GlobalSettingsPanel.updateFailed.title"),
+                    JOptionPane.WARNING_MESSAGE);
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
@@ -426,21 +424,12 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
         store();
         EamDbSettingsDialog dialog = new EamDbSettingsDialog();
-        updateDatabase();
-        load(); // reload db settings content and update buttons
         if (dialog.wasConfigurationChanged()) {
+            updateDatabase();
+            load(); // reload db settings content and update buttons
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_bnDbConfigureActionPerformed
-
-    private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
-        //if saved setting is disabled checkbox should be disabled already 
-        store();
-        updateDatabase();
-        load();
-        this.ingestStateUpdated(Case.isCaseOpen());
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_cbUseCentralRepoActionPerformed
 
     private void manageOrganizationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manageOrganizationButtonActionPerformed
         store();
@@ -452,13 +441,22 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         ManageCasesDialog.displayManageCasesDialog();
     }//GEN-LAST:event_showCasesButtonActionPerformed
 
+    private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
+        //if saved setting is disabled checkbox should be disabled already 
+        store();
+        updateDatabase();
+        load();
+        this.ingestStateUpdated(Case.isCaseOpen());
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_cbUseCentralRepoActionPerformed
+
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
     public void load() {
         tbOops.setText("");
         enableButtonSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        cbUseCentralRepo.setSelected(EamDbUtil.useCentralRepo()); // NON-NLS
+        cbUseCentralRepo.setSelected(EamDbUtil.allowUseOfCentralRepository()); // NON-NLS
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();

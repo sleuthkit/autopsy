@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.commonfilessearch;
 
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.util.Set;
 import junit.framework.Test;
 import org.netbeans.junit.NbModuleSuite;
 import org.netbeans.junit.NbTestCase;
@@ -45,11 +46,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * 2: No matches If I only search in the current case (existing mode), allowing
  * all data sources: One node for Hash C (3_1_C.jpg, 3_2_C.jpg)
  *
- * TODO (JIRA-4241): All of the tests in this class are commented out until the
- * Image Gallery tool cleans up its drawable database connection
- * deterministically, instead of in a finalizer. As it is now, case deletion can
- * fail due to an open drawable database file handles, and that makes the tests
- * fail.
  */
 public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
 
@@ -69,181 +65,187 @@ public class IngestedWithHashAndFileTypeInterCaseTests extends NbTestCase {
 
     @Override
     public void setUp() {
-//        this.utils.clearTestDir();
-//        try {
-//            this.utils.enableCentralRepo();
-//
-//            String[] cases = new String[]{
-//                CASE1,
-//                CASE2,
-//                CASE3};
-//
-//            Path[][] paths = {
-//                {this.utils.case1DataSet1Path, this.utils.case1DataSet2Path},
-//                {this.utils.case2DataSet1Path, this.utils.case2DataSet2Path},
-//                {this.utils.case3DataSet1Path, this.utils.case3DataSet2Path}};
-//
-//            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE3);
-//        } catch (TskCoreException | EamDbException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
+        this.utils.clearTestDir();
+        try {
+            this.utils.enableCentralRepo();
+
+            String[] cases = new String[]{
+                CASE1,
+                CASE2,
+                CASE3};
+
+            Path[][] paths = {
+                {this.utils.case1DataSet1Path, this.utils.case1DataSet2Path},
+                {this.utils.case2DataSet1Path, this.utils.case2DataSet2Path},
+                {this.utils.case3DataSet1Path, this.utils.case3DataSet2Path}};
+
+            this.utils.createCases(cases, paths, this.utils.getIngestSettingsForHashAndFileType(), InterCaseTestUtils.CASE3);
+        } catch (TskCoreException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 
     @Override
     public void tearDown() {
-//        this.utils.clearTestDir();
-//        this.utils.tearDown();
+        this.utils.clearTestDir();
+        this.utils.tearDown();
     }
 
     /**
      * Search All cases with no file type filtering.
      */
     public void testOne() {
-//        try {
-//            //note that the params false and false are presently meaningless because that feature is not supported yet
-//            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.FILE_TYPE, 0);
-//            CommonAttributeCountSearchResults metadata = builder.findMatches();
-//
-//            assertTrue("Results should not be empty", metadata.size() != 0);
-//
-//            //case 1 data set 1
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
-//
-//            //case 1 data set 2
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 1));
-//
-//            //case 2 data set 1
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
-//
-//            //case 2 data set 2
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
-//
-//            //case 3 data set 1
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
-//
-//            //case 3 data set 2
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1));
-//
-//        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
+        try {
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, this.utils.FILE_TYPE, 0);
+            CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
+
+            assertTrue("Results should not be empty", metadata.size() != 0);
+
+            //case 1 data set 1
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_1, CASE1", 1, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_1, CASE1", 1, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1));
+
+            //case 1 data set 2
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_2, CASE1", 1, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_2, CASE1", 1, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1));
+
+            //case 2 data set 1
+            assertEquals("Verify Existence or Count failed for HASH_B_PDF, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_B_JPG, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2));
+
+            //case 2 data set 2
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2));
+
+            //case 3 data set 1
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE3_DATASET_1, CASE3", 1, getInstanceCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE3_DATASET_1, CASE3", 1, getInstanceCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3));
+
+            //case 3 data set 2
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE3_DATASET_2, CASE3", 1, getInstanceCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3));
+
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
-//
-//    /**
-//     * Search All cases with no file type filtering.
-//     */
+
+    /**
+     * Search All cases with no file type filtering.
+     */
     public void testTwo() {
-//        try {
-//
-//            int matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(CASE2);
-//            CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
-//            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false, fileType, 0);
-//
-//            CommonAttributeCountSearchResults metadata = builder.findMatches();
-//
-//            assertTrue("Results should not be empty", metadata.size() != 0);
-//
-//            //case 1 data set 1
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 1));
-//
-//            //case 1 data set 2
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 1));
-//
-//            //case 2 data set 1
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
-//
-//            //case 2 data set 2
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
-//
-//            //case 3 data set 1
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 1));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
-//
-//            //case 3 data set 2
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1));
-//
-//        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
+        try {
+            int matchesMustAlsoBeFoundInThisCase = 0;
+            
+            // Filter out the time stamp to get the correct case name.
+            Set<String> caseNames = this.utils.getCaseMap().keySet();
+            for (String caseName : caseNames) {
+                if (caseName.substring(0, caseName.length() - 20).equalsIgnoreCase(CASE2)) {
+                    // Case match found. Get the number of matches.
+                    matchesMustAlsoBeFoundInThisCase = this.utils.getCaseMap().get(caseName);
+                }
+            }
+            CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
+            AbstractCommonAttributeSearcher builder = new SingleInterCaseCommonAttributeSearcher(matchesMustAlsoBeFoundInThisCase, false, false, fileType, 0);
+
+            CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
+
+            assertTrue("Results should not be empty", metadata.size() != 0);
+
+            //case 1 data set 1
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_1, CASE1", 1, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_1, CASE1", 1, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1));
+
+            //case 1 data set 2
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_2, CASE1", 1, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_2, CASE1", 1, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1));
+
+            //case 2 data set 1
+            assertEquals("Verify Existence or Count failed for HASH_B_PDF, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_B_JPG, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2));
+
+            //case 2 data set 2
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2));
+
+            //case 3 data set 1
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE3_DATASET_1, CASE3", 1, getInstanceCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE3_DATASET_1, CASE3", 1, getInstanceCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3));
+
+            //case 3 data set 2
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE3_DATASET_2, CASE3", 1, getInstanceCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3));
+
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 
     /**
      * We should be able to observe that certain files are no longer returned in
-     * the result set since they do not appear frequently enough.
+     * the result set since they exist too frequently
      */
     public void testThree() {
-//        try {
-//
-//            //note that the params false and false are presently meaningless because that feature is not supported yet
-//            CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
-//            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, fileType, 50);
-//
-//            CommonAttributeCountSearchResults metadata = builder.findMatches();
-//
-//            assertTrue("Results should not be empty", metadata.size() != 0);
-//
-//            //case 1 data set 1
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1, 0));
-//
-//            //case 1 data set 2
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1, 0));
-//
-//            //case 2 data set 1
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2, 0));
-//
-//            //case 2 data set 2
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2, 1));
-//
-//            //case 3 data set 1
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3, 0));
-//
-//            //case 3 data set 2
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3, 0));
-//            assertTrue(verifyInstanceExistenceAndCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3, 1));
-//
-//        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
-//            Exceptions.printStackTrace(ex);
-//            Assert.fail(ex.getMessage());
-//        }
+        try {
+
+            CorrelationAttributeInstance.Type fileType = CorrelationAttributeInstance.getDefaultCorrelationTypes().get(0);
+            AbstractCommonAttributeSearcher builder = new AllInterCaseCommonAttributeSearcher(false, false, fileType, 50);
+
+            CommonAttributeCountSearchResults metadata = builder.findMatchesByCount();
+            metadata.filterMetadata();
+            assertTrue("Results should not be empty", metadata.size() != 0);
+
+            //case 1 data set 1
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_1, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_1, CASE1", 0, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_1, CASE1));
+
+            //case 1 data set 2
+            assertEquals("Verify Existence or Count failed for HASH_0_DAT, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_0_DAT, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_A_PDF, CASE1_DATASET_2, CASE1));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE1_DATASET_2, CASE1", 0, getInstanceCount(metadata, HASH_A_JPG, CASE1_DATASET_2, CASE1));
+
+            //case 2 data set 1
+            assertEquals("Verify Existence or Count failed for HASH_B_PDF, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_PDF, CASE2_DATASET_1, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_B_JPG, CASE2_DATASET_1, CASE2", 0, getInstanceCount(metadata, HASH_B_JPG, CASE2_DATASET_1, CASE2));
+
+            //case 2 data set 2
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE2_DATASET_2, CASE2", 0, getInstanceCount(metadata, HASH_A_PDF, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE2_DATASET_2, CASE2", 0, getInstanceCount(metadata, HASH_A_JPG, CASE2_DATASET_2, CASE2));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE2_DATASET_2, CASE2", 1, getInstanceCount(metadata, HASH_D_DOC, CASE2_DATASET_2, CASE2));
+
+            //case 3 data set 1
+            assertEquals("Verify Existence or Count failed for HASH_A_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_A_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_A_PDF, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_A_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_1, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_JPG, CASE3_DATASET_1, CASE3", 0, getInstanceCount(metadata, HASH_D_JPG, CASE3_DATASET_1, CASE3));
+
+            //case 3 data set 2
+            assertEquals("Verify Existence or Count failed for HASH_C_JPG, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_JPG, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_C_PDF, CASE3_DATASET_2, CASE3", 0, getInstanceCount(metadata, HASH_C_PDF, CASE3_DATASET_2, CASE3));
+            assertEquals("Verify Existence or Count failed for HASH_D_DOC, CASE3_DATASET_2, CASE3", 1, getInstanceCount(metadata, HASH_D_DOC, CASE3_DATASET_2, CASE3));
+
+        } catch (TskCoreException | NoCurrentCaseException | SQLException | EamDbException ex) {
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+        }
     }
 }

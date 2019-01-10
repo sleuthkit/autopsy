@@ -25,7 +25,7 @@ import javax.swing.Action;
 import org.openide.util.Utilities;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ContextMenuActionsProvider;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -46,7 +46,7 @@ public class CentralRepoContextMenuActionsProvider implements ContextMenuActions
         }
 
         for (AbstractFile file : selectedFiles) {
-            if (EamDbUtil.useCentralRepo() && EamArtifactUtil.isSupportedAbstractFileType(file) && file.isFile()) {
+            if (EamDb.isEnabled() && EamArtifactUtil.isSupportedAbstractFileType(file) && file.isFile()) {
                 AddEditCentralRepoCommentAction action = new AddEditCentralRepoCommentAction(file);
                 if (action.getCorrelationAttribute() == null) {
                     action.setEnabled(false);

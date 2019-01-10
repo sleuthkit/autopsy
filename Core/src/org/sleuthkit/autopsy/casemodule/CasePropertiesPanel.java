@@ -85,9 +85,6 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                 EamDb dbManager = EamDb.getInstance();
                 if (dbManager != null) {
                     CorrelationCase correlationCase = dbManager.getCase(theCase);
-                    if (null == correlationCase) {
-                        correlationCase = dbManager.newCase(theCase);
-                    }
                     currentOrg = correlationCase.getOrg();
                 }
             } catch (EamDbException ex) {

@@ -706,6 +706,7 @@ class SevenZipExtractor {
                         parentAr.addChild(child);
                         depthMap.put(unpackedFile.getId(), child);
                     }
+                    unpackedFile.close();
                 }
 
             } catch (TskCoreException | NoCurrentCaseException e) {
