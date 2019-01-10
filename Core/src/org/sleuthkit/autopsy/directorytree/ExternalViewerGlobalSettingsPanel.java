@@ -67,7 +67,7 @@ final class ExternalViewerGlobalSettingsPanel extends javax.swing.JPanel impleme
         ExternalViewerRulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         ListSelectionModel selectionModel = ExternalViewerRulesTable.getSelectionModel();
 
-        selectionModel.addListSelectionListener((ListSelectionEvent e) -> {
+        selectionModel.addListSelectionListener((ListSelectionEvent selection) -> {
             enableButtons();
         });
     }
