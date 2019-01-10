@@ -693,7 +693,7 @@ public final class DrawableDB {
                         + " data_source_obj_id integer DEFAULT 0, "
                         + " value VARCHAR(255) not null, " //NON-NLS
                         + " attribute VARCHAR(255) not null, " //NON-NLS
-                        + " isAnalyzed integer DEFAULT 0, "
+                        + " is_analyzed integer DEFAULT 0, "
                         + " UNIQUE(data_source_obj_id, value, attribute) )"; //NON-NLS
 
                 tskCase.getCaseDbAccessManager().createTable(GROUPS_TABLENAME, tableSchema);
@@ -942,8 +942,8 @@ public final class DrawableDB {
                 
         // 1.0 -> 1.1 upgrade
         // Add a 'isAnalyzed' column to groups table in CaseDB
-        String alterSQL = " ADD COLUMN isAnalyzed integer DEFAULT 1 "; //NON-NLS
-        if (false == tskCase.getCaseDbAccessManager().columnExists(GROUPS_TABLENAME, "isAnalyzed", caseDbTransaction )) {
+        String alterSQL = " ADD COLUMN is_analyzed integer DEFAULT 1 "; //NON-NLS
+        if (false == tskCase.getCaseDbAccessManager().columnExists(GROUPS_TABLENAME, "is_analyzed", caseDbTransaction )) {
             tskCase.getCaseDbAccessManager().alterTable(GROUPS_TABLENAME, alterSQL, caseDbTransaction);
         }    
          return new VersionNumber(1,1,0);
@@ -1189,7 +1189,7 @@ public final class DrawableDB {
     public void markGroupAnalyzed(GroupKey<?> groupKey) throws TskCoreException {
 
         
-        String updateSQL = String.format(" SET isAnalyzed = %d "
+        String updateSQL = String.format(" SET is_analyzed = %d "
                 + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d ",
                 1,
                 SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
@@ -1675,17 +1675,17 @@ public final class DrawableDB {
             public void process(ResultSet resultSet) {
                 try { 
                     if (resultSet.next()) {                     
-                        isAnalyzed = resultSet.getInt("isAnalyzed") == 1 ? true: false;
+                        isAnalyzed = resultSet.getInt("is_analyzed") == 1 ? true: false;
                     }
                 } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Failed to get group isAnalyzed", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to get group is_analyzed", ex); //NON-NLS
                 }
             }
         }
        
         IsGroupAnalyzedQueryResultProcessor queryResultProcessor = new IsGroupAnalyzedQueryResultProcessor();
         try {
-            String groupAnalyzedQueryStmt = String.format("isAnalyzed FROM " + GROUPS_TABLENAME
+            String groupAnalyzedQueryStmt = String.format("is_analyzed FROM " + GROUPS_TABLENAME
                    + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d ",
                 SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
                 SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
@@ -1694,7 +1694,7 @@ public final class DrawableDB {
             tskCase.getCaseDbAccessManager().select(groupAnalyzedQueryStmt, queryResultProcessor);
             return queryResultProcessor.getIsAnalyzed();
         } catch ( TskCoreException ex) {
-            String msg = String.format("Failed to get group isAnalyzed for group key %s", groupKey.getValueDisplayName()); //NON-NLS
+            String msg = String.format("Failed to get group is_analyzed for group key %s", groupKey.getValueDisplayName()); //NON-NLS
             logger.log(Level.SEVERE, msg, ex);
         }
 
@@ -1889,7 +1889,7 @@ public final class DrawableDB {
         }
 
         int isAnalyzed = (groupBy == DrawableAttribute.PATH) ? 0 : 1;  
-        String insertSQL = String.format(" (data_source_obj_id, value, attribute, isAnalyzed) VALUES (%d, \'%s\', \'%s\', %d)",
+        String insertSQL = String.format(" (data_source_obj_id, value, attribute, is_analyzed) VALUES (%d, \'%s\', \'%s\', %d)",
                 ds_obj_id, SleuthkitCase.escapeSingleQuotes(value), SleuthkitCase.escapeSingleQuotes(groupBy.attrName.toString()), isAnalyzed);
         if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
             insertSQL += " ON CONFLICT DO NOTHING";

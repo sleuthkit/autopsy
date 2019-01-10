@@ -108,11 +108,11 @@ public class GroupManager {
     private final ImageGalleryController controller;
 
     /**
-     * Keeps track of the last path group
-     *  - a change in path indicates the last path group is analyzed
+     * Keeps track of the current path group
+     *  - a change in path indicates the current path group is analyzed
      */
     @GuardedBy("this") //NOPMD
-    private GroupKey<?> lastUpdatedPathGroup = null;
+    private GroupKey<?> currentPathGroup = null;
     /**
      * list of all analyzed groups
      */
@@ -625,7 +625,7 @@ public class GroupManager {
                 // see if a group has been created yet for the key
                 DrawableGroup g = getGroupForKey(gk);
                
-                checkForPathGroupChange(gk);
+                updateCurrentPathGroup(gk);
                 addFileToGroup(g, gk, fileId);
             }
         }
@@ -635,7 +635,9 @@ public class GroupManager {
     }
     
     /**
-     * Checks if the given path is different from the last updated path group.
+     * Checks if the given path is different from the current path group.
+     * If so, updates the current path group as analyzed,  and sets current path 
+     * group to the given path.
      * 
      * The idea is that when the path of the files being processed changes, 
      * we have moved from one folder to the next, and the group for the 
@@ -647,40 +649,40 @@ public class GroupManager {
      * 
      * @param groupKey 
      */
-    private void checkForPathGroupChange(GroupKey<?> groupKey) {
+    synchronized private void updateCurrentPathGroup(GroupKey<?> groupKey) {
         try {
             if (groupKey.getAttribute() == DrawableAttribute.PATH) {
             
-                if (this.lastUpdatedPathGroup == null) {
-                    lastUpdatedPathGroup = groupKey;
+                if (this.currentPathGroup == null) {
+                    currentPathGroup = groupKey;
                 }
-                else if (groupKey.getValue().toString().equalsIgnoreCase(this.lastUpdatedPathGroup.getValue().toString()) == false) {
+                else if (groupKey.getValue().toString().equalsIgnoreCase(this.currentPathGroup.getValue().toString()) == false) {
                     // mark the last path group as analyzed
-                    getDrawableDB().markGroupAnalyzed(lastUpdatedPathGroup);
-                    popuplateIfAnalyzed(lastUpdatedPathGroup, null);
+                    getDrawableDB().markGroupAnalyzed(currentPathGroup);
+                    popuplateIfAnalyzed(currentPathGroup, null);
                     
-                    lastUpdatedPathGroup = groupKey;
+                    currentPathGroup = groupKey;
                 }
             }
         }
         catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error setting isAnalyzed status for group: %s", groupKey.getValue().toString()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error setting is_analyzed status for group: %s", groupKey.getValue().toString()), ex); //NON-NLS
         } 
     }
 
     /**
-     * Resets the last updated path group, after marking the last path group as analyzed.
+     * Resets current path group, after marking the current path group as analyzed.
      */
-    public void resetLastUpdatedPathGroup() {
+    synchronized public void resetCurrentPathGroup() {
         try {
-            if (lastUpdatedPathGroup != null) {
-                getDrawableDB().markGroupAnalyzed(lastUpdatedPathGroup);
-                popuplateIfAnalyzed(lastUpdatedPathGroup, null);
-                lastUpdatedPathGroup = null;
+            if (currentPathGroup != null) {
+                getDrawableDB().markGroupAnalyzed(currentPathGroup);
+                popuplateIfAnalyzed(currentPathGroup, null);
+                currentPathGroup = null;
             }
         }
         catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error resetting last path group: %s", lastUpdatedPathGroup.getValue().toString()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Error resetting last path group: %s", currentPathGroup.getValue().toString()), ex); //NON-NLS
         }
     }
     /**
