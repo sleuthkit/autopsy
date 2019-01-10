@@ -111,6 +111,7 @@ public class GroupManager {
      * Keeps track of the last path group
      *  - a change in path indicates the last path group is analyzed
      */
+    @GuardedBy("this") //NOPMD
     private GroupKey<?> lastUpdatedPathGroup = null;
     /**
      * list of all analyzed groups
