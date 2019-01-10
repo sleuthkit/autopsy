@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -688,18 +688,47 @@ class ExtractRegistry extends Extract {
 
                                     case "ProfileList": //NON-NLS
                                         try {
-
                                             String homeDir = value;
                                             String sid = artnode.getAttribute("sid"); //NON-NLS
                                             String username = artnode.getAttribute("username"); //NON-NLS
-                                            BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                                                    parentModuleName, username));
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
-                                                    parentModuleName, sid));
-                                            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                                                    parentModuleName, homeDir));
-
+                                            BlackboardArtifact bbart = null;
+                                            try {
+                                                //check if any of the existing artifacts match this username
+                                                ArrayList<BlackboardArtifact> existingArtifacts = currentCase.getSleuthkitCase().getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
+                                                for (BlackboardArtifact artifact : existingArtifacts) {
+                                                    if (artifact.getDataSource().getId() == regFile.getDataSourceObjectId()) {
+                                                        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
+                                                        if (attribute != null && attribute.getValueString().equals(username)) {
+                                                            bbart = artifact;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            } catch (TskCoreException ex) {
+                                                logger.log(Level.WARNING, "Error getting existing os account artifact", ex);
+                                            }
+                                            if (bbart == null) {
+                                                //create new artifact
+                                                bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
+                                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                                                        parentModuleName, username));
+                                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
+                                                        parentModuleName, sid));
+                                                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
+                                                        parentModuleName, homeDir));
+                                            } else {
+                                                //add attributes to existing artifact
+                                                BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
+                                                if (bbattr == null) {
+                                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
+                                                            parentModuleName, sid));
+                                                }
+                                                bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH));
+                                                if (bbattr == null) {
+                                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
+                                                            parentModuleName, homeDir));
+                                                }
+                                            }
                                             bbart.addAttributes(bbattributes);
                                             // index the artifact for keyword search
                                             this.indexArtifact(bbart);
@@ -759,7 +788,7 @@ class ExtractRegistry extends Extract {
             if (!usbBBartifacts.isEmpty()) {
                 IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, usbBBartifacts));
             }
-            if (!wifiBBartifacts.isEmpty()){
+            if (!wifiBBartifacts.isEmpty()) {
                 IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK, wifiBBartifacts));
             }
             return true;

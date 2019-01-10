@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -22,6 +22,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import com.sun.org.apache.bcel.internal.generic.L2D;
 import java.io.BufferedReader;
 
 import org.openide.util.NbBundle;
@@ -463,7 +464,20 @@ class ExtractIE extends Extract {
 
         // Keep a list of reported user accounts to avoid repeats
         Set<String> reportedUserAccounts = new HashSet<>();
-
+        //get existing account names
+        try {
+            ArrayList<BlackboardArtifact> existingArtifacts = currentCase.getSleuthkitCase().getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
+            for (BlackboardArtifact artifact: existingArtifacts){
+                if (artifact.getDataSource().getId() == origFile.getDataSourceObjectId()){
+                    BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
+                    if (attribute != null){
+                        reportedUserAccounts.add(attribute.getValueString());
+                    }
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to get existing os account user names", ex);
+        }
         while (fileScanner.hasNext()) {
             String line = fileScanner.nextLine();
             if (!line.startsWith("URL")) {   //NON-NLS
