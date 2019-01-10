@@ -37,8 +37,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
