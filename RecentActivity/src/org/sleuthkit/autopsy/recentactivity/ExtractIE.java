@@ -461,23 +461,6 @@ class ExtractIE extends Extract {
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return bbartifacts;
         }
-
-        // Keep a list of reported user accounts to avoid repeats
-        Set<String> reportedUserAccounts = new HashSet<>();
-        //get existing account names
-        try {
-            ArrayList<BlackboardArtifact> existingArtifacts = currentCase.getSleuthkitCase().getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-            for (BlackboardArtifact artifact: existingArtifacts){
-                if (artifact.getDataSource().getId() == origFile.getDataSourceObjectId()){
-                    BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
-                    if (attribute != null){
-                        reportedUserAccounts.add(attribute.getValueString());
-                    }
-                }
-            }
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Unable to get existing os account user names", ex);
-        }
         while (fileScanner.hasNext()) {
             String line = fileScanner.nextLine();
             if (!line.startsWith("URL")) {   //NON-NLS
@@ -584,18 +567,6 @@ class ExtractIE extends Extract {
                 // index the artifact for keyword search
                 this.indexArtifact(bbart);
                 bbartifacts.add(bbart);
-
-                if ((!user.isEmpty()) && (!reportedUserAccounts.contains(user))) {
-                    BlackboardArtifact osAttr = origFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                    osAttr.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                            NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName.noSpace"), user));
-
-                    // index the artifact for keyword search
-                    this.indexArtifact(osAttr);
-                    bbartifacts.add(osAttr);
-
-                    reportedUserAccounts.add(user);
-                }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex); //NON-NLS
             }

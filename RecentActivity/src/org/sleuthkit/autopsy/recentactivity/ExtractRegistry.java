@@ -697,8 +697,8 @@ class ExtractRegistry extends Extract {
                                                 ArrayList<BlackboardArtifact> existingArtifacts = currentCase.getSleuthkitCase().getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
                                                 for (BlackboardArtifact artifact : existingArtifacts) {
                                                     if (artifact.getDataSource().getId() == regFile.getDataSourceObjectId()) {
-                                                        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
-                                                        if (attribute != null && attribute.getValueString().equals(username)) {
+                                                        BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
+                                                        if (attribute != null && attribute.getValueString().equals(sid)) {
                                                             bbart = artifact;
                                                             break;
                                                         }
@@ -718,10 +718,11 @@ class ExtractRegistry extends Extract {
                                                         parentModuleName, homeDir));
                                             } else {
                                                 //add attributes to existing artifact
-                                                BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_ID));
+                                                BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
+                                                
                                                 if (bbattr == null) {
-                                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_ID,
-                                                            parentModuleName, sid));
+                                                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                                                            parentModuleName, username));
                                                 }
                                                 bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PATH));
                                                 if (bbattr == null) {
