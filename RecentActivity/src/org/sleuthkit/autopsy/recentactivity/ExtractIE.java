@@ -22,9 +22,7 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import com.sun.org.apache.bcel.internal.generic.L2D;
 import java.io.BufferedReader;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
