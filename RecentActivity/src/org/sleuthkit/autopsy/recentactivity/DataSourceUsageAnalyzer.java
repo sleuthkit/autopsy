@@ -32,6 +32,11 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Analyzes data sources using heuristics to determine which types of opperating
+ * systems the images may have been used by.
+ *
+ */
 @Messages({"DataSourceUsageAnalyzer.parentModuleName=Recent Activity"})
 public class DataSourceUsageAnalyzer extends Extract {
 
@@ -40,7 +45,7 @@ public class DataSourceUsageAnalyzer extends Extract {
 
     @Override
     void process(Content dataSource, IngestJobContext context) {
-        
+
         this.dataSource = dataSource;
         try {
             checkForWindowsVolume();
@@ -52,7 +57,8 @@ public class DataSourceUsageAnalyzer extends Extract {
 
     /**
      * Check if the data source contains files which would indicate a windows
-     * volume is present in it, and create an artifact for that volume if detected.
+     * volume is present in it, and create an artifact for that volume if
+     * detected.
      *
      * @throws TskCoreException
      */
