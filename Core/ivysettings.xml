@@ -7,4 +7,6 @@
         <ibiblio name="jitpack.io" root="https://jitpack.io" m2compatible="true" />  
     </chain>
   </resolvers>
+  <!-- For Tika dependencies -->
+  <property name="packaging.type" value="jar"/>
 </ivysettings>

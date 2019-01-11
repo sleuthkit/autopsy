@@ -15,18 +15,15 @@
     </configurations>
     <dependencies>
         <!-- Solr -->
-        <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="4.9.1"/>
         <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->
         
         <!-- Autopsy -->
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
-        <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.17"/>
+        <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.20"/>
 
-        <!-- metadata-extractor is required by Tika but it depends on version 2.6.2 which suffers
-        from an XMP library issue. -->
-        <dependency conf="autopsy->*" org="com.drewnoakes" name="metadata-extractor" rev="2.7.2" />
+        
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
         <dependency conf="autopsy->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>
         <dependency conf="autopsy->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
@@ -45,6 +42,10 @@
         <!-- Tika 1.14 seems to declare a (transitive?) dependency on cleartk-util 3.2.2, but the most recent
         version available is 2.0.0  Overriding the version worked-->
         <override  org="org.cleartk" module="cleartk-util" rev="2.0.0"/>
+        <override org="commons-io" module="commons-io" rev="2.3"/>
+        <override org="org.apache.httpcomponents" module="httpclient" rev="4.3.1"/>
+        <override org="org.apache.httpcomponents" module="httpcore" rev="4.3"/>
+        <override org="org.apache.httpcomponents" module="httpmime" rev="4.3.1"/>
        
     </dependencies>
 </ivy-module>
