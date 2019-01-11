@@ -50,6 +50,9 @@ import org.sleuthkit.datamodel.OSUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
 final class DataSourceSummaryPanel extends javax.swing.JPanel {
 
@@ -341,6 +344,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         private final Map<Long, Long> fileCountsMap;
         private final Map<Long, Long> artifactCountsMap;
         private final Map<Long, Long> tagCountsMap;
+        private final Map<Long, String> typesMap;
 
         /**
          * Create a new DataSourceTableModel for the current case.
@@ -354,7 +358,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
             fileCountsMap = getCountsOfFiles();
             artifactCountsMap = getCountsOfArtifacts();
             tagCountsMap = getCountsOfTags();
-
+            typesMap = getDataSourceTypes();
         }
 
         @Override
@@ -375,7 +379,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 case 0:
                     return currentDataSource.getName();
                 case 1:
-                    return "";
+                    return typesMap.get(currentDataSource.getId());
                 case 2:
                     //display 0 if no count is found
                     count = fileCountsMap.get(currentDataSource.getId());
@@ -392,6 +396,39 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                     break;
             }
             return null;
+        }
+
+        /**
+         * Get a map containing the TSK_DATA_SOURCE_USAGE description attributes
+         * associated with each data source in the current case.
+         *
+         * @return Collection which maps datasource id to a String which
+         *         displays a comma seperated list of values of data source
+         *         usage types expected to be in the datasource
+         */
+        private Map<Long, String> getDataSourceTypes() {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                List<BlackboardArtifact> listOfArtifacts = skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE);
+                Map<Long, String> typeMap = new HashMap<>();
+                for (BlackboardArtifact typeArtifact : listOfArtifacts) {
+                    BlackboardAttribute descriptionAttr = typeArtifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DESCRIPTION));
+                    if (typeArtifact.getDataSource() != null && descriptionAttr != null) {
+                        long dsId = typeArtifact.getDataSource().getId();
+                        String type = typeMap.get(typeArtifact.getDataSource().getId());
+                        if (type == null) {
+                            type = descriptionAttr.getValueString();
+                        } else {
+                            type = type + ", " + descriptionAttr.getValueString();
+                        }
+                        typeMap.put(dsId, type);
+                    }
+                }
+                return typeMap;
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
+                return Collections.emptyMap();
+            }
         }
 
         /**
