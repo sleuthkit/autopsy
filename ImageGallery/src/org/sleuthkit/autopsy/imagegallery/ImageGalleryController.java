@@ -698,7 +698,8 @@ public final class ImageGalleryController {
                     //grab files with supported mime-types
                     + MIMETYPE_CLAUSE //NON-NLS
                     //grab files with image or video mime-types even if we don't officially support them
-                    + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"; //NON-NLS
+                    + " OR mime_type LIKE 'video/%' OR mime_type LIKE 'image/%' )"  //NON-NLS
+                    + " ORDER BY parent_path ";
         }
 
         /**
