@@ -125,7 +125,7 @@ sub pluginmain {
 # Print sorted content to report file			
 					foreach my $u (sort {$a <=> $b} keys %files) {
 						my ($val,$data) = split(/:/,$files{$u},2);
-						::rptMsg("<PowerPoint name=\"".$val."\">".$data . "</PowerPoint);
+						::rptMsg("<PowerPoint name=\"".$val."\">".$data . "</PowerPoint>");
 					}
 				}
 				else {
