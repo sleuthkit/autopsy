@@ -235,6 +235,16 @@ public interface EamDb {
     List<CorrelationDataSource> getDataSources() throws EamDbException;
 
     /**
+     * Changes the name of a data source in the DB
+     * 
+     * @param eamDataSource  The data source
+     * @param newName        The new name
+     * 
+     * @throws EamDbException 
+     */
+    void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException;
+    
+    /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
      * Data Source first.
      *

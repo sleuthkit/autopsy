@@ -821,6 +821,47 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Changes the name of a data source in the DB
+     * 
+     * @param eamDataSource  The data source
+     * @param newName        The new name
+     * 
+     * @throws EamDbException 
+     */
+    @Override
+    public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
+        
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+
+        String sql = "UPDATE data_sources SET name = ? WHERE id = ?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, newName);
+            preparedStatement.setInt(2, eamDataSource.getID());
+            preparedStatement.executeUpdate();
+            
+            CorrelationDataSource updatedDataSource = new CorrelationDataSource(
+                    eamDataSource.getCaseID(),
+                    eamDataSource.getID(),
+                    eamDataSource.getDeviceID(),
+                    newName,
+                    eamDataSource.getDataSourceObjectID());
+            
+            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getDataSourceObjectID()), updatedDataSource);
+            dataSourceCacheById.put(getDataSourceByIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getID()), updatedDataSource);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error updating name of data source with ID " + eamDataSource.getDataSourceObjectID()
+                    + " to " + newName, ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }     
+    }    
+    
+    /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
      * Data Source first.
      *

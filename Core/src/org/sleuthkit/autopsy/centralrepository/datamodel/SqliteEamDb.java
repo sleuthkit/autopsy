@@ -433,6 +433,24 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
+    
+    /**
+     * Changes the name of a data source in the DB
+     * 
+     * @param eamDataSource  The data source
+     * @param newName        The new name
+     * 
+     * @throws EamDbException 
+     */
+    @Override
+    public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSourceName(eamDataSource, newName);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
 
     /**
      * Inserts new Artifact(s) into the database. Should add associated Case and

@@ -207,6 +207,7 @@ class AddArchiveTask implements Runnable {
                                 DataSource ds = (DataSource) c;
                                 String newName = Paths.get(archivePath).getFileName() + "/" + ds.getName();
                                 ds.setDisplayName(newName);
+                                currentCase.notifyDataSourceNameChanged(c, newName);
                             }
                         }
 

@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -34,6 +35,7 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -106,6 +108,9 @@ final class CaseEventListener implements PropertyChangeListener {
                 jobProcessingExecutor.submit(new CurrentCaseTask(dbManager, evt));
             }
             break;
+            case DATA_SOURCE_NAME_CHANGED: {
+                jobProcessingExecutor.submit(new DataSourceNameChangedTask(dbManager, evt));
+            }
         }
     }
 
@@ -488,5 +493,41 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
             }
         } // CURRENT_CASE
+    }
+    
+    private final class DataSourceNameChangedTask implements Runnable {
+
+        private final EamDb dbManager;
+        private final PropertyChangeEvent event;
+
+        private DataSourceNameChangedTask(EamDb db, PropertyChangeEvent evt) {
+            dbManager = db;
+            event = evt;
+        }
+
+        @Override
+        public void run() {
+            
+            final DataSourceNameChangedEvent dataSourceAddedEvent = (DataSourceNameChangedEvent) event;
+            Content dataSource = dataSourceAddedEvent.getDataSource();
+            String newName = (String) event.getNewValue();
+            
+            if (! StringUtils.isEmpty(newName)) {
+
+                if (!EamDb.isEnabled()) {
+                    return;
+                }
+
+                try {
+                    CorrelationCase correlationCase = dbManager.getCase(Case.getCurrentCaseThrows());
+                    CorrelationDataSource existingEamDataSource = dbManager.getDataSource(correlationCase, dataSource.getId());
+                    dbManager.updateDataSourceName(existingEamDataSource, newName);
+                } catch (EamDbException ex) {
+                    LOGGER.log(Level.SEVERE, "Error updating data source with ID " + dataSource.getId() + " to " + newName, ex); //NON-NLS
+                } catch (NoCurrentCaseException ex) {
+                    LOGGER.log(Level.SEVERE, "No open case", ex);
+                }
+            }
+        } // DATA_SOURCE_NAME_CHANGED
     }
 }
