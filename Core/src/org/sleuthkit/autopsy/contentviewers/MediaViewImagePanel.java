@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
@@ -29,11 +28,8 @@ import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
-import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.JFXPanel;
-import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
@@ -41,12 +37,14 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.transform.Transform;
+import javafx.scene.transform.Rotate;
+import javafx.scene.transform.Scale;
+import javafx.scene.transform.Translate;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import org.controlsfx.control.MaskerPane;
@@ -74,11 +72,19 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private JFXPanel fxPanel;
     private ImageView fxImageView;
-    private Pane pane;
+    private ScrollPane scrollPane;
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
     
-    private double zoomRatio = 1.0; // 100%
+    private double zoomRatio;
+    private double rotation; // Can be 0, 90, 180, and 270.
+    
+    private static final double[] ZOOM_STEPS = {
+        0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
+        1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10};
+    
+    private static final double MIN_ZOOM_RATIO = 0.0625; // 6.25%
+    private static final double MAX_ZOOM_RATIO = 10.0; // 1000%
 
     static {
         ImageIO.scanForPlugins();
@@ -110,18 +116,17 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
-                pane = new Pane(fxImageView); // centers and sizes imageview //DLG:
-                pane.getStyleClass().add("bg"); //NOI18N
+                scrollPane = new ScrollPane(fxImageView); // centers and sizes imageview
+                scrollPane.getStyleClass().add("bg"); //NOI18N
+                scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+                scrollPane.setHbarPolicy(ScrollBarPolicy.AS_NEEDED);
                 
                 fxPanel = new JFXPanel(); // bridge jfx-swing
-                Scene scene = new Scene(pane); //root of jfx tree
+                Scene scene = new Scene(scrollPane); //root of jfx tree
                 scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm()); //NOI18N
                 fxPanel.setScene(scene);
 
                 //bind size of image to that of scene, while keeping proportions
-                fxImageView.fitWidthProperty().bind(scene.widthProperty());
-                fxImageView.fitHeightProperty().bind(scene.heightProperty());
-                fxImageView.setPreserveRatio(true);
                 fxImageView.setSmooth(true);
                 fxImageView.setCache(true);
 
@@ -142,7 +147,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     public void reset() {
         Platform.runLater(() -> {
             fxImageView.setImage(null);
-            //DLG: borderpane.setsetCenter(null);
+            scrollPane.setContent(null);
+            scrollPane.setContent(fxImageView);
         });
     }
 
@@ -159,7 +165,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
         final VBox errorNode = new VBox(10, new Label(errorMessage), externalViewerButton);
         errorNode.setAlignment(Pos.CENTER);
-        //DLG: borderpane.setCenter(errorNode);
     }
 
     /**
@@ -172,7 +177,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         if (!fxInited) {
             return;
         }
-
+        
         Platform.runLater(() -> {
             if (readImageTask != null) {
                 readImageTask.cancel();
@@ -193,16 +198,17 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 try {
                     Image fxImage = readImageTask.get();
                     if (nonNull(fxImage)) {
-                        //we have non-null image show it
+                        // We have a non-null image, so let's show it.
                         fxImageView.setImage(fxImage);
-                        //DLG: borderpane.setCenter(fxImageView);
+                        resetView();
+                        scrollPane.setContent(fxImageView);
                     } else {
                         showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                 }
-                pane.setCursor(Cursor.DEFAULT);
+                scrollPane.setCursor(Cursor.DEFAULT);
             });
             readImageTask.setOnFailed(failed -> {
                 if (!Case.isCaseOpen()) {
@@ -223,14 +229,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                 }
 
-                pane.setCursor(Cursor.DEFAULT);
+                scrollPane.setCursor(Cursor.DEFAULT);
             });
 
             maskerPane.setProgressNode(progressBar);
             progressBar.progressProperty().bind(readImageTask.progressProperty());
             maskerPane.textProperty().bind(readImageTask.messageProperty());
-            //DLG: borderpane.setCenter(maskerPane);
-            pane.setCursor(Cursor.WAIT);
+            scrollPane.setContent(null);
+            scrollPane.setCursor(Cursor.WAIT);
             new Thread(readImageTask).start();
         });
     }
@@ -276,153 +282,277 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jToolBar1 = new javax.swing.JToolBar();
+        toolbar = new javax.swing.JToolBar();
+        rotationTextField = new javax.swing.JTextField();
         rotateLeftButton = new javax.swing.JButton();
         rotateRightButton = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JToolBar.Separator();
-        zoomInButton = new javax.swing.JButton();
+        zoomTextField = new javax.swing.JTextField();
         zoomOutButton = new javax.swing.JButton();
+        zoomInButton = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JToolBar.Separator();
+        zoomResetButton = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(0, 0, 0));
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
         setLayout(new javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS));
 
-        jToolBar1.setFloatable(false);
-        jToolBar1.setRollover(true);
-        jToolBar1.setMaximumSize(new java.awt.Dimension(84, 23));
-        jToolBar1.setName(""); // NOI18N
-        jToolBar1.setPreferredSize(new java.awt.Dimension(95, 23));
+        toolbar.setFloatable(false);
+        toolbar.setRollover(true);
+        toolbar.setMaximumSize(new java.awt.Dimension(32767, 23));
+        toolbar.setName(""); // NOI18N
 
+        rotationTextField.setEditable(false);
+        rotationTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        rotationTextField.setText(org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.rotationTextField.text")); // NOI18N
+        rotationTextField.setMaximumSize(new java.awt.Dimension(50, 2147483647));
+        rotationTextField.setMinimumSize(new java.awt.Dimension(50, 20));
+        rotationTextField.setPreferredSize(new java.awt.Dimension(50, 20));
+        toolbar.add(rotationTextField);
+
+        rotateLeftButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/rotate-left.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(rotateLeftButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.rotateLeftButton.text")); // NOI18N
+        rotateLeftButton.setToolTipText(org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.rotateLeftButton.toolTipText")); // NOI18N
         rotateLeftButton.setFocusable(false);
         rotateLeftButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        rotateLeftButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        rotateLeftButton.setMaximumSize(new java.awt.Dimension(24, 24));
+        rotateLeftButton.setMinimumSize(new java.awt.Dimension(24, 24));
+        rotateLeftButton.setPreferredSize(new java.awt.Dimension(24, 24));
         rotateLeftButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 rotateLeftButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(rotateLeftButton);
+        toolbar.add(rotateLeftButton);
 
+        rotateRightButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/rotate-right.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(rotateRightButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.rotateRightButton.text")); // NOI18N
         rotateRightButton.setFocusable(false);
         rotateRightButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        rotateRightButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        rotateRightButton.setMaximumSize(new java.awt.Dimension(24, 24));
+        rotateRightButton.setMinimumSize(new java.awt.Dimension(24, 24));
+        rotateRightButton.setPreferredSize(new java.awt.Dimension(24, 24));
         rotateRightButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 rotateRightButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(rotateRightButton);
+        toolbar.add(rotateRightButton);
 
         jSeparator1.setMaximumSize(new java.awt.Dimension(6, 20));
-        jToolBar1.add(jSeparator1);
+        toolbar.add(jSeparator1);
 
-        org.openide.awt.Mnemonics.setLocalizedText(zoomInButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.zoomInButton.text")); // NOI18N
-        zoomInButton.setFocusable(false);
-        zoomInButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        zoomInButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        zoomInButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                zoomInButtonActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(zoomInButton);
+        zoomTextField.setEditable(false);
+        zoomTextField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        zoomTextField.setText(org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.zoomTextField.text")); // NOI18N
+        zoomTextField.setMaximumSize(new java.awt.Dimension(50, 2147483647));
+        zoomTextField.setMinimumSize(new java.awt.Dimension(50, 20));
+        zoomTextField.setPreferredSize(new java.awt.Dimension(50, 20));
+        toolbar.add(zoomTextField);
 
+        zoomOutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/zoom-out.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(zoomOutButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.zoomOutButton.text")); // NOI18N
         zoomOutButton.setFocusable(false);
         zoomOutButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        zoomOutButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        zoomOutButton.setMaximumSize(new java.awt.Dimension(24, 24));
+        zoomOutButton.setMinimumSize(new java.awt.Dimension(24, 24));
+        zoomOutButton.setPreferredSize(new java.awt.Dimension(24, 24));
         zoomOutButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 zoomOutButtonActionPerformed(evt);
             }
         });
-        jToolBar1.add(zoomOutButton);
+        toolbar.add(zoomOutButton);
 
-        add(jToolBar1);
+        zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/contentviewers/images/zoom-in.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(zoomInButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.zoomInButton.text")); // NOI18N
+        zoomInButton.setFocusable(false);
+        zoomInButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        zoomInButton.setMaximumSize(new java.awt.Dimension(24, 24));
+        zoomInButton.setMinimumSize(new java.awt.Dimension(24, 24));
+        zoomInButton.setPreferredSize(new java.awt.Dimension(24, 24));
+        zoomInButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zoomInButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(zoomInButton);
+
+        jSeparator2.setMaximumSize(new java.awt.Dimension(6, 20));
+        toolbar.add(jSeparator2);
+
+        org.openide.awt.Mnemonics.setLocalizedText(zoomResetButton, org.openide.util.NbBundle.getMessage(MediaViewImagePanel.class, "MediaViewImagePanel.zoomResetButton.text")); // NOI18N
+        zoomResetButton.setFocusable(false);
+        zoomResetButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        zoomResetButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        zoomResetButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                zoomResetButtonActionPerformed(evt);
+            }
+        });
+        toolbar.add(zoomResetButton);
+
+        add(toolbar);
     }// </editor-fold>//GEN-END:initComponents
 
     private void rotateLeftButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateLeftButtonActionPerformed
-        fxImageView.setRotate(fxImageView.getRotate() - 90);
-        
-        test();
+        rotation = (rotation + 270) % 360;
+        updateView();
     }//GEN-LAST:event_rotateLeftButtonActionPerformed
 
     private void rotateRightButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateRightButtonActionPerformed
-        fxImageView.setRotate(fxImageView.getRotate() + 90);
-        
-        test();
+        rotation = (rotation + 90) % 360;
+        updateView();
     }//GEN-LAST:event_rotateRightButtonActionPerformed
 
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
-        if (zoomRatio >= 1.0) {
-            zoomRatio += 1.0;
-            if (zoomRatio == 8.0) {
-                zoomInButton.setEnabled(false);
+        for (int i=0; i < ZOOM_STEPS.length; i++) {
+            if (zoomRatio < ZOOM_STEPS[i]) {
+                zoomRatio = ZOOM_STEPS[i];
+                break;
             }
-        } else {
-            zoomRatio *= 2;
         }
-        zoomOutButton.setEnabled(true);
-        
-        //double x = 0;
-        //double y = 0;
-        //double width = 0;
-        //double height = 0;
-        //fxImageView.setViewport(new Rectangle2D(x, y, width, height));
-        
-        test();
-        
-        fxImageView.setScaleX(zoomRatio);
-        fxImageView.setScaleY(zoomRatio);
+        updateView();
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
-        if (zoomRatio <= 1.0) {
-            zoomRatio /= 2;
-            if (zoomRatio == 0.125) {
-                zoomOutButton.setEnabled(false);
+        for (int i=ZOOM_STEPS.length-1; i >= 0; i--) {
+            if (zoomRatio > ZOOM_STEPS[i]) {
+                zoomRatio = ZOOM_STEPS[i];
+                break;
             }
-        } else {
-            zoomRatio -= 1.0;
         }
-        zoomInButton.setEnabled(true);
-        
-        test();
-        
-        //double x = 0;
-        //double y = 0;
-        //double width = 0;
-        //double height = 0;
-        //fxImageView.setViewport(new Rectangle2D(x, y, width, height));
-        fxImageView.setScaleX(zoomRatio);
-        fxImageView.setScaleY(zoomRatio);
+        updateView();
     }//GEN-LAST:event_zoomOutButtonActionPerformed
+
+    private void zoomResetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomResetButtonActionPerformed
+        resetView();
+    }//GEN-LAST:event_zoomResetButtonActionPerformed
+
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        updateView();
+    }//GEN-LAST:event_formComponentResized
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToolBar.Separator jSeparator1;
-    private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JToolBar.Separator jSeparator2;
     private javax.swing.JButton rotateLeftButton;
     private javax.swing.JButton rotateRightButton;
+    private javax.swing.JTextField rotationTextField;
+    private javax.swing.JToolBar toolbar;
     private javax.swing.JButton zoomInButton;
     private javax.swing.JButton zoomOutButton;
+    private javax.swing.JButton zoomResetButton;
+    private javax.swing.JTextField zoomTextField;
     // End of variables declaration//GEN-END:variables
+    
+    /**
+     * Reset the zoom and rotation values to their defaults. The zoom level gets
+     * defaulted to the current size of the panel. The rotation will be set to
+     * zero.
+     */
+    private void resetView() {
+        Image image = fxImageView.getImage();
+        if (image == null) {
+            return;
+        }
+        
+        double imageWidth = image.getWidth();
+        double imageHeight = image.getHeight();
+        double scrollPaneWidth = fxPanel.getWidth();
+        double scrollPaneHeight = fxPanel.getHeight();
+        double zoomRatioWidth = (scrollPaneWidth) / (imageWidth + 1);
+        double zoomRatioHeight = (scrollPaneHeight) / (imageHeight + 1);
+        
+        // Use the smallest ratio size to fit the entire image in the view area.
+        zoomRatio = zoomRatioWidth < zoomRatioHeight ? zoomRatioWidth : zoomRatioHeight;
+        
+        rotation = 0;
+        
+        scrollPane.setHvalue(0);
+        scrollPane.setVvalue(0);
+        
+        updateView();
+    }
+    
+    /**
+     * Update the image to use the current zoom and rotation values.
+     */
+    private void updateView() {
+        Image image = fxImageView.getImage();
+        if (image == null) {
+            return;
+        }
+        
+        double imageWidth = image.getWidth();
+        double imageHeight = image.getHeight();
+        double adjustedImageWidth = imageWidth * zoomRatio;
+        double adjustedImageHeight = imageHeight * zoomRatio;
+        double viewportWidth;
+        double viewportHeight;
+        double centerOffsetX = (fxPanel.getWidth() / 2) - (imageWidth / 2);
+        double centerOffsetY = (fxPanel.getHeight() / 2) - (imageHeight / 2);
+        double leftOffsetX;
+        double topOffsetY;
+        
+        // Set viewport size and translation offsets.
+        if ((rotation % 180) == 0) {
+            // Rotation is 0 or 180.
+            viewportWidth = adjustedImageWidth;
+            viewportHeight = adjustedImageHeight;
+            leftOffsetX = (adjustedImageWidth - imageWidth) / 2;
+            topOffsetY = (adjustedImageHeight - imageHeight) / 2;
+        } else {
+            // Rotation is 90 or 270.
+            viewportWidth = adjustedImageHeight;
+            viewportHeight = adjustedImageWidth;
+            leftOffsetX = (adjustedImageHeight - imageWidth) / 2;
+            topOffsetY = (adjustedImageWidth - imageHeight) / 2;
+        }
+            
+        // Work around bug that truncates image if dimensions are too small.
+        if (viewportWidth < imageWidth) {
+            viewportWidth = imageWidth;
+        }
+        if (viewportHeight < imageHeight) {
+            viewportHeight = imageHeight;
+        }
+        
+        // Update the viewport size.
+        fxImageView.setViewport(new Rectangle2D(
+                0, 0, viewportWidth, viewportHeight));
 
-    //DLG: Remove this!
-    private void test() {
-        double layoutX = fxImageView.getLayoutX();
-        double layoutY = fxImageView.getLayoutY();
+        // Step 1: Zoom
+        Scale scale = new Scale();
+        scale.setX(zoomRatio);
+        scale.setY(zoomRatio);
+        scale.setPivotX(imageWidth / 2);
+        scale.setPivotY(imageHeight / 2);
+
+        // Step 2: Rotate
+        Rotate rotate = new Rotate();
+        rotate.setPivotX(imageWidth / 2);
+        rotate.setPivotY(imageHeight / 2);
+        rotate.setAngle(rotation);
+
+        // Step 3: Position
+        Translate translate = new Translate();
+        translate.setX(viewportWidth > fxPanel.getWidth() ? leftOffsetX : centerOffsetX);
+        translate.setY(viewportHeight > fxPanel.getHeight() ? topOffsetY : centerOffsetY);
+
+        fxImageView.getTransforms().clear();
+        fxImageView.getTransforms().add(translate);
+        fxImageView.getTransforms().add(rotate);
+        fxImageView.getTransforms().add(scale);
         
-        Bounds layoutBounds = fxImageView.getLayoutBounds();
-        
-        DoubleProperty scaleXProperty = fxImageView.scaleXProperty();
-        DoubleProperty scaleYProperty = fxImageView.scaleXProperty();
-        
-        ObservableList<Transform> transforms = fxImageView.getTransforms();
-        
-        double translateX = fxImageView.getTranslateX();
-        double translateY = fxImageView.getTranslateY();
-        
-        System.out.println();
+        // Update all image controls to reflect the current values.
+        zoomOutButton.setEnabled(zoomRatio > MIN_ZOOM_RATIO);
+        zoomInButton.setEnabled(zoomRatio < MAX_ZOOM_RATIO);
+        rotationTextField.setText((int) rotation + "°");
+        zoomTextField.setText((Math.round(zoomRatio * 100.0)) + "%");
     }
 }
