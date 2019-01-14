@@ -444,9 +444,6 @@ final class CaseEventListener implements PropertyChangeListener {
 
             try {
                 CorrelationCase correlationCase = dbManager.getCase(openCase);
-                if (null == correlationCase) {
-                    correlationCase = dbManager.newCase(openCase);
-                }
                 if (null == dbManager.getDataSource(correlationCase, newDataSource.getId())) {
                     CorrelationDataSource.fromTSKDataSource(correlationCase, newDataSource);
                 }

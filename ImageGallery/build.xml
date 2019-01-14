@@ -15,11 +15,4 @@
         out-of-date/unneeded stuff in the installer-->
         <delete dir="${ext.dir}"/>
     </target>
-    
-    <target name="get-thirdparty-jars" description="get third-party jar dependencies"> 
-        <mkdir dir="${ext.dir}"/>
-        <copy file="${thirdparty.dir}/sqlite-jdbc/sqlite-jdbc-3.7.8-SNAPSHOT.jar" todir="${ext.dir}" />
-    </target>
- 
-    <target name="init" depends="get-thirdparty-jars,harness.init" />
 </project>

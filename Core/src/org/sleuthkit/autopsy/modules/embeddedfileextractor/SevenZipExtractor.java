@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -247,10 +247,7 @@ class SevenZipExtractor {
     private void flagRootArchiveAsZipBomb(Archive rootArchive, AbstractFile archiveFile, String details, String escapedFilePath) {
         rootArchive.flagAsZipBomb();
         logger.log(Level.INFO, details);
-        String msg = NbBundle.getMessage(SevenZipExtractor.class,
-                "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnMsg", archiveFile.getName(), escapedFilePath);//NON-NLS
         try {
-
             Collection<BlackboardAttribute> attributes = Arrays.asList(
                     new BlackboardAttribute(
                             TSK_SET_NAME, MODULE_NAME,
@@ -261,8 +258,9 @@ class SevenZipExtractor {
                     new BlackboardAttribute(
                             TSK_COMMENT, MODULE_NAME,
                             details));
+
             if (!blackboard.artifactExists(archiveFile, TSK_INTERESTING_FILE_HIT, attributes)) {
-                BlackboardArtifact artifact = archiveFile.newArtifact(TSK_INTERESTING_FILE_HIT);
+                BlackboardArtifact artifact = rootArchive.getArchiveFile().newArtifact(TSK_INTERESTING_FILE_HIT);
                 artifact.addAttributes(attributes);
                 try {
                     /*
@@ -271,6 +269,10 @@ class SevenZipExtractor {
                      * new artifact
                      */
                     blackboard.postArtifact(artifact, MODULE_NAME);
+
+                    String msg = NbBundle.getMessage(SevenZipExtractor.class,
+                            "EmbeddedFileExtractorIngestModule.ArchiveExtractor.isZipBombCheck.warnMsg", archiveFile.getName(), escapedFilePath);//NON-NLS
+
                     services.postMessage(IngestMessage.createWarningMessage(MODULE_NAME, msg, details));
 
                 } catch (Blackboard.BlackboardException ex) {

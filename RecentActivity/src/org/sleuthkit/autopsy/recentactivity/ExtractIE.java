@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -530,6 +530,7 @@ class ExtractIE extends Extract {
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return bbartifacts;
         }
+
     }
 
     private Optional<URLVisit> parseLine(AbstractFile origFile, String line) {
@@ -581,22 +582,6 @@ class ExtractIE extends Extract {
         return Optional.of(new URLVisit(user, realurl, domain, ftime));
     }
 
-    @Immutable
-    private static class URLVisit {
-
-        private final String user;
-        private final String url;
-        private final String domain;
-        private final Long time;
-
-        URLVisit(String user, String url, String domain, Long ftime) {
-            this.user = user;
-            this.url = url;
-            this.domain = domain;
-            this.time = ftime;
-        }
-    }
-
     /**
      *
      * Determine if the URL should be ignored.
@@ -611,5 +596,22 @@ class ExtractIE extends Extract {
          */
         return StringUtils.isBlank(url)
                || url.toLowerCase().startsWith(RESOURCE_URL_PREFIX);
+    }
+
+    @Immutable
+    private static class URLVisit {
+
+        private final String user;
+        private final String url;
+        private final String domain;
+        private final Long time;
+
+        URLVisit(String user, String url, String domain, Long ftime) {
+            this.user = user;
+            this.url = url;
+            this.domain = domain;
+            this.time = ftime;
+        }
+
     }
 }

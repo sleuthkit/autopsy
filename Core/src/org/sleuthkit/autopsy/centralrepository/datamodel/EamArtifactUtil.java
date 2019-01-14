@@ -200,9 +200,6 @@ public class EamArtifactUtil {
 
             // make an instance for the BB source file
             CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-            if (null == correlationCase) {
-                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
-            }
             return new CorrelationAttributeInstance(
                     correlationType,
                     value,
@@ -322,9 +319,6 @@ public class EamArtifactUtil {
             CorrelationAttributeInstance.Type filesType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
 
             CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-            if (null == correlationCase) {
-                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
-            }
             return new CorrelationAttributeInstance(
                     filesType,
                     af.getMd5Hash(),
