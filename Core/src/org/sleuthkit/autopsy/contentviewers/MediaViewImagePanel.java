@@ -116,7 +116,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
-                scrollPane = new ScrollPane(fxImageView); // centers and sizes imageview
+                scrollPane = new ScrollPane(fxImageView); // scrolls and sizes imageview
                 scrollPane.getStyleClass().add("bg"); //NOI18N
                 scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
                 scrollPane.setHbarPolicy(ScrollBarPolicy.AS_NEEDED);
@@ -177,7 +177,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         if (!fxInited) {
             return;
         }
-        
+
         Platform.runLater(() -> {
             if (readImageTask != null) {
                 readImageTask.cancel();
@@ -235,7 +235,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             maskerPane.setProgressNode(progressBar);
             progressBar.progressProperty().bind(readImageTask.progressProperty());
             maskerPane.textProperty().bind(readImageTask.messageProperty());
-            scrollPane.setContent(null);
+            scrollPane.setContent(null); // Prevent content display issues.
             scrollPane.setCursor(Cursor.WAIT);
             new Thread(readImageTask).start();
         });
@@ -410,6 +410,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }//GEN-LAST:event_rotateRightButtonActionPerformed
 
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
+        // Find the next zoom step.
         for (int i=0; i < ZOOM_STEPS.length; i++) {
             if (zoomRatio < ZOOM_STEPS[i]) {
                 zoomRatio = ZOOM_STEPS[i];
@@ -420,6 +421,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
+        // Find the next zoom step.
         for (int i=ZOOM_STEPS.length-1; i >= 0; i--) {
             if (zoomRatio > ZOOM_STEPS[i]) {
                 zoomRatio = ZOOM_STEPS[i];
@@ -465,8 +467,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         double imageHeight = image.getHeight();
         double scrollPaneWidth = fxPanel.getWidth();
         double scrollPaneHeight = fxPanel.getHeight();
-        double zoomRatioWidth = (scrollPaneWidth) / (imageWidth + 1);
-        double zoomRatioHeight = (scrollPaneHeight) / (imageHeight + 1);
+        double zoomRatioWidth = scrollPaneWidth / imageWidth;
+        double zoomRatioHeight = scrollPaneHeight / imageHeight;
         
         // Use the smallest ratio size to fit the entire image in the view area.
         zoomRatio = zoomRatioWidth < zoomRatioHeight ? zoomRatioWidth : zoomRatioHeight;
@@ -544,10 +546,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         translate.setX(viewportWidth > fxPanel.getWidth() ? leftOffsetX : centerOffsetX);
         translate.setY(viewportHeight > fxPanel.getHeight() ? topOffsetY : centerOffsetY);
 
+        // Add the transforms in reverse order of intended execution.
+        // Note: They MUST be added in this order to ensure translate is
+        // executed last.
         fxImageView.getTransforms().clear();
-        fxImageView.getTransforms().add(translate);
-        fxImageView.getTransforms().add(rotate);
-        fxImageView.getTransforms().add(scale);
+        fxImageView.getTransforms().addAll(translate, rotate, scale);
         
         // Update all image controls to reflect the current values.
         zoomOutButton.setEnabled(zoomRatio > MIN_ZOOM_RATIO);
