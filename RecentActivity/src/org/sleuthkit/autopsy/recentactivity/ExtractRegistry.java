@@ -863,10 +863,7 @@ class ExtractRegistry extends Extract {
             Map<String, UserInfo> userInfoMap = new HashMap<>();
             //load all the user info which was read into a map
             for (UserInfo userInfo : userSet) {
-                String userIdWithoutRID = fullUserIds.get(userInfo.getUserId());
-                if (userIdWithoutRID == null){
-                    userIdWithoutRID = "";
-                }
+                String userIdWithoutRID = fullUserIds.get(userInfo.getUserId()) == null ? "" : fullUserIds.get(userInfo.getUserId());
                 String fullUserId = userIdWithoutRID + "-" + userInfo.getUserId();
                 userInfoMap.put(fullUserId.trim(), userInfo);
             }
