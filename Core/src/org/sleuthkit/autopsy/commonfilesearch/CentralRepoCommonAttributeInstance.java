@@ -88,6 +88,16 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                         return null;
                     }
 
+                    Long fileId = currentAttribute.getFileObjectId();
+                    if (fileId != null && fileId != 0) {
+                        AbstractFile file = tskDb.getAbstractFileById(fileId);
+                        if (file == null) {
+                            LOGGER.log(Level.WARNING, String.format("Failed to find file with id %s in current case. Will attempt to find file based on path.", fileId));
+                        } else {
+                            return file;
+                        }
+                    }
+
                     File fileFromPath = new File(currentFullPath);
                     String fileName = fileFromPath.getName();
 
