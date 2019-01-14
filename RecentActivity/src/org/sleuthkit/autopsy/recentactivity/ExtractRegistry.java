@@ -847,13 +847,13 @@ class ExtractRegistry extends Extract {
             String previousLine = null;
             String line = bufferedReader.readLine();
             Set<UserInfo> userSet = new HashSet<>();
-            String userIdPrefix = "";
+            Map<String, String> fullUserIds = new HashMap<>();
             while (line != null) {
                 if (line.contains(SECTION_DIVIDER) && previousLine != null) {
                     if (previousLine.contains(userInfoSection)) {
                         readUsers(bufferedReader, userSet);
                     } else if (previousLine.contains(groupMembershipSection)) {
-                        userIdPrefix = readUserIdPrefix(bufferedReader);
+                        fullUserIds = readFullUserIds(bufferedReader);
                     }
                 }
                 previousLine = line;
@@ -863,7 +863,11 @@ class ExtractRegistry extends Extract {
             Map<String, UserInfo> userInfoMap = new HashMap<>();
             //load all the user info which was read into a map
             for (UserInfo userInfo : userSet) {
-                String fullUserId = userIdPrefix + "-" + userInfo.getUserId();
+                String userIdWithoutRID = fullUserIds.get(userInfo.getUserId());
+                if (userIdWithoutRID == null){
+                    userIdWithoutRID = "";
+                }
+                String fullUserId = userIdWithoutRID + "-" + userInfo.getUserId();
                 userInfoMap.put(fullUserId.trim(), userInfo);
             }
             //get all existing OS account artifacts
@@ -974,26 +978,28 @@ class ExtractRegistry extends Extract {
     }
 
     /**
-     * Read the common part of the security identifier for user accounts.
+     * Read the Domain or local computer identifier portion of the SIDs and map them to their RIDs
      *
      * @param bufferedReader a buffered reader for the file which contains the
      *                       Group Membership Information
      *
-     * @return the common part of the SID for user accounts
+     * @return Map<String, String> mapping RIDs to the remainder of their SID
      *
      * @throws IOException
      */
-    private String readUserIdPrefix(BufferedReader bufferedReader) throws IOException {
+    private  Map<String, String> readFullUserIds(BufferedReader bufferedReader) throws IOException {
         String userPrefixStart = "S-1-5-21";
+         Map<String, String> fullUserIds = new HashMap<>();
         String line = bufferedReader.readLine();
         while (line != null && !line.contains(SECTION_DIVIDER)) {
             if (line.contains(userPrefixStart)) {
-                //return string minus the numbers after the last dash 
-                return line.substring(0, line.lastIndexOf('-')).trim();
+                //Map the RIDs to the remainder of the SIDs
+                //this may not map correctly if the same RID exists for multiple Domain or local computer identifiers 
+                fullUserIds.put(line.substring(line.lastIndexOf('-')+1).trim(),line.substring(0, line.lastIndexOf('-')).trim());
             }
             line = bufferedReader.readLine();
         }
-        return ""; //no prefix deteremined return empty string
+        return fullUserIds; 
     }
 
     @Override
