@@ -140,12 +140,13 @@ sub pluginmain {
 			#::rptMsg("Could not access ".$key_path);
 			#::logMsg("Could not access ".$key_path);
 		}
+		::rptMsg("</artifacts>");
 	}
 	else {
 		#::logMsg("MSOffice version not found.");
 		#::rptMsg("MSOffice version not found.");
 	}
-::rptMsg("</artifacts></office>");
+::rptMsg("</office>");
 }
 	
 1;
