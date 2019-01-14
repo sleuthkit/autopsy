@@ -108,6 +108,12 @@ public class GroupManager {
     private final ImageGalleryController controller;
 
     /**
+     * Keeps track of the current path group
+     *  - a change in path indicates the current path group is analyzed
+     */
+    @GuardedBy("this") //NOPMD
+    private GroupKey<?> currentPathGroup = null;
+    /**
      * list of all analyzed groups
      */
     @GuardedBy("this") //NOPMD
@@ -238,7 +244,7 @@ public class GroupManager {
         setGroupBy(DrawableAttribute.PATH);
         setSortOrder(SortOrder.ASCENDING);
         setDataSource(null);
-
+        
         unSeenGroups.forEach(controller.getCategoryManager()::unregisterListener);
         unSeenGroups.clear();
         analyzedGroups.forEach(controller.getCategoryManager()::unregisterListener);
@@ -618,6 +624,8 @@ public class GroupManager {
             for (GroupKey<?> gk : groupsForFile) {
                 // see if a group has been created yet for the key
                 DrawableGroup g = getGroupForKey(gk);
+               
+                updateCurrentPathGroup(gk);
                 addFileToGroup(g, gk, fileId);
             }
         }
@@ -625,7 +633,58 @@ public class GroupManager {
         //we fire this event for all files so that the category counts get updated during initial db population
         controller.getCategoryManager().fireChange(updatedFileIDs, null);
     }
+    
+    /**
+     * Checks if the given path is different from the current path group.
+     * If so, updates the current path group as analyzed,  and sets current path 
+     * group to the given path.
+     * 
+     * The idea is that when the path of the files being processed changes, 
+     * we have moved from one folder to the next, and the group for the 
+     * previous PATH can be considered as analyzed and can be displayed.
+     * 
+     * NOTE: this a close approximation for when all files in a folder have been processed, 
+     * but there's some room for error - files may go down the ingest pipleline  
+     * out of order or the events may not always arrive in the same order
+     * 
+     * @param groupKey 
+     */
+    synchronized private void updateCurrentPathGroup(GroupKey<?> groupKey) {
+        try {
+            if (groupKey.getAttribute() == DrawableAttribute.PATH) {
+            
+                if (this.currentPathGroup == null) {
+                    currentPathGroup = groupKey;
+                }
+                else if (groupKey.getValue().toString().equalsIgnoreCase(this.currentPathGroup.getValue().toString()) == false) {
+                    // mark the last path group as analyzed
+                    getDrawableDB().markGroupAnalyzed(currentPathGroup);
+                    popuplateIfAnalyzed(currentPathGroup, null);
+                    
+                    currentPathGroup = groupKey;
+                }
+            }
+        }
+        catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Error setting is_analyzed status for group: %s", groupKey.getValue().toString()), ex); //NON-NLS
+        } 
+    }
 
+    /**
+     * Resets current path group, after marking the current path group as analyzed.
+     */
+    synchronized public void resetCurrentPathGroup() {
+        try {
+            if (currentPathGroup != null) {
+                getDrawableDB().markGroupAnalyzed(currentPathGroup);
+                popuplateIfAnalyzed(currentPathGroup, null);
+                currentPathGroup = null;
+            }
+        }
+        catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Error resetting last path group: %s", currentPathGroup.getValue().toString()), ex); //NON-NLS
+        }
+    }
     /**
      * If the group is analyzed (or other criteria based on grouping) and should
      * be shown to the user, then add it to the appropriate data structures so
