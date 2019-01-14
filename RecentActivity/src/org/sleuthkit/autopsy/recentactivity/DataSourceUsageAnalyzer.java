@@ -33,14 +33,14 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Analyzes data sources using heuristics to determine which types of opperating
+ * Analyzes data sources using heuristics to determine which types of operating
  * systems the images may have been used by.
  *
  */
 @Messages({"DataSourceUsageAnalyzer.parentModuleName=Recent Activity"})
 public class DataSourceUsageAnalyzer extends Extract {
 
-    private static final Logger logger = Logger.getLogger(Firefox.class.getName());
+    private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
     private Content dataSource;
 
     @Override

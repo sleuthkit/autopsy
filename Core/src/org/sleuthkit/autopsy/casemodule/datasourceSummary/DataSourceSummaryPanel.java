@@ -95,7 +95,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 updateIngestJobs(selectedDataSource);
                 filesTableModel = new FilesTableModel(selectedDataSource);
                 fileCountsTable.setModel(filesTableModel);
-                opperatingSystemValueLabel.setText(getOSName(selectedDataSource));
+                operatingSystemValueLabel.setText(getOSName(selectedDataSource));
                 this.repaint();
             }
         });
@@ -107,15 +107,15 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
      *
      * @param selectedDataSource the datasource to get the OS information for
      *
-     * @return the name of the opperating system on the specified datasource,
-     *         empty string if no opperating system info found
+     * @return the name of the operating system on the specified datasource,
+     *         empty string if no operating system info found
      */
     private String getOSName(DataSource selectedDataSource) {
         String osName = "";
         if (selectedDataSource != null) {
             for (OSInfo osInfo : osInfoList) {
                 try {
-                    //assumes only one Opperating System per datasource
+                    //assumes only one Operating System per datasource
                     //get the datasource id from the OSInfo's first artifact if it has artifacts
                     if (!osInfo.getArtifacts().isEmpty() && osInfo.getArtifacts().get(0).getDataSource().getId() == selectedDataSource.getId()) {
                         osName = osInfo.getOSName();
@@ -170,8 +170,8 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         ingestJobsTable = new javax.swing.JTable();
         fileCountsScrollPane = new javax.swing.JScrollPane();
         fileCountsTable = new javax.swing.JTable();
-        opperatingSystemLabel = new javax.swing.JLabel();
-        opperatingSystemValueLabel = new javax.swing.JLabel();
+        operatingSystemLabel = new javax.swing.JLabel();
+        operatingSystemValueLabel = new javax.swing.JLabel();
         fileCountsLabel = new javax.swing.JLabel();
         ingestJobsLabel = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
@@ -188,7 +188,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         fileCountsTable.setModel(filesTableModel);
         fileCountsScrollPane.setViewportView(fileCountsTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(opperatingSystemLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.opperatingSystemLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(operatingSystemLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.operatingSystemLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(fileCountsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.fileCountsLabel.text")); // NOI18N
 
@@ -227,9 +227,9 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                             .addComponent(ingestJobsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(ingestJobsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 474, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(opperatingSystemLabel)
+                                .addComponent(operatingSystemLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(opperatingSystemValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
 
@@ -252,8 +252,8 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                     .addComponent(ingestJobsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(opperatingSystemLabel, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(opperatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(operatingSystemLabel, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(10, 10, 10)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(closeButton)
@@ -323,8 +323,8 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane ingestJobsScrollPane;
     private javax.swing.JTable ingestJobsTable;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JLabel opperatingSystemLabel;
-    private javax.swing.JLabel opperatingSystemValueLabel;
+    private javax.swing.JLabel operatingSystemLabel;
+    private javax.swing.JLabel operatingSystemValueLabel;
     // End of variables declaration//GEN-END:variables
 
     /**
