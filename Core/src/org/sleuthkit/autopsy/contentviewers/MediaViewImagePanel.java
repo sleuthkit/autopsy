@@ -456,6 +456,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * Reset the zoom and rotation values to their defaults. The zoom level gets
      * defaulted to the current size of the panel. The rotation will be set to
      * zero.
+     * 
+     * Note: This method will make a call to 'updateView()' after the values
+     * have been reset.
      */
     private void resetView() {
         Image image = fxImageView.getImage();
@@ -490,16 +493,37 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             return;
         }
         
+        // Image dimensions
         double imageWidth = image.getWidth();
         double imageHeight = image.getHeight();
+        
+        // Image dimensions with zooming applied
         double adjustedImageWidth = imageWidth * zoomRatio;
         double adjustedImageHeight = imageHeight * zoomRatio;
+        
+        // ImageView viewport dimensions
         double viewportWidth;
         double viewportHeight;
-        double centerOffsetX = (fxPanel.getWidth() / 2) - (imageWidth / 2);
-        double centerOffsetY = (fxPanel.getHeight() / 2) - (imageHeight / 2);
+        
+        // Panel dimensions
+        double panelWidth = fxPanel.getWidth();
+        double panelHeight = fxPanel.getHeight();
+        
+        // Coordinates to center the image on the panel
+        double centerOffsetX = (panelWidth / 2) - (imageWidth / 2);
+        double centerOffsetY = (panelHeight / 2) - (imageHeight / 2);
+        
+        // Coordinates to keep the image inside the left/top boundaries
         double leftOffsetX;
         double topOffsetY;
+        
+        // Scroll bar positions
+        double scrollX = scrollPane.getHvalue();
+        double scrollY = scrollPane.getVvalue();
+        
+        // Scroll bar position boundaries (work-around for viewport size bug)
+        double maxScrollX;
+        double maxScrollY;
         
         // Set viewport size and translation offsets.
         if ((rotation % 180) == 0) {
@@ -508,20 +532,30 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             viewportHeight = adjustedImageHeight;
             leftOffsetX = (adjustedImageWidth - imageWidth) / 2;
             topOffsetY = (adjustedImageHeight - imageHeight) / 2;
+            maxScrollX = (adjustedImageWidth - panelWidth) / (imageWidth - panelWidth);
+            maxScrollY = (adjustedImageHeight - panelHeight) / (imageHeight - panelHeight);
         } else {
             // Rotation is 90 or 270.
             viewportWidth = adjustedImageHeight;
             viewportHeight = adjustedImageWidth;
             leftOffsetX = (adjustedImageHeight - imageWidth) / 2;
             topOffsetY = (adjustedImageWidth - imageHeight) / 2;
+            maxScrollX = (adjustedImageHeight - panelWidth) / (imageWidth - panelWidth);
+            maxScrollY = (adjustedImageWidth - panelHeight) / (imageHeight - panelHeight);
         }
             
         // Work around bug that truncates image if dimensions are too small.
         if (viewportWidth < imageWidth) {
             viewportWidth = imageWidth;
+            if (scrollX > maxScrollX) {
+                scrollX = maxScrollX;
+            }
         }
         if (viewportHeight < imageHeight) {
             viewportHeight = imageHeight;
+            if (scrollY > maxScrollY) {
+                scrollY = maxScrollY;
+            }
         }
         
         // Update the viewport size.
@@ -551,6 +585,14 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         // executed last.
         fxImageView.getTransforms().clear();
         fxImageView.getTransforms().addAll(translate, rotate, scale);
+        
+        // Adjust scroll bar positions for view changes.
+        if (viewportWidth > fxPanel.getWidth()) {
+            scrollPane.setHvalue(scrollX);
+        }
+        if (viewportHeight > fxPanel.getHeight()) {
+            scrollPane.setVvalue(scrollY);
+        }
         
         // Update all image controls to reflect the current values.
         zoomOutButton.setEnabled(zoomRatio > MIN_ZOOM_RATIO);
