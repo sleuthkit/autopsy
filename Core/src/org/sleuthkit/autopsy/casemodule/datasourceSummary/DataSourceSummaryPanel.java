@@ -118,11 +118,11 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                     //assumes only one Operating System per datasource
                     //get the datasource id from the OSInfo's first artifact if it has artifacts
                     if (!osInfo.getArtifacts().isEmpty() && osInfo.getArtifacts().get(0).getDataSource().getId() == selectedDataSource.getId()) {
-                        osName = osInfo.getOSName();
-                        //if this OSInfo object has a name use it otherwise keep checking OSInfo objects
-                        if (!osName.isEmpty()) {
-                            break;
+                        if (!osName.isEmpty()){
+                            osName += ", ";
                         }
+                        osName += osInfo.getOSName();
+                        //if this OSInfo object has a name use it otherwise keep checking OSInfo objects
                     }
                 } catch (TskCoreException ignored) {
                     //unable to get datasource for the OSInfo Object 

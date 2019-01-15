@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
@@ -41,14 +42,22 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
+    private static final String WINDOWS_VOLUME_PATH = "/windows/system32";
+    private static final String OSX_VOLUME_PATH = "/System/Library/CoreServices/SystemVersion.plist";
+
     private Content dataSource;
 
+    @Messages({
+        "DataSourceAnalyzer.windowsVolume.label=Windows volume",
+        "DataSourceUsageAnalyzer.osxVolume.label=OS Drive (OS X)",
+        "DataSourceUsageAnalyzer.osx.label=Mac OS X"})
     @Override
     void process(Content dataSource, IngestJobContext context) {
 
         this.dataSource = dataSource;
         try {
-            checkForWindowsVolume();
+            checkForOpperatingSystemSpecificFiles(Arrays.asList(WINDOWS_VOLUME_PATH), Bundle.DataSourceAnalyzer_windowsVolume_label(), "");
+            checkForOpperatingSystemSpecificFiles(Arrays.asList(OSX_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_osxVolume_label(), "");
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained Windows volume.", ex);
         }
@@ -56,23 +65,41 @@ public class DataSourceUsageAnalyzer extends Extract {
     }
 
     /**
-     * Check if the data source contains files which would indicate a windows
-     * volume is present in it, and create an artifact for that volume if
-     * detected.
+     * Check if any of the specified file paths exist, if they do create a Data
+     * Source Usage if a description was specified and create and OS Info
+     * artifact if a program name was specified.
      *
-     * @throws TskCoreException
+     * @param filesToCheckFor             - List of file paths to check for
+     * @param dataSourceUsageDescription- empty if no Data Source Usage Artifact
+     *                                    should be created
+     * @param osInfoProgramName           - empty if no OS Info Artifact should
+     *                                    be created
      */
-    private void checkForWindowsVolume() throws TskCoreException {
+    private void checkForOpperatingSystemSpecificFiles(List<String> filesToCheckFor, String dataSourceUsageDescription, String osInfoProgramName) throws TskCoreException {
+        if (dataSourceUsageDescription.isEmpty() && osInfoProgramName.isEmpty()) {
+            //shortcut out if it was called with no artifacts to create
+            return;
+        }
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> files = fileManager.findFilesByParentPath(dataSource.getId(), "/windows/system32");
-        //create an artifact if any files with the windows/system32 path were found
+        List<AbstractFile> files = new ArrayList<>();
+        for (String filePath : filesToCheckFor) {
+            files.addAll(fileManager.findFilesByParentPath(dataSource.getId(), filePath));
+        }
+        //create an artifact if any files with the windows/system32 specific path were found
         if (!files.isEmpty()) {
-            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                    Bundle.DataSourceUsageAnalyzer_parentModuleName(),
-                    "Windows volume")); //NON-NLS
-            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
+            if (!dataSourceUsageDescription.isEmpty()) {
+                bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                        Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                        dataSourceUsageDescription)); //NON-NLS
+                addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
+            }
+            if (!osInfoProgramName.isEmpty()) {
+                bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                        Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                        osInfoProgramName)); //NON-NLS
+                addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, dataSource, bbattributes);
+            }
         }
     }
-
 }
