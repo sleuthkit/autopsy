@@ -95,7 +95,7 @@ public class DataSourceUsageAnalyzer extends Extract {
                 addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
             }
             if (!osInfoProgramName.isEmpty()) {
-                bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                         osInfoProgramName)); //NON-NLS
                 addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, dataSource, bbattributes);
