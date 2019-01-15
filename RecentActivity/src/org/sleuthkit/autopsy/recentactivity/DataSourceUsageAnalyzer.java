@@ -56,10 +56,10 @@ public class DataSourceUsageAnalyzer extends Extract {
 
         this.dataSource = dataSource;
         try {
-            checkForOpperatingSystemSpecificFiles(Arrays.asList(WINDOWS_VOLUME_PATH), Bundle.DataSourceAnalyzer_windowsVolume_label(), "");
-            checkForOpperatingSystemSpecificFiles(Arrays.asList(OSX_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_osxVolume_label(), Bundle.DataSourceUsageAnalyzer_osx_label());
+            checkForOSFiles(Arrays.asList(WINDOWS_VOLUME_PATH), Bundle.DataSourceAnalyzer_windowsVolume_label(), "");
+            checkForOSFiles(Arrays.asList(OSX_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_osxVolume_label(), Bundle.DataSourceUsageAnalyzer_osx_label());
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to check if datasource contained Windows volume.", ex);
+            logger.log(Level.WARNING, "Failed to check if datasource contained a volume with operating system specific files", ex);
         }
 
     }
@@ -75,7 +75,7 @@ public class DataSourceUsageAnalyzer extends Extract {
      * @param osInfoProgramName           - empty if no OS Info Artifact should
      *                                    be created
      */
-    private void checkForOpperatingSystemSpecificFiles(List<String> filesToCheckFor, String dataSourceUsageDescription, String osInfoProgramName) throws TskCoreException {
+    private void checkForOSFiles(List<String> filesToCheckFor, String dataSourceUsageDescription, String osInfoProgramName) throws TskCoreException {
         if (dataSourceUsageDescription.isEmpty() && osInfoProgramName.isEmpty()) {
             //shortcut out if it was called with no artifacts to create
             return;
