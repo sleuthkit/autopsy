@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -83,11 +84,12 @@ public class DataSourceUsageAnalyzer extends Extract {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> files = new ArrayList<>();
         for (String filePath : filesToCheckFor) {
-            files.addAll(fileManager.findFilesByParentPath(dataSource.getId(), filePath));
+            files.addAll(fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath)));
         }
-        //create an artifact if any files with the windows/system32 specific path were found
+        //if any files existed matching the specified file
         if (!files.isEmpty()) {
             if (!dataSourceUsageDescription.isEmpty()) {
+                //if the data source usage description is not empty create a data source usage artifact
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                         Bundle.DataSourceUsageAnalyzer_parentModuleName(),
@@ -95,6 +97,7 @@ public class DataSourceUsageAnalyzer extends Extract {
                 addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
             }
             if (!osInfoProgramName.isEmpty()) {
+                //if the os info program name is not empty create an os info artifacts
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         Bundle.DataSourceUsageAnalyzer_parentModuleName(),
