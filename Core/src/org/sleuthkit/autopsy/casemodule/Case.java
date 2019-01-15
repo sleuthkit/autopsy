@@ -67,6 +67,7 @@ import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
+import org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -1202,6 +1203,7 @@ public class Case {
                 CallableSystemAction.get(AddImageAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
@@ -1255,6 +1257,7 @@ public class Case {
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false);
+                CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);

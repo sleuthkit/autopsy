@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  *
@@ -97,7 +97,6 @@ final class Chrome extends Extract {
         this.getHistory();
         this.getBookmark();
         this.getCookie();
-        this.getLogin();
         this.getDownload();
     }
 
@@ -591,7 +590,7 @@ final class Chrome extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, LOGIN_QUERY);
             logger.log(Level.INFO, "{0}- Now getting login information from {1} with {2}artifacts identified.", new Object[]{getModuleName(), temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
- 
+
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
                                 TSK_URL, PARENT_MODULE_NAME,

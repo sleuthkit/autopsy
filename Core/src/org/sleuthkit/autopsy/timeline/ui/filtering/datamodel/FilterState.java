@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import javafx.beans.binding.BooleanExpression;
 import javafx.beans.property.ReadOnlyBooleanProperty;
-import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
  * The state of a filter: selected, disabled, active, etc.

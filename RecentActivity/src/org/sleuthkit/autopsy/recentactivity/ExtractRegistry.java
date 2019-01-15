@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
@@ -45,6 +46,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.collections4.CollectionUtils;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -579,25 +581,66 @@ class ExtractRegistry extends Extract {
         return Optional.empty();
     }
 
-    private Optional<BlackboardArtifact> processProfileList(String homeDir, Element artnode, AbstractFile regAbstractFile) throws IllegalArgumentException {
-        try {
-            List<BlackboardAttribute> bbattributes = Arrays.asList(
-                    new BlackboardAttribute(
-                            TSK_USER_NAME, PARENT_MODULE_NAME,
-                            artnode.getAttribute("username")), //NON-NLS
-                    new BlackboardAttribute(
-                            TSK_USER_ID, PARENT_MODULE_NAME,
-                            artnode.getAttribute("sid")),//NON-NLS
-                    new BlackboardAttribute(
-                            TSK_PATH, PARENT_MODULE_NAME,
-                            homeDir));
+    private Optional<BlackboardArtifact> processProfileList(String homeDir, Element artnode, AbstractFile regFile) throws IllegalArgumentException {
+        String sid = artnode.getAttribute("sid"); //NON-NLS
+        String username = artnode.getAttribute("username"); //NON-NLS
+        BlackboardArtifact bbart = null;
 
-            BlackboardArtifact bbart = regAbstractFile.newArtifact(TSK_OS_ACCOUNT);
-            bbart.addAttributes(bbattributes);
-            return Optional.of(bbart);
+        try {
+            BlackboardAttribute.Type userAttrType = new BlackboardAttribute.Type(TSK_USER_ID);
+
+            //check if any of the existing artifacts match this username
+            ArrayList<BlackboardArtifact> existingArtifacts = currentCase.getSleuthkitCase().getBlackboardArtifacts(TSK_OS_ACCOUNT);
+
+            for (BlackboardArtifact artifact : existingArtifacts) {
+                if (artifact.getDataSource().getId() == regFile.getDataSourceObjectId()) {
+                    BlackboardAttribute attribute = artifact.getAttribute(userAttrType);
+                    if (attribute != null && attribute.getValueString().equals(sid)) {
+                        bbart = artifact;
+                        break;
+                    }
+                }
+            }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error adding account artifact to blackboard."); //NON-NLS
+            logger.log(Level.WARNING, "Error getting existing os account artifact", ex);
         }
+        try {
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+            if (bbart == null) {
+                //create new artifact
+                bbart = regFile.newArtifact(TSK_OS_ACCOUNT);
+                bbattributes.addAll(Arrays.asList(
+                        new BlackboardAttribute(
+                                TSK_USER_NAME, MODULE_NAME,
+                                username),
+                        new BlackboardAttribute(
+                                TSK_USER_ID, MODULE_NAME,
+                                sid),
+                        new BlackboardAttribute(
+                                TSK_PATH, MODULE_NAME,
+                                homeDir)
+                ));
+            } else {
+                //add attributes to existing artifact
+                if (bbart.getAttribute(new BlackboardAttribute.Type(TSK_USER_NAME)) == null) {
+                    bbattributes.add(new BlackboardAttribute(
+                            TSK_USER_NAME, MODULE_NAME,
+                            username));
+                }
+                if (bbart.getAttribute(new BlackboardAttribute.Type(TSK_PATH)) == null) {
+                    bbattributes.add(new BlackboardAttribute(
+                            TSK_PATH, MODULE_NAME,
+                            homeDir));
+                }
+            }
+            bbart.addAttributes(bbattributes);
+            // index the artifact for keyword search
+            blackboard.postArtifact(bbart, MODULE_NAME);
+            return Optional.of(bbart);
+        } catch (TskCoreException | Blackboard.BlackboardException ex2) {
+            logger.log(Level.SEVERE, "Error adding account artifact to blackboard.", ex2); //NON-NLS
+        }
+        //NON-NLS
         return Optional.empty();
     }
 
@@ -667,6 +710,7 @@ class ExtractRegistry extends Extract {
                     model = info.getProduct();
                 }
             }
+
             List<BlackboardAttribute> bbattributes = Lists.newArrayList(
                     new BlackboardAttribute(
                             TSK_DATETIME, PARENT_MODULE_NAME,
@@ -706,6 +750,7 @@ class ExtractRegistry extends Extract {
                 } else if (name.equals("Domain")) { // NON-NLS
                     domain = value;
                 }
+
             }
         }
         try {
