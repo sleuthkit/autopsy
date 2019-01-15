@@ -21,10 +21,14 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
+import java.util.Iterator;
 import javax.swing.JDialog;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.appservices.IngestJobRunningServiceInterface;
 
 /**
  * The default implementation of the Autopsy startup window.
@@ -43,6 +47,19 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     }
 
     private void init() {
+        
+        // first check whether Autopsy is being run from command line
+        Collection<? extends IngestJobRunningServiceInterface> jobRunningServices = Lookup.getDefault().lookupAll(IngestJobRunningServiceInterface.class);
+        Iterator<? extends IngestJobRunningServiceInterface> it = jobRunningServices.iterator();
+        if (it.hasNext()) {
+            // Autopsy is running from command line
+            IngestJobRunningServiceInterface processor = it.next();
+            //LOGGER.log(Level.INFO, "Autopsy is running from command line. No startup window"); //NON-NLS
+            // ELTODO display some message or panel here
+            processor.start();
+            return;
+        }
+        
         setSize(DIMENSIONS);
         welcomeWindow = new CueBannerPanel();
         welcomeWindow.setCloseButtonActionListener(new ActionListener() {
@@ -58,7 +75,9 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
 
     @Override
     public void open() {
-        welcomeWindow.refresh();
+        if (welcomeWindow != null) {
+            welcomeWindow.refresh();
+        }
         setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }
