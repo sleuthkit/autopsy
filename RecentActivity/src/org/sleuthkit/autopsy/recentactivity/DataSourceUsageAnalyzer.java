@@ -57,7 +57,7 @@ public class DataSourceUsageAnalyzer extends Extract {
     private static final String LINUX_SUN_JDS_PATH = "/etc/sun-release";
     private static final String LINUX_SOLARIS_SPARC_PATH = "/etc/release";
     private static final String LINUX_GENTOO_PATH = "/etc/gentoo-release";
-    private static final String LINUX_UNITED_LINUX_PATH = "/etc/UnitedLinux-releasee";
+    private static final String LINUX_UNITED_LINUX_PATH = "/etc/UnitedLinux-release";
     private static final String LINUX_UBUNTU_PATH = "/etc/lsb-release";
 
     private Content dataSource;
@@ -134,7 +134,6 @@ public class DataSourceUsageAnalyzer extends Extract {
             //shortcut out if it was called with no artifacts to create
             return;
         }
-        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> files = new ArrayList<>();
         for (String filePath : filesToCheckFor) {
@@ -143,12 +142,14 @@ public class DataSourceUsageAnalyzer extends Extract {
         //create an artifact if any files with the windows/system32 specific path were found
         if (!files.isEmpty()) {
             if (!dataSourceUsageDescription.isEmpty()) {
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                         Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                         dataSourceUsageDescription)); //NON-NLS
                 addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
             }
             if (!osInfoProgramName.isEmpty()) {
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                         osInfoProgramName)); //NON-NLS
