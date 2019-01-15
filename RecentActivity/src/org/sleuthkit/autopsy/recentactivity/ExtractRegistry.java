@@ -843,29 +843,22 @@ class ExtractRegistry extends Extract {
             SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             // Read the file in and create a Document and elements
             String userInfoSection = "User Information";
-            String groupMembershipSection = "Group Membership Information";
             String previousLine = null;
             String line = bufferedReader.readLine();
             Set<UserInfo> userSet = new HashSet<>();
-            Map<String, String> fullUserIds = new HashMap<>();
             while (line != null) {
                 if (line.contains(SECTION_DIVIDER) && previousLine != null) {
                     if (previousLine.contains(userInfoSection)) {
                         readUsers(bufferedReader, userSet);
-                    } else if (previousLine.contains(groupMembershipSection)) {
-                        fullUserIds = readFullUserIds(bufferedReader);
-                    }
+                    } 
                 }
                 previousLine = line;
                 line = bufferedReader.readLine();
             }
-
             Map<String, UserInfo> userInfoMap = new HashMap<>();
             //load all the user info which was read into a map
             for (UserInfo userInfo : userSet) {
-                String userIdWithoutRID = fullUserIds.get(userInfo.getUserId()) == null ? "" : fullUserIds.get(userInfo.getUserId());
-                String fullUserId = userIdWithoutRID + "-" + userInfo.getUserId();
-                userInfoMap.put(fullUserId.trim(), userInfo);
+                userInfoMap.put(userInfo.getUserSid(), userInfo);
             }
             //get all existing OS account artifacts
             List<BlackboardArtifact> existingOsAccounts = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
@@ -943,19 +936,22 @@ class ExtractRegistry extends Extract {
      */
     private void readUsers(BufferedReader bufferedReader, Set<UserInfo> users) throws IOException {
         String userNameLabel = "Username        :";
+        String sidLabel = "SID             :";
         String accountCreatedLabel = "Account Created :";
         String loginCountLabel = "Login Count     :";
         String lastLoginLabel = "Last Login Date :";
         String line = bufferedReader.readLine();
         //read until end of file or next section divider
+        String userName = "";
         while (line != null && !line.contains(SECTION_DIVIDER)) {
             //when a user name field exists read the name and id number
             if (line.contains(userNameLabel)) {
                 String userNameAndIdString = line.replace(userNameLabel, "");
-                int idBracketIndex = userNameAndIdString.lastIndexOf('[');
-                String userName = userNameAndIdString.substring(0, idBracketIndex).trim();
-                String userIdString = userNameAndIdString.substring(idBracketIndex + 1, userNameAndIdString.lastIndexOf(']')).trim();
-                UserInfo userInfo = new UserInfo(userName, userIdString);
+                userName = userNameAndIdString.substring(0, userNameAndIdString.lastIndexOf('[')).trim();
+            }
+            else if (line.contains(sidLabel) && !userName.isEmpty()){
+                String sid = line.replace(sidLabel, "").trim();
+                UserInfo userInfo = new UserInfo(userName, sid);
                 //continue reading this users information until end of file or a blank line between users
                 line = bufferedReader.readLine();
                 while (line != null && !line.isEmpty()) {
@@ -969,34 +965,10 @@ class ExtractRegistry extends Extract {
                     line = bufferedReader.readLine();
                 }
                 users.add(userInfo);
+                userName = "";
             }
             line = bufferedReader.readLine();
         }
-    }
-
-    /**
-     * Read the Domain or local computer identifier portion of the SIDs and map them to their RIDs
-     *
-     * @param bufferedReader a buffered reader for the file which contains the
-     *                       Group Membership Information
-     *
-     * @return Map<String, String> mapping RIDs to the remainder of their SID
-     *
-     * @throws IOException
-     */
-    private  Map<String, String> readFullUserIds(BufferedReader bufferedReader) throws IOException {
-        String userPrefixStart = "S-1-5-21";
-         Map<String, String> fullUserIds = new HashMap<>();
-        String line = bufferedReader.readLine();
-        while (line != null && !line.contains(SECTION_DIVIDER)) {
-            if (line.contains(userPrefixStart)) {
-                //Map the RIDs to the remainder of the SIDs
-                //this may not map correctly if the same RID exists for multiple Domain or local computer identifiers 
-                fullUserIds.put(line.substring(line.lastIndexOf('-')+1).trim(),line.substring(0, line.lastIndexOf('-')).trim());
-            }
-            line = bufferedReader.readLine();
-        }
-        return fullUserIds; 
     }
 
     @Override
@@ -1014,7 +986,7 @@ class ExtractRegistry extends Extract {
     private class UserInfo {
 
         private final String userName;
-        private final String userId;
+        private final String userSid;
         private String lastLoginDate;
         private String accountCreatedDate;
         private int loginCount = 0;
@@ -1023,12 +995,11 @@ class ExtractRegistry extends Extract {
          * Create a UserInfo object
          *
          * @param name         - the os user account name
-         * @param userIdString - the last digits of the users SID which are
-         *                     unique for each user on this system
+         * @param userIdString - the SID for the user account
          */
-        private UserInfo(String name, String userIdString) {
+        private UserInfo(String name, String userSidString) {
             userName = name;
-            userId = userIdString;
+            userSid = userSidString;
         }
 
         /**
@@ -1041,12 +1012,12 @@ class ExtractRegistry extends Extract {
         }
 
         /**
-         * Get the user id.
+         * Get the user SID.
          *
-         * @return the user id
+         * @return the user SID
          */
-        String getUserId() {
-            return userId;
+        String getUserSid() {
+            return userSid;
         }
 
         /**
