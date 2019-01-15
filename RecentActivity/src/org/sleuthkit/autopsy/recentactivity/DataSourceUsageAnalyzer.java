@@ -47,7 +47,7 @@ public class DataSourceUsageAnalyzer extends Extract {
     private static final String OSX_VOLUME_PATH = "/System/Library/CoreServices/SystemVersion.plist";
     private static final String ANDROID_VOLUME_PATH = "data/data/com.android.providers.settings/databases/settings‌​.db";
     //linux specific files reference https://www.novell.com/coolsolutions/feature/11251.html
-    private static final String LINUX_RED_HAT_PATH = "/etc/redhat-release, /etc/redhat_version";
+    private static final String LINUX_RED_HAT_PATHS[] = {"/etc/redhat-release", "/etc/redhat_version"};
     private static final String LINUX_NOVELL_SUSE_PATH = "/etc/SUSE-release";
     private static final String LINUX_FEDORA_PATH = "/etc/fedora-release";
     private static final String LINUX_SLACKWARE_PATHS[] = {"/etc/slackware-release", "/etc/slackware-version"};
@@ -100,7 +100,7 @@ public class DataSourceUsageAnalyzer extends Extract {
             checkForOSFiles(Arrays.asList(WINDOWS_VOLUME_PATH), Bundle.DataSourceAnalyzer_windowsVolume_label(), "");
             checkForOSFiles(Arrays.asList(OSX_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_osxVolume_label(), Bundle.DataSourceUsageAnalyzer_osx_label());
             checkForOSFiles(Arrays.asList(ANDROID_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_androidVolume_label(), Bundle.DataSourceUsageAnalyzer_androidOs_label());
-            checkForOSFiles(Arrays.asList(LINUX_RED_HAT_PATH), Bundle.DataSourceUsageAnalyzer_redhatLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_redhatLinuxOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_RED_HAT_PATHS), Bundle.DataSourceUsageAnalyzer_redhatLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_redhatLinuxOs_label());
             checkForOSFiles(Arrays.asList(LINUX_NOVELL_SUSE_PATH), Bundle.DataSourceUsageAnalyzer_novellSUSEVolume_label(), Bundle.DataSourceUsageAnalyzer_novellSUSEOs_label());
             checkForOSFiles(Arrays.asList(LINUX_FEDORA_PATH), Bundle.DataSourceUsageAnalyzer_fedoraLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_fedoraLinuxOs_lable());
             checkForOSFiles(Arrays.asList(LINUX_SLACKWARE_PATHS), Bundle.DataSourceUsageAnalyzer_slackwareLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_slackwareLinuxOs_label());
