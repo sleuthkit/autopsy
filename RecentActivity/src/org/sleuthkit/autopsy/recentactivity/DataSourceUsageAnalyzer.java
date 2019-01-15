@@ -130,7 +130,6 @@ public class DataSourceUsageAnalyzer extends Extract {
             //shortcut out if it was called with no artifacts to create
             return;
         }
-        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> files = new ArrayList<>();
         for (String filePath : filesToCheckFor) {
@@ -139,12 +138,14 @@ public class DataSourceUsageAnalyzer extends Extract {
         //create an artifact if any files with the windows/system32 specific path were found
         if (!files.isEmpty()) {
             if (!dataSourceUsageDescription.isEmpty()) {
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                         Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                         dataSourceUsageDescription)); //NON-NLS
                 addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
             }
             if (!osInfoProgramName.isEmpty()) {
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         Bundle.DataSourceUsageAnalyzer_parentModuleName(),
                         osInfoProgramName)); //NON-NLS
