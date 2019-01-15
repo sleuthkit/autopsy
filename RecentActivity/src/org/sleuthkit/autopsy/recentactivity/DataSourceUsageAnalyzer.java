@@ -57,7 +57,7 @@ public class DataSourceUsageAnalyzer extends Extract {
         this.dataSource = dataSource;
         try {
             checkForOpperatingSystemSpecificFiles(Arrays.asList(WINDOWS_VOLUME_PATH), Bundle.DataSourceAnalyzer_windowsVolume_label(), "");
-            checkForOpperatingSystemSpecificFiles(Arrays.asList(OSX_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_osxVolume_label(), "");
+            checkForOpperatingSystemSpecificFiles(Arrays.asList(OSX_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_osxVolume_label(), Bundle.DataSourceUsageAnalyzer_osx_label());
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained Windows volume.", ex);
         }
