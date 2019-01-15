@@ -486,6 +486,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     
     /**
      * Update the image to use the current zoom and rotation values.
+     * 
+     * Note: For zoom levels less than 100%, special accomodations are made in
+     * order to keep the image fully visible. This is because the viewport size
+     * change occurs before any transforms execute, thus chopping off part of
+     * the image. So the viewport is kept the same size. Scrolling adjustments
+     * are also made to try and ensure when the user zooms out, they don't find
+     * themselves looking at an entire screen of dead space.
      */
     private void updateView() {
         Image image = fxImageView.getImage();
