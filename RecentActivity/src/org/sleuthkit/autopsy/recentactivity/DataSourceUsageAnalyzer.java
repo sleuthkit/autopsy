@@ -42,24 +42,74 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
+    
     private static final String WINDOWS_VOLUME_PATH = "/windows/system32";
     private static final String OSX_VOLUME_PATH = "/System/Library/CoreServices/SystemVersion.plist";
+    //linux specific files reference https://www.novell.com/coolsolutions/feature/11251.html
+    private static final String LINUX_RED_HAT_PATH = "/etc/redhat-release, /etc/redhat_version";
+    private static final String LINUX_NOVELL_SUSE_PATH = "/etc/SUSE-release";
+    private static final String LINUX_FEDORA_PATH = "/etc/fedora-release";
+    private static final String LINUX_SLACKWARE_PATHS[] = {"/etc/slackware-release", "/etc/slackware-version"};
+    private static final String LINUX_DEBIAN_PATHS[] = {"/etc/debian_release", "/etc/debian_version"};
+    private static final String LINUX_MANDRAKE_PATH = "/etc/mandrake-release";
+    private static final String LINUX_YELLOW_DOG_PATH = "/etc/yellowdog-release";
+    private static final String LINUX_SUN_JDS_PATH = "/etc/sun-release";
+    private static final String LINUX_SOLARIS_SPARC_PATH = "/etc/release";
+    private static final String LINUX_GENTOO_PATH = "/etc/gentoo-release";
+    private static final String LINUX_UNITED_LINUX_PATH = "/etc/UnitedLinux-releasee";
+    private static final String LINUX_UBUNTU_PATH = "/etc/lsb-release";
 
     private Content dataSource;
 
     @Messages({
         "DataSourceAnalyzer.windowsVolume.label=Windows volume",
         "DataSourceUsageAnalyzer.osxVolume.label=OS Drive (OS X)",
-        "DataSourceUsageAnalyzer.osx.label=Mac OS X"})
+        "DataSourceUsageAnalyzer.osx.label=Mac OS X",
+        "DataSourceUsageAnalyzer.redhatLinuxVolume.label=OS Drive (Linux Redhat)",
+        "DataSourceUsageAnalyzer.redhatLinuxOs.label=Linux (Redhat)",
+        "DataSourceUsageAnalyzer.novellSUSEVolume.label=OS Drive (Linux Novell SUSE)",
+        "DataSourceUsageAnalyzer.novellSUSEOs.label=Linux (Novell SUSE)",
+        "DataSourceUsageAnalyzer.fedoraLinuxVolume.label=OS Drive (Linux Fedora)",
+        "DataSourceUsageAnalyzer.fedoraLinuxOs.lable=Linux (Fedora)",
+        "DataSourceUsageAnalyzer.slackwareLinuxVolume.label=OS Drive (Linux Slackware)",
+        "DataSourceUsageAnalyzer.slackwareLinuxOs.label=Linux (Slackware)",
+        "DataSourceUsageAnalyzer.debianLinuxVolume.label=OS Drive (Linux Debian)",
+        "DataSourceUsageAnalyzer.debianLinuxOs.label=Linux (Debian)",
+        "DataSourceUsageAnalyzer.mandrakeLinuxVolume.label=OS Drive (Linux Mandrake)",
+        "DataSourceUsageAnalyzer.mandrakeLinuxOs.label=Linux (Mandrake)",
+        "DataSourceUsageAnalyzer.yellowDogLinuxVolume.label=OS Drive (Linux Yellow Dog)",
+        "DataSourceUsageAnalyzer.yellowDogLinuxOs.label=Linux (Yellow Dog)",
+        "DataSourceUsageAnalyzer.sunJDSLinuxVolume.label=OS Drive (Linux Sun JDS)",
+        "DataSourceUsageAnalyzer.sunJDSLinuxOs.label=Linux (Sun JDS)",
+        "DataSourceUsageAnalyzer.solarisSparcVolume.label=OS Drive (Linux Solaris/Sparc)",
+        "DataSourceUsageAnalyzer.solarisSparcOs.label=Linux (Solaris/Sparc)",
+        "DataSourceUsageAnalyzer.gentooLinuxVolume.label=OS Drive (Linux Gentoo)",
+        "DataSourceUsageAnalyzer.gentooLinuxOs.label=Linux (Gentoo)",
+        "DataSourceUsageAnalyzer.unitedLinuxVolume.label=OS Drive (Linux United Linux)",
+        "DataSourceUsageAnalyzer.unitedLinuxOs.label=Linux (United Linux)",
+        "DataSourceUsageAnalyzer.ubuntuLinuxVolume.label=OS Drive (Linux Ubuntu)",
+        "DataSourceUsageAnalyzer.ubuntuLinuxOs.label=Linux (Ubuntu)"})
     @Override
     void process(Content dataSource, IngestJobContext context) {
 
         this.dataSource = dataSource;
         try {
-            checkForOpperatingSystemSpecificFiles(Arrays.asList(WINDOWS_VOLUME_PATH), Bundle.DataSourceAnalyzer_windowsVolume_label(), "");
-            checkForOpperatingSystemSpecificFiles(Arrays.asList(OSX_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_osxVolume_label(), Bundle.DataSourceUsageAnalyzer_osx_label());
+            checkForOSFiles(Arrays.asList(WINDOWS_VOLUME_PATH), Bundle.DataSourceAnalyzer_windowsVolume_label(), "");
+            checkForOSFiles(Arrays.asList(OSX_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_osxVolume_label(), Bundle.DataSourceUsageAnalyzer_osx_label());
+            checkForOSFiles(Arrays.asList(LINUX_RED_HAT_PATH), Bundle.DataSourceUsageAnalyzer_redhatLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_redhatLinuxOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_NOVELL_SUSE_PATH), Bundle.DataSourceUsageAnalyzer_novellSUSEVolume_label(), Bundle.DataSourceUsageAnalyzer_novellSUSEOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_FEDORA_PATH), Bundle.DataSourceUsageAnalyzer_fedoraLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_fedoraLinuxOs_lable());
+            checkForOSFiles(Arrays.asList(LINUX_SLACKWARE_PATHS), Bundle.DataSourceUsageAnalyzer_slackwareLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_slackwareLinuxOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_DEBIAN_PATHS), Bundle.DataSourceUsageAnalyzer_debianLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_debianLinuxOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_MANDRAKE_PATH), Bundle.DataSourceUsageAnalyzer_mandrakeLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_mandrakeLinuxOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_YELLOW_DOG_PATH), Bundle.DataSourceUsageAnalyzer_yellowDogLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_yellowDogLinuxOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_SUN_JDS_PATH), Bundle.DataSourceUsageAnalyzer_sunJDSLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_sunJDSLinuxOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_SOLARIS_SPARC_PATH), Bundle.DataSourceUsageAnalyzer_solarisSparcVolume_label(), Bundle.DataSourceUsageAnalyzer_solarisSparcOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_GENTOO_PATH), Bundle.DataSourceUsageAnalyzer_gentooLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_gentooLinuxOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_UNITED_LINUX_PATH), Bundle.DataSourceUsageAnalyzer_unitedLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_unitedLinuxOs_label());
+            checkForOSFiles(Arrays.asList(LINUX_UBUNTU_PATH), Bundle.DataSourceUsageAnalyzer_ubuntuLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_ubuntuLinuxOs_label());
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to check if datasource contained Windows volume.", ex);
+            logger.log(Level.WARNING, "Failed to check if datasource contained a volume with operating system specific files", ex);
         }
 
     }
@@ -75,7 +125,7 @@ public class DataSourceUsageAnalyzer extends Extract {
      * @param osInfoProgramName           - empty if no OS Info Artifact should
      *                                    be created
      */
-    private void checkForOpperatingSystemSpecificFiles(List<String> filesToCheckFor, String dataSourceUsageDescription, String osInfoProgramName) throws TskCoreException {
+    private void checkForOSFiles(List<String> filesToCheckFor, String dataSourceUsageDescription, String osInfoProgramName) throws TskCoreException {
         if (dataSourceUsageDescription.isEmpty() && osInfoProgramName.isEmpty()) {
             //shortcut out if it was called with no artifacts to create
             return;
