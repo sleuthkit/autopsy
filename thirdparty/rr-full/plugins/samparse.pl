@@ -79,6 +79,15 @@ sub pluginmain {
 	::rptMsg("-" x 25);
 	my $key_path = 'SAM\\Domains\\Account\\Users';
 	my $key;
+	my $local_sid = "";
+	my $account_value = $root_key->get_subkey("SAM\\Domains\\Account")->get_value("V")->get_data();;
+	if (defined $account_value) {
+		my $data_len = length($account_value);
+		if ($data_len >= 12) {
+			my @vAt  = unpack("VVV",substr($account_value, $data_len-12, 12));
+			$local_sid = "S-1-5-21-".$vAt[0]."-".$vAt[1]."-".$vAt[2];
+		}
+	}
 	if ($key = $root_key->get_subkey($key_path)) {
 		my @user_list = $key->get_list_of_subkeys();
 		if (scalar(@user_list) > 0) {
@@ -102,6 +111,7 @@ sub pluginmain {
 					};
 				
 					::rptMsg("Username        : ".$v_val{name}." [".$rid."]");
+					::rptMsg("SID             : ".$local_sid."-".$rid);
 					::rptMsg("Full Name       : ".$v_val{fullname});
 					::rptMsg("User Comment    : ".$v_val{comment});
 					::rptMsg("Account Type    : ".$v_val{type});
