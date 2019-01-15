@@ -56,7 +56,7 @@ public class DataSourceUsageAnalyzer extends Extract {
     private static final String LINUX_SUN_JDS_PATH = "/etc/sun-release";
     private static final String LINUX_SOLARIS_SPARC_PATH = "/etc/release";
     private static final String LINUX_GENTOO_PATH = "/etc/gentoo-release";
-    private static final String LINUX_UNITED_LINUX_PATH = "/etc/UnitedLinux-releasee";
+    private static final String LINUX_UNITED_LINUX_PATH = "/etc/UnitedLinux-release";
     private static final String LINUX_UBUNTU_PATH = "/etc/lsb-release";
 
     private Content dataSource;
