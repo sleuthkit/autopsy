@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2017-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,107 +18,52 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Cursor;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.SortOrder;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
- * A panel that allows a user to open cases created by auto ingest.
+ * A JPanel that allows a user to open a multi-user case.
  */
-@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final class MultiUserCasesPanel extends JPanel{
+@SuppressWarnings("PMD.SingularField")  // Matisse-generated UI widgets cause lots of false positives
+final class OpenMultiUserCasePanel extends JPanel {
 
-    private static final Logger logger = Logger.getLogger(MultiUserCasesPanel.class.getName());
     private static final long serialVersionUID = 1L;
     private final JDialog parentDialog;
-    private final CaseBrowser caseBrowserPanel;
+    private final MultiUserCasesBrowserPanel caseBrowserPanel;
 
     /**
-     * Constructs a panel that allows a user to open cases created by automated
-     * ingest.
+     * Constructs a JPanel that allows a user to open a multi-user case.
+     *
+     * @param parentDialog The parent dialog of the panel, may be null. If
+     *                     provided, the dialog is hidden when this poanel's
+     *                     cancel button is pressed.
      */
-    MultiUserCasesPanel(JDialog parentDialog) {
+    OpenMultiUserCasePanel(JDialog parentDialog) {
         this.parentDialog = parentDialog;
         initComponents();
-
-        caseBrowserPanel = new CaseBrowser();
+        caseBrowserPanel = new MultiUserCasesBrowserPanel();
         caseExplorerScrollPane.add(caseBrowserPanel);
         caseExplorerScrollPane.setViewportView(caseBrowserPanel);
-        /*
-         * Listen for row selection changes and set button state for the current
-         * selection.
-         */
-        caseBrowserPanel.addListSelectionListener((ListSelectionEvent e) -> {
-            setButtons();
-        });
-
     }
 
     /**
-     * Gets the list of cases known to the review mode cases manager and
-     * refreshes the cases table.
+     * Refreshes the child component that displays the multi-user cases known to
+     * the coordination service..
      */
-    void refresh() {
-        caseBrowserPanel.refresh();
+    void refreshDisplay() {
+        caseBrowserPanel.refreshCases();
     }
 
     /**
-     * Enables/disables the Open and Show Log buttons based on the case selected
-     * in the cases table.
-     */
-    void setButtons() {
-        bnOpen.setEnabled(caseBrowserPanel.isRowSelected());
-    }
-
-    /**
-     * Open a case.
-     *
-     * @param caseMetadataFilePath The path to the case metadata file.
-     */
-    private void openCase(String caseMetadataFilePath) {
-        if (caseMetadataFilePath != null) {
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-            StartupWindowProvider.getInstance().close();
-            if (parentDialog != null) {
-                parentDialog.setVisible(false);
-            }
-            new Thread(() -> {
-                try {
-                    Case.openAsCurrentCase(caseMetadataFilePath);
-                } catch (CaseActionException ex) {
-                    if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
-                        logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
-                        MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
-                    }
-                    SwingUtilities.invokeLater(() -> {
-                        //GUI changes done back on the EDT
-                        StartupWindowProvider.getInstance().open();
-                    });
-                } finally {
-                    SwingUtilities.invokeLater(() -> {
-                        //GUI changes done back on the EDT
-                        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    });
-                }
-            }).start();
-        }
-    }
-
-    /**
-     * RowSorter which makes columns whose type is Date to be sorted first in
-     * Descending order then in Ascending order
+     * A RowSorter which causes columns whose type is Date to be sorted in
+     * either descending order or ascending order with descending order as the
+     * default.
      */
     private static class RowSorter<M extends DefaultTableModel> extends TableRowSorter<M> {
 
@@ -155,7 +100,6 @@ final class MultiUserCasesPanel extends JPanel{
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        bnOpen = new javax.swing.JButton();
         bnOpenSingleUserCase = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         searchLabel = new javax.swing.JLabel();
@@ -164,18 +108,7 @@ final class MultiUserCasesPanel extends JPanel{
         setName("Completed Cases"); // NOI18N
         setPreferredSize(new java.awt.Dimension(960, 485));
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnOpen, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnOpen.text")); // NOI18N
-        bnOpen.setEnabled(false);
-        bnOpen.setMaximumSize(new java.awt.Dimension(80, 23));
-        bnOpen.setMinimumSize(new java.awt.Dimension(80, 23));
-        bnOpen.setPreferredSize(new java.awt.Dimension(80, 23));
-        bnOpen.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnOpenActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnOpenSingleUserCase, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.bnOpenSingleUserCase.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnOpenSingleUserCase, org.openide.util.NbBundle.getMessage(OpenMultiUserCasePanel.class, "OpenMultiUserCasePanel.bnOpenSingleUserCase.text")); // NOI18N
         bnOpenSingleUserCase.setMinimumSize(new java.awt.Dimension(156, 23));
         bnOpenSingleUserCase.setPreferredSize(new java.awt.Dimension(156, 23));
         bnOpenSingleUserCase.addActionListener(new java.awt.event.ActionListener() {
@@ -184,7 +117,7 @@ final class MultiUserCasesPanel extends JPanel{
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(OpenMultiUserCasePanel.class, "OpenMultiUserCasePanel.cancelButton.text")); // NOI18N
         cancelButton.setMaximumSize(new java.awt.Dimension(80, 23));
         cancelButton.setMinimumSize(new java.awt.Dimension(80, 23));
         cancelButton.setPreferredSize(new java.awt.Dimension(80, 23));
@@ -194,7 +127,7 @@ final class MultiUserCasesPanel extends JPanel{
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(searchLabel, org.openide.util.NbBundle.getMessage(MultiUserCasesPanel.class, "MultiUserCasesPanel.searchLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(searchLabel, org.openide.util.NbBundle.getMessage(OpenMultiUserCasePanel.class, "OpenMultiUserCasePanel.searchLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -206,17 +139,12 @@ final class MultiUserCasesPanel extends JPanel{
                     .addComponent(caseExplorerScrollPane)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(searchLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 350, Short.MAX_VALUE)
                         .addComponent(bnOpenSingleUserCase, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(190, 190, 190)
-                        .addComponent(bnOpen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {bnOpen, cancelButton});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -225,7 +153,6 @@ final class MultiUserCasesPanel extends JPanel{
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(bnOpen, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(bnOpenSingleUserCase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(searchLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -233,14 +160,10 @@ final class MultiUserCasesPanel extends JPanel{
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Open button action
+     * Opens the standard open single user case window.
      *
-     * @param evt -- The event that caused this to be called
+     * @param evt An ActionEvent, unused.
      */
-    private void bnOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenActionPerformed
-        openCase(caseBrowserPanel.getCasePath());
-    }//GEN-LAST:event_bnOpenActionPerformed
-
     private void bnOpenSingleUserCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenSingleUserCaseActionPerformed
         Lookup.getDefault().lookup(CaseOpenAction.class).openCaseSelectionWindow();
     }//GEN-LAST:event_bnOpenSingleUserCaseActionPerformed
@@ -252,7 +175,6 @@ final class MultiUserCasesPanel extends JPanel{
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton bnOpen;
     private javax.swing.JButton bnOpenSingleUserCase;
     private javax.swing.JButton cancelButton;
     private javax.swing.JScrollPane caseExplorerScrollPane;

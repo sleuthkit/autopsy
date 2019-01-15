@@ -32,6 +32,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
@@ -57,6 +58,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -80,6 +82,7 @@ import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
+import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -1956,9 +1959,9 @@ public class Case {
             }
 
             if (isNewCase) {
-                createCaseData(progressIndicator);
+                createCaseData(progressIndicator); // RJCTODO: This name is vague
             } else {
-                openCaseData(progressIndicator);
+                openCaseData(progressIndicator); // RJCTODO: This name is vague
             }
 
             if (Thread.currentThread().isInterrupted()) {
@@ -1970,6 +1973,7 @@ public class Case {
             if (Thread.currentThread().isInterrupted()) {
                 throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
             }
+
         } catch (CaseActionException ex) {
             /*
              * Cancellation or failure. Clean up. The sleep is a little hack to
@@ -2003,6 +2007,19 @@ public class Case {
         "Case.exceptionMessage.couldNotCreateMetadataFile=Failed to create case metadata file."
     })
     private void createCaseData(ProgressIndicator progressIndicator) throws CaseActionException {
+        // RJCTODO: progress
+        try {
+            CoordinationService coordinationService = CoordinationService.getInstance();
+            CaseNodeData nodeData = new CaseNodeData(metadata);
+            coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
+        } catch (CoordinationServiceException | InterruptedException | ParseException ex) {
+            // RJCTODO
+        } 
+        
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
+        }
+
         /*
          * Create the case directory, if it does not already exist.
          *
@@ -2012,6 +2029,10 @@ public class Case {
         if (new File(metadata.getCaseDirectory()).exists() == false) {
             progressIndicator.progress(Bundle.Case_progressMessage_creatingCaseDirectory());
             Case.createCaseDirectory(metadata.getCaseDirectory(), metadata.getCaseType());
+        }
+
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
         }
 
         /*
@@ -2065,6 +2086,24 @@ public class Case {
     })
     private void openCaseData(ProgressIndicator progressIndicator) throws CaseActionException {
         try {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
+            }
+
+            // RJCTODO: progress
+            try {
+                CoordinationService coordinationService = CoordinationService.getInstance();
+                CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
+                nodeData.setLastAccessDate(new Date());
+                coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
+            } catch (CoordinationServiceException | InterruptedException | CaseNodeData.InvalidDataException ex) {
+                // RJCTODO
+            }
+
+            if (Thread.currentThread().isInterrupted()) {
+                throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
+            }
+
             progressIndicator.progress(Bundle.Case_progressMessage_openingCaseDatabase());
             String databaseName = metadata.getCaseDatabaseName();
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
