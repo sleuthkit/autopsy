@@ -42,9 +42,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
-    
+
     private static final String WINDOWS_VOLUME_PATH = "/windows/system32";
     private static final String OSX_VOLUME_PATH = "/System/Library/CoreServices/SystemVersion.plist";
+    private static final String ANDROID_VOLUME_PATH = "data/data/com.android.providers.settings/databases/settings‌​.db";
     //linux specific files reference https://www.novell.com/coolsolutions/feature/11251.html
     private static final String LINUX_RED_HAT_PATH = "/etc/redhat-release, /etc/redhat_version";
     private static final String LINUX_NOVELL_SUSE_PATH = "/etc/SUSE-release";
@@ -65,6 +66,8 @@ public class DataSourceUsageAnalyzer extends Extract {
         "DataSourceAnalyzer.windowsVolume.label=Windows volume",
         "DataSourceUsageAnalyzer.osxVolume.label=OS Drive (OS X)",
         "DataSourceUsageAnalyzer.osx.label=Mac OS X",
+        "DataSourceUsageAnalyzer.androidVolume.label=OS Drive (Android)",
+        "DataSourceUsageAnalyzer.androidOs.label=Android",
         "DataSourceUsageAnalyzer.redhatLinuxVolume.label=OS Drive (Linux Redhat)",
         "DataSourceUsageAnalyzer.redhatLinuxOs.label=Linux (Redhat)",
         "DataSourceUsageAnalyzer.novellSUSEVolume.label=OS Drive (Linux Novell SUSE)",
@@ -96,6 +99,7 @@ public class DataSourceUsageAnalyzer extends Extract {
         try {
             checkForOSFiles(Arrays.asList(WINDOWS_VOLUME_PATH), Bundle.DataSourceAnalyzer_windowsVolume_label(), "");
             checkForOSFiles(Arrays.asList(OSX_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_osxVolume_label(), Bundle.DataSourceUsageAnalyzer_osx_label());
+            checkForOSFiles(Arrays.asList(ANDROID_VOLUME_PATH), Bundle.DataSourceUsageAnalyzer_androidVolume_label(), Bundle.DataSourceUsageAnalyzer_androidOs_label());
             checkForOSFiles(Arrays.asList(LINUX_RED_HAT_PATH), Bundle.DataSourceUsageAnalyzer_redhatLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_redhatLinuxOs_label());
             checkForOSFiles(Arrays.asList(LINUX_NOVELL_SUSE_PATH), Bundle.DataSourceUsageAnalyzer_novellSUSEVolume_label(), Bundle.DataSourceUsageAnalyzer_novellSUSEOs_label());
             checkForOSFiles(Arrays.asList(LINUX_FEDORA_PATH), Bundle.DataSourceUsageAnalyzer_fedoraLinuxVolume_label(), Bundle.DataSourceUsageAnalyzer_fedoraLinuxOs_lable());
