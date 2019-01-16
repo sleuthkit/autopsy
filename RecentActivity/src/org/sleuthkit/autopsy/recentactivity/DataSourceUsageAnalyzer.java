@@ -139,20 +139,33 @@ public class DataSourceUsageAnalyzer extends Extract {
         //if any files existed matching the specified file
         if (!files.isEmpty()) {
             if (!dataSourceUsageDescription.isEmpty()) {
-                //if the data source usage description is not empty create a data source usage artifact
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                        Bundle.DataSourceUsageAnalyzer_parentModuleName(),
-                        dataSourceUsageDescription)); //NON-NLS
-                addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
+                //if the data source usage description is not empty create a data source usage artifact if an Usage artifact does not already exist with the same description
+                List<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource.getId());
+                boolean createNewUsageArtifact = true;
+                for (BlackboardArtifact artifact : artifacts) {
+                    if (artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)).getValueString().equals(dataSourceUsageDescription)) {
+                        createNewUsageArtifact = false;
+                        break;
+                    }
+                }
+                if (createNewUsageArtifact) {
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                    bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                            Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                            dataSourceUsageDescription)); //NON-NLS
+                    addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
+                }
             }
             if (!osInfoProgramName.isEmpty()) {
-                //if the os info program name is not empty create an os info artifacts
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        Bundle.DataSourceUsageAnalyzer_parentModuleName(),
-                        osInfoProgramName)); //NON-NLS
-                addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, dataSource, bbattributes);
+                //check if OS INFO artifact already created on this file
+                if (tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, files.get(0).getId()).isEmpty()) {
+                    //if the os info program name is not empty create an os info artifact on the first of the files found
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                    bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                            Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                            osInfoProgramName)); //NON-NLS
+                    addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, files.get(0), bbattributes);
+                }
             }
         }
     }
