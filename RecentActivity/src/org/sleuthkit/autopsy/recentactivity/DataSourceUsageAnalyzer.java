@@ -46,7 +46,7 @@ public class DataSourceUsageAnalyzer extends Extract {
 
     private static final String WINDOWS_VOLUME_PATH = "/windows/system32";
     private static final String OSX_VOLUME_PATH = "/System/Library/CoreServices/SystemVersion.plist";
-    private static final String ANDROID_VOLUME_PATH = "data/data/com.android.providers.settings/databases/settings.db";
+    private static final String ANDROID_VOLUME_PATH = "data/com.android.providers.settings/databases/settings.db";
     //linux specific files reference https://www.novell.com/coolsolutions/feature/11251.html
     private static final String LINUX_RED_HAT_PATHS[] = {"/etc/redhat-release", "/etc/redhat_version"};
     private static final String LINUX_NOVELL_SUSE_PATH = "/etc/SUSE-release";
