@@ -641,7 +641,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
                             eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
                             () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
-                } catch (CacheLoader.InvalidCacheLoadException ex) {
+                } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
                     throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo", eamDataSource.getName()), ex);
                 }
             } else {
