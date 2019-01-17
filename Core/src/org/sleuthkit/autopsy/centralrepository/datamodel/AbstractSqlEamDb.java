@@ -621,7 +621,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
-
+        //The conflict clause exists incase multiple nodes are trying to add the datasource because it did not exist at the same time
         String sql = "INSERT INTO data_sources(device_id, case_id, name, datasource_obj_id) VALUES (?, ?, ?, ?) "
                 + getConflictClause();
         ResultSet resultSet = null;
