@@ -362,8 +362,6 @@ class ExtractRegistry extends Extract {
     private boolean parseAutopsyPluginOutput(String regFilePath, AbstractFile regFile) {
         FileInputStream fstream = null;
         try {
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
-
             // Read the file in and create a Document and elements
             File regfile = new File(regFilePath);
             fstream = new FileInputStream(regfile);
@@ -484,7 +482,7 @@ class ExtractRegistry extends Extract {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ORGANIZATION, parentModuleName, regOrg));
 
                             // Check if there is already an OS_INFO artifact for this file, and add to that if possible.
-                            ArrayList<BlackboardArtifact> results = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
+                            ArrayList<BlackboardArtifact> results = skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
                             if (results.isEmpty()) {
                                 BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                                 bbart.addAttributes(bbattributes);
@@ -537,7 +535,7 @@ class ExtractRegistry extends Extract {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEMP_DIR, parentModuleName, tempDir));
 
                             // Check if there is already an OS_INFO artifact for this file and add to that if possible
-                            ArrayList<BlackboardArtifact> results = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
+                            ArrayList<BlackboardArtifact> results = skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
                             if (results.isEmpty()) {
                                 BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                                 bbart.addAttributes(bbattributes);
@@ -576,7 +574,7 @@ class ExtractRegistry extends Extract {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN, parentModuleName, domain));
 
                             // Check if there is already an OS_INFO artifact for this file and add to that if possible
-                            ArrayList<BlackboardArtifact> results = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
+                            ArrayList<BlackboardArtifact> results = skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_INFO, regFile.getId());
                             if (results.isEmpty()) {
                                 BlackboardArtifact bbart = regFile.newArtifact(ARTIFACT_TYPE.TSK_OS_INFO);
                                 bbart.addAttributes(bbattributes);
@@ -602,7 +600,7 @@ class ExtractRegistry extends Extract {
 
                                 switch (dataType) {
                                     case "recentdocs": //NON-NLS
-                                        // BlackboardArtifact bbart = tempDb.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
+                                        // BlackboardArtifact bbart = skCase.getContentById(orgId).newArtifact(ARTIFACT_TYPE.TSK_RECENT_OBJECT);
                                         // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", dataType, mtime));
                                         // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME.getTypeID(), "RecentActivity", dataType, mtimeItem));
                                         // bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE.getTypeID(), "RecentActivity", dataType, value));
@@ -840,7 +838,6 @@ class ExtractRegistry extends Extract {
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(regfile))) {
-            SleuthkitCase tempDb = currentCase.getSleuthkitCase();
             // Read the file in and create a Document and elements
             String userInfoSection = "User Information";
             String previousLine = null;
@@ -861,7 +858,7 @@ class ExtractRegistry extends Extract {
                 userInfoMap.put(userInfo.getUserSid(), userInfo);
             }
             //get all existing OS account artifacts
-            List<BlackboardArtifact> existingOsAccounts = tempDb.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
+            List<BlackboardArtifact> existingOsAccounts = skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
             for (BlackboardArtifact osAccount : existingOsAccounts) {
                 //if the OS Account artifact was from the same data source check the user id
                 if (osAccount.getDataSource().getId() == regAbstractFile.getDataSourceObjectId()) {
