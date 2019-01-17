@@ -64,7 +64,7 @@ public class DataSourceUsageAnalyzer extends Extract {
     private Content dataSource;
 
     @Messages({
-        "DataSourceAnalyzer.windowsVolume.label=Windows volume",
+        "DataSourceAnalyzer.windowsVolume.label=OS Drive (Windows)",
         "DataSourceUsageAnalyzer.osxVolume.label=OS Drive (OS X)",
         "DataSourceUsageAnalyzer.osx.label=Mac OS X",
         "DataSourceUsageAnalyzer.androidVolume.label=OS Drive (Android)",
