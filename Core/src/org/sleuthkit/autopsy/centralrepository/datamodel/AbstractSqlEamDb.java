@@ -1675,9 +1675,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 // in the database, but we don't expect the user to be tagging large numbers
                 // of items (that didn't have the CE ingest module run on them) at once.
                 CorrelationCase correlationCaseWithId = getCaseByUUID(eamArtifact.getCorrelationCase().getCaseUUID());
-                if (null == correlationCaseWithId) {
-                    correlationCaseWithId = newCase(eamArtifact.getCorrelationCase());
-                }
                 if (null == getDataSource(correlationCaseWithId, eamArtifact.getCorrelationDataSource().getDataSourceObjectID())) {
                     newDataSource(eamArtifact.getCorrelationDataSource());
                 }

@@ -70,8 +70,8 @@
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-postgresql-${TSK_VERSION}.jar" 
               tofile="${ext.dir}/sleuthkit-postgresql-${TSK_VERSION}.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar"
-              tofile="${ext.dir}/sqlite-jdbc-3.8.11.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.25.2.jar"
+              tofile="${ext.dir}/sqlite-jdbc-3.25.2.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 
               tofile="${ext.dir}/postgresql-9.4.1211.jre7.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"
