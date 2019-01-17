@@ -638,7 +638,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             if (!resultSet.next()) {
                 //if nothing was inserted then return the DataSource that exists in the central repository
                 try {
-                    return dataSource = dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
+                    return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
                             eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
                             () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
                 } catch (CacheLoader.InvalidCacheLoadException ex) {
