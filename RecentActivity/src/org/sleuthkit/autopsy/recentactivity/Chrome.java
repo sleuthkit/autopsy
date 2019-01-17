@@ -37,12 +37,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -63,6 +66,10 @@ class Chrome extends Extract {
     private static final String DOWNLOAD_QUERY = "SELECT full_path, url, start_time, received_bytes FROM downloads"; //NON-NLS
     private static final String DOWNLOAD_QUERY_V30 = "SELECT current_path AS full_path, url, start_time, received_bytes FROM downloads, downloads_url_chains WHERE downloads.id=downloads_url_chains.id"; //NON-NLS
     private static final String LOGIN_QUERY = "SELECT origin_url, username_value, date_created, signon_realm from logins"; //NON-NLS
+    private static final String AUTOFILL_QUERY = "SELECT name, value, date_created, date_last_used, count from autofill"; //NON-NLS
+    private static final String WEBFORM_ADDRESS_QUERY = "SELECT first_name, middle_name, last_name, full_name, street_address, city, state, zipcode, number, email, date_modified, use_date, use_count" +
+                                                        " FROM autofill_profiles, autofill_profile_names, autofill_profile_emails, autofill_profile_phones" +
+                                                        " WHERE autofill_profiles.guid = autofill_profile_names.guid AND autofill_profiles.guid = autofill_profile_emails.guid AND autofill_profiles.guid = autofill_profile_phones.guid";
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
     private IngestJobContext context;
@@ -80,6 +87,7 @@ class Chrome extends Extract {
         this.getBookmark();
         this.getCookie();
         this.getLogins();
+        this.getAutofill();
         this.getDownload();
     }
 
@@ -596,6 +604,7 @@ class Chrome extends Extract {
                         
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT, loginDataFile, bbattributes);
                 if (bbart != null) {
+                    this.indexArtifact(bbart);
                     bbartifacts.add(bbart);
                 }
             }
@@ -605,6 +614,176 @@ class Chrome extends Extract {
         IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
                 NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                 BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT, bbartifacts));
+        
+    }
+    
+    /**
+     * Gets and parses Autofill data from 'Web Data' database, 
+     * and creates TSK_WEB_FORM_AUTOFILL, TSK_WEB_FORM_ADDRESS artifacts
+     */
+    private void getAutofill() {
+        
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> webDataFiles;
+        try {
+            webDataFiles = fileManager.findFiles(dataSource, "Web Data", "Chrome"); //NON-NLS
+        } catch (TskCoreException ex) {
+            String msg = NbBundle.getMessage(this.getClass(), "Chrome.getAutofills.errMsg.errGettingFiles");
+            logger.log(Level.SEVERE, msg, ex);
+            this.addErrorMessage(this.getName() + ": " + msg);
+            return;
+        }
+
+        if (webDataFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Chrome Web Data files."); //NON-NLS
+            return;
+        }
+        
+        dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        int j = 0;
+        while (j < webDataFiles.size()) {
+            AbstractFile webDataFile = webDataFiles.get(j++);
+            if (webDataFile.getSize() == 0) {
+                continue;
+            }
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + webDataFile.getName() + j + ".db"; //NON-NLS
+            try {
+                ContentUtils.writeToFile(webDataFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Chrome Autofill artifacts file '%s' (id=%d).",
+                        webDataFile.getName(), webDataFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getAutofill.errMsg.errAnalyzingFiles",
+                        this.getName(), webDataFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Chrome Web data file '%s' (id=%d).",
+                        temps, webDataFile.getName(), webDataFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Chrome.getLogin.errMsg.errAnalyzingFiles",
+                        this.getName(), webDataFile.getName()));
+                continue;
+            }
+            File dbFile = new File(temps);
+            if (context.dataSourceIngestIsCancelled()) {
+                dbFile.delete();
+                break;
+            }
+            
+            // Get Autofill
+            List<HashMap<String, Object>> autofills = this.dbConnect(temps, AUTOFILL_QUERY);
+            logger.log(Level.INFO, "{0}- Now getting Autofill information from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, autofills.size()}); //NON-NLS
+            for (HashMap<String, Object> result : autofills) {
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("name").toString() != null) ? result.get("name").toString() : ""))); //NON-NLS
+                
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
+                
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        Long.valueOf(result.get("date_created").toString()))); //NON-NLS
+               
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        Long.valueOf(result.get("date_last_used").toString()))); //NON-NLS
+                
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        (Integer.valueOf(result.get("count").toString())))); //NON-NLS
+               
+                // Add artifact
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, webDataFile, bbattributes);
+                if (bbart != null) {
+                    this.indexArtifact(bbart);
+                    bbartifacts.add(bbart);
+                }
+            }
+
+            
+            // Get Web form addresses
+            List<HashMap<String, Object>> addresses = this.dbConnect(temps, WEBFORM_ADDRESS_QUERY);
+            logger.log(Level.INFO, "{0}- Now getting Web form addresses from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, addresses.size()}); //NON-NLS
+            for (HashMap<String, Object> result : addresses) {
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                
+                String first_name = result.get("first_name").toString() != null ? result.get("first_name").toString() : "";
+                String middle_name = result.get("middle_name").toString() != null ? result.get("middle_name").toString() : "";
+                String last_name = result.get("last_name").toString() != null ? result.get("last_name").toString() : "";
+                String full_name = result.get("full_name").toString() != null ? result.get("full_name").toString() : "";
+                
+                if (full_name == null || full_name.isEmpty()) {
+                    full_name = String.join(" ", first_name, middle_name, last_name);
+                }
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME_PERSON,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                         full_name)); //NON-NLS
+                
+                String email_Addr = result.get("email").toString() != null ? result.get("email").toString() : "";
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        email_Addr)); //NON-NLS
+                // If an email address is found, create an account instance for it
+                if (email_Addr != null && !email_Addr.isEmpty()) {
+                    try {
+                        Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, email_Addr,  NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), webDataFile);
+                    } catch (NoCurrentCaseException | TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Error creating email account instance for '%s' from Chrome WebData file '%s' .",
+                            email_Addr, webDataFile.getName()), ex); //NON-NLS
+                    } 
+                }
+                
+                String phone_number = result.get("number").toString() != null ? result.get("number").toString() : "";
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                         phone_number)); //NON-NLS
+                // If a phone number is found, create an account instance for it
+                 if (phone_number != null && !phone_number.isEmpty()) {
+                    try {
+                        Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, phone_number,  NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), webDataFile);
+                    } catch (NoCurrentCaseException | TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Error creating phone account instance for '%s' from Chrome WebData file '%s' .",
+                            phone_number, webDataFile.getName()), ex); //NON-NLS
+                    } 
+                }
+                
+                // Get the location address
+                String street_address = result.get("street_address").toString() != null ? result.get("street_address").toString() : "";
+                String city = result.get("city").toString() != null ? result.get("city").toString() : "";
+                String state = result.get("state").toString() != null ? result.get("state").toString() : "";
+                String zipcode = result.get("zipcode").toString() != null ? result.get("zipcode").toString() : "";
+                String locationAddress = String.join(", ", street_address, city, state, zipcode);
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCATION,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        locationAddress)); //NON-NLS
+                 
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        Long.valueOf(result.get("date_modified").toString()))); //NON-NLS
+                  
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        Integer.valueOf(result.get("use_count").toString()))); //NON-NLS
+               
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                        NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                        Long.valueOf(result.get("use_date").toString()))); //NON-NLS       
+                
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS, webDataFile, bbattributes);
+                if (bbart != null) {
+                    this.indexArtifact(bbart);
+                    bbartifacts.add(bbart);
+                }
+            }
+            
+            dbFile.delete();
+        }
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, bbartifacts));
         
     }
     
