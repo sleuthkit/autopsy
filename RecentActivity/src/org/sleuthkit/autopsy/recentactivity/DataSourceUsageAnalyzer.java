@@ -40,10 +40,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @Messages({"DataSourceUsageAnalyzer.parentModuleName=Recent Activity"})
 class DataSourceUsageAnalyzer extends Extract {
-    
+
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
     private Content dataSource;
-    
+
     @Messages({
         "# {0} - OS name",
         "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})"
@@ -56,7 +56,7 @@ class DataSourceUsageAnalyzer extends Extract {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained a volume with operating system specific files", ex);
         }
-        
+
     }
 
     /**
@@ -73,27 +73,49 @@ class DataSourceUsageAnalyzer extends Extract {
             if (osInfoArt.getDataSource().getId() == dataSource.getId()) {
                 BlackboardAttribute progNameAttr = osInfoArt.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME));
                 if (progNameAttr != null) {
-                    String dataSourceUsageDescription = "";
                     if (progNameAttr.getDisplayString().toLowerCase().contains("windows")) { //non-nls
                         windowsOsDetected = true;
                         //use the program name when it appears to be windows
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_customVolume_label(progNameAttr.getDisplayString());
+                        createDataSourceUsageArtifact(Bundle.DataSourceUsageAnalyzer_customVolume_label(progNameAttr.getDisplayString()));
                     } else {
                         ExtractOs.OS_TYPE osType = ExtractOs.OS_TYPE.fromOsInfoLabel(moduleName);
                         if (osType != null) {
-                            dataSourceUsageDescription = osType.getDsUsageLabel();
+                            createDataSourceUsageArtifact(osType.getDsUsageLabel());
                         } else {
                             //unable to determine name for DATA_SOURCE_USAGE artifact using program name
-                            dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_customVolume_label(progNameAttr.getDisplayString());
+                            createDataSourceUsageArtifact(Bundle.DataSourceUsageAnalyzer_customVolume_label(progNameAttr.getDisplayString()));
                         }
                     }
-                    createDataSourceUsageArtifact(dataSourceUsageDescription);
                 }
             }
         }
         if (!windowsOsDetected) {  //if we didn't find a windows OS_INFO artifact check if we still think it is a windows volume
             checkIfOsSpecificVolume(ExtractOs.OS_TYPE.WINDOWS);
         }
+    }
+
+    /**
+     * If a TSK_DATA_SOURCE_USAGE artifact does not exist with the given
+     * description create one.
+     *
+     * @param dataSourceUsageDescription the text for the description attribute
+     *                                   of the TSK_DATA_SOURCE_USAGE artifact
+     *
+     * @throws TskCoreException
+     */
+    private void createDataSourceUsageArtifact(String dataSourceUsageDescription) throws TskCoreException {
+            //if the data source usage description is not empty create a data source usage artifact if an Usage artifact does not already exist with the same description
+            List<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource.getId());
+            for (BlackboardArtifact artifact : artifacts) {
+                if (artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)).getValueString().equals(dataSourceUsageDescription)) {
+                    return; //already exists don't create a duplicate
+                }
+            }
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                    Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                    dataSourceUsageDescription)); //NON-NLS
+            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
     }
 
     /**
@@ -105,25 +127,15 @@ class DataSourceUsageAnalyzer extends Extract {
      *
      * @return true if any specified files exist false if none exist
      */
-    private void checkIfOsSpecificVolume(ExtractOs.OS_TYPE osType) {
+    private void checkIfOsSpecificVolume(ExtractOs.OS_TYPE osType) throws TskCoreException {
         FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> files = new ArrayList<>();
         for (String filePath : osType.getFilePaths()) {
             files.addAll(fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath)));
         }
-        if (!files.isEmpty) {
+        if (!files.isEmpty()) {
             //if the data source usage description is not empty create a data source usage artifact if an Usage artifact does not already exist with the same description
-            List<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource.getId());
-            for (BlackboardArtifact artifact : artifacts) {
-                if (artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)).getValueString().equals(osType.getDsUsageLabel())) {
-                    return; //already exists don't create a duplicate
-                }
-            }
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                    Bundle.DataSourceUsageAnalyzer_parentModuleName(),
-                    osType.getDsUsageLabel())); //NON-NLS
-            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
+            createDataSourceUsageArtifact(osType.getDsUsageLabel());
         }
     }
 }

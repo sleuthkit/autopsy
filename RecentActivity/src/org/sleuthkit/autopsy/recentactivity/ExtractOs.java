@@ -134,13 +134,13 @@ class ExtractOs extends Extract {
         "ExtractOs.solarisSparcVolume.label=OS Drive (Linux Solaris/Sparc)",
         "ExtractOs.gentooLinuxVolume.label=OS Drive (Linux Gentoo)",
         "ExtractOs.unitedLinuxVolume.label=OS Drive (Linux United Linux)",
-        "ExtractOs.ubuntuLinuxVolume.label=OS Drive (Linux Ubuntu)"})s
+        "ExtractOs.ubuntuLinuxVolume.label=OS Drive (Linux Ubuntu)"})
     /**
      * Enum used for coupling the TSK_OS_INFO artifacts created in ExtractOs and
      * the TSK_DATA_SOURCE_USAGE artifacts created in DataSourceUsageAnalyzer
      */
     enum OS_TYPE {
-        WINDOWS("", Bundle.DataSourceUsageAnalyzer_windowsVolume_label(), Arrays.asList(WINDOWS_VOLUME_PATH)), //windows doesn't get OS_INFO artifacts created for it here  
+        WINDOWS("", Bundle.ExtractOs_windowsVolume_label(), Arrays.asList(WINDOWS_VOLUME_PATH)), //windows doesn't get OS_INFO artifacts created for it here  
         MAC_OS_X(Bundle.ExtractOs_osx_label(), Bundle.ExtractOs_osxVolume_label(), Arrays.asList(OSX_VOLUME_PATH)),
         ANDROID(Bundle.ExtractOs_androidOs_label(), Bundle.ExtractOs_androidVolume_label(), Arrays.asList(ANDROID_VOLUME_PATH)),
         LINUX_REDHAT(Bundle.ExtractOs_redhatLinuxOs_label(), Bundle.ExtractOs_redhatLinuxVolume_label(), Arrays.asList(LINUX_RED_HAT_PATHS)),
@@ -161,10 +161,14 @@ class ExtractOs extends Extract {
         private final List<String> filePaths;
 
         /**
-         * An OS_TYPE enum containing the messages 
-         * @param osInfoText
-         * @param dsUsageText
-         * @param filePathList 
+         * An constructs a value for an OS_TYPE enum
+         *
+         * @param osInfoText   - the program name to use for TSK_OS_INFO
+         *                     artifacts
+         * @param dsUsageText  - the description to use for
+         *                     TSK_DATA_SOURCE_USAGE artifacts
+         * @param filePathList - the list of file paths to create these
+         *                     artifacts for
          */
         private OS_TYPE(String osInfoText, String dsUsageText, List<String> filePathList) {
             this.osInfoLabel = osInfoText;
@@ -172,18 +176,46 @@ class ExtractOs extends Extract {
             this.filePaths = filePathList;
         }
 
+        /**
+         * Get the string to use for the PROG_NAME attribute of TSK_OS_INFO
+         * artifacts.
+         *
+         * @return osInfoLabel
+         */
         String getOsInfoLabel() {
             return osInfoLabel;
         }
 
+        /**
+         * Get the string to use for the DESCRIPTION attribute of
+         * TSK_DATA_SOURCE_USAGE artifacts.
+         *
+         * @return dsUsageLabel
+         */
         String getDsUsageLabel() {
             return dsUsageLabel;
         }
 
+        /**
+         * Get the list of string representations of file paths which should
+         * identify that this OS_TYPE is present in the data source.
+         *
+         * @return filePaths
+         */
         List<String> getFilePaths() {
             return Collections.unmodifiableList(filePaths);
         }
 
+        /**
+         * Given the Description text of a TSK_DATA_SOURCE_USAGE artifact
+         * determine what type OS_TYPE this is
+         *
+         * @param dsUsageLabel description text of the TSK_DATA_SOURCE_USAGE
+         *                     artifact
+         *
+         * @return the OS_TYPE which matches the specified dsUsageLabel, null if
+         *         no types match
+         */
         static public OS_TYPE fromDsUsageLabel(String dsUsageLabel) {
             for (OS_TYPE value : OS_TYPE.values()) {
                 if (value.getDsUsageLabel().equals(dsUsageLabel)) {
@@ -193,6 +225,15 @@ class ExtractOs extends Extract {
             return null;
         }
 
+        /**
+         * Given the Program Name text of a TSK_OS_INFO artifact determine what
+         * type OS_TYPE this is
+         *
+         * @param osInfoLabel program name text of the TSK_OS_INFO artifact
+         *
+         * @return the OS_TYPE which matches the specified osInfoLabel, null if
+         *         no types match
+         */
         static public OS_TYPE fromOsInfoLabel(String osInfoLabel) {
             for (OS_TYPE value : OS_TYPE.values()) {
                 if (value.getOsInfoLabel().equals(osInfoLabel)) {
@@ -201,7 +242,5 @@ class ExtractOs extends Extract {
             }
             return null;
         }
-
     }
-
 }
