@@ -134,7 +134,11 @@ class ExtractOs extends Extract {
         "ExtractOs.solarisSparcVolume.label=OS Drive (Linux Solaris/Sparc)",
         "ExtractOs.gentooLinuxVolume.label=OS Drive (Linux Gentoo)",
         "ExtractOs.unitedLinuxVolume.label=OS Drive (Linux United Linux)",
-        "ExtractOs.ubuntuLinuxVolume.label=OS Drive (Linux Ubuntu)"})
+        "ExtractOs.ubuntuLinuxVolume.label=OS Drive (Linux Ubuntu)"})s
+    /**
+     * Enum used for coupling the TSK_OS_INFO artifacts created in ExtractOs and
+     * the TSK_DATA_SOURCE_USAGE artifacts created in DataSourceUsageAnalyzer
+     */
     enum OS_TYPE {
         WINDOWS("", Bundle.DataSourceUsageAnalyzer_windowsVolume_label(), Arrays.asList(WINDOWS_VOLUME_PATH)), //windows doesn't get OS_INFO artifacts created for it here  
         MAC_OS_X(Bundle.ExtractOs_osx_label(), Bundle.ExtractOs_osxVolume_label(), Arrays.asList(OSX_VOLUME_PATH)),
@@ -156,6 +160,12 @@ class ExtractOs extends Extract {
         private final String dsUsageLabel;
         private final List<String> filePaths;
 
+        /**
+         * An OS_TYPE enum containing the messages 
+         * @param osInfoText
+         * @param dsUsageText
+         * @param filePathList 
+         */
         private OS_TYPE(String osInfoText, String dsUsageText, List<String> filePathList) {
             this.osInfoLabel = osInfoText;
             this.dsUsageLabel = dsUsageText;

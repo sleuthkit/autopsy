@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
@@ -41,11 +40,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @Messages({"DataSourceUsageAnalyzer.parentModuleName=Recent Activity"})
 class DataSourceUsageAnalyzer extends Extract {
-
+    
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
-    private static final String WINDOWS_VOLUME_PATH = "/windows/system32";
     private Content dataSource;
-
+    
     @Messages({
         "# {0} - OS name",
         "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})"
@@ -58,7 +56,7 @@ class DataSourceUsageAnalyzer extends Extract {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained a volume with operating system specific files", ex);
         }
-
+        
     }
 
     /**
@@ -94,52 +92,38 @@ class DataSourceUsageAnalyzer extends Extract {
             }
         }
         if (!windowsOsDetected) {  //if we didn't find a windows OS_INFO artifact check if we still think it is a windows volume
-            if (osSpecificVolumeFilesExist(Arrays.asList(WINDOWS_VOLUME_PATH))) {
-                createDataSourceUsageArtifact(Bundle.DataSourceUsageAnalyzer_windowsVolume_label());
-            }
+            checkIfOsSpecificVolume(ExtractOs.OS_TYPE.WINDOWS);
         }
     }
 
     /**
-     * If a TSK_DATA_SOURCE_USAGE artifact does not exist with the given
-     * description create one.
+     * Check if any of the specified file paths exist for the specified OS_TYPE
+     * exist, if they do create a TSK_DATA_SOURCE_USAGE artifact does if one
+     * does not exist with the given description.
      *
-     * @param dataSourceUsageDescription the text for the description attribute
-     *                                   of the TSK_DATA_SOURCE_USAGE artifact
+     * @param osType - the OS_TYPE to check for
      *
-     * @throws TskCoreException
+     * @return true if any specified files exist false if none exist
      */
-    private void createDataSourceUsageArtifact(String dataSourceUsageDescription) throws TskCoreException {
-        if (!dataSourceUsageDescription.isEmpty()) {
+    private void checkIfOsSpecificVolume(ExtractOs.OS_TYPE osType) {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> files = new ArrayList<>();
+        for (String filePath : osType.getFilePaths()) {
+            files.addAll(fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath)));
+        }
+        if (!files.isEmpty) {
             //if the data source usage description is not empty create a data source usage artifact if an Usage artifact does not already exist with the same description
             List<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource.getId());
             for (BlackboardArtifact artifact : artifacts) {
-                if (artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)).getValueString().equals(dataSourceUsageDescription)) {
+                if (artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)).getValueString().equals(osType.getDsUsageLabel())) {
                     return; //already exists don't create a duplicate
                 }
             }
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
                     Bundle.DataSourceUsageAnalyzer_parentModuleName(),
-                    dataSourceUsageDescription)); //NON-NLS
+                    osType.getDsUsageLabel())); //NON-NLS
             addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
         }
-    }
-
-    /**
-     * Check if any of the specified file paths exist, if they do return true
-     * otherwise return false.
-     *
-     * @param filesToCheckFor - List of file paths to check for
-     *
-     * @return true if any specified files exist false if none exist
-     */
-    private boolean osSpecificVolumeFilesExist(List<String> filesToCheckFor) throws TskCoreException {
-        FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> files = new ArrayList<>();
-        for (String filePath : filesToCheckFor) {
-            files.addAll(fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath)));
-        }
-        return !files.isEmpty();
     }
 }
