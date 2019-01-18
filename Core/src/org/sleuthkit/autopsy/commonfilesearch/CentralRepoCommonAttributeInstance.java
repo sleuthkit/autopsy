@@ -65,6 +65,9 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
 
     @Override
     AbstractFile getAbstractFile() {
+        if (this.abstractFile != null) {
+            return this.abstractFile;
+        }
 
         Case currentCase;
         if (this.currentAttribute != null) {
@@ -88,46 +91,57 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                         return null;
                     }
 
-                    File fileFromPath = new File(currentFullPath);
-                    String fileName = fileFromPath.getName();
-
-                    // Create the parent path. Make sure not to add a separator if there is already one there.
-                    String parentPath = fileFromPath.getParent();
-                    if (!parentPath.endsWith(File.separator)) {
-                        parentPath += File.separator;
+                    // First try to find the file in the current case using the file object id
+                    // we get from the CR (if available).
+                    Long fileId = currentAttribute.getFileObjectId();
+                    if (fileId != null && fileId != 0) {
+                        AbstractFile file = tskDb.getAbstractFileById(fileId);
+                        if (file == null) {
+                            LOGGER.log(Level.WARNING, String.format("Failed to find file with id %s in current case. Will attempt to find file based on path.", fileId));
+                        } else {
+                            this.abstractFile = file;
+                        }
                     }
-                    parentPath = parentPath.replace("\\", "/");
-                    final String whereClause = String.format("lower(name) = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, parentPath, dataSource.get().getId());
-                    List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(whereClause);
 
-                    if (potentialAbstractFiles.isEmpty()) {
-                        return null;
-                    } else if (potentialAbstractFiles.size() > 1) {
-                        LOGGER.log(Level.WARNING, String.format("Unable to find an exact match for AbstractFile for record with filePath: %s.  May have returned the wrong file.", new Object[]{currentFullPath}));
-                        return potentialAbstractFiles.get(0);
-                    } else {
-                        return potentialAbstractFiles.get(0);
+                    if (this.abstractFile == null) {
+                        // We failed to find the file using the file id so now we
+                        // will try using the file name, parent path and data source id.
+                        File fileFromPath = new File(currentFullPath);
+                        String fileName = fileFromPath.getName();
+
+                        // Create the parent path. Make sure not to add a separator if there is already one there.
+                        String parentPath = fileFromPath.getParent();
+                        if (!parentPath.endsWith(File.separator)) {
+                            parentPath += File.separator;
+                        }
+                        parentPath = parentPath.replace("\\", "/");
+                        final String whereClause = String.format("lower(name) = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, parentPath, dataSource.get().getId());
+                        List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(whereClause);
+
+                        if (potentialAbstractFiles.isEmpty()) {
+                            LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.", new Object[]{currentAttributeInstance.getFilePath()}));
+                        } else if (potentialAbstractFiles.size() > 1) {
+                            LOGGER.log(Level.WARNING, String.format("Unable to find an exact match for AbstractFile for record with filePath: %s.  May have returned the wrong file.", new Object[]{currentFullPath}));
+                            this.abstractFile = potentialAbstractFiles.get(0);
+                        } else {
+                            this.abstractFile = potentialAbstractFiles.get(0);
+                        }
                     }
-                } else {
-                    return null;
                 }
             } catch (TskCoreException | NoCurrentCaseException ex) {
                 LOGGER.log(Level.SEVERE, String.format("Unable to find AbstractFile for record with filePath: %s.  Node not created.", new Object[]{currentAttributeInstance.getFilePath()}), ex);
-                return null;
             }
-
         }
-        return null;
+
+        return this.abstractFile;
     }
 
     @Override
     public DisplayableItemNode[] generateNodes() {
-        // @@@ We should be doing more of this work in teh generateKeys method. We want to do as little as possible in generateNodes
         List<DisplayableItemNode> attrInstNodeList = new ArrayList<>(0);
         String currCaseDbName = Case.getCurrentCase().getDisplayName();
         try {
-            AbstractFile abstractFileForAttributeInstance = this.getAbstractFile();
-            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createNode(currentAttribute, abstractFileForAttributeInstance, currCaseDbName, nodeType);
+            DisplayableItemNode generatedInstNode = AbstractCommonAttributeInstance.createNode(currentAttribute, this.getAbstractFile(), currCaseDbName, nodeType);
             attrInstNodeList.add(generatedInstNode);
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, String.format("Unable to get DataSource for record with md5: %s.  Node not created.", new Object[]{currentAttribute.getCorrelationValue()}), ex);

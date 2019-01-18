@@ -57,7 +57,7 @@ public final class InstanceCountNode extends DisplayableItemNode {
         "InstanceCountNode.displayName=Files with %s instances (%s)"
     })
     public InstanceCountNode(int instanceCount, CommonAttributeValueList attributeValues) {
-        super(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), true));
+        super(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), false));
 
         this.instanceCount = instanceCount;
         this.attributeValues = attributeValues;
@@ -81,7 +81,7 @@ public final class InstanceCountNode extends DisplayableItemNode {
      */
     void createChildren() {
         attributeValues.displayDelayedMetadata();
-        setChildren(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), true));
+        setChildren(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), false));
     }
 
     /**
