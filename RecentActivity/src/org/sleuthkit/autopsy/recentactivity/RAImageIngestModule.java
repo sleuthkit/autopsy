@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2019 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,15 +70,17 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract chrome = new Chrome();
         Extract firefox = new Firefox();
         Extract SEUQA = new SearchEngineURLQueryAnalyzer();
-        Extract dataSourceProfiler = new DataSourceUsageAnalyzer();
+        Extract osExtract = new ExtractOs();
+        Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer();
 
         extractors.add(chrome);
         extractors.add(firefox);
         extractors.add(iexplore);
         extractors.add(recentDocuments);
-        extractors.add(dataSourceProfiler);
         extractors.add(SEUQA); // this needs to run after the web browser modules
-        extractors.add(registry); // this runs last because it is slowest
+        extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
+        extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
+        extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
 
         browserExtracters.add(chrome);
         browserExtracters.add(firefox);
