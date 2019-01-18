@@ -73,12 +73,15 @@ class DataSourceUsageAnalyzer extends Extract {
             if (osInfoArt.getDataSource().getId() == dataSource.getId()) {
                 BlackboardAttribute progNameAttr = osInfoArt.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME));
                 if (progNameAttr != null) {
-                    if (progNameAttr.getDisplayString().toLowerCase().contains("windows")) { //non-nls
+                    if (progNameAttr.getValueString().isEmpty()) {
+                        //skip empty Program Name text
+                    }
+                    else if (progNameAttr.getDisplayString().toLowerCase().contains("windows")) { //non-nls
                         windowsOsDetected = true;
                         //use the program name when it appears to be windows
                         createDataSourceUsageArtifact(Bundle.DataSourceUsageAnalyzer_customVolume_label(progNameAttr.getDisplayString()));
                     } else {
-                        ExtractOs.OS_TYPE osType = ExtractOs.OS_TYPE.fromOsInfoLabel(moduleName);
+                        ExtractOs.OS_TYPE osType = ExtractOs.OS_TYPE.fromOsInfoLabel(progNameAttr.getValueString());
                         if (osType != null) {
                             createDataSourceUsageArtifact(osType.getDsUsageLabel());
                         } else {
