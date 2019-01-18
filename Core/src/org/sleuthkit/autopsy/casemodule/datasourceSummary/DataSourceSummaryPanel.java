@@ -30,7 +30,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -39,7 +38,6 @@ import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
@@ -61,7 +59,8 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
     private List<IngestJobInfo> ingestJobs = new ArrayList<>();
     private DataSourceTableModel dataSourceTableModel = new DataSourceTableModel();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
-    private FilesTableModel filesTableModel = new FilesTableModel(null);
+    private DataSourceSummaryFilesPanel filesPanel = new DataSourceSummaryFilesPanel();
+    private DataSourceSummaryDetailsPanel detailsPanel = new DataSourceSummaryDetailsPanel();
     private final List<DataSource> dataSources = new ArrayList<>();
     private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final Logger logger = Logger.getLogger(DataSourceSummaryPanel.class.getName());
@@ -76,8 +75,10 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         "DataSourceSummaryPanel.getDataSources.error.title=Load Failure"})
     DataSourceSummaryPanel() {
         initComponents();
-        ingestJobsTable.getTableHeader().setReorderingAllowed(false);
-        fileCountsTable.getTableHeader().setReorderingAllowed(false);
+        dataSourceTabbedPane.add("Files",filesPanel);
+        dataSourceTabbedPane.addTab("Details", detailsPanel);
+//        ingestJobsTable.getTableHeader().setReorderingAllowed(false);
+//        fileCountsTable.getTableHeader().setReorderingAllowed(false);
         dataSourcesTable.getTableHeader().setReorderingAllowed(false);
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
@@ -94,9 +95,8 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 DataSource selectedDataSource = (dataSourcesTable.getSelectedRow() < 0 ? null : dataSources.get(dataSourcesTable.getSelectedRow()));
                 gotoDataSourceButton.setEnabled(selectedDataSource != null);
                 updateIngestJobs(selectedDataSource);
-                filesTableModel = new FilesTableModel(selectedDataSource);
-                fileCountsTable.setModel(filesTableModel);
-                operatingSystemValueLabel.setText(getOSName(selectedDataSource));
+                filesPanel.updateFilesTableData(selectedDataSource);
+//                operatingSystemValueLabel.setText(getOSName(selectedDataSource));
                 this.repaint();
             }
         });
@@ -152,7 +152,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
             }
         }
         ingestJobTableModel = new IngestJobTableModel();
-        ingestJobsTable.setModel(ingestJobTableModel);
+//        ingestJobsTable.setModel(ingestJobTableModel);
     }
 
     /**
@@ -167,33 +167,13 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         jSeparator1 = new javax.swing.JSeparator();
         dataSourcesScrollPane = new javax.swing.JScrollPane();
         dataSourcesTable = new javax.swing.JTable();
-        ingestJobsScrollPane = new javax.swing.JScrollPane();
-        ingestJobsTable = new javax.swing.JTable();
-        fileCountsScrollPane = new javax.swing.JScrollPane();
-        fileCountsTable = new javax.swing.JTable();
-        operatingSystemLabel = new javax.swing.JLabel();
-        operatingSystemValueLabel = new javax.swing.JLabel();
-        fileCountsLabel = new javax.swing.JLabel();
-        ingestJobsLabel = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
         gotoDataSourceButton = new javax.swing.JButton();
+        dataSourceTabbedPane = new javax.swing.JTabbedPane();
 
         dataSourcesTable.setModel(dataSourceTableModel);
         dataSourcesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         dataSourcesScrollPane.setViewportView(dataSourcesTable);
-
-        ingestJobsTable.setModel(ingestJobTableModel);
-        ingestJobsTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        ingestJobsScrollPane.setViewportView(ingestJobsTable);
-
-        fileCountsTable.setModel(filesTableModel);
-        fileCountsScrollPane.setViewportView(fileCountsTable);
-
-        org.openide.awt.Mnemonics.setLocalizedText(operatingSystemLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.operatingSystemLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(fileCountsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.fileCountsLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(ingestJobsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.ingestJobsLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.closeButton.text")); // NOI18N
 
@@ -213,24 +193,13 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(gotoDataSourceButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(closeButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(fileCountsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(fileCountsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(ingestJobsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(ingestJobsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 474, Short.MAX_VALUE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(operatingSystemLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                    .addComponent(dataSourceTabbedPane, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addContainerGap())
         );
 
@@ -240,22 +209,12 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(8, 8, 8)
-                .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 120, Short.MAX_VALUE)
+                .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 135, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 5, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(fileCountsLabel)
-                    .addComponent(ingestJobsLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(dataSourceTabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(fileCountsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ingestJobsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(operatingSystemLabel, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(10, 10, 10)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(closeButton)
                     .addComponent(gotoDataSourceButton))
@@ -314,18 +273,11 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
+    private javax.swing.JTabbedPane dataSourceTabbedPane;
     private javax.swing.JScrollPane dataSourcesScrollPane;
     private javax.swing.JTable dataSourcesTable;
-    private javax.swing.JLabel fileCountsLabel;
-    private javax.swing.JScrollPane fileCountsScrollPane;
-    private javax.swing.JTable fileCountsTable;
     private javax.swing.JButton gotoDataSourceButton;
-    private javax.swing.JLabel ingestJobsLabel;
-    private javax.swing.JScrollPane ingestJobsScrollPane;
-    private javax.swing.JTable ingestJobsTable;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JLabel operatingSystemLabel;
-    private javax.swing.JLabel operatingSystemValueLabel;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -616,121 +568,5 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         public String getColumnName(int column) {
             return columnHeaders.get(column);
         }
-
     }
-
-    /**
-     * Table model for the files table model to display counts of specific file
-     * types found in the currently selected data source.
-     */
-    @Messages({"DataSourceSummaryPanel.FilesTableModel.type.header=File Type",
-        "DataSourceSummaryPanel.FilesTableModel.count.header=Count"})
-    private class FilesTableModel extends AbstractTableModel {
-
-        private static final long serialVersionUID = 1L;
-        private final DataSource currentDataSource;
-        private final List<String> columnHeaders = new ArrayList<>();
-
-        /**
-         * Create a FilesTableModel for the speicified datasource.
-         *
-         * @param selectedDataSource the datasource which this filesTablemodel
-         *                           will represent
-         */
-        FilesTableModel(DataSource selectedDataSource) {
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_FilesTableModel_type_header());
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_FilesTableModel_count_header());
-            currentDataSource = selectedDataSource;
-        }
-
-        @Override
-        public int getRowCount() {
-            //should be kept equal to the number of types we are displaying in the tables
-            return 5;
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnHeaders.size();
-        }
-
-        @Messages({
-            "DataSourceSummaryPanel.FilesTableModel.images.row=Images",
-            "DataSourceSummaryPanel.FilesTableModel.videos.row=Videos",
-            "DataSourceSummaryPanel.FilesTableModel.audio.row=Audio",
-            "DataSourceSummaryPanel.FilesTableModel.documents.row=Documents",
-            "DataSourceSummaryPanel.FilesTableModel.executables.row=Executables"
-        })
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            if (columnIndex == 0) {
-                switch (rowIndex) {
-                    case 0:
-                        return Bundle.DataSourceSummaryPanel_FilesTableModel_images_row();
-                    case 1:
-                        return Bundle.DataSourceSummaryPanel_FilesTableModel_videos_row();
-                    case 2:
-                        return Bundle.DataSourceSummaryPanel_FilesTableModel_audio_row();
-                    case 3:
-                        return Bundle.DataSourceSummaryPanel_FilesTableModel_documents_row();
-                    case 4:
-                        return Bundle.DataSourceSummaryPanel_FilesTableModel_executables_row();
-                    default:
-                        break;
-                }
-            } else if (columnIndex == 1) {
-                switch (rowIndex) {
-                    case 0:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.IMAGE.getMediaTypes());
-                    case 1:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.VIDEO.getMediaTypes());
-                    case 2:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes());
-                    case 3:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes());
-                    case 4:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes());
-                    default:
-                        break;
-                }
-            }
-            return null;
-        }
-
-        /**
-         * Get the number of files in the case database for the current data
-         * source which have the specified mimetypes.
-         *
-         * @param setOfMimeTypes the set of mime types which we are finding the
-         *                       number of occurences of
-         *
-         * @return a Long value which represents the number of occurrences of
-         *         the specified mime types in the current case for the
-         *         specified data source, null if no count was retrieved
-         */
-        private Long getCountOfFiles(Set<String> setOfMimeTypes) {
-            if (currentDataSource != null) {
-                try {
-                    String inClause = String.join("', '", setOfMimeTypes);
-                    SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                    return skCase.countFilesWhere("data_source_obj_id=" + currentDataSource.getId()
-                            + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
-                            + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
-                            + " AND mime_type IN ('" + inClause + "')"
-                            + " AND name<>''");
-                } catch (TskCoreException | NoCurrentCaseException ex) {
-                    logger.log(Level.WARNING, "Unable to get count of files for specified mime types", ex);
-                    //unable to get count of files for the specified mimetypes cell will be displayed as empty
-                }
-            }
-            return null;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return columnHeaders.get(column);
-        }
-
-    }
-
 }
