@@ -84,7 +84,7 @@ class ExtractOs extends Extract {
      */
     private void checkForOSFiles(OS_TYPE osType) throws TskCoreException {
         if (osType.getOsInfoLabel().isEmpty()) {
-            //shortcut out if it was called with no OS Program nameartifacts to create
+            //shortcut out if it was called with out a specified program name so no OS INFO artifacts are created
             return;
         }
         FileManager fileManager = currentCase.getServices().getFileManager();
