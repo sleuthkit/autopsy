@@ -87,22 +87,40 @@ class ExtractOs extends Extract {
             //shortcut out if it was called with out a specified program name so no OS INFO artifacts are created
             return;
         }
-        FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> files = new ArrayList<>();
-        for (String filePath : osType.getFilePaths()) {
-            files.addAll(fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath)));
-        }
-        if (!files.isEmpty()) {
+        AbstractFile file = getFirstFileFound(osType.getFilePaths());
+        if (file != null) {
             //check if OS INFO artifact already created on this file
-            if (tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, files.get(0).getId()).isEmpty()) {
+            if (tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, file.getId()).isEmpty()) {
                 //if the os info program name is not empty create an os info artifact on the first of the files found
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         Bundle.ExtractOs_parentModuleName(),
                         osType.getOsInfoLabel())); //NON-NLS
-                addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, files.get(0), bbattributes);
+                addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, file, bbattributes);
             }
         }
+    }
+
+    /**
+     * Get the first file found which matches one of the specified paths. Return
+     * null if no file is found.
+     *
+     * @param pathsToSearchFor the list of strings which represent the paths to
+     *                         search
+     *
+     * @return the first AbstractFile found which matched a specified path to
+     *         search for
+     */
+    private AbstractFile getFirstFileFound(List<String> pathsToSearchFor) throws TskCoreException{
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        for (String filePath : pathsToSearchFor) {
+            for (AbstractFile file : fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
+                if ((file.getParentPath() + file.getName()).equals(filePath)) {
+                    return file;
+                }
+            }
+        }
+        return null;
     }
 
     @Messages({

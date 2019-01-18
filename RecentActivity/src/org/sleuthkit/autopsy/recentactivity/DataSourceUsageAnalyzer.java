@@ -75,8 +75,7 @@ class DataSourceUsageAnalyzer extends Extract {
                 if (progNameAttr != null) {
                     if (progNameAttr.getValueString().isEmpty()) {
                         //skip empty Program Name text
-                    }
-                    else if (progNameAttr.getDisplayString().toLowerCase().contains("windows")) { //non-nls
+                    } else if (progNameAttr.getDisplayString().toLowerCase().contains("windows")) { //non-nls
                         windowsOsDetected = true;
                         //use the program name when it appears to be windows
                         createDataSourceUsageArtifact(Bundle.DataSourceUsageAnalyzer_customVolume_label(progNameAttr.getDisplayString()));
@@ -107,18 +106,18 @@ class DataSourceUsageAnalyzer extends Extract {
      * @throws TskCoreException
      */
     private void createDataSourceUsageArtifact(String dataSourceUsageDescription) throws TskCoreException {
-            //if the data source usage description is not empty create a data source usage artifact if an Usage artifact does not already exist with the same description
-            List<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource.getId());
-            for (BlackboardArtifact artifact : artifacts) {
-                if (artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)).getValueString().equals(dataSourceUsageDescription)) {
-                    return; //already exists don't create a duplicate
-                }
+        //if the data source usage description is not empty create a data source usage artifact if an Usage artifact does not already exist with the same description
+        List<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource.getId());
+        for (BlackboardArtifact artifact : artifacts) {
+            if (artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)).getValueString().equals(dataSourceUsageDescription)) {
+                return; //already exists don't create a duplicate
             }
-            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                    Bundle.DataSourceUsageAnalyzer_parentModuleName(),
-                    dataSourceUsageDescription)); //NON-NLS
-            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
+        }
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                dataSourceUsageDescription)); //NON-NLS
+        addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
     }
 
     /**
@@ -132,13 +131,13 @@ class DataSourceUsageAnalyzer extends Extract {
      */
     private void checkIfOsSpecificVolume(ExtractOs.OS_TYPE osType) throws TskCoreException {
         FileManager fileManager = currentCase.getServices().getFileManager();
-        List<AbstractFile> files = new ArrayList<>();
         for (String filePath : osType.getFilePaths()) {
-            files.addAll(fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath)));
-        }
-        if (!files.isEmpty()) {
-            //if the data source usage description is not empty create a data source usage artifact if an Usage artifact does not already exist with the same description
-            createDataSourceUsageArtifact(osType.getDsUsageLabel());
+            for (AbstractFile file : fileManager.findFiles(dataSource, FilenameUtils.getName(filePath), FilenameUtils.getPath(filePath))) {
+                if ((file.getParentPath() + file.getName()).equals(filePath)) {
+                    createDataSourceUsageArtifact(osType.getDsUsageLabel());
+                    return;
+                }
+            }
         }
     }
 }
