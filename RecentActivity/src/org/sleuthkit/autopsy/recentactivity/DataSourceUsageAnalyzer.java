@@ -43,9 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
-
     private static final String WINDOWS_VOLUME_PATH = "/windows/system32";
-
     private Content dataSource;
 
     @Messages({
@@ -68,7 +66,6 @@ class DataSourceUsageAnalyzer extends Extract {
         "DataSourceUsageAnalyzer.ubuntuLinuxVolume.label=OS Drive (Linux Ubuntu)"})
     @Override
     void process(Content dataSource, IngestJobContext context) {
-
         this.dataSource = dataSource;
         try {
             createDataSourceUsageArtifacts();
@@ -78,6 +75,12 @@ class DataSourceUsageAnalyzer extends Extract {
 
     }
 
+    /**
+     * Create TSK_DATA_SOURCE_USAGE artifacts based on OS_INFO artifacts
+     * existing as well as other criteria such as specific paths existing.
+     *
+     * @throws TskCoreException
+     */
     private void createDataSourceUsageArtifacts() throws TskCoreException {
         boolean windowsOsDetected = false;
         List<BlackboardArtifact> osInfoArtifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO);
@@ -123,13 +126,22 @@ class DataSourceUsageAnalyzer extends Extract {
                 }
             }
         }
-        if (!windowsOsDetected) {
+        if (!windowsOsDetected) {  //if we didn't find a windows OS_INFO artifact check if we still think it is a windows volume
             if (osSpecificVolumeFilesExist(Arrays.asList(WINDOWS_VOLUME_PATH))) {
                 createDataSourceUsageArtifact(Bundle.DataSourceUsageAnalyzer_windowsVolume_label());
             }
         }
     }
 
+    /**
+     * If a TSK_DATA_SOURCE_USAGE artifact does not exist with the given
+     * description create one.
+     *
+     * @param dataSourceUsageDescription the text for the description attribute
+     *                                   of the TSK_DATA_SOURCE_USAGE artifact
+     *
+     * @throws TskCoreException
+     */
     private void createDataSourceUsageArtifact(String dataSourceUsageDescription) throws TskCoreException {
         if (!dataSourceUsageDescription.isEmpty()) {
             //if the data source usage description is not empty create a data source usage artifact if an Usage artifact does not already exist with the same description

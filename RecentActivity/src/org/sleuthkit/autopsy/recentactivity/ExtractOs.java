@@ -34,6 +34,11 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Create OS INFO artifacts for the Operating Systems believed to be present on
+ * the data source.
+ */
+@Messages({"ExtractOs.parentModuleName=Recent Activity"})
 class ExtractOs extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractOs.class.getName());
@@ -118,7 +123,7 @@ class ExtractOs extends Extract {
                     //if the os info program name is not empty create an os info artifact on the first of the files found
                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                     bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                            Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                            Bundle.ExtractOs_parentModuleName(),
                             osInfoProgramName)); //NON-NLS
                     addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO, files.get(0), bbattributes);
                 }
