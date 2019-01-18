@@ -19,13 +19,17 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
+import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -40,6 +44,8 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
+    private static final Logger LOGGER = Logger.getLogger(Metadata.class.getName());
+    
     /**
      * Creates new form Metadata
      */
@@ -130,11 +136,14 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         "Metadata.tableRowTitle.imageType=Type",
         "Metadata.tableRowTitle.sectorSize=Sector Size",
         "Metadata.tableRowTitle.timezone=Time Zone",
-        "Metadata.tableRowTitle.deviceId=Device ID"})
+        "Metadata.tableRowTitle.deviceId=Device ID",
+        "Metadata.tableRowTitle.acquisitionDetails=Acquisition Details",
+        "Metadata.nodeText.unknown=Unknown"})
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
-        Image image = node.getLookup().lookup((Image.class));
+        Image image = node.getLookup().lookup(Image.class);
+        DataSource dataSource = node.getLookup().lookup(DataSource.class);
         if (file == null && image == null) {
             setText(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.nonFilePassedIn"));
             return;
@@ -167,12 +176,13 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             }
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.md5"), md5);
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.hashLookupResults"), file.getKnown().toString());
-
+            addAcquisitionDetails(sb, dataSource);
+            
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(file.getId()));
             if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
             }
-
+            
             endTable(sb);
 
             /*
@@ -235,6 +245,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             }
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.sectorSize"), Long.toString(image.getSsize()));
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.timezone"), image.getTimeZone());
+            addAcquisitionDetails(sb, dataSource);
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.deviceId"), image.getDeviceId());
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(image.getId()));
 
@@ -250,10 +261,31 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             }
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), pathValues.toString());
         }
-
+        
         setText(sb.toString());
         jTextPane1.setCaretPosition(0);
         this.setCursor(null);
+    }
+    
+    /**
+     * Add the acquisition details to the results (if applicable)
+     * 
+     * @param sb         The output StringBuilder object
+     * @param dataSource The data source (may be null)
+     */
+    private void addAcquisitionDetails(StringBuilder sb, DataSource dataSource) {
+        if (dataSource != null) {
+            try {
+                String details = dataSource.getAcquisitionDetails();
+                if (StringUtils.isEmpty(details)) {
+                    details = Bundle.Metadata_nodeText_unknown();
+                }
+                details = details.replaceAll("\n", "<br>");
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.acquisitionDetails"), details);
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error reading acquisition details from case database", ex); //NON-NLS
+            }
+        }
     }
 
     @Override
