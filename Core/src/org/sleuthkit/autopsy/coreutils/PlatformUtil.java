@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.filechooser.FileSystemView;
+import org.apache.commons.io.FilenameUtils;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.ptql.ProcessFinder;
 import org.openide.modules.InstalledFileLocator;
@@ -53,6 +54,7 @@ public class PlatformUtil {
     private static final String PYTHON_MODULES_SUBDIRECTORY = "python_modules"; //NON-NLS
     private static final String CLASSIFIERS_SUBDIRECTORY = "object_detection_classifiers"; //NON-NLS
     private static final String OCR_LANGUAGE_SUBDIRECTORY = "ocr_language_packs"; //NON-NLS
+    private static final String OCR_LANGUAGE_PACK_EXT = "traineddata";
     private static String javaPath = null;
     public static final String OS_NAME_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.nameUnknown");
     public static final String OS_VERSION_UNKNOWN = NbBundle.getMessage(PlatformUtil.class, "PlatformUtil.verUnknown");
@@ -125,6 +127,26 @@ public class PlatformUtil {
      */
     public static String getOcrLanguagePacksPath() {
         return getUserDirectory().getAbsolutePath() + File.separator + OCR_LANGUAGE_SUBDIRECTORY;
+    }
+    
+    /**
+     * Get the names of the language packs installed at the user directory.
+     * 
+     * @return List of language packs base names
+     */
+    public static List<String> getOcrLanguagePacks() {
+        File languagePackRootDir = new File(getOcrLanguagePacksPath());
+
+        List<String> languagePacks = new ArrayList<>();
+        for (File languagePack : languagePackRootDir.listFiles()) {
+            String fileExt = FilenameUtils.getExtension(languagePack.getName()); 
+            if (!languagePack.isDirectory() && OCR_LANGUAGE_PACK_EXT.equals(fileExt)) {
+                String packageName = FilenameUtils.getBaseName(languagePack.getName());
+                languagePacks.add(packageName);
+            }
+        }
+        
+        return languagePacks;
     }
 
     /**

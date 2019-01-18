@@ -18,19 +18,22 @@
  */
 package org.sleuthkit.autopsy.textextractors.configs;
 
+import java.util.List;
+
 /**
- * Allows for configuration of OCR on image files. Extractors that use ImageConfig
- * can be obtained through TextExtractoryFactory.getExtractor().
+ * Allows for configuration of OCR on image files. Extractors that use
+ * ImageConfig can be obtained through TextExtractoryFactory.getExtractor().
  *
  * @see org.openide.util.Lookup
  */
 public class ImageConfig {
 
     private Boolean OCREnabled;
+    private List<String> ocrLanguages;
 
     /**
-     * Enables OCR to be run on the text reader responsible for handling
-     * image files.
+     * Enables OCR to be run on the text reader responsible for handling image
+     * files.
      *
      * @param enabled Flag indicating if OCR is enabled.
      */
@@ -45,5 +48,25 @@ public class ImageConfig {
      */
     public boolean getOCREnabled() {
         return this.OCREnabled;
+    }
+
+    /**
+     * Sets languages for OCR.
+     * 
+     * See PlatformUtil for list of installed language packs.
+     * 
+     * @param languages List of languages to use
+     */
+    public void setOCRLanguages(List<String> languages) {
+        this.ocrLanguages = languages;
+    }
+
+    /**
+     * Gets the list of languages OCR should perform.
+     * 
+     * @return Collection of OCR languages
+     */
+    public List<String> getOCRLanguages() {
+        return this.ocrLanguages;
     }
 }

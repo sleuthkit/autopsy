@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -42,7 +41,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
@@ -134,8 +132,7 @@ final class TikaTextExtractor implements TextExtractor {
     private static final String TESSERACT_DIR_NAME = "Tesseract-OCR"; //NON-NLS
     private static final String TESSERACT_EXECUTABLE = "tesseract.exe"; //NON-NLS
     private static final File TESSERACT_PATH = locateTesseractExecutable();
-    private static final String LANGUAGE_PACKS = getLanguagePacks();
-    private static final String TESSERACT_LANGUAGE_PACK_EXT = "traineddata"; //NON-NLS
+    private String languagePacks = formatLanguagePacks(PlatformUtil.getOcrLanguagePacks());
     private static final String TESSERACT_OUTPUT_FILE_NAME = "tess_output"; //NON-NLS
     
     private ProcessTerminator processTerminator;
@@ -203,7 +200,7 @@ final class TikaTextExtractor implements TextExtractor {
                 String tesseractFolder = TESSERACT_PATH.getParent();
                 ocrConfig.setTesseractPath(tesseractFolder);
                 
-                ocrConfig.setLanguage(LANGUAGE_PACKS);
+                ocrConfig.setLanguage(languagePacks);
                 ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
                 parseContext.set(TesseractOCRConfig.class, ocrConfig);
 
@@ -289,7 +286,7 @@ final class TikaTextExtractor implements TextExtractor {
                     String.format("\"%s\"", outputFilePath),
                     "--tessdata-dir", PlatformUtil.getOcrLanguagePacksPath(),
                     //language pack command flag
-                    "-l", LANGUAGE_PACKS);
+                    "-l", languagePacks);
 
             //If the ProcessTerminator was supplied during 
             //configuration apply it here.
@@ -443,23 +440,11 @@ final class TikaTextExtractor implements TextExtractor {
     }
 
     /**
-     * Retrieves all of the installed language packs from their designated
-     * directory location to be used to configure Tesseract OCR.
+     * Formats language packs to be parseable from the command line.
      *
      * @return String of all language packs available for Tesseract to use
      */
-    private static String getLanguagePacks() {
-        File languagePackRootDir = new File(PlatformUtil.getOcrLanguagePacksPath());
-
-        List<String> languagePacks = new ArrayList<>();
-        for (File languagePack : languagePackRootDir.listFiles()) {
-            String fileExt = FilenameUtils.getExtension(languagePack.getName()); 
-            if (!languagePack.isDirectory() && TESSERACT_LANGUAGE_PACK_EXT.equals(fileExt)) {
-                String packageName = FilenameUtils.getBaseName(languagePack.getName());
-                languagePacks.add(packageName);
-            }
-        }
-
+    private static String formatLanguagePacks(List<String> languagePacks) {
         return String.join("+", languagePacks);
     }
 
@@ -499,8 +484,14 @@ final class TikaTextExtractor implements TextExtractor {
     public void setExtractionSettings(Lookup context) {
         if (context != null) {
             ImageConfig configInstance = context.lookup(ImageConfig.class);
-            if (configInstance != null && Objects.nonNull(configInstance.getOCREnabled())) {
-                this.tesseractOCREnabled = configInstance.getOCREnabled();
+            if (configInstance != null) {
+                if(Objects.nonNull(configInstance.getOCREnabled())) {
+                    this.tesseractOCREnabled = configInstance.getOCREnabled();
+                }
+                
+                if(Objects.nonNull(configInstance.getOCRLanguages())) {
+                    this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
+                }
             }
 
             ProcessTerminator terminatorInstance = context.lookup(ProcessTerminator.class);
