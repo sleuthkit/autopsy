@@ -48,22 +48,8 @@ class DataSourceUsageAnalyzer extends Extract {
 
     @Messages({
         "# {0} - OS name",
-        "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})",
-        "DataSourceUsageAnalyzer.windowsVolume.label=OS Drive (Windows)",
-        "DataSourceUsageAnalyzer.osxVolume.label=OS Drive (OS X)",
-        "DataSourceUsageAnalyzer.androidVolume.label=OS Drive (Android)",
-        "DataSourceUsageAnalyzer.redhatLinuxVolume.label=OS Drive (Linux Redhat)",
-        "DataSourceUsageAnalyzer.novellSUSEVolume.label=OS Drive (Linux Novell SUSE)",
-        "DataSourceUsageAnalyzer.fedoraLinuxVolume.label=OS Drive (Linux Fedora)",
-        "DataSourceUsageAnalyzer.slackwareLinuxVolume.label=OS Drive (Linux Slackware)",
-        "DataSourceUsageAnalyzer.debianLinuxVolume.label=OS Drive (Linux Debian)",
-        "DataSourceUsageAnalyzer.mandrakeLinuxVolume.label=OS Drive (Linux Mandrake)",
-        "DataSourceUsageAnalyzer.yellowDogLinuxVolume.label=OS Drive (Linux Yellow Dog)",
-        "DataSourceUsageAnalyzer.sunJDSLinuxVolume.label=OS Drive (Linux Sun JDS)",
-        "DataSourceUsageAnalyzer.solarisSparcVolume.label=OS Drive (Linux Solaris/Sparc)",
-        "DataSourceUsageAnalyzer.gentooLinuxVolume.label=OS Drive (Linux Gentoo)",
-        "DataSourceUsageAnalyzer.unitedLinuxVolume.label=OS Drive (Linux United Linux)",
-        "DataSourceUsageAnalyzer.ubuntuLinuxVolume.label=OS Drive (Linux Ubuntu)"})
+        "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})"
+    })
     @Override
     void process(Content dataSource, IngestJobContext context) {
         this.dataSource = dataSource;
@@ -92,35 +78,16 @@ class DataSourceUsageAnalyzer extends Extract {
                     String dataSourceUsageDescription = "";
                     if (progNameAttr.getDisplayString().toLowerCase().contains("windows")) { //non-nls
                         windowsOsDetected = true;
+                        //use the program name when it appears to be windows
                         dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_customVolume_label(progNameAttr.getDisplayString());
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_osx_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_osxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_androidOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_androidVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_redhatLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_redhatLinuxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_novellSUSEOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_novellSUSEVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_fedoraLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_fedoraLinuxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_slackwareLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_slackwareLinuxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_debianLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_debianLinuxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_mandrakeLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_mandrakeLinuxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_yellowDogLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_yellowDogLinuxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_sunJDSLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_sunJDSLinuxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_solarisSparcOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_solarisSparcVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_gentooLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_gentooLinuxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_unitedLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_unitedLinuxVolume_label();
-                    } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_ubuntuLinuxOs_label())) {
-                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_ubuntuLinuxVolume_label();
+                    } else {
+                        ExtractOs.OS_TYPE osType = ExtractOs.OS_TYPE.fromOsInfoLabel(moduleName);
+                        if (osType != null) {
+                            dataSourceUsageDescription = osType.getDsUsageLabel();
+                        } else {
+                            //unable to determine name for DATA_SOURCE_USAGE artifact using program name
+                            dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_customVolume_label(progNameAttr.getDisplayString());
+                        }
                     }
                     createDataSourceUsageArtifact(dataSourceUsageDescription);
                 }
