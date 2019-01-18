@@ -49,6 +49,8 @@ class DataSourceUsageAnalyzer extends Extract {
     private Content dataSource;
 
     @Messages({
+        "# {0} - OS name",
+        "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})",
         "DataSourceUsageAnalyzer.windowsVolume.label=OS Drive (Windows)",
         "DataSourceUsageAnalyzer.osxVolume.label=OS Drive (OS X)",
         "DataSourceUsageAnalyzer.androidVolume.label=OS Drive (Android)",
@@ -87,7 +89,7 @@ class DataSourceUsageAnalyzer extends Extract {
                     String dataSourceUsageDescription = "";
                     if (progNameAttr.getDisplayString().toLowerCase().contains("windows")) { //non-nls
                         windowsOsDetected = true;
-                        dataSourceUsageDescription = progNameAttr.getDisplayString();
+                        dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_customVolume_label(progNameAttr.getDisplayString());
                     } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_osx_label())) {
                         dataSourceUsageDescription = Bundle.DataSourceUsageAnalyzer_osxVolume_label();
                     } else if (progNameAttr.getDisplayString().contains(Bundle.ExtractOs_androidOs_label())) {
@@ -132,20 +134,16 @@ class DataSourceUsageAnalyzer extends Extract {
         if (!dataSourceUsageDescription.isEmpty()) {
             //if the data source usage description is not empty create a data source usage artifact if an Usage artifact does not already exist with the same description
             List<BlackboardArtifact> artifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource.getId());
-            boolean createNewUsageArtifact = true;
             for (BlackboardArtifact artifact : artifacts) {
                 if (artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION)).getValueString().equals(dataSourceUsageDescription)) {
-                    createNewUsageArtifact = false;
-                    break;
+                    return; //already exists don't create a duplicate
                 }
             }
-            if (createNewUsageArtifact) {
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
-                        Bundle.DataSourceUsageAnalyzer_parentModuleName(),
-                        dataSourceUsageDescription)); //NON-NLS
-                addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
-            }
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION,
+                    Bundle.DataSourceUsageAnalyzer_parentModuleName(),
+                    dataSourceUsageDescription)); //NON-NLS
+            addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE, dataSource, bbattributes);
         }
     }
 
