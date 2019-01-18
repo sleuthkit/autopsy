@@ -18,13 +18,73 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.OSInfo;
+import org.sleuthkit.datamodel.OSUtility;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+
 public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
+
+    private static final long serialVersionUID = 1L;
+    private List<OSInfo> osInfoList;
+    private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
 
     /**
      * Creates new form DataSourceSummaryDetailsPanel
      */
     public DataSourceSummaryDetailsPanel() {
         initComponents();
+        try {
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            osInfoList = OSUtility.getOSInfo(skCase);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
+            JOptionPane.showMessageDialog(this, Bundle.DataSourceSummaryPanel_getDataSources_error_text(), Bundle.DataSourceSummaryPanel_getDataSources_error_title(), JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    void updateDetailsPanelData(DataSource selectedDataSource) {
+        operatingSystemValueLabel.setText(getOSName(selectedDataSource));
+        this.repaint();
+    }
+
+    /**
+     * Get the name of the operating system if it is available. Otherwise get
+     * and empty string.
+     *
+     * @param selectedDataSource the datasource to get the OS information for
+     *
+     * @return the name of the operating system on the specified datasource,
+     *         empty string if no operating system info found
+     */
+    private String getOSName(DataSource selectedDataSource) {
+        String osName = "";
+        if (selectedDataSource != null) {
+            for (OSInfo osInfo : osInfoList) {
+                try {
+                    //assumes only one Operating System per datasource
+                    //get the datasource id from the OSInfo's first artifact if it has artifacts
+                    if (!osInfo.getArtifacts().isEmpty() && osInfo.getArtifacts().get(0).getDataSource().getId() == selectedDataSource.getId()) {
+                        if (!osName.isEmpty()) {
+                            osName += ", ";
+                        }
+                        osName += osInfo.getOSName();
+                        //if this OSInfo object has a name use it otherwise keep checking OSInfo objects
+                    }
+                } catch (TskCoreException ignored) {
+                    //unable to get datasource for the OSInfo Object 
+                    //continue checking for OSInfo objects to try and get get the desired information
+                }
+            }
+        }
+        return osName;
     }
 
     /**
@@ -49,7 +109,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(operatingSystemLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 317, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(

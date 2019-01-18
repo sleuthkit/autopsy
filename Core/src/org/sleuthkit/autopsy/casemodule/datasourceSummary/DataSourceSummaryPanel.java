@@ -43,8 +43,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
-import org.sleuthkit.datamodel.OSInfo;
-import org.sleuthkit.datamodel.OSUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -64,7 +62,6 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
     private final List<DataSource> dataSources = new ArrayList<>();
     private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final Logger logger = Logger.getLogger(DataSourceSummaryPanel.class.getName());
-    private List<OSInfo> osInfoList;
 
     /**
      * Creates new form DataSourceSummaryPanel for displaying a summary of the
@@ -85,7 +82,6 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
             allIngestJobs.addAll(skCase.getIngestJobs());
             dataSources.addAll(skCase.getDataSources());
             //if for some reason multiple OS_INFO_ARTIFACTS were created with the same parent object id this will only return one OSInfo object for them
-            osInfoList = OSUtility.getOSInfo(skCase);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.DataSourceSummaryPanel_getDataSources_error_text(), Bundle.DataSourceSummaryPanel_getDataSources_error_title(), JOptionPane.ERROR_MESSAGE);
@@ -96,43 +92,14 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 gotoDataSourceButton.setEnabled(selectedDataSource != null);
                 updateIngestJobs(selectedDataSource);
                 filesPanel.updateFilesTableData(selectedDataSource);
-//                operatingSystemValueLabel.setText(getOSName(selectedDataSource));
+                detailsPanel.updateDetailsPanelData(selectedDataSource);
+
                 this.repaint();
             }
         });
     }
 
-    /**
-     * Get the name of the operating system if it is available. Otherwise get
-     * and empty string.
-     *
-     * @param selectedDataSource the datasource to get the OS information for
-     *
-     * @return the name of the operating system on the specified datasource,
-     *         empty string if no operating system info found
-     */
-    private String getOSName(DataSource selectedDataSource) {
-        String osName = "";
-        if (selectedDataSource != null) {
-            for (OSInfo osInfo : osInfoList) {
-                try {
-                    //assumes only one Operating System per datasource
-                    //get the datasource id from the OSInfo's first artifact if it has artifacts
-                    if (!osInfo.getArtifacts().isEmpty() && osInfo.getArtifacts().get(0).getDataSource().getId() == selectedDataSource.getId()) {
-                        if (!osName.isEmpty()) {
-                            osName += ", ";
-                        }
-                        osName += osInfo.getOSName();
-                        //if this OSInfo object has a name use it otherwise keep checking OSInfo objects
-                    }
-                } catch (TskCoreException ignored) {
-                    //unable to get datasource for the OSInfo Object 
-                    //continue checking for OSInfo objects to try and get get the desired information
-                }
-            }
-        }
-        return osName;
-    }
+    
 
     /**
      * Update the ingestJobs list with the ingest jobs for the
@@ -164,16 +131,12 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jSeparator1 = new javax.swing.JSeparator();
-        dataSourcesScrollPane = new javax.swing.JScrollPane();
-        dataSourcesTable = new javax.swing.JTable();
         closeButton = new javax.swing.JButton();
         gotoDataSourceButton = new javax.swing.JButton();
+        dataSourceSummarySplitPane = new javax.swing.JSplitPane();
+        dataSourcesScrollPane = new javax.swing.JScrollPane();
+        dataSourcesTable = new javax.swing.JTable();
         dataSourceTabbedPane = new javax.swing.JTabbedPane();
-
-        dataSourcesTable.setModel(dataSourceTableModel);
-        dataSourcesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        dataSourcesScrollPane.setViewportView(dataSourcesTable);
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.closeButton.text")); // NOI18N
 
@@ -185,21 +148,29 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
             }
         });
 
+        dataSourceSummarySplitPane.setDividerLocation(100);
+        dataSourceSummarySplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        dataSourcesTable.setModel(dataSourceTableModel);
+        dataSourcesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        dataSourcesScrollPane.setViewportView(dataSourcesTable);
+
+        dataSourceSummarySplitPane.setLeftComponent(dataSourcesScrollPane);
+        dataSourceSummarySplitPane.setRightComponent(dataSourceTabbedPane);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSeparator1, javax.swing.GroupLayout.Alignment.TRAILING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 630, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(gotoDataSourceButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(closeButton))
-                    .addComponent(dataSourceTabbedPane, javax.swing.GroupLayout.Alignment.TRAILING))
+                        .addComponent(closeButton)))
                 .addContainerGap())
         );
 
@@ -208,16 +179,12 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addComponent(dataSourcesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 135, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 5, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(dataSourceTabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 164, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 231, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(closeButton)
-                    .addComponent(gotoDataSourceButton))
+                    .addComponent(gotoDataSourceButton)
+                    .addComponent(closeButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -273,11 +240,11 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
+    private javax.swing.JSplitPane dataSourceSummarySplitPane;
     private javax.swing.JTabbedPane dataSourceTabbedPane;
     private javax.swing.JScrollPane dataSourcesScrollPane;
     private javax.swing.JTable dataSourcesTable;
     private javax.swing.JButton gotoDataSourceButton;
-    private javax.swing.JSeparator jSeparator1;
     // End of variables declaration//GEN-END:variables
 
     /**
