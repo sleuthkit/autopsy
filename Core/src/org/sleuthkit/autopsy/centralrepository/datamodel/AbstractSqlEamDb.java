@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -245,7 +245,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (eamCase.getCaseUUID() == null) {
             throw new EamDbException("Case UUID is null");
         }
-        
+
         // check if there is already an existing CorrelationCase for this Case
         CorrelationCase cRCase = getCaseByUUID(eamCase.getCaseUUID());
         if (cRCase != null) {
@@ -621,7 +621,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
-
+        //The conflict clause exists incase multiple nodes are trying to add the datasource because it did not exist at the same time
         String sql = "INSERT INTO data_sources(device_id, case_id, name, datasource_obj_id) VALUES (?, ?, ?, ?) "
                 + getConflictClause();
         ResultSet resultSet = null;
@@ -636,13 +636,22 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
             if (!resultSet.next()) {
-                throw new EamDbException(String.format("Failed to INSERT data source %s in central repo", eamDataSource.getName()));
+                //if nothing was inserted then return the DataSource that exists in the central repository
+                try {
+                    return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
+                            eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
+                            () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
+                } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
+                    throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo", eamDataSource.getName()), ex);
+                }
+            } else {
+                //if a new data source was added to the central repository update the caches to include it and return it
+                int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
+                CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID());
+                dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(dataSource.getCaseID(), dataSource.getDataSourceObjectID()), dataSource);
+                dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
+                return dataSource;
             }
-            int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
-            CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID());
-            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(dataSource.getCaseID(), dataSource.getDataSourceObjectID()), dataSource);
-            dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
-            return dataSource;
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new data source.", ex); // NON-NLS
         } finally {
@@ -670,7 +679,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
         try {
-            return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(correlationCase.getID(), dataSourceObjectId), () -> getDataSourceFromCr(correlationCase, dataSourceObjectId));
+            return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(correlationCase.getID(), dataSourceObjectId), () -> getDataSourceFromCr(correlationCase.getID(), dataSourceObjectId));
         } catch (CacheLoader.InvalidCacheLoadException ignored) {
             //lambda valueloader returned a null value and cache can not store null values this is normal if the dataSource does not exist in the central repo yet
             return null;
@@ -683,15 +692,15 @@ abstract class AbstractSqlEamDb implements EamDb {
      * Gets the Data Source details based on data source device ID from the
      * central repository.
      *
-     * @param correlationCase    the current CorrelationCase used for ensuring
-     *                           uniqueness of DataSource
-     * @param dataSourceDeviceId the object id of the data source
+     * @param correlationCaseId  the current CorrelationCase id used for
+     *                           ensuring uniqueness of DataSource
+     * @param dataSourceObjectId the object id of the data source
      *
      * @return The data source
      *
      * @throws EamDbException
      */
-    private CorrelationDataSource getDataSourceFromCr(CorrelationCase correlationCase, Long dataSourceObjectId) throws EamDbException {
+    private CorrelationDataSource getDataSourceFromCr(int correlationCaseId, Long dataSourceObjectId) throws EamDbException {
         Connection conn = connect();
 
         CorrelationDataSource eamDataSourceResult = null;
@@ -703,13 +712,13 @@ abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setLong(1, dataSourceObjectId);
-            preparedStatement.setInt(2, correlationCase.getID());
+            preparedStatement.setInt(2, correlationCaseId);
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
             }
             if (eamDataSourceResult != null) {
-                dataSourceCacheById.put(getDataSourceByIdCacheKey(correlationCase.getID(), eamDataSourceResult.getID()), eamDataSourceResult);
+                dataSourceCacheById.put(getDataSourceByIdCacheKey(correlationCaseId, eamDataSourceResult.getID()), eamDataSourceResult);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting data source.", ex); // NON-NLS
