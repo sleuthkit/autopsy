@@ -105,8 +105,8 @@ public class CombinedEvent {
 
 	/**
 	 * Get the event ID of one event that is representative of all the combined
-	 * events. It can be used to look up a SingleEvent with more details, for
-	 * example.
+	 * events. It can be used to look up a TimelineEvent with more details, for
+	 * example. wwhether the file is tagged or a hash hit.
 	 *
 	 * @return An arbitrary representative event ID for the combined events.
 	 */

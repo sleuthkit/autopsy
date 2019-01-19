@@ -38,7 +38,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
+import org.apache.commons.collections4.CollectionUtils;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -637,7 +639,7 @@ public final class FilteredEventsModel {
 
     synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) throws TskCoreException {
         Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, true);
-        if (!updatedEventIDs.isEmpty()) {
+        if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
@@ -645,7 +647,7 @@ public final class FilteredEventsModel {
 
     synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) throws TskCoreException {
         Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, tagged);
-        if (!updatedEventIDs.isEmpty()) {
+        if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
@@ -656,7 +658,7 @@ public final class FilteredEventsModel {
         for (BlackboardArtifact artifact : artifacts) {
             updatedEventIDs.addAll(eventManager.setEventsHashed(artifact.getObjectID(), hasHashHit));
         }
-        if (!updatedEventIDs.isEmpty()) {
+        if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;

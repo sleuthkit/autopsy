@@ -572,7 +572,7 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * Base class for TableCells that represent a MergedEvent by way of a
+     * Base class for TableCells that represent a CombinedEvent by way of a
      * representative TimeLineEvent.
      */
     private abstract class EventTableCell extends TableCell<CombinedEvent, CombinedEvent> {
