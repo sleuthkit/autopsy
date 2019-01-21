@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -40,6 +41,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -48,6 +51,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
+import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -294,6 +300,8 @@ public class IngestEventsListener {
                         jobProcessingExecutor.submit(new DataAddedTask(dbManager, evt, flagNotable, flagPrevious, createAttributes));
                         break;
                     }
+                    default:
+                        break;
                 }
             }
         }
@@ -303,17 +311,35 @@ public class IngestEventsListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
+            EamDb dbManager;
+            try {
+                dbManager = EamDb.getInstance();
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
+                return;
+            }
+            
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED: {
-                    jobProcessingExecutor.submit(new AnalysisCompleteTask());
+                    jobProcessingExecutor.submit(new AnalysisCompleteTask(dbManager, evt));
                     break;
                 }
+                default:
+                    break;
             }
         }
 
     }
 
     private final class AnalysisCompleteTask implements Runnable {
+        
+        private final EamDb dbManager;
+        private final PropertyChangeEvent event;
+        
+        private AnalysisCompleteTask(EamDb db, PropertyChangeEvent evt) {
+            dbManager = db;
+            event = evt;
+        }
 
         @Override
         public void run() {
@@ -322,6 +348,86 @@ public class IngestEventsListener {
                 recentlyAddedCeArtifacts.clear();
             }
             //else another instance of the Correlation Engine Module is still being run.
+
+            /*
+             * Ensure the data source in the Central Repository has hash values
+             * that match those in the case database.
+             */
+            if (!EamDb.isEnabled()) {
+                return;
+            }
+            Content dataSource;
+            String dataSourceName = "";
+            long dataSourceObjectId = -1;
+            try {
+                dataSource = ((DataSourceAnalysisCompletedEvent) event).getDataSource();
+                
+                /*
+                 * We only care about Images for the purpose of
+                 * updating hash values.
+                 */
+                if (!(dataSource instanceof Image)) {
+                    return;
+                }
+                
+                dataSourceName = dataSource.getName();
+                dataSourceObjectId = dataSource.getId();
+
+                Case openCase = Case.getCurrentCaseThrows();
+
+                CorrelationCase correlationCase = dbManager.getCase(openCase);
+                if (null == correlationCase) {
+                    correlationCase = dbManager.newCase(openCase);
+                }
+
+                CorrelationDataSource correlationDataSource = dbManager.getDataSource(correlationCase, dataSource.getId());
+                if (correlationDataSource == null) {
+                    // Add the data source.
+                    CorrelationDataSource.fromTSKDataSource(correlationCase, dataSource);
+                } else {
+                    // Sync the data source hash values if necessary.
+                    if (dataSource instanceof Image) {
+                        Image image = (Image) dataSource;
+
+                        String imageMd5Hash = image.getMd5();
+                        if (imageMd5Hash == null) {
+                            imageMd5Hash = "";
+                        }
+                        String crMd5Hash = correlationDataSource.getMd5();
+                        if (StringUtils.equals(imageMd5Hash, crMd5Hash) == false) {
+                            correlationDataSource.setMd5(imageMd5Hash);
+                        }
+                        
+                        String imageSha1Hash = image.getSha1();
+                        if (imageSha1Hash == null) {
+                            imageSha1Hash = "";
+                        }
+                        String crSha1Hash = correlationDataSource.getSha1();
+                        if (StringUtils.equals(imageSha1Hash, crSha1Hash) == false) {
+                            correlationDataSource.setSha1(imageSha1Hash);
+                        }
+                        
+                        String imageSha256Hash = image.getSha256();
+                        if (imageSha256Hash == null) {
+                            imageSha256Hash = "";
+                        }
+                        String crSha256Hash = correlationDataSource.getSha256();
+                        if (StringUtils.equals(imageSha256Hash, crSha256Hash) == false) {
+                            correlationDataSource.setSha256(imageSha256Hash);
+                        }
+                    }
+                }
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, String.format(
+                        "Unable to fetch data from the Central Repository for data source '%s' (obj_id=%d)",
+                        dataSourceName, dataSourceObjectId), ex);
+            } catch (NoCurrentCaseException ex) {
+                LOGGER.log(Level.SEVERE, "No current case opened.", ex);
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, String.format(
+                        "Unable to fetch data from the case database for data source '%s' (obj_id=%d)",
+                        dataSourceName, dataSourceObjectId), ex);
+            }
         } // DATA_SOURCE_ANALYSIS_COMPLETED
     }
 

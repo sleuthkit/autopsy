@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -204,6 +204,27 @@ public interface EamDb {
      * @return - A CorrelationDataSource object with data source's central repository id
      */
     CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
+    
+    /**
+     * Updates the MD5 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException;
+    
+    /**
+     * Updates the SHA-1 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException;
+    
+    /**
+     * Updates the SHA-256 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source device ID
