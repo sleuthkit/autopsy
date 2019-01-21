@@ -621,6 +621,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
+        //The conflict clause exists in case multiple nodes are trying to add the data source because it did not exist at the same time
         String sql = "INSERT INTO data_sources(device_id, case_id, name, datasource_obj_id, md5, sha1, sha256) VALUES (?, ?, ?, ?, ?, ?, ?) "
                 + getConflictClause();
         ResultSet resultSet = null;
@@ -649,7 +650,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             } else {
                 //if a new data source was added to the central repository update the caches to include it and return it
                 int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
-                CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID());
+                CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID(), eamDataSource.getMd5(), eamDataSource.getSha1(), eamDataSource.getSha256());
                 dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(dataSource.getCaseID(), dataSource.getDataSourceObjectID()), dataSource);
                 dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
                 return dataSource;
