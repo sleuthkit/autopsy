@@ -779,7 +779,7 @@ class ExtractRegistry extends Extract {
     private Collection<BlackboardArtifact> processProfiler(NodeList myartlist, SleuthkitCase caseDB, AbstractFile regAbstractFile) throws IllegalArgumentException, DOMException {
         //map from node attribute names to tsk ATTRIBUTE_TYPE.
         Map<String, ATTRIBUTE_TYPE> keys = ImmutableMap.of(
-                "PROCESSOR_IDENTIFIER", null,// TODO: should this go into an attribute?         //NON-NLS
+          //      "PROCESSOR_IDENTIFIER", null,// TODO: should this go into an attribute?         //NON-NLS
                 "OS", TSK_VERSION, //NON-NLS
                 "PROCESSOR_ARCHITECTURE", TSK_PROCESSOR_ARCHITECTURE, //NON-NLS
                 "TEMP", TSK_TEMP_DIR);        //NON-NLS
