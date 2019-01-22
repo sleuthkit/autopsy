@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import javafx.application.Platform;
@@ -66,6 +68,7 @@ import org.sleuthkit.autopsy.corecomponents.VideoFrame;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.VideoUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -73,11 +76,8 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Video viewer part of the Media View layered pane.
  */
-@ServiceProviders(value = {
-    @ServiceProvider(service = FrameCapture.class)
-})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class FXVideoPanel extends MediaViewVideoPanel {
+public class FXVideoPanel extends JPanel implements MediaFileViewer.MediaViewPanel {
 
     // Refer to https://docs.oracle.com/javafx/2/api/javafx/scene/media/package-summary.html
     // for Javafx supported formats 
@@ -109,8 +109,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         return this;
     }
 
-    @Override
-    void setupVideo(final AbstractFile file, final Dimension dims) {
+    void loadFile(final AbstractFile file, final Dimension dims) {
         if (file.equals(currentFile)) {
             return;
         }
@@ -150,7 +149,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
 
     }
 
-    @Override
     void reset() {
         Platform.runLater(() -> {
             if (mediaPane != null) {
@@ -199,7 +197,6 @@ public class FXVideoPanel extends MediaViewVideoPanel {
     private javafx.embed.swing.JFXPanel jFXPanel;
     // End of variables declaration//GEN-END:variables
 
-    @Override
     public boolean isInited() {
         return fxInited;
     }
@@ -641,29 +638,49 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         }
     }
 
-    /**
-     * @param file      a video file from which to capture frames
-     * @param numFrames the number of frames to capture. These frames will be
-     *                  captured at successive intervals given by
-     *                  durationOfVideo/numFrames. If this frame interval is
-     *                  less than MIN_FRAME_INTERVAL_MILLIS, then only one frame
-     *                  will be captured and returned.
-     *
-     * @return a List of VideoFrames representing the captured frames.
-     */
     @Override
-    public List<VideoFrame> captureFrames(java.io.File file, int numFrames) throws Exception {
-        //What is/was the point of this method /interface.
-        return null;
+    public List<String> getSupportedExtensions() {
+        return Arrays.asList(EXTENSIONS.clone());
     }
 
     @Override
-    public String[] getExtensions() {
-        return EXTENSIONS.clone();
-    }
-
-    @Override
-    public List<String> getMimeTypes() {
+    public List<String> getSupportedMimeTypes() {
         return MIMETYPES;
+    }
+
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        String extension = file.getNameExtension();
+        /**
+         * Although it seems too restrictive, requiring both a supported
+         * extension and a supported MIME type prevents two undesirable
+         * behaviors:
+         *
+         * 1) Until AUT-1766 and AUT-1801 are fixed, we incorrectly identify all
+         * iff files as audio/aiff. This means that if this panel went with the
+         * looser 'mime type OR extension' criteria we use for images, then this
+         * panel would attempt (and fail) to display all iff files, even non
+         * audio ones.
+         *
+         * 2) The looser criteria means we are less confident about the files we
+         * are potentialy sending to GStreamer on 32bit jvms. We are less
+         * comfortable with the error handling for GStreamer, and don't want to
+         * send it files which might cause it trouble.
+         */
+        if (getSupportedExtensions().contains("." + extension)) {
+            SortedSet<String> mimeTypes = new TreeSet<>(getSupportedMimeTypes());
+            try {
+                String mimeType = new FileTypeDetector().getMIMEType(file);
+                return mimeTypes.contains(mimeType);
+            } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+                logger.log(Level.WARNING, "Failed to look up mimetype for " + file.getName() + " using FileTypeDetector.  Fallingback on AbstractFile.isMimeType", ex);
+                if (!mimeTypes.isEmpty() && file.isMimeType(mimeTypes) == AbstractFile.MimeMatchEnum.TRUE) {
+                    return true;
+                }
+            }
+
+            return getSupportedExtensions().contains("." + extension);
+        }
+        return false;
     }
 }

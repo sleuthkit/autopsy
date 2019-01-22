@@ -123,7 +123,7 @@
             <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\bin -install_operation CreateUpdate -behavior Append -system_variable"/>
         </exec>
         <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\lib\gstreamer-0.10 -install_operation CreateUpdate -behavior Append -system_variable"/>
+            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\lib\gstreamer-1.0 -install_operation CreateUpdate -behavior Append -system_variable"/>
         </exec>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /NewEnvironment -name PATH -value %GSTREAMER_PATH% -install_operation CreateUpdate -behavior Append -system_variable"/>
