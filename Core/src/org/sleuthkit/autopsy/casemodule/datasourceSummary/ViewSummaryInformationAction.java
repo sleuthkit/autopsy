@@ -47,15 +47,12 @@ public final class ViewSummaryInformationAction extends AbstractAction {
         super(Bundle.ViewSummaryInformationAction_name_text());
         selectDataSource = selectedDataSource;
     }
-
     
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         SwingUtilities.invokeLater(() -> {
             Frame mainWindow = WindowManager.getDefault().getMainWindow();
             dataSourceSummaryDialog = new DataSourceSummaryDialog(mainWindow);
-            //allow the buttons in DataSourceSummaryDialog to close this dialog
-
             //select the specifed data source
             dataSourceSummaryDialog.selectDataSource(selectDataSource);
             dataSourceSummaryDialog.setResizable(true);

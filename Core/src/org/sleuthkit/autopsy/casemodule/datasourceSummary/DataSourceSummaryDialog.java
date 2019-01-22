@@ -19,46 +19,22 @@
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
 import java.awt.Frame;
-import java.awt.Rectangle;
-import java.awt.event.ActionListener;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.CaseDbAccessManager.CaseDbAccessQueryCallback;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.IngestJobInfo;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
 final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer{
 
     private static final long serialVersionUID = 1L;
     private final List<IngestJobInfo> allIngestJobs = new ArrayList<>();
-    private List<IngestJobInfo> ingestJobs = new ArrayList<>();
-    private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
     private DataSourceSummaryFilesPanel filesPanel = new DataSourceSummaryFilesPanel();
     private DataSourceSummaryDetailsPanel detailsPanel = new DataSourceSummaryDetailsPanel();
     private DataSourceBrowser dataSourcesPanel = new DataSourceBrowser();
@@ -78,21 +54,9 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
         dataSourceTabbedPane.add("Files",filesPanel);
         dataSourceTabbedPane.addTab("Details", detailsPanel);
-//        ingestJobsTable.getTableHeader().setReorderingAllowed(false);
-//        fileCountsTable.getTableHeader().setReorderingAllowed(false);
-//        dataSourcesTable.getTableHeader().setReorderingAllowed(false);
-//        try {
-//            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-//            allIngestJobs.addAll(skCase.getIngestJobs());
-            //if for some reason multiple OS_INFO_ARTIFACTS were created with the same parent object id this will only return one OSInfo object for them
-//        } catch (TskCoreException | NoCurrentCaseException ex) {
-//            logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
-//            JOptionPane.showMessageDialog(this, Bundle.DataSourceSummaryPanel_getDataSources_error_text(), Bundle.DataSourceSummaryPanel_getDataSources_error_title(), JOptionPane.ERROR_MESSAGE);
-//        }
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();
-                updateIngestJobs(selectedDataSource);
                 filesPanel.updateFilesTableData(selectedDataSource);
                 detailsPanel.updateDetailsPanelData(selectedDataSource);
                 this.repaint();
@@ -105,27 +69,6 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     @Override
     public void update(Observable o, Object arg) {
         this.dispose();
-    }
-
-    /**
-     * Update the ingestJobs list with the ingest jobs for the
-     * selectedDataSource
-     *
-     * @param selectedDataSource the datasource to find the ingest jobs for
-     */
-    @Messages({"DataSourceSummaryPanel.loadIngestJob.error.text=Failed to load ingest jobs.",
-        "DataSourceSummaryPanel.loadIngestJob.error.title=Load Failure"})
-    private void updateIngestJobs(DataSource selectedDataSource) {
-        ingestJobs.clear();
-        if (selectedDataSource != null) {
-            for (IngestJobInfo ingestJob : allIngestJobs) {
-                if (ingestJob.getObjectId() == selectedDataSource.getId()) {
-                    ingestJobs.add(ingestJob);
-                }
-            }
-        }
-        ingestJobTableModel = new IngestJobTableModel();
-//        ingestJobsTable.setModel(ingestJobTableModel);
     }
 
     /**
@@ -193,68 +136,9 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
         dataSourcesPanel.selectDataSource(dataSourceId);
     }
 
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
     private javax.swing.JSplitPane dataSourceSummarySplitPane;
     private javax.swing.JTabbedPane dataSourceTabbedPane;
     // End of variables declaration//GEN-END:variables
-
-    /**
-     * Table model for the Ingest Job table to display ingest jobs for the
-     * selected datasource.
-     */
-    @Messages({"DataSourceSummaryPanel.IngestJobTableModel.StartTime.header=Start Time",
-        "DataSourceSummaryPanel.IngestJobTableModel.EndTime.header=End Time",
-        "DataSourceSummaryPanel.IngestJobTableModel.IngestStatus.header=Ingest Status"})
-    private class IngestJobTableModel extends AbstractTableModel {
-
-        private static final long serialVersionUID = 1L;
-
-        private final List<String> columnHeaders = new ArrayList<>();
-
-        /**
-         * Create a new IngestJobTableModel
-         */
-        IngestJobTableModel() {
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_IngestJobTableModel_StartTime_header());
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_IngestJobTableModel_EndTime_header());
-            columnHeaders.add(Bundle.DataSourceSummaryPanel_IngestJobTableModel_IngestStatus_header());
-        }
-
-        @Override
-        public int getRowCount() {
-            return ingestJobs.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnHeaders.size();
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            IngestJobInfo currIngestJob = ingestJobs.get(rowIndex);
-            switch (columnIndex) {
-                case 0:
-                    return datetimeFormat.format(currIngestJob.getStartDateTime());
-                case 1:
-                    Date endDate = currIngestJob.getEndDateTime();
-                    if (endDate.getTime() == 0) {
-                        return "N/A";
-                    }
-                    return datetimeFormat.format(currIngestJob.getEndDateTime());
-                case 2:
-                    return currIngestJob.getStatus().getDisplayName();
-                default:
-                    break;
-            }
-            return null;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return columnHeaders.get(column);
-        }
-    }
 }
