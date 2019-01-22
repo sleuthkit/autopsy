@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
-import java.awt.event.ActionListener;
+import java.awt.EventQueue;
+import java.beans.PropertyVetoException;
 import javax.swing.ListSelectionModel;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
@@ -57,7 +58,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private final org.openide.explorer.view.OutlineView outlineView;
     private final ExplorerManager explorerManager;
     private final List<DataSourceSummary> dataSourceSummaryList;
-    
+
     /**
      * Creates new form DataSourceBrowser
      */
@@ -83,10 +84,31 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         this.setVisible(true);
     }
 
-    void addObserver(Observer observer) {
-        ((DataSourceSummaryNode)explorerManager.getRootContext()).addObserver(observer);
+    void selectDataSource(Long dataSourceId) {
+        EventQueue.invokeLater(() -> {
+            if (dataSourceId != null) {
+                for (Node node : explorerManager.getRootContext().getChildren().getNodes()) {
+                    if (node instanceof DataSourceSummaryEntryNode && ((DataSourceSummaryEntryNode) node).getDataSource().getId() == dataSourceId) {
+                        try {
+                            explorerManager.setExploredContextAndSelection(node, new Node[]{node});
+                            return;
+                        } catch (PropertyVetoException ex) {
+                            logger.log(Level.WARNING, "Failed to select the datasource in the explorer view", ex); //NON-NLS
+                        }
+                    }
+                }
+            }
+            //if no data source was selected and there are data sources to select select the first one
+            if (explorerManager.getRootContext().getChildren().getNodes().length > 0) {
+                outline.getSelectionModel().setSelectionInterval(0, 0);
+            }
+        });
     }
-    
+
+    void addObserver(Observer observer) {
+        ((DataSourceSummaryNode) explorerManager.getRootContext()).addObserver(observer);
+    }
+
     private List<DataSourceSummary> getDataSourceSummaryList() {
         List<DataSourceSummary> summaryList = new ArrayList<>();
         try {
@@ -117,7 +139,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     DataSource getSelectedDataSource() {
         Node selectedNode[] = explorerManager.getSelectedNodes();
         if (selectedNode.length == 1) {
-            return ((DataSourceSummaryEntryNode)selectedNode[0]).getDataSource();
+            return ((DataSourceSummaryEntryNode) selectedNode[0]).getDataSource();
         }
         return null;
     }

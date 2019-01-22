@@ -189,21 +189,8 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
      * @param dataSourceID the ID of the datasource to select, null will cause
      *                     the first datasource to be selected
      */
-    void selectDataSource(Long dataSourceID) {
-//        if (dataSourceID != null) {
-//            for (int i = 0; i < dataSources.size(); i++) {
-//                if (dataSources.get(i).getId() == dataSourceID) {
-//                    dataSourcesTable.setRowSelectionInterval(i, i);
-//                    //scroll down from top of table to where selected datasource is
-//                    dataSourcesTable.scrollRectToVisible(new Rectangle(dataSourcesTable.getCellRect(i, 0, true)));
-//                    return;
-//                }
-//            }
-//        }
-//        //if there are data sources in the list and none were found that matched the specied dataSourceID select the first one
-//        if (!dataSources.isEmpty()) {
-//            dataSourcesTable.setRowSelectionInterval(0, 0);
-//        }
+    void selectDataSource(Long dataSourceId) {
+        dataSourcesPanel.selectDataSource(dataSourceId);
     }
 
 
