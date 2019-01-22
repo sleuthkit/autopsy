@@ -20,7 +20,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="operatingSystemLabel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="operatingSystemValueLabel" pref="317" max="32767" attributes="0"/>
+              <Component id="operatingSystemValueLabel" pref="445" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -33,7 +33,7 @@
                   <Component id="operatingSystemLabel" alignment="1" min="-2" max="-2" attributes="0"/>
                   <Component id="operatingSystemValueLabel" alignment="0" min="-2" pref="14" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace pref="275" max="32767" attributes="0"/>
+              <EmptySpace pref="153" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
