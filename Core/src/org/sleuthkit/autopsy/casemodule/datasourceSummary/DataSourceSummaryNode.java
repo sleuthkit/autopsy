@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -28,12 +31,27 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
+import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.DataSource;
 
 final class DataSourceSummaryNode extends AbstractNode {
 
+    private final static Observable closeDialogObservable = new Observable() {
+        @Override
+        public void notifyObservers() {
+            //set changed before notify observers
+            //we want this observerable to always cause the observer to update when notified
+            this.setChanged();
+            super.notifyObservers();
+        }
+    };
+
     DataSourceSummaryNode(List<DataSourceSummary> dataSourceList) {
         super(Children.create(new DataSourceSummaryChildren(dataSourceList), true));
+    }
+
+    void addObserver(Observer observer) {
+        closeDialogObservable.addObserver(observer);
     }
 
     static final class DataSourceSummaryChildren extends ChildFactory<DataSourceSummary> {
@@ -63,7 +81,7 @@ final class DataSourceSummaryNode extends AbstractNode {
      */
     static final class DataSourceSummaryEntryNode extends AbstractNode {
 
-        private final DataSource dataSource;
+        private DataSource dataSource;
         private final String type;
         private final long filesCount;
         private final long resultsCount;
@@ -85,15 +103,6 @@ final class DataSourceSummaryNode extends AbstractNode {
             return dataSource;
         }
 
-//        /**
-//         * Returns action to open the Case represented by this node
-//         *
-//         * @return an action which will open the current case
-//         */
-//        @Override
-//        public Action getPreferredAction() {
-//            return new OpenMultiUserCaseAction(caseMetadataFilePath);
-//        }
         @Messages({"DataSourceSummaryNode.column.dataSourceName.header=Data Source Name",
             "DataSourceSummaryNode.column.type.header=Type",
             "DataSourceSummaryNode.column.files.header=Files",
@@ -120,12 +129,38 @@ final class DataSourceSummaryNode extends AbstractNode {
             return sheet;
         }
 
+        /**
+         * Returns action to open the Case represented by this node
+         *
+         * @return an action which will open the current case
+         */
+        @Override
+        public Action getPreferredAction() {
+            return new ViewDataSourceInContextAction();
+        }
+
         @Override
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
-//                actions.add(new OpenMultiUserCaseAction(caseMetadataFilePath));  //open case context menu option
-//                actions.add(new OpenCaseLogAction(caseLogFilePath));
+            actions.add(new ViewDataSourceInContextAction());
+
             return actions.toArray(new Action[actions.size()]);
         }
+
+        private class ViewDataSourceInContextAction extends ViewContextAction {
+
+            private static final long serialVersionUID = 1L;
+
+            ViewDataSourceInContextAction() {
+                super("Go to Data Source", dataSource);
+            }
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                closeDialogObservable.notifyObservers();
+                super.actionPerformed(e);
+            }
+        }
     }
+
 }

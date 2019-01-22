@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
+import java.awt.event.ActionListener;
 import javax.swing.ListSelectionModel;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
@@ -29,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ListSelectionListener;
@@ -55,7 +57,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private final org.openide.explorer.view.OutlineView outlineView;
     private final ExplorerManager explorerManager;
     private final List<DataSourceSummary> dataSourceSummaryList;
-
+    
     /**
      * Creates new form DataSourceBrowser
      */
@@ -81,6 +83,10 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         this.setVisible(true);
     }
 
+    void addObserver(Observer observer) {
+        ((DataSourceSummaryNode)explorerManager.getRootContext()).addObserver(observer);
+    }
+    
     private List<DataSourceSummary> getDataSourceSummaryList() {
         List<DataSourceSummary> summaryList = new ArrayList<>();
         try {

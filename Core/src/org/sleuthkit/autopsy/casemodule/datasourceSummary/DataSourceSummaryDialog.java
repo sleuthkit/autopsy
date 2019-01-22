@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
+import java.awt.Frame;
 import java.awt.Rectangle;
 import java.awt.event.ActionListener;
 import java.sql.ResultSet;
@@ -30,6 +31,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -50,7 +53,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
-final class DataSourceSummaryPanel extends javax.swing.JPanel {
+final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer{
 
     private static final long serialVersionUID = 1L;
     private final List<IngestJobInfo> allIngestJobs = new ArrayList<>();
@@ -59,18 +62,18 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
     private DataSourceSummaryFilesPanel filesPanel = new DataSourceSummaryFilesPanel();
     private DataSourceSummaryDetailsPanel detailsPanel = new DataSourceSummaryDetailsPanel();
     private DataSourceBrowser dataSourcesPanel = new DataSourceBrowser();
-    private final List<DataSource> dataSources = new ArrayList<>();
     private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-    private static final Logger logger = Logger.getLogger(DataSourceSummaryPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
 
     /**
      * Creates new form DataSourceSummaryPanel for displaying a summary of the
      * data sources for the fcurrent case and the contents found for each
      * datasource.
      */
-    @Messages({"DataSourceSummaryPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
+    @Messages({"DataSourceSummaryPanel.window.title=Data Sources Summary","DataSourceSummaryPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
         "DataSourceSummaryPanel.getDataSources.error.title=Load Failure"})
-    DataSourceSummaryPanel() {
+    DataSourceSummaryDialog(Frame owner) {
+        super(owner, Bundle.DataSourceSummaryPanel_window_title(), true);
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
         dataSourceTabbedPane.add("Files",filesPanel);
@@ -78,28 +81,31 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
 //        ingestJobsTable.getTableHeader().setReorderingAllowed(false);
 //        fileCountsTable.getTableHeader().setReorderingAllowed(false);
 //        dataSourcesTable.getTableHeader().setReorderingAllowed(false);
-        try {
-            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            allIngestJobs.addAll(skCase.getIngestJobs());
-            dataSources.addAll(skCase.getDataSources());
+//        try {
+//            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+//            allIngestJobs.addAll(skCase.getIngestJobs());
             //if for some reason multiple OS_INFO_ARTIFACTS were created with the same parent object id this will only return one OSInfo object for them
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
-            JOptionPane.showMessageDialog(this, Bundle.DataSourceSummaryPanel_getDataSources_error_text(), Bundle.DataSourceSummaryPanel_getDataSources_error_title(), JOptionPane.ERROR_MESSAGE);
-        }
+//        } catch (TskCoreException | NoCurrentCaseException ex) {
+//            logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
+//            JOptionPane.showMessageDialog(this, Bundle.DataSourceSummaryPanel_getDataSources_error_text(), Bundle.DataSourceSummaryPanel_getDataSources_error_title(), JOptionPane.ERROR_MESSAGE);
+//        }
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();
-                gotoDataSourceButton.setEnabled(selectedDataSource != null);
                 updateIngestJobs(selectedDataSource);
                 filesPanel.updateFilesTableData(selectedDataSource);
                 detailsPanel.updateDetailsPanelData(selectedDataSource);
                 this.repaint();
             }
         });
+        dataSourcesPanel.addObserver(this);
+        this.pack();
     }
 
-    
+    @Override
+    public void update(Observable o, Object arg) {
+        this.dispose();
+    }
 
     /**
      * Update the ingestJobs list with the ingest jobs for the
@@ -132,17 +138,13 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         closeButton = new javax.swing.JButton();
-        gotoDataSourceButton = new javax.swing.JButton();
         dataSourceSummarySplitPane = new javax.swing.JSplitPane();
         dataSourceTabbedPane = new javax.swing.JTabbedPane();
 
-        org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.closeButton.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(gotoDataSourceButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.gotoDataSourceButton.text")); // NOI18N
-        gotoDataSourceButton.setEnabled(false);
-        gotoDataSourceButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(DataSourceSummaryDialog.class, "DataSourceSummaryDialog.closeButton.text")); // NOI18N
+        closeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                gotoDataSourceButtonActionPerformed(evt);
+                closeButtonActionPerformed(evt);
             }
         });
 
@@ -152,8 +154,8 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
 
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -162,37 +164,23 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                     .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 630, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(gotoDataSourceButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(closeButton)))
                 .addContainerGap())
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {closeButton, gotoDataSourceButton});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(gotoDataSourceButton)
-                    .addComponent(closeButton))
+                .addComponent(closeButton)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    /**
-     * Adds an action listener to the Close button of the panel.
-     *
-     * @param action
-     */
-    void addCloseButtonAction(ActionListener action) {
-        this.closeButton.addActionListener(action);
-        //the gotoDataSourceButton should also close the dialog
-        this.gotoDataSourceButton.addActionListener(action);
-    }
+    private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
+        this.dispose();
+    }//GEN-LAST:event_closeButtonActionPerformed
 
     /**
      * Select the data source with the specicied data source id. If no data
@@ -218,25 +206,11 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
 //        }
     }
 
-    /**
-     * Performed when the Goto Data Source button is clicked, will cause the
-     * window to be closed and the data source which was selected to be
-     * navigated to in the tree.
-     */
-    private void gotoDataSourceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_gotoDataSourceButtonActionPerformed
-        //the dialog will be closed due to the action listener added in addCloseButtonAction
-//        DataSource selectedDataSource = (dataSourcesTable.getSelectedRow() < 0 ? null : dataSources.get(dataSourcesTable.getSelectedRow()));
-//        if (selectedDataSource != null) {
-//            new ViewContextAction("", selectedDataSource).actionPerformed(evt);
-//        }
-    }//GEN-LAST:event_gotoDataSourceButtonActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
     private javax.swing.JSplitPane dataSourceSummarySplitPane;
     private javax.swing.JTabbedPane dataSourceTabbedPane;
-    private javax.swing.JButton gotoDataSourceButton;
     // End of variables declaration//GEN-END:variables
 
     /**
