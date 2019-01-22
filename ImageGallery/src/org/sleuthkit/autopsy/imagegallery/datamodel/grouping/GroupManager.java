@@ -543,8 +543,7 @@ public class GroupManager {
     }
 
     /**
-     * Adds an analyzed file to a group and marks the group as analyzed if the
-     * entire group is now analyzed.
+     * Adds an analyzed file to the in-memory group data structures. Marks the group as unseen. 
      *
      * @param group    Group being added to (will be null if a group has not yet
      *                 been created)
@@ -559,12 +558,17 @@ public class GroupManager {
             //if there wasn't already a DrawableGroup, then check if this group is now 
             // in an appropriate state to get one made.  
             // Path group, for example, only gets a DrawableGroup created when all files are analyzed
+            /* NOTE: With the current (Jan 2019) behavior of how we detect a PATH group as being analyzed, the group
+             * is not marked as analyzed until we add a file for another folder.  So, when the last picture in a folder
+             * is added to the group, the call to 'populateIfAnalyzed' will still not return a group and therefore this
+             * method will never mark the group as unseen. */
             group = popuplateIfAnalyzed(groupKey, null);
         } else {
             //if there is aleady a group that was previously deemed fully analyzed, then add this newly analyzed file to it.
             group.addFile(fileID);
         }
-        // reset the seen status for the group
+        
+        // reset the seen status for the group (if it is currently considered analyzed)
         if (group != null) {
             markGroupSeen(group, false);
         }
