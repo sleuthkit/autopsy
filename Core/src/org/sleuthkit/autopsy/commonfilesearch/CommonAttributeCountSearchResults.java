@@ -130,6 +130,10 @@ final public class CommonAttributeCountSearchResults {
      * @return metadata
      */
     private void filterMetadata(int maximumPercentageThreshold) throws EamDbException {
+        if (!EamDb.isEnabled()) {
+            return;
+        }
+
         CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
                 .getDefaultCorrelationTypes()
                 .stream()

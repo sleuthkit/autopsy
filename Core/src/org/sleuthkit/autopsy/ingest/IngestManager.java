@@ -1102,9 +1102,8 @@ public class IngestManager implements IngestProgressSnapshotProvider {
         DATA_ADDED,
         /**
          * Property change event fired when an ingest module adds new content to
-         * a case or changes a recorded attribute of existing content. For
-         * example, if a module adds an extracted or carved file to a case, the
-         * module should fire this event. The old value of the
+         * a case. For example, if a module adds an extracted or carved file to
+         * a case, the module should fire this event. The old value of the
          * PropertyChangeEvent is a ModuleContentEvent object, and the new value
          * is set to null.
          */
