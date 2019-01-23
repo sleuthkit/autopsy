@@ -69,7 +69,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         initComponents();
         explorerManager = new ExplorerManager();
         outlineView = new org.openide.explorer.view.OutlineView();
-        dataSourcesScrollPane.setViewportView(outlineView);
         this.setVisible(true);
         outlineView.setPropertyColumns(
                 Bundle.DataSourceSummaryNode_column_type_header(), Bundle.DataSourceSummaryNode_column_type_header(),
@@ -81,7 +80,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         outline.setRootVisible(false);
         dataSourceSummaryList = getDataSourceSummaryList();
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.DataSourceSummaryNode_column_dataSourceName_header());
-        dataSourcesScrollPane.setViewportView(outlineView);
+        add(outlineView, java.awt.BorderLayout.CENTER);
         explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
         this.setVisible(true);
     }
@@ -300,10 +299,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        dataSourcesScrollPane = new javax.swing.JScrollPane();
-
         setLayout(new java.awt.BorderLayout());
-        add(dataSourcesScrollPane, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
     @Override
@@ -313,7 +309,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane dataSourcesScrollPane;
     // End of variables declaration//GEN-END:variables
 
     /**

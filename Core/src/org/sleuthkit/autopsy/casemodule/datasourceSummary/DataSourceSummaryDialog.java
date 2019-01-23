@@ -96,7 +96,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
             }
         });
 
-        dataSourceSummarySplitPane.setDividerLocation(100);
+        dataSourceSummarySplitPane.setDividerLocation(140);
         dataSourceSummarySplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         dataSourceSummarySplitPane.setRightComponent(dataSourceTabbedPane);
 
@@ -119,7 +119,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)
+                .addComponent(dataSourceSummarySplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(closeButton)
                 .addContainerGap())

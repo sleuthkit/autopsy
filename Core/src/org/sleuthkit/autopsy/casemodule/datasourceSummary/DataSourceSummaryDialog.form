@@ -36,7 +36,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="dataSourceSummarySplitPane" pref="353" max="32767" attributes="0"/>
+              <Component id="dataSourceSummarySplitPane" pref="362" max="32767" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="closeButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
@@ -57,7 +57,7 @@
     </Component>
     <Container class="javax.swing.JSplitPane" name="dataSourceSummarySplitPane">
       <Properties>
-        <Property name="dividerLocation" type="int" value="100"/>
+        <Property name="dividerLocation" type="int" value="140"/>
         <Property name="orientation" type="int" value="0"/>
       </Properties>
       <AuxValues>
