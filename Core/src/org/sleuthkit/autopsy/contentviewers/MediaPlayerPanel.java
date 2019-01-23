@@ -179,6 +179,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private boolean gstInited;
     private static final String MEDIA_PLAYER_ERROR_STRING = NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.cannotProcFile.err");
     //playback
+    private boolean durationSet;
     private long durationMillis = 0;
     private VideoProgressWorker videoProgressWorker;
     private int totalHours, totalMinutes, totalSeconds;
@@ -187,6 +188,38 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlayBin player
     private AbstractFile currentFile;
+    
+    private Bus.STATE_CHANGED busStateChangedListener = new Bus.STATE_CHANGED() {
+        @Override
+        public void stateChanged(GstObject source, State old, State current, State pending) {
+            if (durationSet == false && current.equals(State.PLAYING)) {
+                durationSet = true;
+                
+                durationMillis = gstPlayBin.queryDuration().toMillis();
+
+                // pick out the total hours, minutes, seconds
+                long durationSeconds = (int) durationMillis / 1000;
+                totalHours = (int) durationSeconds / 3600;
+                durationSeconds -= totalHours * 3600;
+                totalMinutes = (int) durationSeconds / 60;
+                durationSeconds -= totalMinutes * 60;
+                totalSeconds = (int) durationSeconds;
+                
+                SwingUtilities.invokeLater(() -> {
+                    progressSlider.setMaximum((int) durationMillis);
+                    progressSlider.setMinimum(0);
+
+                    pauseButton.setText("||");
+                    videoProgressWorker = new VideoProgressWorker();
+                    videoProgressWorker.execute();
+                });
+            }
+            if (!current.equals(State.PLAYING)) {
+                System.out.println();
+                System.out.println();
+            }
+        }
+    };
 
     /**
      * Creates new form MediaViewVideoPanel
@@ -244,6 +277,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                         infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                         return;
                     }
+                    State test = gstPlayBin.getState(); //DLG: Remove this!
                     if (gstPlayBin.seek(ClockTime.fromMillis(time)) == false) {
                         logger.log(Level.WARNING, "Attempt to call PlayBin.seek() failed."); //NON-NLS
                         infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
@@ -350,41 +384,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
             }
             
-            gstPlayBin.getBus().connect(new Bus.EOS() {
-                @Override
-                public void endOfStream(GstObject source) {
-                    long test = durationMillis;
-                    System.out.println(test);
-                    System.out.println();
-                }
-            });
-            gstPlayBin.getBus().connect(new Bus.ERROR() {
-                @Override
-                public void errorMessage(GstObject source, int code, String message) {
-                    long test = durationMillis;
-                    System.out.println(test);
-                    System.out.println();
-                }
-            });
-            gstPlayBin.getBus().connect(new Bus.STATE_CHANGED() {
-                @Override
-                public void stateChanged(GstObject source, State old, State current, State pending) {
-                    if (durationMillis == 0 && current.equals(State.PLAYING)) {
-                        durationMillis = gstPlayBin.queryDuration().toMillis();
-                        
-                        // pick out the total hours, minutes, seconds
-                        long durationSeconds = (int) durationMillis / 1000;
-                        totalHours = (int) durationSeconds / 3600;
-                        durationSeconds -= totalHours * 3600;
-                        totalMinutes = (int) durationSeconds / 60;
-                        durationSeconds -= totalMinutes * 60;
-                        totalSeconds = (int) durationSeconds;
-                    }
-                    long test = durationMillis;
-                    System.out.println(test);
-                    System.out.println();
-                }
-            });
+            gstPlayBin.getBus().connect(busStateChangedListener);
         }
 
     }
@@ -418,6 +418,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     return;
                 }
                 if (gstPlayBin.getState().equals(State.NULL)) {
+                    gstPlayBin.getBus().disconnect(busStateChangedListener);
                     gstPlayBin.dispose();
                 }
                 gstPlayBin = null;
@@ -431,6 +432,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             videoProgressWorker.cancel(true);
             videoProgressWorker = null;
         }
+        
+        durationSet = false;
+        
+        durationMillis = 0;
+        totalHours = 0;
+        totalMinutes = 0;
+        totalSeconds = 0;
 
         currentFile = null;
     }
@@ -744,7 +752,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progressLabel.bufferingErr"));
                 return;
             }
-            ClockTime dur;
             synchronized (playbinLock) {
                 // must play, then pause and get state to get duration.
                 if (gstPlayBin.play() == StateChangeReturn.FAILURE) {
@@ -752,44 +759,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
-                /*gstPlayBin.getBus().connect(new Bus.DURATION() {
-                    @Override
-                    public void durationChanged(GstObject go, Format format, long l) {
-                        System.out.println();
-                    }
-                });*/
-                //DLG:
-                /*if (gstPlayBin.pause() == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin.pause() failed."); //NON-NLS
-                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                    return;
-                }*/
-                State state = gstPlayBin.getState();
-                dur = gstPlayBin.queryDuration();
             }
-
-            // pick out the total hours, minutes, seconds
-            long durationSeconds = (int) durationMillis / 1000;
-            totalHours = (int) durationSeconds / 3600;
-            durationSeconds -= totalHours * 3600;
-            totalMinutes = (int) durationSeconds / 60;
-            durationSeconds -= totalMinutes * 60;
-            totalSeconds = (int) durationSeconds;
-
-            SwingUtilities.invokeLater(() -> {
-                progressSlider.setMaximum((int) durationMillis);
-                progressSlider.setMinimum(0);
-
-                /*synchronized (playbinLock) {
-                    if (gstPlayBin.play() == StateChangeReturn.FAILURE) {
-                        logger.log(Level.WARNING, "Attempt to call PlayBin.play() failed."); //NON-NLS
-                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                    }
-                }*/
-                pauseButton.setText("||");
-                videoProgressWorker = new VideoProgressWorker();
-                videoProgressWorker.execute();
-            });
         }
     }
 
