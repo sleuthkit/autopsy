@@ -96,7 +96,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
             }
         });
 
-        dataSourceSummarySplitPane.setDividerLocation(140);
+        dataSourceSummarySplitPane.setDividerLocation(130);
         dataSourceSummarySplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
         dataSourceSummarySplitPane.setRightComponent(dataSourceTabbedPane);
 

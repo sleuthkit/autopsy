@@ -57,7 +57,7 @@
     </Component>
     <Container class="javax.swing.JSplitPane" name="dataSourceSummarySplitPane">
       <Properties>
-        <Property name="dividerLocation" type="int" value="140"/>
+        <Property name="dividerLocation" type="int" value="130"/>
         <Property name="orientation" type="int" value="0"/>
       </Properties>
       <AuxValues>
