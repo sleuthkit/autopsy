@@ -48,11 +48,11 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
         "DataSourceSummaryPanel.detailsTab.title=Details"
     })
     DataSourceSummaryDialog(Frame owner) {
-        super(owner, Bundle.DataSourcesSummaryPanel_window_title(), true);
+        super(owner, Bundle.DataSourceSummaryPanel_window_title(), true);
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
-        dataSourceTabbedPane.add(Bundle.DataSourcesSummaryPanel_filesTab_title(), filesPanel);
-        dataSourceTabbedPane.addTab(Bundle.DataSourcesSummaryPanel_detailsTab_title(), detailsPanel);
+        dataSourceTabbedPane.add(Bundle.DataSourceSummaryPanel_filesTab_title(), filesPanel);
+        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryPanel_detailsTab_title(), detailsPanel);
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();

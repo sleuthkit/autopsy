@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.DataSource;
@@ -43,6 +44,8 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
     /**
      * Creates new form DataSourceSummaryDetailsPanel
      */
+    @Messages({"DataSourceSummaryDetailsPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
+        "DataSourceSummaryDetailsPanel.getDataSources.error.title=Load Failure"})
     public DataSourceSummaryDetailsPanel() {
         initComponents();
         try {
@@ -50,7 +53,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
             osInfoList = OSUtility.getOSInfo(skCase);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
-            JOptionPane.showMessageDialog(this, Bundle.DataSourceSummaryPanel_getDataSources_error_text(), Bundle.DataSourceSummaryPanel_getDataSources_error_title(), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.DataSourceSummaryDetailsPanel_getDataSources_error_text(), Bundle.DataSourceSummaryDetailsPanel_getDataSources_error_title(), JOptionPane.ERROR_MESSAGE);
         }
     }
 
