@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -245,7 +245,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (eamCase.getCaseUUID() == null) {
             throw new EamDbException("Case UUID is null");
         }
-        
+
         // check if there is already an existing CorrelationCase for this Case
         CorrelationCase cRCase = getCaseByUUID(eamCase.getCaseUUID());
         if (cRCase != null) {
@@ -621,8 +621,8 @@ abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
-
-        String sql = "INSERT INTO data_sources(device_id, case_id, name, datasource_obj_id) VALUES (?, ?, ?, ?) "
+        //The conflict clause exists in case multiple nodes are trying to add the data source because it did not exist at the same time
+        String sql = "INSERT INTO data_sources(device_id, case_id, name, datasource_obj_id, md5, sha1, sha256) VALUES (?, ?, ?, ?, ?, ?, ?) "
                 + getConflictClause();
         ResultSet resultSet = null;
         try {
@@ -632,17 +632,30 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setInt(2, eamDataSource.getCaseID());
             preparedStatement.setString(3, eamDataSource.getName());
             preparedStatement.setLong(4, eamDataSource.getDataSourceObjectID());
+            preparedStatement.setString(5, eamDataSource.getMd5());
+            preparedStatement.setString(6, eamDataSource.getSha1());
+            preparedStatement.setString(7, eamDataSource.getSha256());
 
             preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
             if (!resultSet.next()) {
-                throw new EamDbException(String.format("Failed to INSERT data source %s in central repo", eamDataSource.getName()));
+                //if nothing was inserted then return the DataSource that exists in the central repository
+                try {
+                    return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
+                            eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
+                            () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
+                } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
+                    throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo", eamDataSource.getName()), ex);
+                }
+            } else {
+                //if a new data source was added to the central repository update the caches to include it and return it
+                int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
+                CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID(), eamDataSource.getMd5(), eamDataSource.getSha1(), eamDataSource.getSha256());
+                dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(dataSource.getCaseID(), dataSource.getDataSourceObjectID()), dataSource);
+                dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
+                return dataSource;
             }
-            int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
-            CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID());
-            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(dataSource.getCaseID(), dataSource.getDataSourceObjectID()), dataSource);
-            dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
-            return dataSource;
+
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new data source.", ex); // NON-NLS
         } finally {
@@ -670,7 +683,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
         try {
-            return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(correlationCase.getID(), dataSourceObjectId), () -> getDataSourceFromCr(correlationCase, dataSourceObjectId));
+            return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(correlationCase.getID(), dataSourceObjectId), () -> getDataSourceFromCr(correlationCase.getID(), dataSourceObjectId));
         } catch (CacheLoader.InvalidCacheLoadException ignored) {
             //lambda valueloader returned a null value and cache can not store null values this is normal if the dataSource does not exist in the central repo yet
             return null;
@@ -683,15 +696,15 @@ abstract class AbstractSqlEamDb implements EamDb {
      * Gets the Data Source details based on data source device ID from the
      * central repository.
      *
-     * @param correlationCase    the current CorrelationCase used for ensuring
-     *                           uniqueness of DataSource
-     * @param dataSourceDeviceId the object id of the data source
+     * @param correlationCaseId  the current CorrelationCase id used for
+     *                           ensuring uniqueness of DataSource
+     * @param dataSourceObjectId the object id of the data source
      *
      * @return The data source
      *
      * @throws EamDbException
      */
-    private CorrelationDataSource getDataSourceFromCr(CorrelationCase correlationCase, Long dataSourceObjectId) throws EamDbException {
+    private CorrelationDataSource getDataSourceFromCr(int correlationCaseId, Long dataSourceObjectId) throws EamDbException {
         Connection conn = connect();
 
         CorrelationDataSource eamDataSourceResult = null;
@@ -703,13 +716,13 @@ abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setLong(1, dataSourceObjectId);
-            preparedStatement.setInt(2, correlationCase.getID());
+            preparedStatement.setInt(2, correlationCaseId);
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
             }
             if (eamDataSourceResult != null) {
-                dataSourceCacheById.put(getDataSourceByIdCacheKey(correlationCase.getID(), eamDataSourceResult.getID()), eamDataSourceResult);
+                dataSourceCacheById.put(getDataSourceByIdCacheKey(correlationCaseId, eamDataSourceResult.getID()), eamDataSourceResult);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting data source.", ex); // NON-NLS
@@ -818,6 +831,73 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
 
         return dataSources;
+    }
+    
+    /**
+     * Updates the MD5 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        updateDataSourceStringValue(eamDataSource, "md5", eamDataSource.getMd5());
+    }
+    
+    /**
+     * Updates the SHA-1 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        updateDataSourceStringValue(eamDataSource, "sha1", eamDataSource.getSha1());
+    }
+    
+    /**
+     * Updates the SHA-256 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        updateDataSourceStringValue(eamDataSource, "sha256", eamDataSource.getSha256());
+    }
+    
+    /**
+     * Updates the specified value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     * @param column The name of the column to be updated
+     * @param value The value to assign to the specified column
+     */
+    private void updateDataSourceStringValue(CorrelationDataSource eamDataSource, String column, String value) throws EamDbException {
+        if (eamDataSource == null) {
+            throw new EamDbException("Correlation data source is null");
+        }
+
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "UPDATE data_sources "
+                + "SET " + column + "=? "
+                + "WHERE id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            
+            preparedStatement.setString(1, value);
+            preparedStatement.setInt(2, eamDataSource.getID());
+            
+            preparedStatement.executeUpdate();
+            //update the case in the cache
+            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()), eamDataSource);
+            dataSourceCacheById.put(getDataSourceByIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getID()), eamDataSource);
+        } catch (SQLException ex) {
+            throw new EamDbException(String.format("Error updating data source (obj_id=%d).", eamDataSource.getDataSourceObjectID()), ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
     }
 
     /**
@@ -932,7 +1012,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".value,"
                 + tableName
                 + ".file_obj_id,"
-                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -997,7 +1077,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".value,"
                 + tableName
                 + ".file_obj_id,"
-                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -1722,7 +1802,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".value, "
                 + tableName
                 + ".file_obj_id,"
-                + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
+                + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -1779,7 +1859,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
-                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, file_obj_id, data_sources.datasource_obj_id FROM "
+                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, file_obj_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -3062,7 +3142,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("id"),
                 resultSet.getString("device_id"),
                 resultSet.getString("name"),
-                resultSet.getLong("datasource_obj_id")
+                resultSet.getLong("datasource_obj_id"),
+                resultSet.getString("md5"),
+                resultSet.getString("sha1"),
+                resultSet.getString("sha256")
         );
 
         return eamDataSource;
@@ -3103,7 +3186,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getString("value"),
                 resultSet.getInt("id"),
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
-                new CorrelationDataSource(resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name"), resultSet.getLong("datasource_obj_id")),
+                new CorrelationDataSource(
+                        resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name"),
+                        resultSet.getLong("datasource_obj_id"), resultSet.getString("md5"), resultSet.getString("sha1"), resultSet.getString("sha256")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status")),

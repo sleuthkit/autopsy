@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -30,9 +29,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * @param <T> extends AbstractFile
  */
 public abstract class AbstractFsContentNode<T extends AbstractFile> extends AbstractAbstractFileNode<T> {
-
-    private static Logger logger = Logger.getLogger(AbstractFsContentNode.class.getName());
-
+    
     private boolean directoryBrowseMode;
     public static final String HIDE_PARENT = "hide_parent"; //NON-NLS
 
@@ -54,7 +51,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         this.setDisplayName(getContentDisplayName(content));
         this.directoryBrowseMode = directoryBrowseMode;
     }
-
+    
     public boolean getDirectoryBrowseMode() {
         return directoryBrowseMode;
     }

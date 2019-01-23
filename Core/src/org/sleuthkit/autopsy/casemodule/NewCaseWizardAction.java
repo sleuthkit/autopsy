@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +39,6 @@ import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -89,19 +88,22 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
                     Case.createAsCurrentCase(caseType, createdDirectory, new CaseDetails(caseName, caseNumber, examinerName, examinerPhone, examinerEmail, caseNotes));
                     if (EamDb.isEnabled()) {  //if the eam is enabled we need to save the case organization information now
-                            EamDb dbManager = EamDb.getInstance();
-                            if (dbManager != null) {
-                                CorrelationCase cRCase = dbManager.getCase(Case.getCurrentCaseThrows());
-                                if (!organizationName.isEmpty()) {
-                                    for (EamOrganization org : dbManager.getOrganizations()) {
-                                        if (org.getName().equals(organizationName)) {
-                                            cRCase.setOrg(org);
-                                            dbManager.updateCase(cRCase);
-                                        }
+                        EamDb dbManager = EamDb.getInstance();
+                        if (dbManager != null) {
+                            CorrelationCase cRCase = dbManager.getCase(Case.getCurrentCaseThrows());
+                            if (cRCase == null) {
+                                cRCase = dbManager.newCase(Case.getCurrentCaseThrows());
+                            }
+                            if (!organizationName.isEmpty()) {
+                                for (EamOrganization org : dbManager.getOrganizations()) {
+                                    if (org.getName().equals(organizationName)) {
+                                        cRCase.setOrg(org);
+                                        dbManager.updateCase(cRCase);
                                     }
                                 }
                             }
-                        } 
+                        }
+                    }
                     return null;
                 }
 
