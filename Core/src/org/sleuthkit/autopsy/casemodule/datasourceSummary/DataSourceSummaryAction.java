@@ -66,4 +66,9 @@ public class DataSourceSummaryAction extends CallableSystemAction {
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
+    
+    @Override
+    public boolean asynchronous(){
+        return false;
+    }
 }

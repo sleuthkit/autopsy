@@ -18,20 +18,21 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import org.apache.commons.lang.StringUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.OSInfo;
-import org.sleuthkit.datamodel.OSUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -42,7 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private List<OSInfo> osInfoList;
+    private Map<Long, String> osDetailMap = new HashMap<>();
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
 
     /**
@@ -52,13 +53,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         "DataSourceSummaryDetailsPanel.getDataSources.error.title=Load Failure"})
     public DataSourceSummaryDetailsPanel() {
         initComponents();
-        try {
-            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            osInfoList = OSUtility.getOSInfo(skCase);
-        } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
-            JOptionPane.showMessageDialog(this, Bundle.DataSourceSummaryDetailsPanel_getDataSources_error_text(), Bundle.DataSourceSummaryDetailsPanel_getDataSources_error_title(), JOptionPane.ERROR_MESSAGE);
-        }
+        getOperatingSystems();
     }
 
     /**
@@ -66,38 +61,51 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
      *
      * @param selectedDataSource the DataSource to display details about.
      */
+    @Messages({"DataSourceSummaryDetailsPanel.detail.name=Name",
+        "DataSourceSummaryDetailsPanel.detail.displayName=Display Name",
+        "DataSourceSummaryDetailsPanel.detail.deviceId=Device ID",
+        "DataSourceSummaryDetailsPanel.detail.operatingSystem=Operating System",
+        "DataSourceSummaryDetailsPanel.detail.timeZone=Time Zone",
+        "DataSourceSummaryDetailsPanel.detail.filePath=File Path",
+        "DataSourceSummaryDetailsPanel.detail.size=Size",
+        "DataSourceSummaryDetailsPanel.detail.sectorSize=Sector Size",
+        "DataSourceSummaryDetailsPanel.detail.md5=MD5",
+        "DataSourceSummaryDetailsPanel.detail.sha1=SHA1",
+        "DataSourceSummaryDetailsPanel.detail.sha256=SHA256",
+        "DataSourceSummaryDetailsPanel.detail.aquisitionDetails=Aquisition Details",
+        "DataSourceSummaryDetailsPanel.units.bytes= bytes"})
     void updateDetailsPanelData(DataSource selectedDataSource) {
         clearTableValues();
         if (selectedDataSource != null) {
-            updateTableValue("Name", selectedDataSource.getName());
-            updateTableValue("Display Name", selectedDataSource.getName());
-            updateTableValue("Device ID", selectedDataSource.getDeviceId());
-            updateTableValue("Operating System", getOSName(selectedDataSource));
-            updateTableValue("Time Zone", selectedDataSource.getTimeZone());
+            updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_name(), selectedDataSource.getName());
+            updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_displayName(), selectedDataSource.getName());
+            updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_deviceId(), selectedDataSource.getDeviceId());
+            updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_timeZone(), selectedDataSource.getTimeZone());
+            updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_operatingSystem(), osDetailMap.get(selectedDataSource.getId()));
             if (selectedDataSource instanceof Image) {
-                updateTableValue("File Path", StringUtils.join(((Image) selectedDataSource).getPaths()));
-                updateTableValue("Size", String.valueOf(selectedDataSource.getSize()) + " bytes");
-                updateTableValue("Sector Size", String.valueOf(((Image) selectedDataSource).getSsize()) + " bytes");
+                updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_filePath(), StringUtils.join(((Image) selectedDataSource).getPaths()));
+                updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_size(), String.valueOf(selectedDataSource.getSize()) + Bundle.DataSourceSummaryDetailsPanel_units_bytes());
+                updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_sectorSize(), String.valueOf(((Image) selectedDataSource).getSsize()) + Bundle.DataSourceSummaryDetailsPanel_units_bytes());
                 try {
-                    updateTableValue("MD5", ((Image) selectedDataSource).getMd5());
+                    updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_md5(), ((Image) selectedDataSource).getMd5());
                 } catch (TskCoreException ex) {
-
+                    logger.log(Level.WARNING, "Unable to get MD5 for selected data source", ex);
                 }
                 try {
-                    updateTableValue("SHA1", ((Image) selectedDataSource).getSha1());
+                    updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_sha1(), ((Image) selectedDataSource).getSha1());
                 } catch (TskCoreException ex) {
-
+                    logger.log(Level.WARNING, "Unable to get SHA1 for selected data source", ex);
                 }
                 try {
-                    updateTableValue("SHA256", ((Image) selectedDataSource).getSha256());
+                    updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_sha256(), ((Image) selectedDataSource).getSha256());
                 } catch (TskCoreException ex) {
-
-                }   
+                    logger.log(Level.WARNING, "Unable to get SHA256 for selected data source", ex);
+                }
             }
             try {
-                updateTableValue("Aquisition Details", selectedDataSource.getAcquisitionDetails());
+                updateTableValue(Bundle.DataSourceSummaryDetailsPanel_detail_aquisitionDetails(), selectedDataSource.getAcquisitionDetails());
             } catch (TskCoreException ex) {
-
+                logger.log(Level.WARNING, "Unable to get aquisition details for selected data source", ex);
             }
             this.repaint();
         }
@@ -111,44 +119,33 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         if (value != null && !value.isEmpty()) {
             ((DefaultTableModel) jTable1.getModel()).addRow(new Object[]{valueName, value});
         }
-//        for (int row = 0; row < jTable1.getRowCount(); row++) {
-//            if (jTable1.getModel().getValueAt(row, 0).equals(valueName)) {
-//                jTable1.getModel().setValueAt(value, row, 1);
-//                return;
-//            }
-//        }
     }
 
     /**
-     * Get the name of the operating system if it is available. Otherwise get
-     * and empty string.
+     * Map the names of operating systems joined in a comma seperated list to
+     * the Data Source they exist on.
      *
-     * @param selectedDataSource the datasource to get the OS information for
-     *
-     * @return the name of the operating system on the specified datasource,
-     *         empty string if no operating system info found
      */
-    private String getOSName(DataSource selectedDataSource) {
-        String osName = "";
-        if (selectedDataSource != null) {
-            for (OSInfo osInfo : osInfoList) {
-                try {
-                    //assumes only one Operating System per datasource
-                    //get the datasource id from the OSInfo's first artifact if it has artifacts
-                    if (!osInfo.getArtifacts().isEmpty() && osInfo.getArtifacts().get(0).getDataSource().getId() == selectedDataSource.getId()) {
-                        if (!osName.isEmpty()) {
-                            osName += ", ";
-                        }
-                        osName += osInfo.getOSName();
-                        //if this OSInfo object has a name use it otherwise keep checking OSInfo objects
+    private void getOperatingSystems() {
+        try {
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            ArrayList<BlackboardArtifact> osInfoArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO);
+            for (BlackboardArtifact osInfo : osInfoArtifacts) {
+                BlackboardAttribute programName = osInfo.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME));
+                if (programName != null) {
+                    String currentOsString = osDetailMap.get(osInfo.getDataSource().getId());
+                    if (currentOsString == null || currentOsString.isEmpty()) {
+                        currentOsString = programName.getValueString();
+                    } else {
+                        currentOsString = currentOsString + ", " + programName.getValueString();;
                     }
-                } catch (TskCoreException ignored) {
-                    //unable to get datasource for the OSInfo Object 
-                    //continue checking for OSInfo objects to try and get get the desired information
+                    osDetailMap.put(osInfo.getDataSource().getId(), currentOsString);
                 }
             }
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Failed to load OS info artifacts.", ex);
+            JOptionPane.showMessageDialog(this, Bundle.DataSourceSummaryDetailsPanel_getDataSources_error_text(), Bundle.DataSourceSummaryDetailsPanel_getDataSources_error_title(), JOptionPane.ERROR_MESSAGE);
         }
-        return osName;
     }
 
     /**
