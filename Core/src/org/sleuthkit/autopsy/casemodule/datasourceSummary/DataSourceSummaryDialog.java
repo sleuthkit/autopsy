@@ -19,41 +19,40 @@
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
 import java.awt.Frame;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Logger;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.IngestJobInfo;
 
-final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer{
+/**
+ * Dialog for displaying the Data Sources Summary information
+ */
+final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer {
 
     private static final long serialVersionUID = 1L;
-    private final List<IngestJobInfo> allIngestJobs = new ArrayList<>();
     private DataSourceSummaryFilesPanel filesPanel = new DataSourceSummaryFilesPanel();
     private DataSourceSummaryDetailsPanel detailsPanel = new DataSourceSummaryDetailsPanel();
     private DataSourceBrowser dataSourcesPanel = new DataSourceBrowser();
-    private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
 
     /**
-     * Creates new form DataSourceSummaryPanel for displaying a summary of the
+     * Creates new form DataSourceSummaryDialog for displaying a summary of the
      * data sources for the fcurrent case and the contents found for each
      * datasource.
      */
-    @Messages({"DataSourceSummaryPanel.window.title=Data Sources Summary","DataSourceSummaryPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
-        "DataSourceSummaryPanel.getDataSources.error.title=Load Failure"})
+    @Messages({
+        "DataSourceSummaryPanel.window.title=Data Sources Summary",
+        "DataSourceSummaryPanel.filesTab.title=Files",
+        "DataSourceSummaryPanel.detailsTab.title=Details"
+    })
     DataSourceSummaryDialog(Frame owner) {
-        super(owner, Bundle.DataSourceSummaryPanel_window_title(), true);
+        super(owner, Bundle.DataSourcesSummaryPanel_window_title(), true);
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
-        dataSourceTabbedPane.add("Files",filesPanel);
-        dataSourceTabbedPane.addTab("Details", detailsPanel);
+        dataSourceTabbedPane.add(Bundle.DataSourcesSummaryPanel_filesTab_title(), filesPanel);
+        dataSourceTabbedPane.addTab(Bundle.DataSourcesSummaryPanel_detailsTab_title(), detailsPanel);
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();
@@ -62,8 +61,14 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
                 this.repaint();
             }
         });
-        dataSourcesPanel.addObserver(this);
         this.pack();
+    }
+
+    /**
+     * Make this dialog an observer of the DataSourcesPanel.
+     */
+    void enableObserver() {
+        dataSourcesPanel.addObserver(this);
     }
 
     @Override

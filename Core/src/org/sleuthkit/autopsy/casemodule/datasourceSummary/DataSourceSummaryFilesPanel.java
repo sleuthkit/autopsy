@@ -33,6 +33,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * Panel for displaying summary information on the known files present in the
+ * specified DataSource
+ */
 public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -47,6 +51,11 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
         fileCountsTable.getTableHeader().setReorderingAllowed(false);
     }
 
+    /**
+     * Specify the DataSource to display file information for
+     *
+     * @param selectedDataSource the DataSource to display file information for
+     */
     void updateFilesTableData(DataSource selectedDataSource) {
         filesTableModel = new FilesTableModel(selectedDataSource);
         fileCountsTable.setModel(filesTableModel);

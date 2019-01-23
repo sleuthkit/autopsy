@@ -20,6 +20,10 @@ package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
 import org.sleuthkit.datamodel.DataSource;
 
+/**
+ * Wrapper object for a DataSource and the information associated with it.
+ *
+ */
 class DataSourceSummary {
 
     private final DataSource dataSource;
@@ -28,6 +32,17 @@ class DataSourceSummary {
     private final long resultsCount;
     private final long tagsCount;
 
+    /**
+     * Construct a new DataSourceSummary object
+     *
+     * @param dSource         the DataSource being wrapped by this object
+     * @param typeValue       the Type sting to be associated with this
+     *                        DataSource
+     * @param numberOfFiles   the number of files found in this DataSource
+     * @param numberOfResults the number of artifacts found in this DataSource
+     * @param numberOfTags    the number of tagged content objects in this
+     *                        DataSource
+     */
     DataSourceSummary(DataSource dSource, String typeValue, Long numberOfFiles, Long numberOfResults, Long numberOfTags) {
         dataSource = dSource;
         type = typeValue == null ? "" : typeValue;
@@ -37,6 +52,8 @@ class DataSourceSummary {
     }
 
     /**
+     * Get the DataSource
+     *
      * @return the dataSource
      */
     DataSource getDataSource() {
@@ -44,6 +61,8 @@ class DataSourceSummary {
     }
 
     /**
+     * Get the type of this DataSource
+     *
      * @return the type
      */
     String getType() {
@@ -51,6 +70,8 @@ class DataSourceSummary {
     }
 
     /**
+     * Get the number of files in this DataSource
+     *
      * @return the filesCount
      */
     long getFilesCount() {
@@ -58,6 +79,8 @@ class DataSourceSummary {
     }
 
     /**
+     * Get the number of artifacts in this DataSource
+     *
      * @return the resultsCount
      */
     long getResultsCount() {
@@ -65,6 +88,8 @@ class DataSourceSummary {
     }
 
     /**
+     * Get the number of tagged content objects in this DataSource
+     *
      * @return the tagsCount
      */
     long getTagsCount() {

@@ -34,6 +34,11 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.DataSource;
 
+/**
+ * Root node for displaying DataSourceSummary information in the
+ * DataSourceBrowser
+ *
+ */
 final class DataSourceSummaryNode extends AbstractNode {
 
     private final static Observable closeDialogObservable = new Observable() {
@@ -46,18 +51,40 @@ final class DataSourceSummaryNode extends AbstractNode {
         }
     };
 
+    /**
+     * Construct a new DataSourceSummaryNode
+     *
+     * @param dataSourceList the list of DataSourceSummary objects representing
+     *                       DataSources which are this nodes children
+     */
     DataSourceSummaryNode(List<DataSourceSummary> dataSourceList) {
         super(Children.create(new DataSourceSummaryChildren(dataSourceList), true));
     }
 
+    /**
+     * Add an observer to the closeDialogObservable
+     *
+     * @param observer the observer to add
+     */
     void addObserver(Observer observer) {
         closeDialogObservable.addObserver(observer);
     }
 
+    /**
+     * ChildFactory to create children of the DataSourceSummaryNode for each
+     * DataSourceSummary
+     */
     static final class DataSourceSummaryChildren extends ChildFactory<DataSourceSummary> {
 
         private final List<DataSourceSummary> dataSourceList;
 
+        /**
+         * Construct a new DataSourceSummaryChildren object to create children
+         * for each DataSourceSummary object in the list
+         *
+         * @param dataSourceList the DataSourceSummary objects to create
+         *                       children for
+         */
         DataSourceSummaryChildren(List<DataSourceSummary> dataSourceList) {
             this.dataSourceList = dataSourceList;
         }
@@ -77,7 +104,7 @@ final class DataSourceSummaryNode extends AbstractNode {
     }
 
     /**
-     * A node which represents a single multi user case.
+     * A node which represents a single DataSource.
      */
     static final class DataSourceSummaryEntryNode extends AbstractNode {
 
@@ -87,6 +114,13 @@ final class DataSourceSummaryNode extends AbstractNode {
         private final long resultsCount;
         private final long tagsCount;
 
+        /**
+         * Constrcut a new DataSourceSummaryEntryNode
+         *
+         * @param dataSourceSummary the DataSourceSummary which is wrapping the
+         *                          DataSource which will be represented by this
+         *                          node.
+         */
         DataSourceSummaryEntryNode(DataSourceSummary dataSourceSummary) {
             super(Children.LEAF);
             dataSource = dataSourceSummary.getDataSource();
@@ -99,6 +133,11 @@ final class DataSourceSummaryNode extends AbstractNode {
             setDisplayName(dataSource.getName());
         }
 
+        /**
+         * Get the DataSource being represented by this node.
+         *
+         * @return the DataSource which is represented by this node.
+         */
         DataSource getDataSource() {
             return dataSource;
         }
@@ -147,10 +186,17 @@ final class DataSourceSummaryNode extends AbstractNode {
             return actions.toArray(new Action[actions.size()]);
         }
 
+        /**
+         * Action to navigate to this node's Data Source in the Results Viewer
+         * and close the DataSourceSummaryDialog.
+         */
         private class ViewDataSourceInContextAction extends ViewContextAction {
 
             private static final long serialVersionUID = 1L;
 
+            /**
+             * Construct a new ViewDataSourceInCOntextAction
+             */
             ViewDataSourceInContextAction() {
                 super("Go to Data Source", dataSource);
             }

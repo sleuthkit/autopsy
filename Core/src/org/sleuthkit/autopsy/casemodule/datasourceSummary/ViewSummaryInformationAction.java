@@ -26,7 +26,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 
 /**
- * ViewSummaryInformationAction action for opening a Data Source Summary Panel
+ * ViewSummaryInformationAction action for opening a Data Sources Summary Dialog
  * with the specified data source selected if it is present.
  */
 public final class ViewSummaryInformationAction extends AbstractAction {
@@ -47,12 +47,14 @@ public final class ViewSummaryInformationAction extends AbstractAction {
         super(Bundle.ViewSummaryInformationAction_name_text());
         selectDataSource = selectedDataSource;
     }
-    
+
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
         SwingUtilities.invokeLater(() -> {
             Frame mainWindow = WindowManager.getDefault().getMainWindow();
             dataSourceSummaryDialog = new DataSourceSummaryDialog(mainWindow);
+            //allow dialog to be closed when actions performed
+            dataSourceSummaryDialog.enableObserver();
             //select the specifed data source
             dataSourceSummaryDialog.selectDataSource(selectDataSource);
             dataSourceSummaryDialog.setResizable(true);

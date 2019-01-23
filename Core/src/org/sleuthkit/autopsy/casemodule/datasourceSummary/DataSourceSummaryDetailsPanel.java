@@ -30,6 +30,10 @@ import org.sleuthkit.datamodel.OSUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Panel to display additional details associated with a specific DataSource
+ *
+ */
 public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
@@ -50,6 +54,11 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Update which DataSource this panel should display details about
+     *
+     * @param selectedDataSource the DataSource to display details about.
+     */
     void updateDetailsPanelData(DataSource selectedDataSource) {
         operatingSystemValueLabel.setText(getOSName(selectedDataSource));
         this.repaint();

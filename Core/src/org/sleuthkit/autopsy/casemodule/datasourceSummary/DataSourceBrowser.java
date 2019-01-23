@@ -49,10 +49,13 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
+/**
+ * Panel which allows viewing and selecting of Data Sources and some of their
+ * related information.
+ */
 final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
-
     private static final Logger logger = Logger.getLogger(DataSourceBrowser.class.getName());
     private final Outline outline;
     private final org.openide.explorer.view.OutlineView outlineView;
@@ -76,7 +79,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         outline = outlineView.getOutline();
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         outline.setRootVisible(false);
-
         dataSourceSummaryList = getDataSourceSummaryList();
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.DataSourceSummaryNode_column_dataSourceName_header());
         dataSourcesScrollPane.setViewportView(outlineView);
@@ -84,6 +86,14 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         this.setVisible(true);
     }
 
+    /**
+     * Select the datasource which matches the specified data source object id.
+     * If the specified id is null or no data source matches the id the first
+     * data source will be selected instead.
+     *
+     * @param dataSourceId the object id of the data source to select, null if
+     *                     the first data source should be selected
+     */
     void selectDataSource(Long dataSourceId) {
         EventQueue.invokeLater(() -> {
             if (dataSourceId != null) {
@@ -105,10 +115,23 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         });
     }
 
+    /**
+     * Add the specified observer as an observer of the DataSourceSummaryNode's
+     * observable.
+     *
+     * @param observer the observer which should be added
+     */
     void addObserver(Observer observer) {
         ((DataSourceSummaryNode) explorerManager.getRootContext()).addObserver(observer);
     }
 
+    /**
+     * Get a list of the DataSourceSummary objects representing the information
+     * to be displayed for each DataSource in this browser.
+     *
+     * @return list containing a DataSourceSummary object for each DataSource in
+     *         the current case.
+     */
     private List<DataSourceSummary> getDataSourceSummaryList() {
         List<DataSourceSummary> summaryList = new ArrayList<>();
         try {
@@ -136,6 +159,11 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         outline.getSelectionModel().addListSelectionListener(listener);
     }
 
+    /**
+     * Get the DataSource which is currently selected in the ExplorerManager
+     *
+     * @return the selected DataSource
+     */
     DataSource getSelectedDataSource() {
         Node selectedNode[] = explorerManager.getSelectedNodes();
         if (selectedNode.length == 1) {
@@ -147,6 +175,8 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     /**
      * Get a map containing the TSK_DATA_SOURCE_USAGE description attributes
      * associated with each data source in the current case.
+     *
+     * @param skCase the current SluethkitCase
      *
      * @return Collection which maps datasource id to a String which displays a
      *         comma seperated list of values of data source usage types
@@ -180,6 +210,8 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
      * Get a map containing the number of files in each data source in the
      * current case.
      *
+     * @param skCase the current SluethkitCase
+     *
      * @return Collection which maps datasource id to a count for the number of
      *         files in the datasource, will only contain entries for
      *         datasources which have at least 1 file
@@ -203,6 +235,8 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
      * Get a map containing the number of artifacts in each data source in the
      * current case.
      *
+     * @param skCase the current SluethkitCase
+     *
      * @return Collection which maps datasource id to a count for the number of
      *         artifacts in the datasource, will only contain entries for
      *         datasources which have at least 1 artifact
@@ -225,6 +259,8 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
      * Get a map containing the number of tags which have been applied in each
      * data source in the current case. Not necessarily the same as the number
      * of items tagged, as an item can have any number of tags.
+     *
+     * @param skCase the current SluethkitCase
      *
      * @return Collection which maps datasource id to a count for the number of
      *         tags which have been applied in the datasource, will only contain
@@ -275,7 +311,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         return explorerManager;
 
     }
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane dataSourcesScrollPane;
