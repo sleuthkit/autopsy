@@ -22,10 +22,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import org.apache.commons.lang.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.OSInfo;
 import org.sleuthkit.datamodel.OSUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -63,8 +67,56 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
      * @param selectedDataSource the DataSource to display details about.
      */
     void updateDetailsPanelData(DataSource selectedDataSource) {
-        operatingSystemValueLabel.setText(getOSName(selectedDataSource));
-        this.repaint();
+        clearTableValues();
+        if (selectedDataSource != null) {
+            updateTableValue("Name", selectedDataSource.getName());
+            updateTableValue("Display Name", selectedDataSource.getName());
+            updateTableValue("Device ID", selectedDataSource.getDeviceId());
+            updateTableValue("Operating System", getOSName(selectedDataSource));
+            updateTableValue("Time Zone", selectedDataSource.getTimeZone());
+            if (selectedDataSource instanceof Image) {
+                updateTableValue("File Path", StringUtils.join(((Image) selectedDataSource).getPaths()));
+                updateTableValue("Size", String.valueOf(selectedDataSource.getSize()) + " bytes");
+                updateTableValue("Sector Size", String.valueOf(((Image) selectedDataSource).getSsize()) + " bytes");
+                try {
+                    updateTableValue("MD5", ((Image) selectedDataSource).getMd5());
+                } catch (TskCoreException ex) {
+
+                }
+                try {
+                    updateTableValue("SHA1", ((Image) selectedDataSource).getSha1());
+                } catch (TskCoreException ex) {
+
+                }
+                try {
+                    updateTableValue("SHA256", ((Image) selectedDataSource).getSha256());
+                } catch (TskCoreException ex) {
+
+                }   
+            }
+            try {
+                updateTableValue("Aquisition Details", selectedDataSource.getAcquisitionDetails());
+            } catch (TskCoreException ex) {
+
+            }
+            this.repaint();
+        }
+    }
+
+    void clearTableValues() {
+        ((DefaultTableModel) jTable1.getModel()).setRowCount(0);
+    }
+
+    void updateTableValue(String valueName, String value) {
+        if (value != null && !value.isEmpty()) {
+            ((DefaultTableModel) jTable1.getModel()).addRow(new Object[]{valueName, value});
+        }
+//        for (int row = 0; row < jTable1.getRowCount(); row++) {
+//            if (jTable1.getModel().getValueAt(row, 0).equals(valueName)) {
+//                jTable1.getModel().setValueAt(value, row, 1);
+//                return;
+//            }
+//        }
     }
 
     /**
@@ -108,36 +160,47 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        operatingSystemLabel = new javax.swing.JLabel();
-        operatingSystemValueLabel = new javax.swing.JLabel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        jTable1 = new javax.swing.JTable();
 
-        org.openide.awt.Mnemonics.setLocalizedText(operatingSystemLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.operatingSystemLabel.text")); // NOI18N
+        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Detail", "Value"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jTable1.setCellSelectionEnabled(true);
+        jScrollPane2.setViewportView(jTable1);
+        if (jTable1.getColumnModel().getColumnCount() > 0) {
+            jTable1.getColumnModel().getColumn(0).setHeaderValue(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.jTable1.columnModel.title0")); // NOI18N
+            jTable1.getColumnModel().getColumn(1).setHeaderValue(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.jTable1.columnModel.title1")); // NOI18N
+        }
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(operatingSystemLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 445, Short.MAX_VALUE)
-                .addContainerGap())
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 545, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(operatingSystemLabel, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(153, Short.MAX_VALUE))
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel operatingSystemLabel;
-    private javax.swing.JLabel operatingSystemValueLabel;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTable jTable1;
     // End of variables declaration//GEN-END:variables
 }
