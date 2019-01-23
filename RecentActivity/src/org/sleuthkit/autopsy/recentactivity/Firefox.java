@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * 
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -22,17 +22,30 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
@@ -41,6 +54,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -62,6 +76,7 @@ class Firefox extends Extract {
     private static final String BOOKMARK_QUERY = "SELECT fk, moz_bookmarks.title, url, (moz_bookmarks.dateAdded/1000000) AS dateAdded FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id"; //NON-NLS
     private static final String DOWNLOAD_QUERY = "SELECT target, source,(startTime/1000000) AS startTime, maxBytes FROM moz_downloads"; //NON-NLS
     private static final String DOWNLOAD_QUERY_V24 = "SELECT url, content AS target, (lastModified/1000000) AS lastModified FROM moz_places, moz_annos WHERE moz_places.id = moz_annos.place_id AND moz_annos.anno_attribute_id = 3"; //NON-NLS
+    private static final String FORMHISTORY_QUERY = "SELECT fieldname, value, timesUsed, firstUsed, lastUsed FROM moz_formhistory";
     private final IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
@@ -79,6 +94,8 @@ class Firefox extends Extract {
         this.getBookmark();
         this.getDownload();
         this.getCookie();
+        this.getFormsHistory();
+        this.getAutofillProfiles();
     }
 
     private void getHistory() {
@@ -651,6 +668,312 @@ class Firefox extends Extract {
     }
     
     /**
+     * Gets data from formshistory.sqlite database.
+     * Parses and creates artifacts.
+     */
+    private void getFormsHistory() {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> formHistoryFiles;
+       
+        // Some fields are just noisy and can me excluded
+        Set<String> excludedFieldNames = new HashSet<>(Arrays.asList(
+                "it",   // some kind of timestamp
+                "ts"    // some kind of timestamp
+            ));
+       
+        try {
+            formHistoryFiles = fileManager.findFiles(dataSource, "formhistory.sqlite", "Firefox"); //NON-NLS
+        } catch (TskCoreException ex) {
+            String msg = NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.errFetchingFiles");
+            logger.log(Level.WARNING, msg);
+            this.addErrorMessage(this.getName() + ": " + msg);
+            return;
+        }
+
+        if (formHistoryFiles.isEmpty()) {
+            String msg = NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.noFilesFound");
+            logger.log(Level.INFO, msg);
+            return;
+        }
+
+        dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        int j = 0;
+        for (AbstractFile formHistoryFile : formHistoryFiles) {
+            if (formHistoryFile.getSize() == 0) {
+                continue;
+            }
+
+            String fileName = formHistoryFile.getName();
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
+            try {
+                ContentUtils.writeToFile(formHistoryFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Firefox web history artifacts file '%s' (id=%d).",
+                        fileName, formHistoryFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.errAnalyzeFile", this.getName(),
+                                fileName));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox web history artifacts file '%s' (id=%d).",
+                        temps, fileName, formHistoryFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.errAnalyzeFile", this.getName(),
+                                fileName));
+                continue;
+            }
+            File dbFile = new File(temps);
+            if (context.dataSourceIngestIsCancelled()) {
+                dbFile.delete();
+                break;
+            }
+            List<HashMap<String, Object>> tempList = this.dbConnect(temps, FORMHISTORY_QUERY);
+            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
+            for (HashMap<String, Object> result : tempList) {
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                
+                String fieldName = ((result.get("fieldname").toString() != null) ? result.get("fieldname").toString() : "");
+                // filter out unuseful values
+                if (excludedFieldNames.contains(fieldName.toLowerCase())) {
+                    continue;
+                }
+                
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
+                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                        fieldName)); //NON-NLS
+                
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
+                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                        ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
+                
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                        (Long.valueOf(result.get("firstUsed").toString()) / 1000000))); //NON-NLS
+               
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                        (Long.valueOf(result.get("lastUsed").toString()) / 1000000))); //NON-NLS
+                        
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                        (Integer.valueOf(result.get("timesUsed").toString())))); //NON-NLS
+               
+                // Add artifact
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, formHistoryFile, bbattributes);
+                if (bbart != null) {
+                    this.indexArtifact(bbart);
+                    bbartifacts.add(bbart);
+                }
+            }
+            ++j;
+            dbFile.delete();
+        }
+
+        services.fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, bbartifacts));
+    }
+     
+     
+    /**
+     * Gets data from autofill-profiles.json file. 
+     * Parses file and makes artifacts.
+     * 
+     */
+    private void getAutofillProfiles() {
+        FileManager fileManager = currentCase.getServices().getFileManager();
+        List<AbstractFile> autofillProfilesFiles;
+        try {
+            autofillProfilesFiles = fileManager.findFiles(dataSource, "autofill-profiles.json", "Firefox"); //NON-NLS
+        } catch (TskCoreException ex) {
+            String msg = NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errGettingFiles");
+            logger.log(Level.SEVERE, msg, ex);
+            this.addErrorMessage(this.getName() + ": " + msg);
+            return;
+        }
+
+        if (autofillProfilesFiles.isEmpty()) {
+            logger.log(Level.INFO, "Didn't find any Firefox Autofill Profiles files."); //NON-NLS
+            return;
+        }
+
+        dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        int j = 0;
+
+        while (j < autofillProfilesFiles.size()) {
+            AbstractFile profileFile = autofillProfilesFiles.get(j++);
+            if (profileFile.getSize() == 0) {
+                continue;
+            }
+            String temps = RAImageIngestModule.getRATempPath(currentCase, "Firefox") + File.separator + profileFile.getName() + j + ".json"; //NON-NLS
+            try {
+                ContentUtils.writeToFile(profileFile, new File(temps), context::dataSourceIngestIsCancelled);
+            } catch (ReadContentInputStreamException ex) {
+                logger.log(Level.WARNING, String.format("Error reading Firefox Autofill profiles artifacts file '%s' (id=%d).",
+                        profileFile.getName(), profileFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzingFile",
+                        this.getName(), profileFile.getName()));
+                continue;
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Error writing temp file '%s' for Firefox Autofill profiles file '%s' (id=%d).",
+                        temps, profileFile.getName(), profileFile.getId()), ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzingFile",
+                        this.getName(), profileFile.getName()));
+                continue;
+            }
+
+            logger.log(Level.INFO, "{0}- Now getting Bookmarks from {1}", new Object[]{moduleName, temps}); //NON-NLS
+            File dbFile = new File(temps);
+            if (context.dataSourceIngestIsCancelled()) {
+                dbFile.delete();
+                break;
+            }
+
+            FileReader tempReader;
+            try {
+                tempReader = new FileReader(temps);
+            } catch (FileNotFoundException ex) {
+                logger.log(Level.SEVERE, "Error while trying to read the Autofill profiles json file for Firefox.", ex); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzeFile", this.getName(),
+                                profileFile.getName()));
+                continue;
+            }
+
+            final JsonParser parser = new JsonParser();
+            
+            JsonObject jsonRootObject;
+            JsonArray jAddressesArray;
+            
+            try {
+                jsonRootObject = parser.parse(tempReader).getAsJsonObject();
+                jAddressesArray = jsonRootObject.getAsJsonArray("addresses"); //NON-NLS
+            } catch (JsonIOException | JsonSyntaxException | IllegalStateException ex) {
+                logger.log(Level.WARNING, "Error parsing Json for Firefox Autofill profiles.", ex); //NON-NLS
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzingFile3",
+                        this.getName(), profileFile.getName()));
+                continue;
+            }
+
+            for (JsonElement result : jAddressesArray) {
+                JsonObject address = result.getAsJsonObject();
+                if (address == null) {
+                    continue;
+                }
+               
+                JsonElement nameEl = address.get("name"); //NON-NLS
+                String name = (nameEl != null) ? nameEl.getAsString() : "";
+                
+                JsonElement emailEl = address.get("email"); //NON-NLS
+                String email = (emailEl != null) ? emailEl.getAsString() : "";
+                
+                JsonElement telEl = address.get("tel"); //NON-NLS
+                String tel = (telEl != null) ? telEl.getAsString() : "";
+                JsonElement telCountryCodeEl = address.get("tel-country-code"); //NON-NLS
+                String telCountryCode = (telCountryCodeEl != null) ? telCountryCodeEl.getAsString() : "";
+                JsonElement telNationalEl = address.get("tel-national"); //NON-NLS
+                String telNational = (telNationalEl != null) ? telNationalEl.getAsString() : "";
+                
+                String phoneNumber = makeTelNumber(tel, telCountryCode, telNational);
+
+                JsonElement createdEl = address.get("timeCreated"); //NON-NLS
+                Long datetimeCreated = (createdEl != null) ? createdEl.getAsLong()/1000 : Long.valueOf(0);     
+                JsonElement lastusedEl = address.get("timeLastUsed"); //NON-NLS
+                Long datetimeLastUsed = (lastusedEl != null) ? lastusedEl.getAsLong()/1000 : Long.valueOf(0); 
+                JsonElement timesUsedEl = address.get("timesUsed"); //NON-NLS
+                Integer timesUsed = (timesUsedEl != null) ? timesUsedEl.getAsShort() : Integer.valueOf(0); 
+                
+                JsonElement addressLine1El = address.get("address-line1"); //NON-NLS
+                String addressLine1 = (addressLine1El != null) ? addressLine1El.getAsString() : "";
+                JsonElement addressLine2El = address.get("address-line2"); //NON-NLS
+                String addressLine2 = (addressLine2El != null) ? addressLine2El.getAsString() : "";
+                JsonElement addressLine3El = address.get("address-line3"); //NON-NLS
+                String addressLine3 = (addressLine3El != null) ? addressLine3El.getAsString() : "";
+                
+                JsonElement postalCodeEl = address.get("postal-code"); //NON-NLS
+                String postalCode = (postalCodeEl != null) ? postalCodeEl.getAsString() : "";
+                JsonElement countryEl = address.get("country"); //NON-NLS
+                String country = (countryEl != null) ? countryEl.getAsString() : "";
+                
+                String mailingAddress = makeFullAddress(addressLine1, addressLine2, addressLine3, postalCode, country );
+                
+                try {
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME_PERSON,
+                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                        name)); //NON-NLS
+                    
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL,
+                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                        email)); //NON-NLS
+                    
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER,
+                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                        phoneNumber)); //NON-NLS
+                     
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LOCATION,
+                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                        mailingAddress)); //NON-NLS
+                 
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                            NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                            datetimeCreated)); //NON-NLS
+
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                            NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                            datetimeLastUsed)); //NON-NLS       
+                     
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+                            NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                            timesUsed)); //NON-NLS
+
+                    BlackboardArtifact bbart = profileFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS);  
+                    
+                    // index the artifact for keyword search
+                    if (bbart != null) {
+                        bbart.addAttributes(bbattributes);
+                        this.indexArtifact(bbart);
+                        bbartifacts.add(bbart);
+                    }
+                    
+                    // If an email address is found, create an account instance for it
+                    if (email != null && !email.isEmpty()) {
+                        try {
+                            Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL, email,  NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), profileFile);
+                        } catch (NoCurrentCaseException | TskCoreException ex) {
+                            logger.log(Level.SEVERE, String.format("Error creating email account instance for '%s' from Firefox profiles file '%s' .",
+                                email, profileFile.getName()), ex); //NON-NLS
+                        } 
+                    }
+                    
+                    // If a phone number is found, create an account instance for it
+                    if (phoneNumber != null && !phoneNumber.isEmpty()) {
+                        try {
+                            Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE, phoneNumber,  NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), profileFile);
+                        } catch (NoCurrentCaseException | TskCoreException ex) {
+                            logger.log(Level.SEVERE, String.format("Error creating phone number account instance for '%s' from Chrome profiles file '%s' .",
+                                phoneNumber, profileFile.getName()), ex); //NON-NLS
+                        } 
+                    }
+                    
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error while trying to insert Firefox Autofill profile artifact{0}", ex); //NON-NLS
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "Firefox.getAutofillProfiles.errMsg.errAnalyzingFile4",
+                                    this.getName(), profileFile.getName()));
+                }
+            }
+            dbFile.delete();
+        }
+
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS, bbartifacts));
+    }
+       
+    /**
      * Extract the domain from the supplied URL. This method does additional
      * checks to detect invalid URLs.
      * 
@@ -672,4 +995,71 @@ class Firefox extends Extract {
         
         return NetworkUtils.extractDomain(url);
     }
+    
+    
+    /**
+     * Returns a phone number based on input number or components of phone number.
+     * 
+     * @param tel full number, if available
+     * @param telCountryCode country code
+     * @param telNational full national number
+     * 
+     * @return phone number, or an empty string if no number can be deciphered from input
+     */
+    private String makeTelNumber(String tel, String telCountryCode, String telNational) {
+        
+        if (tel != null && !tel.isEmpty()) {
+            return tel;
+        }
+        
+        if ((telCountryCode != null && !telCountryCode.isEmpty()) && 
+            (telNational != null && !telNational.isEmpty())) {
+            return telCountryCode + telNational;
+        }
+        
+        return "";
+    }
+    
+     /**
+     * Returns a full postal address from multiple address fields.
+     * 
+     * @parm addressLine1
+     * @parm addressLine2
+     * @parm addressLine3
+     * @parm postalCode
+     * @parm country
+     * 
+     * @return full address
+     */
+    private String makeFullAddress(String addressLine1, String addressLine2, String addressLine3, String postalCode, String country ) {
+        String fullAddress = "";
+        fullAddress = appendAddressField(fullAddress, addressLine1 );
+        fullAddress = appendAddressField(fullAddress, addressLine2 );
+        fullAddress = appendAddressField(fullAddress, addressLine3 );
+        fullAddress = appendAddressField(fullAddress, postalCode );
+        fullAddress = appendAddressField(fullAddress, country );
+
+        return fullAddress;
+    }
+    
+    /**
+     * Appends the given address field to given address, if not empty.
+     * Adds delimiter in between if needed.
+     * 
+     * @param address
+     * @param addressfield
+     * @return updated address
+     */
+    private String appendAddressField(String address, String addressfield) {
+        
+        String updatedAddress = address;
+        if (addressfield != null && !addressfield.isEmpty()) {
+            if (!updatedAddress.isEmpty()) 
+                updatedAddress += ", ";
+            updatedAddress += addressfield;
+        }
+        
+        return updatedAddress;
+    }
+    
 }
