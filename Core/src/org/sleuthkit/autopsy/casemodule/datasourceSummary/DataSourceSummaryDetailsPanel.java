@@ -36,7 +36,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private Map<Long, String> osDetailMap = new HashMap<>();
-    final Map<Long, String> usageMap = new HashMap<>();
+    final Map<Long, String> usageMap;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
 
     /**
@@ -46,6 +46,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         "DataSourceSummaryDetailsPanel.getDataSources.error.title=Load Failure"})
     public DataSourceSummaryDetailsPanel(Map<Long, String> usageMap) {
         initComponents();
+        this.usageMap = usageMap;
         osDetailMap = DataSourceInfoUtilities.getOperatingSystems();
     }
 
