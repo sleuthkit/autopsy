@@ -1054,8 +1054,9 @@ class Firefox extends Extract {
         
         String updatedAddress = address;
         if (addressfield != null && !addressfield.isEmpty()) {
-            if (!updatedAddress.isEmpty()) 
+            if (!updatedAddress.isEmpty()) {
                 updatedAddress += ", ";
+            }
             updatedAddress += addressfield;
         }
         
