@@ -16,13 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.coordinationservice;
+package org.sleuthkit.autopsy.casemodule;
 
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
@@ -45,8 +47,8 @@ public final class CaseNodeData {
      * Version 1 fields.
      */
     private Path directory;
-    private long createDate;
-    private long lastAccessDate;
+    private Date createDate;
+    private Date lastAccessDate;
     private String name;
     private String displayName;
     private short deletedItemFlags;
@@ -75,8 +77,8 @@ public final class CaseNodeData {
         this.version = CURRENT_VERSION;
         this.errorsOccurred = false;
         this.directory = Paths.get(metadata.getCaseDirectory());
-        this.createDate = CaseMetadata.getDateFormat().parse(metadata.getCreatedDate()).getTime();
-        this.lastAccessDate = new Date().getTime(); // Don't really know.
+        this.createDate = CaseMetadata.getDateFormat().parse(metadata.getCreatedDate());
+        this.lastAccessDate = new Date();
         this.name = metadata.getCaseName();
         this.displayName = metadata.getCaseDisplayName();
         this.deletedItemFlags = 0;
@@ -89,45 +91,27 @@ public final class CaseNodeData {
      *
      * @param nodeData The raw bytes received from the coordination service.
      *
-     * @throws InvalidDataException If the node data buffer is smaller than
-     *                              expected.
+     * @throws IOException If there is an error reading the node data.
      */
-    public CaseNodeData(byte[] nodeData) throws InvalidDataException {
+    public CaseNodeData(byte[] nodeData) throws IOException {
         if (nodeData == null || nodeData.length == 0) {
-            throw new InvalidDataException(null == nodeData ? "Null node data byte array" : "Zero-length node data byte array");
+            throw new IOException(null == nodeData ? "Null node data byte array" : "Zero-length node data byte array");
         }
-
-        /*
-         * Get the fields from the node data.
-         */
-        ByteBuffer buffer = ByteBuffer.wrap(nodeData);
-        try {
-            /*
-             * Get version 0 fields.
-             */
-            this.version = buffer.getInt();
-
-            /*
-             * Flags bit format: 76543210 0-6 --> reserved for future use 7 -->
-             * errorsOccurred
-             */
-            byte flags = buffer.get();
-            this.errorsOccurred = (flags < 0);
-
-            if (buffer.hasRemaining()) {
-                /*
-                 * Get version 1 fields.
-                 */
-                this.directory = Paths.get(NodeDataUtils.getStringFromBuffer(buffer));
-                this.createDate = buffer.getLong();
-                this.lastAccessDate = buffer.getLong();
-                this.name = NodeDataUtils.getStringFromBuffer(buffer);
-                this.displayName = NodeDataUtils.getStringFromBuffer(buffer);
-                this.deletedItemFlags = buffer.getShort();
-            }
-
-        } catch (BufferUnderflowException ex) {
-            throw new InvalidDataException("Node data is incomplete", ex);
+        DataInputStream inputStream = new DataInputStream(new ByteArrayInputStream(nodeData));
+        this.version = inputStream.readInt();
+        if (this.version > 0) {
+            this.errorsOccurred = inputStream.readBoolean();
+        } else {
+            short legacyErrorsOccurred = inputStream.readByte();
+            this.errorsOccurred = (legacyErrorsOccurred < 0);
+        }
+        if (this.version > 0) {
+            this.directory = Paths.get(inputStream.readUTF());
+            this.createDate = new Date(inputStream.readLong());
+            this.lastAccessDate = new Date(inputStream.readLong());
+            this.name = inputStream.readUTF();
+            this.displayName = inputStream.readUTF();
+            this.deletedItemFlags = inputStream.readShort();
         }
     }
 
@@ -186,7 +170,7 @@ public final class CaseNodeData {
      * @return The create date.
      */
     public Date getCreateDate() {
-        return new Date(this.createDate);
+        return new Date(this.createDate.getTime());
     }
 
     /**
@@ -195,7 +179,7 @@ public final class CaseNodeData {
      * @param createDate The create date.
      */
     public void setCreateDate(Date createDate) {
-        this.createDate = createDate.getTime();
+        this.createDate = new Date(createDate.getTime());
     }
 
     /**
@@ -204,7 +188,7 @@ public final class CaseNodeData {
      * @return The last access date.
      */
     public Date getLastAccessDate() {
-        return new Date(this.lastAccessDate);
+        return new Date(this.lastAccessDate.getTime());
     }
 
     /**
@@ -213,7 +197,7 @@ public final class CaseNodeData {
      * @param lastAccessDate The last access date.
      */
     public void setLastAccessDate(Date lastAccessDate) {
-        this.lastAccessDate = lastAccessDate.getTime();
+        this.lastAccessDate = new Date(lastAccessDate.getTime());
     }
 
     /**
@@ -259,34 +243,23 @@ public final class CaseNodeData {
      * service.
      *
      * @return The node data as a byte array.
+     *
+     * @throws IOException If there is an error writing the node data.
      */
-    public byte[] toArray() {
-        int bufferSize = Integer.BYTES; // version
-        bufferSize += 1; // errorsOccurred
-        bufferSize += this.directory.toString().getBytes().length; // directory
-        bufferSize += Long.BYTES; // createDate
-        bufferSize += Long.BYTES; // lastAccessDate
-        bufferSize += this.name.getBytes().length; // name
-        bufferSize += this.displayName.getBytes().length; // displayName
-        bufferSize += Short.BYTES; // deletedItemFlags
-        ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
-
-        buffer.putInt(this.version);
-        buffer.put((byte) (this.errorsOccurred ? 0x80 : 0));
-
-        if (this.version >= 1) {
-            NodeDataUtils.putStringIntoBuffer(this.directory.toString(), buffer);
-            buffer.putLong(this.createDate);
-            buffer.putLong(this.lastAccessDate);
-            NodeDataUtils.putStringIntoBuffer(name, buffer);
-            NodeDataUtils.putStringIntoBuffer(displayName, buffer);
-            buffer.putShort(deletedItemFlags);
-        }
-
-        byte[] array = new byte[buffer.position()];
-        buffer.rewind();
-        buffer.get(array, 0, array.length);
-        return array;
+    public byte[] toArray() throws IOException {
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        DataOutputStream outputStream = new DataOutputStream(byteStream);
+        outputStream.writeInt(this.version);
+        outputStream.writeBoolean(this.errorsOccurred);
+        outputStream.writeUTF(this.directory.toString());
+        outputStream.writeLong(this.createDate.getTime());
+        outputStream.writeLong(this.lastAccessDate.getTime());
+        outputStream.writeUTF(this.name);
+        outputStream.writeUTF(this.displayName);
+        outputStream.writeShort(this.deletedItemFlags);
+        outputStream.flush();
+        byteStream.flush();
+        return byteStream.toByteArray();
     }
 
     public final static class InvalidDataException extends Exception {

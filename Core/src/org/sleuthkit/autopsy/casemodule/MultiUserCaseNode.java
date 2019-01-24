@@ -33,7 +33,12 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
+import org.sleuthkit.autopsy.casemodule.Bundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -66,9 +71,9 @@ final class MultiUserCaseNode extends AbstractNode {
     }
 
     @NbBundle.Messages({
-        "CaseNode.column.name=Name",
-        "CaseNode.column.createTime=Create Time",
-        "CaseNode.column.path=Path"
+        "MultiUserCaseNode.column.name=Name",
+        "MultiUserCaseNode.column.createTime=Create Time",
+        "MultiUserCaseNode.column.path=Path"
     })
     @Override
     protected Sheet createSheet() {
@@ -78,17 +83,17 @@ final class MultiUserCaseNode extends AbstractNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-        sheetSet.put(new NodeProperty<>(Bundle.CaseNode_column_name(),
-                Bundle.CaseNode_column_name(),
-                Bundle.CaseNode_column_name(),
+        sheetSet.put(new NodeProperty<>(Bundle.MultiUserCaseNode_column_name(),
+                Bundle.MultiUserCaseNode_column_name(),
+                Bundle.MultiUserCaseNode_column_name(),
                 caseNodeData.getDisplayName()));
-        sheetSet.put(new NodeProperty<>(Bundle.CaseNode_column_createTime(),
-                Bundle.CaseNode_column_createTime(),
-                Bundle.CaseNode_column_createTime(),
+        sheetSet.put(new NodeProperty<>(Bundle.MultiUserCaseNode_column_createTime(),
+                Bundle.MultiUserCaseNode_column_createTime(),
+                Bundle.MultiUserCaseNode_column_createTime(),
                 caseNodeData.getCreateDate()));
-        sheetSet.put(new NodeProperty<>(Bundle.CaseNode_column_path(),
-                Bundle.CaseNode_column_path(),
-                Bundle.CaseNode_column_path(),
+        sheetSet.put(new NodeProperty<>(Bundle.MultiUserCaseNode_column_path(),
+                Bundle.MultiUserCaseNode_column_path(),
+                Bundle.MultiUserCaseNode_column_path(),
                 caseNodeData.getDirectory().toString()));
         return sheet;
     }

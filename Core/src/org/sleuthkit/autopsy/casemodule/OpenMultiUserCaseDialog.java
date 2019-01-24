@@ -25,6 +25,7 @@ import javax.swing.JDialog;
 import javax.swing.KeyStroke;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Bundle;
 
 /**
  * A singleton JDialog that allows a user to open a multi-user case.

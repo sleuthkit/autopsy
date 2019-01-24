@@ -19,12 +19,12 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -32,6 +32,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 final class MultiUserCasesRootNode extends AbstractNode {
 
+    private static final Logger logger = Logger.getLogger(MultiUserCasesRootNode.class.getName());    
+    
     /**
      * Constructs a root node for displaying MultiUserCaseNodes in a NetBeans
      * Explorer View.
@@ -39,22 +41,19 @@ final class MultiUserCasesRootNode extends AbstractNode {
      * @param case A list of coordination service node data objects representing
      *             multi-user cases.
      */
-    MultiUserCasesRootNode(List<CaseNodeData> cases) {
-        super(Children.create(new MultiUserCasesRootNodeChildren(cases), true));
+    MultiUserCasesRootNode() {
+        super(Children.create(new MultiUserCasesRootNodeChildren(), true));
     }
 
     private static class MultiUserCasesRootNodeChildren extends ChildFactory<CaseNodeData> {
 
-        private final List<CaseNodeData> cases;
-
-        MultiUserCasesRootNodeChildren(List<CaseNodeData> cases) {
-            this.cases = cases;
-        }
-
         @Override
         protected boolean createKeys(List<CaseNodeData> keys) {
-            if (cases != null && cases.size() > 0) {
-                keys.addAll(cases);
+            try {
+                List<CaseNodeData> caseNodeData = MulitUserCaseNodeDataCollector.getNodeData();
+                keys.addAll(caseNodeData);
+            } catch (CoordinationService.CoordinationServiceException ex) {
+                logger.log(Level.SEVERE, "Failed to get case node data from coodination service", ex);
             }
             return true;
         }
