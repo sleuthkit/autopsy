@@ -19,12 +19,18 @@
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
 import java.awt.Frame;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Dialog for displaying the Data Sources Summary information
@@ -33,8 +39,8 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
 
     private static final long serialVersionUID = 1L;
     private DataSourceSummaryFilesPanel filesPanel = new DataSourceSummaryFilesPanel();
-    private DataSourceSummaryDetailsPanel detailsPanel = new DataSourceSummaryDetailsPanel();
-    private DataSourceBrowser dataSourcesPanel = new DataSourceBrowser();
+    private DataSourceSummaryDetailsPanel detailsPanel;
+    private DataSourceBrowser dataSourcesPanel;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
 
     /**
@@ -49,10 +55,19 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     })
     DataSourceSummaryDialog(Frame owner) {
         super(owner, Bundle.DataSourceSummaryPanel_window_title(), true);
+        Map<Long, String> usageMap = new HashMap<>();
+        try {
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+            usageMap = DataSourceInfoUtilities.getDataSourceTypes(skCase);
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to data source usage information", ex);
+        }
+        detailsPanel = new DataSourceSummaryDetailsPanel(usageMap);
+        dataSourcesPanel = new DataSourceBrowser(usageMap);
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
-        dataSourceTabbedPane.add(Bundle.DataSourceSummaryPanel_filesTab_title(), filesPanel);
         dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryPanel_detailsTab_title(), detailsPanel);
+        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryPanel_filesTab_title(), filesPanel);
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();
