@@ -33,6 +33,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -41,7 +42,9 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.freedesktop.gstreamer.Bus;
 import org.freedesktop.gstreamer.ClockTime;
 import org.freedesktop.gstreamer.Format;
@@ -181,7 +184,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     //playback
     private boolean durationSet;
     private long durationMillis = 0;
-    private VideoProgressWorker videoProgressWorker;
+    //DLG: private VideoProgressWorker videoProgressWorker;
     private int totalHours, totalMinutes, totalSeconds;
     private volatile PlayBin gstPlayBin;
     private GstVideoRendererPanel gstVideoRenderer;
@@ -189,7 +192,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlayBin player
     private AbstractFile currentFile;
     
-    private Bus.STATE_CHANGED busStateChangedListener = new Bus.STATE_CHANGED() {
+    private Timer timer; //DLG:
+    private ExtractMedia extractMediaWorker; //DLG:
+    
+    private final long END_TIME_MARGIN_NS = 50000000; //DLG:
+    
+    //DLG:
+    /*private Bus.STATE_CHANGED busStateChangedListener = new Bus.STATE_CHANGED() {
         @Override
         public void stateChanged(GstObject source, State old, State current, State pending) {
             if (durationSet == false && current.equals(State.PLAYING)) {
@@ -219,7 +228,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 System.out.println();
             }
         }
-    };
+    };*/
 
     /**
      * Creates new form MediaViewVideoPanel
@@ -260,15 +269,42 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
 
         progressSlider.setEnabled(false); // disable slider; enable after user plays vid
+        //DLG:
+        progressSlider.setMinimum(0); //DLG:
+        progressSlider.setMaximum(2000); //DLG:
         progressSlider.setValue(0);
+        //DLG:
+        progressSlider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if (gstPlayBin == null) { //DLG: Is this needed?
+                    return;
+                }
+                if (progressSlider.getValueIsAdjusting()) {
+                    synchronized (playbinLock) {
+                        long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+                        long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS); //DLG: Not used!
+                        if (duration > 0) {
+                            double relativePosition = progressSlider.getValue() / 2000.0;
+                            gstPlayBin.seek((long) (relativePosition * duration), TimeUnit.NANOSECONDS);
+                        } else if (position > 0 || progressSlider.getValue() > 0) {
+                            gstPlayBin.seek(ClockTime.ZERO);
+                            progressSlider.setValue(0);
+                        }
+                    }
+                }
+            }
+        });
 
-        progressSlider.addChangeListener((ChangeEvent e) -> {
+        //DLG:
+        /*progressSlider.addChangeListener((ChangeEvent e) -> {
             /**
              * Should always try to synchronize any call to
              * progressSlider.setValue() to avoid a different thread changing
              * playbin while stateChanged() is processing
              */
-            int time = progressSlider.getValue();
+        //DLG:
+        /*    int time = progressSlider.getValue();
             synchronized (playbinLock) {
                 if (gstPlayBin != null && !autoTracking) {
                     State orig = gstPlayBin.getState();
@@ -286,7 +322,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     gstPlayBin.setState(orig);
                 }
             }
-        });
+        });*/
     }
 
     private boolean initGst() {
@@ -321,72 +357,124 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      */
     @NbBundle.Messages ({"GstVideoPanel.noOpenCase.errMsg=No open case available."})
     void loadFile(final AbstractFile file, final Dimension dims) {
-        reset();
-        infoLabel.setText("");
-        currentFile = file;
-        final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-        if (deleted) {
-            infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.setupVideo.infoLabel.text"));
-            videoPanel.removeAll();
-            pauseButton.setEnabled(false);
-            progressSlider.setEnabled(false);
-            return;
-        }
-
-        java.io.File ioFile;
-        try {
-            ioFile = VideoUtils.getVideoFileInTempDir(file);
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-            infoLabel.setText(Bundle.GstVideoPanel_noOpenCase_errMsg());
-            pauseButton.setEnabled(false);
-            progressSlider.setEnabled(false);
-
-            return;
-        }
-
-        String path = "";
-        try {
-            path = file.getUniquePath();
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Cannot get unique path of video file"); //NON-NLS
-        }
-        infoLabel.setText(path);
-        infoLabel.setToolTipText(path);
-        pauseButton.setEnabled(true);
-        progressSlider.setEnabled(true);
-
-
-        //gstVideoComponent = new SimpleVideoComponent();
-        gstVideoRenderer = new GstVideoRendererPanel();
-        synchronized (playbinLock) {
-            if (gstPlayBin != null) {
-                gstPlayBin.dispose();
+        EventQueue.invokeLater(() -> {
+            reset();
+            infoLabel.setText("");
+            currentFile = file;
+            final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
+            if (deleted) {
+                infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.setupVideo.infoLabel.text"));
+                videoPanel.removeAll();
+                pauseButton.setEnabled(false);
+                progressSlider.setEnabled(false);
+                return;
             }
-            gstPlayBin = new PlayBin("VideoPlayer"); //NON-NLS
-            gstPlayBin.setVideoSink(gstVideoRenderer.getVideoSink());
 
-            videoPanel.removeAll();
+            java.io.File ioFile;
+            try {
+                ioFile = VideoUtils.getVideoFileInTempDir(file);
+            } catch (NoCurrentCaseException ex) {
+                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+                infoLabel.setText(Bundle.GstVideoPanel_noOpenCase_errMsg());
+                pauseButton.setEnabled(false);
+                progressSlider.setEnabled(false);
 
-            videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
-            //videoPanel.add(gstVideoComponent);
-            
-            EventQueue.invokeLater(() -> {
-                videoPanel.add(gstVideoRenderer);//add jfx ui to JPanel
+                return;
+            }
+
+            String path = "";
+            try {
+                path = file.getUniquePath();
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Cannot get unique path of video file"); //NON-NLS
+            }
+            infoLabel.setText(path);
+            infoLabel.setToolTipText(path);
+            pauseButton.setEnabled(true);
+            progressSlider.setEnabled(true);
+            //DLG:
+            timer = new Timer(50, e -> {
+                if (!progressSlider.getValueIsAdjusting()) {
+                    long duration;
+                    long position;
+                    synchronized (playbinLock) {
+                        duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+                        position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+                        if (duration > 0) {
+                            long positionDelta = duration - position;
+                            if (positionDelta <= END_TIME_MARGIN_NS && gstPlayBin.isPlaying()) {
+                                gstPlayBin.pause();
+                                if (gstPlayBin.seek(ClockTime.ZERO) == false) {
+                                    logger.log(Level.WARNING, "Attempt to call PlayBin.seek() failed."); //NON-NLS
+                                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                                    return;
+                                }
+                                progressSlider.setValue(0);
+                                pauseButton.setText("►");
+                            } else {
+                                double relativePosition = (double) position / duration;
+                                progressSlider.setValue((int) (relativePosition * 2000));
+                            }
+                        }
+                    }
+
+                    durationMillis = duration / 1000000;
+                    // pick out the total hours, minutes, seconds
+                    long durationSeconds = (int) durationMillis / 1000;
+                    totalHours = (int) durationSeconds / 3600;
+                    durationSeconds -= totalHours * 3600;
+                    totalMinutes = (int) durationSeconds / 60;
+                    durationSeconds -= totalMinutes * 60;
+                    totalSeconds = (int) durationSeconds;
+
+                    long millisElapsed = position / 1000000;
+                    // pick out the elapsed hours, minutes, seconds
+                    long secondsElapsed = millisElapsed / 1000;
+                    int elapsedHours = (int) secondsElapsed / 3600;
+                    secondsElapsed -= elapsedHours * 3600;
+                    int elapsedMinutes = (int) secondsElapsed / 60;
+                    secondsElapsed -= elapsedMinutes * 60;
+                    int elapsedSeconds = (int) secondsElapsed;
+
+                    String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  "; //NON-NLS
+                    String durationStr = String.format(durationFormat,
+                            elapsedHours, elapsedMinutes, elapsedSeconds,
+                            totalHours, totalMinutes, totalSeconds);
+                    progressLabel.setText(durationStr);
+                }
             });
+            timer.start();
 
-            videoPanel.setVisible(true);
 
-            gstPlayBin.setInputFile(ioFile);
+            //gstVideoComponent = new SimpleVideoComponent();
+            gstVideoRenderer = new GstVideoRendererPanel();
+            synchronized (playbinLock) {
+                if (gstPlayBin != null) {
+                    gstPlayBin.dispose();
+                }
+                gstPlayBin = new PlayBin("VideoPlayer"); //NON-NLS
+                gstPlayBin.setVideoSink(gstVideoRenderer.getVideoSink());
 
-            if (gstPlayBin.setState(State.READY) == StateChangeReturn.FAILURE) {
-                logger.log(Level.WARNING, "Attempt to call PlayBin.setState(State.READY) failed."); //NON-NLS
-                infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                videoPanel.removeAll();
+
+                videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+                //videoPanel.add(gstVideoComponent);
+
+                videoPanel.add(gstVideoRenderer);//add jfx ui to JPanel
+
+                videoPanel.setVisible(true);
+
+                gstPlayBin.setInputFile(ioFile);
+
+                //DLG:
+                /*if (gstPlayBin.setState(State.READY) == StateChangeReturn.FAILURE) {
+                    logger.log(Level.WARNING, "Attempt to call PlayBin.setState(State.READY) failed."); //NON-NLS
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                }*/
+
+                //DLG: gstPlayBin.getBus().connect(busStateChangedListener);
             }
-            
-            gstPlayBin.getBus().connect(busStateChangedListener);
-        }
-
+        });
     }
 
     /**
@@ -394,6 +482,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      */
     void reset() {
 
+        //DLG:
+        if (timer != null) {
+            timer.stop();
+        }
+        
         // reset the progress label text on the event dispatch thread
         SwingUtilities.invokeLater(() -> {
             progressLabel.setText("");
@@ -412,7 +505,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                         return;
                     }
                 }
-                if (gstPlayBin.setState(State.NULL) == StateChangeReturn.FAILURE) {
+                //DLG:
+                /*if (gstPlayBin.setState(State.NULL) == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin.setState(State.NULL) failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
@@ -420,7 +514,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 if (gstPlayBin.getState().equals(State.NULL)) {
                     gstPlayBin.getBus().disconnect(busStateChangedListener);
                     gstPlayBin.dispose();
-                }
+                }*/
+                gstPlayBin.dispose();
                 gstPlayBin = null;
             }
             //gstVideoComponent = null;
@@ -428,7 +523,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
 
         // get rid of any existing videoProgressWorker thread
-        if (videoProgressWorker != null) {
+        //DLG:
+        /*if (videoProgressWorker != null) {
             videoProgressWorker.cancel(true);
             videoProgressWorker = null;
         }
@@ -439,6 +535,9 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         totalHours = 0;
         totalMinutes = 0;
         totalSeconds = 0;
+        */
+        progressSlider.setValue(0);
+        pauseButton.setText("►");
 
         currentFile = null;
     }
@@ -543,11 +642,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 }
                 pauseButton.setText("►");
                 // Is this call necessary considering we just called gstPlayBin.pause()?
-                if (gstPlayBin.setState(State.PAUSED) == StateChangeReturn.FAILURE) {
+                //DLG:
+                /*if (gstPlayBin.setState(State.PAUSED) == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin.setState(State.PAUSED) failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
-                }
+                }*/
             } else if (state.equals(State.PAUSED)) {
                 if (gstPlayBin.play() == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin.play() failed."); //NON-NLS
@@ -556,12 +656,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 }
                 pauseButton.setText("||");
                 // Is this call necessary considering we just called gstPlayBin.play()?
-                if (gstPlayBin.setState(State.PLAYING) == StateChangeReturn.FAILURE) {
+                //DLG:
+                /*if (gstPlayBin.setState(State.PLAYING) == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin.setState(State.PLAYING) failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
-                }
-            } else if (state.equals(State.READY)) {
+                }*/
+            } else if (state.equals(State.READY) || state.equals(State.NULL)) {
                 final File tempVideoFile;
                 try {
                     tempVideoFile = VideoUtils.getVideoFileInTempDir(currentFile);
@@ -571,7 +672,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     return;
                 }
 
-                new ExtractMedia(currentFile, tempVideoFile).execute();
+                if (extractMediaWorker != null) {
+                    extractMediaWorker.cancel(true);
+                    extractMediaWorker = null;
+                }
+                extractMediaWorker = new ExtractMedia(currentFile, tempVideoFile);
+                extractMediaWorker.execute();
 
             }
         }
@@ -586,6 +692,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private javax.swing.JPanel videoPanel;
     // End of variables declaration//GEN-END:variables
 
+    //DLG:
+    /*
     private class VideoProgressWorker extends SwingWorker<Object, Object> {
 
         private final String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  "; //NON-NLS
@@ -628,6 +736,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
          *         has ended because for some videos the time elapsed never
          *         becomes equal to the reported duration of the video.
          */
+    //DLG:
+    /*
         private boolean hasNotEnded() {
             return (durationMillis - millisElapsed) > END_TIME_MARGIN_MS;
         }
@@ -753,12 +863,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 return;
             }
             synchronized (playbinLock) {
+                gstPlayBin.seek(ClockTime.ZERO); //DLG:
                 // must play, then pause and get state to get duration.
                 if (gstPlayBin.play() == StateChangeReturn.FAILURE) {
                     logger.log(Level.WARNING, "Attempt to call PlayBin.play() failed."); //NON-NLS
                     infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     return;
                 }
+                pauseButton.setText("||");
             }
         }
     }
