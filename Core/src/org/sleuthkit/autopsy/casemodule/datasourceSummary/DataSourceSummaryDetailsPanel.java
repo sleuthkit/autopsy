@@ -209,6 +209,8 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         deviceIdLabel = new javax.swing.JLabel();
         acquisitionDetailsScrollPane = new javax.swing.JScrollPane();
         acquisitionDetailsTextArea = new javax.swing.JTextArea();
+        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
+        filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
 
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
@@ -338,7 +340,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.weighty = 0.4;
+        gridBagConstraints.weighty = 1.2;
         gridBagConstraints.insets = new java.awt.Insets(6, 0, 10, 10);
         jPanel1.add(filePathsScrollPane, gridBagConstraints);
 
@@ -416,7 +418,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         gridBagConstraints.gridy = 13;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weighty = 0.5;
+        gridBagConstraints.weighty = 1.2;
         gridBagConstraints.insets = new java.awt.Insets(6, 10, 10, 4);
         jPanel1.add(filePathsLabel, gridBagConstraints);
 
@@ -480,7 +482,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         gridBagConstraints.gridy = 6;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weighty = 0.3;
+        gridBagConstraints.weighty = 0.6;
         gridBagConstraints.insets = new java.awt.Insets(6, 10, 6, 4);
         jPanel1.add(acquisitionDetailsLabel, gridBagConstraints);
 
@@ -527,9 +529,22 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weightx = 0.5;
-        gridBagConstraints.weighty = 0.2;
+        gridBagConstraints.weighty = 0.6;
         gridBagConstraints.insets = new java.awt.Insets(6, 0, 6, 10);
         jPanel1.add(acquisitionDetailsScrollPane, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 14;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weighty = 0.1;
+        jPanel1.add(filler1, gridBagConstraints);
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weighty = 0.1;
+        jPanel1.add(filler2, gridBagConstraints);
 
         jScrollPane1.setViewportView(jPanel1);
 
@@ -538,12 +553,12 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 302, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -561,6 +576,8 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel filePathsLabel;
     private javax.swing.JScrollPane filePathsScrollPane;
     private javax.swing.JTable filePathsTable;
+    private javax.swing.Box.Filler filler1;
+    private javax.swing.Box.Filler filler2;
     private javax.swing.JLabel imageTypeLabel;
     private javax.swing.JLabel imageTypeValue;
     private javax.swing.JPanel jPanel1;
