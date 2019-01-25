@@ -21,14 +21,10 @@ package org.sleuthkit.autopsy.casemodule;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Iterator;
 import javax.swing.JDialog;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.appservices.IngestJobRunningServiceInterface;
 
 /**
  * The default implementation of the Autopsy startup window.
@@ -47,20 +43,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     }
 
     private void init() {
-        
-        // first check whether Autopsy is being run from command line
-        Collection<? extends IngestJobRunningServiceInterface> jobRunningServices = Lookup.getDefault().lookupAll(IngestJobRunningServiceInterface.class);
-        Iterator<? extends IngestJobRunningServiceInterface> it = jobRunningServices.iterator();
-        if (it.hasNext()) {
-            // Autopsy is running from command line
-            IngestJobRunningServiceInterface processor = it.next();
-            add(processor.getStartupWindow());
-            pack();
-            setResizable(false);
-            processor.start();
-            return;
-        }
-        
+
         setSize(DIMENSIONS);
         welcomeWindow = new CueBannerPanel();
         welcomeWindow.setCloseButtonActionListener(new ActionListener() {
