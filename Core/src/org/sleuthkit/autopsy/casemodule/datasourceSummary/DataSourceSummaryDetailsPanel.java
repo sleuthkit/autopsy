@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
 
+    //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;
     private Map<Long, String> osDetailMap = new HashMap<>();
     final Map<Long, String> usageMap;
