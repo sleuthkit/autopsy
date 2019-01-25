@@ -114,9 +114,9 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
             for (String path : filePaths) {
                 ((DefaultTableModel) filePathsTable.getModel()).addRow(new Object[]{path});
             }
-            updateFieldVisibility();
-            this.repaint();
         }
+        updateFieldVisibility();
+        this.repaint();
     }
 
     private void updateFieldVisibility() {

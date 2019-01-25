@@ -292,7 +292,7 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
                     default:
                         break;
                 }
-            } else if (columnIndex == 1) {
+            } else if (columnIndex == 1 && currentDataSource != null) {
                 switch (rowIndex) {
                     case 0:
                         return allFilesCountsMap.get(currentDataSource.getId()) == null ? 0 : allFilesCountsMap.get(currentDataSource.getId());
