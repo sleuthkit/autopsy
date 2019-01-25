@@ -19,18 +19,13 @@
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
 import java.awt.Frame;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Dialog for displaying the Data Sources Summary information
@@ -55,15 +50,8 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     })
     DataSourceSummaryDialog(Frame owner) {
         super(owner, Bundle.DataSourceSummaryPanel_window_title(), true);
-        Map<Long, String> usageMap = new HashMap<>();
-        Map<Long, Long> fileCountsMap = new HashMap<>();
-        try {
-            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            usageMap = DataSourceInfoUtilities.getDataSourceTypes(skCase);
-            fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles(skCase);
-        } catch (NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Unable to data source usage information", ex);
-        }
+        Map<Long, String> usageMap = DataSourceInfoUtilities.getDataSourceTypes();
+        Map<Long, Long> fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles();
         filesPanel = new DataSourceSummaryFilesPanel(fileCountsMap);
         detailsPanel = new DataSourceSummaryDetailsPanel(usageMap);
         dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);

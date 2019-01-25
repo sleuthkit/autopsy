@@ -37,12 +37,19 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
     private FilesByMimeTypeTableModel filesByMimeTypeTableModel = new FilesByMimeTypeTableModel(null);
     private FilesByCategoryTableModel filesByCategoryTableModel = new FilesByCategoryTableModel(null);
     private static final Logger logger = Logger.getLogger(DataSourceSummaryFilesPanel.class.getName());
-    private final Map<Long, Long> fileCountsMap;
+    private final Map<Long, Long> allFilesCountsMap;
+    private final Map<Long, Long> slackFilesCountsMap;
+    private final Map<Long, Long> directoriesCountsMap;
+    private final Map<Long, Long> unallocatedFilesCountsMap;
+
     /**
      * Creates new form DataSourceSummaryFilesPanel
      */
     public DataSourceSummaryFilesPanel(Map<Long, Long> fileCountsMap) {
-        this.fileCountsMap = fileCountsMap;
+        this.allFilesCountsMap = fileCountsMap;
+        this.slackFilesCountsMap = DataSourceInfoUtilities.getCountsOfSlackFiles();
+        this.directoriesCountsMap = DataSourceInfoUtilities.getCountsOfDirectories();
+        this.unallocatedFilesCountsMap = DataSourceInfoUtilities.getCountsOfUnallocatedFiles();
         initComponents();
         fileCountsByMimeTypeTable.getTableHeader().setReorderingAllowed(false);
     }
@@ -195,15 +202,15 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
             } else if (columnIndex == 1) {
                 switch (rowIndex) {
                     case 0:
-                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.IMAGE.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFilesForMimeTypes(currentDataSource, FileTypeUtils.FileTypeCategory.IMAGE.getMediaTypes());
                     case 1:
-                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.VIDEO.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFilesForMimeTypes(currentDataSource, FileTypeUtils.FileTypeCategory.VIDEO.getMediaTypes());
                     case 2:
-                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFilesForMimeTypes(currentDataSource, FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes());
                     case 3:
-                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFilesForMimeTypes(currentDataSource, FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes());
                     case 4:
-                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFilesForMimeTypes(currentDataSource, FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes());
                     default:
                         break;
                 }
@@ -217,7 +224,7 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
         }
 
     }
-    
+
     /**
      * Table model for the files table model to display counts of specific file
      * types found in the currently selected data source.
@@ -259,7 +266,7 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
             "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.unallocated.row=Unallocated",
             "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.slack.row=Slack",
             "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.directory.row=Directory"
-            
+
         })
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
@@ -281,15 +288,23 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
             } else if (columnIndex == 1) {
                 switch (rowIndex) {
                     case 0:
-                        return fileCountsMap.get(currentDataSource.getId()) == null ? 0 : fileCountsMap.get(currentDataSource.getId());
+                        return allFilesCountsMap.get(currentDataSource.getId()) == null ? 0 : allFilesCountsMap.get(currentDataSource.getId());
                     case 1:
-                        return 0;
+                        Long unallocatedFilesCount = unallocatedFilesCountsMap.get(currentDataSource.getId());
+                        Long allFilesCount = allFilesCountsMap.get(currentDataSource.getId());
+                        if (allFilesCount == null) {
+                            return 0;
+                        } else if (unallocatedFilesCount == null) {
+                            return allFilesCount;
+                        } else {
+                            return allFilesCount - unallocatedFilesCount;
+                        }
                     case 2:
-                        return 0;
+                        return unallocatedFilesCountsMap.get(currentDataSource.getId()) == null ? 0 : unallocatedFilesCountsMap.get(currentDataSource.getId());
                     case 3:
-                        return 0;
+                        return slackFilesCountsMap.get(currentDataSource.getId()) == null ? 0 : slackFilesCountsMap.get(currentDataSource.getId());
                     case 4:
-                        return 0;
+                        return directoriesCountsMap.get(currentDataSource.getId()) == null ? 0 : directoriesCountsMap.get(currentDataSource.getId());
                     default:
                         break;
                 }

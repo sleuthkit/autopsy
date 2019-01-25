@@ -39,7 +39,6 @@ import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-
 /**
  * Panel which allows viewing and selecting of Data Sources and some of their
  * related information.
@@ -124,10 +123,11 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
      */
     private List<DataSourceSummary> getDataSourceSummaryList(Map<Long, String> usageMap, Map<Long, Long> fileCountsMap) {
         List<DataSourceSummary> summaryList = new ArrayList<>();
+
+        final Map<Long, Long> artifactCountsMap = DataSourceInfoUtilities.getCountsOfArtifacts();
+        final Map<Long, Long> tagCountsMap = DataSourceInfoUtilities.getCountsOfTags();
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            final Map<Long, Long> artifactCountsMap = DataSourceInfoUtilities.getCountsOfArtifacts(skCase);
-            final Map<Long, Long> tagCountsMap = DataSourceInfoUtilities.getCountsOfTags(skCase);
             for (DataSource dataSource : skCase.getDataSources()) {
                 summaryList.add(new DataSourceSummary(dataSource, usageMap.get(dataSource.getId()),
                         fileCountsMap.get(dataSource.getId()), artifactCountsMap.get(dataSource.getId()), tagCountsMap.get(dataSource.getId())));

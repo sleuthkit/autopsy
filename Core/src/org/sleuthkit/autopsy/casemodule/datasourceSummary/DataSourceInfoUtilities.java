@@ -49,8 +49,9 @@ class DataSourceInfoUtilities {
      *         comma seperated list of values of data source usage types
      *         expected to be in the datasource
      */
-    static Map<Long, String> getDataSourceTypes(SleuthkitCase skCase) {
+    static Map<Long, String> getDataSourceTypes() {
         try {
+            SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             List<BlackboardArtifact> listOfArtifacts = skCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE);
             Map<Long, String> typeMap = new HashMap<>();
             for (BlackboardArtifact typeArtifact : listOfArtifacts) {
@@ -67,7 +68,7 @@ class DataSourceInfoUtilities {
                 }
             }
             return typeMap;
-        } catch (TskCoreException ex) {
+       } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to get types of files for all datasources, providing empty results", ex);
             return Collections.emptyMap();
         }
@@ -83,16 +84,14 @@ class DataSourceInfoUtilities {
      *         files in the datasource, will only contain entries for
      *         datasources which have at least 1 file
      */
-    static Map<Long, Long> getCountsOfFiles(SleuthkitCase skCase) {
+    static Map<Long, Long> getCountsOfFiles() {
         try {
-            DataSourceCountsCallback callback = new DataSourceCountsCallback();
             final String countFilesQuery = "data_source_obj_id, COUNT(*) AS count"
                     + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                     + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
                     + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
-            skCase.getCaseDbAccessManager().select(countFilesQuery, callback);
-            return callback.getMapOfCounts();
-        } catch (TskCoreException ex) {
+            return getCountsMap(countFilesQuery);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
             return Collections.emptyMap();
         }
@@ -108,15 +107,13 @@ class DataSourceInfoUtilities {
      *         artifacts in the datasource, will only contain entries for
      *         datasources which have at least 1 artifact
      */
-    static Map<Long, Long> getCountsOfArtifacts(SleuthkitCase skCase) {
+    static Map<Long, Long> getCountsOfArtifacts() {
         try {
-            DataSourceCountsCallback callback = new DataSourceCountsCallback();
             final String countArtifactsQuery = "data_source_obj_id, COUNT(*) AS count"
                     + " FROM blackboard_artifacts WHERE review_status_id !=" + BlackboardArtifact.ReviewStatus.REJECTED.getID()
                     + " GROUP BY data_source_obj_id"; //NON-NLS
-            skCase.getCaseDbAccessManager().select(countArtifactsQuery, callback);
-            return callback.getMapOfCounts();
-        } catch (TskCoreException ex) {
+            return getCountsMap(countArtifactsQuery);
+       } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to get counts of artifacts for all datasources, providing empty results", ex);
             return Collections.emptyMap();
         }
@@ -133,28 +130,25 @@ class DataSourceInfoUtilities {
      *         tags which have been applied in the datasource, will only contain
      *         entries for datasources which have at least 1 item tagged.
      */
-    static Map<Long, Long> getCountsOfTags(SleuthkitCase skCase) {
+    static Map<Long, Long> getCountsOfTags() {
         try {
-            DataSourceCountsCallback fileCountcallback = new DataSourceCountsCallback();
             final String countFileTagsQuery = "data_source_obj_id, COUNT(*) AS count"
                     + " FROM content_tags as content_tags, tsk_files as tsk_files"
                     + " WHERE content_tags.obj_id = tsk_files.obj_id"
                     + " GROUP BY data_source_obj_id"; //NON-NLS
-            skCase.getCaseDbAccessManager().select(countFileTagsQuery, fileCountcallback);
-            Map<Long, Long> tagCountMap = new HashMap<>(fileCountcallback.getMapOfCounts());
-            DataSourceCountsCallback artifactCountcallback = new DataSourceCountsCallback();
+            //new hashmap so it can be modifiable
+            Map<Long, Long> tagCountMap = new HashMap<>(getCountsMap(countFileTagsQuery));         
             final String countArtifactTagsQuery = "data_source_obj_id, COUNT(*) AS count"
                     + " FROM blackboard_artifact_tags as artifact_tags,  blackboard_artifacts AS arts"
                     + " WHERE artifact_tags.artifact_id = arts.artifact_id"
                     + " GROUP BY data_source_obj_id"; //NON-NLS
-            skCase.getCaseDbAccessManager().select(countArtifactTagsQuery, artifactCountcallback);
             //combine the results from the count artifact tags query into the copy of the mapped results from the count file tags query
-            artifactCountcallback.getMapOfCounts().forEach((key, value) -> tagCountMap.merge(key, value, (value1, value2) -> value1 + value2));
+            getCountsMap(countArtifactTagsQuery).forEach((key, value) -> tagCountMap.merge(key, value, (value1, value2) -> value1 + value2));
             return tagCountMap;
-        } catch (TskCoreException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to get counts of tags for all datasources, providing empty results", ex);
             return Collections.emptyMap();
-        }
+        } 
     }
 
     /**
@@ -199,7 +193,7 @@ class DataSourceInfoUtilities {
      *         specified mime types in the current case for the specified data
      *         source, null if no count was retrieved
      */
-    static Long getCountOfFiles(DataSource currentDataSource, Set<String> setOfMimeTypes) {
+    static Long getCountOfFilesForMimeTypes(DataSource currentDataSource, Set<String> setOfMimeTypes) {
         if (currentDataSource != null) {
             try {
                 String inClause = String.join("', '", setOfMimeTypes);
@@ -215,6 +209,84 @@ class DataSourceInfoUtilities {
             }
         }
         return null;
+    }
+
+    /**
+     * Get a map containing the number of files in each data source in the
+     * current case.
+     *
+     * @param skCase the current SluethkitCase
+     *
+     * @return Collection which maps datasource id to a count for the number of
+     *         files in the datasource, will only contain entries for
+     *         datasources which have at least 1 file
+     */
+    static Map<Long, Long> getCountsOfUnallocatedFiles() {
+        try {
+            final String countUnallocatedFilesQuery = "data_source_obj_id, COUNT(*) AS count"
+                    + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                    + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
+                    + " AND dir_flags=" + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
+                    + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
+            return getCountsMap(countUnallocatedFilesQuery);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Get a map containing the number of files in each data source in the
+     * current case.
+     *
+     * @param skCase the current SluethkitCase
+     *
+     * @return Collection which maps datasource id to a count for the number of
+     *         files in the datasource, will only contain entries for
+     *         datasources which have at least 1 file
+     */
+    static Map<Long, Long> getCountsOfDirectories() {
+        try {
+            final String countDirectoriesQuery = "data_source_obj_id, COUNT(*) AS count"
+                    + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                    + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
+                    + " AND meta_type=" + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()
+                    + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
+             return getCountsMap(countDirectoriesQuery);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Get a map containing the number of files in each data source in the
+     * current case.
+     *
+     * @param skCase the current SluethkitCase
+     *
+     * @return Collection which maps datasource id to a count for the number of
+     *         files in the datasource, will only contain entries for
+     *         datasources which have at least 1 file
+     */
+    static Map<Long, Long> getCountsOfSlackFiles() {
+        try {
+            final String countSlackFilesQuery = "data_source_obj_id, COUNT(*) AS count"
+                    + " FROM tsk_files WHERE type=" + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType()
+                    + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
+                    + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
+            return getCountsMap(countSlackFilesQuery);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
+            return Collections.emptyMap();
+        }
+    }
+
+    private static Map<Long, Long> getCountsMap(String query) throws TskCoreException, NoCurrentCaseException {
+        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        DataSourceSingleCountCallback callback = new DataSourceSingleCountCallback();
+        skCase.getCaseDbAccessManager().select(query, callback);
+        return callback.getMapOfCounts();
     }
 
     private DataSourceInfoUtilities() {

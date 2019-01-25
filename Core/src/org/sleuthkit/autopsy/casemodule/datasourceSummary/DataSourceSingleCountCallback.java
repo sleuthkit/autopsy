@@ -32,9 +32,9 @@ import org.sleuthkit.datamodel.CaseDbAccessManager;
  * selects data_source_obj_id and count(*) with a group by data_source_obj_id
  * clause.
  */
-class DataSourceCountsCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+class DataSourceSingleCountCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-    private static final Logger logger = Logger.getLogger(DataSourceCountsCallback.class.getName());
+    private static final Logger logger = Logger.getLogger(DataSourceSingleCountCallback.class.getName());
     private Map<Long, Long> dataSourceObjIdCounts = new HashMap<>();
 
     @Override
