@@ -48,7 +48,7 @@ class DataSourceSummary {
         type = typeValue == null ? "" : typeValue;
         filesCount = numberOfFiles == null ? 0 : numberOfFiles;
         resultsCount = numberOfResults == null ? 0 : numberOfResults;
-        tagsCount = numberOfTags == null ? 0 : numberOfResults;
+        tagsCount = numberOfTags == null ? 0 : numberOfTags;
     }
 
     /**
