@@ -352,6 +352,8 @@ class TskDbDiff(object):
             # Write to the database dump
             with codecs.open(dump_file, "wb", "utf_8") as db_log:
                 for line in conn.iterdump():
+					if "image_gallery_groups_seen" in line:
+						continue
                     line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table)
                     db_log.write('%s\n' % line)
         # Now sort the file  
