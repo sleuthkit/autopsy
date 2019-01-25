@@ -150,17 +150,17 @@ public class CentralRepoDatamodelTest extends TestCase {
             case2 = EamDb.getInstance().newCase(case2);
             assertTrue("Failed to create test object case2", case2 != null);
 
-            dataSource1fromCase1 = new CorrelationDataSource(case1, "dataSource1_deviceID", "dataSource1", CASE_1_DATA_SOURCE_1_ID);
+            dataSource1fromCase1 = new CorrelationDataSource(case1, "dataSource1_deviceID", "dataSource1", CASE_1_DATA_SOURCE_1_ID, null, null, null);
             EamDb.getInstance().newDataSource(dataSource1fromCase1);
             dataSource1fromCase1 = EamDb.getInstance().getDataSource(case1, dataSource1fromCase1.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource1fromCase1", dataSource1fromCase1 != null);
 
-            dataSource2fromCase1 = new CorrelationDataSource(case1, "dataSource2_deviceID", "dataSource2", CASE_1_DATA_SOURCE_2_ID);
+            dataSource2fromCase1 = new CorrelationDataSource(case1, "dataSource2_deviceID", "dataSource2", CASE_1_DATA_SOURCE_2_ID, null, null, null);
             EamDb.getInstance().newDataSource(dataSource2fromCase1);
             dataSource2fromCase1 = EamDb.getInstance().getDataSource(case1, dataSource2fromCase1.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource2fromCase1", dataSource2fromCase1 != null);
 
-            dataSource1fromCase2 = new CorrelationDataSource(case2, "dataSource3_deviceID", "dataSource3", CASE_2_DATA_SOURCE_1_ID);
+            dataSource1fromCase2 = new CorrelationDataSource(case2, "dataSource3_deviceID", "dataSource3", CASE_2_DATA_SOURCE_1_ID, null, null, null);
             EamDb.getInstance().newDataSource(dataSource1fromCase2);
             dataSource1fromCase2 = EamDb.getInstance().getDataSource(case2, dataSource1fromCase2.getDataSourceObjectID());
             assertTrue("Failed to create test object dataSource1fromCase2", dataSource1fromCase2 != null);
@@ -866,7 +866,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test adding instance with invalid data source ID
         try {
             CorrelationDataSource badDS = new CorrelationDataSource(case1, "badDSUuid", "badDSName",
-                    0L);
+                    0L, null, null, null);
             CorrelationAttributeInstance failAttrInst4 = new CorrelationAttributeInstance(fileType, randomHash(), case1, badDS, BAD_PATH,
                     null, TskData.FileKnown.UNKNOWN, 0L);
             EamDb.getInstance().addArtifactInstance(failAttrInst4);
@@ -2348,7 +2348,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with valid case, name, and ID
         try {
             dataSourceA = new CorrelationDataSource(case2, dataSourceAid, dataSourceAname,
-                    0L);
+                    0L, null, null, null);
             EamDb.getInstance().newDataSource(dataSourceA);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2359,7 +2359,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with the same case, name, and ID
         try {
             CorrelationDataSource temp = new CorrelationDataSource(case2, dataSourceAid, dataSourceAname,
-                    0L);
+                    0L, null, null, null);
             EamDb.getInstance().newDataSource(temp);
             fail("newDataSource did not throw exception from duplicate data source");
         } catch (EamDbException ex) {
@@ -2369,7 +2369,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with the same name and ID but different case
         try {
             dataSourceB = new CorrelationDataSource(case1, dataSourceAid, dataSourceAname,
-                    0L);
+                    0L, null, null, null);
             EamDb.getInstance().newDataSource(dataSourceB);
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
@@ -2381,7 +2381,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         try {
             CorrelationCase correlationCase = new CorrelationCase("1", "test");
             CorrelationDataSource temp = new CorrelationDataSource(correlationCase, "tempID", "tempName",
-                    0L);
+                    0L, null, null, null);
             EamDb.getInstance().newDataSource(temp);
             fail("newDataSource did not throw exception from invalid case ID");
         } catch (EamDbException ex) {
@@ -2392,7 +2392,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with null device ID
         try {
             CorrelationDataSource temp = new CorrelationDataSource(case2, null, "tempName",
-                    0L);
+                    0L, null, null, null);
             EamDb.getInstance().newDataSource(temp);
             fail("newDataSource did not throw exception from null device ID");
         } catch (EamDbException ex) {
@@ -2403,7 +2403,7 @@ public class CentralRepoDatamodelTest extends TestCase {
         // Test creating a data source with null name
         try {
             CorrelationDataSource temp = new CorrelationDataSource(case2, "tempID", null,
-                    0L);
+                    0L, null, null, null);
             EamDb.getInstance().newDataSource(temp);
             fail("newDataSource did not throw exception from null name");
         } catch (EamDbException ex) {

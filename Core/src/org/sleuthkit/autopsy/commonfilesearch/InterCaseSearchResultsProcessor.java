@@ -377,11 +377,17 @@ final class InterCaseSearchResultsProcessor {
                     CorrelationCase correlationCase = dbManager.getCaseById(InstanceTableCallback.getCaseId(resultSet));
                     CorrelationDataSource dataSource = dbManager.getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
                     try {
-                        correlationAttributeInstance = dbManager.getCorrelationAttributeInstance(correlationType,
-                                correlationCase,
-                                dataSource,
-                                InstanceTableCallback.getValue(resultSet),
-                                InstanceTableCallback.getFilePath(resultSet));
+                        long fileObjectId = InstanceTableCallback.getFileObjectId(resultSet);
+                        if (fileObjectId != 0) {
+                            correlationAttributeInstance = dbManager.getCorrelationAttributeInstance(correlationType,
+                                    correlationCase, dataSource, fileObjectId);
+                        } else {
+                            correlationAttributeInstance = dbManager.getCorrelationAttributeInstance(correlationType,
+                                    correlationCase,
+                                    dataSource,
+                                    InstanceTableCallback.getValue(resultSet),
+                                    InstanceTableCallback.getFilePath(resultSet));
+                        }
                     } catch (CorrelationAttributeNormalizationException ex) {
                         LOGGER.log(Level.INFO, "Unable to get CorrelationAttributeInstance.", ex); // NON-NLS
                     }

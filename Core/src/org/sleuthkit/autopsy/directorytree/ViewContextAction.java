@@ -223,7 +223,7 @@ public class ViewContextAction extends AbstractAction {
                     Node ancestorNode = ancestorChildren.getNodeAt(i);
                     for (int j = 0; j < treeNodeChildren.getNodesCount(); j++) {
                         Node treeNode = treeNodeChildren.getNodeAt(j);
-                        if (ancestorNode.getDisplayName().equals(treeNode.getDisplayName())) {
+                        if (ancestorNode.getName().equals(treeNode.getName())) {
                             parentTreeViewNode = treeNode;
                             treeNodeChildren = treeNode.getChildren();
                             break;
