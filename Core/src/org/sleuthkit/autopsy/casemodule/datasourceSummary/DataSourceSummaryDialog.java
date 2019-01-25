@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer {
 
     private static final long serialVersionUID = 1L;
-    private DataSourceSummaryFilesPanel filesPanel = new DataSourceSummaryFilesPanel();
+    private DataSourceSummaryFilesPanel filesPanel;
     private DataSourceSummaryDetailsPanel detailsPanel;
     private DataSourceBrowser dataSourcesPanel;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
@@ -56,14 +56,17 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     DataSourceSummaryDialog(Frame owner) {
         super(owner, Bundle.DataSourceSummaryPanel_window_title(), true);
         Map<Long, String> usageMap = new HashMap<>();
+        Map<Long, Long> fileCountsMap = new HashMap<>();
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             usageMap = DataSourceInfoUtilities.getDataSourceTypes(skCase);
+            fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles(skCase);
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to data source usage information", ex);
         }
+        filesPanel = new DataSourceSummaryFilesPanel(fileCountsMap);
         detailsPanel = new DataSourceSummaryDetailsPanel(usageMap);
-        dataSourcesPanel = new DataSourceBrowser(usageMap);
+        dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
         dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryPanel_detailsTab_title(), detailsPanel);

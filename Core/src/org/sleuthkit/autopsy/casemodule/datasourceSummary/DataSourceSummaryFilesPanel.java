@@ -20,18 +20,12 @@ package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
+import java.util.Map;
 import java.util.logging.Logger;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
 import org.sleuthkit.datamodel.DataSource;
-import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Panel for displaying summary information on the known files present in the
@@ -40,15 +34,17 @@ import org.sleuthkit.datamodel.TskData;
 public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private FilesTableModel filesTableModel = new FilesTableModel(null);
+    private FilesByMimeTypeTableModel filesByMimeTypeTableModel = new FilesByMimeTypeTableModel(null);
+    private FilesByCategoryTableModel filesByCategoryTableModel = new FilesByCategoryTableModel(null);
     private static final Logger logger = Logger.getLogger(DataSourceSummaryFilesPanel.class.getName());
-
+    private final Map<Long, Long> fileCountsMap;
     /**
      * Creates new form DataSourceSummaryFilesPanel
      */
-    public DataSourceSummaryFilesPanel() {
+    public DataSourceSummaryFilesPanel(Map<Long, Long> fileCountsMap) {
+        this.fileCountsMap = fileCountsMap;
         initComponents();
-        fileCountsTable.getTableHeader().setReorderingAllowed(false);
+        fileCountsByMimeTypeTable.getTableHeader().setReorderingAllowed(false);
     }
 
     /**
@@ -57,8 +53,10 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
      * @param selectedDataSource the DataSource to display file information for
      */
     void updateFilesTableData(DataSource selectedDataSource) {
-        filesTableModel = new FilesTableModel(selectedDataSource);
-        fileCountsTable.setModel(filesTableModel);
+        filesByMimeTypeTableModel = new FilesByMimeTypeTableModel(selectedDataSource);
+        fileCountsByMimeTypeTable.setModel(filesByMimeTypeTableModel);
+        filesByCategoryTableModel = new FilesByCategoryTableModel(selectedDataSource);
+        fileCountsByCategoryTable.setModel(filesByCategoryTableModel);
         this.repaint();
     }
 
@@ -71,14 +69,22 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        fileCountsScrollPane = new javax.swing.JScrollPane();
-        fileCountsTable = new javax.swing.JTable();
-        fileCountsLabel = new javax.swing.JLabel();
+        fileCountsByMimeTypeScrollPane = new javax.swing.JScrollPane();
+        fileCountsByMimeTypeTable = new javax.swing.JTable();
+        fileCountsByMimeTypeLabel = new javax.swing.JLabel();
+        fileCountsByCategoryScrollPane = new javax.swing.JScrollPane();
+        fileCountsByCategoryTable = new javax.swing.JTable();
+        jLabel1 = new javax.swing.JLabel();
 
-        fileCountsTable.setModel(filesTableModel);
-        fileCountsScrollPane.setViewportView(fileCountsTable);
+        fileCountsByMimeTypeTable.setModel(filesByMimeTypeTableModel);
+        fileCountsByMimeTypeScrollPane.setViewportView(fileCountsByMimeTypeTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(fileCountsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryFilesPanel.class, "DataSourceSummaryFilesPanel.fileCountsLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(fileCountsByMimeTypeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryFilesPanel.class, "DataSourceSummaryFilesPanel.fileCountsByMimeTypeLabel.text")); // NOI18N
+
+        fileCountsByCategoryTable.setModel(filesByCategoryTableModel);
+        fileCountsByCategoryScrollPane.setViewportView(fileCountsByCategoryTable);
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(DataSourceSummaryFilesPanel.class, "DataSourceSummaryFilesPanel.jLabel1.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -87,35 +93,53 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(fileCountsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE)
-                    .addComponent(fileCountsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(265, Short.MAX_VALUE))
+                    .addComponent(fileCountsByMimeTypeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE)
+                    .addComponent(fileCountsByMimeTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(fileCountsByCategoryScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
+                .addContainerGap(248, Short.MAX_VALUE))
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {fileCountsByCategoryScrollPane, fileCountsByMimeTypeScrollPane});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(fileCountsLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(fileCountsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(fileCountsByCategoryScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(fileCountsByMimeTypeLabel)
+                            .addComponent(jLabel1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(fileCountsByMimeTypeScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(48, Short.MAX_VALUE))
         );
+
+        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {fileCountsByCategoryScrollPane, fileCountsByMimeTypeScrollPane});
+
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel fileCountsLabel;
-    private javax.swing.JScrollPane fileCountsScrollPane;
-    private javax.swing.JTable fileCountsTable;
+    private javax.swing.JScrollPane fileCountsByCategoryScrollPane;
+    private javax.swing.JTable fileCountsByCategoryTable;
+    private javax.swing.JLabel fileCountsByMimeTypeLabel;
+    private javax.swing.JScrollPane fileCountsByMimeTypeScrollPane;
+    private javax.swing.JTable fileCountsByMimeTypeTable;
+    private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
 
     /**
      * Table model for the files table model to display counts of specific file
      * types found in the currently selected data source.
      */
-    @Messages({"DataSourceSummaryFilesPanel.FilesTableModel.type.header=File Type",
-        "DataSourceSummaryFilesPanel.FilesTableModel.count.header=Count"})
-    private class FilesTableModel extends AbstractTableModel {
+    @Messages({"DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.type.header=File Type",
+        "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.count.header=Count"})
+    private class FilesByMimeTypeTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = 1L;
         private final DataSource currentDataSource;
@@ -127,9 +151,9 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
          * @param selectedDataSource the datasource which this filesTablemodel
          *                           will represent
          */
-        FilesTableModel(DataSource selectedDataSource) {
-            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesTableModel_type_header());
-            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesTableModel_count_header());
+        FilesByMimeTypeTableModel(DataSource selectedDataSource) {
+            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_type_header());
+            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_count_header());
             currentDataSource = selectedDataSource;
         }
 
@@ -145,41 +169,41 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
         }
 
         @Messages({
-            "DataSourceSummaryFilesPanel.FilesTableModel.images.row=Images",
-            "DataSourceSummaryFilesPanel.FilesTableModel.videos.row=Videos",
-            "DataSourceSummaryFilesPanel.FilesTableModel.audio.row=Audio",
-            "DataSourceSummaryFilesPanel.FilesTableModel.documents.row=Documents",
-            "DataSourceSummaryFilesPanel.FilesTableModel.executables.row=Executables"
+            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.images.row=Images",
+            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.videos.row=Videos",
+            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.audio.row=Audio",
+            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.documents.row=Documents",
+            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.executables.row=Executables"
         })
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
                 switch (rowIndex) {
                     case 0:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesTableModel_images_row();
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_images_row();
                     case 1:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesTableModel_videos_row();
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_videos_row();
                     case 2:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesTableModel_audio_row();
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_audio_row();
                     case 3:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesTableModel_documents_row();
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_documents_row();
                     case 4:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesTableModel_executables_row();
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_executables_row();
                     default:
                         break;
                 }
             } else if (columnIndex == 1) {
                 switch (rowIndex) {
                     case 0:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.IMAGE.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.IMAGE.getMediaTypes());
                     case 1:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.VIDEO.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.VIDEO.getMediaTypes());
                     case 2:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.AUDIO.getMediaTypes());
                     case 3:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes());
                     case 4:
-                        return getCountOfFiles(FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes());
+                        return DataSourceInfoUtilities.getCountOfFiles(currentDataSource, FileTypeUtils.FileTypeCategory.EXECUTABLE.getMediaTypes());
                     default:
                         break;
                 }
@@ -187,30 +211,87 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
             return null;
         }
 
+        @Override
+        public String getColumnName(int column) {
+            return columnHeaders.get(column);
+        }
+
+    }
+    
+    /**
+     * Table model for the files table model to display counts of specific file
+     * types found in the currently selected data source.
+     */
+    @Messages({"DataSourceSummaryFilesPanel.FilesByCategoryTableModel.type.header=File Type",
+        "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.count.header=Count"})
+    private class FilesByCategoryTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
+        private final DataSource currentDataSource;
+        private final List<String> columnHeaders = new ArrayList<>();
+
         /**
-         * Get the number of files in the case database for the current data
-         * source which have the specified mimetypes.
+         * Create a FilesTableModel for the speicified datasource.
          *
-         * @param setOfMimeTypes the set of mime types which we are finding the
-         *                       number of occurences of
-         *
-         * @return a Long value which represents the number of occurrences of
-         *         the specified mime types in the current case for the
-         *         specified data source, null if no count was retrieved
+         * @param selectedDataSource the datasource which this filesTablemodel
+         *                           will represent
          */
-        private Long getCountOfFiles(Set<String> setOfMimeTypes) {
-            if (currentDataSource != null) {
-                try {
-                    String inClause = String.join("', '", setOfMimeTypes);
-                    SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                    return skCase.countFilesWhere("data_source_obj_id=" + currentDataSource.getId()
-                            + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
-                            + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
-                            + " AND mime_type IN ('" + inClause + "')"
-                            + " AND name<>''");
-                } catch (TskCoreException | NoCurrentCaseException ex) {
-                    logger.log(Level.WARNING, "Unable to get count of files for specified mime types", ex);
-                    //unable to get count of files for the specified mimetypes cell will be displayed as empty
+        FilesByCategoryTableModel(DataSource selectedDataSource) {
+            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_type_header());
+            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_count_header());
+            currentDataSource = selectedDataSource;
+        }
+
+        @Override
+        public int getRowCount() {
+            //should be kept equal to the number of types we are displaying in the tables
+            return 5;
+        }
+
+        @Override
+        public int getColumnCount() {
+            return columnHeaders.size();
+        }
+
+        @Messages({
+            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.all.row=All",
+            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.allocated.row=Allocated",
+            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.unallocated.row=Unallocated",
+            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.slack.row=Slack",
+            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.directory.row=Directory"
+            
+        })
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            if (columnIndex == 0) {
+                switch (rowIndex) {
+                    case 0:
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_all_row();
+                    case 1:
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_allocated_row();
+                    case 2:
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_unallocated_row();
+                    case 3:
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_slack_row();
+                    case 4:
+                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_directory_row();
+                    default:
+                        break;
+                }
+            } else if (columnIndex == 1) {
+                switch (rowIndex) {
+                    case 0:
+                        return fileCountsMap.get(currentDataSource.getId()) == null ? 0 : fileCountsMap.get(currentDataSource.getId());
+                    case 1:
+                        return 0;
+                    case 2:
+                        return 0;
+                    case 3:
+                        return 0;
+                    case 4:
+                        return 0;
+                    default:
+                        break;
                 }
             }
             return null;

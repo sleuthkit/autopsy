@@ -56,7 +56,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     /**
      * Creates new form DataSourceBrowser
      */
-    DataSourceBrowser(Map<Long, String> usageMap) {
+    DataSourceBrowser(Map<Long, String> usageMap, Map<Long, Long> fileCountsMap) {
         initComponents();
         explorerManager = new ExplorerManager();
         outlineView = new org.openide.explorer.view.OutlineView();
@@ -69,7 +69,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
         outline = outlineView.getOutline();
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         outline.setRootVisible(false);
-        dataSourceSummaryList = getDataSourceSummaryList(usageMap);
+        dataSourceSummaryList = getDataSourceSummaryList(usageMap, fileCountsMap);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.DataSourceSummaryNode_column_dataSourceName_header());
         add(outlineView, java.awt.BorderLayout.CENTER);
         explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
@@ -122,11 +122,10 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
      * @return list containing a DataSourceSummary object for each DataSource in
      *         the current case.
      */
-    private List<DataSourceSummary> getDataSourceSummaryList(Map<Long, String> usageMap) {
+    private List<DataSourceSummary> getDataSourceSummaryList(Map<Long, String> usageMap, Map<Long, Long> fileCountsMap) {
         List<DataSourceSummary> summaryList = new ArrayList<>();
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            final Map<Long, Long> fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles(skCase);
             final Map<Long, Long> artifactCountsMap = DataSourceInfoUtilities.getCountsOfArtifacts(skCase);
             final Map<Long, Long> tagCountsMap = DataSourceInfoUtilities.getCountsOfTags(skCase);
             for (DataSource dataSource : skCase.getDataSources()) {

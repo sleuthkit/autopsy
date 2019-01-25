@@ -27,11 +27,13 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Set;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.DataSource;
 
 class DataSourceInfoUtilities {
 
@@ -179,8 +181,40 @@ class DataSourceInfoUtilities {
             }
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load OS info artifacts.", ex);
-        } 
+        }
         return osDetailMap;
+    }
+
+    /**
+     * Get the number of files in the case database for the current data source
+     * which have the specified mimetypes.
+     *
+     * @param currentDataSource the data source which we are finding a file
+     *                          count
+     *
+     * @param setOfMimeTypes    the set of mime types which we are finding the
+     *                          number of occurences of
+     *
+     * @return a Long value which represents the number of occurrences of the
+     *         specified mime types in the current case for the specified data
+     *         source, null if no count was retrieved
+     */
+    static Long getCountOfFiles(DataSource currentDataSource, Set<String> setOfMimeTypes) {
+        if (currentDataSource != null) {
+            try {
+                String inClause = String.join("', '", setOfMimeTypes);
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                return skCase.countFilesWhere("data_source_obj_id=" + currentDataSource.getId()
+                        + " AND type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                        + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
+                        + " AND mime_type IN ('" + inClause + "')"
+                        + " AND name<>''");
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to get count of files for specified mime types", ex);
+                //unable to get count of files for the specified mimetypes cell will be displayed as empty
+            }
+        }
+        return null;
     }
 
     private DataSourceInfoUtilities() {
