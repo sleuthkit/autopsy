@@ -678,12 +678,12 @@ class Chrome extends Extract {
             }
             
             // The DB schema is little different in schema version 8x vs older versions
-            boolean isDBVerPre8x = !Util.checkColumn("date_created", "autofill", tempFilePath);
+            boolean isSchemaV8X = Util.checkColumn("date_created", "autofill", tempFilePath);
                    
             // get form autofill artifacts
-            bbartifacts.addAll(getFormAutofillArtifacts(webDataFile, tempFilePath, isDBVerPre8x));
+            bbartifacts.addAll(getFormAutofillArtifacts(webDataFile, tempFilePath, isSchemaV8X));
             // get form address atifacts
-            bbartifacts.addAll(getFormAddressArtifacts(webDataFile, tempFilePath, isDBVerPre8x));
+            bbartifacts.addAll(getFormAddressArtifacts(webDataFile, tempFilePath, isSchemaV8X));
             
             dbFile.delete();
         }
@@ -698,17 +698,17 @@ class Chrome extends Extract {
      * 
      * @param webDataFile - the database file in the data source
      * @param dbFilePath - path to a temporary file where the DB file is extracted 
-     * @param isDBVerPre8x - indicates of the DB schema version is pre 8X
+     * @param isSchemaV8X - indicates of the DB schema version is 8X or greater
      * 
      * @return collection of TSK_WEB_FORM_AUTOFILL artifacts
      */
-    private Collection<BlackboardArtifact> getFormAutofillArtifacts (AbstractFile webDataFile, String dbFilePath , boolean isDBVerPre8x ) {
+    private Collection<BlackboardArtifact> getFormAutofillArtifacts (AbstractFile webDataFile, String dbFilePath , boolean isSchemaV8X ) {
         
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
          
         // The DB Schema is little different in version 8x vs older versions
-        String autoFillquery = (isDBVerPre8x) ? AUTOFILL_QUERY 
-                                              : AUTOFILL_QUERY_V8X  ;
+        String autoFillquery = (isSchemaV8X) ? AUTOFILL_QUERY_V8X  
+                                             : AUTOFILL_QUERY;
 
         List<HashMap<String, Object>> autofills = this.dbConnect(dbFilePath, autoFillquery);
         logger.log(Level.INFO, "{0}- Now getting Autofill information from {1} with {2}artifacts identified.", new Object[]{moduleName, dbFilePath, autofills.size()}); //NON-NLS
@@ -733,7 +733,7 @@ class Chrome extends Extract {
                     Long.valueOf(result.get("date_created").toString()))); //NON-NLS
 
              // get schema version specific attributes
-            if (!isDBVerPre8x) {
+            if (isSchemaV8X) {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                     NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                     Long.valueOf(result.get("date_last_used").toString()))); //NON-NLS
@@ -756,15 +756,15 @@ class Chrome extends Extract {
      * 
      * @param webDataFile - the database file in the data source
      * @param dbFilePath - path to a temporary file where the DB file is extracted 
-     * @param isDBVerPre8x - indicates of the DB schema version is pre 8X
+     * @param isSchemaV8X - indicates of the DB schema version is 8X or greater
      * 
      * @return collection of TSK_WEB_FORM_ADDRESS artifacts
      */
-    private Collection<BlackboardArtifact> getFormAddressArtifacts (AbstractFile webDataFile, String dbFilePath , boolean isDBVerPre8x ) {
+    private Collection<BlackboardArtifact> getFormAddressArtifacts (AbstractFile webDataFile, String dbFilePath , boolean isSchemaV8X ) {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         
-        String webformAddressQuery = (isDBVerPre8x) ? WEBFORM_ADDRESS_QUERY 
-                                                    : WEBFORM_ADDRESS_QUERY_V8X;
+        String webformAddressQuery = (isSchemaV8X) ? WEBFORM_ADDRESS_QUERY_V8X 
+                                                    : WEBFORM_ADDRESS_QUERY;
            
         // Get Web form addresses
         List<HashMap<String, Object>> addresses = this.dbConnect(dbFilePath, webformAddressQuery);
@@ -794,17 +794,17 @@ class Chrome extends Extract {
             int  use_count = 0;
             long use_date = 0;
 
-            if (isDBVerPre8x)  {
-                String address_line_1 = result.get("address_line_1").toString() != null ? result.get("street_address").toString() : ""; 
-                String address_line_2 = result.get("address_line_2").toString() != null ? result.get("address_line_2").toString() : "";
-                street_address = String.join(" ", address_line_1, address_line_2);
-            } else {
+            if (isSchemaV8X) {
                 full_name = result.get("full_name").toString() != null ? result.get("full_name").toString() : "";
                 street_address = result.get("street_address").toString() != null ? result.get("street_address").toString() : "";
                 date_modified = result.get("date_modified").toString() != null ? Long.valueOf(result.get("date_modified").toString()) : 0;
                 use_count = result.get("use_count").toString() != null ? Integer.valueOf(result.get("use_count").toString()) : 0;
                 use_date = result.get("use_date").toString() != null ? Long.valueOf(result.get("use_date").toString()) : 0;   
-            } 
+            } else {
+                String address_line_1 = result.get("address_line_1").toString() != null ? result.get("street_address").toString() : ""; 
+                String address_line_2 = result.get("address_line_2").toString() != null ? result.get("address_line_2").toString() : "";
+                street_address = String.join(" ", address_line_1, address_line_2);
+            }
  
             // If an email address is found, create an account instance for it
             if (email_Addr != null && !email_Addr.isEmpty()) {
