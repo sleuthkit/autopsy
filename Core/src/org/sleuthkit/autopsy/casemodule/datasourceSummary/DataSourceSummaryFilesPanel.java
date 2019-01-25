@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+import javax.swing.JLabel;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
 import org.sleuthkit.datamodel.DataSource;
@@ -41,6 +43,7 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
     private final Map<Long, Long> slackFilesCountsMap;
     private final Map<Long, Long> directoriesCountsMap;
     private final Map<Long, Long> unallocatedFilesCountsMap;
+    private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
 
     /**
      * Creates new form DataSourceSummaryFilesPanel
@@ -50,8 +53,10 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
         this.slackFilesCountsMap = DataSourceInfoUtilities.getCountsOfSlackFiles();
         this.directoriesCountsMap = DataSourceInfoUtilities.getCountsOfDirectories();
         this.unallocatedFilesCountsMap = DataSourceInfoUtilities.getCountsOfUnallocatedFiles();
+        rightAlignedRenderer.setHorizontalAlignment(JLabel.RIGHT);
         initComponents();
         fileCountsByMimeTypeTable.getTableHeader().setReorderingAllowed(false);
+        fileCountsByCategoryTable.getTableHeader().setReorderingAllowed(false);
     }
 
     /**
@@ -62,8 +67,10 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
     void updateFilesTableData(DataSource selectedDataSource) {
         filesByMimeTypeTableModel = new FilesByMimeTypeTableModel(selectedDataSource);
         fileCountsByMimeTypeTable.setModel(filesByMimeTypeTableModel);
+        fileCountsByMimeTypeTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
         filesByCategoryTableModel = new FilesByCategoryTableModel(selectedDataSource);
         fileCountsByCategoryTable.setModel(filesByCategoryTableModel);
+        fileCountsByCategoryTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
         this.repaint();
     }
 
