@@ -141,6 +141,12 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
 
         @Override
         protected boolean createKeys(List<AbstractCommonAttributeInstance> list) {
+            // This is a bit of a hack to ensure that the AbstractFile instance
+            // has been created before createNodesForKey() is called. Constructing
+            // the AbstractFile in createNodesForKey() was resulting in UI lockups.
+            this.descendants.getInstances().forEach((acai) -> {
+                acai.getAbstractFile();
+            });
             list.addAll(this.descendants.getInstances());
             return true;
         }

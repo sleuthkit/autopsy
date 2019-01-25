@@ -124,6 +124,13 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
         @Override
         protected boolean createKeys(List<AbstractCommonAttributeInstance> list) {
             for (CommonAttributeValue value : descendants.getDelayedMetadataList()) {
+                // This is a bit of a hack to ensure that the AbstractFile instance
+                // has been created before createNodesForKey() is called. Constructing
+                // the AbstractFile in createNodesForKey() was resulting in UI lockups.
+                value.getInstances().forEach((acai) -> {
+                    acai.getAbstractFile();
+                });
+
                 list.addAll(value.getInstances());
             }
             return true;

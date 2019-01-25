@@ -43,14 +43,15 @@ public abstract class AbstractCommonAttributeInstance {
     private final String caseName;
     private final String dataSource;
 
+    // Reference to the AbstractFile instance in the current case
+    // that matched on one of the common properties.
+    protected AbstractFile abstractFile;
+
     /**
      * Create a leaf node for attributes found in files in the current case db.
      *
      * @param abstractFileReference file from which the common attribute was
      *                              found
-     * @param cachedFiles           storage for abstract files which have been
-     *                              used already so we can avoid extra
-     *                              roundtrips to the case db
      * @param dataSource            datasource where this attribute appears
      * @param caseName              case where this attribute appears
      */
@@ -58,20 +59,15 @@ public abstract class AbstractCommonAttributeInstance {
         this.abstractFileObjectId = abstractFileReference;
         this.caseName = caseName;
         this.dataSource = dataSource;
+        this.abstractFile = null;
     }
 
     /**
      * Create a leaf node for attributes found in the central repo and not
-     * available in the current data case.
-     *
-     * @param cachedFiles storage for abstract files which have been used
-     *                    already so we can avoid extra roundtrips to the case
-     *                    db
+     * available in the current case db.
      */
     AbstractCommonAttributeInstance() {
-        this.abstractFileObjectId = -1L;
-        this.caseName = "";
-        this.dataSource = "";
+        this(-1L, "", "");
     }
 
     /**

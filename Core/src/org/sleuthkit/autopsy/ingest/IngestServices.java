@@ -111,7 +111,8 @@ public final class IngestServices {
 
     /**
      * Fires an event to notify registered listeners that there is new content
-     * (e.g., files extracted from an archive file, carved files, etc.)
+     * added to the case. (e.g., files extracted from an archive file, carved
+     * files, etc.)
      *
      * @param moduleContentEvent A module content event, i.e., an event that
      *                           encapsulates new content data.
