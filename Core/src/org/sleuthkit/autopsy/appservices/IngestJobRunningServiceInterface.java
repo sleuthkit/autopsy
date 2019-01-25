@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.appservices;
 
+import javax.swing.JPanel;
+
 /**
  * Interface to run an ingest job in the background. // ELTODO
  */
@@ -31,5 +33,12 @@ public interface IngestJobRunningServiceInterface {
     /**
      * Stops the service
      */
-    public void stop();    
+    public void stop();
+    
+    /**
+     * Returns a panel to be displayed while using this service
+     * 
+     * @return panel to be displayed while using this service
+     */
+    public JPanel getStartupWindow();
 }

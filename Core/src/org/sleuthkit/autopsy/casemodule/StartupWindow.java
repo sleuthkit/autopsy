@@ -54,8 +54,9 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
         if (it.hasNext()) {
             // Autopsy is running from command line
             IngestJobRunningServiceInterface processor = it.next();
-            //LOGGER.log(Level.INFO, "Autopsy is running from command line. No startup window"); //NON-NLS
-            // ELTODO display some message or panel here
+            add(processor.getStartupWindow());
+            pack();
+            setResizable(false);
             processor.start();
             return;
         }
