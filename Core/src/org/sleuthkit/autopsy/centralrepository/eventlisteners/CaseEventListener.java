@@ -111,6 +111,7 @@ final class CaseEventListener implements PropertyChangeListener {
             case DATA_SOURCE_NAME_CHANGED: {
                 jobProcessingExecutor.submit(new DataSourceNameChangedTask(dbManager, evt));
             }
+            break;
         }
     }
 
@@ -508,8 +509,8 @@ final class CaseEventListener implements PropertyChangeListener {
         @Override
         public void run() {
             
-            final DataSourceNameChangedEvent dataSourceAddedEvent = (DataSourceNameChangedEvent) event;
-            Content dataSource = dataSourceAddedEvent.getDataSource();
+            final DataSourceNameChangedEvent dataSourceNameChangedEvent = (DataSourceNameChangedEvent) event;
+            Content dataSource = dataSourceNameChangedEvent.getDataSource();
             String newName = (String) event.getNewValue();
             
             if (! StringUtils.isEmpty(newName)) {

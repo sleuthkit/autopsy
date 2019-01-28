@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.casemodule.events;
 
 import java.io.Serializable;
-import java.util.UUID;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;

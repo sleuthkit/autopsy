@@ -928,7 +928,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                     eamDataSource.getID(),
                     eamDataSource.getDeviceID(),
                     newName,
-                    eamDataSource.getDataSourceObjectID());
+                    eamDataSource.getDataSourceObjectID(),
+                    eamDataSource.getMd5(),
+                    eamDataSource.getSha1(),
+                    eamDataSource.getSha256());
             
             dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getDataSourceObjectID()), updatedDataSource);
             dataSourceCacheById.put(getDataSourceByIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getID()), updatedDataSource);
