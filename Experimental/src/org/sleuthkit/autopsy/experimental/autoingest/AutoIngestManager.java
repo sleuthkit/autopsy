@@ -1488,87 +1488,79 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             /*
              * Try to get an exclusive lock on the coordination service node for
              * the job. If the lock cannot be obtained, another host in the auto
-             * ingest cluster is already doing the recovery.
+             * ingest cluster is already doing the recovery, so there is nothing
+             * to do.
              */
             String manifestPath = manifest.getFilePath().toString();
             try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifestPath)) {
                 if (null != manifestLock) {
                     sysLogger.log(Level.SEVERE, "Attempting crash recovery for {0}", manifestPath);
-                    try {
-                        Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
+                    Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
 
-                        /*
-                         * Create the recovery job.
-                         */
-                        AutoIngestJob job = new AutoIngestJob(jobNodeData);
-                        int numberOfCrashes = job.getNumberOfCrashes();
+                    /*
+                     * Create the recovery job.
+                     */
+                    AutoIngestJob job = new AutoIngestJob(jobNodeData);
+                    int numberOfCrashes = job.getNumberOfCrashes();
+                    if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                        ++numberOfCrashes;
+                        job.setNumberOfCrashes(numberOfCrashes);
                         if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                            ++numberOfCrashes;
-                            job.setNumberOfCrashes(numberOfCrashes);
-                            if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                                job.setCompletedDate(new Date(0));
-                            } else {
-                                job.setCompletedDate(Date.from(Instant.now()));
-                            }
+                            job.setCompletedDate(new Date(0));
+                        } else {
+                            job.setCompletedDate(Date.from(Instant.now()));
                         }
+                    }
 
+                    if (null != caseDirectoryPath) {
+                        job.setCaseDirectoryPath(caseDirectoryPath);
+                        job.setErrorsOccurred(true);
+                        try {
+                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
+                        } catch (CaseNodeData.InvalidDataException ex) {
+                            sysLogger.log(Level.SEVERE, String.format("Error attempting to get case node data for %s", caseDirectoryPath), ex);
+                        }
+                    } else {
+                        job.setErrorsOccurred(false);
+                    }
+
+                    if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                        job.setProcessingStatus(AutoIngestJob.ProcessingStatus.PENDING);
                         if (null != caseDirectoryPath) {
-                            job.setCaseDirectoryPath(caseDirectoryPath);
-                            job.setErrorsOccurred(true);
                             try {
-                                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
-                            } catch (CaseNodeData.InvalidDataException ex) {
-                                sysLogger.log(Level.SEVERE, String.format("Error attempting to get case node data for %s", caseDirectoryPath), ex);
-                            }
-                        } else {
-                            job.setErrorsOccurred(false);
-                        }
-
-                        if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                            job.setProcessingStatus(AutoIngestJob.ProcessingStatus.PENDING);
-                            if (null != caseDirectoryPath) {
-                                try {
-                                    new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryWithRetry();
-                                } catch (AutoIngestJobLoggerException ex) {
-                                    sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
-                                }
-                            }
-                        } else {
-                            job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
-                            if (null != caseDirectoryPath) {
-                                try {
-                                    new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryNoRetry();
-                                } catch (AutoIngestJobLoggerException ex) {
-                                    sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
-                                }
+                                new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryWithRetry();
+                            } catch (AutoIngestJobLoggerException ex) {
+                                sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
                             }
                         }
-
-                        /*
-                         * Update the coordination service node for the job. If
-                         * this fails, leave the recovery to another host.
-                         */
-                        try {
-                            updateCoordinationServiceManifestNode(job);
-                        } catch (CoordinationServiceException ex) {
-                            sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
-                            return;
+                    } else {
+                        job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
+                        if (null != caseDirectoryPath) {
+                            try {
+                                new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryNoRetry();
+                            } catch (AutoIngestJobLoggerException ex) {
+                                sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
+                            }
                         }
+                    }
 
-                        jobNodeData = new AutoIngestJobNodeData(job);
+                    /*
+                     * Update the coordination service node for the job. If this
+                     * fails, leave the recovery to another host.
+                     */
+                    try {
+                        updateCoordinationServiceManifestNode(job);
+                    } catch (CoordinationServiceException ex) {
+                        sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
+                        return;
+                    }
 
-                        if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                            newPendingJobsList.add(job);
-                        } else {
-                            newCompletedJobsList.add(new AutoIngestJob(jobNodeData));
-                        }
+                    jobNodeData = new AutoIngestJobNodeData(job);
 
-                    } finally {
-                        try {
-                            manifestLock.release();
-                        } catch (CoordinationServiceException ex) {
-                            sysLogger.log(Level.SEVERE, String.format("Error attempting to release exclusive lock for %s", manifestPath), ex);
-                        }
+                    if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                        newPendingJobsList.add(job);
+                    } else {
+                        newCompletedJobsList.add(new AutoIngestJob(jobNodeData));
                     }
                 }
             } catch (CoordinationServiceException ex) {

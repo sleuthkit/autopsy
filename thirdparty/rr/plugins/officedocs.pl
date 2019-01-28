@@ -125,7 +125,7 @@ sub pluginmain {
 # Print sorted content to report file			
 					foreach my $u (sort {$a <=> $b} keys %files) {
 						my ($val,$data) = split(/:/,$files{$u},2);
-						::rptMsg("<PowerPoint name=\"".$val."\">".$data . "</PowerPoint);
+						::rptMsg("<PowerPoint name=\"".$val."\">".$data . "</PowerPoint>");
 					}
 				}
 				else {
@@ -140,12 +140,13 @@ sub pluginmain {
 			#::rptMsg("Could not access ".$key_path);
 			#::logMsg("Could not access ".$key_path);
 		}
+		::rptMsg("</artifacts>");
 	}
 	else {
 		#::logMsg("MSOffice version not found.");
 		#::rptMsg("MSOffice version not found.");
 	}
-::rptMsg("</artifacts></office>");
+::rptMsg("</office>");
 }
 	
 1;
