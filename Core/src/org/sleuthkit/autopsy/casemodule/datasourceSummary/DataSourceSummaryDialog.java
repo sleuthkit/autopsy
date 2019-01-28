@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.DataSource;
 final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer {
 
     private static final long serialVersionUID = 1L;
-    private DataSourceSummaryCountsPanel filesPanel;
+    private DataSourceSummaryCountsPanel countsPanel;
     private DataSourceSummaryDetailsPanel detailsPanel;
     private DataSourceBrowser dataSourcesPanel;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
@@ -45,24 +45,24 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
      */
     @Messages({
         "DataSourceSummaryPanel.window.title=Data Sources Summary",
-        "DataSourceSummaryPanel.filesTab.title=Files",
+        "DataSourceSummaryPanel.countsTab.title=Counts",
         "DataSourceSummaryPanel.detailsTab.title=Details"
     })
     DataSourceSummaryDialog(Frame owner) {
         super(owner, Bundle.DataSourceSummaryPanel_window_title(), true);
         Map<Long, String> usageMap = DataSourceInfoUtilities.getDataSourceTypes();
         Map<Long, Long> fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles();
-        filesPanel = new DataSourceSummaryCountsPanel(fileCountsMap);
+        countsPanel = new DataSourceSummaryCountsPanel(fileCountsMap);
         detailsPanel = new DataSourceSummaryDetailsPanel(usageMap);
         dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
         dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryPanel_detailsTab_title(), detailsPanel);
-        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryPanel_filesTab_title(), filesPanel);
+        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryPanel_countsTab_title(), countsPanel);
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();
-                filesPanel.updateCountsTableData(selectedDataSource);
+                countsPanel.updateCountsTableData(selectedDataSource);
                 detailsPanel.updateDetailsPanelData(selectedDataSource);
                 this.repaint();
             }

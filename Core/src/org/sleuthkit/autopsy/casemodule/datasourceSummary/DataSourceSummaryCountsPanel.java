@@ -89,6 +89,7 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
             }
         }
         artifactCountsTable.getColumnModel().getColumn(0).setPreferredWidth(230);
+        artifactCountsTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
     }
 
     /**
@@ -127,7 +128,7 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
             },
             new String [] {
-                "Type", "Count"
+                "Result Type", "Count"
             }
         ));
         artifactCountsScrollPane.setViewportView(artifactCountsTable);
