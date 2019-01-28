@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,12 +41,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
-import org.openide.explorer.view.BeanTreeView;
-import org.openide.explorer.view.TreeView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -124,6 +125,30 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
         // only allow one item to be selected at a time
         getTree().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        //Hook into the JTree and pre-expand the Views Node and Results node when a user
+        //expands an item in the tree that makes these nodes visible.
+        getTree().addTreeExpansionListener(new TreeExpansionListener() {
+            @Override
+            public void treeExpanded(TreeExpansionEvent event) {
+                for(Node child : em.getRootContext().getChildren().getNodes()) {
+                    Object[] treePath = getPath(child);
+                    
+                    if(treePath.length != event.getPath().getPathCount()) {
+                        break;
+                    }
+                    
+                    if(isSameTreeNodePath(treePath, event.getPath().getPath())){
+                        preExpandNodes(child.getChildren());
+                    }
+                }
+            }
+
+            @Override
+            public void treeCollapsed(TreeExpansionEvent event) {
+                //Do nothing
+            }
+
+        });
         // remove the close button
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
         setName(NbBundle.getMessage(DirectoryTreeTopComponent.class, "CTL_DirectoryTreeTopComponent"));
@@ -137,7 +162,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.forwardList = new LinkedList<>();
         backButton.setEnabled(false);
         forwardButton.setEnabled(false);
-        
+
         viewPreferencesPopupMenu.add(viewPreferencesPanel);
         viewPreferencesPopupMenu.setSize(viewPreferencesPanel.getPreferredSize().width + 6, viewPreferencesPanel.getPreferredSize().height + 6);
         viewPreferencesPopupMenu.addPopupMenuListener(new PopupMenuListener() {
@@ -156,6 +181,71 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 openViewPreferencesButton.setSelected(false);
             }
         });
+    }
+    
+    /**
+     * Test whether the two tree node paths are the same. 
+     * 
+     * @param first 
+     * @param second
+     * 
+     * @return boolean indicating equality of paths
+     */
+    private boolean isSameTreeNodePath(Object[] first, Object[] second) {
+        if(first.length != second.length) {
+            return false;
+        }
+        
+        for(int i = 0; i < first.length; i++) {
+            if(!first[i].toString().equals(second[i].toString())) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    /**
+     * Build the node's path in the Tree.
+     * 
+     * @param node
+     * @return Path array where the first element is the root
+     * and the last is the node parameter.
+     */
+    private Object[] getPath(Node node) {
+        List<Object> path = new ArrayList<>();
+        
+        Node current = node;
+        path.add(node.getName());
+        while(current.getParentNode() != null) {
+            current = node.getParentNode();
+            path.add(current.getName());
+        }
+        
+        Collections.reverse(path);
+        
+        return path.toArray();
+    }
+
+    /**
+     * Pre-expands the Views node, the Results node, and all of the children of
+     * the Results node.
+     *
+     * @param rootChildren Children node containing Results node and Views node.
+     */
+    private void preExpandNodes(Children rootChildren) {
+        ExpansionBeanTreeView tree = getTree();
+
+        Node results = rootChildren.findChild(ResultsNode.NAME);
+        if (!Objects.isNull(results)) {
+            tree.expandNode(results);
+            Children resultsChildren = results.getChildren();
+            Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
+        }
+
+        Node views = rootChildren.findChild(ViewsNode.NAME);
+        if (!Objects.isNull(views)) {
+            tree.expandNode(views);
+        }
     }
 
     /**
@@ -204,21 +294,21 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public DataResultTopComponent getDirectoryListing() {
         return this.dataResult;
     }
-    
+
     /**
      * Show rejected results?
-     * 
+     *
      * @return True if showing rejected results; otherwise false.
      */
     public boolean getShowRejectedResults() {
         return showRejectedResults;
     }
-    
+
     /**
      * Setter to determine if rejected results should be shown or not.
-     * 
+     *
      * @param showRejectedResults True if showing rejected results; otherwise
-     *                            false.
+     * false.
      */
     public void setShowRejectedResults(boolean showRejectedResults) {
         this.showRejectedResults = showRejectedResults;
@@ -236,7 +326,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void initComponents() {
 
         viewPreferencesPopupMenu = new javax.swing.JPopupMenu();
-        treeView = new BeanTreeView();
+        treeView = new ExpansionBeanTreeView();
         backButton = new javax.swing.JButton();
         forwardButton = new javax.swing.JButton();
         openViewPreferencesButton = new javax.swing.JButton();
@@ -536,22 +626,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 @Override
                 protected Node[] doInBackground() throws Exception {
                     Children rootChildren = em.getRootContext().getChildren();
-                    TreeView tree = getTree();
-
-                    Node results = rootChildren.findChild(ResultsNode.NAME);
-                    if (!Objects.isNull(results)) {
-                        tree.expandNode(results);
-                        Children resultsChildren = results.getChildren();
-                        Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
-
-                        accounts = resultsChildren.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
-                    }
-
-                    Node views = rootChildren.findChild(ViewsNode.NAME);
-                    if (!Objects.isNull(views)) {
-                        Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
-                        tree.collapseNode(views);
-                    }
+                    preExpandNodes(rootChildren);
                     /*
                      * JIRA-2806: What is this supposed to do? Right now it
                      * selects the data sources node, but the comment seems to
@@ -753,7 +828,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                      * this elsewhere.
                      */
                     SwingUtilities.invokeLater(() -> {
-                        if (! DirectoryTreeTopComponent.this.isOpened()) {
+                        if (!DirectoryTreeTopComponent.this.isOpened()) {
                             CoreComponentControl.openCoreWindows();
                         }
                     });
@@ -896,8 +971,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @return tree the BeanTreeView
      */
-    public BeanTreeView getTree() {
-        return (BeanTreeView) this.treeView;
+    public ExpansionBeanTreeView getTree() {
+        return (ExpansionBeanTreeView) this.treeView;
     }
 
     /**
@@ -916,20 +991,20 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             if (autopsyTreeChildren == null) {
                 return;
             }
-            
+
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 for (Node dataSource : autopsyTreeChildren.getNodes()) {
                     Node tagsNode = dataSource.getChildren().findChild(Tags.getTagsDisplayName());
                     if (tagsNode != null) {
                         //Reports is at the same level as the data sources so we want to ignore it
-                        ((Tags.RootNode)tagsNode).refresh();
+                        ((Tags.RootNode) tagsNode).refresh();
                     }
                 }
             } else {
-                 Node tagsNode = autopsyTreeChildren.findChild(Tags.getTagsDisplayName());
-                    if (tagsNode != null) {
-                        ((Tags.RootNode)tagsNode).refresh();
-                    }
+                Node tagsNode = autopsyTreeChildren.findChild(Tags.getTagsDisplayName());
+                if (tagsNode != null) {
+                    ((Tags.RootNode) tagsNode).refresh();
+                }
             }
         });
     }
@@ -970,8 +1045,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 super.done();
                 try {
                     get();
-                    selectFirstChildNode();
                     resetHistory();
+                    preExpandNodes(em.getRootContext().getChildren());
                 } catch (InterruptedException | ExecutionException ex) {
                     LOGGER.log(Level.SEVERE, "Error selecting tree node.", ex); //NON-NLS
                 } //NON-NLS
@@ -980,27 +1055,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     /**
-     * Selects the first node in the tree.
-     *
-     */
-    private void selectFirstChildNode() {
-        Children rootChildren = em.getRootContext().getChildren();
-
-        if (rootChildren.getNodesCount() > 0) {
-            Node firstNode = rootChildren.getNodeAt(0);
-            if (firstNode != null) {
-                final String[] selectedPath = NodeOp.createPath(firstNode, em.getRootContext());
-                setSelectedNode(selectedPath, null);
-            }
-        }
-    }
-
-    /**
      * Set the selected node using a path to a previously selected node.
      *
      * @param previouslySelectedNodePath Path to a previously selected node.
-     * @param rootNodeName               Name of the root node to match, may be
-     *                                   null.
+     * @param rootNodeName Name of the root node to match, may be null.
      */
     private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
         if (previouslySelectedNodePath == null) {
