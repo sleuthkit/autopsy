@@ -35,9 +35,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Queries the coordination service to collect the multi-user case node data
  * stored in the case directory lock ZooKeeper nodes.
  */
-final class MulitUserCaseNodeDataCollector {
+final class MultiUserCaseNodeDataCollector {
 
-    private static final Logger logger = Logger.getLogger(MulitUserCaseNodeDataCollector.class.getName());
+    private static final Logger logger = Logger.getLogger(MultiUserCaseNodeDataCollector.class.getName());
     private static final String CASE_AUTO_INGEST_LOG_NAME = "AUTO_INGEST_LOG.TXT"; //NON-NLS
     private static final String RESOURCES_LOCK_SUFFIX = "_RESOURCES"; //NON-NLS
 
@@ -158,7 +158,7 @@ final class MulitUserCaseNodeDataCollector {
     /**
      * Private constructor to prevent instantiation of this utility class.
      */
-    private MulitUserCaseNodeDataCollector() {
+    private MultiUserCaseNodeDataCollector() {
     }
 
 }

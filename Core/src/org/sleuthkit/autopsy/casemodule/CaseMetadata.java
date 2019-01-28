@@ -363,7 +363,7 @@ public final class CaseMetadata {
      * @throws CaseMetadataException If there is an error writing to the case
      *                               metadata file.
      */
-    private void writeToFile() throws CaseMetadataException {
+    void writeToFile() throws CaseMetadataException {
         try {
             /*
              * Create the XML DOM.

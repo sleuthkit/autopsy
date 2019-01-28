@@ -66,7 +66,7 @@ final class MultiUserCaseNode extends AbstractNode {
         setName(caseNodeData.getDisplayName());
         setDisplayName(caseNodeData.getDisplayName());
         this.caseNodeData = caseNodeData;
-        this.caseMetadataFilePath = Paths.get(caseNodeData.getDirectory().toString(), caseNodeData.getName() + CaseMetadata.getFileExtension());
+        this.caseMetadataFilePath = Paths.get(caseNodeData.getDirectory().toString(), caseNodeData.getDisplayName() + CaseMetadata.getFileExtension());
         this.caseAutoIngestLogFilePath = Paths.get(caseNodeData.getDirectory().toString(), CASE_AUTO_INGEST_LOG_FILE_NAME);
     }
 

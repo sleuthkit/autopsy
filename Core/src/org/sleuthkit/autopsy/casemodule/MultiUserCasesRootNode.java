@@ -50,7 +50,7 @@ final class MultiUserCasesRootNode extends AbstractNode {
         @Override
         protected boolean createKeys(List<CaseNodeData> keys) {
             try {
-                List<CaseNodeData> caseNodeData = MulitUserCaseNodeDataCollector.getNodeData();
+                List<CaseNodeData> caseNodeData = MultiUserCaseNodeDataCollector.getNodeData();
                 keys.addAll(caseNodeData);
             } catch (CoordinationService.CoordinationServiceException ex) {
                 logger.log(Level.SEVERE, "Failed to get case node data from coodination service", ex);

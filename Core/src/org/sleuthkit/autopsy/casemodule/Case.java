@@ -40,7 +40,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -569,7 +568,7 @@ public class Case {
      *                             exception.
      */
     @Messages({
-        "Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata.",
+        "# {0} - exception message", "Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata:\n{0}.",        
         "Case.exceptionMessage.cannotOpenMultiUserCaseNoSettings=Multi-user settings are missing (see Tools, Options, Multi-user tab), cannot open a multi-user case."
     })
     public static void openAsCurrentCase(String caseMetadataFilePath) throws CaseActionException {
@@ -577,7 +576,7 @@ public class Case {
         try {
             metadata = new CaseMetadata(Paths.get(caseMetadataFilePath));
         } catch (CaseMetadataException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_failedToReadMetadata(), ex);
+            throw new CaseActionException(Bundle.Case_exceptionMessage_failedToReadMetadata(ex.getLocalizedMessage()), ex);
         }
         if (CaseType.MULTI_USER_CASE == metadata.getCaseType() && !UserPreferences.getIsMultiUserModeEnabled()) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_cannotOpenMultiUserCaseNoSettings());
@@ -708,7 +707,8 @@ public class Case {
         "Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first.",
         "Case.progressMessage.checkingForOtherUser=Checking to see if another user has the case open...",
         "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or there is a problem with the coordination service.",
-        "Case.exceptionMessage.failedToDeleteCoordinationServiceNodes=Failed to delete the coordination service nodes for the case.",})
+        "Case.exceptionMessage.failedToDeleteCoordinationServiceNodes=Failed to delete the coordination service nodes for the case."
+    })
     public static void deleteCase(CaseMetadata metadata) throws CaseActionException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -1957,12 +1957,18 @@ public class Case {
             switchLoggingToCaseLogsDirectory(progressIndicator);
             checkForUserCancellation();
             if (isNewCase) {
+                saveCaseMetadataToFile(progressIndicator);
+            }
+            checkForUserCancellation();
+            if (isNewCase) {
                 createCaseNodeData(progressIndicator);
             } else {
                 updateCaseNodeData(progressIndicator);
             }
             checkForUserCancellation();
-            deleteTempfilesFromCaseDirectory(progressIndicator);
+            if (!isNewCase) {
+                deleteTempfilesFromCaseDirectory(progressIndicator);
+            }
             checkForUserCancellation();
             if (isNewCase) {
                 createCaseDatabase(progressIndicator);
@@ -2021,7 +2027,8 @@ public class Case {
      *                             for a lower-level exception.
      */
     @Messages({
-        "Case.progressMessage.creatingCaseDirectory=Creating case directory...",})
+        "Case.progressMessage.creatingCaseDirectory=Creating case directory..."
+    })
     private void createCaseDirectoryIfDoesNotExist(ProgressIndicator progressIndicator) throws CaseActionException {
         progressIndicator.progress(Bundle.Case_progressMessage_creatingCaseDirectory());
         if (new File(metadata.getCaseDirectory()).exists() == false) {
@@ -2045,6 +2052,30 @@ public class Case {
     }
 
     /**
+     * Saves teh case metadata to a file.SHould not be called until the case
+     * directory has been created.
+     *
+     * @param progressIndicator A progress indicator.
+     *
+     * @throws CaseActionException If there is a problem completing the
+     *                             operation. The exception will have a
+     *                             user-friendly message and may be a wrapper
+     *                             for a lower-level exception.
+     */
+    @Messages({
+        "Case.progressMessage.savingCaseMetadata=Saving case metadata to file...",
+        "# {0} - exception message", "Case.exceptionMessage.couldNotSaveCaseMetadata=Failed to save case metadata:\n{0}."
+    })
+    private void saveCaseMetadataToFile(ProgressIndicator progressIndicator) throws CaseActionException {
+        progressIndicator.progress(Bundle.Case_progressMessage_savingCaseMetadata());
+        try {
+            this.metadata.writeToFile();
+        } catch (CaseMetadataException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotSaveCaseMetadata(ex.getLocalizedMessage()), ex);
+        }
+    }
+
+    /**
      * Creates the node data for the case directory lock coordination service
      * node.
      *
@@ -2060,13 +2091,15 @@ public class Case {
         "# {0} - exception message", "Case.exceptionMessage.couldNotCreateCaseNodeData=Failed to create coordination service node data:\n{0}."
     })
     private void createCaseNodeData(ProgressIndicator progressIndicator) throws CaseActionException {
-        progressIndicator.progress(Bundle.Case_progressMessage_creatingCaseNodeData());
-        try {
-            CoordinationService coordinationService = CoordinationService.getInstance();
-            CaseNodeData nodeData = new CaseNodeData(metadata);
-            coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
-        } catch (CoordinationServiceException | InterruptedException | ParseException | IOException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseNodeData(ex.getLocalizedMessage()), ex);
+        if (getCaseType() == CaseType.MULTI_USER_CASE) {
+            progressIndicator.progress(Bundle.Case_progressMessage_creatingCaseNodeData());
+            try {
+                CoordinationService coordinationService = CoordinationService.getInstance();
+                CaseNodeData nodeData = new CaseNodeData(metadata);
+                coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
+            } catch (CoordinationServiceException | InterruptedException | ParseException | IOException ex) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseNodeData(ex.getLocalizedMessage()), ex);
+            }
         }
     }
 
@@ -2086,14 +2119,16 @@ public class Case {
         "# {0} - exception message", "Case.exceptionMessage.couldNotUpdateCaseNodeData=Failed to update coordination service node data:\n{0}."
     })
     private void updateCaseNodeData(ProgressIndicator progressIndicator) throws CaseActionException {
-        progressIndicator.progress(Bundle.Case_progressMessage_updatingCaseNodeData());
-        try {
-            CoordinationService coordinationService = CoordinationService.getInstance();
-            CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
-            nodeData.setLastAccessDate(new Date());
-            coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
-        } catch (CoordinationServiceException | InterruptedException | IOException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
+        if (getCaseType() == CaseType.MULTI_USER_CASE) {
+            progressIndicator.progress(Bundle.Case_progressMessage_updatingCaseNodeData());
+            try {
+                CoordinationService coordinationService = CoordinationService.getInstance();
+                CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
+                nodeData.setLastAccessDate(new Date());
+                coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
+            } catch (CoordinationServiceException | InterruptedException | IOException ex) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
+            }
         }
     }
 
@@ -2103,7 +2138,8 @@ public class Case {
      * @param progressIndicator A progress indicator.
      */
     @Messages({
-        "Case.progressMessage.clearingTempDirectory=Clearing case temp directory...",})
+        "Case.progressMessage.clearingTempDirectory=Clearing case temp directory..."
+    })
     private void deleteTempfilesFromCaseDirectory(ProgressIndicator progressIndicator) {
         /*
          * Clear the temp subdirectory of the case directory.
