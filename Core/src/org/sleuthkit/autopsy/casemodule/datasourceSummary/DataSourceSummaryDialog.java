@@ -25,6 +25,7 @@ import java.util.Observer;
 import java.util.logging.Logger;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
@@ -36,6 +37,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
     private DataSourceSummaryCountsPanel countsPanel;
     private DataSourceSummaryDetailsPanel detailsPanel;
     private DataSourceBrowser dataSourcesPanel;
+    private IngestJobInfoPanel ingestHistoryPanel;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
 
     /**
@@ -44,26 +46,30 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
      * datasource.
      */
     @Messages({
-        "DataSourceSummaryPanel.window.title=Data Sources Summary",
-        "DataSourceSummaryPanel.countsTab.title=Counts",
-        "DataSourceSummaryPanel.detailsTab.title=Details"
+        "DataSourceSummaryDialog.window.title=Data Sources Summary",
+        "DataSourceSummaryDialog.countsTab.title=Counts",
+        "DataSourceSummaryDialog.detailsTab.title=Details",
+        "DataSourceSummaryDialog.ingestHistoryTab.title=Ingest History"
     })
     DataSourceSummaryDialog(Frame owner) {
-        super(owner, Bundle.DataSourceSummaryPanel_window_title(), true);
+        super(owner, Bundle.DataSourceSummaryDialog_window_title(), true);
         Map<Long, String> usageMap = DataSourceInfoUtilities.getDataSourceTypes();
         Map<Long, Long> fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles();
         countsPanel = new DataSourceSummaryCountsPanel(fileCountsMap);
         detailsPanel = new DataSourceSummaryDetailsPanel(usageMap);
         dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
+        ingestHistoryPanel = new IngestJobInfoPanel();
         initComponents();
         dataSourceSummarySplitPane.setLeftComponent(dataSourcesPanel);
-        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryPanel_detailsTab_title(), detailsPanel);
-        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryPanel_countsTab_title(), countsPanel);
+        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryDialog_detailsTab_title(), detailsPanel);
+        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryDialog_countsTab_title(), countsPanel);
+        dataSourceTabbedPane.addTab(Bundle.DataSourceSummaryDialog_ingestHistoryTab_title(), ingestHistoryPanel);
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();
                 countsPanel.updateCountsTableData(selectedDataSource);
                 detailsPanel.updateDetailsPanelData(selectedDataSource);
+                ingestHistoryPanel.updateIngestHistoryData(selectedDataSource);
                 this.repaint();
             }
         });

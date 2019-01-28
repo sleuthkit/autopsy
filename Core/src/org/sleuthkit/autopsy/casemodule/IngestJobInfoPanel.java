@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Panel for displaying ingest job history.
@@ -44,9 +45,11 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
     private List<IngestJobInfo> ingestJobs;
+    private List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
     private IngestModuleTableModel ingestModuleTableModel = new IngestModuleTableModel(null);
     private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private DataSource selectedDataSource;
 
     /**
      * Creates new form IngestJobInfoPanel
@@ -61,7 +64,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     private void customizeComponents() {
         refresh();
         this.ingestJobTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
-            IngestJobInfo currJob = (ingestJobTable.getSelectedRow() < 0 ? null : this.ingestJobs.get(ingestJobTable.getSelectedRow()));
+            IngestJobInfo currJob = (ingestJobTable.getSelectedRow() < 0 ? null : this.ingestJobsForSelectedDataSource.get(ingestJobTable.getSelectedRow()));
             this.ingestModuleTableModel = new IngestModuleTableModel(currJob);
             this.ingestModuleTable.setModel(this.ingestModuleTableModel);
         });
@@ -75,12 +78,21 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         });
     }
 
+    public void updateIngestHistoryData(DataSource selectedDataSource){
+        this.selectedDataSource = selectedDataSource;
+        ingestJobsForSelectedDataSource.clear();
+        for (IngestJobInfo jobInfo : ingestJobs){
+            ingestJobsForSelectedDataSource.add(jobInfo);
+        }
+        this.repaint();
+    }
+    
+    
     private void refresh() {
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
-            this.ingestJobs = ingestJobs;
-            this.repaint();
+            this.ingestJobs = skCase.getIngestJobs();
+            updateIngestHistoryData(selectedDataSource);  
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
@@ -104,7 +116,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
-            return ingestJobs.size();
+            return ingestJobsForSelectedDataSource.size();
         }
 
         @Override
@@ -114,7 +126,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            IngestJobInfo currIngestJob = ingestJobs.get(rowIndex);
+            IngestJobInfo currIngestJob = ingestJobsForSelectedDataSource.get(rowIndex);
             if (columnIndex == 0) {
                 try {
                     SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
