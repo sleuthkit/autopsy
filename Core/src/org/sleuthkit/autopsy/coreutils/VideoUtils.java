@@ -83,6 +83,9 @@ public class VideoUtils {
     private static final int CV_CAP_PROP_POS_MSEC = 0;
     private static final int CV_CAP_PROP_FRAME_COUNT = 7;
     private static final int CV_CAP_PROP_FPS = 5;
+    
+    private static final int THUMBNAIL_FRAME_POS_MS = 5000;
+    private static final double THUMBNAIL_FRAME_POS_BOUNDARY_RATIO = 0.9;
 
     static final Logger LOGGER = Logger.getLogger(VideoUtils.class.getName());
 
@@ -107,6 +110,16 @@ public class VideoUtils {
         return isMediaThumbnailSupported(file, "video/", SUPPORTED_VIDEO_MIME_TYPES, SUPPORTED_VIDEO_EXTENSIONS);
     }
 
+    /**
+     * Generate a thumbnail for the supplied video.
+     * 
+     * @param file The video file.
+     * @param iconSize The target icon size in pixels.
+     * 
+     * @return The generated thumbnail. Can return null if an error occurred
+     *         trying to generate the thumbnail, or if the current thread was
+     *         interrupted.
+     */
     @NbBundle.Messages({"# {0} - file name",
         "VideoUtils.genVideoThumb.progress.text=extracting temporary file {0}"})
     static BufferedImage generateVideoThumbnail(AbstractFile file, int iconSize) {
@@ -146,15 +159,22 @@ public class VideoUtils {
                 LOGGER.log(Level.WARNING, "Error getting fps or total frames for {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
                 return null;
             }
-            double duration = 1000 * (totalFrames / fps); //total milliseconds
-
-            int timestamp = (int) Math.min(duration * 0.9, 5000); //default time to check for is 5 seconds, unless the files is extremely small
-
-            Mat imageMatrix = new Mat();
-
             if (Thread.interrupted()) {
                 return null;
             }
+            
+            double duration = 1000 * (totalFrames / fps); //total milliseconds
+
+            /*
+             * The default time to check is 5 seconds. If the file is smaller,
+             * grab a frame close to the end. With some videos, using the
+             * duration to grab the last frame will result in failure to find a
+             * frame. We therefore go to the 90% point in the video.
+             */
+            int timestamp = (int) Math.min(duration * THUMBNAIL_FRAME_POS_BOUNDARY_RATIO, THUMBNAIL_FRAME_POS_MS);
+
+            Mat imageMatrix = new Mat();
+
             if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp)) {
                 LOGGER.log(Level.WARNING, "Error seeking to " + timestamp + "ms in {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
                 return null; // if we can't set the time, return black for that frame
