@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;

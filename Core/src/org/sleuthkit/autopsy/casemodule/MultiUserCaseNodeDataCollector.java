@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.LinkOption;

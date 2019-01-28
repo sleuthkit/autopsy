@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
