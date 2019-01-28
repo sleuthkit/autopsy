@@ -130,14 +130,22 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         getTree().addTreeExpansionListener(new TreeExpansionListener() {
             @Override
             public void treeExpanded(TreeExpansionEvent event) {
+                //Bail immediately if we are not in the Group By view.
+                //Assumption here is that the views are already expanded.
+                if(!CasePreferences.getGroupItemsInTreeByDataSource()) {
+                    return;
+                }
+                
                 for(Node child : em.getRootContext().getChildren().getNodes()) {
-                    Object[] treePath = getPath(child);
+                    Object[] dataSourceNode = getPath(child);
                     
-                    if(treePath.length != event.getPath().getPathCount()) {
+                    if(dataSourceNode.length != event.getPath().getPathCount()) {
                         break;
                     }
                     
-                    if(isSameTreeNodePath(treePath, event.getPath().getPath())){
+                    //If the the user expanded one of the data sources node, then
+                    //automatically expand the Views and Results for them.
+                    if(isSameTreeNodePath(dataSourceNode, event.getPath().getPath())){
                         preExpandNodes(child.getChildren());
                     }
                 }
