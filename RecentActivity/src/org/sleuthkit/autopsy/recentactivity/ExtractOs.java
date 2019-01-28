@@ -179,7 +179,7 @@ class ExtractOs extends Extract {
         private final List<String> filePaths;
 
         /**
-         * An constructs a value for an OS_TYPE enum
+         * Constructs a value for an OS_TYPE enum
          *
          * @param osInfoText   - the program name to use for TSK_OS_INFO
          *                     artifacts
