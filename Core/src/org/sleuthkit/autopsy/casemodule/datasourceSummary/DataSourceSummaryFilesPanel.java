@@ -43,6 +43,7 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
     private final Map<Long, Long> slackFilesCountsMap;
     private final Map<Long, Long> directoriesCountsMap;
     private final Map<Long, Long> unallocatedFilesCountsMap;
+    private final Map<Long, Long> unallocatedFilesSizeMap;
     private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
 
     /**
@@ -53,6 +54,7 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
         this.slackFilesCountsMap = DataSourceInfoUtilities.getCountsOfSlackFiles();
         this.directoriesCountsMap = DataSourceInfoUtilities.getCountsOfDirectories();
         this.unallocatedFilesCountsMap = DataSourceInfoUtilities.getCountsOfUnallocatedFiles();
+        this.unallocatedFilesSizeMap = DataSourceInfoUtilities.getSizeOfUnallocatedFiles();
         rightAlignedRenderer.setHorizontalAlignment(JLabel.RIGHT);
         initComponents();
         fileCountsByMimeTypeTable.getTableHeader().setReorderingAllowed(false);
@@ -71,7 +73,21 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
         filesByCategoryTableModel = new FilesByCategoryTableModel(selectedDataSource);
         fileCountsByCategoryTable.setModel(filesByCategoryTableModel);
         fileCountsByCategoryTable.getColumnModel().getColumn(1).setCellRenderer(rightAlignedRenderer);
+        unallocatedSpaceValue.setText(getSizeOfUnallocatedSpaceText(selectedDataSource));
         this.repaint();
+    }
+
+    @Messages({
+        "DataSourceSummaryFilesPanel.units.bytes= bytes"
+    })
+    private String getSizeOfUnallocatedSpaceText(DataSource selectedDataSource) {
+        Long sizeOfUnallocatedSpace = 0L;
+        if (selectedDataSource == null) {
+            return "";
+        } else if (unallocatedFilesSizeMap.get(selectedDataSource.getId()) != null) {
+            sizeOfUnallocatedSpace = unallocatedFilesSizeMap.get(selectedDataSource.getId());
+        }
+        return String.valueOf(sizeOfUnallocatedSpace) + Bundle.DataSourceSummaryDetailsPanel_units_bytes();
     }
 
     /**
@@ -85,20 +101,26 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
 
         fileCountsByMimeTypeScrollPane = new javax.swing.JScrollPane();
         fileCountsByMimeTypeTable = new javax.swing.JTable();
-        fileCountsByMimeTypeLabel = new javax.swing.JLabel();
+        byMimeTypeLabel = new javax.swing.JLabel();
         fileCountsByCategoryScrollPane = new javax.swing.JScrollPane();
         fileCountsByCategoryTable = new javax.swing.JTable();
-        jLabel1 = new javax.swing.JLabel();
+        byCategoryLabel = new javax.swing.JLabel();
+        unallocatedSpaceLabel = new javax.swing.JLabel();
+        unallocatedSpaceValue = new javax.swing.JLabel();
 
         fileCountsByMimeTypeTable.setModel(filesByMimeTypeTableModel);
         fileCountsByMimeTypeScrollPane.setViewportView(fileCountsByMimeTypeTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(fileCountsByMimeTypeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryFilesPanel.class, "DataSourceSummaryFilesPanel.fileCountsByMimeTypeLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(byMimeTypeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryFilesPanel.class, "DataSourceSummaryFilesPanel.byMimeTypeLabel.text")); // NOI18N
 
         fileCountsByCategoryTable.setModel(filesByCategoryTableModel);
         fileCountsByCategoryScrollPane.setViewportView(fileCountsByCategoryTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(DataSourceSummaryFilesPanel.class, "DataSourceSummaryFilesPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(byCategoryLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryFilesPanel.class, "DataSourceSummaryFilesPanel.byCategoryLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(unallocatedSpaceLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryFilesPanel.class, "DataSourceSummaryFilesPanel.unallocatedSpaceLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(unallocatedSpaceValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryFilesPanel.class, "DataSourceSummaryFilesPanel.unallocatedSpaceValue.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -107,12 +129,18 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(fileCountsByMimeTypeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE)
-                    .addComponent(fileCountsByMimeTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(fileCountsByCategoryScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(unallocatedSpaceLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(unallocatedSpaceValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(fileCountsByMimeTypeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE)
+                            .addComponent(byMimeTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(fileCountsByCategoryScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(byCategoryLabel))))
                 .addContainerGap(248, Short.MAX_VALUE))
         );
 
@@ -126,11 +154,15 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
                     .addComponent(fileCountsByCategoryScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(fileCountsByMimeTypeLabel)
-                            .addComponent(jLabel1))
+                            .addComponent(byMimeTypeLabel)
+                            .addComponent(byCategoryLabel))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(fileCountsByMimeTypeScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(48, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(unallocatedSpaceLabel)
+                    .addComponent(unallocatedSpaceValue, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(28, Short.MAX_VALUE))
         );
 
         layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {fileCountsByCategoryScrollPane, fileCountsByMimeTypeScrollPane});
@@ -139,12 +171,14 @@ public class DataSourceSummaryFilesPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel byCategoryLabel;
+    private javax.swing.JLabel byMimeTypeLabel;
     private javax.swing.JScrollPane fileCountsByCategoryScrollPane;
     private javax.swing.JTable fileCountsByCategoryTable;
-    private javax.swing.JLabel fileCountsByMimeTypeLabel;
     private javax.swing.JScrollPane fileCountsByMimeTypeScrollPane;
     private javax.swing.JTable fileCountsByMimeTypeTable;
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel unallocatedSpaceLabel;
+    private javax.swing.JLabel unallocatedSpaceValue;
     // End of variables declaration//GEN-END:variables
 
     /**

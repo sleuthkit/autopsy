@@ -68,7 +68,7 @@ class DataSourceInfoUtilities {
                 }
             }
             return typeMap;
-       } catch (TskCoreException | NoCurrentCaseException ex) {
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to get types of files for all datasources, providing empty results", ex);
             return Collections.emptyMap();
         }
@@ -86,11 +86,11 @@ class DataSourceInfoUtilities {
      */
     static Map<Long, Long> getCountsOfFiles() {
         try {
-            final String countFilesQuery = "data_source_obj_id, COUNT(*) AS count"
+            final String countFilesQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                     + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
                     + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
-            return getCountsMap(countFilesQuery);
+            return getValuesMap(countFilesQuery);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
             return Collections.emptyMap();
@@ -109,11 +109,11 @@ class DataSourceInfoUtilities {
      */
     static Map<Long, Long> getCountsOfArtifacts() {
         try {
-            final String countArtifactsQuery = "data_source_obj_id, COUNT(*) AS count"
+            final String countArtifactsQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM blackboard_artifacts WHERE review_status_id !=" + BlackboardArtifact.ReviewStatus.REJECTED.getID()
                     + " GROUP BY data_source_obj_id"; //NON-NLS
-            return getCountsMap(countArtifactsQuery);
-       } catch (TskCoreException | NoCurrentCaseException ex) {
+            return getValuesMap(countArtifactsQuery);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to get counts of artifacts for all datasources, providing empty results", ex);
             return Collections.emptyMap();
         }
@@ -132,23 +132,23 @@ class DataSourceInfoUtilities {
      */
     static Map<Long, Long> getCountsOfTags() {
         try {
-            final String countFileTagsQuery = "data_source_obj_id, COUNT(*) AS count"
+            final String countFileTagsQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM content_tags as content_tags, tsk_files as tsk_files"
                     + " WHERE content_tags.obj_id = tsk_files.obj_id"
                     + " GROUP BY data_source_obj_id"; //NON-NLS
             //new hashmap so it can be modifiable
-            Map<Long, Long> tagCountMap = new HashMap<>(getCountsMap(countFileTagsQuery));         
-            final String countArtifactTagsQuery = "data_source_obj_id, COUNT(*) AS count"
+            Map<Long, Long> tagCountMap = new HashMap<>(getValuesMap(countFileTagsQuery));
+            final String countArtifactTagsQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM blackboard_artifact_tags as artifact_tags,  blackboard_artifacts AS arts"
                     + " WHERE artifact_tags.artifact_id = arts.artifact_id"
                     + " GROUP BY data_source_obj_id"; //NON-NLS
             //combine the results from the count artifact tags query into the copy of the mapped results from the count file tags query
-            getCountsMap(countArtifactTagsQuery).forEach((key, value) -> tagCountMap.merge(key, value, (value1, value2) -> value1 + value2));
+            getValuesMap(countArtifactTagsQuery).forEach((key, value) -> tagCountMap.merge(key, value, (value1, value2) -> value1 + value2));
             return tagCountMap;
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.WARNING, "Unable to get counts of tags for all datasources, providing empty results", ex);
             return Collections.emptyMap();
-        } 
+        }
     }
 
     /**
@@ -223,14 +223,28 @@ class DataSourceInfoUtilities {
      */
     static Map<Long, Long> getCountsOfUnallocatedFiles() {
         try {
-            final String countUnallocatedFilesQuery = "data_source_obj_id, COUNT(*) AS count"
+            final String countUnallocatedFilesQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                     + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
                     + " AND dir_flags=" + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
                     + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
-            return getCountsMap(countUnallocatedFilesQuery);
+            return getValuesMap(countUnallocatedFilesQuery);
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
+            logger.log(Level.WARNING, "Unable to get counts of unallocated files for all datasources, providing empty results", ex);
+            return Collections.emptyMap();
+        }
+    }
+
+    static Map<Long, Long> getSizeOfUnallocatedFiles() {
+        try {
+            final String countUnallocatedFilesQuery = "data_source_obj_id, sum(size) AS value"
+                    + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
+                    + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
+                    + " AND dir_flags=" + TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC.getValue()
+                    + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
+            return getValuesMap(countUnallocatedFilesQuery);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to get size of unallocated files for all datasources, providing empty results", ex);
             return Collections.emptyMap();
         }
     }
@@ -247,14 +261,14 @@ class DataSourceInfoUtilities {
      */
     static Map<Long, Long> getCountsOfDirectories() {
         try {
-            final String countDirectoriesQuery = "data_source_obj_id, COUNT(*) AS count"
+            final String countDirectoriesQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM tsk_files WHERE type<>" + TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR.getFileType()
                     + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
                     + " AND meta_type=" + TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()
                     + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
-             return getCountsMap(countDirectoriesQuery);
+            return getValuesMap(countDirectoriesQuery);
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
+            logger.log(Level.WARNING, "Unable to get counts of directories for all datasources, providing empty results", ex);
             return Collections.emptyMap();
         }
     }
@@ -271,22 +285,22 @@ class DataSourceInfoUtilities {
      */
     static Map<Long, Long> getCountsOfSlackFiles() {
         try {
-            final String countSlackFilesQuery = "data_source_obj_id, COUNT(*) AS count"
+            final String countSlackFilesQuery = "data_source_obj_id, COUNT(*) AS value"
                     + " FROM tsk_files WHERE type=" + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType()
                     + " AND dir_type<>" + TskData.TSK_FS_NAME_TYPE_ENUM.VIRT_DIR.getValue()
                     + " AND name<>'' GROUP BY data_source_obj_id"; //NON-NLS
-            return getCountsMap(countSlackFilesQuery);
+            return getValuesMap(countSlackFilesQuery);
         } catch (TskCoreException | NoCurrentCaseException ex) {
-            logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
+            logger.log(Level.WARNING, "Unable to get counts of slack files for all datasources, providing empty results", ex);
             return Collections.emptyMap();
         }
     }
 
-    private static Map<Long, Long> getCountsMap(String query) throws TskCoreException, NoCurrentCaseException {
+    private static Map<Long, Long> getValuesMap(String query) throws TskCoreException, NoCurrentCaseException {
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-        DataSourceSingleCountCallback callback = new DataSourceSingleCountCallback();
+        DataSourceSingleValueCallback callback = new DataSourceSingleValueCallback();
         skCase.getCaseDbAccessManager().select(query, callback);
-        return callback.getMapOfCounts();
+        return callback.getMapOfValues();
     }
 
     private DataSourceInfoUtilities() {

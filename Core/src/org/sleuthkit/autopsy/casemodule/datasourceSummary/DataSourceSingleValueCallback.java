@@ -28,39 +28,37 @@ import java.util.logging.Logger;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 
 /**
- * Get the map of Data Source ID to counts of items found for a query which
- * selects data_source_obj_id and count(*) with a group by data_source_obj_id
- * clause.
+ * Get the map of Data Source ID to a value found related to that data source query which
+ * selects data_source_obj_id and value which is grouped by that data source object id.
  */
-class DataSourceSingleCountCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+class DataSourceSingleValueCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
-    private static final Logger logger = Logger.getLogger(DataSourceSingleCountCallback.class.getName());
-    private Map<Long, Long> dataSourceObjIdCounts = new HashMap<>();
+    private static final Logger logger = Logger.getLogger(DataSourceSingleValueCallback.class.getName());
+    private Map<Long, Long> dataSourceObjIdValues = new HashMap<>();
 
     @Override
     public void process(ResultSet rs) {
         try {
             while (rs.next()) {
                 try {
-                    dataSourceObjIdCounts.put(rs.getLong("data_source_obj_id"), rs.getLong("count"));
+                    dataSourceObjIdValues.put(rs.getLong("data_source_obj_id"), rs.getLong("value"));
                 } catch (SQLException ex) {
-                    logger.log(Level.WARNING, "Unable to get data_source_obj_id or count from result set", ex);
+                    logger.log(Level.WARNING, "Unable to get data_source_obj_id or value from result set", ex);
                 }
             }
         } catch (SQLException ex) {
-            logger.log(Level.WARNING, "Failed to get next result for counts by datasource", ex);
+            logger.log(Level.WARNING, "Failed to get next result for valuess by datasource", ex);
         }
     }
 
     /**
      * Get the processed results
      *
-     * @return Collection which maps datasource id to a count for the number of
-     *         items found with that datasource id, only contains entries for
+     * @return Collection which maps datasource id to a value related to the datasource id, only contains entries for
      *         datasources with at least 1 item found.
      */
-    Map<Long, Long> getMapOfCounts() {
-        return Collections.unmodifiableMap(dataSourceObjIdCounts);
+    Map<Long, Long> getMapOfValues() {
+        return Collections.unmodifiableMap(dataSourceObjIdValues);
     }
 
 }
