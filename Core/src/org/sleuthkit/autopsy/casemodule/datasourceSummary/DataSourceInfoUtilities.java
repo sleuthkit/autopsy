@@ -296,6 +296,26 @@ class DataSourceInfoUtilities {
         }
     }
 
+    static Map<Long, Map<String, Long>> getCountsOfArtifactsByType() {
+        try {
+            final String countArtifactsQuery = "blackboard_artifacts.data_source_obj_id, blackboard_artifact_types.display_name AS label, COUNT(*) AS value"
+                    + " FROM blackboard_artifacts, blackboard_artifact_types"
+                    + " WHERE blackboard_artifacts.artifact_type_id = blackboard_artifact_types.artifact_type_id"
+                    + " GROUP BY blackboard_artifacts.data_source_obj_id, blackboard_artifact_types.display_name";
+            return getLabeledValuesMap(countArtifactsQuery);
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to get counts of all artifact types for all datasources, providing empty results", ex);
+            return Collections.emptyMap();
+        }
+    }
+
+    private static Map<Long, Map<String, Long>> getLabeledValuesMap(String query) throws TskCoreException, NoCurrentCaseException {
+        SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+        DataSourceLabeledValueCallback callback = new DataSourceLabeledValueCallback();
+        skCase.getCaseDbAccessManager().select(query, callback);
+        return callback.getMapOfLabeledValues();
+    }
+
     private static Map<Long, Long> getValuesMap(String query) throws TskCoreException, NoCurrentCaseException {
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         DataSourceSingleValueCallback callback = new DataSourceSingleValueCallback();

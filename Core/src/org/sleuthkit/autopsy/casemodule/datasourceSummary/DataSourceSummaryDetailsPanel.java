@@ -129,7 +129,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         }
         return String.valueOf(sizeOfUnallocatedSpace) + Bundle.DataSourceSummaryDetailsPanel_units_bytes();
     }
-    
+
     private void updateFieldVisibility() {
         displayNameValue.setVisible(!displayNameValue.getText().isEmpty());
         displayNameLabel.setVisible(!displayNameValue.getText().isEmpty());
@@ -158,10 +158,10 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         sha1HashLabel.setVisible(!sha1HashValue.getText().isEmpty());
         sha256HashValue.setVisible(!sha256HashValue.getText().isEmpty());
         sha256HashLabel.setVisible(!sha256HashValue.getText().isEmpty());
+        unallocatedSizeValue.setVisible(!unallocatedSizeValue.getText().isEmpty());
+        unallocatedSizeLabel.setVisible(!unallocatedSizeValue.getText().isEmpty());
         filePathsTable.setVisible(filePathsTable.getRowCount() > 0);
         filePathsLabel.setVisible(filePathsTable.getRowCount() > 0);
-        unallocatedSizeValue.setVisible(unallocatedSizeValue.getText().isEmpty());
-        unallocatedSizeLabel.setVisible(unallocatedSizeValue.getText().isEmpty());
         filePathsScrollPane.setVisible(filePathsTable.getRowCount() > 0);
     }
 

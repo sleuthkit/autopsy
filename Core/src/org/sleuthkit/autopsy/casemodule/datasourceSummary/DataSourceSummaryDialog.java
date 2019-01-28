@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.DataSource;
 final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer {
 
     private static final long serialVersionUID = 1L;
-    private DataSourceSummaryFilesPanel filesPanel;
+    private DataSourceSummaryCountsPanel filesPanel;
     private DataSourceSummaryDetailsPanel detailsPanel;
     private DataSourceBrowser dataSourcesPanel;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
@@ -52,7 +52,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
         super(owner, Bundle.DataSourceSummaryPanel_window_title(), true);
         Map<Long, String> usageMap = DataSourceInfoUtilities.getDataSourceTypes();
         Map<Long, Long> fileCountsMap = DataSourceInfoUtilities.getCountsOfFiles();
-        filesPanel = new DataSourceSummaryFilesPanel(fileCountsMap);
+        filesPanel = new DataSourceSummaryCountsPanel(fileCountsMap);
         detailsPanel = new DataSourceSummaryDetailsPanel(usageMap);
         dataSourcesPanel = new DataSourceBrowser(usageMap, fileCountsMap);
         initComponents();
@@ -62,7 +62,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
         dataSourcesPanel.addListSelectionListener((ListSelectionEvent e) -> {
             if (!e.getValueIsAdjusting()) {
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();
-                filesPanel.updateFilesTableData(selectedDataSource);
+                filesPanel.updateCountsTableData(selectedDataSource);
                 detailsPanel.updateDetailsPanelData(selectedDataSource);
                 this.repaint();
             }
