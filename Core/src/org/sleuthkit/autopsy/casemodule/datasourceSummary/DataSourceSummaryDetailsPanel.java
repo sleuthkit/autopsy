@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule.datasourceSummary;
 
+import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -38,6 +39,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
     private Map<Long, String> osDetailMap = new HashMap<>();
     private static final Integer SIZE_COVERSION_CONSTANT = 1000;
+    private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##"); 
     private final Map<Long, Long> unallocatedFilesSizeMap;
     final Map<Long, String> usageMap;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
@@ -129,7 +131,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         "DataSourceSummaryDetailsPanel.units.petabytes= PB"
     })
     private String getSizeString(Long size) {
-        long approximateSize;
+        double approximateSize;
         if (size == null) {
             return "";
         }
@@ -139,26 +141,26 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         }
         approximateSize /= SIZE_COVERSION_CONSTANT;
         if (approximateSize < SIZE_COVERSION_CONSTANT) {
-            return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_kilobytes()
+            return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_kilobytes()
                     + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
         }
         approximateSize /= SIZE_COVERSION_CONSTANT;
         if (approximateSize < SIZE_COVERSION_CONSTANT) {
-            return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_megabytes()
+            return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_megabytes()
                     + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
         }
         approximateSize /= SIZE_COVERSION_CONSTANT;
         if (approximateSize < SIZE_COVERSION_CONSTANT) {
-            return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_gigabytes()
+            return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_gigabytes()
                     + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
         }
         approximateSize /= SIZE_COVERSION_CONSTANT;
         if (approximateSize < SIZE_COVERSION_CONSTANT) {
-            return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_terabytes()
+            return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_terabytes()
                     + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
         }
         approximateSize /= SIZE_COVERSION_CONSTANT;
-        return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_petabytes()
+        return APPROXIMATE_SIZE_FORMAT.format(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_petabytes()
                 + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
     }
 
