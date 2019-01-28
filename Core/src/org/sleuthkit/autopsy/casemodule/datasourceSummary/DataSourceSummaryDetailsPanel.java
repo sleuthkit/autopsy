@@ -37,6 +37,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
     //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;
     private Map<Long, String> osDetailMap = new HashMap<>();
+    private static final Integer SIZE_COVERSION_CONSTANT = 1000;
     private final Map<Long, Long> unallocatedFilesSizeMap;
     final Map<Long, String> usageMap;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
@@ -58,9 +59,6 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
      *
      * @param selectedDataSource the DataSource to display details about.
      */
-    @Messages({
-        "DataSourceSummaryDetailsPanel.units.bytes= bytes"
-    })
     void updateDetailsPanelData(DataSource selectedDataSource) {
         clearTableValues();
         if (selectedDataSource != null) {
@@ -82,8 +80,8 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
             if (selectedDataSource instanceof Image) {
                 imageTypeString = ((Image) selectedDataSource).getType().getName();
                 filePaths = ((Image) selectedDataSource).getPaths();
-                sizeString = String.valueOf(selectedDataSource.getSize()) + Bundle.DataSourceSummaryDetailsPanel_units_bytes();
-                sectorSizeString = String.valueOf(((Image) selectedDataSource).getSsize()) + Bundle.DataSourceSummaryDetailsPanel_units_bytes();
+                sizeString = getSizeString(selectedDataSource.getSize());
+                sectorSizeString = getSizeString(((Image) selectedDataSource).getSsize());
                 try {
                     md5String = ((Image) selectedDataSource).getMd5();
                 } catch (TskCoreException ex) {
@@ -109,7 +107,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
             acquisitionDetailsTextArea.setText(acquisitionDetailsString);
             imageTypeValue.setText(imageTypeString);
             sizeValue.setText(sizeString);
-            unallocatedSizeValue.setText(getSizeOfUnallocatedSpaceText(selectedDataSource));
+            unallocatedSizeValue.setText(getSizeString(unallocatedFilesSizeMap.get(selectedDataSource.getId())));
             sectorSizeValue.setText(sectorSizeString);
             md5HashValue.setText(md5String);
             sha1HashValue.setText(sha1String);
@@ -122,12 +120,46 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         this.repaint();
     }
 
-    private String getSizeOfUnallocatedSpaceText(DataSource selectedDataSource) {
-        Long sizeOfUnallocatedSpace = 0L;
-        if (unallocatedFilesSizeMap.get(selectedDataSource.getId()) != null) {
-            sizeOfUnallocatedSpace = unallocatedFilesSizeMap.get(selectedDataSource.getId());
+    @Messages({
+        "DataSourceSummaryDetailsPanel.units.bytes= bytes",
+        "DataSourceSummaryDetailsPanel.units.kilobytes= kB",
+        "DataSourceSummaryDetailsPanel.units.megabytes= MB",
+        "DataSourceSummaryDetailsPanel.units.gigabytes= GB",
+        "DataSourceSummaryDetailsPanel.units.terabytes= TB",
+        "DataSourceSummaryDetailsPanel.units.petabytes= PB"
+    })
+    private String getSizeString(Long size) {
+        long approximateSize;
+        if (size == null) {
+            return "";
         }
-        return String.valueOf(sizeOfUnallocatedSpace) + Bundle.DataSourceSummaryDetailsPanel_units_bytes();
+        approximateSize = size;
+        if (approximateSize < SIZE_COVERSION_CONSTANT) {
+            return String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes();
+        }
+        approximateSize /= SIZE_COVERSION_CONSTANT;
+        if (approximateSize < SIZE_COVERSION_CONSTANT) {
+            return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_kilobytes()
+                    + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
+        }
+        approximateSize /= SIZE_COVERSION_CONSTANT;
+        if (approximateSize < SIZE_COVERSION_CONSTANT) {
+            return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_megabytes()
+                    + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
+        }
+        approximateSize /= SIZE_COVERSION_CONSTANT;
+        if (approximateSize < SIZE_COVERSION_CONSTANT) {
+            return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_gigabytes()
+                    + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
+        }
+        approximateSize /= SIZE_COVERSION_CONSTANT;
+        if (approximateSize < SIZE_COVERSION_CONSTANT) {
+            return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_terabytes()
+                    + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
+        }
+        approximateSize /= SIZE_COVERSION_CONSTANT;
+        return String.valueOf(approximateSize) + Bundle.DataSourceSummaryDetailsPanel_units_petabytes()
+                + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
     }
 
     private void updateFieldVisibility() {
