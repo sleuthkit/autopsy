@@ -76,7 +76,8 @@ class Firefox extends Extract {
     private static final String BOOKMARK_QUERY = "SELECT fk, moz_bookmarks.title, url, (moz_bookmarks.dateAdded/1000000) AS dateAdded FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id"; //NON-NLS
     private static final String DOWNLOAD_QUERY = "SELECT target, source,(startTime/1000000) AS startTime, maxBytes FROM moz_downloads"; //NON-NLS
     private static final String DOWNLOAD_QUERY_V24 = "SELECT url, content AS target, (lastModified/1000000) AS lastModified FROM moz_places, moz_annos WHERE moz_places.id = moz_annos.place_id AND moz_annos.anno_attribute_id = 3"; //NON-NLS
-    private static final String FORMHISTORY_QUERY = "SELECT fieldname, value, timesUsed, firstUsed, lastUsed FROM moz_formhistory";
+    private static final String FORMHISTORY_QUERY = "SELECT fieldname, value FROM moz_formhistory";
+    private static final String FORMHISTORY_QUERY_V64 = "SELECT fieldname, value, timesUsed, firstUsed, lastUsed FROM moz_formhistory";
     private final IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
@@ -705,9 +706,9 @@ class Firefox extends Extract {
             }
 
             String fileName = formHistoryFile.getName();
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
+            String tempFilePath = RAImageIngestModule.getRATempPath(currentCase, "firefox") + File.separator + fileName + j + ".db"; //NON-NLS
             try {
-                ContentUtils.writeToFile(formHistoryFile, new File(temps), context::dataSourceIngestIsCancelled);
+                ContentUtils.writeToFile(formHistoryFile, new File(tempFilePath), context::dataSourceIngestIsCancelled);
             } catch (ReadContentInputStreamException ex) {
                 logger.log(Level.WARNING, String.format("Error reading Firefox web history artifacts file '%s' (id=%d).",
                         fileName, formHistoryFile.getId()), ex); //NON-NLS
@@ -717,19 +718,24 @@ class Firefox extends Extract {
                 continue;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error writing temp sqlite db file '%s' for Firefox web history artifacts file '%s' (id=%d).",
-                        temps, fileName, formHistoryFile.getId()), ex); //NON-NLS
+                        tempFilePath, fileName, formHistoryFile.getId()), ex); //NON-NLS
                 this.addErrorMessage(
                         NbBundle.getMessage(this.getClass(), "Firefox.getFormsAutofill.errMsg.errAnalyzeFile", this.getName(),
                                 fileName));
                 continue;
             }
-            File dbFile = new File(temps);
+            File dbFile = new File(tempFilePath);
             if (context.dataSourceIngestIsCancelled()) {
                 dbFile.delete();
                 break;
             }
-            List<HashMap<String, Object>> tempList = this.dbConnect(temps, FORMHISTORY_QUERY);
-            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
+             
+            // The table schema is a little different in newer version of Firefox
+            boolean isFirefoxV64 = Util.checkColumn("timesUsed", "moz_formhistory", tempFilePath);
+            String formHistoryQuery = (isFirefoxV64) ? FORMHISTORY_QUERY_V64 : FORMHISTORY_QUERY;
+           
+            List<HashMap<String, Object>> tempList = this.dbConnect(tempFilePath, formHistoryQuery);
+            logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, tempFilePath, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 
@@ -747,18 +753,21 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
                         ((result.get("value").toString() != null) ? result.get("value").toString() : ""))); //NON-NLS
                 
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                        (Long.valueOf(result.get("firstUsed").toString()) / 1000000))); //NON-NLS
+                // Newer versions of firefox have additional columns
+                if (isFirefoxV64) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                            NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                            (Long.valueOf(result.get("firstUsed").toString()) / 1000000))); //NON-NLS
+
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                            NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                            (Long.valueOf(result.get("lastUsed").toString()) / 1000000))); //NON-NLS
+
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
+                            NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                            (Integer.valueOf(result.get("timesUsed").toString())))); //NON-NLS
                
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                        (Long.valueOf(result.get("lastUsed").toString()) / 1000000))); //NON-NLS
-                        
-                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_COUNT,
-                        NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                        (Integer.valueOf(result.get("timesUsed").toString())))); //NON-NLS
-               
+                }
                 // Add artifact
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, formHistoryFile, bbattributes);
                 if (bbart != null) {
