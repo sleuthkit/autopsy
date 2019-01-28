@@ -123,7 +123,6 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                             osName += ", ";
                         }
                         osName += osInfo.getOSName();
-                        //if this OSInfo object has a name use it otherwise keep checking OSInfo objects
                     }
                 } catch (TskCoreException ignored) {
                     //unable to get datasource for the OSInfo Object 
