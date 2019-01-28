@@ -78,7 +78,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchAction;
+import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;

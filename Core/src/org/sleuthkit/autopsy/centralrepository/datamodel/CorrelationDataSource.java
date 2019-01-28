@@ -57,7 +57,7 @@ public class CorrelationDataSource implements Serializable {
      * @param sha1Hash           The SHA-1 hash value
      * @param sha256Hash         The SHA-256 hash value
      */
-    CorrelationDataSource(CorrelationCase correlationCase,
+    public CorrelationDataSource(CorrelationCase correlationCase,
             String deviceId,
             String name,
             Long dataSourceObjectId,
