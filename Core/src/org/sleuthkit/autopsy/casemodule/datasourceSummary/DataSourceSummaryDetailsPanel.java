@@ -37,6 +37,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
     //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;
     private Map<Long, String> osDetailMap = new HashMap<>();
+    private final Map<Long, Long> unallocatedFilesSizeMap;
     final Map<Long, String> usageMap;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
 
@@ -48,6 +49,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
     public DataSourceSummaryDetailsPanel(Map<Long, String> usageMap) {
         initComponents();
         this.usageMap = usageMap;
+        this.unallocatedFilesSizeMap = DataSourceInfoUtilities.getSizeOfUnallocatedFiles();
         osDetailMap = DataSourceInfoUtilities.getOperatingSystems();
     }
 
@@ -107,6 +109,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
             acquisitionDetailsTextArea.setText(acquisitionDetailsString);
             imageTypeValue.setText(imageTypeString);
             sizeValue.setText(sizeString);
+            unallocatedSizeValue.setText(getSizeOfUnallocatedSpaceText(selectedDataSource));
             sectorSizeValue.setText(sectorSizeString);
             md5HashValue.setText(md5String);
             sha1HashValue.setText(sha1String);
@@ -119,6 +122,14 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         this.repaint();
     }
 
+    private String getSizeOfUnallocatedSpaceText(DataSource selectedDataSource) {
+        Long sizeOfUnallocatedSpace = 0L;
+        if (unallocatedFilesSizeMap.get(selectedDataSource.getId()) != null) {
+            sizeOfUnallocatedSpace = unallocatedFilesSizeMap.get(selectedDataSource.getId());
+        }
+        return String.valueOf(sizeOfUnallocatedSpace) + Bundle.DataSourceSummaryDetailsPanel_units_bytes();
+    }
+    
     private void updateFieldVisibility() {
         displayNameValue.setVisible(!displayNameValue.getText().isEmpty());
         displayNameLabel.setVisible(!displayNameValue.getText().isEmpty());
@@ -149,6 +160,8 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         sha256HashLabel.setVisible(!sha256HashValue.getText().isEmpty());
         filePathsTable.setVisible(filePathsTable.getRowCount() > 0);
         filePathsLabel.setVisible(filePathsTable.getRowCount() > 0);
+        unallocatedSizeValue.setVisible(unallocatedSizeValue.getText().isEmpty());
+        unallocatedSizeLabel.setVisible(unallocatedSizeValue.getText().isEmpty());
         filePathsScrollPane.setVisible(filePathsTable.getRowCount() > 0);
     }
 
@@ -166,6 +179,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         md5HashValue.setText("");
         sha1HashValue.setText("");
         sha256HashValue.setText("");
+        unallocatedSizeValue.setText("");
         ((DefaultTableModel) filePathsTable.getModel()).setRowCount(0);
     }
 
@@ -213,6 +227,8 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         acquisitionDetailsTextArea = new javax.swing.JTextArea();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
         filler2 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(32767, 32767));
+        unallocatedSizeLabel = new javax.swing.JLabel();
+        unallocatedSizeValue = new javax.swing.JLabel();
 
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
@@ -246,7 +262,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(sha1HashValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sha1HashValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 11;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
@@ -280,7 +296,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(sha256HashValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sha256HashValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 12;
+        gridBagConstraints.gridy = 13;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
@@ -337,7 +353,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 13;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
@@ -384,7 +400,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         md5HashValue.setToolTipText(org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.md5HashValue.toolTipText")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridy = 11;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
@@ -395,7 +411,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(sectorSizeValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sectorSizeValue.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridy = 10;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
@@ -417,7 +433,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(filePathsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.filePathsLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 13;
+        gridBagConstraints.gridy = 14;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.weighty = 1.2;
@@ -427,7 +443,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(sha256HashLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sha256HashLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 12;
+        gridBagConstraints.gridy = 13;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 6, 4);
@@ -436,7 +452,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(sha1HashLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sha1HashLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 11;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
@@ -445,7 +461,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(md5HashLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.md5HashLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 10;
+        gridBagConstraints.gridy = 11;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
@@ -454,7 +470,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(sectorSizeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.sectorSizeLabel.text")); // NOI18N
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridy = 10;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
         gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
@@ -536,17 +552,37 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         jPanel1.add(acquisitionDetailsScrollPane, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridy = 15;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weighty = 0.1;
         jPanel1.add(filler1, gridBagConstraints);
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 14;
+        gridBagConstraints.gridy = 15;
         gridBagConstraints.gridwidth = 4;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.weighty = 0.1;
         jPanel1.add(filler2, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(unallocatedSizeLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.unallocatedSizeLabel.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
+        jPanel1.add(unallocatedSizeLabel, gridBagConstraints);
+
+        org.openide.awt.Mnemonics.setLocalizedText(unallocatedSizeValue, org.openide.util.NbBundle.getMessage(DataSourceSummaryDetailsPanel.class, "DataSourceSummaryDetailsPanel.unallocatedSizeValue.text")); // NOI18N
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridwidth = 4;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        gridBagConstraints.weightx = 0.5;
+        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
+        jPanel1.add(unallocatedSizeValue, gridBagConstraints);
 
         jScrollPane1.setViewportView(jPanel1);
 
@@ -600,5 +636,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel sizeValue;
     private javax.swing.JLabel timeZoneLabel;
     private javax.swing.JLabel timeZoneValue;
+    private javax.swing.JLabel unallocatedSizeLabel;
+    private javax.swing.JLabel unallocatedSizeValue;
     // End of variables declaration//GEN-END:variables
 }
