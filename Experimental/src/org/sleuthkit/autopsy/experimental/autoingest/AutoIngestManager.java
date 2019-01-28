@@ -389,7 +389,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private void handleRemoteJobCancelledEvent(AutoIngestJobCancelEvent event) {
         AutoIngestJob job = event.getJob();
         if (job != null && job.getProcessingHostName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
-            sysLogger.log(Level.INFO, "Received cancel job event for data source {0} in case {1} from user {2} on machine {3}", 
+            sysLogger.log(Level.INFO, "Received cancel job event for data source {0} in case {1} from user {2} on machine {3}",
                     new Object[]{job.getManifest().getDataSourceFileName(), job.getManifest().getCaseName(), event.getUserName(), event.getNodeName()});
             if (event.getJob().equals(currentJob)) {
                 cancelCurrentJob();
@@ -405,7 +405,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private void handleRemoteJobReprocessEvent(AutoIngestJobReprocessEvent event) {
         synchronized (jobsLock) {
             AutoIngestJob job = event.getJob();
-            sysLogger.log(Level.INFO, "Received reprocess job event for data source {0} in case {1} from user {2} on machine {3}", 
+            sysLogger.log(Level.INFO, "Received reprocess job event for data source {0} in case {1} from user {2} on machine {3}",
                     new Object[]{job.getManifest().getDataSourceFileName(), job.getManifest().getCaseName(), event.getUserName(), event.getNodeName()});
             if (completedJobs.contains(job)) {
                 // Remove from completed jobs table.
@@ -429,27 +429,27 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private void handleRemoteCasePrioritizationEvent(AutoIngestCasePrioritizedEvent event) {
         switch (event.getEventType()) {
             case CASE_PRIORITIZED:
-                sysLogger.log(Level.INFO, "Received prioritize case event for case {0} from user {1} on machine {2}", 
+                sysLogger.log(Level.INFO, "Received prioritize case event for case {0} from user {1} on machine {2}",
                         new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
                 break;
             case CASE_DEPRIORITIZED:
-                sysLogger.log(Level.INFO, "Received deprioritize case event for case {0} from user {1} on machine {2}", 
+                sysLogger.log(Level.INFO, "Received deprioritize case event for case {0} from user {1} on machine {2}",
                         new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
                 break;
             case JOB_PRIORITIZED:
-                sysLogger.log(Level.INFO, "Received prioritize job event for data source {0} in case {1} from user {2} on machine {3}", 
+                sysLogger.log(Level.INFO, "Received prioritize job event for data source {0} in case {1} from user {2} on machine {3}",
                         new Object[]{event.getDataSources(), event.getCaseName(), event.getUserName(), event.getNodeName()});
                 break;
             case JOB_DEPRIORITIZED:
-                sysLogger.log(Level.INFO, "Received deprioritize job event for data source {0} in case {1} from user {2} on machine {3}", 
+                sysLogger.log(Level.INFO, "Received deprioritize job event for data source {0} in case {1} from user {2} on machine {3}",
                         new Object[]{event.getDataSources(), event.getCaseName(), event.getUserName(), event.getNodeName()});
                 break;
             default:
-                sysLogger.log(Level.WARNING, "Received invalid prioritization event from user {0} on machine {1}", 
+                sysLogger.log(Level.WARNING, "Received invalid prioritization event from user {0} on machine {1}",
                         new Object[]{event.getUserName(), event.getNodeName()});
                 break;
         }
-                
+
         String hostName = event.getNodeName();
         hostNamesToLastMsgTime.put(hostName, Instant.now());
         scanInputDirsNow();
@@ -464,8 +464,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      * @param event A case deleted event from another auto ingest node.
      */
     private void handleRemoteCaseDeletedEvent(AutoIngestCaseDeletedEvent event) {
-        sysLogger.log(Level.INFO, "Received delete case event for case {0} from user {1} on machine {2}", 
-                    new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
+        sysLogger.log(Level.INFO, "Received delete case event for case {0} from user {1} on machine {2}",
+                new Object[]{event.getCaseName(), event.getUserName(), event.getNodeName()});
         String hostName = event.getNodeName();
         hostNamesToLastMsgTime.put(hostName, Instant.now());
         scanInputDirsNow();
@@ -483,7 +483,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
     private void handleRemoteNodeControlEvent(AutoIngestNodeControlEvent event) {
         if (event.getTargetNodeName().compareToIgnoreCase(LOCAL_HOST_NAME) == 0) {
-            sysLogger.log(Level.INFO, "Received {0} event from user {1} on machine {2}", new Object[] {event.getControlEventType().toString(), event.getUserName(), event.getOriginatingNodeName()});
+            sysLogger.log(Level.INFO, "Received {0} event from user {1} on machine {2}", new Object[]{event.getControlEventType().toString(), event.getUserName(), event.getOriginatingNodeName()});
             switch (event.getControlEventType()) {
                 case PAUSE:
                     pause();
@@ -658,15 +658,15 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         }
         jobProcessingTask.requestResume();
     }
-    
+
     /**
      * Get the name of the currently logged in user
-     * @return 
+     *
+     * @return
      */
     static String getSystemUserNameProperty() {
         return System.getProperty("user.name");
     }
-            
 
     /**
      * Removes the priority (set to zero) of all pending ingest jobs for a
@@ -708,7 +708,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (!jobsToDeprioritize.isEmpty()) {
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
+                        getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_DEPRIORITIZED, ""));
             }).start();
         }
     }
@@ -758,7 +758,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         if (!jobsToPrioritize.isEmpty()) {
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
+                        getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.CASE_PRIORITIZED, ""));
             }).start();
         }
     }
@@ -811,7 +811,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             final String dataSourceName = jobToDeprioritize.getManifest().getDataSourceFileName();
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
+                        getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_DEPRIORITIZED, dataSourceName));
             }).start();
         }
     }
@@ -869,7 +869,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             final String dataSourceName = jobToPrioritize.getManifest().getDataSourceFileName();
             new Thread(() -> {
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName,
-                    getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
+                        getSystemUserNameProperty(), AutoIngestCasePrioritizedEvent.EventType.JOB_PRIORITIZED, dataSourceName));
             }).start();
         }
     }
@@ -1488,87 +1488,79 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             /*
              * Try to get an exclusive lock on the coordination service node for
              * the job. If the lock cannot be obtained, another host in the auto
-             * ingest cluster is already doing the recovery.
+             * ingest cluster is already doing the recovery, so there is nothing
+             * to do.
              */
             String manifestPath = manifest.getFilePath().toString();
             try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifestPath)) {
                 if (null != manifestLock) {
                     sysLogger.log(Level.SEVERE, "Attempting crash recovery for {0}", manifestPath);
-                    try {
-                        Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
+                    Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
 
-                        /*
-                         * Create the recovery job.
-                         */
-                        AutoIngestJob job = new AutoIngestJob(jobNodeData);
-                        int numberOfCrashes = job.getNumberOfCrashes();
+                    /*
+                     * Create the recovery job.
+                     */
+                    AutoIngestJob job = new AutoIngestJob(jobNodeData);
+                    int numberOfCrashes = job.getNumberOfCrashes();
+                    if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                        ++numberOfCrashes;
+                        job.setNumberOfCrashes(numberOfCrashes);
                         if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                            ++numberOfCrashes;
-                            job.setNumberOfCrashes(numberOfCrashes);
-                            if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                                job.setCompletedDate(new Date(0));
-                            } else {
-                                job.setCompletedDate(Date.from(Instant.now()));
-                            }
+                            job.setCompletedDate(new Date(0));
+                        } else {
+                            job.setCompletedDate(Date.from(Instant.now()));
                         }
+                    }
 
+                    if (null != caseDirectoryPath) {
+                        job.setCaseDirectoryPath(caseDirectoryPath);
+                        job.setErrorsOccurred(true);
+                        try {
+                            setCaseNodeDataErrorsOccurred(caseDirectoryPath);
+                        } catch (CaseNodeData.InvalidDataException ex) {
+                            sysLogger.log(Level.SEVERE, String.format("Error attempting to get case node data for %s", caseDirectoryPath), ex);
+                        }
+                    } else {
+                        job.setErrorsOccurred(false);
+                    }
+
+                    if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                        job.setProcessingStatus(AutoIngestJob.ProcessingStatus.PENDING);
                         if (null != caseDirectoryPath) {
-                            job.setCaseDirectoryPath(caseDirectoryPath);
-                            job.setErrorsOccurred(true);
                             try {
-                                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
-                            } catch (CaseNodeData.InvalidDataException ex) {
-                                sysLogger.log(Level.SEVERE, String.format("Error attempting to get case node data for %s", caseDirectoryPath), ex);
-                            }
-                        } else {
-                            job.setErrorsOccurred(false);
-                        }
-
-                        if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                            job.setProcessingStatus(AutoIngestJob.ProcessingStatus.PENDING);
-                            if (null != caseDirectoryPath) {
-                                try {
-                                    new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryWithRetry();
-                                } catch (AutoIngestJobLoggerException ex) {
-                                    sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
-                                }
-                            }
-                        } else {
-                            job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
-                            if (null != caseDirectoryPath) {
-                                try {
-                                    new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryNoRetry();
-                                } catch (AutoIngestJobLoggerException ex) {
-                                    sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
-                                }
+                                new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryWithRetry();
+                            } catch (AutoIngestJobLoggerException ex) {
+                                sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
                             }
                         }
-
-                        /*
-                         * Update the coordination service node for the job. If
-                         * this fails, leave the recovery to another host.
-                         */
-                        try {
-                            updateCoordinationServiceManifestNode(job);
-                        } catch (CoordinationServiceException ex) {
-                            sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
-                            return;
+                    } else {
+                        job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
+                        if (null != caseDirectoryPath) {
+                            try {
+                                new AutoIngestJobLogger(manifest.getFilePath(), manifest.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryNoRetry();
+                            } catch (AutoIngestJobLoggerException ex) {
+                                sysLogger.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
+                            }
                         }
+                    }
 
-                        jobNodeData = new AutoIngestJobNodeData(job);
+                    /*
+                     * Update the coordination service node for the job. If this
+                     * fails, leave the recovery to another host.
+                     */
+                    try {
+                        updateCoordinationServiceManifestNode(job);
+                    } catch (CoordinationServiceException ex) {
+                        sysLogger.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
+                        return;
+                    }
 
-                        if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                            newPendingJobsList.add(job);
-                        } else {
-                            newCompletedJobsList.add(new AutoIngestJob(jobNodeData));
-                        }
+                    jobNodeData = new AutoIngestJobNodeData(job);
 
-                    } finally {
-                        try {
-                            manifestLock.release();
-                        } catch (CoordinationServiceException ex) {
-                            sysLogger.log(Level.SEVERE, String.format("Error attempting to release exclusive lock for %s", manifestPath), ex);
-                        }
+                    if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                        newPendingJobsList.add(job);
+                    } else {
+                        newCompletedJobsList.add(new AutoIngestJob(jobNodeData));
                     }
                 }
             } catch (CoordinationServiceException ex) {
@@ -1619,11 +1611,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
 
                 /*
-                     * Try to upgrade/update the coordination service manifest
-                     * node data for the job. It is possible that two hosts will
-                     * both try to obtain the lock to do the upgrade operation
-                     * at the same time. If this happens, the host that is
-                     * holding the lock will complete the upgrade operation.
+                 * Try to upgrade/update the coordination service manifest node
+                 * data for the job. It is possible that two hosts will both try
+                 * to obtain the lock to do the upgrade operation at the same
+                 * time. If this happens, the host that is holding the lock will
+                 * complete the upgrade operation.
                  */
                 try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
                     if (null != manifestLock) {
@@ -2456,7 +2448,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         throw new CaseManagementException(String.format("Error creating solr settings file for case %s for %s", caseName, manifest.getFilePath()), ex);
                     } catch (CaseActionException ex) {
                         throw new CaseManagementException(String.format("Error creating or opening case %s for %s", caseName, manifest.getFilePath()), ex);
-                    } 
+                    }
                 } else {
                     throw new CaseManagementException(String.format("Timed out acquiring case name lock for %s for %s", caseName, manifest.getFilePath()));
                 }
