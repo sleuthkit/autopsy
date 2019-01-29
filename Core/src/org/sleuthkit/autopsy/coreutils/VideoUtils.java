@@ -84,8 +84,9 @@ public class VideoUtils {
     private static final int CV_CAP_PROP_FRAME_COUNT = 7;
     private static final int CV_CAP_PROP_FPS = 5;
     
-    private static final int THUMBNAIL_FRAME_POS_MS = 5000;
-    private static final double THUMBNAIL_FRAME_POS_BOUNDARY_RATIO = 0.9;
+    private static final int LONG_VIDEO_MIN_MS = 60000;
+    private static final int[] LONG_VIDEO_FRAME_GRAB_POS_MS = { 5000, 10000, 15000 };
+    private static final double[] SHORT_VIDEO_FRAME_GRAB_POS_RATIO = { 0.1, 0.2, 0.3 };
 
     static final Logger LOGGER = Logger.getLogger(VideoUtils.class.getName());
 
@@ -166,25 +167,51 @@ public class VideoUtils {
             double duration = 1000 * (totalFrames / fps); //total milliseconds
 
             /*
-             * The default time to check is 5 seconds. If the file is smaller,
-             * grab a frame close to the end. With some videos, using the
-             * duration to grab the last frame will result in failure to find a
-             * frame. We therefore go to the 90% point in the video.
+             * We want to try and grab a frame early on in the video with the
+             * idea that if the video is corrupt, we will have a better chance
+             * of pulling out a frame successfully by attempting it before the
+             * corruption starts.
+             * 
+             * For videos that are one minute or longer, we attempt to grab a
+             * frame at five seconds. Upon failure, we will attempt ten seconds,
+             * and then 15.
+             * 
+             * For videos shorter than one minute, we attempt to grab a frame at
+             * the 10% point. Upon failure, we will attempt 20%, and then 30%.
+             * 
+             * If no frame can be retrieved, the frame will be black.
              */
-            int timestamp = (int) Math.min(duration * THUMBNAIL_FRAME_POS_BOUNDARY_RATIO, THUMBNAIL_FRAME_POS_MS);
+            int[] framePositions;
+            
+            if (duration >= LONG_VIDEO_MIN_MS) {
+                framePositions = LONG_VIDEO_FRAME_GRAB_POS_MS;
+            } else {
+                framePositions = new int[] {
+                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[0]),
+                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[1]),
+                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[2])
+                };
+            }
 
             Mat imageMatrix = new Mat();
-
-            if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp)) {
-                LOGGER.log(Level.WARNING, "Error seeking to " + timestamp + "ms in {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
-                return null; // if we can't set the time, return black for that frame
+            
+            for (int i=0; i < framePositions.length; i++) {
+                if (!videoFile.set(CV_CAP_PROP_POS_MSEC, framePositions[i])) {
+                    LOGGER.log(Level.WARNING, "Error seeking to " + framePositions[i] + "ms in {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                    // If we can't set the time, continue to the next frame position and try again.
+                    continue;
+                }
+                // Read the frame into the image/matrix.
+                if (!videoFile.read(imageMatrix)) {
+                    LOGGER.log(Level.WARNING, "Error reading frame at " + framePositions[i] + "ms from {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                    // If the image is bad for some reason, continue to the next frame position and try again.
+                    continue;
+                }
+                
+                break;
             }
-            //read the frame into the image/matrix
-            if (!videoFile.read(imageMatrix)) {
-                LOGGER.log(Level.WARNING, "Error reading frame at " + timestamp + "ms from {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
-                return null; //if the image for some reason is bad, return black for that frame
-            }
 
+            // Convert the matrix that contains the frame to a buffered image.
             if (bufferedImage == null) {
                 bufferedImage = new BufferedImage(imageMatrix.cols(), imageMatrix.rows(), BufferedImage.TYPE_3BYTE_BGR);
             }
