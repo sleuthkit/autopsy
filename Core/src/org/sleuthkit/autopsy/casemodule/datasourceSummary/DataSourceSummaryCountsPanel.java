@@ -130,6 +130,7 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(DataSourceSummaryCountsPanel.class, "DataSourceSummaryCountsPanel.jLabel1.text")); // NOI18N
 
+        artifactCountsTable.setAutoCreateRowSorter(true);
         artifactCountsTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
@@ -137,7 +138,15 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
             new String [] {
                 "Result Type", "Count"
             }
-        ));
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
         artifactCountsScrollPane.setViewportView(artifactCountsTable);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
