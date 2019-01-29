@@ -317,6 +317,16 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             }
             
             setContentPath(path);
+            
+            /**
+             * Automatically clear out the hash values if a new image was
+             * selected.
+             */
+            if (!oldText.equals(getContentPaths())) {
+                md5HashTextField.setText(null);
+                sha1HashTextField.setText(null);
+                sha256HashTextField.setText(null);
+            }
         }
 
         updateHelper();
@@ -418,6 +428,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     public void reset() {
         //reset the UI elements to default 
         pathTextField.setText(null);
+        this.md5HashTextField.setText(null);
+        this.sha1HashTextField.setText(null);
+        this.sha256HashTextField.setText(null);
     }
 
     /**
