@@ -33,7 +33,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 @ActionRegistration(displayName = "#CTL_DataSourceSummaryAction", lazy = false)
 @Messages({"CTL_DataSourceSummaryAction=Data Source Summary"})
 /**
- * DataSourceSummaryAction action for the Case menu to activate a ViewSummaryInformationAction selecting the first data source.
+ * DataSourceSummaryAction action for the Case menu to activate a
+ * ViewSummaryInformationAction selecting the first data source.
  */
 public class DataSourceSummaryAction extends CallableSystemAction {
 
@@ -66,9 +67,9 @@ public class DataSourceSummaryAction extends CallableSystemAction {
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-    
+
     @Override
-    public boolean asynchronous(){
+    public boolean asynchronous() {
         return false;
     }
 }

@@ -35,6 +35,10 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DataSource;
 
+/**
+ * Utilities for getting information about a data source or all data sources
+ * from the case database.
+ */
 class DataSourceInfoUtilities {
 
     private static final Logger logger = Logger.getLogger(DataSourceInfoUtilities.class.getName());
@@ -42,8 +46,6 @@ class DataSourceInfoUtilities {
     /**
      * Get a map containing the TSK_DATA_SOURCE_USAGE description attributes
      * associated with each data source in the current case.
-     *
-     * @param skCase the current SluethkitCase
      *
      * @return Collection which maps datasource id to a String which displays a
      *         comma seperated list of values of data source usage types
@@ -78,8 +80,6 @@ class DataSourceInfoUtilities {
      * Get a map containing the number of files in each data source in the
      * current case.
      *
-     * @param skCase the current SluethkitCase
-     *
      * @return Collection which maps datasource id to a count for the number of
      *         files in the datasource, will only contain entries for
      *         datasources which have at least 1 file
@@ -101,8 +101,6 @@ class DataSourceInfoUtilities {
      * Get a map containing the number of artifacts in each data source in the
      * current case.
      *
-     * @param skCase the current SluethkitCase
-     *
      * @return Collection which maps datasource id to a count for the number of
      *         artifacts in the datasource, will only contain entries for
      *         datasources which have at least 1 artifact
@@ -123,8 +121,6 @@ class DataSourceInfoUtilities {
      * Get a map containing the number of tags which have been applied in each
      * data source in the current case. Not necessarily the same as the number
      * of items tagged, as an item can have any number of tags.
-     *
-     * @param skCase the current SluethkitCase
      *
      * @return Collection which maps datasource id to a count for the number of
      *         tags which have been applied in the datasource, will only contain
@@ -152,9 +148,14 @@ class DataSourceInfoUtilities {
     }
 
     /**
-     * Map the names of operating systems joined in a comma seperated list to
-     * the Data Source they exist on.
+     * Get a map containing the names of operating systems joined in a comma
+     * seperated list to the Data Source they exist on in the current case. No
+     * item will exist in the map for data sources which do not contain
+     * TS_OS_INFO artifacts which have a program name.
      *
+     * @return Collection which maps datasource id to a String which is a comma
+     *         seperated list of Operating system names found on the data
+     *         source.
      */
     static Map<Long, String> getOperatingSystems() {
         Map<Long, String> osDetailMap = new HashMap<>();
@@ -212,14 +213,12 @@ class DataSourceInfoUtilities {
     }
 
     /**
-     * Get a map containing the number of files in each data source in the
-     * current case.
-     *
-     * @param skCase the current SluethkitCase
+     * Get a map containing the number of unallocated files in each data source
+     * in the current case.
      *
      * @return Collection which maps datasource id to a count for the number of
-     *         files in the datasource, will only contain entries for
-     *         datasources which have at least 1 file
+     *         unallocated files in the datasource, will only contain entries
+     *         for datasources which have at least 1 unallocated file
      */
     static Map<Long, Long> getCountsOfUnallocatedFiles() {
         try {
@@ -235,6 +234,14 @@ class DataSourceInfoUtilities {
         }
     }
 
+    /**
+     * Get a map containing the total size of unallocated files in each data
+     * source in the current case.
+     *
+     * @return Collection which maps datasource id to a total size in bytes of
+     *         unallocated files in the datasource, will only contain entries
+     *         for datasources which have at least 1 unallocated file
+     */
     static Map<Long, Long> getSizeOfUnallocatedFiles() {
         try {
             final String countUnallocatedFilesQuery = "data_source_obj_id, sum(size) AS value"
@@ -250,14 +257,12 @@ class DataSourceInfoUtilities {
     }
 
     /**
-     * Get a map containing the number of files in each data source in the
+     * Get a map containing the number of directories in each data source in the
      * current case.
      *
-     * @param skCase the current SluethkitCase
-     *
      * @return Collection which maps datasource id to a count for the number of
-     *         files in the datasource, will only contain entries for
-     *         datasources which have at least 1 file
+     *         directories in the datasource, will only contain entries for
+     *         datasources which have at least 1 directory
      */
     static Map<Long, Long> getCountsOfDirectories() {
         try {
@@ -274,14 +279,12 @@ class DataSourceInfoUtilities {
     }
 
     /**
-     * Get a map containing the number of files in each data source in the
+     * Get a map containing the number of slack files in each data source in the
      * current case.
      *
-     * @param skCase the current SluethkitCase
-     *
      * @return Collection which maps datasource id to a count for the number of
-     *         files in the datasource, will only contain entries for
-     *         datasources which have at least 1 file
+     *         slack files in the datasource, will only contain entries for
+     *         datasources which have at least 1 slack file
      */
     static Map<Long, Long> getCountsOfSlackFiles() {
         try {
@@ -296,6 +299,15 @@ class DataSourceInfoUtilities {
         }
     }
 
+    /**
+     * Get a map containing maps which map artifact type to the number of times
+     * it exosts in each data source in the current case.
+     *
+     * @return Collection which maps datasource id to maps of artifact display
+     *         name to number of occurences in the datasource, will only contain
+     *         entries for artifacts which have at least one occurence in the
+     *         data source.
+     */
     static Map<Long, Map<String, Long>> getCountsOfArtifactsByType() {
         try {
             final String countArtifactsQuery = "blackboard_artifacts.data_source_obj_id, blackboard_artifact_types.display_name AS label, COUNT(*) AS value"
@@ -309,6 +321,18 @@ class DataSourceInfoUtilities {
         }
     }
 
+    /**
+     * Helper method to execute a select query with a
+     * DataSourceLabeledValueCallback.
+     *
+     * @param query the portion of the query which should follow the SELECT
+     *
+     * @return a map of datasource object IDs to maps of String labels to the
+     *         values associated with them.
+     *
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     */
     private static Map<Long, Map<String, Long>> getLabeledValuesMap(String query) throws TskCoreException, NoCurrentCaseException {
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         DataSourceLabeledValueCallback callback = new DataSourceLabeledValueCallback();
@@ -316,6 +340,17 @@ class DataSourceInfoUtilities {
         return callback.getMapOfLabeledValues();
     }
 
+    /**
+     * Helper method to execute a select query with a
+     * DataSourceSingleValueCallback.
+     *
+     * @param query the portion of the query which should follow the SELECT
+     *
+     * @return a map of datasource object ID to a value of type Long
+     *
+     * @throws TskCoreException
+     * @throws NoCurrentCaseException
+     */
     private static Map<Long, Long> getValuesMap(String query) throws TskCoreException, NoCurrentCaseException {
         SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
         DataSourceSingleValueCallback callback = new DataSourceSingleValueCallback();
@@ -323,6 +358,9 @@ class DataSourceInfoUtilities {
         return callback.getMapOfValues();
     }
 
+    /**
+     * Empty private constructor
+     */
     private DataSourceInfoUtilities() {
     }
 }

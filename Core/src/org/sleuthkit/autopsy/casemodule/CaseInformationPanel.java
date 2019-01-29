@@ -33,7 +33,7 @@ import org.openide.windows.WindowManager;
 class CaseInformationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private CasePropertiesPanel propertiesPanel;
+    private CaseDetailsPanel caseDetailsPanel;
 
     /**
      * Constructs a panel for displaying the case information including case
@@ -51,13 +51,13 @@ class CaseInformationPanel extends javax.swing.JPanel {
     })
     private void customizeComponents() {
         try {
-            propertiesPanel = new CasePropertiesPanel(Case.getCurrentCaseThrows());
+            caseDetailsPanel = new CaseDetailsPanel(Case.getCurrentCaseThrows());
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(CaseInformationPanel.class.getName()).log(Level.INFO, "Exception while getting open case.", ex);
         }
-        propertiesPanel.setSize(propertiesPanel.getPreferredSize());
-        this.detailsPanel.add(propertiesPanel);
-        this.detailsPanel.setPreferredSize(propertiesPanel.getPreferredSize());
+        caseDetailsPanel.setSize(caseDetailsPanel.getPreferredSize());
+        this.detailsPanel.add(caseDetailsPanel);
+        this.detailsPanel.setPreferredSize(caseDetailsPanel.getPreferredSize());
     }
 
     /**
@@ -154,7 +154,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
         editCasePropertiesPanel.addSaveButtonAction((ActionEvent e) -> {
             editCasePropertiesDialog.setVisible(false);
             editCasePropertiesPanel.saveProperties();
-            propertiesPanel.updateCaseInfo();
+            caseDetailsPanel.updateCaseInfo();
 
         });
 
@@ -164,7 +164,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
         editCasePropertiesDialog.setLocationRelativeTo(this);
         editCasePropertiesDialog.setVisible(true);
         editCasePropertiesDialog.toFront();
-        propertiesPanel.updateCaseInfo();
+        caseDetailsPanel.updateCaseInfo();
     }//GEN-LAST:event_editDetailsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

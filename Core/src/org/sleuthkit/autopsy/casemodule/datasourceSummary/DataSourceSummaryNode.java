@@ -108,7 +108,7 @@ final class DataSourceSummaryNode extends AbstractNode {
      */
     static final class DataSourceSummaryEntryNode extends AbstractNode {
 
-        private DataSource dataSource;
+        private final DataSource dataSource;
         private final String type;
         private final long filesCount;
         private final long resultsCount;
@@ -182,7 +182,6 @@ final class DataSourceSummaryNode extends AbstractNode {
         public Action[] getActions(boolean context) {
             List<Action> actions = new ArrayList<>();
             actions.add(new ViewDataSourceInContextAction());
-
             return actions.toArray(new Action[actions.size()]);
         }
 
@@ -197,8 +196,9 @@ final class DataSourceSummaryNode extends AbstractNode {
             /**
              * Construct a new ViewDataSourceInCOntextAction
              */
+            @Messages({"DataSourceSummaryNode.viewDataSourceAction.text=Go to Data Source"})
             ViewDataSourceInContextAction() {
-                super("Go to Data Source", dataSource);
+                super(Bundle.DataSourceSummaryNode_viewDataSourceAction_text(), dataSource);
             }
 
             @Override

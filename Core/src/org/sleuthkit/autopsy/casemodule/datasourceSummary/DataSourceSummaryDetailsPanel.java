@@ -31,17 +31,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Panel to display additional details associated with a specific DataSource
- *
  */
-public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
+class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
 
     //Because this panel was made using the gridbaglayout and netbean's Customize Layout tool it will be best to continue to modify it through that
     private static final long serialVersionUID = 1L;
     private Map<Long, String> osDetailMap = new HashMap<>();
     private static final Integer SIZE_COVERSION_CONSTANT = 1000;
-    private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##"); 
+    private static final DecimalFormat APPROXIMATE_SIZE_FORMAT = new DecimalFormat("#.##");
     private final Map<Long, Long> unallocatedFilesSizeMap;
-    final Map<Long, String> usageMap;
+    private final Map<Long, String> usageMap;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDetailsPanel.class.getName());
 
     /**
@@ -49,7 +48,7 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
      */
     @Messages({"DataSourceSummaryDetailsPanel.getDataSources.error.text=Failed to get the list of datasources for the current case.",
         "DataSourceSummaryDetailsPanel.getDataSources.error.title=Load Failure"})
-    public DataSourceSummaryDetailsPanel(Map<Long, String> usageMap) {
+    DataSourceSummaryDetailsPanel(Map<Long, String> usageMap) {
         initComponents();
         this.usageMap = usageMap;
         this.unallocatedFilesSizeMap = DataSourceInfoUtilities.getSizeOfUnallocatedFiles();
@@ -122,6 +121,14 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         this.repaint();
     }
 
+    /**
+     * Get a long size in bytes as a string formated to be read by users.
+     *
+     * @param size Long value representing a size in bytes
+     *
+     * @return return a string formated with a user friendly version of the size
+     *         as a string, returns empty String when provided empty size
+     */
     @Messages({
         "DataSourceSummaryDetailsPanel.units.bytes= bytes",
         "DataSourceSummaryDetailsPanel.units.kilobytes= kB",
@@ -164,6 +171,10 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
                 + " (" + String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes() + ")";
     }
 
+    /**
+     * Update the visibility of all fields and their labels based on whether
+     * they have contents. Empty fields have them and their contents hidden.
+     */
     private void updateFieldVisibility() {
         displayNameValue.setVisible(!displayNameValue.getText().isEmpty());
         displayNameLabel.setVisible(!displayNameValue.getText().isEmpty());
@@ -199,6 +210,9 @@ public class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         filePathsScrollPane.setVisible(filePathsTable.getRowCount() > 0);
     }
 
+    /**
+     * Set the contents of all fields to be empty.
+     */
     private void clearTableValues() {
         displayNameValue.setText("");
         originalNameValue.setText("");

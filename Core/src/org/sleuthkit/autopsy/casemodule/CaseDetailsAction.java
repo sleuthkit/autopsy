@@ -31,16 +31,16 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 
 /**
- * The action associated with the Case/Case Properties menu item. It invokes the
- * Case Properties dialog.
+ * The action associated with the Case/Case Details menu item. It invokes the
+ * dialog containing the CaseInformationPanel.
  */
-final class CasePropertiesAction extends CallableSystemAction {
+final class CaseDetailsAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-    private static JDialog casePropertiesDialog;
+    private static JDialog caseDetailsDialog;
 
-    CasePropertiesAction() {
-        putValue(Action.NAME, NbBundle.getMessage(CasePropertiesAction.class, "CTL_CasePropertiesAction"));
+    CaseDetailsAction() {
+        putValue(Action.NAME, NbBundle.getMessage(CaseDetailsAction.class, "CTL_CaseDetailsAction"));
         this.setEnabled(false);
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             setEnabled(null != evt.getNewValue());
@@ -50,25 +50,25 @@ final class CasePropertiesAction extends CallableSystemAction {
     @Override
     public void performAction() {
         SwingUtilities.invokeLater(() -> {
-            String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
+            String title = NbBundle.getMessage(this.getClass(), "CaseDetailsAction.window.title");
             Frame mainWindow = WindowManager.getDefault().getMainWindow();
-            casePropertiesDialog = new JDialog(mainWindow, title, true);
+            caseDetailsDialog = new JDialog(mainWindow, title, true);
             CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
             caseInformationPanel.addCloseButtonAction((ActionEvent e) -> {
-                casePropertiesDialog.dispose();
+                caseDetailsDialog.dispose();
             });
-            casePropertiesDialog.add(caseInformationPanel);
-            casePropertiesDialog.setResizable(true);
-            casePropertiesDialog.pack();
-            casePropertiesDialog.setLocationRelativeTo(mainWindow);
-            casePropertiesDialog.setVisible(true);
-            casePropertiesDialog.toFront();
+            caseDetailsDialog.add(caseInformationPanel);
+            caseDetailsDialog.setResizable(true);
+            caseDetailsDialog.pack();
+            caseDetailsDialog.setLocationRelativeTo(mainWindow);
+            caseDetailsDialog.setVisible(true);
+            caseDetailsDialog.toFront();
         });
     }
 
     @Override
     public String getName() {
-        return NbBundle.getMessage(CasePropertiesAction.class, "CTL_CasePropertiesAction");
+        return NbBundle.getMessage(CaseDetailsAction.class, "CTL_CaseDetailsAction");
     }
 
     @Override

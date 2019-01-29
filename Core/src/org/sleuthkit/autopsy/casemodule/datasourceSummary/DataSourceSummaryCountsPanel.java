@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.DataSource;
  * Panel for displaying summary information on the known files present in the
  * specified DataSource
  */
-public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
+class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private FilesByMimeTypeTableModel filesByMimeTypeTableModel = new FilesByMimeTypeTableModel(null);
@@ -48,9 +48,9 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
     private final DefaultTableCellRenderer rightAlignedRenderer = new DefaultTableCellRenderer();
 
     /**
-     * Creates new form DataSourceSummaryFilesPanel
+     * Creates new form DataSourceSummaryCountsPanel
      */
-    public DataSourceSummaryCountsPanel(Map<Long, Long> fileCountsMap) {
+    DataSourceSummaryCountsPanel(Map<Long, Long> fileCountsMap) {
         this.allFilesCountsMap = fileCountsMap;
         this.slackFilesCountsMap = DataSourceInfoUtilities.getCountsOfSlackFiles();
         this.directoriesCountsMap = DataSourceInfoUtilities.getCountsOfDirectories();
@@ -80,6 +80,13 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         this.repaint();
     }
 
+    /**
+     * Helper method to update the artifact specific counts by clearing the
+     * table and adding counts for the artifacts which exist in the selected
+     * data source.
+     *
+     * @param selectedDataSource the data source to display artifact counts for
+     */
     private void updateArtifactCounts(DataSource selectedDataSource) {
         ((DefaultTableModel) artifactCountsTable.getModel()).setRowCount(0);
         if (selectedDataSource != null && artifactsByTypeCountsMap.get(selectedDataSource.getId()) != null) {
@@ -193,10 +200,10 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
 
     /**
      * Table model for the files table model to display counts of specific file
-     * types found in the currently selected data source.
+     * types by mime type found in the currently selected data source.
      */
-    @Messages({"DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.type.header=File Type",
-        "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.count.header=Count"})
+    @Messages({"DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.type.header=File Type",
+        "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.count.header=Count"})
     private class FilesByMimeTypeTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = 1L;
@@ -204,14 +211,14 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         private final List<String> columnHeaders = new ArrayList<>();
 
         /**
-         * Create a FilesTableModel for the speicified datasource.
+         * Create a FilesByMimeTypeTableModel for the speicified datasource.
          *
-         * @param selectedDataSource the datasource which this filesTablemodel
+         * @param selectedDataSource the datasource which this FilesByMimeTypeTablemodel
          *                           will represent
          */
         FilesByMimeTypeTableModel(DataSource selectedDataSource) {
-            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_type_header());
-            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_count_header());
+            columnHeaders.add(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_type_header());
+            columnHeaders.add(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_count_header());
             currentDataSource = selectedDataSource;
         }
 
@@ -227,26 +234,26 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         }
 
         @Messages({
-            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.images.row=Images",
-            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.videos.row=Videos",
-            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.audio.row=Audio",
-            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.documents.row=Documents",
-            "DataSourceSummaryFilesPanel.FilesByMimeTypeTableModel.executables.row=Executables"
+            "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.images.row=Images",
+            "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.videos.row=Videos",
+            "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.audio.row=Audio",
+            "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.documents.row=Documents",
+            "DataSourceSummaryCountsPanel.FilesByMimeTypeTableModel.executables.row=Executables"
         })
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
                 switch (rowIndex) {
                     case 0:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_images_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_images_row();
                     case 1:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_videos_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_videos_row();
                     case 2:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_audio_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_audio_row();
                     case 3:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_documents_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_documents_row();
                     case 4:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByMimeTypeTableModel_executables_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_executables_row();
                     default:
                         break;
                 }
@@ -273,15 +280,14 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         public String getColumnName(int column) {
             return columnHeaders.get(column);
         }
-
     }
 
     /**
      * Table model for the files table model to display counts of specific file
-     * types found in the currently selected data source.
+     * types by category found in the currently selected data source.
      */
-    @Messages({"DataSourceSummaryFilesPanel.FilesByCategoryTableModel.type.header=File Type",
-        "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.count.header=Count"})
+    @Messages({"DataSourceSummaryCountsPanel.FilesByCategoryTableModel.type.header=File Type",
+        "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.count.header=Count"})
     private class FilesByCategoryTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = 1L;
@@ -289,14 +295,14 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         private final List<String> columnHeaders = new ArrayList<>();
 
         /**
-         * Create a FilesTableModel for the speicified datasource.
+         * Create a FilesByCategoryTableModel for the speicified datasource.
          *
-         * @param selectedDataSource the datasource which this filesTablemodel
+         * @param selectedDataSource the datasource which this FilesByCategoryTablemodel
          *                           will represent
          */
         FilesByCategoryTableModel(DataSource selectedDataSource) {
-            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_type_header());
-            columnHeaders.add(Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_count_header());
+            columnHeaders.add(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_type_header());
+            columnHeaders.add(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_count_header());
             currentDataSource = selectedDataSource;
         }
 
@@ -312,27 +318,26 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         }
 
         @Messages({
-            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.all.row=All",
-            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.allocated.row=Allocated",
-            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.unallocated.row=Unallocated",
-            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.slack.row=Slack",
-            "DataSourceSummaryFilesPanel.FilesByCategoryTableModel.directory.row=Directory"
-
+            "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.all.row=All",
+            "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.allocated.row=Allocated",
+            "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.unallocated.row=Unallocated",
+            "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.slack.row=Slack",
+            "DataSourceSummaryCountsPanel.FilesByCategoryTableModel.directory.row=Directory"
         })
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
                 switch (rowIndex) {
                     case 0:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_all_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_all_row();
                     case 1:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_allocated_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_allocated_row();
                     case 2:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_unallocated_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_unallocated_row();
                     case 3:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_slack_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_slack_row();
                     case 4:
-                        return Bundle.DataSourceSummaryFilesPanel_FilesByCategoryTableModel_directory_row();
+                        return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_directory_row();
                     default:
                         break;
                 }
@@ -341,6 +346,7 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
                     case 0:
                         return allFilesCountsMap.get(currentDataSource.getId()) == null ? 0 : allFilesCountsMap.get(currentDataSource.getId());
                     case 1:
+                        //All files should be either allocated or unallocated as dir_flags only has two values so any file that isn't unallocated is allocated
                         Long unallocatedFilesCount = unallocatedFilesCountsMap.get(currentDataSource.getId());
                         Long allFilesCount = allFilesCountsMap.get(currentDataSource.getId());
                         if (allFilesCount == null) {
@@ -367,6 +373,5 @@ public class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         public String getColumnName(int column) {
             return columnHeaders.get(column);
         }
-
     }
 }

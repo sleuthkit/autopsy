@@ -28,13 +28,14 @@ import java.util.logging.Logger;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 
 /**
- * Get the map of Data Source ID to a value found related to that data source query which
- * selects data_source_obj_id and value which is grouped by that data source object id.
+ * Callback which gets a map of datasource object IDs to maps of String labels
+ * to the values associated with them, given a query which should select a
+ * 'data_source_obj_id', a 'label', and a 'value'.
  */
 class DataSourceLabeledValueCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
     private static final Logger logger = Logger.getLogger(DataSourceSingleValueCallback.class.getName());
-    private Map<Long, Map<String,Long>> dataSourceObjIdLabeledValues = new HashMap<>();
+    private Map<Long, Map<String, Long>> dataSourceObjIdLabeledValues = new HashMap<>();
 
     @Override
     public void process(ResultSet rs) {
@@ -59,8 +60,9 @@ class DataSourceLabeledValueCallback implements CaseDbAccessManager.CaseDbAccess
     /**
      * Get the processed results
      *
-     * @return Collection which maps datasource id to a value related to the datasource id, only contains entries for
-     *         data sources with at least 1 item found.
+     * @return Collection which maps datasource object IDs to maps of String
+     *         labels to the values associated with them only contains entries
+     *         for data sources with at least 1 item found for any label.
      */
     Map<Long, Map<String, Long>> getMapOfLabeledValues() {
         return Collections.unmodifiableMap(dataSourceObjIdLabeledValues);

@@ -28,8 +28,9 @@ import java.util.logging.Logger;
 import org.sleuthkit.datamodel.CaseDbAccessManager;
 
 /**
- * Get the map of Data Source ID to a value found related to that data source query which
- * selects data_source_obj_id and value which is grouped by that data source object id.
+ * Get the map of Data Source ID to a value found related to that data source
+ * query which selects data_source_obj_id and value which is grouped by that
+ * data source object id.
  */
 class DataSourceSingleValueCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
@@ -54,8 +55,9 @@ class DataSourceSingleValueCallback implements CaseDbAccessManager.CaseDbAccessQ
     /**
      * Get the processed results
      *
-     * @return Collection which maps datasource id to a value related to the datasource id, only contains entries for
-     *         datasources with at least 1 item found.
+     * @return Collection which maps datasource id to a value related to the
+     *         datasource id, only contains entries for datasources with at
+     *         least 1 item found.
      */
     Map<Long, Long> getMapOfValues() {
         return Collections.unmodifiableMap(dataSourceObjIdValues);

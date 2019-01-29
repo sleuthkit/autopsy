@@ -47,7 +47,7 @@
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_CaseNewAction"/>
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
-            <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
+            <file name="org-sleuthkit-autopsy-casemodule-CaseDetailsAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance">
@@ -180,7 +180,7 @@
                 <attr name="position" intvalue="300"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseDetailsAction.instance"/>
                 <attr name="position" intvalue="301"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.shadow">
