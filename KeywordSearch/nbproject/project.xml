@@ -134,6 +134,7 @@
             </module-dependencies>
             <public-packages>
                 <package>org.apache.commons.logging.impl</package>
+                <package>org.apache.tika.parser.txt</package>
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
             </public-packages>
             <class-path-extension>
