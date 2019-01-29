@@ -85,8 +85,8 @@ public class VideoUtils {
     private static final int CV_CAP_PROP_FPS = 5;
     
     private static final int LONG_VIDEO_MIN_MS = 60000;
-    private static final int[] LONG_VIDEO_FRAME_GRAB_POS_MS = { 5000, 10000, 15000 };
-    private static final double[] SHORT_VIDEO_FRAME_GRAB_POS_RATIO = { 0.1, 0.2, 0.3 };
+    private static final int[] LONG_VIDEO_FRAME_GRAB_POS_MS = { 5000, 10000, 15000, 250 };
+    private static final double[] SHORT_VIDEO_FRAME_GRAB_POS_RATIO = { 0.1, 0.2, 0.3, 0.01 };
 
     static final Logger LOGGER = Logger.getLogger(VideoUtils.class.getName());
 
@@ -174,12 +174,13 @@ public class VideoUtils {
              * 
              * For videos that are one minute or longer, we attempt to grab a
              * frame at five seconds. Upon failure, we will attempt ten seconds,
-             * and then 15.
+             * and then 15. In a last-ditch effort, it will try 0.25 seconds.
              * 
              * For videos shorter than one minute, we attempt to grab a frame at
              * the 10% point. Upon failure, we will attempt 20%, and then 30%.
+             * In a last-ditch effort, it will try 1%.
              * 
-             * If no frame can be retrieved, the frame will be black.
+             * If no frame can be retrieved, no thumbnail will be created.
              */
             int[] framePositions;
             
@@ -189,7 +190,8 @@ public class VideoUtils {
                 framePositions = new int[] {
                     (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[0]),
                     (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[1]),
-                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[2])
+                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[2]),
+                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[3]),
                 };
             }
 
