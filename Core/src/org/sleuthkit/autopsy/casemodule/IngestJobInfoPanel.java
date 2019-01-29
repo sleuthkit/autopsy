@@ -78,6 +78,11 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Update the data source which ingest jobs are being displayed for
+     *
+     * @param selectedDataSource the data source to display ingest jobs for
+     */
     public void updateIngestHistoryData(DataSource selectedDataSource) {
         this.selectedDataSource = selectedDataSource;
         ingestJobsForSelectedDataSource.clear();
@@ -90,12 +95,16 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         }
         this.ingestJobTableModel = new IngestJobTableModel();
         this.ingestJobTable.setModel(ingestJobTableModel);
+        //if there were ingest jobs select the first one by default
         if (ingestJobsForSelectedDataSource.size() > 0) {
             ingestJobTable.setRowSelectionInterval(0, 0);
         }
         this.repaint();
     }
 
+    /**
+     * Get the updated complete list of ingest jobs.
+     */
     private void refresh() {
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,18 +27,17 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 
 /**
- * Panel for displaying the case information, including both case details and
- * ingest job history.
+ * Panel for displaying the case information, including case details.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class CaseInformationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    CasePropertiesPanel propertiesPanel;
+    private CasePropertiesPanel propertiesPanel;
 
     /**
-     * Constructs a panel for displaying the case information, including both
-     * case details and ingest job history.
+     * Constructs a panel for displaying the case information including case
+     * details.
      */
     CaseInformationPanel() {
         initComponents();
@@ -47,14 +46,13 @@ class CaseInformationPanel extends javax.swing.JPanel {
 
     @Messages({
         "CaseInformationPanel.caseDetails.header=Details",
-        "CaseInformationPanel.ingestJobInfo.header=Ingest History",
         "CaseInformationPanel.editDetailsButton.text=Edit Details",
         "CaseInformationPanel.editDetailsDialog.title=Edit Case Details"
     })
     private void customizeComponents() {
         try {
             propertiesPanel = new CasePropertiesPanel(Case.getCurrentCaseThrows());
-        } catch (NoCurrentCaseException ex) { 
+        } catch (NoCurrentCaseException ex) {
             Logger.getLogger(CaseInformationPanel.class.getName()).log(Level.INFO, "Exception while getting open case.", ex);
         }
         propertiesPanel.setSize(propertiesPanel.getPreferredSize());
