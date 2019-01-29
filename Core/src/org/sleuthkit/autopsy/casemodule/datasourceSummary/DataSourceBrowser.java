@@ -25,16 +25,21 @@ import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Observer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryNode.DataSourceSummaryEntryNode;
+import static javax.swing.SwingConstants.RIGHT;
+import javax.swing.table.TableColumn;
+import org.sleuthkit.autopsy.guiutils.GrayableCellRenderer;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -51,12 +56,14 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private final org.openide.explorer.view.OutlineView outlineView;
     private final ExplorerManager explorerManager;
     private final List<DataSourceSummary> dataSourceSummaryList;
+    private final RightAlignedTableCellRenderer rightAlignedRenderer = new RightAlignedTableCellRenderer();
 
     /**
      * Creates new form DataSourceBrowser
      */
     DataSourceBrowser(Map<Long, String> usageMap, Map<Long, Long> fileCountsMap) {
         initComponents();
+        rightAlignedRenderer.setHorizontalAlignment(RIGHT);
         explorerManager = new ExplorerManager();
         outlineView = new org.openide.explorer.view.OutlineView();
         this.setVisible(true);
@@ -66,12 +73,25 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
                 Bundle.DataSourceSummaryNode_column_results_header(), Bundle.DataSourceSummaryNode_column_results_header(),
                 Bundle.DataSourceSummaryNode_column_tags_header(), Bundle.DataSourceSummaryNode_column_tags_header());
         outline = outlineView.getOutline();
+
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        outline.setRootVisible(false);
+
         dataSourceSummaryList = getDataSourceSummaryList(usageMap, fileCountsMap);
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.DataSourceSummaryNode_column_dataSourceName_header());
+        outline.setRootVisible(false);
         add(outlineView, java.awt.BorderLayout.CENTER);
         explorerManager.setRootContext(new DataSourceSummaryNode(dataSourceSummaryList));
+
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.DataSourceSummaryNode_column_dataSourceName_header());
+        for (TableColumn column : Collections.list(outline.getColumnModel().getColumns())) {
+            if (column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_files_header())
+                    || column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_results_header())
+                    || column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_tags_header())) {
+                column.setCellRenderer(rightAlignedRenderer);
+            }
+        }
+//        outline.getColumnModel().getColumn(2).setCellRenderer(rightAlignedRenderer);
+//        outline.getColumnModel().getColumn(3).setCellRenderer(rightAlignedRenderer);
+//        outline.getColumnModel().getColumn(4).setCellRenderer(rightAlignedRenderer);
         this.setVisible(true);
     }
 
@@ -175,7 +195,6 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     @Override
     public ExplorerManager getExplorerManager() {
         return explorerManager;
-
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
