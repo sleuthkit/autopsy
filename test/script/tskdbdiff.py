@@ -654,6 +654,7 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
     # make a copy of files_table and update it with new data from artifacts_table and reports_table
     mapping = files_table.copy()
     for k, v in objects_table.items():
+        path = ""
         if k not in mapping.keys(): # If the mapping table doesn't have data for obj_id
             if k in reports_table.keys(): # For a report we use the report path
                 par_obj_id = v[0]
