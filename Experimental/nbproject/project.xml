@@ -163,7 +163,7 @@
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-core-1.20.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\Experimental\release\modules\ext\tika-core-1.20.jar</binary-origin>
+                <binary-origin>release\modules\ext\tika-core-1.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/LGoodDatePicker-10.3.1.jar</runtime-relative-path>

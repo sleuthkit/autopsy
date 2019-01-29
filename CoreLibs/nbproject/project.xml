@@ -844,7 +844,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-scratchpad-4.0.1.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\CoreLibs\release\modules\ext\poi-scratchpad-4.0.1.jar</binary-origin>
+                <binary-origin>release\modules\ext\poi-scratchpad-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-psd-3.2.jar</runtime-relative-path>
@@ -856,7 +856,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-4.0.1.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\CoreLibs\release\modules\ext\poi-ooxml-4.0.1.jar</binary-origin>
+                <binary-origin>release\modules\ext\poi-ooxml-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-codec-1.11.jar</runtime-relative-path>
@@ -932,7 +932,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-collections4-4.2.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\CoreLibs\release\modules\ext\commons-collections4-4.2.jar</binary-origin>
+                <binary-origin>release\modules\ext\commons-collections4-4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
@@ -968,11 +968,11 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-4.0.1.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\CoreLibs\release\modules\ext\poi-4.0.1.jar</binary-origin>
+                <binary-origin>release\modules\ext\poi-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-excelant-4.0.1.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\CoreLibs\release\modules\ext\poi-excelant-4.0.1.jar</binary-origin>
+                <binary-origin>release\modules\ext\poi-excelant-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.1.2.jar</runtime-relative-path>
@@ -996,7 +996,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-schemas-4.0.1.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\CoreLibs\release\modules\ext\poi-ooxml-schemas-4.0.1.jar</binary-origin>
+                <binary-origin>release\modules\ext\poi-ooxml-schemas-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pict-3.2.jar</runtime-relative-path>
