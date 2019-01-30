@@ -117,31 +117,31 @@ public class EamArtifactUtil {
                             }
                         }
                     }
-                    
-                    if(artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
+
+                    if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
                         addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_HOME, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                         addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                     }
-                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {    
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
-                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {    
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_SSID, CorrelationAttributeInstance.SSID_TYPE_ID);
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID()) {
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
-                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {  
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_IMEI, CorrelationAttributeInstance.IMEI_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID);
-                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {  
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID);
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()) {
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, CorrelationAttributeInstance.PHONE_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL, CorrelationAttributeInstance.EMAIL_TYPE_ID);
-                }  else if (artifactTypeID == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_BCC, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_CC, CorrelationAttributeInstance.EMAIL_TYPE_ID);
@@ -165,13 +165,13 @@ public class EamArtifactUtil {
 
     /**
      * Add a CorrelationAttributeInstance of the specified type to the provided
- list if the artifactForInstance has an Attribute of the given type with a non empty
- value.
+     * list if the artifactForInstance has an Attribute of the given type with a
+     * non empty value.
      *
      * @param eamArtifacts    the list of CorrelationAttributeInstance objects
      *                        which should be added to
-     * @param artifact        the blackboard artifactForInstance which we are creating a
-                        CorrelationAttributeInstance for
+     * @param artifact        the blackboard artifactForInstance which we are
+     *                        creating a CorrelationAttributeInstance for
      * @param bbAttributeType the type of BlackboardAttribute we expect to exist
      *                        for a CorrelationAttributeInstance of this type
      *                        generated from this Blackboard Artifact
@@ -202,7 +202,8 @@ public class EamArtifactUtil {
      * @param correlationType the given type
      * @param value           the artifactForInstance value
      *
-     * @return CorrelationAttributeInstance from details, or null if validation failed or another error occurred
+     * @return CorrelationAttributeInstance from details, or null if validation
+     *         failed or another error occurred
      */
     private static CorrelationAttributeInstance makeCorrelationAttributeInstanceUsingTypeValue(BlackboardArtifact bbArtifact, CorrelationAttributeInstance.Type correlationType, String value) {
         try {
@@ -301,12 +302,12 @@ public class EamArtifactUtil {
 
     /**
      * Create an EamArtifact from the given Content. Will return null if an
- artifactForInstance can not be created - this is not necessarily an error case, it
- just means an artifactForInstance can't be made. If creation fails due to an error
- (and not that the file is the wrong type or it has no hash), the error
- will be logged before returning.
-
- Does not add the artifactForInstance to the database.
+     * artifactForInstance can not be created - this is not necessarily an error
+     * case, it just means an artifactForInstance can't be made. If creation
+     * fails due to an error (and not that the file is the wrong type or it has
+     * no hash), the error will be logged before returning.
+     *
+     * Does not add the artifactForInstance to the database.
      *
      * @param content The content object
      *
