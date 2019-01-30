@@ -133,13 +133,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             public void treeExpanded(TreeExpansionEvent event) {
                 //Bail immediately if we are not in the Group By view.
                 //Assumption here is that the views are already expanded.
-                if(!CasePreferences.getGroupItemsInTreeByDataSource()) {
+                if (!CasePreferences.getGroupItemsInTreeByDataSource()) {
                     return;
                 }
-                
-                Node expandedNode = Visualizer.findNode(event.getPath().getLastPathComponent());    
-                for(Node child : em.getRootContext().getChildren().getNodes()) {
-                    if(child.equals(expandedNode)) {
+
+                Node expandedNode = Visualizer.findNode(event.getPath().getLastPathComponent());
+                for (Node child : em.getRootContext().getChildren().getNodes()) {
+                    if (child.equals(expandedNode)) {
                         preExpandNodes(child.getChildren());
                     }
                 }
@@ -267,7 +267,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Setter to determine if rejected results should be shown or not.
      *
      * @param showRejectedResults True if showing rejected results; otherwise
-     * false.
+     *                            false.
      */
     public void setShowRejectedResults(boolean showRejectedResults) {
         this.showRejectedResults = showRejectedResults;
@@ -1017,7 +1017,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Set the selected node using a path to a previously selected node.
      *
      * @param previouslySelectedNodePath Path to a previously selected node.
-     * @param rootNodeName Name of the root node to match, may be null.
+     * @param rootNodeName               Name of the root node to match, may be
+     *                                   null.
      */
     private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
         if (previouslySelectedNodePath == null) {
