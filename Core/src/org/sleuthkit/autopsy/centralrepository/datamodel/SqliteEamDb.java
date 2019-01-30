@@ -435,6 +435,24 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
     
     /**
+     * Changes the name of a data source in the DB
+     * 
+     * @param eamDataSource  The data source
+     * @param newName        The new name
+     * 
+     * @throws EamDbException 
+     */
+    @Override
+    public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSourceName(eamDataSource, newName);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+    
+    /**
      * Updates the MD5 hash value in an existing data source in the database.
      *
      * @param eamDataSource The data source to update
