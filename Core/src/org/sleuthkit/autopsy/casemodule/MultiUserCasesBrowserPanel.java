@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumnModel;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.etable.ETableColumnModel;
@@ -27,7 +28,6 @@ import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.util.NbBundle;
 import org.openide.explorer.view.OutlineView;
-import org.sleuthkit.autopsy.casemodule.Bundle;
 
 /**
  * A JPanel with a scroll pane child component that contains a NetBeans
@@ -52,14 +52,14 @@ final class MultiUserCasesBrowserPanel extends javax.swing.JPanel implements Exp
         outlineView = new org.openide.explorer.view.OutlineView();
         initComponents();
         outline = outlineView.getOutline();
-        customizeOutlineView();
+        configureOutlineView();
         explorerManager.setRootContext(new MultiUserCasesRootNode());
     }
 
     /**
-     * Configures the the table of cases and its columns.
+     * Configures the child scroll pane component's child OutlineView component.
      */
-    private void customizeOutlineView() {
+    private void configureOutlineView() {
         outlineView.setPropertyColumns(
                 Bundle.MultiUserCaseNode_column_createTime(), Bundle.MultiUserCaseNode_column_createTime(),
                 Bundle.MultiUserCaseNode_column_path(), Bundle.MultiUserCaseNode_column_path());
@@ -98,8 +98,16 @@ final class MultiUserCasesBrowserPanel extends javax.swing.JPanel implements Exp
     }
 
     /**
-     * Gets the list of cases known to the review mode cases manager and
-     * refreshes the cases table.
+     * Adds a listener to changes in case selection in this browser.
+     *
+     * @param listener the ListSelectionListener to add
+     */
+    void addListSelectionListener(ListSelectionListener listener) {
+        outline.getSelectionModel().addListSelectionListener(listener);
+    }    
+    
+    /**
+     * Refreshes the list of multi-user cases in this browser.
      */
     @NbBundle.Messages({
         "MultiUserCasesBrowserPanel.waitNode.message=Please Wait..."

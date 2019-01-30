@@ -37,8 +37,7 @@ final class OpenMultiUserCaseDialog extends JDialog {
     private static OpenMultiUserCasePanel multiUserCasesPanel;
 
     /**
-     * Gets the singleton JDialog singleton JDialog that allows a user to open a
-     * multi-user case.
+     * Gets the singleton JDialog that allows a user to open a multi-user case.
      *
      * @return The singleton JDialog instance.
      */
@@ -51,16 +50,14 @@ final class OpenMultiUserCaseDialog extends JDialog {
     }
 
     /**
-     * Constructs a singleton JDialog singleton JDialog that allows a user to
-     * open a multi-user case.
+     * Constructs a singleton JDialog that allows a user to open a multi-user
+     * case.
      */
     @NbBundle.Messages({
         "OpenMultiUserCaseDialog.title=Open Multi-User Case"
     })
     private OpenMultiUserCaseDialog() {
-        super(WindowManager.getDefault().getMainWindow(),
-                Bundle.OpenMultiUserCaseDialog_title(),
-                Dialog.ModalityType.APPLICATION_MODAL);
+        super(WindowManager.getDefault().getMainWindow(), Bundle.OpenMultiUserCaseDialog_title(), Dialog.ModalityType.APPLICATION_MODAL);
     }
 
     /**
@@ -72,7 +69,7 @@ final class OpenMultiUserCaseDialog extends JDialog {
                 action -> {
                     setVisible(false);
                 },
-                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), 
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                 JComponent.WHEN_IN_FOCUSED_WINDOW);
         multiUserCasesPanel = new OpenMultiUserCasePanel(this);
         add(multiUserCasesPanel);
@@ -84,14 +81,14 @@ final class OpenMultiUserCaseDialog extends JDialog {
      * Sets the dialog visibility. When made visible, the dialog refreshes the
      * display of its OpenMultiUserCasePanel child component.
      *
-     * @param value True or false.
+     * @param makeVisible True or false.
      */
     @Override
-    public void setVisible(boolean value) {
-        if (value) {
+    public void setVisible(boolean makeVisible) {
+        if (makeVisible) {
             multiUserCasesPanel.refreshDisplay();
         }
-        super.setVisible(value);
+        super.setVisible(makeVisible);
     }
 
 }
