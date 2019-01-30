@@ -92,31 +92,9 @@ public class EamArtifactUtil {
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
-
-                    String value = null;
-                    if (null != artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
-                        value = artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
-                    } else if (null != artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))) {
-                        value = artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
-                    } else if (null != artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
-                        value = artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
-                    }
-                    // Remove all non-numeric symbols to semi-normalize phone numbers, preserving leading "+" character
-                    if (value != null) {
-                        String newValue = value.replaceAll("\\D", "");
-                        if (value.startsWith("+")) {
-                            newValue = "+" + newValue;
-                        }
-                        value = newValue;
-                        // Only add the correlation attribute if the resulting phone number large enough to be of use
-                        // (these 3-5 digit numbers can be valid, but are not useful for correlation)
-                        if (value.length() > 5) {
-                            CorrelationAttributeInstance inst = makeCorrelationAttributeInstanceUsingTypeValue(artifactForInstance, EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.PHONE_TYPE_ID), value);
-                            if (inst != null) {
-                                eamArtifacts.add(inst);
-                            }
-                        }
-                    }
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, CorrelationAttributeInstance.PHONE_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM, CorrelationAttributeInstance.PHONE_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO, CorrelationAttributeInstance.PHONE_TYPE_ID);
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {    
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
