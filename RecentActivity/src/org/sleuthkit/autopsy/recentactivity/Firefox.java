@@ -56,12 +56,20 @@ class Firefox extends Extract {
 
     private static final Logger logger = Logger.getLogger(Firefox.class.getName());
     private static final String PLACE_URL_PREFIX = "place:";
-    private static final String HISTORY_QUERY = "SELECT moz_historyvisits.id,url,title,visit_count,(visit_date/1000000) AS visit_date,from_visit,(SELECT url FROM moz_places WHERE id=moz_historyvisits.from_visit) as ref FROM moz_places, moz_historyvisits WHERE moz_places.id = moz_historyvisits.place_id AND hidden = 0"; //NON-NLS
+    private static final String HISTORY_QUERY = "SELECT moz_historyvisits.id, url, title, visit_count,(visit_date/1000000) AS visit_date,from_visit,"
+            + "(SELECT url FROM moz_historyvisits history, moz_places places where history.id = moz_historyvisits.from_visit and history.place_id = places.id ) as ref "
+            + "FROM moz_places, moz_historyvisits "
+            + "WHERE moz_places.id = moz_historyvisits.place_id "
+            + "AND hidden = 0"; //NON-NLS
     private static final String COOKIE_QUERY = "SELECT name,value,host,expiry,(lastAccessed/1000000) AS lastAccessed,(creationTime/1000000) AS creationTime FROM moz_cookies"; //NON-NLS
     private static final String COOKIE_QUERY_V3 = "SELECT name,value,host,expiry,(lastAccessed/1000000) AS lastAccessed FROM moz_cookies"; //NON-NLS
     private static final String BOOKMARK_QUERY = "SELECT fk, moz_bookmarks.title, url, (moz_bookmarks.dateAdded/1000000) AS dateAdded FROM moz_bookmarks INNER JOIN moz_places ON moz_bookmarks.fk=moz_places.id"; //NON-NLS
     private static final String DOWNLOAD_QUERY = "SELECT target, source,(startTime/1000000) AS startTime, maxBytes FROM moz_downloads"; //NON-NLS
-    private static final String DOWNLOAD_QUERY_V24 = "SELECT url, content AS target, (lastModified/1000000) AS lastModified FROM moz_places, moz_annos WHERE moz_places.id = moz_annos.place_id AND moz_annos.anno_attribute_id = 3"; //NON-NLS
+    private static final String DOWNLOAD_QUERY_V24 = "SELECT url, content AS target, (lastModified/1000000) AS lastModified "
+                                                        + " FROM moz_places, moz_annos, moz_anno_attributes " 
+                                                        + " WHERE moz_places.id = moz_annos.place_id" 
+                                                        + " AND moz_annos.anno_attribute_id = moz_anno_attributes.id"
+                                                        + " AND moz_anno_attributes.name='downloads/destinationFileURI'"; //NON-NLS
     private final IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
