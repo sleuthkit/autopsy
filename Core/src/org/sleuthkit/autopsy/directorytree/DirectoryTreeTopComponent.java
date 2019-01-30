@@ -47,6 +47,7 @@ import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
+import org.openide.explorer.view.Visualizer;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -136,16 +137,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     return;
                 }
                 
+                Node expandedNode = Visualizer.findNode(event.getPath().getLastPathComponent());    
                 for(Node child : em.getRootContext().getChildren().getNodes()) {
-                    Object[] dataSourceNode = getPath(child);
-                    
-                    if(dataSourceNode.length != event.getPath().getPathCount()) {
-                        break;
-                    }
-                    
-                    //If the the user expanded one of the data sources node, then
-                    //automatically expand the Views and Results for them.
-                    if(isSameTreeNodePath(dataSourceNode, event.getPath().getPath())){
+                    if(child.equals(expandedNode)) {
                         preExpandNodes(child.getChildren());
                     }
                 }
@@ -189,49 +183,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 openViewPreferencesButton.setSelected(false);
             }
         });
-    }
-    
-    /**
-     * Test whether the two tree node paths are the same. 
-     * 
-     * @param first 
-     * @param second
-     * 
-     * @return boolean indicating equality of paths
-     */
-    private boolean isSameTreeNodePath(Object[] first, Object[] second) {
-        if(first.length != second.length) {
-            return false;
-        }
-        
-        for(int i = 0; i < first.length; i++) {
-            if(!first[i].toString().equals(second[i].toString())) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
-    /**
-     * Build the node's path in the Tree.
-     * 
-     * @param node
-     * @return Path array where the first element is the root
-     * and the last is the node parameter.
-     */
-    private Object[] getPath(Node node) {
-        List<Object> path = new ArrayList<>();
-        
-        Node current = node;
-        path.add(node.getName());
-        while(current.getParentNode() != null) {
-            current = node.getParentNode();
-            path.add(current.getName());
-        }
-        
-        Collections.reverse(path);
-        
-        return path.toArray();
     }
 
     /**
