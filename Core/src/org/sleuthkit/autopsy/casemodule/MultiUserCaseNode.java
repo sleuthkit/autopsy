@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import java.awt.Desktop;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,12 +35,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
-import org.sleuthkit.autopsy.casemodule.CaseActionException;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
-import org.sleuthkit.autopsy.casemodule.Bundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -50,10 +45,7 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 final class MultiUserCaseNode extends AbstractNode {
 
     private static final Logger logger = Logger.getLogger(MultiUserCaseNode.class.getName());
-    private static final String CASE_AUTO_INGEST_LOG_FILE_NAME = "auto_ingest_log.txt";
     private final CaseNodeData caseNodeData;
-    private final Path caseMetadataFilePath;
-    private final Path caseAutoIngestLogFilePath;
 
     /**
      * Constructs a NetBeans Explorer View node that represents a multi-user
@@ -67,8 +59,6 @@ final class MultiUserCaseNode extends AbstractNode {
         setName(caseNodeData.getDisplayName());
         setDisplayName(caseNodeData.getDisplayName());
         this.caseNodeData = caseNodeData;
-        this.caseMetadataFilePath = Paths.get(caseNodeData.getDirectory().toString(), caseNodeData.getDisplayName() + CaseMetadata.getFileExtension());
-        this.caseAutoIngestLogFilePath = Paths.get(caseNodeData.getDirectory().toString(), CASE_AUTO_INGEST_LOG_FILE_NAME);
     }
 
     @NbBundle.Messages({
@@ -102,14 +92,14 @@ final class MultiUserCaseNode extends AbstractNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new OpenMultiUserCaseAction(this.caseMetadataFilePath));
-        actions.add(new OpenCaseAutoIngestLogAction(this.caseAutoIngestLogFilePath));
+        actions.add(new OpenMultiUserCaseAction(this.caseNodeData));
+        actions.add(new OpenCaseAutoIngestLogAction(this.caseNodeData));
         return actions.toArray(new Action[actions.size()]);
     }
 
     @Override
     public Action getPreferredAction() {
-        return new OpenMultiUserCaseAction(this.caseMetadataFilePath);
+        return new OpenMultiUserCaseAction(this.caseNodeData);
     }
 
     /**
@@ -123,30 +113,44 @@ final class MultiUserCaseNode extends AbstractNode {
     private static final class OpenMultiUserCaseAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
-        private final Path caseMetadataFilePath;
+        private final CaseNodeData caseNodeData;
 
-        OpenMultiUserCaseAction(Path caseMetadataFilePath) {
+        OpenMultiUserCaseAction(CaseNodeData caseNodeData) {
             super(Bundle.MultiUserNode_OpenMultiUserCaseAction_menuItemText());
-            this.caseMetadataFilePath = caseMetadataFilePath;
+            this.caseNodeData = caseNodeData;
         }
 
+        @Override
         public void actionPerformed(ActionEvent e) {
             StartupWindowProvider.getInstance().close();
             OpenMultiUserCaseDialog.getInstance().setVisible(false);
             new Thread(() -> {
-                try {
-                    Case.openAsCurrentCase(caseMetadataFilePath.toString());
-                } catch (CaseActionException ex) {
-                    if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
-                        logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
-                        /*
-                         * CaseActionException error messages are user-friendly.
-                         */
-                        MessageNotifyUtil.Message.error(Bundle.MultiUserNode_OpenMultiUserCaseAction_caseOpeningErrorErrorMsg(ex.getLocalizedMessage()));
+                String caseMetadataFilePath = null;
+                File caseDirectory = caseNodeData.getDirectory().toFile();
+                File[] filesInDirectory = caseDirectory.listFiles();
+                if (filesInDirectory != null) {
+                    for (File file : filesInDirectory) {
+                        if (file.getName().toLowerCase().endsWith(CaseMetadata.getFileExtension()) && file.isFile()) {
+                            caseMetadataFilePath = file.getPath();
+                        }
                     }
+                }
+                if (caseMetadataFilePath != null) {
+                    try {
+                        Case.openAsCurrentCase(caseMetadataFilePath);
+                    } catch (CaseActionException ex) {
+                        if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
+                            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
+                        }
+                        SwingUtilities.invokeLater(() -> {
+                            MessageNotifyUtil.Message.error(Bundle.MultiUserNode_OpenMultiUserCaseAction_caseOpeningErrorErrorMsg(ex.getLocalizedMessage()));
+                            StartupWindowProvider.getInstance().open();
+                            OpenMultiUserCaseDialog.getInstance().setVisible(true);
+                        });
+                    }
+                } else {
                     SwingUtilities.invokeLater(() -> {
-                        StartupWindowProvider.getInstance().open();
-                        OpenMultiUserCaseDialog.getInstance().setVisible(true);
+                        MessageNotifyUtil.Message.error(Bundle.MultiUserNode_OpenMultiUserCaseAction_caseOpeningErrorErrorMsg("Could not locate case metadata file."));
                     });
                 }
             }).start();
@@ -166,16 +170,17 @@ final class MultiUserCaseNode extends AbstractNode {
     @NbBundle.Messages({
         "MultiUserNode.OpenCaseAutoIngestLogAction.menuItemText=Open Auto Ingest Log File",
         "MultiUserNode.OpenCaseAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.",
-        "MultiUserNode.OpenCaseAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details.",
+        "MultiUserNode.OpenCaseAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details."
     })
     private static final class OpenCaseAutoIngestLogAction extends AbstractAction {
 
         private static final long serialVersionUID = 1L;
+        private static final String CASE_AUTO_INGEST_LOG_FILE_NAME = "auto_ingest_log.txt";
         private final Path caseAutoIngestLogFilePath;
 
-        OpenCaseAutoIngestLogAction(Path caseAutoIngestLogFilePath) {
+        OpenCaseAutoIngestLogAction(CaseNodeData caseNodeData) {
             super(Bundle.MultiUserNode_OpenCaseAutoIngestLogAction_menuItemText());
-            this.caseAutoIngestLogFilePath = caseAutoIngestLogFilePath;
+            this.caseAutoIngestLogFilePath = Paths.get(caseNodeData.getDirectory().toString(), CASE_AUTO_INGEST_LOG_FILE_NAME);
             this.setEnabled(caseAutoIngestLogFilePath.toFile().exists());
         }
 

@@ -28,7 +28,6 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Date;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 
 /**
  * An object that converts data for a case directory lock coordination service

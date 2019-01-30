@@ -569,7 +569,7 @@ public class Case {
      *                             exception.
      */
     @Messages({
-        "# {0} - exception message", "Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata:\n{0}.",        
+        "# {0} - exception message", "Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata:\n{0}.",
         "Case.exceptionMessage.cannotOpenMultiUserCaseNoSettings=Multi-user settings are missing (see Tools, Options, Multi-user tab), cannot open a multi-user case."
     })
     public static void openAsCurrentCase(String caseMetadataFilePath) throws CaseActionException {
@@ -1741,7 +1741,7 @@ public class Case {
     }
 
     /**
-     * Updates the case display name.
+     * Updates the case details.
      *
      * @param newDisplayName the new display name for the case
      *
@@ -1756,6 +1756,18 @@ public class Case {
             metadata.setCaseDetails(caseDetails);
         } catch (CaseMetadataException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError(), ex);
+        }
+        if (getCaseType() == CaseType.MULTI_USER_CASE) {
+            if (!oldCaseDetails.getCaseDisplayName().equals(caseDetails.getCaseDisplayName())) {
+                try {
+                    CoordinationService coordinationService = CoordinationService.getInstance();
+                    CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
+                    nodeData.setDisplayName(caseDetails.getCaseDisplayName());
+                    coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
+                } catch (CoordinationServiceException | InterruptedException | IOException ex) {
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
+                }
+            }
         }
         if (!oldCaseDetails.getCaseNumber().equals(caseDetails.getCaseNumber())) {
             eventPublisher.publish(new AutopsyEvent(Events.NUMBER.toString(), oldCaseDetails.getCaseNumber(), caseDetails.getCaseNumber()));
@@ -2108,8 +2120,6 @@ public class Case {
      * Updates the node data for the case directory lock coordination service
      * node.
      *
-     * @param progressIndicator A progress indicator.
-     *
      * @throws CaseActionException If there is a problem completing the
      *                             operation. The exception will have a
      *                             user-friendly message and may be a wrapper
@@ -2122,13 +2132,15 @@ public class Case {
     private void updateCaseNodeData(ProgressIndicator progressIndicator) throws CaseActionException {
         if (getCaseType() == CaseType.MULTI_USER_CASE) {
             progressIndicator.progress(Bundle.Case_progressMessage_updatingCaseNodeData());
-            try {
-                CoordinationService coordinationService = CoordinationService.getInstance();
-                CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
-                nodeData.setLastAccessDate(new Date());
-                coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
-            } catch (CoordinationServiceException | InterruptedException | IOException ex) {
-                throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
+            if (getCaseType() == CaseType.MULTI_USER_CASE) {
+                try {
+                    CoordinationService coordinationService = CoordinationService.getInstance();
+                    CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
+                    nodeData.setLastAccessDate(new Date());
+                    coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
+                } catch (CoordinationServiceException | InterruptedException | IOException ex) {
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
+                }
             }
         }
     }
