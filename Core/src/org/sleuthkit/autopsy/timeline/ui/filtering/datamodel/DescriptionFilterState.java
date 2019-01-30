@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -101,6 +101,14 @@ public class DescriptionFilterState implements FilterState<DescriptionFilter> {
     }
 
     @Override
+    public DescriptionFilterState copyOf() {
+        DescriptionFilterState copy = new DescriptionFilterState(filter);
+        copy.setSelected(isSelected());
+        copy.setDisabled(isDisabled());
+        return copy;
+    }
+
+    @Override
     public int hashCode() {
         int hash = 7;
         hash = 37 * hash + Objects.hashCode(this.filter);
@@ -124,20 +132,13 @@ public class DescriptionFilterState implements FilterState<DescriptionFilter> {
         if (!Objects.equals(this.filter, other.filter)) {
             return false;
         }
-        if (!Objects.equals(this.selected, other.selected)) {
+        if (!Objects.equals(this.isSelected(), other.isSelected())) {
             return false;
         }
-        if (!Objects.equals(this.disabled, other.disabled)) {
+        if (!Objects.equals(this.isDisabled(), other.isDisabled())) {
             return false;
         }
         return true;
     }
 
-    @Override
-    public DescriptionFilterState copyOf() {
-        DescriptionFilterState copy = new DescriptionFilterState(filter);
-        copy.setSelected(isSelected());
-        copy.setDisabled(isDisabled());
-        return copy;
-    }
 }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import com.google.common.collect.Lists;
+import java.util.Objects;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.collections.FXCollections;
@@ -199,21 +200,16 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
             return false;
         }
 
-        RootFilterState otherFilterState = (RootFilterState) obj;
-
-        RootFilter activeFilter = getActiveFilter();
-        RootFilter activeFilter1 = otherFilterState.getActiveFilter();
-
-        if (notEqual(activeFilter, activeFilter1)) {
+        final RootFilterState other = (RootFilterState) obj;
+        if (!Objects.equals(this.getFilter(), other.getFilter())) {
             return false;
         }
 
-        RootFilter filter = getFilter();
-        RootFilter filter1 = otherFilterState.getFilter();
-
-        return filter.equals(filter1);
-    }
-
+        if (!Objects.equals(this.subFilterStates, other.getSubFilterStates())) {
+            return false;
+        }
+        return true;
+    } 
     @Override
     public int hashCode() {
         return 7;
