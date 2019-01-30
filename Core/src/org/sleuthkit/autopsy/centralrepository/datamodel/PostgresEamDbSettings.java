@@ -345,7 +345,7 @@ public final class PostgresEamDbSettings {
         createDataSourcesTable.append("case_id integer NOT NULL,");
         createDataSourcesTable.append("device_id text NOT NULL,");
         createDataSourcesTable.append("name text NOT NULL,");
-        createDataSourcesTable.append("datasource_obj_id integer,");
+        createDataSourcesTable.append("datasource_obj_id BIGINT,");
         createDataSourcesTable.append("md5 text DEFAULT NULL,");
         createDataSourcesTable.append("sha1 text DEFAULT NULL,");
         createDataSourcesTable.append("sha256 text DEFAULT NULL,");
@@ -496,7 +496,7 @@ public final class PostgresEamDbSettings {
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text,");
-        createArtifactInstancesTableTemplate.append("file_obj_id integer,");
+        createArtifactInstancesTableTemplate.append("file_obj_id BIGINT,");
         createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (data_source_id, value, file_path),");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
