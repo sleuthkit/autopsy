@@ -82,24 +82,24 @@ public class EamArtifactUtil {
                     BlackboardAttribute setNameAttr = artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
                     if (setNameAttr != null
                             && EamArtifactUtil.getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
-                        addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                        addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_KEYWORD, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                     }
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID()) {
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_DOMAIN, CorrelationAttributeInstance.DOMAIN_TYPE_ID);
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
 
                     String value = null;
-                    if (null != artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
-                        value = artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
+                    if (null != artifactForInstance.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER))) {
+                        value = artifactForInstance.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER)).getValueString();
                     } else if (null != artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM))) {
-                        value = artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
+                        value = artifactForInstance.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM)).getValueString();
                     } else if (null != artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
-                        value = artifactForInstance.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
+                        value = artifactForInstance.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
                     }
                     // Remove all non-numeric symbols to semi-normalize phone numbers, preserving leading "+" character
                     if (value != null) {
@@ -117,25 +117,37 @@ public class EamArtifactUtil {
                             }
                         }
                     }
+                    
+                    if(artifactTypeID == ARTIFACT_TYPE.TSK_CONTACT.getTypeID()) {
+                        addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_HOME, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                        addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                    }
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID()) {    
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID);
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_DEVICE_ID, CorrelationAttributeInstance.USBID_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK.getTypeID()) {    
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SSID, CorrelationAttributeInstance.SSID_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_SSID, CorrelationAttributeInstance.SSID_TYPE_ID);
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WIFI_NETWORK_ADAPTER.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING.getTypeID()
                         || artifactTypeID == ARTIFACT_TYPE.TSK_BLUETOOTH_ADAPTER.getTypeID()) {
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_MAC_ADDRESS, CorrelationAttributeInstance.MAC_TYPE_ID);
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_DEVICE_INFO.getTypeID()) {  
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMEI, CorrelationAttributeInstance.IMEI_TYPE_ID);
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID);
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_IMEI, CorrelationAttributeInstance.IMEI_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID);
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {  
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID);
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID);
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()) {
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, CorrelationAttributeInstance.PHONE_TYPE_ID);
-                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, CorrelationAttributeInstance.PHONE_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                }  else if (artifactTypeID == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_BCC, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_CC, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_FROM, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_TO, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                 }
             }
         } catch (EamDbException ex) {
