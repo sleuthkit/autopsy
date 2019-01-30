@@ -639,14 +639,8 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
             if (!resultSet.next()) {
-                //if nothing was inserted then return the DataSource that exists in the central repository
-                try {
-                    return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
-                            eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
-                            () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
-                } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
-                    throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo", eamDataSource.getName()), ex);
-                }
+                //if nothing was inserted then throw an exception which will be caught and the existing datasource in the CR found
+                throw new EamDbException("No DataSource added to central repository, should already exist in CR");
             } else {
                 //if a new data source was added to the central repository update the caches to include it and return it
                 int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
@@ -656,8 +650,15 @@ abstract class AbstractSqlEamDb implements EamDb {
                 return dataSource;
             }
 
-        } catch (SQLException ex) {
-            throw new EamDbException("Error inserting new data source.", ex); // NON-NLS
+        } catch (EamDbException | SQLException insertException) {
+            //if an exception was thrown causing us to not return the Datasource attempt to get the datasource to return
+            try {
+                return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
+                        eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
+                        () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
+            } catch (CacheLoader.InvalidCacheLoadException | ExecutionException getException) {
+                throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo, insert failed due to Exception: %s", eamDataSource.getName(), insertException.getMessage()), getException);
+            }
         } finally {
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeStatement(preparedStatement);
@@ -832,7 +833,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         return dataSources;
     }
-    
+
     /**
      * Updates the MD5 hash value in an existing data source in the database.
      *
@@ -842,7 +843,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException {
         updateDataSourceStringValue(eamDataSource, "md5", eamDataSource.getMd5());
     }
-    
+
     /**
      * Updates the SHA-1 hash value in an existing data source in the database.
      *
@@ -852,9 +853,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException {
         updateDataSourceStringValue(eamDataSource, "sha1", eamDataSource.getSha1());
     }
-    
+
     /**
-     * Updates the SHA-256 hash value in an existing data source in the database.
+     * Updates the SHA-256 hash value in an existing data source in the
+     * database.
      *
      * @param eamDataSource The data source to update
      */
@@ -862,13 +864,13 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException {
         updateDataSourceStringValue(eamDataSource, "sha256", eamDataSource.getSha256());
     }
-    
+
     /**
      * Updates the specified value in an existing data source in the database.
      *
      * @param eamDataSource The data source to update
-     * @param column The name of the column to be updated
-     * @param value The value to assign to the specified column
+     * @param column        The name of the column to be updated
+     * @param value         The value to assign to the specified column
      */
     private void updateDataSourceStringValue(CorrelationDataSource eamDataSource, String column, String value) throws EamDbException {
         if (eamDataSource == null) {
@@ -884,10 +886,10 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            
+
             preparedStatement.setString(1, value);
             preparedStatement.setInt(2, eamDataSource.getID());
-            
+
             preparedStatement.executeUpdate();
             //update the case in the cache
             dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()), eamDataSource);
@@ -902,15 +904,15 @@ abstract class AbstractSqlEamDb implements EamDb {
 
     /**
      * Changes the name of a data source in the DB
-     * 
-     * @param eamDataSource  The data source
-     * @param newName        The new name
-     * 
-     * @throws EamDbException 
+     *
+     * @param eamDataSource The data source
+     * @param newName       The new name
+     *
+     * @throws EamDbException
      */
     @Override
     public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
-        
+
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -922,7 +924,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(1, newName);
             preparedStatement.setInt(2, eamDataSource.getID());
             preparedStatement.executeUpdate();
-            
+
             CorrelationDataSource updatedDataSource = new CorrelationDataSource(
                     eamDataSource.getCaseID(),
                     eamDataSource.getID(),
@@ -932,7 +934,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     eamDataSource.getMd5(),
                     eamDataSource.getSha1(),
                     eamDataSource.getSha256());
-            
+
             dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getDataSourceObjectID()), updatedDataSource);
             dataSourceCacheById.put(getDataSourceByIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getID()), updatedDataSource);
         } catch (SQLException ex) {
@@ -941,9 +943,9 @@ abstract class AbstractSqlEamDb implements EamDb {
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
-        }     
-    }    
-    
+        }
+    }
+
     /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
      * Data Source first.
