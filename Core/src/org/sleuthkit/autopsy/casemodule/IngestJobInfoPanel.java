@@ -61,7 +61,8 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     private void customizeComponents() {
         refresh();
         this.ingestJobTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
-            this.ingestModuleTableModel = new IngestModuleTableModel(this.ingestJobs.get(ingestJobTable.getSelectedRow()));
+            IngestJobInfo currJob = (ingestJobTable.getSelectedRow() < 0 ? null : this.ingestJobs.get(ingestJobTable.getSelectedRow()));
+            this.ingestModuleTableModel = new IngestModuleTableModel(currJob);
             this.ingestModuleTable.setModel(this.ingestModuleTableModel);
         });
 

@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -300,6 +301,8 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                     BlackboardArtifact verificationFailedArtifact = Case.getCurrentCase().getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED, img.getId());
                     verificationFailedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                         DataSourceIntegrityModuleFactory.getModuleName(), artifactComment));
+                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(DataSourceIntegrityModuleFactory.getModuleName(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error creating verification failed artifact", ex);
                 }

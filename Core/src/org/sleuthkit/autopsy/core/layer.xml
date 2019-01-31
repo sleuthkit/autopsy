@@ -48,6 +48,7 @@
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
+            <file name="org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseSaveAction"/>
@@ -77,7 +78,7 @@
         </folder>
         <folder name="Tools">
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>
-            <file name="org-sleuthkit-autopsy-commonfilesearch-CommonAttributeSearchAction.instance"/>
+            <file name="org-sleuthkit-autopsy-commonpropertiessearch-CommonAttributeSearchAction.instance"/>
             <file name="org-sleuthkit-autopsy-ingest-IngestMessagesAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.ingest.IngestMessagesAction"/>
             </file>
@@ -182,6 +183,10 @@
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
                 <attr name="position" intvalue="301"/>
             </file>
+            <file name="org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.instance"/>
+                <attr name="position" intvalue="302"/>
+            </file>
             <file name="org-netbeans-modules-print-action-PageSetupAction.shadow_hidden"/>
             <file name="org-netbeans-modules-print-action-PrintAction.shadow_hidden"/>
             <file name="org-openide-actions-SaveAction.shadow_hidden"/>
@@ -197,8 +202,8 @@
             <file name="org-netbeans-modules-options-OptionsWindowAction.shadow"/>
             <file name="org-netbeans-modules-templates-actions-TemplatesAction.shadow_hidden"/>
             <file name="org-openide-actions-ToolsAction.shadow_hidden"/>
-            <file name="org-sleuthkit-autopsy-commonfilesearch-CommonFilesAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-commonfilesearch-CommonAttributeSearchAction.instance"/>
+            <file name="org-sleuthkit-autopsy-commonpropertiessearch-CommonFilesAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Tools/org-sleuthkit-autopsy-commonpropertiessearch-CommonAttributeSearchAction.instance"/>
                 <attr name="position" intvalue="202"/>
             </file>
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.shadow">

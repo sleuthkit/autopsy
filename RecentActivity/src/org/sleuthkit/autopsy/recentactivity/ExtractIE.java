@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -23,7 +23,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.BufferedReader;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
@@ -36,8 +35,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
@@ -460,10 +457,6 @@ class ExtractIE extends Extract {
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return bbartifacts;
         }
-
-        // Keep a list of reported user accounts to avoid repeats
-        Set<String> reportedUserAccounts = new HashSet<>();
-
         while (fileScanner.hasNext()) {
             String line = fileScanner.nextLine();
             if (!line.startsWith("URL")) {   //NON-NLS
@@ -570,18 +563,6 @@ class ExtractIE extends Extract {
                 // index the artifact for keyword search
                 this.indexArtifact(bbart);
                 bbartifacts.add(bbart);
-
-                if ((!user.isEmpty()) && (!reportedUserAccounts.contains(user))) {
-                    BlackboardArtifact osAttr = origFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
-                    osAttr.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                            NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName.noSpace"), user));
-
-                    // index the artifact for keyword search
-                    this.indexArtifact(osAttr);
-                    bbartifacts.add(osAttr);
-
-                    reportedUserAccounts.add(user);
-                }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex); //NON-NLS
             }

@@ -67,6 +67,7 @@ import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
 import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
+import org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -75,9 +76,10 @@ import org.sleuthkit.autopsy.casemodule.events.CommentChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchAction;
+import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
@@ -308,6 +310,11 @@ public class Case {
          * was deleted (type: Long), the new value is null.
          */
         DATA_SOURCE_DELETED,
+        /**
+         * A data source's name has changed. The new value of the property
+         * change event is the new name.
+         */
+        DATA_SOURCE_NAME_CHANGED,
         /**
          * The current case has changed.
          *
@@ -1165,6 +1172,7 @@ public class Case {
                 CallableSystemAction.get(AddImageAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
@@ -1218,6 +1226,7 @@ public class Case {
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false);
+                CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
@@ -1578,6 +1587,19 @@ public class Case {
      */
     public void notifyDataSourceAdded(Content dataSource, UUID addingDataSourceEventId) {
         eventPublisher.publish(new DataSourceAddedEvent(dataSource, addingDataSourceEventId));
+    }
+    
+    /**
+     * Notifies case event subscribers that a data source has been added to the
+     * case database.
+     *
+     * This should not be called from the event dispatch thread (EDT)
+     *
+     * @param dataSource              The data source.
+     * @param newName                 The new name for the data source
+     */
+    public void notifyDataSourceNameChanged(Content dataSource, String newName) {
+        eventPublisher.publish(new DataSourceNameChangedEvent(dataSource, newName));
     }
 
     /**

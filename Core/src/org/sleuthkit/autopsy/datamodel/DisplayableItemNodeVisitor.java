@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeSearchResultRootNode;
-import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
-import org.sleuthkit.autopsy.commonfilesearch.InstanceCaseNode;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
-import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
-import org.sleuthkit.autopsy.commonfilesearch.InstanceDataSourceNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.CentralRepoCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeSearchResultRootNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCountNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCaseNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.InstanceDataSourceNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
