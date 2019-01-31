@@ -359,7 +359,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }//GEN-LAST:event_goToOffsetTextFieldActionPerformed
 
     @NbBundle.Messages({"DataContentViewerHex.launchError=Unable to launch HxD Editor. "
-                        + "Please set-up the HdX install location in Tools -> Options -> External Viewer"})
+                        + "Please set-up the HxD install location in Tools -> Options -> External Viewer"})
     private void launchHxDButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_launchHxDButtonActionPerformed
         try {
             File HdXExecutable = new File(UserPreferences.getExternalHexEditorPath());
