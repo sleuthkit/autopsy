@@ -639,8 +639,15 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
             if (!resultSet.next()) {
-                //if nothing was inserted then throw an exception which will be caught and the existing datasource in the CR found
-                throw new EamDbException("No DataSource added to central repository, should already exist in CR");
+                //if nothing was inserted then return the DataSource that exists in the central repository
+                //expected to occur in regards to PostgreSQL central repository databases
+                try {
+                    return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
+                            eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
+                            () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
+                } catch (CacheLoader.InvalidCacheLoadException | ExecutionException getException) {
+                    throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo:", eamDataSource.getName()), getException);
+                }
             } else {
                 //if a new data source was added to the central repository update the caches to include it and return it
                 int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
@@ -650,8 +657,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                 return dataSource;
             }
 
-        } catch (EamDbException | SQLException insertException) {
+        } catch (SQLException insertException) {
             //if an exception was thrown causing us to not return the Datasource attempt to get the datasource to return
+            //is expected to occur in regards to SQLite central repository databases
             try {
                 return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
                         eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
