@@ -269,6 +269,35 @@
                 <package>org.apache.commons.collections4.splitmap</package>
                 <package>org.apache.commons.collections4.trie</package>
                 <package>org.apache.commons.collections4.trie.analyzer</package>
+                <package>org.apache.commons.compress</package>
+                <package>org.apache.commons.compress.archivers</package>
+                <package>org.apache.commons.compress.archivers.ar</package>
+                <package>org.apache.commons.compress.archivers.arj</package>
+                <package>org.apache.commons.compress.archivers.cpio</package>
+                <package>org.apache.commons.compress.archivers.dump</package>
+                <package>org.apache.commons.compress.archivers.examples</package>
+                <package>org.apache.commons.compress.archivers.jar</package>
+                <package>org.apache.commons.compress.archivers.sevenz</package>
+                <package>org.apache.commons.compress.archivers.tar</package>
+                <package>org.apache.commons.compress.archivers.zip</package>
+                <package>org.apache.commons.compress.changes</package>
+                <package>org.apache.commons.compress.compressors</package>
+                <package>org.apache.commons.compress.compressors.brotli</package>
+                <package>org.apache.commons.compress.compressors.bzip2</package>
+                <package>org.apache.commons.compress.compressors.deflate</package>
+                <package>org.apache.commons.compress.compressors.deflate64</package>
+                <package>org.apache.commons.compress.compressors.gzip</package>
+                <package>org.apache.commons.compress.compressors.lz4</package>
+                <package>org.apache.commons.compress.compressors.lz77support</package>
+                <package>org.apache.commons.compress.compressors.lzma</package>
+                <package>org.apache.commons.compress.compressors.lzw</package>
+                <package>org.apache.commons.compress.compressors.pack200</package>
+                <package>org.apache.commons.compress.compressors.snappy</package>
+                <package>org.apache.commons.compress.compressors.xz</package>
+                <package>org.apache.commons.compress.compressors.z</package>
+                <package>org.apache.commons.compress.compressors.zstandard</package>
+                <package>org.apache.commons.compress.parallel</package>
+                <package>org.apache.commons.compress.utils</package>
                 <package>org.apache.commons.csv</package>
                 <package>org.apache.commons.io</package>
                 <package>org.apache.commons.io.comparator</package>
@@ -909,6 +938,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/joda-time-2.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-compress-1.18.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-compress-1.18.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.1.2-javadoc.jar</runtime-relative-path>

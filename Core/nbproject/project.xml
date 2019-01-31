@@ -468,16 +468,8 @@
                 <binary-origin>release\modules\ext\parso-2.0.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-4.0.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\poi-scratchpad-4.0.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/json-simple-1.1.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\json-simple-1.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-4.0.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\poi-ooxml-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.11.0.jar</runtime-relative-path>
@@ -554,10 +546,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-2.0.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-compress-1.18.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\commons-compress-1.18.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/rome-1.12.0.jar</runtime-relative-path>
@@ -644,10 +632,6 @@
                 <binary-origin>release/modules/ext/postgresql-9.4.1211.jre7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-4.0.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\poi-4.0.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/slf4j-api-1.7.25.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\slf4j-api-1.7.25.jar</binary-origin>
             </class-path-extension>
@@ -698,10 +682,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/activemq-all-5.11.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-schemas-4.0.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\poi-ooxml-schemas-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dec-0.1.2.jar</runtime-relative-path>
