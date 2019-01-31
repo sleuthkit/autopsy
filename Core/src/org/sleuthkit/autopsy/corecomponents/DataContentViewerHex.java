@@ -367,13 +367,17 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         new BackgroundFileCopyTask().execute();
     }//GEN-LAST:event_launchHxDButtonActionPerformed
 
+    /**
+     * Performs the file copying and process launching in a SwingWorker so that the 
+     * UI is not blocked when opening large files.
+     */
     private class BackgroundFileCopyTask extends SwingWorker<Void, Void> {
         private boolean wasCancelled = false;
         
         @Override
         public Void doInBackground() throws InterruptedException {
             ProgressHandle progress = ProgressHandle.createHandle(DataContentViewerHex_copyingFile(), () -> {
-                //Cancel the swing worker (which will interrupt the ContentUtils call)
+                //Cancel the swing worker (which will interrupt the ContentUtils call below)
                 this.cancel(true);
                 wasCancelled = true;
                 return true;
