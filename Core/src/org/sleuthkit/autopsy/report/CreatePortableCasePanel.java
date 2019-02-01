@@ -9,6 +9,7 @@ import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,6 @@ import javax.swing.event.ListDataListener;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -96,6 +96,30 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
                 }
             }
         });
+    }
+    
+    /**
+     * Gets the subset of the tag names in use selected by the user.
+     *
+     * @return A list, possibly empty, of TagName data transfer objects (DTOs).
+     */
+    List<TagName> getSelectedTagNames() {
+        List<TagName> selectedTagNames = new ArrayList<>();
+        for (TagName tagName : tagNames) {
+            if (tagNameSelections.get(tagName.getDisplayName())) {
+                selectedTagNames.add(tagName);
+            }
+        }
+        return selectedTagNames;
+    }
+
+    /**
+     * Get the output folder
+     * 
+     * @return The output folder for the portable case
+     */
+    String getOutputFolder() {
+        return outputFolderTextField.getText();
     }
     
     // This class is a list model for the tag names JList component.
