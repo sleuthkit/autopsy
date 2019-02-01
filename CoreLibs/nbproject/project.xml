@@ -601,24 +601,6 @@
                 <package>org.freedesktop.gstreamer.swing</package>
                 <package>org.freedesktop.gstreamer.swt</package>
                 <package>org.freedesktop.gstreamer.swt.overlay</package>
-                <package>org.gstreamer</package>
-                <package>org.gstreamer.controller</package>
-                <package>org.gstreamer.elements</package>
-                <package>org.gstreamer.elements.good</package>
-                <package>org.gstreamer.event</package>
-                <package>org.gstreamer.example</package>
-                <package>org.gstreamer.glib</package>
-                <package>org.gstreamer.interfaces</package>
-                <package>org.gstreamer.io</package>
-                <package>org.gstreamer.lowlevel</package>
-                <package>org.gstreamer.lowlevel.annotations</package>
-                <package>org.gstreamer.media</package>
-                <package>org.gstreamer.media.event</package>
-                <package>org.gstreamer.message</package>
-                <package>org.gstreamer.query</package>
-                <package>org.gstreamer.swing</package>
-                <package>org.gstreamer.swt</package>
-                <package>org.gstreamer.swt.overlay</package>
                 <package>org.hyperic.jni</package>
                 <package>org.hyperic.sigar</package>
                 <package>org.hyperic.sigar.cmd</package>
