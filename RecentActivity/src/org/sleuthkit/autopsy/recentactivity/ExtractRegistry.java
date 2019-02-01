@@ -992,7 +992,7 @@ class ExtractRegistry extends Extract {
          * Create a UserInfo object
          *
          * @param name         - the os user account name
-         * @param userIdString - the SID for the user account
+         * @param userSidString - the SID for the user account
          */
         private UserInfo(String name, String userSidString) {
             userName = name;
