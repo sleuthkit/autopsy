@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -41,6 +42,8 @@ import org.sleuthkit.datamodel.TskData;
 public class EamArtifactUtil {
 
     private static final Logger logger = Logger.getLogger(EamArtifactUtil.class.getName());
+    private static final ImmutableMap<Integer, Integer> CORRELATABLE_ATTRIBUTES;
+    private static final ATTRIBUTE_TYPE[] KNOWN_ATTRIBUTES = BlackboardAttribute.ATTRIBUTE_TYPE.values();
 
     public EamArtifactUtil() {
     }
@@ -48,6 +51,29 @@ public class EamArtifactUtil {
     @Messages({"EamArtifactUtil.emailaddresses.text=Email Addresses"})
     public static String getEmailAddressAttrString() {
         return Bundle.EamArtifactUtil_emailaddresses_text();
+    }
+
+    static {
+        CORRELATABLE_ATTRIBUTES = ImmutableMap.<Integer, Integer>builder()
+                .put(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), CorrelationAttributeInstance.DOMAIN_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), CorrelationAttributeInstance.USBID_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_MAC_ADDRESS.getTypeID(), CorrelationAttributeInstance.MAC_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_IMEI.getTypeID(), CorrelationAttributeInstance.IMEI_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_IMSI.getTypeID(), CorrelationAttributeInstance.IMSI_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_ICCID.getTypeID(), CorrelationAttributeInstance.ICCID_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_SSID.getTypeID(), CorrelationAttributeInstance.SSID_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), CorrelationAttributeInstance.PHONE_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), CorrelationAttributeInstance.PHONE_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), CorrelationAttributeInstance.PHONE_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_EMAIL_HOME.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
+                .put(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
+                .build();
     }
 
     /**
@@ -148,6 +174,16 @@ public class EamArtifactUtil {
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_FROM, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_TO, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                } else {
+                    for (BlackboardAttribute customAttribute : artifactForInstance.getAttributes()) {
+                        Integer customAttributeTypeId = customAttribute.getAttributeType().getTypeID();
+                        if (CORRELATABLE_ATTRIBUTES.containsKey(customAttributeTypeId)) {
+                            addCorrelationAttributeToList(eamArtifacts, artifactForInstance,
+                                    KNOWN_ATTRIBUTES[customAttributeTypeId],
+                                    CORRELATABLE_ATTRIBUTES.get(customAttributeTypeId)
+                            );
+                        }
+                    }
                 }
             }
         } catch (EamDbException ex) {
