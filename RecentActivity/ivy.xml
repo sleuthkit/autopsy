@@ -6,7 +6,4 @@
         <conf name="recent-activity"/>
       
     </configurations>
-    <dependencies>
-        <dependency conf="recent-activity->default" org="com.google.code.gson" name="gson" rev="2.1"/>
-    </dependencies>
 </ivy-module>
