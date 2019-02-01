@@ -50,6 +50,8 @@ import org.apache.tika.parser.ParsingReader;
 import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.pdf.PDFParserConfig;
+import org.apache.tika.detect.Detector;
+import org.apache.tika.mime.MediaType;
 import org.openide.util.NbBundle;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Lookup;
@@ -125,7 +127,7 @@ final class TikaTextExtractor implements TextExtractor {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(tikaThreadFactory);
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
-    private final AutoDetectParser parser = new AutoDetectParser();
+    private final AutoDetectParser parser;
     private final Content content;
 
     private boolean tesseractOCREnabled;
@@ -145,6 +147,19 @@ final class TikaTextExtractor implements TextExtractor {
 
     public TikaTextExtractor(Content content) {
         this.content = content;
+        if(content instanceof AbstractFile) {
+            //Override the detector in Tika and use the already computed
+            //mimetype. This also saves on unneccessary file reads.
+            parser = new AutoDetectParser(new Detector() {
+                @Override
+                public MediaType detect(InputStream in, Metadata mtdt) throws IOException {
+                    return MediaType.parse(AbstractFile.class.cast(content).getMIMEType());
+                }
+                
+            });   
+        } else {
+            parser = new AutoDetectParser();
+        }
     }
 
     /**
