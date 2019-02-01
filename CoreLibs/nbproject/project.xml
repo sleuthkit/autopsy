@@ -981,10 +981,6 @@
                 <binary-origin>release/modules/ext/common-lang-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gstreamer-java-1.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gstreamer-java-1.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/gst1-java-core-0.9.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gst1-java-core-0.9.3.jar</binary-origin>
             </class-path-extension>
