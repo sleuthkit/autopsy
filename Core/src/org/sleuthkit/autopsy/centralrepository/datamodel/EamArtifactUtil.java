@@ -43,7 +43,6 @@ public class EamArtifactUtil {
 
     private static final Logger logger = Logger.getLogger(EamArtifactUtil.class.getName());
     private static final ImmutableMap<Integer, Integer> CORRELATABLE_ATTRIBUTES;
-    private static final ATTRIBUTE_TYPE[] KNOWN_ATTRIBUTES = BlackboardAttribute.ATTRIBUTE_TYPE.values();
 
     public EamArtifactUtil() {
     }
