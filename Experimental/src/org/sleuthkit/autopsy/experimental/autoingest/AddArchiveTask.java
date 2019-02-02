@@ -201,10 +201,16 @@ class AddArchiveTask implements Runnable {
                         success = true;
                         newDataSources.addAll(internalDataSource.getContent());
                         
-                        // Update the names for all new data sources to be the root archive plus the name of the data source
+                        // update data source info
                         for (Content c:internalDataSource.getContent()) {
                             if (c instanceof DataSource) {
                                 DataSource ds = (DataSource) c;
+                                 
+                                // Update aquisition details
+                                String details = "Extracted from archive: " + archivePath.toString();
+                                ds.setAcquisitionDetails(details);
+                                
+                                // Update the names for all new data sources to be the root archive plus the name of the data source
                                 String newName = Paths.get(archivePath).getFileName() + "/" + ds.getName();
                                 ds.setDisplayName(newName);
                                 currentCase.notifyDataSourceNameChanged(c, newName);
@@ -253,8 +259,17 @@ class AddArchiveTask implements Runnable {
 
                     archiveDspLock.wait();
 
-                    // at this point we got the content object(s) from the current DSP
+                    // at this point we got the content object(s) from the current DSP.
                     newDataSources.addAll(internalDataSource.getContent());
+
+                    for (Content c : internalDataSource.getContent()) {
+                        if (c instanceof DataSource) {
+                            DataSource ds = (DataSource) c;
+                            // Update aquisition details
+                            String details = "Extracted from archive: " + archivePath.toString();
+                            ds.setAcquisitionDetails(details);
+                        }
+                    }
                 }
             }
         } catch (Exception ex) {
