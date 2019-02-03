@@ -3,8 +3,9 @@ Most of the Autopsy development occurs to be run on Windows systems, but it is p
 # Prerequisites
 
 You need the following:
-- X
-- Y
+- testdisk
+- Oracle Java
+- The Sleuth Kit Java Bindings
 
 TODO
 
