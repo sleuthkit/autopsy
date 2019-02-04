@@ -48,10 +48,7 @@ def gitSleuthkitCheckout(branch, branchOwner):
         print("checking out "+branchOwner+"-"+branch)
         passed = subprocess.call(checkout, stdout=sys.stdout,cwd=TSK_HOME)
         cmd = ['git','pull', "/".join(["https://github.com", branchOwner, "sleuthkit.git"]), branch]
-        if passed:
-            #do nothing
-            print("Passed declared")
-        else:
+        if passed != 0: #0 would be success
             print("NOT PASSED")
             #unable to create new branch return instead of pulling
             return
@@ -105,12 +102,13 @@ def main():
         RELEASE_BRANCH = "release-"+version
         gitSleuthkitCheckout(RELEASE_BRANCH, BRANCH_OWNER)
     # Check if the same branch exists in TSK (develop->develop, custom1->custom1, etc.)
-    elif CURRENT_BRANCH in getSleuthkitBranchList(BRANCH_OWNER): 
-        print("current branch found")
+    else: 
+        print("try to get Branch")
         gitSleuthkitCheckout(CURRENT_BRANCH, BRANCH_OWNER)
 
     # Otherwise, default to origin develop
     if passed != 0:
+        print("Earlier attempt failed try develop origin")
         gitSleuthkitCheckout(DEVELOP_BRANCH, ORIGIN_OWNER)
         
     if passed != 0:
