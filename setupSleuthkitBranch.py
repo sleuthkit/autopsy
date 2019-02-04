@@ -85,8 +85,8 @@ def main():
         BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", False).split('/')[0]
     elif APPVEYOR:
         print("APPVEYOR TRUE")
-        CURRENT_BRANCH=os.getenv("APPVEYOR_REPO_BRANCH",False)
-        BRANCH_OWNER=os.getenv("APPVEYOR_REPO_NAME", False).split('/')[0]
+        CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH",False)
+        BRANCH_OWNER=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", False).split('/')[0]
     else:
         cmd=['git','rev-parse','--abbrev-ref','HEAD']
         output = subprocess.check_output(cmd)
