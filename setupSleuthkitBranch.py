@@ -80,9 +80,11 @@ def main():
     TRAVIS=os.getenv("TRAVIS",False)
     APPVEYOR=os.getenv("APPVEYOR",False)
     if TRAVIS == "true":
+        print("TRAVIS TRUE")
         CURRENT_BRANCH=os.getenv("TRAVIS_BRANCH",False)
         BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", False).split('/')[0]
     elif APPVEYOR:
+        print("APPVEYOR TRUE")
         CURRENT_BRANCH=os.getenv("APPVEYOR_REPO_BRANCH",False)
         BRANCH_OWNER=os.getenv("APPVEYOR_REPO_NAME", False).split('/')[0]
     else:
