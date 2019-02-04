@@ -52,6 +52,7 @@ def gitSleuthkitCheckout(branch, branchOwner):
             #do nothing
             print("Passed declared")
         else:
+            print("NOT PASSED")
             #unable to create new branch return instead of pulling
             return
     print("Perfroming CMD: "+" ".join(cmd));
