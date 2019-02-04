@@ -50,6 +50,7 @@ def gitSleuthkitCheckout(branch, branchOwner):
         cmd = ['git','pull', "/".join(["https://github.com", branchOwner, "sleuthkit.git"]), branch]
         if passed:
             #do nothing
+            print("Passed declared")
         else:
             #unable to create new branch return instead of pulling
             return
