@@ -48,7 +48,9 @@ def gitSleuthkitCheckout(branch, branchOwner):
         print("checking out "+branchOwner+"-"+branch)
         passed = subprocess.call(checkout, stdout=sys.stdout,cwd=TSK_HOME)
         cmd = ['git','pull', "/".join(["https://github.com", branchOwner, "sleuthkit.git"]), branch]
-        if !passed:
+        if passed:
+            #do nothing
+        else:
             #unable to create new branch return instead of pulling
             return
     print("Perfroming CMD: "+ *cmd)
