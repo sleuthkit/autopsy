@@ -54,7 +54,7 @@ def gitSleuthkitCheckout(branch, branchOwner):
         else:
             #unable to create new branch return instead of pulling
             return
-    print("Perfroming CMD: "+ *cmd)
+    print("Perfroming CMD: "+" ".join(cmd));
     passed = subprocess.call(cmd,stdout=sys.stdout,cwd=TSK_HOME)
 
 def parseXML(xmlFile):
