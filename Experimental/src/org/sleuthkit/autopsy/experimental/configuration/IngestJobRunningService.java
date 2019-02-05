@@ -23,22 +23,22 @@ import javax.swing.JPanel;
 /**
  * Interface to run an ingest job in the background.
  */
-public interface IngestJobRunningServiceInterface {
+public interface IngestJobRunningService {
 
     /**
      * Starts the service
      */
-    public void start();
+    void start();
     
     /**
      * Stops the service
      */
-    public void stop();
+    void stop();
     
     /**
      * Returns a panel to be displayed while using this service
      * 
      * @return panel to be displayed while using this service
      */
-    public JPanel getStartupWindow();
+    JPanel getStartupWindow();
 }
