@@ -199,7 +199,7 @@
             <file name="Separator4.instance_hidden"/>-->
         </folder>
         <folder name="Search">
-            <attr intvalue="300" name="position"/>
+            <attr intvalue="310" name="position"/>
             <file name="org-sleuthkit-autopsy-filesearch-FileSearchAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Search/org-sleuthkit-autopsy-filesearch-FileSearchAction.instance"/>
                 <attr name="position" intvalue="200"/>
