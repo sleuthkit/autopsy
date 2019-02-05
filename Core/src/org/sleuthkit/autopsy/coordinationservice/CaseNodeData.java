@@ -40,7 +40,7 @@ public final class CaseNodeData {
     /*
      * Version 0 fields.
      */
-    private int version;
+    private final int version;
     private boolean errorsOccurred;
 
     /*
