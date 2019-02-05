@@ -31,9 +31,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 /**
  * Action for accessing the Search Other Cases dialog.
  */
-@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.allcasessearch.AllCasesSearchAction")
+@ActionID(category = "Search", id = "org.sleuthkit.autopsy.allcasessearch.AllCasesSearchAction")
 @ActionRegistration(displayName = "#CTL_OtherCasesSearchAction=Search All Cases", lazy = false)
-@ActionReference(path = "Menu/Tools", position = 201)
+@ActionReference(path = "Menu/Search", position = 201)
 @NbBundle.Messages({"CTL_AllCasesSearchAction=Search All Cases"})
 public class AllCasesSearchAction extends CallableSystemAction {
 
