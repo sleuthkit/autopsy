@@ -61,7 +61,7 @@ final class OpenCaseAutoIngestLogAction extends AbstractAction {
         "OpenCaseAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details."
     })
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent event) {
         try {
             if (caseAutoIngestLogFilePath.toFile().exists()) {
                 Desktop.getDesktop().edit(caseAutoIngestLogFilePath.toFile());
@@ -75,7 +75,7 @@ final class OpenCaseAutoIngestLogAction extends AbstractAction {
     }
 
     @Override
-    public Object clone() throws CloneNotSupportedException {
+    public OpenCaseAutoIngestLogAction clone() throws CloneNotSupportedException {
         super.clone();
         throw new CloneNotSupportedException();
     }

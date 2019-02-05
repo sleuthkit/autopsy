@@ -50,7 +50,7 @@ final class OpenMultiUserCasePanel extends JPanel {
         caseExplorerScrollPane.add(caseBrowserPanel);
         caseExplorerScrollPane.setViewportView(caseBrowserPanel);
         openSelectedCaseButton.setEnabled(false);
-        caseBrowserPanel.addListSelectionListener((ListSelectionEvent e) -> {
+        caseBrowserPanel.addListSelectionListener((ListSelectionEvent event) -> {
             openSelectedCaseButton.setEnabled(caseBrowserPanel.getExplorerManager().getSelectedNodes().length > 0);
         });
     }
@@ -177,12 +177,10 @@ final class OpenMultiUserCasePanel extends JPanel {
     private void openSelectedCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openSelectedCaseButtonActionPerformed
         ExplorerManager explorerManager = caseBrowserPanel.getExplorerManager();
         Node[] selectedNodes = explorerManager.getSelectedNodes();
-        if (selectedNodes.length > 0) {
-            if (selectedNodes[0] instanceof MultiUserCaseNode) {
-                MultiUserCaseNode caseNode = (MultiUserCaseNode) selectedNodes[0];
-                CaseNodeData nodeData = caseNode.getCaseNodeData();
-                new OpenMultiUserCaseAction(nodeData).actionPerformed(evt);
-            }
+        if (selectedNodes.length > 0 && selectedNodes[0] instanceof MultiUserCaseNode) {
+            MultiUserCaseNode caseNode = (MultiUserCaseNode) selectedNodes[0];
+            CaseNodeData nodeData = caseNode.getCaseNodeData();
+            new OpenMultiUserCaseAction(nodeData).actionPerformed(evt);
         }
     }//GEN-LAST:event_openSelectedCaseButtonActionPerformed
 

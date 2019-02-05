@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -53,7 +54,7 @@ public final class CaseMetadata {
 
     private static final String FILE_EXTENSION = ".aut";
     private static final String DATE_FORMAT_STRING = "yyyy/MM/dd HH:mm:ss (z)";
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING);
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
 
     /*
      * Fields from schema version 1
@@ -127,7 +128,7 @@ public final class CaseMetadata {
      * @return The date format.
      */
     public static DateFormat getDateFormat() {
-        return new SimpleDateFormat(DATE_FORMAT_STRING);
+        return new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
     }
 
     /**

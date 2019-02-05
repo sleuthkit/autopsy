@@ -33,8 +33,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 final class MultiUserCasesRootNode extends AbstractNode {
 
-    private static final Logger logger = Logger.getLogger(MultiUserCasesRootNode.class.getName());    
-    
+    private static final Logger logger = Logger.getLogger(MultiUserCasesRootNode.class.getName());
+
     /**
      * Constructs a root node for displaying MultiUserCaseNodes in a NetBeans
      * Explorer View.
@@ -46,6 +46,11 @@ final class MultiUserCasesRootNode extends AbstractNode {
         super(Children.create(new MultiUserCasesRootNodeChildren(), true));
     }
 
+    /**
+     * A child factory for creating child nodes for a MultiUserCasesRootNode.
+     * The child nodes are of type MultiUserCaseNode. The node keys are of type
+     * CaseNodeData.
+     */
     private static class MultiUserCasesRootNodeChildren extends ChildFactory<CaseNodeData> {
 
         @Override

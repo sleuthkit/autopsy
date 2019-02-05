@@ -55,7 +55,7 @@ final class OpenMultiUserCaseAction extends AbstractAction {
         "# {0} - caseErrorMessage", "OpenMultiUserCaseAction.caseOpeningErrorErrorMsg=Failed to open case: {0}"
     })
     @Override
-    public void actionPerformed(ActionEvent e) {
+    public void actionPerformed(ActionEvent event) {
         StartupWindowProvider.getInstance().close();
         OpenMultiUserCaseDialog.getInstance().setVisible(false);
         new Thread(() -> {
@@ -91,7 +91,7 @@ final class OpenMultiUserCaseAction extends AbstractAction {
     }
 
     @Override
-    public Object clone() throws CloneNotSupportedException {
+    public OpenMultiUserCaseAction clone() throws CloneNotSupportedException {
         super.clone();
         throw new CloneNotSupportedException();
     }

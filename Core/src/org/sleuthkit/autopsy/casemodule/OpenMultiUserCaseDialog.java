@@ -19,13 +19,9 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dialog;
-import java.awt.event.KeyEvent;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.KeyStroke;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Bundle;
 
 /**
  * A singleton JDialog that allows a user to open a multi-user case.
@@ -65,12 +61,6 @@ final class OpenMultiUserCaseDialog extends JDialog {
      * pressed and adds a OpenMultiUserCasePanel child component.
      */
     private void init() {
-        getRootPane().registerKeyboardAction(
-                action -> {
-                    setVisible(false);
-                },
-                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
-                JComponent.WHEN_IN_FOCUSED_WINDOW);
         multiUserCasesPanel = new OpenMultiUserCasePanel(this);
         add(multiUserCasesPanel);
         pack();

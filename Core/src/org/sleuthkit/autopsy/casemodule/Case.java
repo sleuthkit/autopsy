@@ -1589,15 +1589,15 @@ public class Case {
     public void notifyDataSourceAdded(Content dataSource, UUID addingDataSourceEventId) {
         eventPublisher.publish(new DataSourceAddedEvent(dataSource, addingDataSourceEventId));
     }
-    
+
     /**
      * Notifies case event subscribers that a data source has been added to the
      * case database.
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param dataSource              The data source.
-     * @param newName                 The new name for the data source
+     * @param dataSource The data source.
+     * @param newName    The new name for the data source
      */
     public void notifyDataSourceNameChanged(Content dataSource, String newName) {
         eventPublisher.publish(new DataSourceNameChangedEvent(dataSource, newName));
@@ -1776,16 +1776,14 @@ public class Case {
         } catch (CaseMetadataException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_metadataUpdateError(), ex);
         }
-        if (getCaseType() == CaseType.MULTI_USER_CASE) {
-            if (!oldCaseDetails.getCaseDisplayName().equals(caseDetails.getCaseDisplayName())) {
-                try {
-                    CoordinationService coordinationService = CoordinationService.getInstance();
-                    CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
-                    nodeData.setDisplayName(caseDetails.getCaseDisplayName());
-                    coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
-                } catch (CoordinationServiceException | InterruptedException | IOException ex) {
-                    throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
-                }
+        if (getCaseType() == CaseType.MULTI_USER_CASE && !oldCaseDetails.getCaseDisplayName().equals(caseDetails.getCaseDisplayName())) {
+            try {
+                CoordinationService coordinationService = CoordinationService.getInstance();
+                CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
+                nodeData.setDisplayName(caseDetails.getCaseDisplayName());
+                coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
+            } catch (CoordinationServiceException | InterruptedException | IOException ex) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
             }
         }
         if (!oldCaseDetails.getCaseNumber().equals(caseDetails.getCaseNumber())) {
