@@ -84,9 +84,7 @@ public class VideoUtils {
     private static final int CV_CAP_PROP_FRAME_COUNT = 7;
     private static final int CV_CAP_PROP_FPS = 5;
     
-    private static final int LONG_VIDEO_MIN_MS = 60000;
-    private static final int[] LONG_VIDEO_FRAME_GRAB_POS_MS = { 5000, 10000, 15000, 250 };
-    private static final double[] SHORT_VIDEO_FRAME_GRAB_POS_RATIO = { 0.1, 0.2, 0.3, 0.01 };
+    private static final double[] FRAME_GRAB_POS_RATIO = { 0.50, 0.25, 0.75, 0.01 };
 
     static final Logger LOGGER = Logger.getLogger(VideoUtils.class.getName());
 
@@ -167,33 +165,22 @@ public class VideoUtils {
             double duration = 1000 * (totalFrames / fps); //total milliseconds
 
             /*
-             * We want to try and grab a frame early on in the video with the
-             * idea that if the video is corrupt, we will have a better chance
-             * of pulling out a frame successfully by attempting it before the
-             * corruption starts.
-             * 
-             * For videos that are one minute or longer, we attempt to grab a
-             * frame at five seconds. Upon failure, we will attempt ten seconds,
-             * and then 15. In a last-ditch effort, it will try 0.25 seconds.
-             * 
-             * For videos shorter than one minute, we attempt to grab a frame at
-             * the 10% point. Upon failure, we will attempt 20%, and then 30%.
-             * In a last-ditch effort, it will try 1%.
+             * Four attempts are made to grab a frame from a video. The first
+             * attempt at 50% will give us a nice frame in the middle that gets
+             * to the heart of the content. If that fails, the next positions
+             * tried will be 25% and 75%. After three failed attempts, 1% will
+             * be tried in a last-ditch effort with, the idea being the video
+             * may be corrupt and that our best chance at retrieving a frame is
+             * early on in the video.
              * 
              * If no frame can be retrieved, no thumbnail will be created.
              */
-            int[] framePositions;
-            
-            if (duration >= LONG_VIDEO_MIN_MS) {
-                framePositions = LONG_VIDEO_FRAME_GRAB_POS_MS;
-            } else {
-                framePositions = new int[] {
-                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[0]),
-                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[1]),
-                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[2]),
-                    (int) (duration * SHORT_VIDEO_FRAME_GRAB_POS_RATIO[3]),
-                };
-            }
+            int[] framePositions = new int[] {
+                (int) (duration * FRAME_GRAB_POS_RATIO[0]),
+                (int) (duration * FRAME_GRAB_POS_RATIO[1]),
+                (int) (duration * FRAME_GRAB_POS_RATIO[2]),
+                (int) (duration * FRAME_GRAB_POS_RATIO[3]),
+            };
 
             Mat imageMatrix = new Mat();
             
@@ -212,13 +199,21 @@ public class VideoUtils {
                 
                 break;
             }
+            
+            // If the image is empty, return since no buffered image can be created.
+            if (imageMatrix.empty()) {
+                return null;
+            }
+            
+            int matrixColumns = imageMatrix.cols();
+            int matrixRows = imageMatrix.rows();
 
             // Convert the matrix that contains the frame to a buffered image.
             if (bufferedImage == null) {
-                bufferedImage = new BufferedImage(imageMatrix.cols(), imageMatrix.rows(), BufferedImage.TYPE_3BYTE_BGR);
+                bufferedImage = new BufferedImage(matrixColumns, matrixRows, BufferedImage.TYPE_3BYTE_BGR);
             }
 
-            byte[] data = new byte[imageMatrix.rows() * imageMatrix.cols() * (int) (imageMatrix.elemSize())];
+            byte[] data = new byte[matrixRows * matrixColumns * (int) (imageMatrix.elemSize())];
             imageMatrix.get(0, 0, data); //copy the image to data
 
             //todo: this looks like we are swapping the first and third channels.  so we can use  BufferedImage.TYPE_3BYTE_BGR
@@ -230,7 +225,7 @@ public class VideoUtils {
                 }
             }
 
-            bufferedImage.getRaster().setDataElements(0, 0, imageMatrix.cols(), imageMatrix.rows(), data);
+            bufferedImage.getRaster().setDataElements(0, 0, matrixColumns, matrixRows, data);
         } finally {
             videoFile.release(); // close the file}
         }
