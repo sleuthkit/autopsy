@@ -169,9 +169,9 @@ public class VideoUtils {
              * attempt at 50% will give us a nice frame in the middle that gets
              * to the heart of the content. If that fails, the next positions
              * tried will be 25% and 75%. After three failed attempts, 1% will
-             * be tried in a last-ditch effort with, the idea being the video
-             * may be corrupt and that our best chance at retrieving a frame is
-             * early on in the video.
+             * be tried in a last-ditch effort, the idea being the video may be
+             * corrupt and that our best chance at retrieving a frame is early
+             * on in the video.
              * 
              * If no frame can be retrieved, no thumbnail will be created.
              */
