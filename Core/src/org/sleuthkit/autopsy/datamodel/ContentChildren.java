@@ -26,6 +26,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VolumeSystem;
 
@@ -85,6 +86,13 @@ class ContentChildren extends AbstractContentChildren<Content> {
                 if ((dir.isRoot()) && (dir.getName().equals(".") == false)
                         && (dir.getName().equals("..") == false)) {
                     children.addAll(getDisplayChildren(dir));
+                } else {
+                    children.add(c);
+                }
+            } else if (c instanceof LocalDirectory) {
+                LocalDirectory localDir = (LocalDirectory)c;
+                if (localDir.isRoot()) {
+                    children.addAll(getDisplayChildren(localDir));
                 } else {
                     children.add(c);
                 }
