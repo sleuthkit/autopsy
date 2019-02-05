@@ -40,19 +40,15 @@ def gitSleuthkitCheckout(branch, branchOwner):
     # When an error occurs
     global passed
     if (branchOwner==ORIGIN_OWNER):
-        print("Checkinging out origin branch")
         cmd = ['git','checkout', branch]
     else:
         #add the remotes
         checkout=['git','checkout','-b',branchOwner+'-'+branch]
-        print("checking out "+branchOwner+"-"+branch)
         passed = subprocess.call(checkout, stdout=sys.stdout,cwd=TSK_HOME)
         cmd = ['git','pull', "/".join(["https://github.com", branchOwner, "sleuthkit.git"]), branch]
         if passed != 0: #0 would be success
-            print("NOT PASSED")
             #unable to create new branch return instead of pulling
             return
-    print("Perfroming CMD: "+" ".join(cmd));
     passed = subprocess.call(cmd,stdout=sys.stdout,cwd=TSK_HOME)
 
 def parseXML(xmlFile):
@@ -80,11 +76,9 @@ def main():
     TRAVIS=os.getenv("TRAVIS",False)
     APPVEYOR=os.getenv("APPVEYOR",False)
     if TRAVIS == "true":
-        print("TRAVIS TRUE")
         CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",False)
         BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", False).split('/')[0]
     elif APPVEYOR:
-        print("APPVEYOR TRUE")
         CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH",False)
         BRANCH_OWNER=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", False).split('/')[0]
     else:
@@ -92,20 +86,16 @@ def main():
         output = subprocess.check_output(cmd)
         CURRENT_BRANCH=output.strip()
         BRANCH_OWNER=ORIGIN_OWNER
-    print("Current Branch: " + CURRENT_BRANCH)
-    print("Branch owner: " + BRANCH_OWNER)
     # If we are in an Autopsy release branch, then use the
     # info in TSKVersion.xml to find the corresponding TSK 
     # release branch.  For other branches, we don't always
     # trust that TSKVersion has been updated.
     if CURRENT_BRANCH.startswith('release'):
-        print("branch starts with release")
         version = parseXML('TSKVersion.xml')
         RELEASE_BRANCH = "release-"+version
         gitSleuthkitCheckout(RELEASE_BRANCH, BRANCH_OWNER)
     # Check if the same branch exists in TSK (develop->develop, custom1->custom1, etc.)
     else: 
-        print("try to get Branch")
         gitSleuthkitCheckout(CURRENT_BRANCH, BRANCH_OWNER)
 
     # Otherwise, default to origin develop
