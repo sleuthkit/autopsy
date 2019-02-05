@@ -94,6 +94,9 @@ def main():
         version = parseXML('TSKVersion.xml')
         RELEASE_BRANCH = "release-"+version
         gitSleuthkitCheckout(RELEASE_BRANCH, BRANCH_OWNER)
+        #If it failed try the origin release branch
+        if passed != 0:
+            gitSleuthkitCheckout(RELEASE_BRANCH, ORIGIN_OWNER)
     # Check if the same branch exists in TSK (develop->develop, custom1->custom1, etc.)
     else: 
         gitSleuthkitCheckout(CURRENT_BRANCH, BRANCH_OWNER)
