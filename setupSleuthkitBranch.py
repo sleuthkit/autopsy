@@ -100,7 +100,6 @@ def main():
 
     # Otherwise, default to origin develop
     if passed != 0:
-        print("Earlier attempt failed try develop origin")
         gitSleuthkitCheckout(DEVELOP_BRANCH, ORIGIN_OWNER)
         
     if passed != 0:
