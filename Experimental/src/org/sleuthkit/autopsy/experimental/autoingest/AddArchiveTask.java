@@ -206,9 +206,14 @@ class AddArchiveTask implements Runnable {
                             if (c instanceof DataSource) {
                                 DataSource ds = (DataSource) c;
                                  
-                                // Update aquisition details
+                                // Read existing aquisition details and update them
                                 String details = "Extracted from archive: " + archivePath.toString();
-                                ds.setAcquisitionDetails(details);
+                                String existingDetails = ds.getAcquisitionDetails();
+                                if (existingDetails != null && !existingDetails.isEmpty()) {
+                                    ds.setAcquisitionDetails(existingDetails + System.getProperty("line.separator") + details);
+                                } else {                                
+                                    ds.setAcquisitionDetails(details);
+                                }
                                 
                                 // Update the names for all new data sources to be the root archive plus the name of the data source
                                 String newName = Paths.get(archivePath).getFileName() + "/" + ds.getName();
@@ -265,7 +270,7 @@ class AddArchiveTask implements Runnable {
                     for (Content c : internalDataSource.getContent()) {
                         if (c instanceof DataSource) {
                             DataSource ds = (DataSource) c;
-                            // Update aquisition details
+                            // This is a new data source so just write the aquisition details
                             String details = "Extracted from archive: " + archivePath.toString();
                             ds.setAcquisitionDetails(details);
                         }
