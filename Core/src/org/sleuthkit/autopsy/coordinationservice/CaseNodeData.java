@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2017-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,69 +18,115 @@
  */
 package org.sleuthkit.autopsy.coordinationservice;
 
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.ParseException;
+import java.util.Date;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 
 /**
- * An object that converts case data for a case directory coordination service
+ * An object that converts data for a case directory lock coordination service
  * node to and from byte arrays.
  */
 public final class CaseNodeData {
 
-    private static final int CURRENT_VERSION = 0;
-    
-    private int version;
+    private static final int CURRENT_VERSION = 1;
+
+    /*
+     * Version 0 fields.
+     */
+    private final int version;
     private boolean errorsOccurred;
 
+    /*
+     * Version 1 fields.
+     */
+    private Path directory;
+    private Date createDate;
+    private Date lastAccessDate;
+    private String name;
+    private String displayName;
+    private short deletedItemFlags;
+
     /**
-     * Gets the current version of the case directory coordination service node
-     * data.
+     * Gets the current version of the case directory lock coordination service
+     * node data.
      *
      * @return The version number.
      */
     public static int getCurrentVersion() {
         return CaseNodeData.CURRENT_VERSION;
     }
-    
+
+    /**
+     * Uses a CaseMetadata object to construct an object that converts data for
+     * a case directory lock coordination service node to and from byte arrays.
+     *
+     * @param metadata The case meta data.
+     *
+     * @throws java.text.ParseException If there is an error parsing dates from
+     *                                  string representations of dates in the
+     *                                  meta data.
+     */
+    public CaseNodeData(CaseMetadata metadata) throws ParseException {
+        this.version = CURRENT_VERSION;
+        this.errorsOccurred = false;
+        this.directory = Paths.get(metadata.getCaseDirectory());
+        this.createDate = CaseMetadata.getDateFormat().parse(metadata.getCreatedDate());
+        this.lastAccessDate = new Date();
+        this.name = metadata.getCaseName();
+        this.displayName = metadata.getCaseDisplayName();
+        this.deletedItemFlags = 0;
+    }
+
     /**
      * Uses coordination service node data to construct an object that converts
-     * case data for a case directory coordination service node to and from byte
+     * data for a case directory lock coordination service node to and from byte
      * arrays.
      *
      * @param nodeData The raw bytes received from the coordination service.
-     * 
-     * @throws InvalidDataException If the node data buffer is smaller than
-     *                              expected.
+     *
+     * @throws IOException If there is an error reading the node data.
      */
-    public CaseNodeData(byte[] nodeData) throws InvalidDataException {
-        if(nodeData == null || nodeData.length == 0) {
-            this.version = CURRENT_VERSION;
-            this.errorsOccurred = false;
+    public CaseNodeData(byte[] nodeData) throws IOException {
+        if (nodeData == null || nodeData.length == 0) {
+            throw new IOException(null == nodeData ? "Null node data byte array" : "Zero-length node data byte array");
+        }
+        DataInputStream inputStream = new DataInputStream(new ByteArrayInputStream(nodeData));
+        this.version = inputStream.readInt();
+        if (this.version > 0) {
+            this.errorsOccurred = inputStream.readBoolean();
         } else {
-            /*
-             * Get fields from node data.
-             */
-            ByteBuffer buffer = ByteBuffer.wrap(nodeData);
-            try {
-                if (buffer.hasRemaining()) {
-                    this.version = buffer.getInt();
-
-                    /*
-                     * Flags bit format: 76543210
-                     * 0-6 --> reserved for future use
-                     * 7 --> errorsOccurred
-                     */
-                    byte flags = buffer.get();
-                    this.errorsOccurred = (flags < 0);
-                }
-            } catch (BufferUnderflowException ex) {
-                throw new InvalidDataException("Node data is incomplete", ex);
-            }
+            short legacyErrorsOccurred = inputStream.readByte();
+            this.errorsOccurred = (legacyErrorsOccurred < 0);
+        }
+        if (this.version > 0) {
+            this.directory = Paths.get(inputStream.readUTF());
+            this.createDate = new Date(inputStream.readLong());
+            this.lastAccessDate = new Date(inputStream.readLong());
+            this.name = inputStream.readUTF();
+            this.displayName = inputStream.readUTF();
+            this.deletedItemFlags = inputStream.readShort();
         }
     }
 
     /**
-     * Gets whether or not any errors occurred during the processing of the job.
+     * Gets the node data version number of this node.
+     *
+     * @return The version number.
+     */
+    public int getVersion() {
+        return this.version;
+    }
+
+    /**
+     * Gets whether or not any errors occurred during the processing of any auto
+     * ingest job for the case represented by this node data.
      *
      * @return True or false.
      */
@@ -89,7 +135,8 @@ public final class CaseNodeData {
     }
 
     /**
-     * Sets whether or not any errors occurred during the processing of job.
+     * Sets whether or not any errors occurred during the processing of any auto
+     * ingest job for the case represented by this node data.
      *
      * @param errorsOccurred True or false.
      */
@@ -98,32 +145,121 @@ public final class CaseNodeData {
     }
 
     /**
-     * Gets the node data version number.
+     * Gets the path of the case directory of the case represented by this node
+     * data.
      *
-     * @return The version number.
+     * @return The case directory path.
      */
-    public int getVersion() {
-        return this.version;
+    public Path getDirectory() {
+        return this.directory;
     }
-    
+
+    /**
+     * Sets the path of the case directory of the case represented by this node
+     * data.
+     *
+     * @param caseDirectory The case directory path.
+     */
+    public void setDirectory(Path caseDirectory) {
+        this.directory = caseDirectory;
+    }
+
+    /**
+     * Gets the date the case represented by this node data was created.
+     *
+     * @return The create date.
+     */
+    public Date getCreateDate() {
+        return new Date(this.createDate.getTime());
+    }
+
+    /**
+     * Sets the date the case represented by this node data was created.
+     *
+     * @param createDate The create date.
+     */
+    public void setCreateDate(Date createDate) {
+        this.createDate = new Date(createDate.getTime());
+    }
+
+    /**
+     * Gets the date the case represented by this node data last accessed.
+     *
+     * @return The last access date.
+     */
+    public Date getLastAccessDate() {
+        return new Date(this.lastAccessDate.getTime());
+    }
+
+    /**
+     * Sets the date the case represented by this node data was last accessed.
+     *
+     * @param lastAccessDate The last access date.
+     */
+    public void setLastAccessDate(Date lastAccessDate) {
+        this.lastAccessDate = new Date(lastAccessDate.getTime());
+    }
+
+    /**
+     * Gets the unique and immutable (user cannot change it) name of the case
+     * represented by this node data.
+     *
+     * @return The case name.
+     */
+    public String getName() {
+        return this.name;
+    }
+
+    /**
+     * Sets the unique and immutable (user cannot change it) name of the case
+     * represented by this node data.
+     *
+     * @param name The case name.
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Gets the display name of the case represented by this node data.
+     *
+     * @return The case display name.
+     */
+    public String getDisplayName() {
+        return this.displayName;
+    }
+
+    /**
+     * Sets the display name of the case represented by this node data.
+     *
+     * @param displayName The case display name.
+     */
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
     /**
      * Gets the node data as a byte array that can be sent to the coordination
      * service.
      *
      * @return The node data as a byte array.
+     *
+     * @throws IOException If there is an error writing the node data.
      */
-    public byte[] toArray() {
-        ByteBuffer buffer = ByteBuffer.allocate(5);
-        
-        buffer.putInt(this.version);
-        buffer.put((byte)(this.errorsOccurred ? 0x80 : 0));
-        
-        // Prepare the array
-        byte[] array = new byte[buffer.position()];
-        buffer.rewind();
-        buffer.get(array, 0, array.length);
-
-        return array;
+    public byte[] toArray() throws IOException {
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        DataOutputStream outputStream = new DataOutputStream(byteStream);
+        outputStream.writeInt(this.version);
+        outputStream.writeBoolean(this.errorsOccurred);
+        outputStream.writeUTF(this.directory.toString());
+        outputStream.writeLong(this.createDate.getTime());
+        outputStream.writeLong(this.lastAccessDate.getTime());
+        outputStream.writeUTF(this.name);
+        outputStream.writeUTF(this.displayName);
+        outputStream.writeShort(this.deletedItemFlags);
+        outputStream.flush();
+        byteStream.flush();
+        return byteStream.toByteArray();
     }
 
     public final static class InvalidDataException extends Exception {
