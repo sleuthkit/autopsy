@@ -2,7 +2,9 @@
 
 # Verifies programs are installed and copies native code into the Autopsy folder structure
 
-TSK_VERSION=4.6.3
+# NOTE: update_sleuthkit_version.pl updates this value and relies
+# on it keeping the same name and whitespace.  Don't change it.
+TSK_VERSION=4.6.5
 
 # Verify PhotoRec was installed
 photorec_filepath=/usr/bin/photorec
