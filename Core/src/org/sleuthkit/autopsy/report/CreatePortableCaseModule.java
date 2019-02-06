@@ -181,7 +181,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             return;
         }
         
-        /*
         // Copy the selected tags
         progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_copyingTags());
         try {
@@ -207,7 +206,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         } catch (TskCoreException ex) {
             handleError("Error copying tagged files", Bundle.CreatePortableCaseModule_generateReport_errorCopyingFiles(), ex, progressPanel);
             return;
-        }   */     
+        } 
 
         // Close the case connections and clear out the maps
         cleanup();
