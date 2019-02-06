@@ -10,22 +10,24 @@ import org.openide.util.lookup.ServiceProvider;
 import javax.swing.JPanel;
 import java.util.logging.Level;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseDetails;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -47,7 +49,13 @@ import org.sleuthkit.datamodel.VolumeSystem;
 public class CreatePortableCaseModule implements GeneralReportModule {
     private static final Logger logger = Logger.getLogger(CreatePortableCaseModule.class.getName());
     private static final String FILE_FOLDER_NAME = "PortableCaseFiles";
+    private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";
+    private static final String CASE_DB_NAME = "autopsy.db";
     private CreatePortableCasePanel configPanel;
+    
+    // These are the types for the exported file subfolders
+    private static final List<FileTypeCategory> FILE_TYPE_CATEGORIES = Arrays.asList(FileTypeCategory.AUDIO, FileTypeCategory.DOCUMENTS,
+            FileTypeCategory.EXECUTABLE, FileTypeCategory.IMAGE, FileTypeCategory.VIDEO);
     
     private Case currentCase = null;
     private SleuthkitCase skCase = null;
@@ -225,9 +233,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     @NbBundle.Messages({
         "# {0} - case folder",
         "CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists",
-        "# {0} - Autopsy file",
-        "CreatePortableCaseModule.createCase.errorWritingAutFile=Error writing to file {0}",  
         "CreatePortableCaseModule.createCase.errorCreatingDatabase=Error creating case database",
+        "CreatePortableCaseModule.createCase.errorCreatingMetadata=Error creating case metadata",
     })
     private void createCase(File outputDir, ReportProgressPanel progressPanel) {
         
@@ -255,44 +262,28 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         }
         caseFolder.mkdirs();
             
-        String dbFilePath = Paths.get(caseFolder.toString(), "autopsy.db").toString();
-
-        // Put a fake .aut file in it (TEMP obviously)
-        String autFileName = "PortableCaseTest.aut";
-        File autFile = Paths.get(caseFolder.toString(), autFileName).toFile();
-        try (PrintWriter writer = new PrintWriter(autFile, "UTF-8")) {
-                String data =
-                        "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" +
-                        "<AutopsyCase>" +
-                        "  <SchemaVersion>4.0</SchemaVersion>" +
-                        "  <CreatedDate>2019/01/08 15:13:03 (EST)</CreatedDate>" +
-                        "  <ModifiedDate>2019/01/08 15:13:05 (EST)</ModifiedDate>" +
-                        "  <CreatedByAutopsyVersion>4.10.0</CreatedByAutopsyVersion>" +
-                        "  <SavedByAutopsyVersion>4.10.0</SavedByAutopsyVersion>" +
-                        "  <Case>" +
-                        "    <Name>PortableCaseTest1_20190108_151303</Name>" +
-                        "    <DisplayName>PortableCaseTest</DisplayName>" +
-                        "    <Number/>" +
-                        "    <Examiner/>" +
-                        "    <ExaminerPhone/>" +
-                        "    <ExaminerEmail/>" +
-                        "    <CaseNotes/>" +
-                        "    <CaseType>Single-user case</CaseType>" +
-                        "    <Database/>" +
-                        "    <CaseDatabase>autopsy.db</CaseDatabase>" +
-                        "    <TextIndex/>" +
-                        "  </Case>" +
-                        "</AutopsyCase>";
-                writer.println(data);    
-        } catch (FileNotFoundException | UnsupportedEncodingException ex) {
-            handleError("Error writing to file " + autFile.toString(),
-                    Bundle.CreatePortableCaseModule_createCase_errorWritingAutFile(autFile), ex, progressPanel);
+        String dbFilePath = Paths.get(caseFolder.toString(), CASE_DB_NAME).toString();
+        CaseDetails details = new CaseDetails(caseName, currentCase.getNumber(), currentCase.getExaminer(), 
+                currentCase.getExaminerPhone(), currentCase.getExaminerEmail(), currentCase.getCaseNotes(), true);
+        try {
+            CaseMetadata metadata = new CaseMetadata(Case.CaseType.SINGLE_USER_CASE, caseFolder.toString(), 
+                caseName, details);
+            metadata.setCaseDatabaseName(CASE_DB_NAME);
+        } catch (CaseMetadataException ex) {
+            handleError("Error creating case metadata",
+                    Bundle.CreatePortableCaseModule_createCase_errorCreatingMetadata(), ex, progressPanel);
             return;
         }
         
-        // Create the folder for the copied files
+        // Create the base folder for the copied files
         copiedFilesFolder = Paths.get(caseFolder.toString(), FILE_FOLDER_NAME).toFile();
         copiedFilesFolder.mkdir();
+        
+        // Create subfolders for the copied files
+        for (FileTypeCategory cat:FILE_TYPE_CATEGORIES) {
+            Paths.get(copiedFilesFolder.toString(), cat.getDisplayName()).toFile().mkdir();
+        }
+        Paths.get(copiedFilesFolder.toString(), UNKNOWN_FILE_TYPE_FOLDER).toFile().mkdir();
         
         // Create the Sleuthkit case
         try {
@@ -322,12 +313,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 AbstractFile file = (AbstractFile) content;
                 String filePath = file.getParentPath() + file.getName();
                 progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_addFilesToPortableCase_copyingFile(filePath));
-                
-                try {
-                    Thread.sleep(1000);
-                } catch (Exception ex) {
-                    
-                }
                 
                 long newFileId;
                 System.out.println("  Want to export file " + content.getName());
@@ -413,12 +398,14 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                     try {
                         // Copy the file
                         String fileName = abstractFile.getId() + "-" + FileUtil.escapeFileName(abstractFile.getName());
-                        File localFile= new File(copiedFilesFolder, fileName);
+                        String exportSubFolder = getExportSubfolder(abstractFile);
+                        File exportFolder = Paths.get(copiedFilesFolder.toString(), exportSubFolder).toFile();
+                        File localFile = new File(exportFolder, fileName);
                         System.out.println("###   Copying to file " + localFile.getAbsolutePath());
                         ContentUtils.writeToFile(abstractFile, localFile);
 
                         // Construct the relative path to the copied file
-                        String relativePath = FILE_FOLDER_NAME + File.separator + fileName;
+                        String relativePath = FILE_FOLDER_NAME + File.separator +  exportSubFolder + File.separator + fileName;
                         
                         // Get the new parent object in the portable case database
                         Content oldParent = abstractFile.getParent();
@@ -456,6 +443,25 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         oldIdToNewContent.put(content.getId(), newContent);
         newIdToContent.put(newContent.getId(), newContent);
         return oldIdToNewContent.get(content.getId()).getId();
+    }
+    
+    /**
+     * Return the subfolder name for this file based on MIME type
+     * 
+     * @param abstractFile
+     * @return 
+     */
+    private String getExportSubfolder(AbstractFile abstractFile) {
+        if (abstractFile.getMIMEType() == null || abstractFile.getMIMEType().isEmpty()) {
+            return UNKNOWN_FILE_TYPE_FOLDER;
+        }
+        
+        for (FileTypeCategory cat:FILE_TYPE_CATEGORIES) {
+            if (cat.getMediaTypes().contains(abstractFile.getMIMEType())) {
+                return cat.getDisplayName();
+            }
+        }
+        return UNKNOWN_FILE_TYPE_FOLDER;
     }
     
     /**
