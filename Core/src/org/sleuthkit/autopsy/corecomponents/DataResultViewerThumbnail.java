@@ -380,7 +380,7 @@ public final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     public void setNode(Node givenNode) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         if (selectionListener == null) {
-            this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener()); // RJCTODO: remove listener on cleanup
+            this.getExplorerManager().addPropertyChangeListener(new NodeSelectionListener());
         }
         if (rootNodeChildren != null) {
             rootNodeChildren.cancelLoadingThumbnails();
