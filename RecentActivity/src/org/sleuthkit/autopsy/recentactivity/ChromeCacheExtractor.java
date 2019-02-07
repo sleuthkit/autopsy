@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.logging.Level;
 import org.openide.util.Exceptions;
@@ -71,18 +72,19 @@ final class ChromeCacheExtractor {
     private final Content dataSource;
     private final IngestJobContext context;
     private Case currentCase;
-    private SleuthkitCase tskCase;
     private FileManager fileManager;
     private FileTypeDetector fileTypeDetector;
  
+    
     private Map<String, CacheFileCopy> filesTable = new HashMap<>();
     
+    /**
+     * Encapsulates  abstract file for a cache file as well as a temp file copy
+     * that can be accessed as a random access file.
+     */
     final class CacheFileCopy {
         
         private AbstractFile abstractFile;
-        
-        // RAMAN TBD: - save the plain File here.  so it can be deleted later.
-        // Caller can create an RandomAccessFile as well as ByteBuffer as needed
         private RandomAccessFile fileCopy;
         private ByteBuffer byteBuffer;
 
@@ -119,17 +121,15 @@ final class ChromeCacheExtractor {
         
         try {
             currentCase = Case.getCurrentCaseThrows();
-            tskCase = currentCase.getSleuthkitCase();
             fileManager = currentCase.getServices().getFileManager();
             fileTypeDetector = new FileTypeDetector();
              
-            // Create an output folder to save derived files
+            // Create an output folder to save any derived files
             outputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName);
             File dir = new File(outputFolderName);
             if (dir.exists() == false) {
                 dir.mkdirs();
             }
-        
         } catch (NoCurrentCaseException ex) {
             String msg = "Failed to get current case.";
             throw new IngestModuleException(msg, ex);
@@ -139,15 +139,26 @@ final class ChromeCacheExtractor {
         }
     }
     
+    /**
+     * Cleans up after the module is done
+     * 
+     */
     void cleanup () {
         
-        // RAMAN TBD: delete all files in the table
-        
-        // Cant delete the RandomAccessFile.  May need to switch the CacheFileCopy to ony store the "File" 
-        // And create a RandomAcessfile and ByteBuffer on it when and as needed.
-        
-        
-        
+        for (Entry<String, CacheFileCopy> entry : this.filesTable.entrySet()) {
+            String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName) + File.separator + entry.getKey(); 
+            try {
+                entry.getValue().getFileCopy().getChannel().close();
+                entry.getValue().getFileCopy().close();
+               
+                File tmpFile = new File(tempFilePathname);
+                if (!tmpFile.delete()) {
+                    tmpFile.deleteOnExit();
+                }
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to delete cache file copy %s", tempFilePathname), ex);
+            }
+        }
     }
     
     /**
@@ -198,18 +209,17 @@ final class ChromeCacheExtractor {
 
         logger.log(Level.INFO, "{0}- Now reading Cache index file", new Object[]{moduleName}); //NON-NLS
             
-            
         ByteBuffer indexFileROBuffer = indexFile.get().getByteBuffer();
         IndexFileHeader indexHdr = new IndexFileHeader(indexFileROBuffer);
  
         // seek past the header
         indexFileROBuffer.position(INDEXFILE_HDR_SIZE);
 
+        // Process each address in the table
         for (int i = 0; i <  indexHdr.getTableLen(); i++) {
-            
             CacheAddress addr = new CacheAddress(indexFileROBuffer.getInt() & UINT32_MASK);
+            
             if (addr.isInitialized()) {
-
                 String fileName = addr.getFilename(); 
                 try {
                     Optional<CacheFileCopy> cacheFileCopy = this.getCacheFileCopy(fileName);
@@ -230,11 +240,10 @@ final class ChromeCacheExtractor {
                         //data.extract();
                         
                         if (data.isInExternalFile() )  {
-
                             String externalFilename = data.getAddress().getFilename();
                             Optional<AbstractFile> externalFile = this.findCacheFile(externalFilename);
+                            
                             if (externalFile.isPresent()) {
-                                
                                 try {
                                     Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                                     bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
@@ -245,7 +254,6 @@ final class ChromeCacheExtractor {
                                     if (bbart != null) {
                                         bbart.addAttributes(bbattributes);
                                     }
-            
                                 } catch (TskException ex) {
                                     logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
                                 }
@@ -253,14 +261,13 @@ final class ChromeCacheExtractor {
                         }
                     }
             
-                } catch (TskCoreException ex) {
+                } catch (TskCoreException | IngestModuleException ex) {
                    logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", addr)); //NON-NLS
-                } catch (IngestModuleException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+                } 
             }  
         }
-
+        
+        cleanup();
     }
     
     /**
@@ -284,22 +291,25 @@ final class ChromeCacheExtractor {
     }
     
     /**
+     * Returns CacheFileCopy for the specified file from the file table.
+     * Find the file and creates a copy if it isnt already in the table.
      * 
      * @param cacheFileName
-     * @return
+     * @return CacheFileCopy
      * @throws TskCoreException 
      */
     Optional<CacheFileCopy> getCacheFileCopy(String cacheFileName) throws TskCoreException, IngestModuleException {
         
         // Check if the file is already in the table
-        if (filesTable.containsKey(cacheFileName)) 
+        if (filesTable.containsKey(cacheFileName)) {
             return Optional.of(filesTable.get(cacheFileName));
+        }
         
         return findAndCopyCacheFile(cacheFileName);
     }
  
     /**
-     * Finds the specified cache file and makes a temporary copy
+     * Finds the specified cache file and makes a temporary copy.
      * 
      * @param cacheFileName
      * @return Cache file copy
@@ -313,18 +323,15 @@ final class ChromeCacheExtractor {
         }
         
         AbstractFile cacheFile = cacheFileOptional.get();
-        String tempIndexFilePath = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + cacheFile.getName(); //NON-NLS
+        String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName) + File.separator + cacheFile.getName(); //NON-NLS
         try {
-            ContentUtils.writeToFile(cacheFile, new File(tempIndexFilePath), context::dataSourceIngestIsCancelled);
+            File newFile = new File(tempFilePathname);
+            ContentUtils.writeToFile(cacheFile, newFile, context::dataSourceIngestIsCancelled);
             
-            RandomAccessFile randomAccessFile;
-            FileChannel roChannel;
-            ByteBuffer cacheFileROBuf;
-      
-            randomAccessFile = new RandomAccessFile(tempIndexFilePath, "r");
-            roChannel = randomAccessFile.getChannel();
-            cacheFileROBuf = roChannel.map(FileChannel.MapMode.READ_ONLY, 0,
-                                (int) roChannel.size());
+            RandomAccessFile randomAccessFile = new RandomAccessFile(tempFilePathname, "r");
+            FileChannel roChannel = randomAccessFile.getChannel();
+            ByteBuffer cacheFileROBuf = roChannel.map(FileChannel.MapMode.READ_ONLY, 0,
+                                                        (int) roChannel.size());
 
             cacheFileROBuf.order(ByteOrder.nativeOrder());
             CacheFileCopy cacheFileCopy = new CacheFileCopy(cacheFile, randomAccessFile, cacheFileROBuf );
