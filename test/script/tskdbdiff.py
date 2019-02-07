@@ -618,7 +618,7 @@ def build_id_objects_table(db_cursor, isPostgreSQL):
     Args:
         db_cursor: the database cursor
     """
-    # for each row in the db, take the object id, device_id, then create a tuple in the dictionary
+    # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
     # with the object id as the key and par_obj_id, type as the value
     mapping = dict([(row[0], [row[1], row[2]]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT * FROM tsk_objects")])
     return mapping
