@@ -320,7 +320,7 @@ class TskDbDiff(object):
         id_objects_table = build_id_objects_table(conn.cursor(), isMultiUser)
         id_artifact_types_table = build_id_artifact_types_table(conn.cursor(), isMultiUser)
         id_reports_table = build_id_reports_table(conn.cursor(), isMultiUser)
-        id_images_table = build_id_images_names_table(conn.cursor(), isMultiUser)
+        id_images_table = build_id_image_names_table(conn.cursor(), isMultiUser)
         id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table, id_reports_table, id_images_table)
 
         if isMultiUser: # Use PostgreSQL
@@ -623,7 +623,7 @@ def build_id_objects_table(db_cursor, isPostgreSQL):
     mapping = dict([(row[0], [row[1], row[2]]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT * FROM tsk_objects")])
     return mapping
 
-def build_id_images_names_table(db_cursor, isPostgreSQL):
+def build_id_image_names_table(db_cursor, isPostgreSQL):
     """Build the map of object ids to name.
 
     Args:
