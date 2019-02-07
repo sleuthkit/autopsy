@@ -2361,9 +2361,10 @@ public class CentralRepoDatamodelTest extends TestCase {
             CorrelationDataSource temp = new CorrelationDataSource(case2, dataSourceAid, dataSourceAname,
                     0L, null, null, null);
             EamDb.getInstance().newDataSource(temp);
-            fail("newDataSource did not throw exception from duplicate data source");
         } catch (EamDbException ex) {
-            // This is the expected behavior
+            Exceptions.printStackTrace(ex);
+            Assert.fail(ex.getMessage());
+            return;
         }
 
         // Test creating a data source with the same name and ID but different case
@@ -2375,40 +2376,6 @@ public class CentralRepoDatamodelTest extends TestCase {
             Exceptions.printStackTrace(ex);
             Assert.fail(ex.getMessage());
             return;
-        }
-
-        // Test creating a data source with an invalid case ID
-        try {
-            CorrelationCase correlationCase = new CorrelationCase("1", "test");
-            CorrelationDataSource temp = new CorrelationDataSource(correlationCase, "tempID", "tempName",
-                    0L, null, null, null);
-            EamDb.getInstance().newDataSource(temp);
-            fail("newDataSource did not throw exception from invalid case ID");
-        } catch (EamDbException ex) {
-            // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
-        }
-
-        // Test creating a data source with null device ID
-        try {
-            CorrelationDataSource temp = new CorrelationDataSource(case2, null, "tempName",
-                    0L, null, null, null);
-            EamDb.getInstance().newDataSource(temp);
-            fail("newDataSource did not throw exception from null device ID");
-        } catch (EamDbException ex) {
-            // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
-        }
-
-        // Test creating a data source with null name
-        try {
-            CorrelationDataSource temp = new CorrelationDataSource(case2, "tempID", null,
-                    0L, null, null, null);
-            EamDb.getInstance().newDataSource(temp);
-            fail("newDataSource did not throw exception from null name");
-        } catch (EamDbException ex) {
-            // This is the expected behavior
-            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
 
         // Test getting a data source with valid case and ID

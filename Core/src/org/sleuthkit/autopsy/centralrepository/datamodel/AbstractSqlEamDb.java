@@ -639,8 +639,13 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
             if (!resultSet.next()) {
-                //if nothing was inserted then return the DataSource that exists in the central repository
-                //expected to occur in regards to PostgreSQL central repository databases
+                /*
+                 * If nothing was inserted, then return the data source that
+                 * exists in the Central Repository.
+                 * 
+                 * This is expected to occur with PostgreSQL Central Repository
+                 * databases.
+                 */
                 try {
                     return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
                             eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
@@ -658,8 +663,14 @@ abstract class AbstractSqlEamDb implements EamDb {
             }
 
         } catch (SQLException insertException) {
-            //if an exception was thrown causing us to not return the Datasource attempt to get the datasource to return
-            //is expected to occur in regards to SQLite central repository databases
+            /*
+             * If an exception was thrown causing us to not return a new data
+             * source, attempt to get an existing data source with the same case
+             * ID and data source object ID.
+             * 
+             * This exception block is expected to occur with SQLite Central
+             * Repository databases.
+             */
             try {
                 return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
                         eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
