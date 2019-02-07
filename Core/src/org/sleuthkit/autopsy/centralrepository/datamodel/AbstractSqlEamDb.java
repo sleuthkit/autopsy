@@ -614,10 +614,18 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
         if (eamDataSource.getCaseID() == -1) {
             throw new EamDbException("Case ID is -1");
-        } else if (eamDataSource.getID() != -1) {
+        }
+        if (eamDataSource.getDeviceID() == null) {
+            throw new EamDbException("Device ID is null");
+        }
+        if (eamDataSource.getName() == null) {
+            throw new EamDbException("Name is null");
+        }
+        if (eamDataSource.getID() != -1) {
             // This data source is already in the central repo
             return eamDataSource;
         }
+        
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;

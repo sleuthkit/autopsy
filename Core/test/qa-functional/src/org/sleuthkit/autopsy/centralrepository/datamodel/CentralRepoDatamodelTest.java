@@ -2389,6 +2389,28 @@ public class CentralRepoDatamodelTest extends TestCase {
             // This is the expected behavior
             assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
         }
+        
+        // Test creating a data source with null device ID
+        try {
+            CorrelationDataSource temp = new CorrelationDataSource(case2, null, "tempName",
+                    0L, null, null, null);
+            EamDb.getInstance().newDataSource(temp);
+            fail("newDataSource did not throw exception from null device ID");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
+        }
+
+         // Test creating a data source with null name
+        try {
+            CorrelationDataSource temp = new CorrelationDataSource(case2, "tempID", null,
+                    0L, null, null, null);
+            EamDb.getInstance().newDataSource(temp);
+            fail("newDataSource did not throw exception from null name");
+        } catch (EamDbException ex) {
+            // This is the expected behavior
+            assertTrue(THIS_IS_THE_EXPECTED_BEHAVIOR, true);
+        }
 
         // Test getting a data source with valid case and ID
         try {
