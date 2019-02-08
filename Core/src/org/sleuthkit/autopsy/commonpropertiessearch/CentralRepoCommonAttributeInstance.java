@@ -108,6 +108,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                         // will try using the file name, parent path and data source id.
                         File fileFromPath = new File(currentFullPath);
                         String fileName = fileFromPath.getName();
+                        fileName = SleuthkitCase.escapeSingleQuotes(fileName);
 
                         // Create the parent path. Make sure not to add a separator if there is already one there.
                         String parentPath = fileFromPath.getParent();
@@ -115,6 +116,7 @@ final public class CentralRepoCommonAttributeInstance extends AbstractCommonAttr
                             parentPath += File.separator;
                         }
                         parentPath = parentPath.replace("\\", "/");
+                        parentPath = SleuthkitCase.escapeSingleQuotes(parentPath);
                         final String whereClause = String.format("lower(name) = '%s' AND lower(parent_path) = '%s' AND data_source_obj_id = %s", fileName, parentPath, dataSource.get().getId());
                         List<AbstractFile> potentialAbstractFiles = tskDb.findAllFilesWhere(whereClause);
 
