@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -55,7 +54,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -66,10 +64,10 @@ import org.sleuthkit.datamodel.TskException;
  */
 final class ChromeCacheExtractor {
     
-    private final long UINT32_MASK = 0xFFFFFFFFl;
+    private final static long UINT32_MASK = 0xFFFFFFFFl;
     
-    private final int INDEXFILE_HDR_SIZE = 92*4;
-    private final int DATAFILE_HDR_SIZE = 8192;
+    private final static int INDEXFILE_HDR_SIZE = 92*4;
+    private final static int DATAFILE_HDR_SIZE = 8192;
     
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     
@@ -87,7 +85,7 @@ final class ChromeCacheExtractor {
     private FileTypeDetector fileTypeDetector;
  
     
-    private Map<String, CacheFileCopy> filesTable = new HashMap<>();
+    private final Map<String, CacheFileCopy> filesTable = new HashMap<>();
     
     /**
      * Encapsulates  abstract file for a cache file as well as a temp file copy
@@ -95,9 +93,9 @@ final class ChromeCacheExtractor {
      */
     final class CacheFileCopy {
         
-        private AbstractFile abstractFile;
-        private RandomAccessFile fileCopy;
-        private ByteBuffer byteBuffer;
+        private final AbstractFile abstractFile;
+        private final RandomAccessFile fileCopy;
+        private final ByteBuffer byteBuffer;
 
         CacheFileCopy (AbstractFile abstractFile, RandomAccessFile fileCopy, ByteBuffer buffer ) {
             this.abstractFile = abstractFile;
@@ -468,18 +466,21 @@ final class ChromeCacheExtractor {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             
-            sb.append(String.format("Index Header:"));
-            sb.append(String.format("\tMagic = %x" , getMagic()) );
-            sb.append(String.format("\tVersion = %x" , getVersion()) );
-            sb.append(String.format("\tNumEntries = %x" , getNumEntries()) );
-            sb.append(String.format("\tNumBytes = %x" , getNumBytes()) );
-            sb.append(String.format("\tLastFile = %x" , getLastFile()) );
-            sb.append(String.format("\tTableLen = %x" , getTableLen()) );
+            sb.append(String.format("Index Header:"))
+                .append(String.format("\tMagic = %x" , getMagic()) )
+                .append(String.format("\tVersion = %x" , getVersion()) )
+                .append(String.format("\tNumEntries = %x" , getNumEntries()) )
+                .append(String.format("\tNumBytes = %x" , getNumBytes()) )
+                .append(String.format("\tLastFile = %x" , getLastFile()) )
+                .append(String.format("\tTableLen = %x" , getTableLen()) );
         
             return sb.toString();
         }
     }
     
+    /**
+     * Cache file type enum - as encoded the address
+     */
     enum CacheFileTypeEnum {
 	  EXTERNAL,     
 	  RANKINGS,
@@ -508,15 +509,15 @@ final class ChromeCacheExtractor {
     
     final class CacheAddress {
         // sundry constants to parse the bit fields in address
-        private final long ADDR_INITIALIZED_MASK    = 0x80000000l;
-	private final long FILE_TYPE_MASK     = 0x70000000;
-        private final long FILE_TYPE_OFFSET   = 28;
-	private final long NUM_BLOCKS_MASK     = 0x03000000;
-	private final long NUM_BLOCKS_OFFSET   = 24;
-	private final long FILE_SELECTOR_MASK   = 0x00ff0000;
-        private final long FILE_SELECTOR_OFFSET = 16;
-	private final long START_BLOCK_MASK     = 0x0000FFFF;
-	private final long EXTERNAL_FILE_NAME_MASK = 0x0FFFFFFF;
+        private static final long ADDR_INITIALIZED_MASK    = 0x80000000l;
+	private static final long FILE_TYPE_MASK     = 0x70000000;
+        private static final long FILE_TYPE_OFFSET   = 28;
+	private static final long NUM_BLOCKS_MASK     = 0x03000000;
+	private static final long NUM_BLOCKS_OFFSET   = 24;
+	private static final long FILE_SELECTOR_MASK   = 0x00ff0000;
+        private static final long FILE_SELECTOR_OFFSET = 16;
+	private static final long START_BLOCK_MASK     = 0x0000FFFF;
+	private static final long EXTERNAL_FILE_NAME_MASK = 0x0FFFFFFF;
         
         private final long uint32CacheAddr;
         private final CacheFileTypeEnum fileType;
@@ -628,7 +629,9 @@ final class ChromeCacheExtractor {
         
     }
     
-   
+    /**
+     * Enum for data type in a data segment.
+     */
     enum CacheDataTypeEnum {
         HTTP_HEADER,
         UNKNOWN,    
@@ -758,7 +761,7 @@ final class ChromeCacheExtractor {
             if (data == null) {
                 extract();
             }
-            return data;
+            return data.clone();
         }
         
         int getDataLength() {
@@ -836,9 +839,9 @@ final class ChromeCacheExtractor {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append(String.format("\t\tData type = : %s, Data Len = %d", 
-                                    this.type.toString(), this.length ));
-            sb.append("\n");
-            sb.append(String.format("\t\tData = : %s ", new String(data) ));
+                                    this.type.toString(), this.length ))
+                    .append("\n")
+                    .append(String.format("\t\tData = : %s ", new String(data) ));
             
             return sb.toString(); 
         }
@@ -846,6 +849,9 @@ final class ChromeCacheExtractor {
     }
     
     
+    /**
+     *  State of cache entry
+     */
     enum EntryStateEnum {
         ENTRY_NORMAL,
         ENTRY_EVICTED,    
@@ -888,31 +894,31 @@ final class ChromeCacheExtractor {
     final class CacheEntry {
     
         // each entry is 256 bytes.  The last section of the entry, after all the other fields is a null terminated key
-        private final int MAX_KEY_LEN = 256-24*4; 
+        private static final int MAX_KEY_LEN = 256-24*4; 
         
         private final CacheAddress selfAddress; 
         private final CacheFileCopy cacheFileCopy;
         
-        private long hash;
-        private CacheAddress nextAddress;
-        private CacheAddress rankingsNodeAddress;
+        private final long hash;
+        private final CacheAddress nextAddress;
+        private final CacheAddress rankingsNodeAddress;
         
-        private int reuseCount;
-        private int refetchCount;
-        private EntryStateEnum state;
+        private final int reuseCount;
+        private final int refetchCount;
+        private final EntryStateEnum state;
         
-        private long creationTime;
-        private int keyLen;
+        private final long creationTime;
+        private final int keyLen;
         
-        private CacheAddress longKeyAddresses; // address of the key, if the key is external to the entry
+        private final CacheAddress longKeyAddresses; // address of the key, if the key is external to the entry
         
-        private int dataSizes[] = new int[4];
-        private CacheAddress dataAddresses[] = new CacheAddress[4];
+        private final int dataSizes[];
+        private final CacheAddress dataAddresses[];
         
-        private long flags;
-        private int pad[] = new int[4];
+        private final long flags;
+        private final int pad[] = new int[4];
         
-        private long selfHash;  // hash of the entry itself so far.
+        private final long selfHash;  // hash of the entry itself so far.
         private String key;     // Key may be found within the entry or may be external
         
         CacheEntry(CacheAddress cacheAdress, CacheFileCopy cacheFileCopy ) {
@@ -945,9 +951,11 @@ final class ChromeCacheExtractor {
             uint32 = fileROBuf.getInt() & UINT32_MASK;
             longKeyAddresses = (uint32 != 0) ?  new CacheAddress(uint32) : null;  
             
+            dataSizes= new int[4];
             for (int i = 0; i < 4; i++)  {
                 dataSizes[i] = fileROBuf.getInt();
             }
+            dataAddresses = new CacheAddress[4];
             for (int i = 0; i < 4; i++)  {
                 dataAddresses[i] =  new CacheAddress(fileROBuf.getInt() & UINT32_MASK);
             }
@@ -1035,15 +1043,12 @@ final class ChromeCacheExtractor {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append(String.format("Entry = Hash: %08x,  State: %s, ReuseCount: %d, RefetchCount: %d", 
-                                    this.hash, this.state.toString(), this.reuseCount, this.refetchCount ));
-            
-            sb.append(String.format("\n\tKey: %s, Keylen: %d", 
-                                    this.key, this.keyLen, this.reuseCount, this.refetchCount ));
-            
-            sb.append(String.format("\n\tCreationTime: %s", 
-                                    TimeUtilities.epochToTime(this.creationTime) ));
-            
-            sb.append(String.format("\n\tNext Address: %s", 
+                                    this.hash, this.state.toString(), this.reuseCount, this.refetchCount ))
+                .append(String.format("\n\tKey: %s, Keylen: %d", 
+                                    this.key, this.keyLen, this.reuseCount, this.refetchCount ))
+                .append(String.format("\n\tCreationTime: %s", 
+                                    TimeUtilities.epochToTime(this.creationTime) ))
+                .append(String.format("\n\tNext Address: %s", 
                                     (nextAddress != null) ? nextAddress.toString() : "None"));
             
             for (int i = 0; i < 4; i++) {
