@@ -233,8 +233,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     @NbBundle.Messages({
         "# {0} - case folder",
         "CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists",
-        "CreatePortableCaseModule.createCase.errorCreatingDatabase=Error creating case database",
-        "CreatePortableCaseModule.createCase.errorCreatingMetadata=Error creating case metadata",
+        "CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case",
     })
     private void createCase(File outputDir, ReportProgressPanel progressPanel) {
         
@@ -260,18 +259,12 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             //    Bundle.CreatePortableCaseModule_createCase_caseDirExists(caseFolder.toString()), null, progressPanel);  
             //return;
         }
-        caseFolder.mkdirs();
-            
-        String dbFilePath = Paths.get(caseFolder.toString(), CASE_DB_NAME).toString();
-        CaseDetails details = new CaseDetails(caseName, currentCase.getNumber(), currentCase.getExaminer(), 
-                currentCase.getExaminerPhone(), currentCase.getExaminerEmail(), currentCase.getCaseNotes(), true);
+        
         try {
-            CaseMetadata metadata = new CaseMetadata(Case.CaseType.SINGLE_USER_CASE, caseFolder.toString(), 
-                caseName, details);
-            metadata.setCaseDatabaseName(CASE_DB_NAME);
-        } catch (CaseMetadataException ex) {
-            handleError("Error creating case metadata",
-                    Bundle.CreatePortableCaseModule_createCase_errorCreatingMetadata(), ex, progressPanel);
+            skCase = currentCase.createPortableCase(caseName, caseFolder);
+        } catch (TskCoreException ex) {
+            handleError("Error creating case " + caseName + " in folder " + caseFolder.toString(),
+                Bundle.CreatePortableCaseModule_createCase_errorCreatingCase(), ex, progressPanel);  
             return;
         }
         
@@ -284,15 +277,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             Paths.get(copiedFilesFolder.toString(), cat.getDisplayName()).toFile().mkdir();
         }
         Paths.get(copiedFilesFolder.toString(), UNKNOWN_FILE_TYPE_FOLDER).toFile().mkdir();
-        
-        // Create the Sleuthkit case
-        try {
-            skCase = SleuthkitCase.newCase(dbFilePath);
-        } catch (TskCoreException ex) {
-            handleError("Error creating case database",
-                    Bundle.CreatePortableCaseModule_createCase_errorCreatingDatabase(), ex, progressPanel);
-            return;
-        }
+                
     }
     
     @NbBundle.Messages({

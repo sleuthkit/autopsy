@@ -19,18 +19,12 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.Serializable;
-import java.util.Date;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
 
 /**
  * Wrapper to contain the modifiable details of a case, such as case display
  * name, case number, and examiner related fields.
  */
 public final class CaseDetails implements Serializable {
-    private static final String DATE_FORMAT_STRING = "yyyy/MM/dd HH:mm:ss (z)";
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
 
     private final String caseDisplayName;
     private final String caseNumber;
@@ -38,8 +32,7 @@ public final class CaseDetails implements Serializable {
     private final String examinerPhone;
     private final String examinerEmail;
     private final String caseNotes;
-    private final boolean isPortableCase;
-    private final String portableCaseCreationDate;
+    private final String originalCaseCreationDate;
 
     /**
      * Create a case details object with all optional fields set to default
@@ -54,8 +47,7 @@ public final class CaseDetails implements Serializable {
         examinerPhone = "";
         examinerEmail = "";
         caseNotes = "";
-        isPortableCase = false;
-        portableCaseCreationDate = "";
+        originalCaseCreationDate = "";
     }
 
     /**
@@ -69,40 +61,13 @@ public final class CaseDetails implements Serializable {
      * @param notes       the case notes
      */
     public CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes) {
-        this(displayName, number, exName, exPhone, exEmail, notes, false);
+        this(displayName, number, exName, exPhone, exEmail, notes, "");
     }
     
-    /**
-     * Create a case details object with the specified values.
-     * If isPortableCase is true, will set the portable case timestamp
-     * to the current time.
-     *
-     * @param displayName    the display name of the case
-     * @param number         the case number
-     * @param exName         the examiner name
-     * @param exPhone        the examiner phone number
-     * @param exEmail        the examiner email address
-     * @param notes          the case notes
-     * @param isPortableCase true if the case is a portable case
-     */
-    public CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes,
-            boolean isPortableCase) {
-        caseDisplayName = displayName;
-        caseNumber = number;
-        examinerName = exName;
-        examinerPhone = exPhone;
-        examinerEmail = exEmail;
-        caseNotes = notes;
-        this.isPortableCase = isPortableCase;
-        if (isPortableCase) {
-            portableCaseCreationDate = DATE_FORMAT.format(new Date());
-        } else {
-            portableCaseCreationDate = "";
-        }
-    }
         
     /**
      * Create a case details object with the specified values.
+     * Only set originalCaseCreationDate for portable cases.
      *
      * @param displayName    the display name of the case
      * @param number         the case number
@@ -110,19 +75,17 @@ public final class CaseDetails implements Serializable {
      * @param exPhone        the examiner phone number
      * @param exEmail        the examiner email address
      * @param notes          the case notes
-     * @param isPortableCase            true if the case is a portable case
-     * @param portableCaseCreationDate  timestamp when the portable case was created
+     * @param originalCaseCreationDate  timestamp when the original case was created (for portable cases)
      */
-    public CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes,
-            boolean isPortableCase, String portableCaseCreationDate) {        
+    CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes,
+            String originalCaseCreationDate) {        
         caseDisplayName = displayName;
         caseNumber = number;
         examinerName = exName;
         examinerPhone = exPhone;
         examinerEmail = exEmail;
         caseNotes = notes;
-        this.isPortableCase = isPortableCase;
-        this.portableCaseCreationDate = portableCaseCreationDate;
+        this.originalCaseCreationDate = originalCaseCreationDate;
     }    
 
     /**
@@ -173,28 +136,19 @@ public final class CaseDetails implements Serializable {
     /**
      * Get the case notes
      *
-     * @return notes - the note asssociated with the case
+     * @return notes - the note associated with the case
      */
     public String getCaseNotes() {
         return caseNotes;
     }
-    
+
     /**
-     * Get whether the case is a portable case
+     * Get the creation timestamp of the case that the portable case was created from
      * 
-     * @return isPortableCase - true if it is a portable case, false otherwise
+     * @return originalCaseCreationDate - the timestamp when the case was created. Returns empty string
+                                    for non-portable cases.
      */
-    public boolean isPortableCase() {
-        return isPortableCase;
-    }
-    
-    /**
-     * Get the timestamp that the portable case was created
-     * 
-     * @return portableCaseCreationDate - the timestamp when the case was created. Returns empty string
-     *                                    for non-portable cases.
-     */
-    public String getPortableCaseCreationDate() {
-        return portableCaseCreationDate;
+    public String getOriginalCaseCreationDate() {
+        return originalCaseCreationDate;
     }
 }

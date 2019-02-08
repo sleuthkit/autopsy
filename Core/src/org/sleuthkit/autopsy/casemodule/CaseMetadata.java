@@ -99,8 +99,7 @@ public final class CaseMetadata {
      * Fields from schema version 5
      */
     private static final String SCHEMA_VERSION_FIVE = "5.0";
-    private final static String PORTABLE_CASE_FLAG_ELEMENT_NAME = "IsPortableCase"; //NON-NLS  
-    private final static String PORTABLE_CASE_TIMESTAMP_ELEMENT_NAME = "PortableCaseTimestamp"; //NON-NLS    
+    private final static String ORIGINAL_CASE_ELEMENT_NAME = "OriginalCase"; //NON-NLS  
     
     /*
      * Unread fields, regenerated on save.
@@ -119,6 +118,7 @@ public final class CaseMetadata {
     private String textIndexName; // Legacy
     private String createdDate;
     private String createdByVersion;
+    private CaseMetadata originalMetadata = null; // For portable cases
 
     /**
      * Gets the file extension used for case metadata files.
@@ -137,21 +137,33 @@ public final class CaseMetadata {
     public static DateFormat getDateFormat() {
         return new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
     }
+    
+    /**
+     * Constructs a CaseMetadata object for a new case. The metadata is not
+     * persisted to the case metadata file until writeFile or a setX method is
+     * called.
+     *
+     * @param caseType        The type of case.
+     * @param caseDirectory   The case directory.
+     * @param caseName        The immutable name of the case.
+     * @param caseDetails     The details for the case
+     */
+    CaseMetadata(Case.CaseType caseType, String caseDirectory, String caseName, CaseDetails caseDetails) {
+        this(caseType, caseDirectory, caseName, caseDetails, null);
+    }
 
     /**
      * Constructs a CaseMetadata object for a new case. The metadata is not
      * persisted to the case metadata file until writeFile or a setX method is
      * called.
      *
-     * @param caseDirectory   The case directory.
      * @param caseType        The type of case.
+     * @param caseDirectory   The case directory.
      * @param caseName        The immutable name of the case.
-     * @param caseDisplayName The display name of the case, can be changed by a
-     *                        user.
-     * @param caseNumber      The case number.
-     * @param examiner        The name of the case examiner.
+     * @param caseDetails     The details for the case
+     * @param originalMetadata  The metadata object from the original case
      */
-    public CaseMetadata(Case.CaseType caseType, String caseDirectory, String caseName, CaseDetails caseDetails) {
+    CaseMetadata(Case.CaseType caseType, String caseDirectory, String caseName, CaseDetails caseDetails, CaseMetadata originalMetadata) {
         metadataFilePath = Paths.get(caseDirectory, caseDetails.getCaseDisplayName() + FILE_EXTENSION);
         this.caseType = caseType;
         this.caseName = caseName;
@@ -161,6 +173,7 @@ public final class CaseMetadata {
         textIndexName = "";
         createdByVersion = Version.getVersion();
         createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
+        this.originalMetadata = originalMetadata;
     }
 
     /**
@@ -288,7 +301,7 @@ public final class CaseMetadata {
      *
      * @throws CaseMetadataException If the operation fails.
      */
-    public void setCaseDatabaseName(String caseDatabaseName) throws CaseMetadataException {
+    void setCaseDatabaseName(String caseDatabaseName) throws CaseMetadataException {
         String oldCaseDatabaseName = this.caseDatabaseName;
         this.caseDatabaseName = caseDatabaseName;
         try {
@@ -424,23 +437,42 @@ public final class CaseMetadata {
         /*
          * Create the children of the case element.
          */
-        createChildElement(doc, caseElement, CASE_NAME_ELEMENT_NAME, caseName);
-        createChildElement(doc, caseElement, CASE_DISPLAY_NAME_ELEMENT_NAME, caseDetails.getCaseDisplayName());
-        createChildElement(doc, caseElement, CASE_NUMBER_ELEMENT_NAME, caseDetails.getCaseNumber());
-        createChildElement(doc, caseElement, EXAMINER_ELEMENT_NAME, caseDetails.getExaminerName());
-        createChildElement(doc, caseElement, EXAMINER_ELEMENT_PHONE, caseDetails.getExaminerPhone());
-        createChildElement(doc, caseElement, EXAMINER_ELEMENT_EMAIL, caseDetails.getExaminerEmail());
-        createChildElement(doc, caseElement, CASE_ELEMENT_NOTES, caseDetails.getCaseNotes());
-        if (caseDetails.isPortableCase()) {
-            createChildElement(doc, caseElement, PORTABLE_CASE_FLAG_ELEMENT_NAME, "true");
-        } else {
-            createChildElement(doc, caseElement, PORTABLE_CASE_FLAG_ELEMENT_NAME, "false");
+        createCaseElements(doc, caseElement, this);
+        
+        /*
+         * Add original case element
+         */
+        Element originalCaseElement = doc.createElement(ORIGINAL_CASE_ELEMENT_NAME);
+        rootElement.appendChild(originalCaseElement);
+        if (originalMetadata != null) {
+            createChildElement(doc, originalCaseElement, CREATED_DATE_ELEMENT_NAME, originalMetadata.createdDate);
+            Element originalCaseDetailsElement = doc.createElement(CASE_ELEMENT_NAME);
+            originalCaseElement.appendChild(originalCaseDetailsElement);
+            createCaseElements(doc, originalCaseDetailsElement, originalMetadata);
         }
-        createChildElement(doc, caseElement, PORTABLE_CASE_TIMESTAMP_ELEMENT_NAME, caseDetails.getPortableCaseCreationDate());
-        createChildElement(doc, caseElement, CASE_TYPE_ELEMENT_NAME, caseType.toString());
-        createChildElement(doc, caseElement, CASE_DB_ABSOLUTE_PATH_ELEMENT_NAME, caseDatabasePath);
-        createChildElement(doc, caseElement, CASE_DB_NAME_RELATIVE_ELEMENT_NAME, caseDatabaseName);
-        createChildElement(doc, caseElement, TEXT_INDEX_ELEMENT, textIndexName);
+        
+    }
+    
+    /**
+     * Write the case element children for the given metadata object
+     * 
+     * @param doc              The document.
+     * @param caseElement      The case element parent
+     * @param metadataToWrite  The CaseMetadata object to read from
+     */
+    private void createCaseElements(Document doc, Element caseElement, CaseMetadata metadataToWrite) {
+        CaseDetails caseDetailsToWrite = metadataToWrite.caseDetails;
+        createChildElement(doc, caseElement, CASE_NAME_ELEMENT_NAME, metadataToWrite.caseName);
+        createChildElement(doc, caseElement, CASE_DISPLAY_NAME_ELEMENT_NAME, caseDetailsToWrite.getCaseDisplayName());
+        createChildElement(doc, caseElement, CASE_NUMBER_ELEMENT_NAME, caseDetailsToWrite.getCaseNumber());
+        createChildElement(doc, caseElement, EXAMINER_ELEMENT_NAME, caseDetailsToWrite.getExaminerName());
+        createChildElement(doc, caseElement, EXAMINER_ELEMENT_PHONE, caseDetailsToWrite.getExaminerPhone());
+        createChildElement(doc, caseElement, EXAMINER_ELEMENT_EMAIL, caseDetailsToWrite.getExaminerEmail());
+        createChildElement(doc, caseElement, CASE_ELEMENT_NOTES, caseDetailsToWrite.getCaseNotes());
+        createChildElement(doc, caseElement, CASE_TYPE_ELEMENT_NAME, metadataToWrite.caseType.toString());
+        createChildElement(doc, caseElement, CASE_DB_ABSOLUTE_PATH_ELEMENT_NAME, metadataToWrite.caseDatabasePath);
+        createChildElement(doc, caseElement, CASE_DB_NAME_RELATIVE_ELEMENT_NAME, metadataToWrite.caseDatabaseName);
+        createChildElement(doc, caseElement, TEXT_INDEX_ELEMENT, metadataToWrite.textIndexName);
     }
 
     /**
@@ -509,35 +541,18 @@ public final class CaseMetadata {
             String examinerPhone;
             String examinerEmail;
             String caseNotes;
-            boolean isPortableCase;
-            String portableCaseTimestamp;
             if (schemaVersion.equals(SCHEMA_VERSION_ONE) || schemaVersion.equals(SCHEMA_VERSION_TWO) || schemaVersion.equals(SCHEMA_VERSION_THREE)) {
                 examinerPhone = "";  //case had metadata file written before additional examiner details were included 
                 examinerEmail = "";
                 caseNotes = "";
-                isPortableCase = false;
-                portableCaseTimestamp = "";
-            } else if (schemaVersion.equals(SCHEMA_VERSION_FOUR)) {
-                examinerPhone = getElementTextContent(caseElement, EXAMINER_ELEMENT_PHONE, false);
-                examinerEmail = getElementTextContent(caseElement, EXAMINER_ELEMENT_EMAIL, false);
-                caseNotes = getElementTextContent(caseElement, CASE_ELEMENT_NOTES, false);
-                isPortableCase = false;
-                portableCaseTimestamp = "";
             } else {
                 examinerPhone = getElementTextContent(caseElement, EXAMINER_ELEMENT_PHONE, false);
                 examinerEmail = getElementTextContent(caseElement, EXAMINER_ELEMENT_EMAIL, false);
                 caseNotes = getElementTextContent(caseElement, CASE_ELEMENT_NOTES, false);
-                String isPortableCaseStr = getElementTextContent(caseElement, PORTABLE_CASE_TIMESTAMP_ELEMENT_NAME, false);
-                if (isPortableCaseStr.equals("true")) {
-                    isPortableCase = true;
-                } else {
-                    isPortableCase = false;
-                }
-                portableCaseTimestamp = getElementTextContent(caseElement, PORTABLE_CASE_TIMESTAMP_ELEMENT_NAME, false);
             }
             
             this.caseDetails = new CaseDetails(caseDisplayName, caseNumber, examinerName, examinerPhone, examinerEmail, 
-                    caseNotes, isPortableCase, portableCaseTimestamp);
+                    caseNotes);
             this.caseType = Case.CaseType.fromString(getElementTextContent(caseElement, CASE_TYPE_ELEMENT_NAME, true));
             if (null == this.caseType) {
                 throw new CaseMetadataException("Case metadata file corrupted");
