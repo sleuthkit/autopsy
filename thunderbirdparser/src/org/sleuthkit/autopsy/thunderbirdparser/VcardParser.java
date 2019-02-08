@@ -32,6 +32,7 @@ import org.sleuthkit.datamodel.TskException;
  */
 final class VcardParser {
     private static final String VCARD_HEADER = "BEGIN:VCARD";
+    private static final long MIN_FILE_SIZE = 22;
     
     private static final Logger logger = Logger.getLogger(VcardParser.class.getName());
     
@@ -50,9 +51,9 @@ final class VcardParser {
      */
     static boolean isVcardFile(Content content) {
         try {
-            byte[] t = new byte[11];
-            if (content.getSize() > 22) {
-                int byteRead = content.read(t, 0, 11);
+            byte[] t = new byte[VCARD_HEADER.length()];
+            if (content.getSize() > MIN_FILE_SIZE) {
+                int byteRead = content.read(t, 0, VCARD_HEADER.length());
                 if (byteRead > 0) {
                     String header = new String(t);
                     return header.equalsIgnoreCase(VCARD_HEADER);
