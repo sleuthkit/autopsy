@@ -35,9 +35,19 @@ final class VcardParser {
     
     private static final Logger logger = Logger.getLogger(VcardParser.class.getName());
     
+    /**
+     * Create a VcardParser object.
+     */
     VcardParser() {
     }
 
+    /**
+     * Is the supplied content a vCard file?
+     * 
+     * @param content The content to check.
+     * 
+     * @return True if the supplied content is a vCard file; otherwise false.
+     */
     static boolean isVcardFile(Content content) {
         try {
             byte[] t = new byte[11];
