@@ -1,11 +1,23 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.report;
 
-import org.apache.commons.io.FileUtils;
 import org.openide.util.lookup.ServiceProvider;
 import javax.swing.JPanel;
 import java.util.logging.Level;
@@ -19,9 +31,6 @@ import java.util.List;
 import java.util.Map;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CaseDetails;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -43,14 +52,13 @@ import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 
 /**
- *
+ * Creates a portable case from tagged files
  */
 @ServiceProvider(service = GeneralReportModule.class)
 public class CreatePortableCaseModule implements GeneralReportModule {
     private static final Logger logger = Logger.getLogger(CreatePortableCaseModule.class.getName());
     private static final String FILE_FOLDER_NAME = "PortableCaseFiles";
     private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";
-    private static final String CASE_DB_NAME = "autopsy.db";
     private CreatePortableCasePanel configPanel;
     
     // These are the types for the exported file subfolders
@@ -102,14 +110,14 @@ public class CreatePortableCaseModule implements GeneralReportModule {
      * Assumes that if an exception is supplied then the error is SEVERE. Otherwise
      * it is logged as a WARNING.
      * 
-     * @param logWarning
-     * @param dialogWarning
-     * @param ex
-     * @param progressPanel 
+     * @param logWarning     Warning to write to the log
+     * @param dialogWarning  Warning to write to a pop-up window
+     * @param ex             The exception (can be null)
+     * @param progressPanel  The report progress panel
      */
     private void handleError(String logWarning, String dialogWarning, Exception ex, ReportProgressPanel progressPanel) {
         if (ex == null) {
-            logger.log(Level.WARNING, logWarning); //NON-NLS
+            logger.log(Level.WARNING, logWarning);
         } else {
             logger.log(Level.SEVERE, logWarning, ex);
         }
@@ -236,30 +244,18 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         "CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case",
     })
     private void createCase(File outputDir, ReportProgressPanel progressPanel) {
-        
-        
-        String caseName;
 
         // Create the case folder
-        caseName = currentCase.getDisplayName() + " (Portable)";
+        String caseName = currentCase.getDisplayName() + " (Portable)";
         caseFolder = Paths.get(outputDir.toString(), caseName).toFile();
 
         if (caseFolder.exists()) {
-            
-            // TEMP TEMP TEMP !!!!!!!!!!!
-            // JUST DELETE FOR TESTING
-            try {
-                FileUtils.deleteDirectory(caseFolder);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                return;
-            }
-            
-            //handleError("Case folder " + caseFolder.toString() + " already exists",
-            //    Bundle.CreatePortableCaseModule_createCase_caseDirExists(caseFolder.toString()), null, progressPanel);  
-            //return;
+            handleError("Case folder " + caseFolder.toString() + " already exists",
+                Bundle.CreatePortableCaseModule_createCase_caseDirExists(caseFolder.toString()), null, progressPanel);  
+            return;
         }
         
+        // Create the case
         try {
             skCase = currentCase.createPortableCase(caseName, caseFolder);
         } catch (TskCoreException ex) {
@@ -280,6 +276,13 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 
     }
     
+    /**
+     * Add all files with a given tag to the portable case.
+     * 
+     * @param oldTagName
+     * @param progressPanel
+     * @throws TskCoreException 
+     */
     @NbBundle.Messages({
         "# {0} - File name",
         "CreatePortableCaseModule.addFilesToPortableCase.copyingFile=Copying file {0}",  
@@ -288,8 +291,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         // Get all the tags in the current case
         List<ContentTag> tags = currentCase.getServices().getTagsManager().getContentTagsByTagName(oldTagName);
-        
-        System.out.println("\nFiles tagged with " + oldTagName.getDisplayName());
         
         // Copy the files into the portable case and tag
         for (ContentTag tag : tags) {
@@ -300,11 +301,9 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_addFilesToPortableCase_copyingFile(filePath));
                 
                 long newFileId;
-                System.out.println("  Want to export file " + content.getName());
                 trans = skCase.beginTransaction();
                 try {
                     newFileId = copyContent(file);
-                    System.out.println("  Exported file " + content.getName() + " Has new ID " + newFileId);
                     trans.commit();
                 } catch (TskCoreException ex) {
                     trans.rollback();
@@ -328,9 +327,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
      */
     private long copyContent(Content content) throws TskCoreException {
                 
-        System.out.println("copyContent: " + content.getName() + " " + content.getId());
+        // Check if we've already copied this content
         if (oldIdToNewContent.containsKey(content.getId())) {
-            System.out.println("  In map - new ID = " + oldIdToNewContent.get(content.getId()).getId());
             return oldIdToNewContent.get(content.getId()).getId();
         }
         
@@ -347,38 +345,27 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             Image image = (Image)content;
             newContent = skCase.addImage(image.getType(), image.getSsize(), image.getSize(), image.getName(), 
                     new ArrayList<>(), image.getTimeZone(), image.getMd5(), image.getSha1(), image.getSha256(), image.getDeviceId(), trans);
-            System.out.println("  Created new image " + image.getName() + " with obj ID " + newContent.getId());
         } else if (content instanceof VolumeSystem) {
             VolumeSystem vs = (VolumeSystem)content;
             newContent = skCase.addVolumeSystem(parentId, vs.getType(), vs.getOffset(), vs.getBlockSize(), trans);
-            System.out.println("  Created new vs " + vs.getName() + " with obj ID " +  newContent.getId());
         } else if (content instanceof Volume) {
             Volume vs = (Volume)content;
             newContent = skCase.addVolume(parentId, vs.getAddr(), vs.getStart(), vs.getLength(), 
                     vs.getDescription(), vs.getFlags(), trans);
-            System.out.println("  Created new volume " + vs.getName() + " with obj ID " + newContent.getId());
         } else if (content instanceof FileSystem) {
             FileSystem fs = (FileSystem)content;
             newContent = skCase.addFileSystem(parentId, fs.getImageOffset(), fs.getFsType(), fs.getBlock_size(), 
                     fs.getBlock_count(), fs.getRoot_inum(), fs.getFirst_inum(), fs.getLastInum(), 
                     fs.getName(), trans);
-            System.out.println("  Created new file system " + fs.getName() + " with obj ID " + newContent.getId());
         } else if (content instanceof AbstractFile) {
             AbstractFile abstractFile = (AbstractFile)content;
             
             if (abstractFile instanceof LocalFilesDataSource) {
                 LocalFilesDataSource localFilesDS = (LocalFilesDataSource)abstractFile;
-                newContent = skCase.addLocalFilesDataSource(localFilesDS.getDeviceId(), localFilesDS.getName(), localFilesDS.getTimeZone(), trans);                
-                System.out.println("  Created new local file data source " + abstractFile.getName() + " with obj ID " + newContent.getId());   
+                newContent = skCase.addLocalFilesDataSource(localFilesDS.getDeviceId(), localFilesDS.getName(), localFilesDS.getTimeZone(), trans);    
             } else {
                 if (abstractFile.isDir()) {
-                    
                     newContent = skCase.addLocalDirectory(parentId, abstractFile.getName(), trans);
-                    System.out.println("  Created new local directory " + abstractFile.getName() + " with obj ID " + newContent.getId()
-                            + " (" + abstractFile.getClass().getName() + ")");   
-                    if (abstractFile.isRoot()) {
-                        System.out.println("    That was the root directory");
-                    }
                 } else {
                     try {
                         // Copy the file
@@ -386,7 +373,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                         String exportSubFolder = getExportSubfolder(abstractFile);
                         File exportFolder = Paths.get(copiedFilesFolder.toString(), exportSubFolder).toFile();
                         File localFile = new File(exportFolder, fileName);
-                        System.out.println("###   Copying to file " + localFile.getAbsolutePath());
                         ContentUtils.writeToFile(abstractFile, localFile);
 
                         // Construct the relative path to the copied file
@@ -395,8 +381,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                         // Get the new parent object in the portable case database
                         Content oldParent = abstractFile.getParent();
                         if (! oldIdToNewContent.containsKey(oldParent.getId())) {
-                            System.out.println("Old parent ID: " + oldParent.getId() + ", new parent ID: " + parentId);
-                            throw new TskCoreException("Parent has not been created");
+                            throw new TskCoreException("Parent of file with ID " + abstractFile.getId() + " has not been created");
                         }
                         Content newParent = oldIdToNewContent.get(oldParent.getId());
 
@@ -408,20 +393,14 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                         ((AbstractFile)newContent).setMIMEType(abstractFile.getMIMEType());
                         ((AbstractFile)newContent).setMd5Hash(abstractFile.getMd5Hash());
                         ((AbstractFile)newContent).save(trans);
-                        
-                        System.out.println("  Creating new local file " + abstractFile.getName() + " with obj ID " + newContent.getId() 
-                                + " (" + abstractFile.getClass().getName() + ")");   
                     } catch (IOException ex) {
                         throw new TskCoreException("Error copying file " + abstractFile.getName() + " with original obj ID " 
                                 + abstractFile.getId(), ex);
                     }
                 }
             }
-            
         } else {
-            // Uh oh?
-            System.out.println("  Oh no!!! Trying to copy instance of " + content.getClass().getName());
-            throw new TskCoreException("Unknown type!!!");
+            throw new TskCoreException("Trying to copy unexpected Content type " + content.getClass().getName());
         }
         
         // Save the new object
