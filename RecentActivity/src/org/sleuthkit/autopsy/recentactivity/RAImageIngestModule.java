@@ -225,4 +225,15 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         }
         return tmpDir;
     }
+    
+    /**
+     * Get relative path for module output folder.
+     *
+     * @throws NoCurrentCaseException if there is no open case.
+     * @return the relative path of the module output folder
+     */
+    static String getRelModuleOutputPath() throws NoCurrentCaseException {
+        return Case.getCurrentCaseThrows().getModuleOutputDirectoryRelativePath() + File.separator
+                + "RecentActivity";
+    }
 }

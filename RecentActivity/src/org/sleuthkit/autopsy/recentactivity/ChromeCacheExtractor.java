@@ -21,6 +21,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -43,16 +44,21 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -65,12 +71,17 @@ final class ChromeCacheExtractor {
     private final int INDEXFILE_HDR_SIZE = 92*4;
     private final int DATAFILE_HDR_SIZE = 8192;
     
-    private final String moduleName;
     private final Logger logger = Logger.getLogger(this.getClass().getName());
-    private String outputFolderName;
+    
+    private static final String VERSION_NUMBER = "1.0.0";
+    private final String moduleName;
+    
+    private String absOutputFolderName;
+    private String relOutputFolderName;
      
     private final Content dataSource;
     private final IngestJobContext context;
+    private IngestServices services = IngestServices.getInstance();
     private Case currentCase;
     private FileManager fileManager;
     private FileTypeDetector fileTypeDetector;
@@ -106,7 +117,7 @@ final class ChromeCacheExtractor {
     }
 
     ChromeCacheExtractor(Content dataSource, IngestJobContext context ) {
-        moduleName = NbBundle.getMessage(ChromeCacheExtractor.class, "ChromeCacheExtractor.moduleName");
+        moduleName = NbBundle.getMessage(ChromeCacheExtractor.class, "ChromeCacheExtractor.moduleName");           
         this.dataSource = dataSource;
         this.context = context;
     }
@@ -125,8 +136,9 @@ final class ChromeCacheExtractor {
             fileTypeDetector = new FileTypeDetector();
              
             // Create an output folder to save any derived files
-            outputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName);
-            File dir = new File(outputFolderName);
+            absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName);
+            relOutputFolderName = RAImageIngestModule.getRelModuleOutputPath() + File.separator + moduleName;
+            File dir = new File(absOutputFolderName);
             if (dir.exists() == false) {
                 dir.mkdirs();
             }
@@ -166,8 +178,17 @@ final class ChromeCacheExtractor {
      * 
      * @return 
      */
-    private String getOutputFolderName() {
-        return outputFolderName;
+    private String getAbsOutputFolderName() {
+        return absOutputFolderName;
+    }
+    
+     /**
+     * Returns the relative location of output folder for this module
+     * 
+     * @return 
+     */
+    private String getRelOutputFolderName() {
+        return relOutputFolderName;
     }
     
     /**
@@ -184,7 +205,6 @@ final class ChromeCacheExtractor {
             logger.log(Level.SEVERE, msg, ex);
             return;
         }
-        
         
         Optional<CacheFileCopy> indexFile;
         try {
@@ -209,6 +229,8 @@ final class ChromeCacheExtractor {
 
         logger.log(Level.INFO, "{0}- Now reading Cache index file", new Object[]{moduleName}); //NON-NLS
             
+        List<AbstractFile> derivedFiles = new ArrayList<>();
+        
         ByteBuffer indexFileROBuffer = indexFile.get().getByteBuffer();
         IndexFileHeader indexHdr = new IndexFileHeader(indexFileROBuffer);
  
@@ -238,26 +260,53 @@ final class ChromeCacheExtractor {
                         // Todo: extract the data if we are going to do something with it in the future
                         
                         //data.extract();
+                        String dataFilename = data.getAddress().getFilename();
+                        Optional<AbstractFile> dataFile = this.findCacheFile(dataFilename);
                         
-                        if (data.isInExternalFile() )  {
-                            String externalFilename = data.getAddress().getFilename();
-                            Optional<AbstractFile> externalFile = this.findCacheFile(externalFilename);
-                            
-                            if (externalFile.isPresent()) {
-                                try {
-                                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                                     bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
                                         moduleName,
                                         ((cacheEntry.getKey() != null) ? cacheEntry.getKey() : ""))); //NON-NLS
-                                    
-                                    BlackboardArtifact bbart = externalFile.get().newArtifact(ARTIFACT_TYPE.TSK_SOURCE_ARTIFACT);
+                        
+                        if (dataFile.isPresent()) {
+                            if (data.isInExternalFile() )  {
+                                try {
+                                    BlackboardArtifact bbart = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_SOURCE_ARTIFACT);
                                     if (bbart != null) {
                                         bbart.addAttributes(bbattributes);
                                     }
                                 } catch (TskException ex) {
                                     logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
                                 }
-                            }                
+                            } else {
+                            
+                            // extract data segment and save it as derived file
+                            data.extract();
+                            String filename = data.save();
+                            String relPathname = getRelOutputFolderName() + File.separator + filename; 
+                            
+                            // TBD: check if data segment is compressed? With Brotli?
+                            DerivedFile derivedFile = fileManager.addDerivedFile(filename, relPathname,
+                                data.getDataLength(), 
+                                cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), // TBD 
+                                true, 
+                                dataFile.get(), 
+                                "",
+                                moduleName, 
+                                VERSION_NUMBER, 
+                                "", 
+                                TskData.EncodingType.NONE);
+                            
+                                derivedFiles.add(derivedFile);
+                                try {
+                                    BlackboardArtifact bbart = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_SOURCE_ARTIFACT);
+                                    if (bbart != null) {
+                                        bbart.addAttributes(bbattributes);
+                                    }
+                                } catch (TskException ex) {
+                                    logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
+                                }
+                            }
                         }
                     }
             
@@ -267,6 +316,15 @@ final class ChromeCacheExtractor {
             }  
         }
         
+        if (derivedFiles.isEmpty() == false) {
+            for (AbstractFile derived : derivedFiles) {
+                services.fireModuleContentEvent(new ModuleContentEvent(derived));
+            }
+        }
+         
+        context.addFilesToJob(derivedFiles);
+        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_SOURCE_ARTIFACT));
+       
         cleanup();
     }
     
@@ -715,35 +773,40 @@ final class ChromeCacheExtractor {
             return address;
         }
         
-        // RAMAN TBD: save needs to return something that can be used to add a derived file
-//        void save() throws TskCoreException, IngestModuleException {
-//            String fileName;
-//            
-//            if (address.isInExternalFile()) {
-//                fileName = address.getFilename();
-//            } else {
-//                fileName = String.format("%s__%08x", address.getFilename(), address.getUint32CacheAddr());
-//            }
-//            save(getOutputFolderName() + File.separator + fileName);
-//        }
         
-        //  TBD: save needs to return something that can be used to add a derived file
-//        void save(String filePathName) throws TskCoreException, IngestModuleException {
-//            
-//            // Save the data to specified file 
-//            if (data == null) {
-//                extract();
-//            }
-//            
-//            if (!this.isInExternalFile() || 
-//                !this.isCompressedFile()) {
-//                // write the
-//                try (FileOutputStream stream = new FileOutputStream(filePathName)) {
-//                    stream.write(data);
-//                } catch (IOException ex) {
-//                    throw new TskCoreException(String.format("Failed to write output file %s", filePathName), ex);
-//                }
-//            }
+        String save() throws TskCoreException, IngestModuleException {
+            String fileName;
+            
+            if (address.isInExternalFile()) {
+                fileName = address.getFilename();
+            } else {
+                fileName = String.format("%s__%08x", address.getFilename(), address.getUint32CacheAddr());
+            }
+            
+            String filePathName = getAbsOutputFolderName() + File.separator + fileName;
+            save(filePathName);
+            
+            return  fileName;
+        }
+        
+       
+        void save(String filePathName) throws TskCoreException, IngestModuleException {
+            
+            // Save the data to specified file 
+            if (data == null) {
+                extract();
+            }
+            
+            if (!this.isInExternalFile() || 
+                !this.isCompressedFile()) {
+                
+                // write the
+                try (FileOutputStream stream = new FileOutputStream(filePathName)) {
+                    stream.write(data);
+                } catch (IOException ex) {
+                    throw new TskCoreException(String.format("Failed to write output file %s", filePathName), ex);
+                }
+            }
 //            else {
 //                if (mimeType.toLowerCase().contains("gzip")) {
 //                //if (mimeType.equalsIgnoreCase("application/gzip")) {
@@ -767,7 +830,7 @@ final class ChromeCacheExtractor {
 //                     System.out.println("TBD Dont know how to uncompress Brotli yet" );
 //                }
 //            }
-//        }
+        }
         
         @Override
         public String toString() {
