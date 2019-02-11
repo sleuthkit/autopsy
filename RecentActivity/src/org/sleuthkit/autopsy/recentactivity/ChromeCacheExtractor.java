@@ -27,6 +27,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -46,7 +47,6 @@ import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -69,7 +69,7 @@ final class ChromeCacheExtractor {
     private final static int INDEXFILE_HDR_SIZE = 92*4;
     private final static int DATAFILE_HDR_SIZE = 8192;
     
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
+    private final static Logger logger = Logger.getLogger(ChromeCacheExtractor.class.getName());
     
     private static final String VERSION_NUMBER = "1.0.0";
     private final String moduleName;
@@ -79,10 +79,9 @@ final class ChromeCacheExtractor {
      
     private final Content dataSource;
     private final IngestJobContext context;
-    private IngestServices services = IngestServices.getInstance();
+    private final IngestServices services = IngestServices.getInstance();
     private Case currentCase;
     private FileManager fileManager;
-    private FileTypeDetector fileTypeDetector;
  
     
     private final Map<String, CacheFileCopy> filesTable = new HashMap<>();
@@ -131,7 +130,6 @@ final class ChromeCacheExtractor {
         try {
             currentCase = Case.getCurrentCaseThrows();
             fileManager = currentCase.getServices().getFileManager();
-            fileTypeDetector = new FileTypeDetector();
              
             // Create an output folder to save any derived files
             absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName);
@@ -143,10 +141,7 @@ final class ChromeCacheExtractor {
         } catch (NoCurrentCaseException ex) {
             String msg = "Failed to get current case.";
             throw new IngestModuleException(msg, ex);
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            String msg = "Failed to get FileTypeDetector.";
-            throw new IngestModuleException(msg, ex);
-        }
+        } 
     }
     
     /**
@@ -280,6 +275,12 @@ final class ChromeCacheExtractor {
                             
                             // extract data segment and save it as derived file
                             data.extract();
+                            
+                            if (data.hasHTTPHeaders()) {
+                                String encoding = data.getHTTPHeader("content-encoding");   
+                                
+                            }
+                            
                             String filename = data.save();
                             String relPathname = getRelOutputFolderName() + File.separator + filename; 
                             
@@ -492,21 +493,27 @@ final class ChromeCacheExtractor {
 	  BLOCK_EVICTED
     }
     
-    // CacheAddress is a unsigned 32 bit number
-    //
-    // Header:
-    //   1000 0000 0000 0000 0000 0000 0000 0000 : initialized bit
-    //   0111 0000 0000 0000 0000 0000 0000 0000 : file type
-    //
-    // If separate file:
-    //   0000 1111 1111 1111 1111 1111 1111 1111 : file#  0 - 268,435,456 (2^28)
-    //
-    // If block file:
-    //   0000 1100 0000 0000 0000 0000 0000 0000 : reserved bits
-    //   0000 0011 0000 0000 0000 0000 0000 0000 : number of contiguous blocks 1-4
-    //   0000 0000 1111 1111 0000 0000 0000 0000 : file selector 0 - 255
-    //   0000 0000 0000 0000 1111 1111 1111 1111 : block#  0 - 65,535 (2^16)
     
+    
+    /**
+     * Encapsulates Cache address.  
+     * 
+     * CacheAddress is a unsigned 32 bit number
+     *
+     * Header:
+     *   1000 0000 0000 0000 0000 0000 0000 0000 : initialized bit
+     *   0111 0000 0000 0000 0000 0000 0000 0000 : file type
+     *
+     * If separate file:
+     *   0000 1111 1111 1111 1111 1111 1111 1111 : file#  0 - 268,435,456 (2^28)
+     *
+     * If block file:
+     *   0000 1100 0000 0000 0000 0000 0000 0000 : reserved bits
+     *   0000 0011 0000 0000 0000 0000 0000 0000 : number of contiguous blocks 1-4
+     *   0000 0000 1111 1111 0000 0000 0000 0000 : file selector 0 - 255
+     *   0000 0000 0000 0000 1111 1111 1111 1111 : block#  0 - 65,535 (2^16)
+     * 
+     */
     final class CacheAddress {
         // sundry constants to parse the bit fields in address
         private static final long ADDR_INITIALIZED_MASK    = 0x80000000l;
@@ -657,9 +664,9 @@ final class ChromeCacheExtractor {
         private CacheFileCopy cacheFileCopy = null;
         private byte[] data = null;
         
-        // mime type of the data segment helps determine if it is compressed 
-        private String mimeType = "";
-        
+        private String httpResponse;
+        private final Map<String, String> httpHeaders = new HashMap<>();
+                
         CacheData(CacheAddress cacheAdress, int len) {
             this(cacheAdress, len, false);
         }
@@ -675,17 +682,16 @@ final class ChromeCacheExtractor {
             return address.isInExternalFile();
         }
         
-        boolean isCompressedFile() {
-            if (isInExternalFile()) {
-                return mimeType.equalsIgnoreCase("application/octet-stream");
-            } 
-            else {
-                return false;
-            }
+        boolean hasHTTPHeaders() {
+            return this.type == CacheDataTypeEnum.HTTP_HEADER;
         }
         
-        String getMimeType() {
-            return mimeType;
+        String getHTTPHeader(String key) {
+            return this.httpHeaders.get(key);
+        }
+        
+        String getHTTPRespone() {
+            return httpResponse;
         }
         
         /**
@@ -711,30 +717,66 @@ final class ChromeCacheExtractor {
                 
                 // if this might be a HTPP header, lets try to parse it as such
                 if ((isHTTPHeaderHint)) {
-                    // Check if we can find the http headers
                     String strData = new String(data);
                     if (strData.contains("HTTP")) {
                         
-                        // TBD parse header
-                        // Past some bytes there's the HTTP headers
+                        // Http headers if present, are usually in frst data segment in an entry
                         // General Parsing algo:
                         //   - Find start of HTTP header by searching for string "HTTP"
-                        //   - Skip to the first 0x00 ti get to the end of the HTTP response line, this makrs start of headers section
-                        //   - Find the end of the end by searching for 0x00 0x00 bytes
+                        //   - Skip to the first 0x00 to get to the end of the HTTP response line, this makrs start of headers section
+                        //   - Find the end of the header by searching for 0x00 0x00 bytes
                         //   - Extract the headers section
                         //   - Parse the headers section - each null terminated string is a header
                         //   - Each header is of the format "name: value" e.g. 
                         
-                         type = CacheDataTypeEnum.HTTP_HEADER;
+                        type = CacheDataTypeEnum.HTTP_HEADER;
+
+                        int startOff = strData.indexOf("HTTP");
+                        Charset charset = Charset.forName("UTF-8");
+                        boolean done = false;
+                        int i = startOff;
+                        int hdrNum = 1;
+                        
+                        while (!done) {
+                            // each header is null terminated
+                            int start = i;
+                            while (i < data.length && data[i] != 0)  {
+                                i++;
+                            }
+                        
+                            // hhtp headers are terminated by 0x00 0x00 
+                            if (data[i+1] == 0) {
+                                done = true;
+                            }
+                        
+                            int len = (i - start);
+                            String headerLine = new String(data, start, len, charset);
+         
+                            // first line is the http response
+                            if (hdrNum == 1) { 
+                                httpResponse = headerLine;
+                            } else {
+                                int nPos = headerLine.indexOf(":");
+                                String key = headerLine.substring(0, nPos);
+                                String val= headerLine.substring(nPos+1);
+                
+                                httpHeaders.put(key.toLowerCase(), val);
+                            }
+                            
+                            i++;
+                            hdrNum++;
+                        }
                     }
                 }
                 
-            } else {
+            } 
+            //else {
                 // Handle external f_* files
                 
                 // External files may or may not be compressed
                 // They may be compresswed with GZIP, which our other ingest modules recognize and decpress
                 // Alternatively thay may be compressed with Brotli, in that case we may want to decopmress them
+                // content-encoding header in the data segment with HTTP header can tell us if data is compressed.
                 
                 // TBD: In future if we want to do anything with contents of file.
 //                this.data = new byte [length];
@@ -743,11 +785,8 @@ final class ChromeCacheExtractor {
 //                buf.position(0);
 //                buf.get(data, 0, length);
 //                
-//                // get mime type, to determine if the file is compressed or not
-//                AbstractFile abstractFile = cacheFileCopy.getAbstractFile();
-//                mimeType = fileTypeDetector.getMIMEType(abstractFile);
                 
-            }
+           //}
         }
         
         String getDataString() throws TskCoreException, IngestModuleException {
@@ -800,8 +839,7 @@ final class ChromeCacheExtractor {
                 extract();
             }
             
-            if (!this.isInExternalFile() || 
-                !this.isCompressedFile()) {
+            if (!this.isInExternalFile()) {
                 
                 // write the
                 try (FileOutputStream stream = new FileOutputStream(filePathName)) {
@@ -837,13 +875,12 @@ final class ChromeCacheExtractor {
         
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append(String.format("\t\tData type = : %s, Data Len = %d", 
+            StringBuilder strBuilder = new StringBuilder();
+            strBuilder.append(String.format("\t\tData type = : %s, Data Len = %d\n", 
                                     this.type.toString(), this.length ))
-                    .append("\n")
-                    .append(String.format("\t\tData = : %s ", new String(data) ));
+                    .append(String.format("\n\t\tData = : %s ", new String(data) ));
             
-            return sb.toString(); 
+            return strBuilder.toString(); 
         }
         
     }
@@ -978,17 +1015,17 @@ final class ChromeCacheExtractor {
                 } 
             }
             else {  // key stored within entry 
-                StringBuilder sb = new StringBuilder(MAX_KEY_LEN);
+                StringBuilder strBuilder = new StringBuilder(MAX_KEY_LEN);
                 int i = 0;
                 while (fileROBuf.remaining() > 0  && i < MAX_KEY_LEN)  {
                     char c = (char)fileROBuf.get();
                     if (c == '\0') { 
                         break;
                     }
-                    sb.append(c);
+                    strBuilder.append(c);
                 }
 
-                key = sb.toString();
+                key = strBuilder.toString();
             }
         }
 
@@ -1028,7 +1065,7 @@ final class ChromeCacheExtractor {
             return key;
         }
         
-        public ArrayList<CacheData> getData() {
+        public List<CacheData> getData() {
             ArrayList<CacheData> list = new ArrayList<>();
              for (int i = 0; i < 4; i++)  {
                  if (dataSizes[i] > 0) {
