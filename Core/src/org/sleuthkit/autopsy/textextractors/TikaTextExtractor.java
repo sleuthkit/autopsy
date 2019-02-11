@@ -147,15 +147,15 @@ final class TikaTextExtractor implements TextExtractor {
 
     public TikaTextExtractor(Content content) {
         this.content = content;
-        
+
         parser = new AutoDetectParser();
 
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
-            if(file.getMIMEType() != null) {
+            if (file.getMIMEType() != null) {
                 //Force Tika to use our pre-computed mime type during detection
-                parser.setDetector((InputStream inStream, Metadata metaData) -> 
-                        MediaType.parse(file.getMIMEType()));
+                parser.setDetector((InputStream inStream, Metadata metaData)
+                        -> MediaType.parse(file.getMIMEType()));
             }
         }
     }
