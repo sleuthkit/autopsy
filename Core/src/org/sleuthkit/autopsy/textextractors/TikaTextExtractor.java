@@ -127,7 +127,7 @@ final class TikaTextExtractor implements TextExtractor {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(tikaThreadFactory);
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
-    private AutoDetectParser parser;
+    private final AutoDetectParser parser;
     private final Content content;
 
     private boolean tesseractOCREnabled;
