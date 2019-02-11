@@ -206,10 +206,6 @@
                 <binary-origin>release/modules/ext/quartz-2.2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.25.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/guava-17.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/guava-17.0.jar</binary-origin>
             </class-path-extension>
@@ -324,10 +320,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-codec-1.10.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-codec-1.10.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/gson-2.8.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-2.8.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-schemas-3.17.jar</runtime-relative-path>
