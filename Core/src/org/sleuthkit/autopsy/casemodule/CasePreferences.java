@@ -125,7 +125,7 @@ public final class CasePreferences {
      * Reset all values to their default states.
      */
     private static void clear() {
-        groupItemsInTreeByDataSource = null;
+        groupItemsInTreeByDataSource = false;
     }
 
     /**
