@@ -334,13 +334,16 @@ class TskDbDiff(object):
                 for line in postgreSQL_db:
                     line = line.strip('\r\n ')
                     # Deal with pg_dump result file
-                    if (line.startswith('--') or line.lower().startswith('alter') or "pg_catalog" in line or "idle_in_transaction_session_timeout" in line or not line or 'INSERT INTO "image_gallery_groups_seen"' in line): # It's comment or alter statement or catalog entry or set idle entry or empty line
+                    if (line.startswith('--') or line.lower().startswith('alter') or "pg_catalog" in line or "idle_in_transaction_session_timeout" in line or not line): # It's comment or alter statement or catalog entry or set idle entry or empty line
                         continue
                     elif not line.endswith(';'): # Statement not finished
                         dump_line += line
                         continue
                     else:
                         dump_line += line
+                    if 'INSERT INTO image_gallery_groups_seen' in dump_line:
+                        dump_line = ''
+                        continue;
                     dump_line = normalize_db_entry(dump_line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table)
                     db_log.write('%s\n' % dump_line)
                     dump_line = ''
