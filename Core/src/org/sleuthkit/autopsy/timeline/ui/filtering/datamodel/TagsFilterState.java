@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
 /**
  *
  */
-public class TagsFilterState extends CompoundFilterStateImpl<TagNameFilter, TagsFilter> {
+public class TagsFilterState extends CompoundFilterState<TagNameFilter, TagsFilter> {
 
     public TagsFilterState(TagsFilter delegate) {
         super(delegate);
@@ -37,13 +37,13 @@ public class TagsFilterState extends CompoundFilterStateImpl<TagNameFilter, Tags
 
     }
 
-    public TagsFilterState(TagsFilter delegate, Collection<FilterState<TagNameFilter>> subFilterStates) {
+    public TagsFilterState(TagsFilter delegate, Collection<FilterState<? extends TagNameFilter>> subFilterStates) {
         super(delegate, subFilterStates);
         installSelectNewFiltersListener();
     }
 
     private void installSelectNewFiltersListener() {
-        getSubFilterStates().addListener((ListChangeListener.Change<? extends FilterState<TagNameFilter>> change) -> {
+        getSubFilterStates().addListener((ListChangeListener.Change<? extends FilterState<? extends TagNameFilter>> change) -> {
             while (change.next()) {
                 change.getAddedSubList().forEach(filterState -> filterState.setSelected(true));
             }

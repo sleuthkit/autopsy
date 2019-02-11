@@ -22,27 +22,29 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import org.junit.Before;
 import org.junit.Test;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
  *
  */
-public class DefaultFilterStateTest extends FilterStateTestAbstract<TimelineFilter.HideKnownFilter, DefaultFilterState<TimelineFilter.HideKnownFilter>> {
+public class DefaultFilterStateTest extends FilterStateTestAbstract<  DefaultFilterState<?>> {
 
     public DefaultFilterStateTest() {
     }
 
-    @Override
-    DefaultFilterState<TimelineFilter.HideKnownFilter> getInstance() {
-        return new DefaultFilterState<>(new TimelineFilter.HideKnownFilter());
+    @Before
+    public void setup() {
+        instance = new DefaultFilterState<>(new TimelineFilter.HideKnownFilter());
     }
-     /**
+
+    /**
      * Test of getActiveFilter method, of class DefaultFilterState.
      */
     @Test
     @Override
-    public   void testGetActiveFilter() {
+    public void testGetActiveFilter() {
         System.out.println("getActiveFilter");
 
         assertNull(instance.getActiveFilter());
@@ -51,7 +53,9 @@ public class DefaultFilterStateTest extends FilterStateTestAbstract<TimelineFilt
         instance.setDisabled(Boolean.TRUE);
         assertNull(instance.getActiveFilter());
 
-    } /**
+    }
+
+    /**
      * Test of equals method, of class DefaultFilterState.
      */
     @Test

@@ -18,26 +18,24 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
-import org.hamcrest.CoreMatchers;
 import static org.hamcrest.CoreMatchers.equalTo;
-import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import org.junit.Before;
 import org.junit.Test;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
-public class DescriptionFilterStateTest extends FilterStateTestAbstract<DescriptionFilter, FilterState<DescriptionFilter>> {
+public class DescriptionFilterStateTest extends FilterStateTestAbstract<  FilterState<DescriptionFilter>> {
 
     public DescriptionFilterStateTest() {
     }
 
-    @Override
-    FilterState<DescriptionFilter> getInstance() {
-        return new DescriptionFilterState(new DescriptionFilter(DescriptionLoD.SHORT, "text"));
+    @Before
+    public void setup() {
+        instance = new DescriptionFilterState(new DescriptionFilter(DescriptionLoD.SHORT, "text"));
     }
 
     /**

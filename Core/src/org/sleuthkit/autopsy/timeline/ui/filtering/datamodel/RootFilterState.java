@@ -19,13 +19,12 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import com.google.common.collect.Lists;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
-import static org.apache.commons.lang3.ObjectUtils.notEqual;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
@@ -40,7 +39,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
 
 /**
  */
-public class RootFilterState implements CompoundFilterState< TimelineFilter, RootFilter> {
+public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFilter> {
 
     private final CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState;
     private final DefaultFilterState<HideKnownFilter> knownFilterState;
@@ -53,23 +52,21 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
     private static final ReadOnlyBooleanProperty ALWAYS_TRUE = new ReadOnlyBooleanWrapper(true).getReadOnlyProperty();
     private final static ReadOnlyBooleanProperty ALWAYS_FALSE = new ReadOnlyBooleanWrapper(false).getReadOnlyProperty();
 
-    private final ObservableList<   FilterState< ? extends TimelineFilter>> subFilterStates = FXCollections.observableArrayList();
-    private final ObservableSet<   FilterState< ? extends TimelineFilter>> namedFilterStates = FXCollections.observableSet();
-    private final RootFilter delegate;
+    private final Set<   FilterState< ? extends TimelineFilter>> namedFilterStates = new HashSet<>();
 
     public RootFilterState(RootFilter delegate) {
         this(delegate,
-                new CompoundFilterStateImpl<>(delegate.getEventTypeFilter()),
+                new CompoundFilterState<>(delegate.getEventTypeFilter()),
                 new DefaultFilterState<>(delegate.getKnownFilter()),
                 new DefaultFilterState<>(delegate.getTextFilter()),
                 new TagsFilterState(delegate.getTagsFilter()),
-                new CompoundFilterStateImpl<>(delegate.getHashHitsFilter()),
-                new CompoundFilterStateImpl<>(delegate.getDataSourcesFilter()),
-                new CompoundFilterStateImpl<>(delegate.getFileTypesFilter())
+                new CompoundFilterState<>(delegate.getHashHitsFilter()),
+                new CompoundFilterState<>(delegate.getDataSourcesFilter()),
+                new CompoundFilterState<>(delegate.getFileTypesFilter())
         );
     }
 
-    private RootFilterState(RootFilter delegate,
+    private RootFilterState(RootFilter filter,
                             CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState,
                             DefaultFilterState<HideKnownFilter> knownFilterState,
                             DefaultFilterState<TextFilter> textFilterState,
@@ -77,7 +74,7 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
                             CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState,
                             CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState,
                             CompoundFilterState<FileTypeFilter, FileTypesFilter> fileTypesFilterState) {
-        this.delegate = delegate;
+        super(filter, Arrays.asList(eventTypeFilterState, knownFilterState, textFilterState, tagsFilterState, hashHitsFilterState, dataSourcesFilterState, fileTypesFilterState));
         this.eventTypeFilterState = eventTypeFilterState;
         this.knownFilterState = knownFilterState;
         this.textFilterState = textFilterState;
@@ -85,15 +82,8 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
         this.hashHitsFilterState = hashHitsFilterState;
         this.dataSourcesFilterState = dataSourcesFilterState;
         this.fileTypesFilterState = fileTypesFilterState;
-        subFilterStates.addAll(
-                knownFilterState,
-                textFilterState,
-                tagsFilterState,
-                hashHitsFilterState,
-                dataSourcesFilterState,
-                fileTypesFilterState,
-                eventTypeFilterState);
-        namedFilterStates.addAll(subFilterStates);
+
+        namedFilterStates.addAll(Arrays.asList(eventTypeFilterState, knownFilterState, textFilterState, tagsFilterState, hashHitsFilterState, dataSourcesFilterState, fileTypesFilterState));
     }
 
     /**
@@ -104,19 +94,10 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
      * @return A new RootFilter model that intersects the given filter with this
      *         one.
      */
-    public RootFilterState intersect(FilterState<? extends TimelineFilter> otherFilter) {
+    public RootFilterState intersect(FilterState< ? extends TimelineFilter> otherFilter) {
         RootFilterState copyOf = copyOf();
         copyOf.addSubFilterState(otherFilter);
         return copyOf;
-    }
-
-    public void addSubFilterState(FilterState<? extends TimelineFilter> newSubFilterState) {
-        if (subFilterStates.contains(newSubFilterState) == false) {
-            subFilterStates.add(newSubFilterState);
-        }
-        if (delegate.getSubFilters().contains(newSubFilterState.getFilter())) {
-            getFilter().getSubFilters().add(newSubFilterState.getFilter());
-        }
     }
 
     @Override
@@ -173,7 +154,7 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
                 eventTypeFilterState.getActiveFilter(),
                 dataSourcesFilterState.getActiveFilter(),
                 fileTypesFilterState.getActiveFilter(),
-                Lists.transform(subFilterStates, FilterState::getActiveFilter));
+                Lists.transform(getSubFilterStates(), FilterState::getActiveFilter));
     }
 
     @SuppressWarnings("rawtypes")
@@ -205,19 +186,15 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
             return false;
         }
 
-        if (!Objects.equals(this.subFilterStates, other.getSubFilterStates())) {
+        if (!Objects.equals(this.getSubFilterStates(), other.getSubFilterStates())) {
             return false;
         }
         return true;
-    } 
-    @Override
-    public int hashCode() {
-        return 7;
     }
 
     @Override
-    public ObservableList<  FilterState< ? extends TimelineFilter>> getSubFilterStates() {
-        return subFilterStates;
+    public int hashCode() {
+        return 7;
     }
 
     @Override
@@ -233,11 +210,6 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
     @Override
     public String getDisplayName() {
         return "Root";
-    }
-
-    @Override
-    public RootFilter getFilter() {
-        return delegate;
     }
 
     @Override
@@ -268,5 +240,20 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
     @Override
     public void setSelected(Boolean act) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String toString() {
+        return "RootFilterState{"
+               + "\neventTypeFilterState=" + eventTypeFilterState + ","
+               + "\nknownFilterState=" + knownFilterState + ","
+               + "\ntextFilterState=" + textFilterState + ","
+               + "\ntagsFilterState=" + tagsFilterState + ","
+               + "\nhashHitsFilterState=" + hashHitsFilterState + ","
+               + "\ndataSourcesFilterState=" + dataSourcesFilterState + ","
+               + "\nfileTypesFilterState=" + fileTypesFilterState + ","
+               + "\nsubFilterStates=" + getSubFilterStates() + ","
+               + "\nnamedFilterStates=" + namedFilterStates + ","
+               + "\ndelegate=" + getFilter() + '}';
     }
 }
