@@ -31,8 +31,10 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Utilities;
+import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -359,36 +361,71 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }//GEN-LAST:event_goToOffsetTextFieldActionPerformed
 
     @NbBundle.Messages({"DataContentViewerHex.launchError=Unable to launch HxD Editor. "
-                        + "Please set-up the HdX install location in Tools -> Options -> External Viewer"})
+                        + "Please specify the HxD install location in Tools -> Options -> External Viewer",
+                        "DataContentViewerHex.copyingFile=Copying file to open in HxD..."})
     private void launchHxDButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_launchHxDButtonActionPerformed
-        try {
-            File HdXExecutable = new File(UserPreferences.getExternalHexEditorPath());
-            if(!HdXExecutable.exists() || !HdXExecutable.canExecute()) {
-                JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
-                return;
-            }
-            
-            String tempDirectory = Case.getCurrentCaseThrows().getTempDirectory();
-            File dataSourceInTempDirectory = Paths.get(tempDirectory, 
-                    FileUtil.escapeFileName(dataSource.getId() + dataSource.getName())).toFile();
-            ContentUtils.writeToFile(dataSource, dataSourceInTempDirectory);
-            
-            try {
-                ProcessBuilder launchHdXExecutable = new ProcessBuilder();
-                launchHdXExecutable.command(String.format("\"%s\" \"%s\"", 
-                        HdXExecutable.getAbsolutePath(), 
-                        dataSourceInTempDirectory.getAbsolutePath()));
-                launchHdXExecutable.start();
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
-                dataSourceInTempDirectory.delete();
-            }
-        } catch (NoCurrentCaseException | IOException ex) {
-            logger.log(Level.SEVERE, "Unable to copy file into temp directory", ex);
-            JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
-        }
+        new BackgroundFileCopyTask().execute();
     }//GEN-LAST:event_launchHxDButtonActionPerformed
 
+    /**
+     * Performs the file copying and process launching in a SwingWorker so that the 
+     * UI is not blocked when opening large files.
+     */
+    private class BackgroundFileCopyTask extends SwingWorker<Void, Void> {
+        private boolean wasCancelled = false;
+        
+        @Override
+        public Void doInBackground() throws InterruptedException {
+            ProgressHandle progress = ProgressHandle.createHandle(DataContentViewerHex_copyingFile(), () -> {
+                //Cancel the swing worker (which will interrupt the ContentUtils call below)
+                this.cancel(true);
+                wasCancelled = true;
+                return true;
+            });
+            
+            try {
+                File HxDExecutable = new File(UserPreferences.getExternalHexEditorPath());
+                if(!HxDExecutable.exists() || !HxDExecutable.canExecute()) {
+                    JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
+                    return null;
+                }
+                
+                String tempDirectory = Case.getCurrentCaseThrows().getTempDirectory();
+                File tempFile = Paths.get(tempDirectory,
+                        FileUtil.escapeFileName(dataSource.getId() + dataSource.getName())).toFile();
+                
+                progress.start(100);
+                ContentUtils.writeToFile(dataSource, tempFile, progress, this, true);
+                
+                if(wasCancelled) {
+                    tempFile.delete();
+                    progress.finish();
+                    return null;
+                }
+                
+                try {
+                    ProcessBuilder launchHxDExecutable = new ProcessBuilder();
+                    launchHxDExecutable.command(String.format("\"%s\" \"%s\"", 
+                            HxDExecutable.getAbsolutePath(), 
+                            tempFile.getAbsolutePath()));
+                    launchHxDExecutable.start();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Unsuccessful attempt to launch HxD", ex);
+                    JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
+                    tempFile.delete();
+                }
+            } catch (NoCurrentCaseException | IOException ex) {
+                logger.log(Level.SEVERE, "Unable to copy file into temp directory", ex);
+                JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
+            }
+            
+            progress.finish();
+            return null;
+        }
+    }
+    
+    
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
