@@ -18,39 +18,19 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
-import org.junit.After;
-import org.junit.AfterClass;
 import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-public abstract class FilterStateTestAbstract<FT, FS extends FilterState<FT>> {
+/**
+ * Abstract base class for test classes testing subclasses of FilterState
+ *
+ * @param <FS> The type of the filter state this class tests.
+ */
+public abstract class FilterStateTestAbstract<FS extends FilterState<?>> {
 
-    protected FS instance;
-
-    abstract FS getInstance();
+    protected FS instance; //must be initialized by subclasses
 
     public FilterStateTestAbstract() {
-    }
-
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
-    @Before
-    public void setUp() {
-        instance = getInstance();
-
-    }
-
-    @After
-    public void tearDown() {
-
     }
 
     /**
@@ -97,8 +77,9 @@ public abstract class FilterStateTestAbstract<FT, FS extends FilterState<FT>> {
     @Test
     public void testCopyOf() {
         System.out.println("copyOf");
+        FilterState<?> copyOf = instance.copyOf();
 
-        assertEquals(instance, instance.copyOf());
+        assertEquals(instance, copyOf);
     }
 
     /**
