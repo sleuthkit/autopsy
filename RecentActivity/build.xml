@@ -19,6 +19,9 @@
         <copy todir="${basedir}/release/rr-full" >
             <fileset dir="${thirdparty.dir}/rr-full/" />
         </copy>
+        <copy todir="${basedir}/release/ESEDatabaseView" >
+            <fileset dir="${thirdparty.dir}/ESEDatabaseView/" />
+        </copy>
     </target>
     
     <target name="get-deps" depends="init-ivy,get-thirdparty-tools">
