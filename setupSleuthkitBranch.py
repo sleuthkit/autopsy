@@ -82,7 +82,7 @@ def main():
         TRAVIS_BRANCH=os.getenv("TRAVIS_BRANCH",DEVELOP_BRANCH)
         print("Travis Branch: " + TRAVIS_BRANCH)
         CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",TRAVIS_BRANCH)
-        if (CURRENT_BRANCH=""):
+        if (CURRENT_BRANCH==""):
             CURRENT_BRANCH=TRAVIS_BRANCH
             BRANCH_OWNER=ORIGIN_OWNER
         else:
