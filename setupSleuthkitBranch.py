@@ -43,6 +43,8 @@ def gitSleuthkitCheckout(branch, branchOwner):
         cmd = ['git','checkout', branch]
     else:
         #add the remotes
+        if (branchOwner==ORIGIN_OWNER):
+            branchOwner="sleuthkit"
         checkout=['git','checkout','-b',branchOwner+'-'+branch]
         passed = subprocess.call(checkout, stdout=sys.stdout,cwd=TSK_HOME)
         cmd = ['git','pull', "/".join(["https://github.com", branchOwner, "sleuthkit.git"]), branch]
