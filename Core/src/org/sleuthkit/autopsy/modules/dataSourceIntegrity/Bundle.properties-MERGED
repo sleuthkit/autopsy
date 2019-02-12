@@ -1,0 +1,51 @@
+# {0} - hashName
+# {1} - calculatedHashValue
+DataSourceIntegrityIngestModule.process.calcHashWithType=<li>Calculated {0} hash: {1} </li>
+# {0} - imageName
+DataSourceIntegrityIngestModule.process.calculateHashDone=<p>Data Source Hash Calculation Results for {0} </p>
+# {0} - imageName
+DataSourceIntegrityIngestModule.process.errorLoadingHashes=\ Error loading hashes for image {0} from the database
+# {0} - imageName
+DataSourceIntegrityIngestModule.process.errorSavingHashes=\ Error saving hashes for image {0} to the database
+# {0} - hashName
+DataSourceIntegrityIngestModule.process.hashAlgorithmError=Error creating message digest for {0} algorithm
+DataSourceIntegrityIngestModule.process.hashesCalculated=\ hashes calculated
+# {0} - hashAlgorithm
+# {1} - calculatedHashValue
+# {2} - storedHashValue
+DataSourceIntegrityIngestModule.process.hashFailedForArtifact={0} hash verification failed:\n  Calculated hash: {1}\n  Stored hash: {2}\n
+# {0} - calculatedHashValue
+# {1} - storedHashValue
+DataSourceIntegrityIngestModule.process.hashList=<ul><li>Calculated hash: {0} </li><li>Stored hash: {1} </li></ul>
+# {0} - hashName
+DataSourceIntegrityIngestModule.process.hashMatch=<li>{0} hash verified </li>
+# {0} - hashName
+DataSourceIntegrityIngestModule.process.hashNonMatch=<li>{0} hash not verified </li>
+# {0} - imageName
+DataSourceIntegrityIngestModule.process.skipCompute=Not computing new hashes for {0} since the option was disabled
+# {0} - imageName
+DataSourceIntegrityIngestModule.process.skipVerify=Not verifying existing hashes for {0} since the option was disabled
+# {0} - imageName
+DataSourceIntegrityIngestModule.process.verificationFailure={0} failed integrity verification
+# {0} - imageName
+DataSourceIntegrityIngestModule.process.verificationSuccess=Integrity of {0} verified
+DataSourceIntegrityIngestModule.startup.noCheckboxesSelected=At least one of the checkboxes must be selected
+OpenIDE-Module-Name=ewfVerify
+DataSourceIntegrityModuleFactory.moduleName.text=Data Source Integrity
+DataSourceIntegrityModuleFactory.moduleDesc.text=Calculates and validates hashes of data sources.
+DataSourceIntegrityIngestModule.process.errProcImg=Error processing {0}
+DataSourceIntegrityIngestModule.process.skipNonEwf=Skipping non-disk image data source {0}
+DataSourceIntegrityIngestModule.process.noStoredHash=Image {0} does not have stored hash.
+DataSourceIntegrityIngestModule.process.startingImg=Starting {0}
+DataSourceIntegrityIngestModule.process.errGetSizeOfImg=Error getting size of {0}. Image will not be processed.
+DataSourceIntegrityIngestModule.process.errReadImgAtChunk=Error reading {0} at chunk {1}
+DataSourceIntegrityIngestModule.shutDown.verified=\ verified 
+DataSourceIntegrityIngestModule.shutDown.notVerified=\ not verified 
+DataSourceIntegrityIngestModule.shutDown.verifyResultsHeader=<p>Data Source Verification Results for {0} </p>
+DataSourceIntegrityIngestModule.shutDown.resultLi=<li>Result\:{0} </li>
+DataSourceIntegrityIngestModule.shutDown.calcHashLi=<li>Calculated hash\: {0} </li>
+DataSourceIntegrityIngestModule.shutDown.storedHashLi=<li>Stored hash\: {0} </li>
+DataSourceIntegrityIngestSettingsPanel.computeHashesCheckbox.text=Calculate data source hashes if none are present
+DataSourceIntegrityIngestSettingsPanel.jLabel1.text=Note that this module will not run on logical files
+DataSourceIntegrityIngestSettingsPanel.jLabel3.text=Ingest Settings
+DataSourceIntegrityIngestSettingsPanel.verifyHashesCheckbox.text=Verify existing data source hashes

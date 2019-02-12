@@ -1,0 +1,3 @@
+CustomArtifactsCreatorDataSourceIngestModule.exceptionMessage.errorCreatingCustomType=Error creating custom artifact type.
+CustomArtifactsCreatorFileIngestModule.exceptionMessage.errorCreatingCustomType=Error creating custom artifact type.
+InterestingArtifactCreatorIngestModule.exceptionMessage.errorCreatingCustomType=Error creating custom artifact type.

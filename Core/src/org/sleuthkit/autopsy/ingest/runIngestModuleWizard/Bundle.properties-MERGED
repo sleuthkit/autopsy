@@ -1,0 +1,8 @@
+IngestModulesConfigWizardPanel.name.text=Configure Ingest Modules
+IngestProfileSelectionPanel.customSettings.description=configure individual module settings in next step of wizard
+IngestProfileSelectionPanel.customSettings.name=Custom Settings
+IngestProfileSelectionPanel.ingestSettingsButton.text=Ingest Settings
+IngestProfileSelectionPanel.profileListLabel.text=Select Profile:
+IngestProfileWizardPanel.panelName=Ingest Profile Selection
+RunIngestModulesAction.actionPerformed.errorMessage=Error querying the case database for the selected item.
+RunIngestModulesAction.name=Run Ingest Modules

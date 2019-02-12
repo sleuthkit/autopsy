@@ -1,0 +1,15 @@
+# {0} - data source name
+deviceIdQueryErrMsg=Data source {0} missing Device ID
+# {0} - output directory name
+VMExtractorIngestModule.cannotCreateOutputDir.message=Unable to create output directory: {0}.
+VMExtractorIngestModule.noOpenCase.errMsg=No open case available.
+VMExtractorIngestModuleFactory.moduleDisplayName=Virtual Machine Extractor
+VMExtractorIngestModuleFactory.moduleDescription=Extracts virtual machine files and adds them to a case as data sources.
+VMExtractorIngestModule.addedVirtualMachineImage.message=Added virtual machine image {0}
+VMExtractorIngestModule.searchingImage.message=Searching image for virtual machine files
+VMExtractorIngestModule.exportingToDisk.message=Exporting virtual machine files to disk
+VMExtractorIngestModule.queuingIngestJobs.message=Queuing ingest jobs for extracted virtual machines
+VMExtractorIngestModule.msgNotify.failedExtractVM.title.txt=Failed to extract virtual machine file
+VMExtractorIngestModule.msgNotify.failedExtractVM.msg.txt=Failed to write virtual machine file {0} to disk.
+VMExtractorIngestModule.msgNotify.failedIngestVM.title.txt=Failed to ingest virtual machine
+VMExtractorIngestModule.msgNotify.failedIngestVM.msg.txt=Failed to ingest virtual machine file {0}

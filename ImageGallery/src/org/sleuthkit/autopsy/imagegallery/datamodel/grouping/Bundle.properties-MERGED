@@ -1,0 +1,6 @@
+GroupSortBy.groupName=Group Name
+GroupSortBy.groupSize=Group Size
+GroupSortBy.none=None
+GroupSortBy.priority=Priority
+# {0} - groupBy attribute Name
+ReGroupTask.displayTitle=regrouping by {0}: 

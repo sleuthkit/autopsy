@@ -1,0 +1,24 @@
+DrawableTileBase.externalViewerAction.text=Open in External Viewer
+DrawableTileBase.menuItem.extractFiles=Extract File(s)
+DrawableTileBase.menuItem.showContentViewer=Show Content Viewer
+DrawableUIBase.errorLabel.OOMText=Insufficent memory
+DrawableUIBase.errorLabel.text=Could not read file
+GroupPane.bottomLabel.displayText=Group Viewing History: 
+GroupPane.catContainerLabel.displayText=Categorize Selected File:
+GroupPane.catHeadingLabel.displayText=Category:
+GroupPane.gridViewContextMenuItem.extractFiles=Extract File(s)
+# {0} - default group name
+# {1} - hashset hits count
+# {2} - group size
+GroupPane.headerString={0} -- {1} hash set hits / {2} files
+GroupPane.hederLabel.displayText=Tag Selected Files:
+# {0} - file name
+MediaLoadTask.messageText=Reading video: {0}
+MetaDataPane.attributeColumn.headingName=Attribute
+MetaDataPane.copyMenuItem.text=Copy
+MetaDataPane.tableView.placeholder=Select a file to show its details here.
+MetaDataPane.titledPane.displayName=Details
+MetaDataPane.valueColumn.headingName=Value
+# {0} - file id number
+# {1} - number of file ids
+SlideShowView.supplementalText={0} of {1} in group
