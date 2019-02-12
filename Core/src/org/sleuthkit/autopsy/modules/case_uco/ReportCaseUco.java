@@ -85,6 +85,15 @@ public class ReportCaseUco implements GeneralReportModule {
     }    
 
     /**
+     * Returns CASE-UCO report file name
+     *
+     * @return the REPORT_FILE_NAME
+     */
+    public static String getReportFileName() {
+        return REPORT_FILE_NAME;
+    }
+
+    /**
      * Generates a CASE-UCO format report.
      *
      * @param baseReportDir caseDirPath to save the report
