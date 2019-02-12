@@ -39,7 +39,7 @@ def gitSleuthkitCheckout(branch, branchOwner):
     # passed is a global variable that gets set to non-zero integer
     # When an error occurs
     global passed
-    if (branchOwner==ORIGIN_OWNER):
+    if (branchOwner==ORIGIN_OWNER and branch==DEVELOP_BRANCH):
         cmd = ['git','checkout', branch]
     else:
         #add the remotes
