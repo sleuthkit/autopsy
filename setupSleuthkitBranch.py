@@ -81,10 +81,15 @@ def main():
     if TRAVIS == "true":
         TRAVIS_BRANCH=os.getenv("TRAVIS_BRANCH",DEVELOP_BRANCH)
         print("Travis Branch: " + TRAVIS_BRANCH)
-        TRAVIS_SLUG=os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+TRAVIS_BRANCH)
-        BRANCH_OWNER=TRAVIS_SLUG.split('/')[0]
-        CURRENT_BRANCH=TRAVIS_SLUG.split('/')[1]
-        print("PR SLUG: " + TRAVIS_SLUG)
+        CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",TRAVIS_BRANCH)
+        if (CURRENT_BRANCH=""):
+            CURRENT_BRANCH=TRAVIS_BRANCH
+            BRANCH_OWNER=ORIGIN_OWNER
+        else:
+            BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
+        print("Current Branch: " + CURRENT_BRANCH)
+        print("Branch Owner: " + BRANCH_OWNER)
+        print("PR SLUG: " + os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+CURRENT_BRANCH))
     elif APPVEYOR:
         APPVEYOR_BRANCH=os.getenv("APPVEYOR_REPO_BRANCH",DEVELOP_BRANCH)
         print("Appveyor Branch: " + APPVEYOR_BRANCH)
