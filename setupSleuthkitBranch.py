@@ -76,11 +76,11 @@ def main():
     TRAVIS=os.getenv("TRAVIS",False)
     APPVEYOR=os.getenv("APPVEYOR",False)
     if TRAVIS == "true":
-        CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",False)
-        BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", False).split('/')[0]
+        CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",DEVELOP_BRANCH)
+        BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
     elif APPVEYOR:
-        CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH",False)
-        BRANCH_OWNER=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", False).split('/')[0]
+        CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH",DEVELOP_BRANCH)
+        BRANCH_OWNER=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
     else:
         cmd=['git','rev-parse','--abbrev-ref','HEAD']
         output = subprocess.check_output(cmd)
