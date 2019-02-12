@@ -50,6 +50,9 @@ import org.sleuthkit.datamodel.OSUtility;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
 final class DataSourceSummaryPanel extends javax.swing.JPanel {
 
@@ -80,6 +83,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             allIngestJobs.addAll(skCase.getIngestJobs());
             dataSources.addAll(skCase.getDataSources());
+            //if for some reason multiple OS_INFO_ARTIFACTS were created with the same parent object id this will only return one OSInfo object for them
             osInfoList = OSUtility.getOSInfo(skCase);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
@@ -92,7 +96,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 updateIngestJobs(selectedDataSource);
                 filesTableModel = new FilesTableModel(selectedDataSource);
                 fileCountsTable.setModel(filesTableModel);
-                opperatingSystemValueLabel.setText(getOSName(selectedDataSource));
+                operatingSystemValueLabel.setText(getOSName(selectedDataSource));
                 this.repaint();
             }
         });
@@ -104,22 +108,21 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
      *
      * @param selectedDataSource the datasource to get the OS information for
      *
-     * @return the name of the opperating system on the specified datasource,
-     *         empty string if no opperating system info found
+     * @return the name of the operating system on the specified datasource,
+     *         empty string if no operating system info found
      */
     private String getOSName(DataSource selectedDataSource) {
         String osName = "";
         if (selectedDataSource != null) {
             for (OSInfo osInfo : osInfoList) {
                 try {
-                    //assumes only one Opperating System per datasource
+                    //assumes only one Operating System per datasource
                     //get the datasource id from the OSInfo's first artifact if it has artifacts
                     if (!osInfo.getArtifacts().isEmpty() && osInfo.getArtifacts().get(0).getDataSource().getId() == selectedDataSource.getId()) {
-                        osName = osInfo.getOSName();
-                        //if this OSInfo object has a name use it otherwise keep checking OSInfo objects
                         if (!osName.isEmpty()) {
-                            break;
+                            osName += ", ";
                         }
+                        osName += osInfo.getOSName();
                     }
                 } catch (TskCoreException ignored) {
                     //unable to get datasource for the OSInfo Object 
@@ -167,8 +170,8 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         ingestJobsTable = new javax.swing.JTable();
         fileCountsScrollPane = new javax.swing.JScrollPane();
         fileCountsTable = new javax.swing.JTable();
-        opperatingSystemLabel = new javax.swing.JLabel();
-        opperatingSystemValueLabel = new javax.swing.JLabel();
+        operatingSystemLabel = new javax.swing.JLabel();
+        operatingSystemValueLabel = new javax.swing.JLabel();
         fileCountsLabel = new javax.swing.JLabel();
         ingestJobsLabel = new javax.swing.JLabel();
         closeButton = new javax.swing.JButton();
@@ -185,7 +188,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         fileCountsTable.setModel(filesTableModel);
         fileCountsScrollPane.setViewportView(fileCountsTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(opperatingSystemLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.opperatingSystemLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(operatingSystemLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.operatingSystemLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(fileCountsLabel, org.openide.util.NbBundle.getMessage(DataSourceSummaryPanel.class, "DataSourceSummaryPanel.fileCountsLabel.text")); // NOI18N
 
@@ -224,9 +227,9 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                             .addComponent(ingestJobsLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(ingestJobsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 474, Short.MAX_VALUE)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(opperatingSystemLabel)
+                                .addComponent(operatingSystemLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(opperatingSystemValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
 
@@ -249,8 +252,8 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                     .addComponent(ingestJobsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(opperatingSystemLabel, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(opperatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(operatingSystemLabel, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(operatingSystemValueLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(10, 10, 10)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(closeButton)
@@ -320,8 +323,8 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane ingestJobsScrollPane;
     private javax.swing.JTable ingestJobsTable;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JLabel opperatingSystemLabel;
-    private javax.swing.JLabel opperatingSystemValueLabel;
+    private javax.swing.JLabel operatingSystemLabel;
+    private javax.swing.JLabel operatingSystemValueLabel;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -341,6 +344,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
         private final Map<Long, Long> fileCountsMap;
         private final Map<Long, Long> artifactCountsMap;
         private final Map<Long, Long> tagCountsMap;
+        private final Map<Long, String> typesMap;
 
         /**
          * Create a new DataSourceTableModel for the current case.
@@ -354,7 +358,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
             fileCountsMap = getCountsOfFiles();
             artifactCountsMap = getCountsOfArtifacts();
             tagCountsMap = getCountsOfTags();
-
+            typesMap = getDataSourceTypes();
         }
 
         @Override
@@ -375,7 +379,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                 case 0:
                     return currentDataSource.getName();
                 case 1:
-                    return "";
+                    return typesMap.get(currentDataSource.getId());
                 case 2:
                     //display 0 if no count is found
                     count = fileCountsMap.get(currentDataSource.getId());
@@ -392,6 +396,39 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                     break;
             }
             return null;
+        }
+
+        /**
+         * Get a map containing the TSK_DATA_SOURCE_USAGE description attributes
+         * associated with each data source in the current case.
+         *
+         * @return Collection which maps datasource id to a String which
+         *         displays a comma seperated list of values of data source
+         *         usage types expected to be in the datasource
+         */
+        private Map<Long, String> getDataSourceTypes() {
+            try {
+                SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                List<BlackboardArtifact> listOfArtifacts = skCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_DATA_SOURCE_USAGE);
+                Map<Long, String> typeMap = new HashMap<>();
+                for (BlackboardArtifact typeArtifact : listOfArtifacts) {
+                    BlackboardAttribute descriptionAttr = typeArtifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DESCRIPTION));
+                    if (typeArtifact.getDataSource() != null && descriptionAttr != null) {
+                        long dsId = typeArtifact.getDataSource().getId();
+                        String type = typeMap.get(typeArtifact.getDataSource().getId());
+                        if (type == null) {
+                            type = descriptionAttr.getValueString();
+                        } else {
+                            type = type + ", " + descriptionAttr.getValueString();
+                        }
+                        typeMap.put(dsId, type);
+                    }
+                }
+                return typeMap;
+            } catch (TskCoreException | NoCurrentCaseException ex) {
+                logger.log(Level.WARNING, "Unable to get counts of files for all datasources, providing empty results", ex);
+                return Collections.emptyMap();
+            }
         }
 
         /**

@@ -106,5 +106,7 @@ public interface InstanceTableCallback {
         return resultSet.getString("comment");
     }
     
-    
+    static long getFileObjectId(ResultSet resultSet) throws SQLException {
+        return resultSet.getLong("file_obj_id");
+    }
 }

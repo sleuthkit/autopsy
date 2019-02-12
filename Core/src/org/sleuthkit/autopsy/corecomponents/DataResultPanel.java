@@ -461,7 +461,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             }
         }
         if (tabToSelect == NO_TAB_SELECTED) {
-            tabToSelect = resultViewerTabs.getSelectedIndex();
             if ((tabToSelect == NO_TAB_SELECTED) || (!resultViewerTabs.isEnabledAt(tabToSelect))) {
                 for (int i = 0; i < resultViewerTabs.getTabCount(); ++i) {
                     if (resultViewerTabs.isEnabledAt(i)) {

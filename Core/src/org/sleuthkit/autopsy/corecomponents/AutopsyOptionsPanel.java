@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,7 +75,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private static final String ETC_FOLDER_NAME = "etc";
     private static final String CONFIG_FILE_EXTENSION = ".conf";
     private static final long ONE_BILLION = 1000000000L;  //used to roughly convert system memory from bytes to gigabytes
-    private static final long MEGA_IN_GIGA = 1024; //used to convert memory settings saved as megabytes to gigabytes
+    private static final int MEGA_IN_GIGA = 1024; //used to convert memory settings saved as megabytes to gigabytes
     private static final int MIN_MEMORY_IN_GB = 2; //the enforced minimum memory in gigabytes
     private static final Logger logger = Logger.getLogger(AutopsyOptionsPanel.class.getName());
     private String initialMemValue = Long.toString(Runtime.getRuntime().maxMemory() / ONE_BILLION);
@@ -96,8 +96,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             //Is the safest course of action
             //And the file won't exist in the install folder when running through netbeans
             memField.setEnabled(false);
+            solrMaxHeapSpinner.setEnabled(false);
         }
         systemMemoryTotal.setText(Long.toString(getSystemMemoryInGB()));
+        // The cast to int in the following is to ensure that the correct SpinnerNumberModel
+        // constructor is called.
+        solrMaxHeapSpinner.setModel(new javax.swing.SpinnerNumberModel(UserPreferences.getMaxSolrVMSize(),
+                512, ((int)getSystemMemoryInGB()) * MEGA_IN_GIGA, 512));
 
         textFieldListener = new TextFieldListener();
         agencyLogoPathField.getDocument().addDocumentListener(textFieldListener);
@@ -292,6 +297,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         agencyLogoPathField.setEnabled(!useDefault);
         browseLogosButton.setEnabled(!useDefault);
         logFileCount.setText(String.valueOf(UserPreferences.getLogFileCount()));
+        solrMaxHeapSpinner.setValue(UserPreferences.getMaxSolrVMSize());
         try {
             updateAgencyLogo(path);
         } catch (IOException ex) {
@@ -349,6 +355,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         } else {
             ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, "");
         }
+        UserPreferences.setMaxSolrVMSize((int)solrMaxHeapSpinner.getValue());
         if (memField.isEnabled()) {  //if the field could of been changed we need to try and save it
             try {
                 writeEtcConfFile();
@@ -531,6 +538,10 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         maxLogFileCount = new javax.swing.JLabel();
         logFileCount = new javax.swing.JTextField();
         logNumAlert = new javax.swing.JTextField();
+        maxSolrMemoryLabel = new javax.swing.JLabel();
+        maxMemoryUnitsLabel2 = new javax.swing.JLabel();
+        solrMaxHeapSpinner = new javax.swing.JSpinner();
+        solrJVMHeapWarning = new javax.swing.JLabel();
 
         setPreferredSize(new java.awt.Dimension(1022, 488));
 
@@ -595,7 +606,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                     .addComponent(agencyLogoPathFieldValidationLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(agencyLogoPreview, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(479, Short.MAX_VALUE))
+                .addContainerGap(456, Short.MAX_VALUE))
         );
         logoPanelLayout.setVerticalGroup(
             logoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -653,6 +664,18 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         logNumAlert.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.logNumAlert.text")); // NOI18N
         logNumAlert.setBorder(null);
 
+        org.openide.awt.Mnemonics.setLocalizedText(maxSolrMemoryLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.maxSolrMemoryLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(maxMemoryUnitsLabel2, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.maxMemoryUnitsLabel2.text")); // NOI18N
+
+        solrMaxHeapSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                solrMaxHeapSpinnerStateChanged(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(solrJVMHeapWarning, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.solrJVMHeapWarning.text")); // NOI18N
+
         javax.swing.GroupLayout runtimePanelLayout = new javax.swing.GroupLayout(runtimePanel);
         runtimePanel.setLayout(runtimePanelLayout);
         runtimePanelLayout.setHorizontalGroup(
@@ -661,32 +684,34 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(runtimePanelLayout.createSequentialGroup()
-                        .addComponent(totalMemoryLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(systemMemoryTotal, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(6, 6, 6)
+                        .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(totalMemoryLabel)
+                            .addComponent(maxSolrMemoryLabel)
+                            .addComponent(maxMemoryLabel)
+                            .addComponent(maxLogFileCount))
+                        .addGap(12, 12, 12)
+                        .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(logFileCount, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(solrMaxHeapSpinner, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(memField, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(systemMemoryTotal, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(maxMemoryUnitsLabel1)
+                            .addComponent(maxMemoryUnitsLabel)
+                            .addComponent(maxMemoryUnitsLabel2))
                         .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(runtimePanelLayout.createSequentialGroup()
-                                .addComponent(maxMemoryUnitsLabel1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 783, Short.MAX_VALUE))
+                                .addGap(23, 23, 23)
+                                .addComponent(memFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 478, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(246, Short.MAX_VALUE))
                             .addGroup(runtimePanelLayout.createSequentialGroup()
-                                .addComponent(maxMemoryUnitsLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(memFieldValidationLabel)
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(runtimePanelLayout.createSequentialGroup()
-                        .addComponent(maxMemoryLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(memField, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(runtimePanelLayout.createSequentialGroup()
-                        .addComponent(maxLogFileCount)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(logFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(logNumAlert)))
-                .addContainerGap())
+                                .addGap(18, 18, 18)
+                                .addComponent(solrJVMHeapWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 717, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(logNumAlert)
+                                .addContainerGap())))
+                    .addComponent(restartNecessaryWarning, javax.swing.GroupLayout.DEFAULT_SIZE, 994, Short.MAX_VALUE)))
         );
 
         runtimePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {maxLogFileCount, maxMemoryLabel, totalMemoryLabel});
@@ -699,22 +724,29 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(totalMemoryLabel)
-                    .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(restartNecessaryWarning)
-                        .addComponent(maxMemoryUnitsLabel1))
+                    .addComponent(maxMemoryUnitsLabel1)
                     .addComponent(systemMemoryTotal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(memFieldValidationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(maxMemoryLabel)
                         .addComponent(memField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(maxMemoryUnitsLabel))
-                    .addComponent(memFieldValidationLabel))
+                        .addComponent(maxMemoryUnitsLabel)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(logNumAlert, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(maxSolrMemoryLabel)
+                        .addComponent(maxMemoryUnitsLabel2)
+                        .addComponent(solrMaxHeapSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(solrJVMHeapWarning)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(runtimePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(maxLogFileCount)
-                    .addComponent(logFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(logNumAlert, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(logFileCount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(restartNecessaryWarning)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -726,7 +758,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(runtimePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1002, Short.MAX_VALUE))
+                    .addComponent(logoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1010, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -736,7 +768,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addComponent(runtimePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(logoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(185, Short.MAX_VALUE))
+                .addContainerGap(171, Short.MAX_VALUE))
         );
 
         jScrollPane1.setViewportView(jPanel1);
@@ -824,6 +856,15 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_browseLogosButtonActionPerformed
 
+    private void solrMaxHeapSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_solrMaxHeapSpinnerStateChanged
+        int value = (int)solrMaxHeapSpinner.getValue();
+        if (value == UserPreferences.getMaxSolrVMSize()) {
+            // if the value hasn't changed there's nothing to do.
+            return;
+        }
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_solrMaxHeapSpinnerStateChanged
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField agencyLogoPathField;
     private javax.swing.JLabel agencyLogoPathFieldValidationLabel;
@@ -842,10 +883,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel maxMemoryLabel;
     private javax.swing.JLabel maxMemoryUnitsLabel;
     private javax.swing.JLabel maxMemoryUnitsLabel1;
+    private javax.swing.JLabel maxMemoryUnitsLabel2;
+    private javax.swing.JLabel maxSolrMemoryLabel;
     private javax.swing.JTextField memField;
     private javax.swing.JLabel memFieldValidationLabel;
     private javax.swing.JLabel restartNecessaryWarning;
     private javax.swing.JPanel runtimePanel;
+    private javax.swing.JLabel solrJVMHeapWarning;
+    private javax.swing.JSpinner solrMaxHeapSpinner;
     private javax.swing.JRadioButton specifyLogoRB;
     private javax.swing.JLabel systemMemoryTotal;
     private javax.swing.JLabel totalMemoryLabel;
