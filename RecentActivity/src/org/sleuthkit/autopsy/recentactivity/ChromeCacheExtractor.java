@@ -61,8 +61,19 @@ import org.sleuthkit.datamodel.TskException;
 
 /**
  * Extracts and parses Chrome Cache files.
+ * 
+ * Cache may hold images, scripts, CSS, JSON files, 
+ * and the URL they were downloaded from.
+ * 
+ * Cache entries may or may not be compressed, 
+ * and the entries may reside in container files or external files.
+ * 
+ * We extract cache entries, create derived files if needed, 
+ * and record the URL.
  */
 final class ChromeCacheExtractor {
+    
+    private final static String BROTLI_MIMETYPE ="application/x-brotli";
     
     private final static long UINT32_MASK = 0xFFFFFFFFl;
     
@@ -121,9 +132,9 @@ final class ChromeCacheExtractor {
     
     
     /**
-     * Initializes Chrome cache extractor module
+     * Initializes Chrome cache extractor module.
      * 
-     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException 
+     * @throws IngestModuleException 
      */
     void init() throws IngestModuleException {
         
@@ -145,7 +156,9 @@ final class ChromeCacheExtractor {
     }
     
     /**
-     * Cleans up after the module is done
+     * Cleans up after the module is done.
+     * 
+     * Removes any temp copies of cache files created during extraction.
      * 
      */
     void cleanup () {
@@ -192,8 +205,6 @@ final class ChromeCacheExtractor {
          try {
            init();
         } catch (IngestModuleException ex) {
-           
-            // TBD: show the error to Autospy error console??
             String msg = "Failed to initialize ChromeCacheExtractor.";
             logger.log(Level.SEVERE, msg, ex);
             return;
@@ -242,24 +253,24 @@ final class ChromeCacheExtractor {
                         logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", addr)); //NON-NLS
                     }
                     
-                    // Get the cache entry at this address
+                    // Get the cache entry and its data segments
                     CacheEntry cacheEntry = new CacheEntry(addr, cacheFileCopy.get() );
-                    
-                    // Get the data segments - each entry can have up to 4 data segments
                     List<CacheData> dataEntries = cacheEntry.getData();
+                    
                     for (int j = 0; j < dataEntries.size(); j++) {
                         CacheData data = dataEntries.get(j);
-                        
-                        // Todo: extract the data if we are going to do something with it in the future
-                        
-                        //data.extract();
                         String dataFilename = data.getAddress().getFilename();
                         Optional<AbstractFile> dataFile = this.findCacheFile(dataFilename);
                         
+                        boolean isBrotliCompressed = false;
+                        if (data.getType() != CacheDataTypeEnum.HTTP_HEADER && cacheEntry.isBrotliCompressed() ) {
+                            isBrotliCompressed = true;
+                        }
+                        
                         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                                    bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                                        moduleName,
-                                        ((cacheEntry.getKey() != null) ? cacheEntry.getKey() : ""))); //NON-NLS
+                        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                            moduleName,
+                            ((cacheEntry.getKey() != null) ? cacheEntry.getKey() : ""))); //NON-NLS
                         
                         if (dataFile.isPresent()) {
                             if (data.isInExternalFile() )  {
@@ -268,39 +279,38 @@ final class ChromeCacheExtractor {
                                     if (bbart != null) {
                                         bbart.addAttributes(bbattributes);
                                     }
+                                    if (isBrotliCompressed) {
+                                        dataFile.get().setMIMEType(BROTLI_MIMETYPE);
+                                        dataFile.get().save();
+                                    }
                                 } catch (TskException ex) {
                                     logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
                                 }
                             } else {
-                            
-                            // extract data segment and save it as derived file
-                            data.extract();
-                            
-                            if (data.hasHTTPHeaders()) {
-                                String encoding = data.getHTTPHeader("content-encoding");   
-                                
-                            }
-                            
-                            String filename = data.save();
-                            String relPathname = getRelOutputFolderName() + File.separator + filename; 
-                            
-                            // TBD: check if data segment is compressed? With Brotli?
-                            DerivedFile derivedFile = fileManager.addDerivedFile(filename, relPathname,
-                                data.getDataLength(), 
-                                cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), // TBD 
-                                true, 
-                                dataFile.get(), 
-                                "",
-                                moduleName, 
-                                VERSION_NUMBER, 
-                                "", 
-                                TskData.EncodingType.NONE);
-                            
+                           
+                                // Data segments in "data_x" files are saved in individual files and added as derived files
+                                String filename = data.save();
+                                String relPathname = getRelOutputFolderName() + File.separator + filename; 
+                                DerivedFile derivedFile = fileManager.addDerivedFile(filename, relPathname,
+                                                                        data.getDataLength(), 
+                                                                        cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), // TBD 
+                                                                        true, 
+                                                                        dataFile.get(), 
+                                                                        "",
+                                                                        moduleName, 
+                                                                        VERSION_NUMBER, 
+                                                                        "", 
+                                                                        TskData.EncodingType.NONE);
+
                                 derivedFiles.add(derivedFile);
                                 try {
                                     BlackboardArtifact bbart = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_SOURCE_ARTIFACT);
                                     if (bbart != null) {
                                         bbart.addAttributes(bbattributes);
+                                    }    
+                                    if (isBrotliCompressed) {
+                                        derivedFile.setMIMEType(BROTLI_MIMETYPE);
+                                        derivedFile.save();
                                     }
                                 } catch (TskException ex) {
                                     logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
@@ -315,12 +325,10 @@ final class ChromeCacheExtractor {
             }  
         }
         
-        if (derivedFiles.isEmpty() == false) {
-            for (AbstractFile derived : derivedFiles) {
-                services.fireModuleContentEvent(new ModuleContentEvent(derived));
-            }
-        }
-         
+        derivedFiles.forEach((derived) -> {
+            services.fireModuleContentEvent(new ModuleContentEvent(derived));
+         });
+        
         context.addFilesToJob(derivedFiles);
         services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_SOURCE_ARTIFACT));
        
@@ -338,8 +346,10 @@ final class ChromeCacheExtractor {
         
         List<AbstractFile> cacheFiles = fileManager.findFiles(dataSource, cacheFileName, "default/cache"); //NON-NLS
         if (!cacheFiles.isEmpty()) {
-            if (cacheFiles.size() > 1 ) {
-                logger.log(Level.WARNING, String.format("Found multiple matches for filename = %s", cacheFileName));
+            for (AbstractFile abstractFile: cacheFiles ) {
+                if (abstractFile.getUniquePath().trim().endsWith("default/cache")) {
+                    return Optional.of(abstractFile);
+                }
             }
             return Optional.of(cacheFiles.get(0));
         }
@@ -349,7 +359,7 @@ final class ChromeCacheExtractor {
     
     /**
      * Returns CacheFileCopy for the specified file from the file table.
-     * Find the file and creates a copy if it isnt already in the table.
+     * Find the file and creates a copy if it isn't already in the table.
      * 
      * @param cacheFileName
      * @return CacheFileCopy
@@ -695,7 +705,7 @@ final class ChromeCacheExtractor {
         }
         
         /**
-         * Extracts the data segment from the file 
+         * Extracts the data segment from the cache file 
          * 
          * @throws TskCoreException 
          */
@@ -768,25 +778,7 @@ final class ChromeCacheExtractor {
                         }
                     }
                 }
-                
             } 
-            //else {
-                // Handle external f_* files
-                
-                // External files may or may not be compressed
-                // They may be compresswed with GZIP, which our other ingest modules recognize and decpress
-                // Alternatively thay may be compressed with Brotli, in that case we may want to decopmress them
-                // content-encoding header in the data segment with HTTP header can tell us if data is compressed.
-                
-                // TBD: In future if we want to do anything with contents of file.
-//                this.data = new byte [length];
-//                
-//                ByteBuffer buf = cacheFileCopy.getByteBuffer();
-//                buf.position(0);
-//                buf.get(data, 0, length);
-//                
-                
-           //}
         }
         
         String getDataString() throws TskCoreException, IngestModuleException {
@@ -816,6 +808,14 @@ final class ChromeCacheExtractor {
         }
         
         
+        /**
+         * Saves the data segment to a file in the local disk.
+         * 
+         * @return file name the data is saved in 
+         * 
+         * @throws TskCoreException
+         * @throws IngestModuleException 
+         */
         String save() throws TskCoreException, IngestModuleException {
             String fileName;
             
@@ -831,6 +831,14 @@ final class ChromeCacheExtractor {
             return  fileName;
         }
         
+        /**
+         * Saves the data in he specified file name
+         * 
+         * @param filePathName - file name to save the data in
+         * 
+         * @throws TskCoreException
+         * @throws IngestModuleException 
+         */
        
         void save(String filePathName) throws TskCoreException, IngestModuleException {
             
@@ -839,8 +847,8 @@ final class ChromeCacheExtractor {
                 extract();
             }
             
+            // Data in external files is not saved in local files
             if (!this.isInExternalFile()) {
-                
                 // write the
                 try (FileOutputStream stream = new FileOutputStream(filePathName)) {
                     stream.write(data);
@@ -848,37 +856,19 @@ final class ChromeCacheExtractor {
                     throw new TskCoreException(String.format("Failed to write output file %s", filePathName), ex);
                 }
             }
-//            else {
-//                if (mimeType.toLowerCase().contains("gzip")) {
-//                //if (mimeType.equalsIgnoreCase("application/gzip")) {
-//                    try {
-//                        ByteArrayInputStream byteInputStream = new ByteArrayInputStream(data);
-//                        GZIPInputStream in = new GZIPInputStream(byteInputStream);
-//                        FileOutputStream out = new FileOutputStream(filePathName);
-//                        byte[] buffer = new byte[2048];
-//                        int len;
-//                        while((len = in.read(buffer)) != -1){
-//                            out.write(buffer, 0, len);
-//                        }
-//                        out.close();
-//   
-//                    } catch (IOException ex) {
-//                        throw new TskCoreException(String.format("Failed to write output file %s", filePathName), ex);
-//                    }  
-//                }
-//                else {
-//                    // TBD: how to uncompress Brotli ??
-//                     System.out.println("TBD Dont know how to uncompress Brotli yet" );
-//                }
-//            }
         }
         
         @Override
         public String toString() {
             StringBuilder strBuilder = new StringBuilder();
-            strBuilder.append(String.format("\t\tData type = : %s, Data Len = %d\n", 
-                                    this.type.toString(), this.length ))
-                    .append(String.format("\n\t\tData = : %s ", new String(data) ));
+            strBuilder.append(String.format("\t\tData type = : %s, Data Len = %d ", 
+                                    this.type.toString(), this.length ));
+            
+            if (hasHTTPHeaders()) {
+                String str = getHTTPHeader("content-encoding");
+                if (str!=null) 
+                    strBuilder.append(String.format("\t%s=%s", "content-encoding", str ));
+            }
             
             return strBuilder.toString(); 
         }
@@ -951,7 +941,8 @@ final class ChromeCacheExtractor {
         
         private final int dataSizes[];
         private final CacheAddress dataAddresses[];
-        
+        ArrayList<CacheData> dataList = null;
+                
         private final long flags;
         private final int pad[] = new int[4];
         
@@ -1065,15 +1056,76 @@ final class ChromeCacheExtractor {
             return key;
         }
         
-        public List<CacheData> getData() {
-            ArrayList<CacheData> list = new ArrayList<>();
-             for (int i = 0; i < 4; i++)  {
-                 if (dataSizes[i] > 0) {
-                     CacheData cacheData = new CacheData(dataAddresses[i], dataSizes[i], true );
-                     list.add(cacheData);
-                 }
+        /**
+         * Returns the data segments in the cache entry.
+         * 
+         * @return list of data segments in the entry.
+         * 
+         * @throws TskCoreException
+         * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException 
+         */
+        public List<CacheData> getData() throws TskCoreException, IngestModuleException {
+            
+            if (dataList == null) { 
+                dataList = new ArrayList<>();
+                 for (int i = 0; i < 4; i++)  {
+                     if (dataSizes[i] > 0) {
+                         CacheData cacheData = new CacheData(dataAddresses[i], dataSizes[i], true );
+
+                         cacheData.extract();
+                         dataList.add(cacheData);
+                     }
+                }
             }
-            return list; 
+            return dataList; 
+        }
+        
+        /**
+         * Returns if the Entry has HTTP headers.
+         * 
+         * If present, the HTTP headers are in the first data segment
+         * 
+         * @return true if the entry has HTTP headers
+         */
+        boolean hasHTTPHeaders() {
+            if ((dataList == null) || dataList.isEmpty()) {
+                return false;
+            }
+            return dataList.get(0).hasHTTPHeaders();
+        }
+        
+        /**
+         * Returns the specified http header , if present
+         * 
+         * @param key name of header to return
+         * @return header value, null if not found
+         */
+        String getHTTPHeader(String key) {
+            if ((dataList == null) || dataList.isEmpty()) {
+                return null;
+            }
+            // First data segment has the HTTP headers, if any
+            return dataList.get(0).getHTTPHeader(key);
+        }
+        
+        /**
+         * Returns if the entry is compressed with Brotli
+         * 
+         * An entry is considered to be Brotli compressed if it has a 
+         * HTTP header "content-encoding: br"
+         * 
+         * @return true if the entry id compressed with Brotli, false otherwise.
+         */
+        boolean isBrotliCompressed() {
+            
+            if (hasHTTPHeaders() ) {
+                String encodingHeader = getHTTPHeader("content-encoding");
+                if (encodingHeader!= null) {
+                    return encodingHeader.trim().equalsIgnoreCase("br");
+                }
+            } 
+            
+            return false;
         }
         
         @Override
@@ -1090,8 +1142,11 @@ final class ChromeCacheExtractor {
             
             for (int i = 0; i < 4; i++) {
                 if (dataSizes[i] > 0) {
-                    sb.append(String.format("\n\tData %d: %8d bytes at cache address = %s", 
-                                         i, dataSizes[i], dataAddresses[i] ));
+                    sb.append(String.format("\n\tData %d: cache address = %s, Data = %s", 
+                                         i, dataAddresses[i].toString(), 
+                                         (dataList != null)
+                                                 ? dataList.get(i).toString() 
+                                                 : "Data not retrived yet."));
                 }
             }
             
