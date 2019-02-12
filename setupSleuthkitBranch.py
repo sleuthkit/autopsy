@@ -75,17 +75,24 @@ def main():
     # will tell us where a pull request is directed
     TRAVIS=os.getenv("TRAVIS",False)
     APPVEYOR=os.getenv("APPVEYOR",False)
+    cmd=['git','rev-parse','--abbrev-ref','HEAD']
+    output = subprocess.check_output(cmd)
+    print("Output of command: " + output)
     if TRAVIS == "true":
         TRAVIS_BRANCH=os.getenv("TRAVIS_BRANCH",DEVELOP_BRANCH)
+        print("Travis Branch: " + TRAVIS_BRANCH)
         CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",TRAVIS_BRANCH)
+        print("Current Branch: " + CURRENT_BRANCH)
         BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
+        print("PR SLUG: " + os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+CURRENT_BRANCH))
     elif APPVEYOR:
         APPVEYOR_BRANCH=os.getenv("APPVEYOR_REPO_BRANCH",DEVELOP_BRANCH)
+        print("Appveyor Branch: " + APPVEYOR_BRANCH)
         CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH",APPVEYOR_BRANCH)
+        print("Current Branch: " + CURRENT_BRANCH)
         BRANCH_OWNER=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
+        print("PR SLUG: " + os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", ORIGIN_OWNER+"/"+CURRENT_BRANCH))
     else:
-        cmd=['git','rev-parse','--abbrev-ref','HEAD']
-        output = subprocess.check_output(cmd)
         CURRENT_BRANCH=output.strip()
         BRANCH_OWNER=ORIGIN_OWNER
     # If we are in an Autopsy release branch, then use the
