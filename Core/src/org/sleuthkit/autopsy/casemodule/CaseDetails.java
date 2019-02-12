@@ -32,7 +32,6 @@ public final class CaseDetails implements Serializable {
     private final String examinerPhone;
     private final String examinerEmail;
     private final String caseNotes;
-    private final String originalCaseCreationDate;
 
     /**
      * Create a case details object with all optional fields set to default
@@ -47,7 +46,6 @@ public final class CaseDetails implements Serializable {
         examinerPhone = "";
         examinerEmail = "";
         caseNotes = "";
-        originalCaseCreationDate = "";
     }
 
     /**
@@ -61,31 +59,12 @@ public final class CaseDetails implements Serializable {
      * @param notes       the case notes
      */
     public CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes) {
-        this(displayName, number, exName, exPhone, exEmail, notes, "");
-    }
-    
-        
-    /**
-     * Create a case details object with the specified values.
-     * Only set originalCaseCreationDate for portable cases.
-     *
-     * @param displayName    the display name of the case
-     * @param number         the case number
-     * @param exName         the examiner name
-     * @param exPhone        the examiner phone number
-     * @param exEmail        the examiner email address
-     * @param notes          the case notes
-     * @param originalCaseCreationDate  timestamp when the original case was created (for portable cases)
-     */
-    CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes,
-            String originalCaseCreationDate) {        
         caseDisplayName = displayName;
         caseNumber = number;
         examinerName = exName;
         examinerPhone = exPhone;
         examinerEmail = exEmail;
         caseNotes = notes;
-        this.originalCaseCreationDate = originalCaseCreationDate;
     }    
 
     /**
@@ -140,15 +119,5 @@ public final class CaseDetails implements Serializable {
      */
     public String getCaseNotes() {
         return caseNotes;
-    }
-
-    /**
-     * Get the creation timestamp of the case that the portable case was created from
-     * 
-     * @return originalCaseCreationDate - the timestamp when the case was created. Returns empty string
-                                    for non-portable cases.
-     */
-    public String getOriginalCaseCreationDate() {
-        return originalCaseCreationDate;
     }
 }

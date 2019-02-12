@@ -79,8 +79,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     // Maps old TagName to new TagName
     private final Map<TagName, TagName> oldTagNameToNewTagName = new HashMap<>();
     
-    CaseDbTransaction trans = null;
-    
     public CreatePortableCaseModule() {
     }
 
@@ -294,6 +292,12 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         // Copy the files into the portable case and tag
         for (ContentTag tag : tags) {
+            
+            // Check for cancellation 
+            if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                return;
+            }
+            
             Content content = tag.getContent();
             if (content instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile) content;
@@ -301,9 +305,9 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_addFilesToPortableCase_copyingFile(filePath));
                 
                 long newFileId;
-                trans = skCase.beginTransaction();
+                CaseDbTransaction trans = skCase.beginTransaction();
                 try {
-                    newFileId = copyContent(file);
+                    newFileId = copyContent(file, trans);
                     trans.commit();
                 } catch (TskCoreException ex) {
                     trans.rollback();
@@ -321,11 +325,15 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     
     /**
      * Returns the object ID for the given content object in the portable case.
-     * @param child
-     * @return
+     * 
+     * @param content The content object to copy into the portable case
+     * @param trans   The current transaction
+     * 
+     * @return the new object ID for this content
+     * 
      * @throws TskCoreException 
      */
-    private long copyContent(Content content) throws TskCoreException {
+    private long copyContent(Content content, CaseDbTransaction trans) throws TskCoreException {
                 
         // Check if we've already copied this content
         if (oldIdToNewContent.containsKey(content.getId())) {
@@ -337,7 +345,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         // - Copy this content
         long parentId = 0;
         if (content.getParent() != null) {
-            parentId = copyContent(content.getParent());
+            parentId = copyContent(content.getParent(), trans);
         }
         
         Content newContent;
@@ -412,8 +420,9 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     /**
      * Return the subfolder name for this file based on MIME type
      * 
-     * @param abstractFile
-     * @return 
+     * @param abstractFile the file
+     * 
+     * @return the name of the appropriate subfolder for this file type 
      */
     private String getExportSubfolder(AbstractFile abstractFile) {
         if (abstractFile.getMIMEType() == null || abstractFile.getMIMEType().isEmpty()) {
@@ -429,7 +438,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     }
     
     /**
-     * Clear out the maps and other fields
+     * Clear out the maps and other fields and close the database connections.
      */
     private void cleanup() {
         oldIdToNewContent.clear();
@@ -437,7 +446,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         oldTagNameToNewTagName.clear();
         currentCase = null;
         if (skCase != null) {
-            // Do not call close() here! It will close all the handles in the JNI cache. 
+            // Do not call close() here! It will close all the handles for the current case in the JNI cache. 
             skCase.closeConnections();
             skCase = null;
         }

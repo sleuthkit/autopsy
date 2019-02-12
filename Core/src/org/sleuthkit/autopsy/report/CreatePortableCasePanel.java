@@ -35,6 +35,7 @@ import javax.swing.JOptionPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListModel;
 import javax.swing.event.ListDataListener;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -44,6 +45,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  */
+@NbBundle.Messages({
+    "CreatePortableCasePanel.error.errorTitle=Error getting tag names for case",
+    "CreatePortableCasePanel.error.noOpenCase=There is no case open",
+    "CreatePortableCasePanel.error.errorLoadingTags=Error loading tags",  
+})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class CreatePortableCasePanel extends javax.swing.JPanel {
 
@@ -68,7 +74,7 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
             outputFolderTextField.setText(Case.getCurrentCaseThrows().getReportDirectory());
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(CreatePortableCasePanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
-            JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Exception while getting open case.", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.CreatePortableCasePanel_error_noOpenCase(), Bundle.CreatePortableCasePanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -78,10 +84,10 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
             tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
         } catch (TskCoreException ex) {
             Logger.getLogger(CreatePortableCasePanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
-            JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Tag Names Not Found", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.CreatePortableCasePanel_error_errorLoadingTags(), Bundle.CreatePortableCasePanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(CreatePortableCasePanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
-            JOptionPane.showMessageDialog(this, "Error getting tag names for case.", "Exception while getting open case.", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.CreatePortableCasePanel_error_noOpenCase(), Bundle.CreatePortableCasePanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
         }
 
         // Mark the tag names as unselected. Note that tagNameSelections is a
