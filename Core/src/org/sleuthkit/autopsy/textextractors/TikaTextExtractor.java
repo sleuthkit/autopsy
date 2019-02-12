@@ -50,7 +50,6 @@ import org.apache.tika.parser.ParsingReader;
 import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.pdf.PDFParserConfig;
-import org.apache.tika.detect.Detector;
 import org.apache.tika.mime.MediaType;
 import org.openide.util.NbBundle;
 import org.openide.modules.InstalledFileLocator;
