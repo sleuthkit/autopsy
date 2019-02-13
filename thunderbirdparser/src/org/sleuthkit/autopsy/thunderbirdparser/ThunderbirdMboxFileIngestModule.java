@@ -82,9 +82,19 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private static final String VCARD_TEL_TYPE_PAGER = "pager";
     private static final String VCARD_TEL_TYPE_TEXTPHONE = "textphone";
     private static final String VCARD_TEL_TYPE_MAIN_NUMBER = "main-number";
+    private static final String VCARD_TEL_TYPE_MSG = "msg";
+    private static final String VCARD_TEL_TYPE_PREF = "pref";
+    private static final String VCARD_TEL_TYPE_BBS = "bbs";
+    private static final String VCARD_TEL_TYPE_MODEM = "modem";
+    private static final String VCARD_TEL_TYPE_CAR = "car";
+    private static final String VCARD_TEL_TYPE_ISDN = "isdn";
+    private static final String VCARD_TEL_TYPE_PCS = "pcs";
     
     private static final String VCARD_EMAIL_TYPE_HOME = "home";
     private static final String VCARD_EMAIL_TYPE_WORK = "work";
+    private static final String VCARD_EMAIL_TYPE_INTERNET = "internet";
+    private static final String VCARD_EMAIL_TYPE_X400 = "x400";
+    private static final String VCARD_EMAIL_TYPE_PREF = "pref";
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private IngestServices services = IngestServices.getInstance();
@@ -644,65 +654,109 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         addArtifactAttribute(vcard.getFormattedName().getValue(), ATTRIBUTE_TYPE.TSK_NAME_PERSON, attributes);
         
         for (Telephone telephone : vcard.getTelephoneNumbers()) {
-            for (TelephoneType type : telephone.getTypes()) {
-                BlackboardAttribute.ATTRIBUTE_TYPE attributeType;
-                
-                switch (type.getValue().toLowerCase()) {
-                    case VCARD_TEL_TYPE_HOME:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME;
-                        break;
-                    case VCARD_TEL_TYPE_WORK:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE;
-                        break;
-                    case VCARD_TEL_TYPE_TEXT:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TEXT;
-                        break;
-                    case VCARD_TEL_TYPE_VOICE:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_VOICE;
-                        break;
-                    case VCARD_TEL_TYPE_FAX:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FAX;
-                        break;
-                    case VCARD_TEL_TYPE_CELL:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE;
-                        break;
-                    case VCARD_TEL_TYPE_VIDEO:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_VIDEO;
-                        break;
-                    case VCARD_TEL_TYPE_PAGER:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_PAGER;
-                        break;
-                    case VCARD_TEL_TYPE_TEXTPHONE:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TEXTPHONE;
-                        break;
-                    case VCARD_TEL_TYPE_MAIN_NUMBER:
-                        // Fall-thru
-                    default:
-                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER;
-                        break;
+            String telephoneText = telephone.getText();
+            if (telephoneText == null || telephoneText.isEmpty()) {
+                continue;
+            }
+            
+            // Add phone number to collection for later creation of TSK_CONTACT.
+            List<TelephoneType> telephoneTypes = telephone.getTypes();
+            if (telephoneTypes.isEmpty()) {
+                addArtifactAttribute(telephone.getText(), ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, attributes);
+            } else {
+                for (TelephoneType type : telephoneTypes) {
+                    BlackboardAttribute.ATTRIBUTE_TYPE attributeType;
+
+                    switch (type.getValue().toLowerCase()) {
+                        case VCARD_TEL_TYPE_HOME:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME;
+                            break;
+                        case VCARD_TEL_TYPE_WORK:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE;
+                            break;
+                        case VCARD_TEL_TYPE_TEXT:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TEXT;
+                            break;
+                        case VCARD_TEL_TYPE_FAX:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FAX;
+                            break;
+                        case VCARD_TEL_TYPE_CELL:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE;
+                            break;
+                        case VCARD_TEL_TYPE_VIDEO:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_VIDEO;
+                            break;
+                        case VCARD_TEL_TYPE_PAGER:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_PAGER;
+                            break;
+                        case VCARD_TEL_TYPE_TEXTPHONE:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TEXTPHONE;
+                            break;
+                        case VCARD_TEL_TYPE_MSG:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_VOICE_MESSAGING;
+                            break;
+                        case VCARD_TEL_TYPE_BBS:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_BBS;
+                            break;
+                        case VCARD_TEL_TYPE_MODEM:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MODEM;
+                            break;
+                        case VCARD_TEL_TYPE_CAR:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_CAR;
+                            break;
+                        case VCARD_TEL_TYPE_ISDN:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_ISDN;
+                            break;
+                        case VCARD_TEL_TYPE_PCS:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_PCS;
+                            break;
+                        case VCARD_TEL_TYPE_MAIN_NUMBER:
+                        case VCARD_TEL_TYPE_PREF:
+                        case VCARD_TEL_TYPE_VOICE:
+                            // Fall-thru
+                        default:
+                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER;
+                            break;
+                    }
+
+                    addArtifactAttribute(telephone.getText(), attributeType, attributes);
                 }
-                
-                addArtifactAttribute(telephone.getText(), attributeType, attributes);
             }
         }
         
         for (Email email : vcard.getEmails()) {
-            for (EmailType type : email.getTypes()) {
-                BlackboardAttribute.ATTRIBUTE_TYPE attributeType;
-                
-                switch (type.getValue().toLowerCase()) {
-                    case VCARD_EMAIL_TYPE_HOME:
-                        attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_HOME;
-                        break;
-                    case VCARD_EMAIL_TYPE_WORK:
-                        attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE;
-                        break;
-                    default:
-                        attributeType = ATTRIBUTE_TYPE.TSK_EMAIL;
-                        break;
+            String emailValue = email.getValue();
+            if (emailValue == null || emailValue.isEmpty()) {
+                continue;
+            }
+            
+            // Add phone number to collection for later creation of TSK_CONTACT.
+            List<EmailType> emailTypes = email.getTypes();
+            if (emailTypes.isEmpty()) {
+                addArtifactAttribute(email.getValue(), ATTRIBUTE_TYPE.TSK_EMAIL, attributes);
+            } else {
+                for (EmailType type : emailTypes) {
+                    BlackboardAttribute.ATTRIBUTE_TYPE attributeType;
+
+                    switch (type.getValue().toLowerCase()) {
+                        case VCARD_EMAIL_TYPE_HOME:
+                            attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_HOME;
+                            break;
+                        case VCARD_EMAIL_TYPE_WORK:
+                            attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE;
+                            break;
+                        case VCARD_EMAIL_TYPE_X400:
+                            attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_X400;
+                            break;
+                        case VCARD_EMAIL_TYPE_INTERNET:
+                            // Fall-thru
+                        default:
+                            attributeType = ATTRIBUTE_TYPE.TSK_EMAIL;
+                            break;
+                    }
+
+                    addArtifactAttribute(email.getValue(), attributeType, attributes);
                 }
-                
-                addArtifactAttribute(email.getValue(), attributeType, attributes);
             }
         }
         
