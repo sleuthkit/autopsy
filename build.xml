@@ -102,7 +102,6 @@
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/Running_Linux_OSX.txt" tofile="${zip-tmp}/${app.name}/Running_Linux_OSX.txt"/>
         <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
-        <replaceregexp file="${zip-tmp}/${app.name}/unix_setup.sh" match="TSK_VERSION=(.*)" replace="TSK_VERSION=${TSK_VERSION}" byline="true"/>
         <unzip src="${thirdparty.dir}/gstreamer/windows/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
             
         
