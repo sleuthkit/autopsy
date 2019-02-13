@@ -39,7 +39,7 @@ def gitSleuthkitCheckout(branch, branchOwner):
     # passed is a global variable that gets set to non-zero integer
     # When an error occurs
     global passed
-    if CURRENT_BRANCH in getSleuthkitBranchList(branchOwner):
+    if branch in getSleuthkitBranchList(branchOwner):
         #add the remotes
         #if the branch owner was origin substitute in the name of that owner
         if (branchOwner==ORIGIN_OWNER):
@@ -77,14 +77,10 @@ def main():
     if not TSK_HOME:
         sys.exit(1)
         print('Please set TSK_HOME env variable')
-
     # Get the Autopsy branch being used.  Travis and Appveyor
     # will tell us where a pull request is directed
     TRAVIS=os.getenv("TRAVIS",False)
     APPVEYOR=os.getenv("APPVEYOR",False)
-    cmd=['git','rev-parse','--abbrev-ref','HEAD']
-    output = subprocess.check_output(cmd)
-    print("Output of command: " + output)
     if TRAVIS == "true":
         TARGET_BRANCH=os.getenv("TRAVIS_BRANCH",DEVELOP_BRANCH)
         CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",TARGET_BRANCH)
@@ -98,6 +94,8 @@ def main():
         CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH",TARGET_BRANCH)
         BRANCH_OWNER=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
     else:
+        cmd=['git','rev-parse','--abbrev-ref','HEAD']
+        output = subprocess.check_output(cmd)
         CURRENT_BRANCH=output.strip()
         BRANCH_OWNER=ORIGIN_OWNER
         TARGET_BRANCH=CURRENT_BRANCH
