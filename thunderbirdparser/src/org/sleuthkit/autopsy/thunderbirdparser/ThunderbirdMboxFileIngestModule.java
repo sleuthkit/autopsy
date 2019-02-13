@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.thunderbirdparser;
 
 import ezvcard.VCard;
+import ezvcard.parameter.EmailType;
+import ezvcard.parameter.TelephoneType;
 import ezvcard.property.Email;
 import ezvcard.property.Organization;
 import ezvcard.property.Telephone;
@@ -70,6 +72,19 @@ import org.sleuthkit.datamodel.TskException;
  * structure and metadata.
  */
 public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
+    private static final String VCARD_TEL_TYPE_HOME = "home";
+    private static final String VCARD_TEL_TYPE_WORK = "work";
+    private static final String VCARD_TEL_TYPE_TEXT = "text";
+    private static final String VCARD_TEL_TYPE_VOICE = "voice";
+    private static final String VCARD_TEL_TYPE_FAX = "fax";
+    private static final String VCARD_TEL_TYPE_CELL = "cell";
+    private static final String VCARD_TEL_TYPE_VIDEO = "video";
+    private static final String VCARD_TEL_TYPE_PAGER = "pager";
+    private static final String VCARD_TEL_TYPE_TEXTPHONE = "textphone";
+    private static final String VCARD_TEL_TYPE_MAIN_NUMBER = "main-number";
+    
+    private static final String VCARD_EMAIL_TYPE_HOME = "home";
+    private static final String VCARD_EMAIL_TYPE_WORK = "work";
 
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
     private IngestServices services = IngestServices.getInstance();
@@ -627,15 +642,74 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         List<BlackboardAttribute> attributes = new ArrayList<>();
         
         addArtifactAttribute(vcard.getFormattedName().getValue(), ATTRIBUTE_TYPE.TSK_NAME_PERSON, attributes);
+        
         for (Telephone telephone : vcard.getTelephoneNumbers()) {
-            addArtifactAttribute(telephone.getText(), ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, attributes);
+            for (TelephoneType type : telephone.getTypes()) {
+                BlackboardAttribute.ATTRIBUTE_TYPE attributeType;
+                
+                switch (type.getValue().toLowerCase()) {
+                    case VCARD_TEL_TYPE_HOME:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME;
+                        break;
+                    case VCARD_TEL_TYPE_WORK:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE;
+                        break;
+                    case VCARD_TEL_TYPE_TEXT:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TEXT;
+                        break;
+                    case VCARD_TEL_TYPE_VOICE:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_VOICE;
+                        break;
+                    case VCARD_TEL_TYPE_FAX:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FAX;
+                        break;
+                    case VCARD_TEL_TYPE_CELL:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE;
+                        break;
+                    case VCARD_TEL_TYPE_VIDEO:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_VIDEO;
+                        break;
+                    case VCARD_TEL_TYPE_PAGER:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_PAGER;
+                        break;
+                    case VCARD_TEL_TYPE_TEXTPHONE:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TEXTPHONE;
+                        break;
+                    case VCARD_TEL_TYPE_MAIN_NUMBER:
+                        // Fall-thru
+                    default:
+                        attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER;
+                        break;
+                }
+                
+                addArtifactAttribute(telephone.getText(), attributeType, attributes);
+            }
         }
+        
         for (Email email : vcard.getEmails()) {
-            addArtifactAttribute(email.getValue(), ATTRIBUTE_TYPE.TSK_EMAIL, attributes);
+            for (EmailType type : email.getTypes()) {
+                BlackboardAttribute.ATTRIBUTE_TYPE attributeType;
+                
+                switch (type.getValue().toLowerCase()) {
+                    case VCARD_EMAIL_TYPE_HOME:
+                        attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_HOME;
+                        break;
+                    case VCARD_EMAIL_TYPE_WORK:
+                        attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE;
+                        break;
+                    default:
+                        attributeType = ATTRIBUTE_TYPE.TSK_EMAIL;
+                        break;
+                }
+                
+                addArtifactAttribute(email.getValue(), attributeType, attributes);
+            }
         }
+        
         for (Url url : vcard.getUrls()) {
             addArtifactAttribute(url.getValue(), ATTRIBUTE_TYPE.TSK_URL, attributes);
         }
+        
         for (Organization organization : vcard.getOrganizations()) {
             List<String> values = organization.getValues();
             if (values.isEmpty() == false) {
@@ -652,14 +726,21 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, attributes)) {
                 artifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
                 artifact.addAttributes(attributes);
+                List<BlackboardArtifact> blackboardArtifacts = new ArrayList<>();
+                blackboardArtifacts.add(artifact);
 
                 try {
-                    // index the artifact for keyword search
+                    // Index the artifact for keyword search.
                     blackboard.indexArtifact(artifact);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(Bundle.ThunderbirdMboxFileIngestModule_addContactArtifact_indexError(), artifact.getDisplayName());
                 }
+
+                // Fire event to notify UI of this new artifact.
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                        EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT,
+                        blackboardArtifacts));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Failed to create contact artifact for vCard file '%s' (id=%d).",
