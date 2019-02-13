@@ -4,10 +4,6 @@
  *
  * Copyright 2019 Basis Technology Corp.
  *
- * Copyright 2012 42six Solutions.
- * Contact: aebadirad <at> 42six <dot> com
- * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -44,10 +40,6 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
-/**
- *
- * @author kelly
- */
 public class ExtractEdge extends Extract{
     
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
@@ -72,6 +64,13 @@ public class ExtractEdge extends Extract{
         this.context = context;
         dataFound = false;
         
+        this.processWebCache();
+        
+         // Bookmarks come from spartan.edb different file
+        this.getBookmark(); // Not implemented yet
+    }
+    
+    void processWebCache(){
         Path path = Paths.get("ESEDatabaseView", ESE_TOOL_NAME);
         ESE_TOOL_FILE =  InstalledFileLocator.getDefault().locate(path.toString(), ExtractEdge.class.getPackage().getName(), false); //NON-NLS
         if (ESE_TOOL_FILE == null) {
@@ -138,10 +137,7 @@ public class ExtractEdge extends Extract{
             
              datFile.delete();
              resultsDir.delete();
-         }
-         
-         // Bookmarks come from spartan.edb different file
-         this.getBookmark(); // Not implemented yet
+         }   
     }
     
     /**
