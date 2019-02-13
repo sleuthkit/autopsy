@@ -243,8 +243,8 @@ public class ViewContextAction extends AbstractAction {
              */
             DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) parentTreeViewNode).getOriginal();
             undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(content));
-            if(content instanceof BlackboardArtifact) {
-                BlackboardArtifact artifact = ((BlackboardArtifact)content);
+            if (content instanceof BlackboardArtifact) {
+                BlackboardArtifact artifact = ((BlackboardArtifact) content);
                 long associatedId = artifact.getObjectID();
                 try {
                     Content associatedFileContent = artifact.getSleuthkitCase().getContentById(associatedId);
@@ -253,7 +253,7 @@ public class ViewContextAction extends AbstractAction {
                     logger.log(Level.SEVERE, "Could not find associated content from artifact with id %d", artifact.getId());
                 }
             }
-            
+
             TreeView treeView = treeViewTopComponent.getTree();
             treeView.expandNode(parentTreeViewNode);
             if (treeViewTopComponent.getSelectedNode().equals(parentTreeViewNode)) {
