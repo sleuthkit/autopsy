@@ -267,18 +267,20 @@ final class ChromeCacheExtractor {
                             isBrotliCompressed = true;
                         }
                         
-                        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-                        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                        Collection<BlackboardAttribute> sourceAttributes = new ArrayList<>();
+                        sourceAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
                             moduleName,
                             ((cacheEntry.getKey() != null) ? cacheEntry.getKey() : ""))); //NON-NLS
                         
                         if (dataFile.isPresent()) {
                             if (data.isInExternalFile() )  {
                                 try {
-                                    BlackboardArtifact bbart = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_SOURCE_ARTIFACT);
-                                    if (bbart != null) {
-                                        bbart.addAttributes(bbattributes);
+                                    BlackboardArtifact sourceArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
+                                    if (sourceArtifact != null) {
+                                        sourceArtifact.addAttributes(sourceAttributes);
                                     }
+                                    BlackboardArtifact webCacheArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
+                                    
                                     if (isBrotliCompressed) {
                                         dataFile.get().setMIMEType(BROTLI_MIMETYPE);
                                         dataFile.get().save();
@@ -304,10 +306,11 @@ final class ChromeCacheExtractor {
 
                                 derivedFiles.add(derivedFile);
                                 try {
-                                    BlackboardArtifact bbart = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_SOURCE_ARTIFACT);
-                                    if (bbart != null) {
-                                        bbart.addAttributes(bbattributes);
+                                    BlackboardArtifact sourceArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
+                                    if (sourceArtifact != null) {
+                                        sourceArtifact.addAttributes(sourceAttributes);
                                     }    
+                                    BlackboardArtifact webCacheArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
                                     if (isBrotliCompressed) {
                                         derivedFile.setMIMEType(BROTLI_MIMETYPE);
                                         derivedFile.save();
@@ -330,7 +333,9 @@ final class ChromeCacheExtractor {
          });
         
         context.addFilesToJob(derivedFiles);
-        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_SOURCE_ARTIFACT));
+        
+        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_SOURCE));
+        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE));
        
         cleanup();
     }
