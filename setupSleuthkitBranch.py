@@ -39,20 +39,24 @@ def gitSleuthkitCheckout(branch, branchOwner):
     # passed is a global variable that gets set to non-zero integer
     # When an error occurs
     global passed
-    if (branchOwner==ORIGIN_OWNER and branch==DEVELOP_BRANCH):
-        cmd = ['git','checkout', branch]
-    else:
+    if CURRENT_BRANCH in getSleuthkitBranchList(branchOwner):
         #add the remotes
-        pullLocation=branchOwner
-        if (branchOwner!=ORIGIN_OWNER):
-             pullLocation="/".join(["https://github.com", branchOwner, "sleuthkit.git"])
+        #if the branch owner was origin substitute in the name of that owner
+        if (branchOwner==ORIGIN_OWNER):
+             gitHubUser="sleuthkit"
+        else:
+             gitHubUser=branchOwner
         checkout=['git','checkout','-b',branchOwner+'-'+branch]
+        print("Command run:" + " ".join(checkout))
         passed = subprocess.call(checkout, stdout=sys.stdout,cwd=TSK_HOME)
-        cmd = ['git','pull', pullLocation, branch]
+        cmd = ['git','pull', "/".join(["https://github.com", gitHubUser, "sleuthkit.git"]), branch]
         if passed != 0: #0 would be success
             #unable to create new branch return instead of pulling
             return
-    passed = subprocess.call(cmd,stdout=sys.stdout,cwd=TSK_HOME)
+        print("Command run:" + " ".join(cmd))
+        passed = subprocess.call(cmd,stdout=sys.stdout,cwd=TSK_HOME)
+    else:
+        print("Branch: " + branch + " does not exist for owner: " + branchOwner)
 
 def parseXML(xmlFile):
     '''
@@ -82,27 +86,21 @@ def main():
     output = subprocess.check_output(cmd)
     print("Output of command: " + output)
     if TRAVIS == "true":
-        TRAVIS_BRANCH=os.getenv("TRAVIS_BRANCH",DEVELOP_BRANCH)
-        print("Travis Branch: " + TRAVIS_BRANCH)
-        CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",TRAVIS_BRANCH)
+        TARGET_BRANCH=os.getenv("TRAVIS_BRANCH",DEVELOP_BRANCH)
+        CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",TARGET_BRANCH)
         if (CURRENT_BRANCH==""):
-            CURRENT_BRANCH=TRAVIS_BRANCH
+            CURRENT_BRANCH=TARGET_BRANCH
             BRANCH_OWNER=ORIGIN_OWNER
         else:
             BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
-        print("Current Branch: " + CURRENT_BRANCH)
-        print("Branch Owner: " + BRANCH_OWNER)
-        print("PR SLUG: " + os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+CURRENT_BRANCH))
     elif APPVEYOR:
-        APPVEYOR_BRANCH=os.getenv("APPVEYOR_REPO_BRANCH",DEVELOP_BRANCH)
-        print("Appveyor Branch: " + APPVEYOR_BRANCH)
-        CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH",APPVEYOR_BRANCH)
-        print("Current Branch: " + CURRENT_BRANCH)
+        TARGET_BRANCH=os.getenv("APPVEYOR_REPO_BRANCH",DEVELOP_BRANCH)
+        CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH",TARGET_BRANCH)
         BRANCH_OWNER=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
-        print("PR SLUG: " + os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", ORIGIN_OWNER+"/"+CURRENT_BRANCH))
     else:
         CURRENT_BRANCH=output.strip()
         BRANCH_OWNER=ORIGIN_OWNER
+        TARGET_BRANCH=CURRENT_BRANCH
     # If we are in an Autopsy release branch, then use the
     # info in TSKVersion.xml to find the corresponding TSK 
     # release branch.  For other branches, we don't always
@@ -110,14 +108,17 @@ def main():
     if CURRENT_BRANCH.startswith('release'):
         version = parseXML('TSKVersion.xml')
         RELEASE_BRANCH = "release-"+version
+        #Check if the same user has a release branch which corresponds to this release branch
         gitSleuthkitCheckout(RELEASE_BRANCH, BRANCH_OWNER)
         #If it failed try the origin release branch
         if passed != 0:
             gitSleuthkitCheckout(RELEASE_BRANCH, ORIGIN_OWNER)
-    # Check if the same branch exists in TSK (develop->develop, custom1->custom1, etc.)
+    # Check if the same branch exists with the same branch owner (origin/develop->origin/develop, user465/custom1->user465/custom1, etc.)
     else: 
         gitSleuthkitCheckout(CURRENT_BRANCH, BRANCH_OWNER)
-
+        #if it failed see if the target branch exists on origin (user465/develop->origin/develop)
+        if passed != 0:
+            gitSleuthkitCheckout(TARGET_BRANCH, ORIGIN_OWNER)
     # Otherwise, default to origin develop
     if passed != 0:
         gitSleuthkitCheckout(DEVELOP_BRANCH, ORIGIN_OWNER)
