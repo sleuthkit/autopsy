@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -52,7 +53,8 @@ import org.xml.sax.SAXException;
 public final class CaseMetadata {
 
     private static final String FILE_EXTENSION = ".aut";
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
+    private static final String DATE_FORMAT_STRING = "yyyy/MM/dd HH:mm:ss (z)";
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
 
     /*
      * Fields from schema version 1
@@ -92,6 +94,7 @@ public final class CaseMetadata {
     private final static String EXAMINER_ELEMENT_PHONE = "ExaminerPhone"; //NON-NLS  
     private final static String EXAMINER_ELEMENT_EMAIL = "ExaminerEmail"; //NON-NLS
     private final static String CASE_ELEMENT_NOTES = "CaseNotes"; //NON-NLS
+    
     /*
      * Unread fields, regenerated on save.
      */
@@ -117,6 +120,15 @@ public final class CaseMetadata {
      */
     public static String getFileExtension() {
         return FILE_EXTENSION;
+    }
+
+    /**
+     * Gets the date format used for dates in case metadata.
+     *
+     * @return The date format.
+     */
+    public static DateFormat getDateFormat() {
+        return new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
     }
 
     /**
@@ -295,7 +307,7 @@ public final class CaseMetadata {
      *
      * @return The date this case was created, as a string.
      */
-    String getCreatedDate() {
+    public String getCreatedDate() {
         return createdDate;
     }
 
@@ -352,7 +364,7 @@ public final class CaseMetadata {
      * @throws CaseMetadataException If there is an error writing to the case
      *                               metadata file.
      */
-    private void writeToFile() throws CaseMetadataException {
+    void writeToFile() throws CaseMetadataException {
         try {
             /*
              * Create the XML DOM.

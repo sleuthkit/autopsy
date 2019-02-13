@@ -1,0 +1,144 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2017-2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.casemodule;
+
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumnModel;
+import org.netbeans.swing.etable.ETableColumn;
+import org.netbeans.swing.etable.ETableColumnModel;
+import org.netbeans.swing.outline.DefaultOutlineModel;
+import org.netbeans.swing.outline.Outline;
+import org.openide.explorer.ExplorerManager;
+import org.openide.util.NbBundle;
+import org.openide.explorer.view.OutlineView;
+
+/**
+ * A JPanel with a scroll pane child component that contains a NetBeans
+ * OutlineView that can be used to display a list of the multi-user cases known
+ * to the coordination service.
+ */
+@SuppressWarnings("PMD.SingularField") // Matisse-generated UI widgets cause lots of false positives
+final class MultiUserCasesBrowserPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
+
+    private static final long serialVersionUID = 1L;
+    private final ExplorerManager explorerManager;
+    private final OutlineView outlineView;
+    private final Outline outline;
+
+    /**
+     * Constructs a JPanel with a scroll pane child component that contains a
+     * NetBeans OutlineView that can be used to display a list of the multi-user
+     * cases known to the coordination service.
+     */
+    MultiUserCasesBrowserPanel() {
+        explorerManager = new ExplorerManager();
+        outlineView = new org.openide.explorer.view.OutlineView();
+        initComponents();
+        outline = outlineView.getOutline();
+        configureOutlineView();
+        explorerManager.setRootContext(new MultiUserCasesRootNode());
+    }
+
+    /**
+     * Configures the child scroll pane component's child OutlineView component.
+     */
+    private void configureOutlineView() {
+        outlineView.setPropertyColumns(
+                Bundle.MultiUserCaseNode_column_createTime(), Bundle.MultiUserCaseNode_column_createTime(),
+                Bundle.MultiUserCaseNode_column_path(), Bundle.MultiUserCaseNode_column_path());
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.MultiUserCaseNode_column_name());
+        outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        TableColumnModel columnModel = outline.getColumnModel();
+        int pathColumnIndex = 0;
+        int dateColumnIndex = 0;
+        for (int index = 0; index < columnModel.getColumnCount(); index++) {
+            if (columnModel.getColumn(index).getHeaderValue().toString().equals(Bundle.MultiUserCaseNode_column_path())) {
+                pathColumnIndex = index;
+            } else if (columnModel.getColumn(index).getHeaderValue().toString().equals(Bundle.MultiUserCaseNode_column_createTime())) {
+                dateColumnIndex = index;
+            }
+        }
+
+        /*
+         * Hide path column by default (user can unhide it)
+         */
+        ETableColumn column = (ETableColumn) columnModel.getColumn(pathColumnIndex);
+        ((ETableColumnModel) columnModel).setColumnHidden(column, true);
+        outline.setRootVisible(false);
+
+        /*
+         * Sort on Created date column in descending order by default.
+         */
+        outline.setColumnSorted(dateColumnIndex, false, 1);
+
+        caseTableScrollPane.setViewportView(outlineView);
+        this.setVisible(true);
+    }
+
+    @Override
+    public ExplorerManager getExplorerManager() {
+        return explorerManager;
+    }
+
+    /**
+     * Adds a listener to changes in case selection in this browser.
+     *
+     * @param listener the ListSelectionListener to add
+     */
+    void addListSelectionListener(ListSelectionListener listener) {
+        outline.getSelectionModel().addListSelectionListener(listener);
+    }    
+    
+    /**
+     * Refreshes the list of multi-user cases in this browser.
+     */
+    @NbBundle.Messages({
+        "MultiUserCasesBrowserPanel.waitNode.message=Please Wait..."
+    })
+    void refreshCases() {
+        explorerManager.setRootContext(new MultiUserCasesRootNode());
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        caseTableScrollPane = new javax.swing.JScrollPane();
+
+        setMinimumSize(new java.awt.Dimension(0, 5));
+        setPreferredSize(new java.awt.Dimension(5, 5));
+        setLayout(new java.awt.BorderLayout());
+
+        caseTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        caseTableScrollPane.setMinimumSize(new java.awt.Dimension(0, 5));
+        caseTableScrollPane.setOpaque(false);
+        caseTableScrollPane.setPreferredSize(new java.awt.Dimension(5, 5));
+        add(caseTableScrollPane, java.awt.BorderLayout.CENTER);
+    }// </editor-fold>//GEN-END:initComponents
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane caseTableScrollPane;
+    // End of variables declaration//GEN-END:variables
+
+}

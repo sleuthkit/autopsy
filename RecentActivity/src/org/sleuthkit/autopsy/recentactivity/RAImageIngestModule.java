@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
- * Copyright 2012-2018 Basis Technology Corp.
- * 
+ *
+ * Copyright 2012-2019 Basis Technology Corp.
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -46,8 +45,8 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 public final class RAImageIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
-    private final List<Extract> extracters = new ArrayList<>();
-    private final List<Extract> browserExtracters = new ArrayList<>();
+    private final List<Extract> extractors = new ArrayList<>();
+    private final List<Extract> browserExtractors = new ArrayList<>();
     private IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
     private StringBuilder subCompleted = new StringBuilder();
@@ -71,20 +70,24 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract chrome = new Chrome();
         Extract firefox = new Firefox();
         Extract SEUQA = new SearchEngineURLQueryAnalyzer();
+        Extract osExtract = new ExtractOs();
+        Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer();
 
-        extracters.add(chrome);
-        extracters.add(firefox);
-        extracters.add(iexplore);
-        extracters.add(recentDocuments);
-        extracters.add(SEUQA); // this needs to run after the web browser modules
-        extracters.add(registry); // this runs last because it is slowest
+        extractors.add(chrome);
+        extractors.add(firefox);
+        extractors.add(iexplore);
+        extractors.add(recentDocuments);
+        extractors.add(SEUQA); // this needs to run after the web browser modules
+        extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
+        extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
+        extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
 
-        browserExtracters.add(chrome);
-        browserExtracters.add(firefox);
-        browserExtracters.add(iexplore);
+        browserExtractors.add(chrome);
+        browserExtractors.add(firefox);
+        browserExtractors.add(iexplore);
 
-        for (Extract extracter : extracters) {
-            extracter.init();
+        for (Extract extractor : extractors) {
+            extractor.init();
         }
     }
 
@@ -95,12 +98,12 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
                         "RAImageIngestModule.process.started",
                         dataSource.getName())));
 
-        progressBar.switchToDeterminate(extracters.size());
+        progressBar.switchToDeterminate(extractors.size());
 
         ArrayList<String> errors = new ArrayList<>();
 
-        for (int i = 0; i < extracters.size(); i++) {
-            Extract extracter = extracters.get(i);
+        for (int i = 0; i < extractors.size(); i++) {
+            Extract extracter = extractors.get(i);
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
                 break;
@@ -154,7 +157,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         StringBuilder historyMsg = new StringBuilder();
         historyMsg.append(
                 NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.title", dataSource.getName()));
-        for (Extract module : browserExtracters) {
+        for (Extract module : browserExtractors) {
             historyMsg.append("<li>").append(module.getName()); //NON-NLS
             historyMsg.append(": ").append((module.foundData()) ? NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.found") : NbBundle
@@ -173,8 +176,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
             return ProcessResult.OK;
         }
 
-        for (int i = 0; i < extracters.size(); i++) {
-            Extract extracter = extracters.get(i);
+        for (int i = 0; i < extractors.size(); i++) {
+            Extract extracter = extractors.get(i);
             try {
                 extracter.complete();
             } catch (Exception ex) {

@@ -528,10 +528,6 @@
                 <binary-origin>release/modules/ext/jul-to-slf4j-1.7.24.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gson-2.8.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-2.8.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/poi-3.17.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/poi-3.17.jar</binary-origin>
             </class-path-extension>

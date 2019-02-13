@@ -64,7 +64,11 @@
                 <package>com.google.common.xml</package>
                 <package>com.google.gson</package>
                 <package>com.google.gson.annotations</package>
+                <package>com.google.gson.internal</package>
+                <package>com.google.gson.internal.bind</package>
+                <package>com.google.gson.internal.bind.util</package>
                 <package>com.google.gson.reflect</package>
+                <package>com.google.gson.stream</package>
                 <package>com.sun.activation.registries</package>
                 <package>com.sun.activation.viewers</package>
                 <package>com.sun.jna</package>
@@ -739,8 +743,8 @@
                 <binary-origin>release/modules/ext/jna-3.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gson-1.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-1.4.jar</binary-origin>
+                <runtime-relative-path>ext/gson-2.8.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gson-2.8.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-common-8.0-r4.jar</runtime-relative-path>

@@ -614,10 +614,18 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
         if (eamDataSource.getCaseID() == -1) {
             throw new EamDbException("Case ID is -1");
-        } else if (eamDataSource.getID() != -1) {
+        }
+        if (eamDataSource.getDeviceID() == null) {
+            throw new EamDbException("Device ID is null");
+        }
+        if (eamDataSource.getName() == null) {
+            throw new EamDbException("Name is null");
+        }
+        if (eamDataSource.getID() != -1) {
             // This data source is already in the central repo
             return eamDataSource;
         }
+        
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -639,13 +647,19 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
             if (!resultSet.next()) {
-                //if nothing was inserted then return the DataSource that exists in the central repository
+                /*
+                 * If nothing was inserted, then return the data source that
+                 * exists in the Central Repository.
+                 * 
+                 * This is expected to occur with PostgreSQL Central Repository
+                 * databases.
+                 */
                 try {
                     return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
                             eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
                             () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
-                } catch (CacheLoader.InvalidCacheLoadException | ExecutionException ex) {
-                    throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo", eamDataSource.getName()), ex);
+                } catch (CacheLoader.InvalidCacheLoadException | ExecutionException getException) {
+                    throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo:", eamDataSource.getName()), getException);
                 }
             } else {
                 //if a new data source was added to the central repository update the caches to include it and return it
@@ -656,8 +670,22 @@ abstract class AbstractSqlEamDb implements EamDb {
                 return dataSource;
             }
 
-        } catch (SQLException ex) {
-            throw new EamDbException("Error inserting new data source.", ex); // NON-NLS
+        } catch (SQLException insertException) {
+            /*
+             * If an exception was thrown causing us to not return a new data
+             * source, attempt to get an existing data source with the same case
+             * ID and data source object ID.
+             * 
+             * This exception block is expected to occur with SQLite Central
+             * Repository databases.
+             */
+            try {
+                return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
+                        eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
+                        () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
+            } catch (CacheLoader.InvalidCacheLoadException | ExecutionException getException) {
+                throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo, insert failed due to Exception: %s", eamDataSource.getName(), insertException.getMessage()), getException);
+            }
         } finally {
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeStatement(preparedStatement);
@@ -832,7 +860,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         return dataSources;
     }
-    
+
     /**
      * Updates the MD5 hash value in an existing data source in the database.
      *
@@ -842,7 +870,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException {
         updateDataSourceStringValue(eamDataSource, "md5", eamDataSource.getMd5());
     }
-    
+
     /**
      * Updates the SHA-1 hash value in an existing data source in the database.
      *
@@ -852,9 +880,10 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException {
         updateDataSourceStringValue(eamDataSource, "sha1", eamDataSource.getSha1());
     }
-    
+
     /**
-     * Updates the SHA-256 hash value in an existing data source in the database.
+     * Updates the SHA-256 hash value in an existing data source in the
+     * database.
      *
      * @param eamDataSource The data source to update
      */
@@ -862,13 +891,13 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException {
         updateDataSourceStringValue(eamDataSource, "sha256", eamDataSource.getSha256());
     }
-    
+
     /**
      * Updates the specified value in an existing data source in the database.
      *
      * @param eamDataSource The data source to update
-     * @param column The name of the column to be updated
-     * @param value The value to assign to the specified column
+     * @param column        The name of the column to be updated
+     * @param value         The value to assign to the specified column
      */
     private void updateDataSourceStringValue(CorrelationDataSource eamDataSource, String column, String value) throws EamDbException {
         if (eamDataSource == null) {
@@ -884,16 +913,60 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            
+
             preparedStatement.setString(1, value);
             preparedStatement.setInt(2, eamDataSource.getID());
-            
+
             preparedStatement.executeUpdate();
             //update the case in the cache
             dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()), eamDataSource);
             dataSourceCacheById.put(getDataSourceByIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getID()), eamDataSource);
         } catch (SQLException ex) {
             throw new EamDbException(String.format("Error updating data source (obj_id=%d).", eamDataSource.getDataSourceObjectID()), ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    /**
+     * Changes the name of a data source in the DB
+     *
+     * @param eamDataSource The data source
+     * @param newName       The new name
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
+
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+
+        String sql = "UPDATE data_sources SET name = ? WHERE id = ?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, newName);
+            preparedStatement.setInt(2, eamDataSource.getID());
+            preparedStatement.executeUpdate();
+
+            CorrelationDataSource updatedDataSource = new CorrelationDataSource(
+                    eamDataSource.getCaseID(),
+                    eamDataSource.getID(),
+                    eamDataSource.getDeviceID(),
+                    newName,
+                    eamDataSource.getDataSourceObjectID(),
+                    eamDataSource.getMd5(),
+                    eamDataSource.getSha1(),
+                    eamDataSource.getSha256());
+
+            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getDataSourceObjectID()), updatedDataSource);
+            dataSourceCacheById.put(getDataSourceByIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getID()), updatedDataSource);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error updating name of data source with ID " + eamDataSource.getDataSourceObjectID()
+                    + " to " + newName, ex); // NON-NLS
         } finally {
             EamDbUtil.closeStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);

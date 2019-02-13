@@ -9,6 +9,8 @@
         <!-- for ingest -->
         <dependency conf="autopsy_core->*" org="org.reflections" name="reflections" rev="0.9.8"/>
         
+        <dependency org="com.google.code.gson" name="gson" rev="2.8.1"/>      
+        
         <!-- for viewers -->
         <dependency conf="autopsy_core->*" org="org.freedesktop.gstreamer" name="gst1-java-core" rev="0.9.3"/>
         <dependency conf="autopsy_core->*" org="net.java.dev.jna" name="jna" rev="3.4.0"/>
@@ -28,7 +30,6 @@
         <dependency conf="autopsy_core->*" org="commons-logging" name="commons-logging" rev="1.1.2"/>
         <dependency conf="autopsy_core->*" org="commons-io" name="commons-io" rev="2.5"/>
         <dependency conf="autopsy_core->*" org="log4j" name="log4j" rev="1.2.17"/>
-              
         <!-- <dependency conf="autopsy_core->*" org="org.jdom" name="jdom" rev="1.1.3"/> -->
         <dependency conf="autopsy_core->*" org="org.apache.poi" name="poi-excelant" rev="3.17"/>
         <dependency conf="autopsy_core->*" org="org.apache.poi" name="poi-scratchpad" rev="3.17"/>
@@ -72,5 +73,5 @@
         <!-- conflict resolutions for multiple JAR versions -->
         <conflict org="net.java.dev.jna" module="jna" rev="3.4.0"/>
         <conflict org="net.java.dev.jna" module="platform" rev="3.4.0"/>
-</dependencies>
+    </dependencies>
 </ivy-module>
