@@ -51,11 +51,11 @@ final class VcardParser {
      */
     static boolean isVcardFile(Content content) {
         try {
-            byte[] t = new byte[VCARD_HEADER.length()];
             if (content.getSize() > MIN_FILE_SIZE) {
-                int byteRead = content.read(t, 0, VCARD_HEADER.length());
+                byte[] buffer = new byte[VCARD_HEADER.length()];
+                int byteRead = content.read(buffer, 0, VCARD_HEADER.length());
                 if (byteRead > 0) {
-                    String header = new String(t);
+                    String header = new String(buffer);
                     return header.equalsIgnoreCase(VCARD_HEADER);
                 }
             }
