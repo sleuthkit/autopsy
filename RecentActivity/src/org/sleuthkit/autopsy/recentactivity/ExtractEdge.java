@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
@@ -62,7 +63,7 @@ public class ExtractEdge extends Extract{
 
     ExtractEdge() throws NoCurrentCaseException{
         moduleName = NbBundle.getMessage(Chrome.class, "ExtractEdge.moduleName");
-        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), EDGE) + File.separator + "results"; 
+        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), EDGE) + File.separator + "results";
     }
     
     @Override
@@ -75,9 +76,11 @@ public class ExtractEdge extends Extract{
         ESE_TOOL_FILE =  InstalledFileLocator.getDefault().locate(path.toString(), ExtractEdge.class.getPackage().getName(), false); //NON-NLS
         if (ESE_TOOL_FILE == null) {
             this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractEdge.errMsg.unableFindESEViewer", this.getName()));
+                    NbBundle.getMessage(this.getClass(), "ExtractEdge.process.errMsg.unableFindESEViewer", this.getName()));
             logger.log(Level.SEVERE, "Error finding ESEDatabaseViewer program "); //NON-NLS
         }
+        
+         final String esedumper = ESE_TOOL_FILE.getAbsolutePath();
 
         // get WebCacheV01.dat files
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
@@ -85,22 +88,24 @@ public class ExtractEdge extends Extract{
         try {
             webCachFiles = fileManager.findFiles(dataSource, EDGE_WEBCACHE_NAME); //NON-NLS
         } catch (TskCoreException ex) {
-            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errGettingHistFiles",
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractEdge.process.errMsg.errGettingWebCacheFiles",
                     this.getName()));
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
             return;
         }
 
         if (webCachFiles.isEmpty()) {
-            String msg = NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.noHistFiles");
+            String msg = NbBundle.getMessage(this.getClass(), "ExtractEdge.process.errMsg.noWebCachFiles");
             logger.log(Level.INFO, msg);
             return;
         }
 
-        dataFound = true;
+        dataFound = true;   
         
-        File resultsDir = new File(moduleTempResultsDir);
-        resultsDir.mkdirs();
+        if(!PlatformUtil.isWindowsOS()){
+            logger.log(Level.WARNING, "Edge data found, unable to parse on non-windows system."); //NON-NLS
+            return;
+        }
         
         String temps;
         String indexFileName;
@@ -118,73 +123,25 @@ public class ExtractEdge extends Extract{
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
                 this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getName(),
+                        NbBundle.getMessage(this.getClass(), "ExtractEdge.process.errMsg.errWriteFile", this.getName(),
                                 datFile.getAbsolutePath()));
                 continue;
             }
             
-            executeDumper(path.toAbsolutePath().toString(), datFile.getAbsolutePath(), moduleTempResultsDir);
+            File resultsDir = new File(moduleTempResultsDir + Integer.toString((int) indexFile.getId()));
+            resultsDir.mkdirs();
+            executeDumper(esedumper, datFile.getAbsolutePath(), "webcache", resultsDir.getAbsolutePath());
              
-            this.getHistory();
+            this.getHistory(); // Not implemented yet
             this.getCookie(); // Not implemented yet
             this.getDownload(); // Not implemented yet
             
-            // cleam up the temp files
+             datFile.delete();
+             resultsDir.delete();
          }
          
-         // Bookmarks come from a different file
-         this.getBookmark();
-    }
-    
-    private boolean executeDumper(String dumperPath, String inputFile, String outputDir){
-        final String outputFileFullPath = moduleTempResultsDir + File.separator + inputFile;
-        final String errFileFullPath = moduleTempResultsDir + File.separator + inputFile + ".err"; //NON-NLS
-        logger.log(Level.INFO, "Writing ESEDatabaseViewer results to: {0}", outputFileFullPath); //NON-NLS   
-        
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(dumperPath);
-        commandLine.add("/table");
-        commandLine.add(inputFile);
-        commandLine.add("/scomma");
-        commandLine.add(outputDir + "\\webcache_*.csv");
-         
-        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-        processBuilder.redirectOutput(new File(outputFileFullPath));
-        processBuilder.redirectError(new File(errFileFullPath));
-        
-        String str = processBuilder.command().toString();
-        
-        int result;
-        try{
-            result = ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
-        }catch(IOException ex){
-            
-        }
-        
-        return false;
-    }
-    
-    private void createWebCachTempFiles(){
-        
-    }
-    
-    private void cleanupWebCacheTempFiles(){
-        
-    }
-    
-    private boolean executeESEDumper(String eseToolFilePath, String eseFilPath, String outputFileName){
-        final String outputFileFullPath = moduleTempResultsDir + File.separator + outputFileName;
-        final String errFileFullPath = moduleTempResultsDir + File.separator + outputFileName + ".err"; 
-        
-        logger.log(Level.INFO, "Writing ESEDatabaseViewer results to: {0}", outputFileFullPath); //NON-NLS   
-        List<String> commandLine = new ArrayList<>();
-       
-        
-        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-        processBuilder.redirectOutput(new File(outputFileFullPath));
-        processBuilder.redirectError(new File(errFileFullPath));
-        
-        return false;
+         // Bookmarks come from spartan.edb different file
+         this.getBookmark(); // Not implemented yet
     }
     
     /**
@@ -213,5 +170,32 @@ public class ExtractEdge extends Extract{
      */
     private void getDownload() {
         
+    }
+    
+    private boolean executeDumper(String dumperPath, String inputFilePath, String inputFilePrefix, String outputDir){
+        final String outputFileFullPath = outputDir + File.separator + inputFilePrefix + ".txt";
+        final String errFileFullPath = outputDir + File.separator + inputFilePrefix + ".err"; //NON-NLS
+        logger.log(Level.INFO, "Writing ESEDatabaseViewer results to: {0}", outputDir); //NON-NLS   
+        
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add(dumperPath);
+        commandLine.add("/table");
+        commandLine.add(inputFilePath);
+         commandLine.add("*");
+        commandLine.add("/scomma");
+        commandLine.add(outputDir + "\\" + inputFilePrefix + "_*.csv");
+         
+        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+        processBuilder.redirectOutput(new File(outputFileFullPath));
+        processBuilder.redirectError(new File(errFileFullPath));
+
+        try{
+            ExecUtil.execute(processBuilder, new DataSourceIngestModuleProcessTerminator(context));
+        }catch(IOException ex){
+            logger.log(Level.SEVERE, "Unable to execute ESEDatabaseView to process Edge file." , ex); //NON-NLS
+            return false;
+        }
+        
+        return true;
     }
 }
