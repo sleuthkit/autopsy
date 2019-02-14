@@ -37,6 +37,7 @@ public class TagsFilterStateTest extends FilterStateTestAbstract<  TagsFilterSta
     private static final PublicTagName PUBLIC_TAG_NAME = new PublicTagName(1, "test", "test tag name", TagName.HTML_COLOR.NONE, TskData.FileKnown.KNOWN);
     private static final PublicTagName PUBLIC_TAG_NAME2 = new PublicTagName(2, "test2", "test2 tag name", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN);
     private static final PublicTagName PUBLIC_TAG_NAME3 = new PublicTagName(3, "test3", "test3 tag name", TagName.HTML_COLOR.NONE, TskData.FileKnown.KNOWN);
+    private static final PublicTagName PUBLIC_TAG_NAME4 = new PublicTagName(4, "test4", "test4 tag name", TagName.HTML_COLOR.NONE, TskData.FileKnown.KNOWN);
 
     public TagsFilterStateTest() {
     }
@@ -61,13 +62,21 @@ public class TagsFilterStateTest extends FilterStateTestAbstract<  TagsFilterSta
         assertThat(instance.getSubFilterStates().get(1).isSelected(), equalTo(false));
 
         //filter starts unselected
-        DefaultFilterState<TimelineFilter.TagNameFilter> defaultFilterState
+        DefaultFilterState<TimelineFilter.TagNameFilter> tagNameState
                 = new DefaultFilterState<>(new TimelineFilter.TagNameFilter(PUBLIC_TAG_NAME3));
-        assertThat(defaultFilterState.isSelected(), equalTo(false));
+        assertThat(tagNameState.isSelected(), equalTo(false));
+        instance.getSubFilterStates().add(tagNameState);
+                //filter is selected after adding to TagsFilterState.
+        assertThat(tagNameState.isSelected(), equalTo(true));
 
-        //filter is selected after adding to TagsFilterState.
-        instance.getSubFilterStates().add(defaultFilterState);
-        assertThat(defaultFilterState.isSelected(), equalTo(true));
+
+        //filter starts unselected
+        DefaultFilterState<TimelineFilter.TagNameFilter> tagNameState2
+                = new DefaultFilterState<>(new TimelineFilter.TagNameFilter(PUBLIC_TAG_NAME4),false);
+        assertThat(tagNameState2.isSelected(), equalTo(false));
+        instance.addSubFilterState(tagNameState2);
+                //filter is selected after adding to TagsFilterState.
+        assertThat(tagNameState2.isSelected(), equalTo(true));
     }
 
     @Test
