@@ -416,6 +416,10 @@
                 <binary-origin>release/modules/ext/StixLib.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-core-2.9.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-tools-2.0.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/pdfbox-tools-2.0.8.jar</binary-origin>
             </class-path-extension>
@@ -432,10 +436,6 @@
                 <binary-origin>release/modules/ext/tika-parsers-1.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.25.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/json-simple-1.1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/json-simple-1.1.1.jar</binary-origin>
             </class-path-extension>
@@ -446,6 +446,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jhighlight-1.0.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jhighlight-1.0.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jempbox-1.8.13.jar</runtime-relative-path>
@@ -500,10 +504,6 @@
                 <binary-origin>release/modules/ext/isoparser-1.1.18.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-core-0.8.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/vorbis-java-core-0.8.jar</binary-origin>
             </class-path-extension>
@@ -526,10 +526,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jul-to-slf4j-1.7.24.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jul-to-slf4j-1.7.24.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/gson-2.8.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-2.8.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-3.17.jar</runtime-relative-path>
@@ -608,8 +604,8 @@
                 <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackson-core-2.9.7.jar</binary-origin>
+                <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sqlite-jdbc-3.25.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/cxf-rt-frontend-jaxrs-3.0.16.jar</runtime-relative-path>
@@ -618,10 +614,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/grib-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/grib-4.5.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jackson-core-2.9.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackson-core-2.9.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/activemq-all-5.11.1.jar</runtime-relative-path>

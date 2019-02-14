@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -42,7 +41,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
@@ -52,6 +50,7 @@ import org.apache.tika.parser.ParsingReader;
 import org.apache.tika.parser.microsoft.OfficeParserConfig;
 import org.apache.tika.parser.ocr.TesseractOCRConfig;
 import org.apache.tika.parser.pdf.PDFParserConfig;
+import org.apache.tika.mime.MediaType;
 import org.openide.util.NbBundle;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Lookup;
@@ -127,17 +126,16 @@ final class TikaTextExtractor implements TextExtractor {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(tikaThreadFactory);
     private static final String SQLITE_MIMETYPE = "application/x-sqlite3";
 
-    private final AutoDetectParser parser = new AutoDetectParser();
+    private final AutoDetectParser parser;
     private final Content content;
 
     private boolean tesseractOCREnabled;
     private static final String TESSERACT_DIR_NAME = "Tesseract-OCR"; //NON-NLS
     private static final String TESSERACT_EXECUTABLE = "tesseract.exe"; //NON-NLS
     private static final File TESSERACT_PATH = locateTesseractExecutable();
-    private static final String LANGUAGE_PACKS = getLanguagePacks();
-    private static final String TESSERACT_LANGUAGE_PACK_EXT = "traineddata"; //NON-NLS
+    private String languagePacks = formatLanguagePacks(PlatformUtil.getOcrLanguagePacks());
     private static final String TESSERACT_OUTPUT_FILE_NAME = "tess_output"; //NON-NLS
-    
+
     private ProcessTerminator processTerminator;
 
     private static final List<String> TIKA_SUPPORTED_TYPES
@@ -148,12 +146,23 @@ final class TikaTextExtractor implements TextExtractor {
 
     public TikaTextExtractor(Content content) {
         this.content = content;
+
+        parser = new AutoDetectParser();
+
+        if (content instanceof AbstractFile) {
+            AbstractFile file = (AbstractFile) content;
+            if (file.getMIMEType() != null && !file.getMIMEType().isEmpty()) {
+                //Force Tika to use our pre-computed mime type during detection
+                parser.setDetector((InputStream inStream, Metadata metaData)
+                        -> MediaType.parse(file.getMIMEType()));
+            }
+        }
     }
 
     /**
      * If Tesseract has been installed and is set to be used through
-     * configuration, then ocr is enabled. OCR can only currently be run on
-     * 64 bit Windows OS.
+     * configuration, then ocr is enabled. OCR can only currently be run on 64
+     * bit Windows OS.
      *
      * @return Flag indicating if OCR is set to be used.
      */
@@ -202,8 +211,8 @@ final class TikaTextExtractor implements TextExtractor {
                 TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
                 String tesseractFolder = TESSERACT_PATH.getParent();
                 ocrConfig.setTesseractPath(tesseractFolder);
-                
-                ocrConfig.setLanguage(LANGUAGE_PACKS);
+
+                ocrConfig.setLanguage(languagePacks);
                 ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
                 parseContext.set(TesseractOCRConfig.class, ocrConfig);
 
@@ -272,7 +281,7 @@ final class TikaTextExtractor implements TextExtractor {
         File outputFile = null;
         try {
             String tempDirectory = Case.getCurrentCaseThrows().getTempDirectory();
-            
+
             //Appending file id makes the name unique
             String tempFileName = FileUtil.escapeFileName(file.getId() + file.getName());
             inputFile = Paths.get(tempDirectory, tempFileName).toFile();
@@ -289,7 +298,7 @@ final class TikaTextExtractor implements TextExtractor {
                     String.format("\"%s\"", outputFilePath),
                     "--tessdata-dir", PlatformUtil.getOcrLanguagePacksPath(),
                     //language pack command flag
-                    "-l", LANGUAGE_PACKS);
+                    "-l", languagePacks);
 
             //If the ProcessTerminator was supplied during 
             //configuration apply it here.
@@ -313,7 +322,7 @@ final class TikaTextExtractor implements TextExtractor {
             }
         }
     }
-    
+
     /**
      * Wraps the creation of a TikaReader into a Future so that it can be
      * cancelled.
@@ -425,11 +434,11 @@ final class TikaTextExtractor implements TextExtractor {
      */
     @Override
     public boolean isSupported() {
-        if(!(content instanceof AbstractFile)) {
+        if (!(content instanceof AbstractFile)) {
             return false;
         }
-        
-        String detectedType = ((AbstractFile)content).getMIMEType();
+
+        String detectedType = ((AbstractFile) content).getMIMEType();
         if (detectedType == null
                 || BINARY_MIME_TYPES.contains(detectedType) //any binary unstructured blobs (string extraction will be used)
                 || ARCHIVE_MIME_TYPES.contains(detectedType)
@@ -438,28 +447,16 @@ final class TikaTextExtractor implements TextExtractor {
                 ) {
             return false;
         }
-        
+
         return TIKA_SUPPORTED_TYPES.contains(detectedType);
     }
 
     /**
-     * Retrieves all of the installed language packs from their designated
-     * directory location to be used to configure Tesseract OCR.
+     * Formats language packs to be parseable from the command line.
      *
      * @return String of all language packs available for Tesseract to use
      */
-    private static String getLanguagePacks() {
-        File languagePackRootDir = new File(PlatformUtil.getOcrLanguagePacksPath());
-
-        List<String> languagePacks = new ArrayList<>();
-        for (File languagePack : languagePackRootDir.listFiles()) {
-            String fileExt = FilenameUtils.getExtension(languagePack.getName()); 
-            if (!languagePack.isDirectory() && TESSERACT_LANGUAGE_PACK_EXT.equals(fileExt)) {
-                String packageName = FilenameUtils.getBaseName(languagePack.getName());
-                languagePacks.add(packageName);
-            }
-        }
-
+    private static String formatLanguagePacks(List<String> languagePacks) {
         return String.join("+", languagePacks);
     }
 
@@ -499,8 +496,14 @@ final class TikaTextExtractor implements TextExtractor {
     public void setExtractionSettings(Lookup context) {
         if (context != null) {
             ImageConfig configInstance = context.lookup(ImageConfig.class);
-            if (configInstance != null && Objects.nonNull(configInstance.getOCREnabled())) {
-                this.tesseractOCREnabled = configInstance.getOCREnabled();
+            if (configInstance != null) {
+                if (Objects.nonNull(configInstance.getOCREnabled())) {
+                    this.tesseractOCREnabled = configInstance.getOCREnabled();
+                }
+
+                if (Objects.nonNull(configInstance.getOCRLanguages())) {
+                    this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
+                }
             }
 
             ProcessTerminator terminatorInstance = context.lookup(ProcessTerminator.class);

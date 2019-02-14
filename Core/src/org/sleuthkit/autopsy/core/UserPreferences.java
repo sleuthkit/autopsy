@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2018 Basis Technology Corp.
+ * Copyright 2014-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@ import java.util.prefs.Preferences;
 import org.openide.util.NbPreferences;
 import org.python.icu.util.TimeZone;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
@@ -76,6 +75,7 @@ public final class UserPreferences {
     public static final String HIDE_CENTRAL_REPO_COMMENTS_AND_OCCURRENCES = "HideCentralRepoCommentsAndOccurrences";
     public static final String DISPLAY_TRANSLATED_NAMES = "DisplayTranslatedNames";
     public static final String EXTERNAL_HEX_EDITOR_PATH = "ExternalHexEditorPath";
+    public static final String SOLR_MAX_JVM_SIZE = "SolrMaxJVMSize";
     
     // Prevent instantiation.
     private UserPreferences() {
@@ -473,6 +473,24 @@ public final class UserPreferences {
         preferences.putInt(MAX_NUM_OF_LOG_FILE, count);
     }
     
+    /**
+     * Get the maximum JVM heap size (in MB) for the embedded Solr server.
+     *
+     * @return Saved value or default (512)
+     */
+    public static int getMaxSolrVMSize() {
+        return preferences.getInt(SOLR_MAX_JVM_SIZE, 512);
+    }
+
+    /**
+     * Set the maximum JVM heap size (in MB) for the embedded Solr server.
+     *
+     * @param maxSize
+     */
+    public static void setMaxSolrVMSize(int maxSize) {
+        preferences.putInt(SOLR_MAX_JVM_SIZE, maxSize);
+    }
+
     /**
      * Set the HdX path.
      * 

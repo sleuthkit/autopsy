@@ -22,12 +22,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import org.openide.util.NbBundle;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.DOCUMENTS;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.EXECUTABLE;
+import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.MEDIA;
 import org.sleuthkit.datamodel.TimelineManager;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypesFilter;
-import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.MEDIA;
-import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.EXECUTABLE;
-import static org.sleuthkit.autopsy.coreutils.FileTypeUtils.FileTypeCategory.DOCUMENTS;
 
 /**
  * Utilities to deal with TimelineFilters

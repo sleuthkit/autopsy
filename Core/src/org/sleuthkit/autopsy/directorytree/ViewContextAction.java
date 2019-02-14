@@ -79,9 +79,10 @@ public class ViewContextAction extends AbstractAction {
      */
     public ViewContextAction(String displayName, BlackboardArtifactNode artifactNode) {
         super(displayName);
-        this.content = artifactNode.getLookup().lookup(AbstractFile.class);
-        if (this.content != null) {
+        this.content = artifactNode.getLookup().lookup(Content.class);
+        if (this.content != null && this.content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
+            //disable the action if the content is a file and the file is hidden
             if ((TskData.FileKnown.KNOWN == file.getKnown() && UserPreferences.hideKnownFilesInDataSourcesTree())
                     || (TskData.TSK_DB_FILES_TYPE_ENUM.SLACK == file.getType() && UserPreferences.hideSlackFilesInDataSourcesTree())) {
                 this.setEnabled(false);
@@ -150,19 +151,18 @@ public class ViewContextAction extends AbstractAction {
                     long contentDSObjid = content.getDataSource().getId();
                     DataSource datasource = skCase.getDataSource(contentDSObjid);
                     dsname = datasource.getName();
-                    
+
                     Children rootChildren = treeViewExplorerMgr.getRootContext().getChildren();
                     Node datasourceGroupingNode = rootChildren.findChild(dsname);
-                    if (! Objects.isNull(datasourceGroupingNode) ) {
+                    if (!Objects.isNull(datasourceGroupingNode)) {
                         Children dsChildren = datasourceGroupingNode.getChildren();
                         parentTreeViewNode = dsChildren.findChild(DataSourcesNode.NAME);
-                    }
-                    else {
+                    } else {
                         MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
                         logger.log(Level.SEVERE, "Failed to locate data source node in tree."); //NON-NLS
                         return;
                     }
-                }  catch (NoCurrentCaseException | TskDataException | TskCoreException ex) {
+                } catch (NoCurrentCaseException | TskDataException | TskCoreException ex) {
                     MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindNode());
                     logger.log(Level.SEVERE, "Failed to locate data source node in tree.", ex); //NON-NLS
                     return;
@@ -180,6 +180,7 @@ public class ViewContextAction extends AbstractAction {
              * searched to find the parent treeview node.
              */
             Content parentContent = null;
+
             try {
                 parentContent = content.getParent();
             } catch (TskCoreException ex) {
