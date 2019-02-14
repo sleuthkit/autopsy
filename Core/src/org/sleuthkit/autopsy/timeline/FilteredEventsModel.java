@@ -38,7 +38,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
-import org.apache.commons.collections4.CollectionUtils;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.joda.time.DateTimeZone;
@@ -539,8 +538,8 @@ public final class FilteredEventsModel {
      *                                directly from this file (file system
      *                                timestamps).
      *
-     * @return A Set of event IDs for the events that are derived from the
-     *         given file.
+     * @return A Set of event IDs for the events that are derived from the given
+     *         file.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
