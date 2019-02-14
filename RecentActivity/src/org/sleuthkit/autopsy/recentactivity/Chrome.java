@@ -99,7 +99,7 @@ class Chrome extends Extract {
         this.getDownload();
         
         ChromeCacheExtractor chromeCacheExtractor = new ChromeCacheExtractor(dataSource, context);
-        chromeCacheExtractor.getCache();
+        chromeCacheExtractor.getCaches();
     }
 
     /**
