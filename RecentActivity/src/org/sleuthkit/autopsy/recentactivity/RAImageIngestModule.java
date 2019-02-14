@@ -47,7 +47,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private final List<Extract> extractors = new ArrayList<>();
     private final List<Extract> browserExtractors = new ArrayList<>();
-    private final IngestServices services = IngestServices.getInstance();
+    private IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
     private StringBuilder subCompleted = new StringBuilder();
 
@@ -68,6 +68,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract registry = new ExtractRegistry();
         Extract recentDocuments = new RecentDocumentsByLnk();
         Extract chrome = new Chrome();
+        Extract firefox = new Firefox();
+        Extract SEUQA = new SearchEngineURLQueryAnalyzer();
         Extract osExtract = new ExtractOs();
         Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer();
 
@@ -156,7 +158,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         historyMsg.append(
                 NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.title", dataSource.getName()));
         for (Extract module : browserExtractors) {
-            historyMsg.append("<li>").append(module.getModuleName()); //NON-NLS
+            historyMsg.append("<li>").append(module.getName()); //NON-NLS
             historyMsg.append(": ").append((module.foundData()) ? NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.found") : NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.notFnd"));
@@ -176,6 +178,15 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
         for (int i = 0; i < extractors.size(); i++) {
             Extract extracter = extractors.get(i);
+            try {
+                extracter.complete();
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Exception occurred when completing " + extracter.getName(), ex); //NON-NLS
+                subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.complete.errMsg.failed",
+                        extracter.getName()));
+            }
+        }
+
         return ProcessResult.OK;
     }
 
