@@ -395,12 +395,9 @@ public class CreatePortableCaseModule implements GeneralReportModule {
 
                         newContent = skCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
                                 abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),
+                                abstractFile.getMd5Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
                                 true, TskData.EncodingType.NONE, 
                                 newParent, trans);
-                        ((AbstractFile)newContent).setKnown(abstractFile.getKnown());
-                        ((AbstractFile)newContent).setMIMEType(abstractFile.getMIMEType());
-                        ((AbstractFile)newContent).setMd5Hash(abstractFile.getMd5Hash());
-                        ((AbstractFile)newContent).save(trans);
                     } catch (IOException ex) {
                         throw new TskCoreException("Error copying file " + abstractFile.getName() + " with original obj ID " 
                                 + abstractFile.getId(), ex);
@@ -446,8 +443,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         oldTagNameToNewTagName.clear();
         currentCase = null;
         if (skCase != null) {
-            // Do not call close() here! It will close all the handles for the current case in the JNI cache. 
-            skCase.closeConnections();
+            // We want to close the database connections here but it is currently not possible. JIRA-4736
             skCase = null;
         }
         caseFolder = null;
