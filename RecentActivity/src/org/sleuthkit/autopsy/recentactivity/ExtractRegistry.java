@@ -797,12 +797,7 @@ class ExtractRegistry extends Extract {
                         break;
                 }
             } // for
-            if (!usbBBartifacts.isEmpty()) {
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED, usbBBartifacts));
-            }
-            if (!wifiBBartifacts.isEmpty()) {
-                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WIFI_NETWORK, wifiBBartifacts));
-            }
+            
             return true;
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS

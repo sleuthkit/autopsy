@@ -201,9 +201,6 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
     }
 
     /**
@@ -298,9 +295,6 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
     }
 
     /**
@@ -412,9 +406,6 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
     }
 
     /**
@@ -546,9 +537,6 @@ class Firefox extends Extract {
             break;
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
     }
 
     /**
@@ -672,9 +660,6 @@ class Firefox extends Extract {
             break;
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
     }
 
     /**
@@ -788,9 +773,6 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, bbartifacts));
     }
 
     /**
@@ -985,9 +967,6 @@ class Firefox extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS, bbartifacts));
     }
 
     /**
@@ -1082,5 +1061,4 @@ class Firefox extends Extract {
         return updatedAddress;
     }
 
-  
 }

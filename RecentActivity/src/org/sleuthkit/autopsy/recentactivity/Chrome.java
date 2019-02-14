@@ -195,9 +195,7 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
+      
     }
 
     /**
@@ -342,9 +340,7 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
+       
     }
 
     /**
@@ -432,9 +428,7 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
+        
     }
 
     /**
@@ -531,10 +525,7 @@ class Chrome extends Extract {
 
             dbFile.delete();
         }
-
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
+ 
     }
 
     /**
@@ -621,9 +612,7 @@ class Chrome extends Extract {
 
             dbFile.delete();
         }
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT, bbartifacts));
+      
 
     }
 
@@ -689,10 +678,7 @@ class Chrome extends Extract {
 
             dbFile.delete();
         }
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_FORM_AUTOFILL, bbartifacts));
-
+       
     }
 
     /**
