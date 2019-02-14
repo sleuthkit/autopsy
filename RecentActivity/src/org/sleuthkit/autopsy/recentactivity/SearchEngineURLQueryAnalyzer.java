@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2014 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,10 +23,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
+import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.util.NbBundle;
@@ -35,17 +35,13 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
@@ -68,22 +64,18 @@ import org.xml.sax.SAXException;
     "cannotParseXml=Unable to parse XML file: ",
     "# {0} - file name", "SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}."
 })
-final class SearchEngineURLQueryExtractor extends Extract {
+class SearchEngineURLQueryAnalyzer extends Extract {
 
-    private static final Logger logger = Logger.getLogger(SearchEngineURLQueryExtractor.class.getName());
-    private static final String PARENT_MODULE_NAME = NbBundle.getMessage(SearchEngineURLQueryExtractor.class,
-            "SearchEngineURLQueryAnalyzer.parentModuleName");
-
+    private static final Logger logger = Logger.getLogger(SearchEngineURLQueryAnalyzer.class.getName());
     private static final String XMLFILE = "SEUQAMappings.xml"; //NON-NLS
     private static final String XSDFILE = "SearchEngineSchema.xsd"; //NON-NLS
-    private static SearchEngine[] engines;
+    private static SearchEngineURLQueryAnalyzer.SearchEngine[] engines;
 
     private Content dataSource;
     private IngestJobContext context;
 
-    @Override
-    protected String getModuleName() {
-        return NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text");
+    SearchEngineURLQueryAnalyzer() {
+        moduleName = NbBundle.getMessage(ExtractIE.class, "SearchEngineURLQueryAnalyzer.moduleName.text");
     }
 
     /**
@@ -100,11 +92,11 @@ final class SearchEngineURLQueryExtractor extends Extract {
             this.keyRegExp = keyRegExp;
         }
 
-        private String getKey() {
+        String getKey() {
             return key;
         }
 
-        private String getKeyRegExp() {
+        String getKeyRegExp() {
             return keyRegExp;
         }
 
@@ -124,19 +116,19 @@ final class SearchEngineURLQueryExtractor extends Extract {
             count = 0;
         }
 
-        private void increment() {
+        void increment() {
             ++count;
         }
 
-        private String getEngineName() {
+        String getEngineName() {
             return engineName;
         }
 
-        private String getDomainSubstring() {
+        String getDomainSubstring() {
             return domainSubstring;
         }
 
-        private int getTotal() {
+        int getTotal() {
             return count;
         }
 
@@ -145,7 +137,7 @@ final class SearchEngineURLQueryExtractor extends Extract {
          *
          * @return
          */
-        private List<KeyPair> getKeys() {
+        List<KeyPair> getKeys() {
             return this.keyPairs;
         }
 
@@ -164,11 +156,13 @@ final class SearchEngineURLQueryExtractor extends Extract {
         Document xmlinput;
         try {
             String path = PlatformUtil.getUserConfigDirectory() + File.separator + XMLFILE;
-            File configFile = new File(path);
+            File f = new File(path);
             logger.log(Level.INFO, "Load successful"); //NON-NLS
-            xmlinput = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(configFile);
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            xmlinput = db.parse(f);
 
-            if (!XMLUtil.xmlIsValid(xmlinput, SearchEngineURLQueryExtractor.class, XSDFILE)) {
+            if (!XMLUtil.xmlIsValid(xmlinput, SearchEngineURLQueryAnalyzer.class, XSDFILE)) {
                 logger.log(Level.WARNING, "Error loading Search Engines: could not validate against [" + XSDFILE + "], results may not be accurate."); //NON-NLS
             }
 
@@ -181,7 +175,7 @@ final class SearchEngineURLQueryExtractor extends Extract {
         }
 
         NodeList nlist = xmlinput.getElementsByTagName("SearchEngine"); //NON-NLS
-        SearchEngine[] listEngines = new SearchEngine[nlist.getLength()];
+        SearchEngineURLQueryAnalyzer.SearchEngine[] listEngines = new SearchEngineURLQueryAnalyzer.SearchEngine[nlist.getLength()];
         for (int i = 0; i < nlist.getLength(); i++) {
             NamedNodeMap nnm = nlist.item(i).getAttributes();
 
@@ -196,8 +190,8 @@ final class SearchEngineURLQueryExtractor extends Extract {
                 }
             }
 
-            SearchEngine searchEngine = new SearchEngine(EngineName, EnginedomainSubstring, keys);
-            listEngines[i] = searchEngine;
+            SearchEngineURLQueryAnalyzer.SearchEngine Se = new SearchEngineURLQueryAnalyzer.SearchEngine(EngineName, EnginedomainSubstring, keys);
+            listEngines[i] = Se;
         }
         engines = listEngines;
     }
@@ -212,7 +206,7 @@ final class SearchEngineURLQueryExtractor extends Extract {
      *         is found
      *
      */
-    private static SearchEngine getSearchEngineFromUrl(String domain) {
+    private static SearchEngineURLQueryAnalyzer.SearchEngine getSearchEngineFromUrl(String domain) {
         if (engines == null) {
             return null;
         }
@@ -231,31 +225,32 @@ final class SearchEngineURLQueryExtractor extends Extract {
      *
      * @return The extracted search query.
      */
-    private String extractSearchEngineQuery(SearchEngine eng, String url) {
-        String value = ""; //NON-NLS
+    private String extractSearchEngineQuery(SearchEngineURLQueryAnalyzer.SearchEngine eng, String url) {
+        String x = ""; //NON-NLS
 
         for (KeyPair kp : eng.getKeys()) {
             if (url.contains(kp.getKey())) {
-                value = getValue(url, kp.getKeyRegExp());
+                x = getValue(url, kp.getKeyRegExp());
                 break;
             }
         }
         try { //try to decode the url
-            return URLDecoder.decode(value, "UTF-8"); //NON-NLS
+            String decoded = URLDecoder.decode(x, "UTF-8"); //NON-NLS
+            return decoded;
         } catch (UnsupportedEncodingException exception) { //if it fails, return the encoded string
             logger.log(Level.FINE, "Error during URL decoding, returning undecoded value:"
                                    + "\n\tURL: " + url
-                                   + "\n\tUndecoded value: " + value
+                                   + "\n\tUndecoded value: " + x
                                    + "\n\tEngine name: " + eng.getEngineName()
                                    + "\n\tEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS
-            return value;
+            return x;
         } catch (IllegalArgumentException exception) { //if it fails, return the encoded string
             logger.log(Level.SEVERE, "Illegal argument passed to URL decoding, returning undecoded value:"
                                      + "\n\tURL: " + url
-                                     + "\n\tUndecoded value: " + value
+                                     + "\n\tUndecoded value: " + x
                                      + "\n\tEngine name: " + eng.getEngineName()
                                      + "\n\tEngine domain: " + eng.getDomainSubstring(), exception); //NON-NLS)
-            return value;
+            return x;
         }
     }
 
@@ -279,108 +274,123 @@ final class SearchEngineURLQueryExtractor extends Extract {
          * resulting in missing things.
          */
         String value = ""; //NON-NLS
-
-        String[] tokens = url.split(regExpKey.replace("\\?", "?"));
-        if (tokens.length >= 2) {
-            if (tokens[tokens.length - 1].contains("&")) {
-                value = tokens[tokens.length - 1].split("&")[0];
+        String v = regExpKey;
+        //Want to determine if string contains a string based on splitkey, but we want to split the string on splitKeyConverted due to regex
+        if (regExpKey.contains("\\?")) {
+            v = regExpKey.replace("\\?", "?");
+        }
+        String[] sp = url.split(v);
+        if (sp.length >= 2) {
+            if (sp[sp.length - 1].contains("&")) {
+                value = sp[sp.length - 1].split("&")[0];
             } else {
-                value = tokens[tokens.length - 1];
+                value = sp[sp.length - 1];
             }
         }
         return value;
     }
 
     private void findSearchQueries() {
-
-        Collection<BlackboardArtifact> sourceArtifacts = new ArrayList<>();
+        int totalQueries = 0;
         try {
-            //List of every 'web_history' and 'bookmark' 
-            sourceArtifacts.addAll(tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
-            sourceArtifacts.addAll(tskCase.getBlackboardArtifacts(ARTIFACT_TYPE.TSK_WEB_HISTORY));
-        } catch (TskCoreException tskCoreException) {
-            logger.log(Level.SEVERE, "Error getting TSK_WEB_BOOKMARK or TSK_WEB_HISTORY artifacts", tskCoreException); //NON-NLS
-        }
-        logger.log(Level.INFO, "Processing {0} blackboard artifacts.", sourceArtifacts.size()); //NON-NLS
+            //from blackboard_artifacts
+            Collection<BlackboardArtifact> listArtifacts = currentCase.getSleuthkitCase().getMatchingArtifacts("WHERE (blackboard_artifacts.artifact_type_id = '" + ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() //NON-NLS
+                                                                                                               + "' OR blackboard_artifacts.artifact_type_id = '" + ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() + "') ");  //List of every 'web_history' and 'bookmark' artifact NON-NLS
+            logger.log(Level.INFO, "Processing {0} blackboard artifacts.", listArtifacts.size()); //NON-NLS
 
-        Collection<BlackboardArtifact> queryArtifacts = new ArrayList<>();
-        for (BlackboardArtifact sourceArtifact : sourceArtifacts) {
-            if (context.dataSourceIngestIsCancelled()) {
-                break;    //User cancelled the process.
-            }
-            long fileId = sourceArtifact.getObjectID();
-            try {
-                if (false == tskCase.isFileFromSource(dataSource, fileId)) {
-                    continue;  //File was from a different dataSource. Skipping.
+            for (BlackboardArtifact artifact : listArtifacts) {
+                if (context.dataSourceIngestIsCancelled()) {
+                    break;       //User cancelled the process.
                 }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Encountered error determining if file " + fileId + "is from datasource " + dataSource.getId(), ex); //NON-NLS
-                continue;
-            }
 
-            AbstractFile file;
-            try {
-                file = tskCase.getAbstractFileById(fileId);
+                //initializing default attributes
+                String query = "";
+                String searchEngineDomain = "";
+                String browser = "";
+                long last_accessed = -1;
+
+                long fileId = artifact.getObjectID();
+                boolean isFromSource = tskCase.isFileFromSource(dataSource, fileId);
+                if (!isFromSource) {
+                    //File was from a different dataSource. Skipping.
+                    continue;
+                }
+
+                AbstractFile file = tskCase.getAbstractFileById(fileId);
                 if (file == null) {
-                    logger.log(Level.WARNING, "There was no file for id {0}", fileId); //NON-NLS
                     continue;
                 }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting file for id " + fileId, ex); //NON-NLS
-                continue;
+
+                SearchEngineURLQueryAnalyzer.SearchEngine se = null;
+                //from blackboard_attributes
+                Collection<BlackboardAttribute> listAttributes = currentCase.getSleuthkitCase().getMatchingAttributes("WHERE artifact_id = " + artifact.getArtifactID()); //NON-NLS
+
+                for (BlackboardAttribute attribute : listAttributes) {
+                    if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL.getTypeID()) {
+                        final String urlString = attribute.getValueString();
+                        se = getSearchEngineFromUrl(urlString);
+                        if (se == null) {
+                            break;
+                        }
+
+                        query = extractSearchEngineQuery(se, attribute.getValueString());
+                        if (query.equals("")) //False positive match, artifact was not a query. NON-NLS
+                        {
+                            break;
+                        }
+
+                    } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME.getTypeID()) {
+                        browser = attribute.getValueString();
+                    } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID()) {
+                        searchEngineDomain = attribute.getValueString();
+                    } else if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()) {
+                        last_accessed = attribute.getValueLong();
+                    }
+                }
+
+                if (se != null && !query.equals("")) { //NON-NLS
+                    // If date doesn't exist, change to 0 (instead of 1969)
+                    if (last_accessed == -1) {
+                        last_accessed = 0;
+                    }
+                    Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            NbBundle.getMessage(this.getClass(),
+                                    "SearchEngineURLQueryAnalyzer.parentModuleName"), searchEngineDomain));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TEXT,
+                            NbBundle.getMessage(this.getClass(),
+                                    "SearchEngineURLQueryAnalyzer.parentModuleName"), query));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                            NbBundle.getMessage(this.getClass(),
+                                    "SearchEngineURLQueryAnalyzer.parentModuleName"), browser));
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                            NbBundle.getMessage(this.getClass(),
+                                    "SearchEngineURLQueryAnalyzer.parentModuleName"), last_accessed));
+                    this.addArtifact(ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY, file, bbattributes);
+                    se.increment();
+                    ++totalQueries;
+                }
+            }
+        } catch (TskCoreException e) {
+            logger.log(Level.SEVERE, "Encountered error retrieving artifacts for search engine queries", e); //NON-NLS
+        } finally {
+            if (context.dataSourceIngestIsCancelled()) {
+                logger.info("Operation terminated by user."); //NON-NLS
             }
 
-            try {
-                final String urlString = sourceArtifact.getAttribute(new BlackboardAttribute.Type(TSK_URL)).getValueString();
-                SearchEngine searchEngine = getSearchEngineFromUrl(urlString);
-                if (searchEngine == null) {
-                    continue;
-                }
-
-                String query = extractSearchEngineQuery(searchEngine, urlString);
-                if (query.isEmpty()) { //False positive match, artifact was not a query.  
-                    continue;
-                }
-
-                String browser = sourceArtifact.getAttribute(new BlackboardAttribute.Type(TSK_PROG_NAME)).getValueString();
-                String searchEngineDomain = sourceArtifact.getAttribute(new BlackboardAttribute.Type(TSK_DOMAIN)).getValueString();
-
-                Collection<BlackboardAttribute> bbattributes = new ArrayList<>(Arrays.asList(
-                        new BlackboardAttribute(
-                                TSK_DOMAIN, PARENT_MODULE_NAME,
-                                searchEngineDomain),
-                        new BlackboardAttribute(
-                                TSK_TEXT, PARENT_MODULE_NAME,
-                                query),
-                        new BlackboardAttribute(
-                                TSK_PROG_NAME, PARENT_MODULE_NAME,
-                                browser)
-                ));
-                BlackboardAttribute accessedAttr = sourceArtifact.getAttribute(new BlackboardAttribute.Type(TSK_DATETIME_ACCESSED));
-                if (accessedAttr != null) {
-                    bbattributes.add(
-                            new BlackboardAttribute(
-                                    TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
-                                    accessedAttr.getValueLong())
-                    );
-                }
-
-                BlackboardArtifact bbart = file.newArtifact(TSK_WEB_SEARCH_QUERY);
-                bbart.addAttributes(bbattributes);
-                queryArtifacts.add(bbart);
-                searchEngine.increment();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Encountered error creating search query artifacts.", ex); //NON-NLS
-            }
+            logger.log(Level.INFO, "Extracted {0} queries from the blackboard", totalQueries); //NON-NLS
         }
+    }
 
-        try {
-            blackboard.postArtifacts(queryArtifacts, PARENT_MODULE_NAME);
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Encountered error posting search query artifacts.", ex); //NON-NLS
+    private String getTotals() {
+        String total = "";
+        if (engines == null) {
+            return total;
         }
-
-        logger.log(Level.INFO, "Extracted {0} queries from the blackboard", queryArtifacts.size()); //NON-NLS
+        for (SearchEngineURLQueryAnalyzer.SearchEngine se : engines) {
+            total += se.getEngineName() + " : " + se.getTotal() + "\n";
+        }
+        return total;
     }
 
     @Override
@@ -388,19 +398,13 @@ final class SearchEngineURLQueryExtractor extends Extract {
         this.dataSource = dataSource;
         this.context = context;
         this.findSearchQueries();
-
-        String totals = "";
-        for (SearchEngine se : engines) {
-            totals += se.getEngineName() + " : " + se.getTotal() + "\n";
-        }
-        logger.log(Level.INFO, "Search Engine stats: \n{0}", totals); //NON-NLS
+        logger.log(Level.INFO, "Search Engine stats: \n{0}", getTotals()); //NON-NLS
     }
 
     @Override
     void configExtractor() throws IngestModuleException {
         try {
-            PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryExtractor.class,
-                    XMLFILE, true);
+            PlatformUtil.extractResourceToUserConfigDir(SearchEngineURLQueryAnalyzer.class, XMLFILE, true);
         } catch (IOException e) {
             String message = Bundle.SearchEngineURLQueryAnalyzer_init_exception_msg(XMLFILE);
             logger.log(Level.SEVERE, message, e);

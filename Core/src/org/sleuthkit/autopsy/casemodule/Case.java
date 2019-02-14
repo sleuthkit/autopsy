@@ -391,9 +391,9 @@ public class Case {
          */
         TAG_DEFINITION_CHANGED,
         /**
-         * An timeline event, such mac time or web activity was added to the current
-         * case. The old value is null and the new value is the TimelineEvent
-         * that was added.
+         * An timeline event, such mac time or web activity was added to the
+         * current case. The old value is null and the new value is the
+         * TimelineEvent that was added.
          */
         TIMELINE_EVENT_ADDED,
         /* An item in the central repository has had its comment

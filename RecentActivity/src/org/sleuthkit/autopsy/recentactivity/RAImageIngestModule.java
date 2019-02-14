@@ -32,12 +32,12 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
-import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 
 /**
  * Recent activity image ingest module
@@ -49,6 +49,10 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     private final List<Extract> browserExtractors = new ArrayList<>();
     private final IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
+    private StringBuilder subCompleted = new StringBuilder();
+
+    RAImageIngestModule() {
+    }
 
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -62,10 +66,8 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         }
 
         Extract registry = new ExtractRegistry();
-        Extract recentDocuments = new RecentDocumentsLnkExtractor();
+        Extract recentDocuments = new RecentDocumentsByLnk();
         Extract chrome = new Chrome();
-        Extract firefox = new FirefoxExtractor();
-        Extract SEUQA = new SearchEngineURLQueryExtractor();
         Extract osExtract = new ExtractOs();
         Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer();
 
@@ -101,16 +103,18 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         for (int i = 0; i < extractors.size(); i++) {
             Extract extracter = extractors.get(i);
             if (context.dataSourceIngestIsCancelled()) {
-                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getModuleName()); //NON-NLS
+                logger.log(Level.INFO, "Recent Activity has been canceled, quitting before {0}", extracter.getName()); //NON-NLS
                 break;
             }
 
-            progressBar.progress(extracter.getModuleName(), i);
+            progressBar.progress(extracter.getName(), i);
 
             try {
                 extracter.process(dataSource, context);
             } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception occurred in " + extracter.getModuleName(), ex); //NON-NLS
+                logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
+                subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
+                        extracter.getName()));
                 errors.add(
                         NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModErrs", RecentActivityExtracterModuleFactory.getModuleName()));
             }
