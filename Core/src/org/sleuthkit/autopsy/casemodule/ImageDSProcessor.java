@@ -136,6 +136,7 @@ public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSour
      */
     @Override
     public JPanel getPanel() {
+        configPanel.reset();
         configPanel.readSettings();
         configPanel.select();
         return configPanel;

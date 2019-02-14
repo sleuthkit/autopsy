@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -33,14 +33,24 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.Blackboard;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
+@Messages({"Extract.indexError.message=Failed to index artifact for keyword search.",
+    "Extract.noOpenCase.errMsg=No open case available.",
+    "# {0} - the module name",
+    "Extractor.errPostingArtifacts=Error posting {0} artifacts to the blackboard."})
 abstract class Extract {
 
-    private static final Logger logger = Logger.getLogger(Extract.class.getName());
+    protected static final Logger logger = Logger.getLogger(Extract.class.getName());
 
     protected Case currentCase;
     protected SleuthkitCase tskCase;
@@ -49,16 +59,17 @@ abstract class Extract {
 
     private final ArrayList<String> errorMessages = new ArrayList<>();
     boolean dataFound = false;
+    protected String moduleName;
 
     /**
      * Returns the name of the inheriting class
      *
      * @return Gets the moduleName
      */
-    abstract protected String getModuleName();
+    protected String getName() {
+        return moduleName;
+    }
 
-    @Messages({"Extract.indexError.message=Failed to index artifact for keyword search.",
-        "Extract.noOpenCase.errMsg=No open case available."})
     final void init() throws IngestModuleException {
         try {
             currentCase = Case.getCurrentCaseThrows();
@@ -102,6 +113,51 @@ abstract class Extract {
         errorMessages.add(message);
     }
 
+    /** Generic method for adding a blackboard artifact to the blackboard and
+     * indexing it
+     *
+     * @param type         is a blackboard.artifact_type enum to determine which
+     *                     type the artifact should be
+     * @param content      is the Content object that needs to have the artifact
+     *                     added for it
+     * @param bbattributes is the collection of blackboard attributes that need
+     *                     to be added to the artifact after the artifact has
+     *                     been created
+     *
+     * @return The newly-created artifact, or null on error
+     */
+    protected BlackboardArtifact addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, Content content, Collection<BlackboardAttribute> bbattributes) {
+        try {
+            BlackboardArtifact bbart = content.newArtifact(type);
+            bbart.addAttributes(bbattributes);
+            // index the artifact for keyword search
+            this.indexArtifact(bbart);
+            return bbart;
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
+        }
+        return null;
+    }
+
+    /**
+     * Method to index a blackboard artifact for keyword search
+     *
+     * @param bbart Blackboard artifact to be indexed
+     */
+    void indexArtifact(BlackboardArtifact bbart) {
+        try {
+            Blackboard blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
+            // index the artifact for keyword search
+            blackboard.postArtifact(bbart, getName());
+        } catch (Blackboard.BlackboardException ex) {
+            logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bbart.getDisplayName(), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.Extract_indexError_message(), bbart.getDisplayName());
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.Extract_noOpenCase_errMsg(), bbart.getDisplayName());
+        }
+    }
+
     /**
      * Returns a List from a result set based on sql query. This is used to
      * query sqlite databases storing user recent activity data, such as in
@@ -121,7 +177,7 @@ abstract class Extract {
             return this.resultSetToArrayList(temprs);
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex); //NON-NLS
-            errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getModuleName()));
+            errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getName()));
             return Collections.<HashMap<String, Object>>emptyList();
         }
     }
@@ -129,21 +185,22 @@ abstract class Extract {
     /**
      * Returns a List of AbstractFile objects from TSK based on sql query.
      *
-     * @param rs is the resultset that needs to be converted to an arraylist
+     * @param results is the resultset that needs to be converted to an
+     *                arraylist
      *
      * @return list returns the arraylist built from the converted resultset
      */
-    private List<HashMap<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
-        ResultSetMetaData md = rs.getMetaData();
-        int columns = md.getColumnCount();
+    private List<HashMap<String, Object>> resultSetToArrayList(ResultSet results) throws SQLException {
+        ResultSetMetaData metaData = results.getMetaData();
+        int columns = metaData.getColumnCount();
         List<HashMap<String, Object>> list = new ArrayList<>(50);
-        while (rs.next()) {
+        while (results.next()) {
             HashMap<String, Object> row = new HashMap<>(columns);
             for (int i = 1; i <= columns; ++i) {
-                if (rs.getObject(i) == null) {
-                    row.put(md.getColumnName(i), "");
+                if (results.getObject(i) == null) {
+                    row.put(metaData.getColumnName(i), "");
                 } else {
-                    row.put(md.getColumnName(i), rs.getObject(i));
+                    row.put(metaData.getColumnName(i), results.getObject(i));
                 }
             }
             list.add(row);
