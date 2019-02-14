@@ -55,6 +55,8 @@ def gitSleuthkitCheckout(branch, branchOwner):
             return
         print("Command run:" + " ".join(cmd))
         passed = subprocess.call(cmd,stdout=sys.stdout,cwd=TSK_HOME)
+        if (passed == 0):
+            sys.exit() #exit if successful
     else:
         print("Branch: " + branch + " does not exist for owner: " + branchOwner)
 
@@ -82,44 +84,34 @@ def main():
     TRAVIS=os.getenv("TRAVIS",False)
     APPVEYOR=os.getenv("APPVEYOR",False)
     if TRAVIS == "true":
+        CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH","") #make default empty string which is same vaule used when not a PR
+        if (CURRENT_BRANCH != ""): #if it is a PR
+             BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]  #default owner is ORIGIN_OWNER
+             gitSleuthkitCheckout(CURRENT_BRANCH, BRANCH_OWNER)
         TARGET_BRANCH=os.getenv("TRAVIS_BRANCH",DEVELOP_BRANCH)
-        CURRENT_BRANCH=os.getenv("TRAVIS_PULL_REQUEST_BRANCH",TARGET_BRANCH)
-        if (CURRENT_BRANCH==""):
-            CURRENT_BRANCH=TARGET_BRANCH
-            BRANCH_OWNER=ORIGIN_OWNER
-        else:
-            BRANCH_OWNER=os.getenv("TRAVIS_PULL_REQUEST_SLUG", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
     elif APPVEYOR:
+        CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH","") #make default same as value used by travis for readability of code
+        if (CURRENT_BRANCH != ""): #if it is a PR
+             BRANCH_OWNER=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0] #default owner is ORIGIN_OWNER
+             gitSleuthkitCheckout(CURRENT_BRANCH, BRANCH_OWNER)
         TARGET_BRANCH=os.getenv("APPVEYOR_REPO_BRANCH",DEVELOP_BRANCH)
-        CURRENT_BRANCH=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_BRANCH",TARGET_BRANCH)
-        BRANCH_OWNER=os.getenv("APPVEYOR_PULL_REQUEST_HEAD_REPO_NAME", ORIGIN_OWNER+"/"+CURRENT_BRANCH).split('/')[0]
     else:
         cmd=['git','rev-parse','--abbrev-ref','HEAD']
         output = subprocess.check_output(cmd)
-        CURRENT_BRANCH=output.strip()
-        BRANCH_OWNER=ORIGIN_OWNER
-        TARGET_BRANCH=CURRENT_BRANCH
+        TARGET_BRANCH=output.strip()
     # If we are in an Autopsy release branch, then use the
     # info in TSKVersion.xml to find the corresponding TSK 
     # release branch.  For other branches, we don't always
     # trust that TSKVersion has been updated.
-    if CURRENT_BRANCH.startswith('release'):
+    if TARGET_BRANCH.startswith('release'):
         version = parseXML('TSKVersion.xml')
         RELEASE_BRANCH = "release-"+version
         #Check if the same user has a release branch which corresponds to this release branch
-        gitSleuthkitCheckout(RELEASE_BRANCH, BRANCH_OWNER)
-        #If it failed try the origin release branch
-        if passed != 0:
-            gitSleuthkitCheckout(RELEASE_BRANCH, ORIGIN_OWNER)
-    # Check if the same branch exists with the same branch owner (origin/develop->origin/develop, user465/custom1->user465/custom1, etc.)
+        gitSleuthkitCheckout(RELEASE_BRANCH, ORIGIN_OWNER)
     else: 
-        gitSleuthkitCheckout(CURRENT_BRANCH, BRANCH_OWNER)
-        #if it failed see if the target branch exists on origin (user465/develop->origin/develop)
-        if passed != 0:
-            gitSleuthkitCheckout(TARGET_BRANCH, ORIGIN_OWNER)
+        gitSleuthkitCheckout(TARGET_BRANCH, ORIGIN_OWNER)
     # Otherwise, default to origin develop
-    if passed != 0:
-        gitSleuthkitCheckout(DEVELOP_BRANCH, ORIGIN_OWNER)
+    gitSleuthkitCheckout(DEVELOP_BRANCH, ORIGIN_OWNER)
         
     if passed != 0:
         print('Error checking out a Sleuth Kit branch')
