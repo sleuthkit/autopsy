@@ -19,24 +19,36 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -52,6 +64,8 @@ public class ExtractEdge extends Extract{
     private static File ESE_TOOL_FILE;
     private static String EDGE_WEBCACHE_NAME = "WebCacheV01.dat";
     private static String EDGE = "Edge";
+    
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a");
 
     ExtractEdge() throws NoCurrentCaseException{
         moduleName = NbBundle.getMessage(Chrome.class, "ExtractEdge.moduleName");
@@ -131,7 +145,7 @@ public class ExtractEdge extends Extract{
             resultsDir.mkdirs();
             executeDumper(esedumper, datFile.getAbsolutePath(), "webcache", resultsDir.getAbsolutePath());
              
-            this.getHistory(); // Not implemented yet
+            this.getHistory(indexFile, resultsDir); // Not implemented yet
             this.getCookie(); // Not implemented yet
             this.getDownload(); // Not implemented yet
             
@@ -140,11 +154,122 @@ public class ExtractEdge extends Extract{
          }   
     }
     
-    /**
-     * Query for history databases and add artifacts
-     */
-    private void getHistory() {
+   
+    @Messages({
+        "ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history"
+    })
+    private void getHistory(AbstractFile origFile, File resultDir) {
+        File containerFiles[] = resultDir.listFiles((dir, name) -> name.toLowerCase().contains("container"));
         
+        if(containerFiles == null){
+            this.addErrorMessage(Bundle.ExtractEdge_getHistory_containerFileNotFound());
+            return;
+        }
+        
+        // The assumption is that the history is in one or more of the container files.
+        // search through all of them looking for a lines with the text "Visited:"
+        for(File file: containerFiles){
+            Scanner fileScanner;
+            try {
+                fileScanner = new Scanner(new FileInputStream(file.toString()));
+            } catch (FileNotFoundException ex) {
+                logger.log(Level.WARNING, "Unable to find the ESEDatabaseView file at " + file.getPath(), ex); //NON-NLS
+                continue; // Should we keep going or bail on the whole process?
+            }
+            
+            Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+            
+            try{
+                List<String> headers = null;
+                while (fileScanner.hasNext()) {
+                    String line = fileScanner.nextLine();
+                    if(headers == null){ // The header should be the first line
+                        headers = Arrays.asList(line.toLowerCase().split(","));
+                        continue;
+                    }
+
+                    if(line.contains("Visited")){
+                        BlackboardArtifact b = parseHistoryLine(origFile, headers, line);
+                        if(b != null){
+                            bbartifacts.add(b);
+                            this.indexArtifact(b);
+                        }
+                    }else{
+                        // I am making the assumption that if the line doesn't have
+                        // "Visited" in it that its probably not the file we are looking for
+                        // therefore we should move on to the next file.
+                        break;
+                    }
+                }
+            }
+            finally{
+                fileScanner.close();
+            }
+            
+            if(!bbartifacts.isEmpty()){
+                services.fireModuleDataEvent(new ModuleDataEvent(
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
+            }
+        }
+      
+    }
+    
+    @Messages({
+        "ExtractEdge_programName=Microsoft Edge"
+    })
+    private BlackboardArtifact parseHistoryLine(AbstractFile origFile, List<String> headers, String line){
+        BlackboardArtifact bbart = null;
+        String[] rowSplit = line.split(",");
+        
+        int index = headers.indexOf("url");
+        String urlUserStr = rowSplit[index];
+        
+        String[] str = urlUserStr.split("@");
+        String user = str[0].replace("Visited: ", "");
+        String url = str[1];
+        
+        index = headers.indexOf("accessedtime");
+        String accessTime = rowSplit[index].trim();
+        Long ftime = null;
+        try{
+            Long epochtime = dateFormatter.parse(accessTime).getTime();
+            ftime = epochtime / 1000;
+        }catch(ParseException ex){
+            logger.log(Level.WARNING, "The Accessed Time format in history file seems invalid " + accessTime, ex);
+        }
+        
+        try{
+            bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(), url));
+            
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                RecentActivityExtracterModuleFactory.getModuleName(), ftime));
+       
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER,
+                RecentActivityExtracterModuleFactory.getModuleName(), ""));
+            
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
+                RecentActivityExtracterModuleFactory.getModuleName(), ""));
+            
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(), Bundle.ExtractEdge_programName()));
+            
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(), (NetworkUtils.extractDomain(url)))); //NON-NLS
+            
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(), user));
+           
+            bbart.addAttributes(bbattributes);
+             
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error writing Microsoft Edge web history artifact to the blackboard.", ex); //NON-NLS
+        }
+        
+        return bbart;
     }
     
     /**
