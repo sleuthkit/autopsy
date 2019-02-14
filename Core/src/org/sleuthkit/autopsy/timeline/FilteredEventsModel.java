@@ -261,7 +261,7 @@ public final class FilteredEventsModel {
     /**
      * "sync" the given root filter with the state of the casee: Disable filters
      * for tags that are not in use in the case, and add new filters for tags,
-     * hashsets, and datasources. that don't have them. New filters are selected
+     * hashsets, and datasources, that don't have them. New filters are selected
      * by default.
      *
      * @param rootFilterState the filter state to modify so it is consistent
@@ -273,6 +273,7 @@ public final class FilteredEventsModel {
             tagsFilterState.getFilter().addSubFilter(new TagNameFilter(tagName));
         }
         for (FilterState<? extends TagNameFilter> tagFilterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
+            // disable states for tag names that don't exist in case.
             tagFilterState.setDisabled(tagNames.contains(tagFilterState.getFilter().getTagName()) == false);
         }
 

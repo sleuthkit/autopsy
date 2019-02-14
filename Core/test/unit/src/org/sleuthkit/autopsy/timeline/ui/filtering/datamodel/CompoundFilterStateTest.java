@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import java.util.Arrays;
-import org.hamcrest.CoreMatchers;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -41,6 +40,7 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
 
     private static final FileTypeFilter PNG_FILTER = new FileTypeFilter("png", Arrays.asList("image/png"));
     private static final FileTypeFilter JPG_FILTER = new FileTypeFilter("jpg", Arrays.asList("image/jpg"));
+    private static final FileTypeFilter BMP_FILTER = new FileTypeFilter("bmp", Arrays.asList("image/bmp"));
     private static final FileTypeFilter GIF_FILTER = new FileTypeFilter("gif", Arrays.asList("image/gif"));
 
     public CompoundFilterStateTest() {
@@ -68,7 +68,7 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
      * Test listeners
      */
     @Test
-    public void testListeners() {
+    public void testStateListeners() {
         System.out.println("listeners");
 
         //assert initial conditions
@@ -172,24 +172,59 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
     public void testAddSubFilterState() {
         System.out.println("addSubFilterState");
 
+        //subfilters should always match through whether they are access though the sub filterstates, or as the subfilters of instance's filter.
         assertThat(instance.getFilter().getSubFilters().size(), is(2));
         assertThat(instance.getFilter().getSubFilters().get(0), is(PNG_FILTER));
-        assertThat(instance.getFilter().getSubFilters().get(1), is(PNG_FILTER));
-        
+        assertThat(instance.getFilter().getSubFilters().get(1), is(JPG_FILTER));
         assertThat(instance.getSubFilterStates().size(), is(2));
         assertThat(instance.getSubFilterStates().get(0).getFilter(), is(PNG_FILTER));
-        assertThat(instance.getSubFilterStates().get(1).getFilter(), is(PNG_FILTER));
+        assertThat(instance.getSubFilterStates().get(1).getFilter(), is(JPG_FILTER));
+        //check that the subfilters are in the correct default state
+        instance.getSubFilterStates().forEach(filterState -> {
+            assertThat(filterState.isSelected(), is(false));
+            assertThat(filterState.isDisabled(), is(true));
+        });
 
-        instance.addSubFilterState(new DefaultFilterState<>(GIF_FILTER));
-        
+        instance.addSubFilterState(new DefaultFilterState<>(BMP_FILTER));
+
+        //subfilters should always match through whether they are access though the sub filterstates, or as the subfilters of instance's filter.
         assertThat(instance.getFilter().getSubFilters().size(), is(3));
         assertThat(instance.getFilter().getSubFilters().get(0), is(PNG_FILTER));
-        assertThat(instance.getFilter().getSubFilters().get(1), is(PNG_FILTER));
-        assertThat(instance.getFilter().getSubFilters().get(2), is(GIF_FILTER));
-        
+        assertThat(instance.getFilter().getSubFilters().get(1), is(JPG_FILTER));
+        assertThat(instance.getFilter().getSubFilters().get(2), is(BMP_FILTER));
         assertThat(instance.getSubFilterStates().size(), is(3));
         assertThat(instance.getSubFilterStates().get(0).getFilter(), is(PNG_FILTER));
-        assertThat(instance.getSubFilterStates().get(1).getFilter(), is(PNG_FILTER));
-        assertThat(instance.getSubFilterStates().get(1).getFilter(), is(GIF_FILTER));
+        assertThat(instance.getSubFilterStates().get(1).getFilter(), is(JPG_FILTER));
+        assertThat(instance.getSubFilterStates().get(2).getFilter(), is(BMP_FILTER));
+        //check that the subfilters are in the correct default state
+        instance.getSubFilterStates().forEach(filterState -> {
+            assertThat(filterState.isSelected(), is(false));
+            assertThat(filterState.isDisabled(), is(true));
+        });
+
+        instance.setSelected(Boolean.TRUE);
+        instance.addSubFilterState(new DefaultFilterState<>(GIF_FILTER));
+
+        //subfilters should always match through whether they are access though the sub filterstates, or as the subfilters of instance's filter.
+        assertThat(instance.getFilter().getSubFilters().size(), is(4));
+        assertThat(instance.getFilter().getSubFilters().get(0), is(PNG_FILTER));
+        assertThat(instance.getFilter().getSubFilters().get(1), is(JPG_FILTER));
+        assertThat(instance.getFilter().getSubFilters().get(2), is(BMP_FILTER));
+        assertThat(instance.getFilter().getSubFilters().get(3), is(GIF_FILTER));
+        assertThat(instance.getSubFilterStates().size(), is(4));
+        assertThat(instance.getSubFilterStates().get(0).getFilter(), is(PNG_FILTER));
+        assertThat(instance.getSubFilterStates().get(1).getFilter(), is(JPG_FILTER));
+        assertThat(instance.getSubFilterStates().get(2).getFilter(), is(BMP_FILTER));
+        assertThat(instance.getSubFilterStates().get(3).getFilter(), is(GIF_FILTER));
+
+        //pre-ecxisting filters should have been selected when instance was selected.
+        assertThat(instance.getSubFilterStates().get(0).isSelected(), is(true));
+        assertThat(instance.getSubFilterStates().get(1).isSelected(), is(true));
+        assertThat(instance.getSubFilterStates().get(2).isSelected(), is(true));
+        // filter added later is in default (unselected state)
+        assertThat(instance.getSubFilterStates().get(3).isSelected(), is(false));
+
+        //subfilters of active filter should not be disabled.
+        instance.getSubFilterStates().forEach(filterState -> assertThat(filterState.isDisabled(), is(false)));
     }
 }

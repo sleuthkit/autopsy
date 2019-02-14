@@ -138,7 +138,7 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
      * @param newSubFilterState The new filter state to be added as a subfilter
      *                          state.
      */
-    public void addSubFilterState(FilterState< ? extends SubFilterType> newSubFilterState) {
+    protected void addSubFilterState(FilterState< ? extends SubFilterType> newSubFilterState) {
         SubFilterType filter = newSubFilterState.getFilter();
         if (getSubFilterStates().stream().map(FilterState::getFilter).noneMatch(filter::equals)) {
             addSubFilterStateInternal(newSubFilterState);

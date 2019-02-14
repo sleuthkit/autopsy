@@ -19,10 +19,11 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import java.util.Collections;
+import java.util.function.Function;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.PublicTagName;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskData;
@@ -179,11 +180,13 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
     @Test
     public void testIntersect() {
         System.out.println("intersect");
-        RootFilterState result = instance.intersect(new DefaultFilterState<>(new TextFilter("intersection test")));
+        assertThat(instance.getSubFilterStates().size(), is(7));
 
-        assertFalse(result.equals(instance));
-        assertTrue(result.getFilter().getSubFilters().contains(new TextFilter("intersection test")));
+        RootFilterState intersection = instance.intersect(new DefaultFilterState<>(new TextFilter("intersection test")));
 
+        assertFalse(intersection.equals(instance));
+        assertThat(intersection.getSubFilterStates().size(), is(8));
+        assertTrue(intersection.getFilter().getSubFilters().contains(new TextFilter("intersection test")));
     }
 
     /**
@@ -192,11 +195,17 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
     @Test
     public void testAddSubFilterState() {
         System.out.println("addSubFilterState");
-        FilterState<? extends TimelineFilter> newSubFilterState = null;
-        RootFilterState instance = null;
-//        instance.addSubFilterStateInternal(newSubFilterState);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+
+        assertThat(instance.getSubFilterStates().size(), is(7));
+        assertThat(instance.getFilter().getSubFilters().size(), is(7));
+
+        instance.addSubFilterState(new DefaultFilterState<>(new TextFilter("intersection test")));
+
+        assertThat(instance.getSubFilterStates().size(), is(8));
+        assertThat(instance.getFilter().getSubFilters().size(), is(8));
+
+        assertTrue(instance.getSubFilterStates().stream().map(FilterState::getFilter).anyMatch(new TextFilter("intersection test")::equals));
+        assertTrue(instance.getFilter().getSubFilters().contains(new TextFilter("intersection test")));
     }
 
     /**
