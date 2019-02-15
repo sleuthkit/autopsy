@@ -180,6 +180,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private ExtractMedia extractMediaWorker;
     
     private final long END_TIME_MARGIN_NS = 50000000;
+    private final int PLAYER_STATUS_UPDATE_INTERVAL_MS = 50;
 
     /**
      * Creates new form MediaViewVideoPanel
@@ -307,13 +308,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             try {
                 path = file.getUniquePath();
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Cannot get unique path of video file"); //NON-NLS
+                logger.log(Level.SEVERE, "Cannot get unique path of video file.", ex); //NON-NLS
             }
             infoLabel.setText(path);
             infoLabel.setToolTipText(path);
             pauseButton.setEnabled(true);
             progressSlider.setEnabled(true);
-            timer = new Timer(50, e -> {
+            timer = new Timer(PLAYER_STATUS_UPDATE_INTERVAL_MS, e -> {
                 if (!progressSlider.getValueIsAdjusting()) {
                     long duration;
                     long position;
