@@ -234,7 +234,7 @@ final class ExtractEdge extends Extract {
                     }
 
                     if (line.contains(EDGE_KEYWORD_VISIT)) {
-                        BlackboardArtifact b = parseHistoryLine(origFile, headers, line);
+                        BlackboardArtifact b = getHistoryArtifact(origFile, headers, line);
                         if (b != null) {
                             bbartifacts.add(b);
                             this.indexArtifact(b);
@@ -325,7 +325,7 @@ final class ExtractEdge extends Extract {
     @Messages({
         "ExtractEdge_programName=Microsoft Edge"
     })
-    private BlackboardArtifact parseHistoryLine(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {
+    private BlackboardArtifact getHistoryArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {
         String[] rowSplit = line.split(",");
 
         int index = headers.indexOf(EDGE_HEAD_URL);
@@ -347,20 +347,21 @@ final class ExtractEdge extends Extract {
 
         BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
 
-        bbart.addAttributes(createHistoryAttributes(url, ftime,
-                "", "",
+        bbart.addAttributes(createHistoryAttribute(url, ftime,
+                null, null,
                 Bundle.ExtractEdge_programName(),
                 NetworkUtils.extractDomain(url), user));
 
         return bbart;
     }
 
-    private Collection<BlackboardAttribute> createHistoryAttributes(String url, Long accessTime,
+    private Collection<BlackboardAttribute> createHistoryAttribute(String url, Long accessTime,
             String referrer, String title, String programName, String domain, String user) throws TskCoreException {
 
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                RecentActivityExtracterModuleFactory.getModuleName(), url));
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : ""));
 
         if (accessTime != null) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
@@ -368,19 +369,24 @@ final class ExtractEdge extends Extract {
         }
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER,
-                RecentActivityExtracterModuleFactory.getModuleName(), referrer));
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (referrer != null) ? referrer : ""));
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
-                RecentActivityExtracterModuleFactory.getModuleName(), title));
+                RecentActivityExtracterModuleFactory.getModuleName(), 
+                (title != null) ? title : ""));
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                RecentActivityExtracterModuleFactory.getModuleName(), programName));
+                RecentActivityExtracterModuleFactory.getModuleName(), 
+                (programName != null) ? programName : ""));
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
-                RecentActivityExtracterModuleFactory.getModuleName(), domain)); //NON-NLS
+                RecentActivityExtracterModuleFactory.getModuleName(), 
+                (domain != null) ? domain : ""));
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME,
-                RecentActivityExtracterModuleFactory.getModuleName(), user));
+                RecentActivityExtracterModuleFactory.getModuleName(), 
+                (user != null) ? user : ""));
 
         return bbattributes;
     }
