@@ -1,9 +1,0 @@
-caseeventlistener.evidencetag=Evidence
-IngestEventsListener.ingestmodule.name=Correlation Engine
-IngestEventsListener.prevCaseComment.text=Previous Case: 
-# {0} - typeName
-# {1} - count
-IngestEventsListener.prevCount.text=Number of previous {0}: {1}
-IngestEventsListener.prevExists.text=Previously Seen Devices (Central Repository)
-IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)
-Installer.centralRepoUpgradeFailed.title=Central repository upgrade failed
