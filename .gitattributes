@@ -6,7 +6,6 @@
 *.xml                   text
 *.form                   text
 *.properties                   text
-*.properties-MERGED                  text
 *.html                   text diff=html
 *.dox                   text
 Doxyfile                text

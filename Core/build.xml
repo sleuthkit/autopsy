@@ -127,20 +127,4 @@
         <delete dir="${basedir}/release/"/>
     </target>
     
-    <target name="compile" depends="projectized-common.compile">
-        <antcall target="copy-bundle" />
-    </target>
-
-    <target name="copy-bundle">
-        <!-- the externalized strings in 'src' are in both the java files as annotations and in the Bundle.property files.
-          The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
-          in and used as a basis for translation efforts -->
-        <copy todir="src">
-            <fileset dir="build/classes">
-                <include name="**/Bundle.properties"/>
-            </fileset>
-            <globmapper from="*" to="*-MERGED"/>
-        </copy>
-    </target>
-    
 </project>
