@@ -18,13 +18,15 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.ObservableList;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
@@ -49,8 +51,8 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     private final CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState;
     private final CompoundFilterState<TimelineFilter.FileTypeFilter, TimelineFilter.FileTypesFilter> fileTypesFilterState;
 
-    private static final ReadOnlyBooleanProperty ALWAYS_TRUE = new ReadOnlyBooleanWrapper(true).getReadOnlyProperty();
-    private final static ReadOnlyBooleanProperty ALWAYS_FALSE = new ReadOnlyBooleanWrapper(false).getReadOnlyProperty();
+    private static final BooleanProperty ALWAYS_TRUE = new SimpleBooleanProperty(true);
+    private final static BooleanProperty ALWAYS_FALSE = new SimpleBooleanProperty(false);
 
     private final Set<   FilterState< ? extends TimelineFilter>> namedFilterStates = new HashSet<>();
 
@@ -170,6 +172,25 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     }
 
     @Override
+    public ObservableList<FilterState<? extends TimelineFilter>> getSubFilterStates() {
+
+        ImmutableMap<FilterState<? extends TimelineFilter>, Integer> filterOrder
+                = ImmutableMap.<FilterState<? extends TimelineFilter>, Integer>builder()
+                        .put(knownFilterState, 0)
+                        .put(textFilterState, 1)
+                        .put(tagsFilterState, 2)
+                        .put(hashHitsFilterState, 3)
+                        .put(dataSourcesFilterState, 4)
+                        .put(fileTypesFilterState, 5)
+                        .put(eventTypeFilterState, 6)
+                        .build();
+
+        return super.getSubFilterStates().sorted((state1, state2)
+                -> Integer.compare(filterOrder.getOrDefault(state1, Integer.MAX_VALUE), filterOrder.getOrDefault(state2, Integer.MAX_VALUE)));
+
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -198,12 +219,12 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     }
 
     @Override
-    public ReadOnlyBooleanProperty activeProperty() {
+    public BooleanProperty activeProperty() {
         return ALWAYS_TRUE;
     }
 
     @Override
-    public ReadOnlyBooleanProperty disabledProperty() {
+    public BooleanProperty disabledProperty() {
         return ALWAYS_FALSE;
     }
 
@@ -228,18 +249,18 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     }
 
     @Override
-    public ReadOnlyBooleanProperty selectedProperty() {
+    public BooleanProperty selectedProperty() {
         return ALWAYS_TRUE;
     }
 
     @Override
     public void setDisabled(Boolean act) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void setSelected(Boolean act) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override

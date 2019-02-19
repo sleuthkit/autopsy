@@ -28,7 +28,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter;
 /**
  * A TreeItem for a FilterState.
  */
-final public class FilterTreeItem extends TreeItem<FilterState<?>> {
+class FilterTreeItem extends TreeItem<FilterState<?>> {
 
     /**
      * Recursively construct a tree of TreeItems to parallel the filter tree of
@@ -40,7 +40,7 @@ final public class FilterTreeItem extends TreeItem<FilterState<?>> {
      *                     children of this FilterTreeItem
      * @param expansionMap Map from filter to whether it is expanded or not.
      */
-    public FilterTreeItem(FilterState<?> filterState, ObservableMap<Object, Boolean> expansionMap) {
+    FilterTreeItem(FilterState<?> filterState, ObservableMap<Object, Boolean> expansionMap) {
         super(filterState);
 
         //keep expanion map upto date if user expands/collapses filter

@@ -22,8 +22,8 @@ import java.util.Objects;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 
 /**
@@ -61,18 +61,18 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
         this.disabled.set(disabled);
     }
 
-    private final ReadOnlyBooleanWrapper selected = new ReadOnlyBooleanWrapper(false);
-    private final ReadOnlyBooleanWrapper disabled = new ReadOnlyBooleanWrapper(false);
+    private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
+    private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
     private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
 
     @Override
-    public ReadOnlyBooleanProperty selectedProperty() {
-        return selected.getReadOnlyProperty();
+    public BooleanProperty selectedProperty() {
+        return selected;
     }
 
     @Override
-    public ReadOnlyBooleanProperty disabledProperty() {
-        return disabled.getReadOnlyProperty();
+    public BooleanProperty disabledProperty() {
+        return disabled;
     }
 
     @Override
@@ -167,5 +167,6 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
         activeProp.get();
         return "DefaultFilterState{" + "filter=" + filter + ", selected=" + selected + ", disabled=" + disabled + ", activeProp=" + activeProp + '}';
     }
+
 
 }
