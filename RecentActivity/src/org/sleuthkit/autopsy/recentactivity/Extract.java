@@ -204,4 +204,8 @@ abstract class Extract {
     public boolean foundData() {
         return dataFound;
     }
+    
+    protected void setFoundData(boolean b){
+        dataFound = b;
+    }
 }

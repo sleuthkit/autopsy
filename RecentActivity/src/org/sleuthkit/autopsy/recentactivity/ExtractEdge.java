@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -36,22 +35,18 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Extract the bookmarks, cookies, downloads and history from the Microsoft Edge
- * files
- *
- * @author kelly
+ * files.
  */
 final class ExtractEdge extends Extract {
 
-    private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private final IngestServices services = IngestServices.getInstance();
-    private final String moduleTempResultsDir;
+    private static final Logger logger = Logger.getLogger(ExtractEdge.class.getName());
+    private final Path moduleTempResultPath;
     private Content dataSource;
     private IngestJobContext context;
 
@@ -63,8 +58,7 @@ final class ExtractEdge extends Extract {
     private static final String EDGE_SPARTAN_NAME = "Spartan.edb";
 
     ExtractEdge() throws NoCurrentCaseException {
-        moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), EDGE)
-                + File.separator + "results"; //NON-NLS
+        moduleTempResultPath = Paths.get(RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), EDGE), "results");
     }
 
     @Messages({
@@ -78,23 +72,30 @@ final class ExtractEdge extends Extract {
     @Messages({
         "ExtractEdge_process_errMsg_unableFindESEViewer=Unable to find ESEDatabaseViewer",
         "ExtractEdge_process_errMsg_errGettingWebCacheFiles=Error trying to retrieving Edge WebCacheV01 file",
-        "ExtractEdge_process_errMsg_webcacheFail=Failure processing Microsoft Edge WebCache file"
+        "ExtractEdge_process_errMsg_webcacheFail=Failure processing Microsoft Edge WebCacheV01.dat file",
+        "ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan.edb file"
     })
     @Override
     void process(Content dataSource, IngestJobContext context) {
         this.dataSource = dataSource;
         this.context = context;
-        dataFound = false;
+        this.setFoundData(false);
 
-        List<AbstractFile> webCacheFiles;
-        List<AbstractFile> spartanFiles;
+        List<AbstractFile> webCacheFiles = null;
+        List<AbstractFile> spartanFiles = null;
+
         try {
             webCacheFiles = fetchWebCacheFiles();
-            spartanFiles = fetchSpartanFiles(); // For later use with bookmarks
         } catch (TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_errGettingWebCacheFiles());
-            logger.log(Level.WARNING, "Error fetching 'WebCacheV01.dat' files for Microsoft Edge", ex); //NON-NLS
-            return;
+            logger.log(Level.SEVERE, "Error fetching 'WebCacheV01.dat' files for Microsoft Edge", ex); //NON-NLS
+        }
+
+        try {
+            spartanFiles = fetchSpartanFiles(); // For later use with bookmarks
+        } catch (TskCoreException ex) {
+            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_spartanFail());
+            logger.log(Level.SEVERE, "Error fetching 'spartan.edb' files for Microsoft Edge", ex); //NON-NLS
         }
 
         // No edge files found 
@@ -102,10 +103,10 @@ final class ExtractEdge extends Extract {
             return;
         }
 
-        dataFound = true;
+        this.setFoundData(true);
 
         if (!PlatformUtil.isWindowsOS()) {
-            logger.log(Level.INFO, "Microsoft Edge files found, unable to parse on Non-Windows system"); //NON-NLS
+            logger.log(Level.WARNING, "Microsoft Edge files found, unable to parse on Non-Windows system"); //NON-NLS
             return;
         }
 
@@ -135,15 +136,18 @@ final class ExtractEdge extends Extract {
         this.getBookmark(); // Not implemented yet
     }
 
-    void processWebCache(String eseDumperPath, List<AbstractFile> webCachFiles) throws IOException {
+    void processWebCache(String eseDumperPath, List<AbstractFile> webCacheFiles) throws IOException {
 
-        for (AbstractFile webCacheFile : webCachFiles) {
+        for (AbstractFile webCacheFile : webCacheFiles) {
+
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
 
             //Run the dumper 
             String tempWebCacheFileName = EDGE_WEBCACHE_PREFIX
                     + Integer.toString((int) webCacheFile.getId()) + ".dat"; //NON-NLS
-            File tempWebCacheFile = new File(RAImageIngestModule.getRATempPath(currentCase, EDGE)
-                    + File.separator + tempWebCacheFileName);
+            File tempWebCacheFile = new File(RAImageIngestModule.getRATempPath(currentCase, EDGE), tempWebCacheFileName);
 
             try {
                 ContentUtils.writeToFile(webCacheFile, tempWebCacheFile,
@@ -152,7 +156,7 @@ final class ExtractEdge extends Extract {
                 throw new IOException("Error writingToFile: " + webCacheFile, ex); //NON-NLS
             }
 
-            File resultsDir = new File(moduleTempResultsDir + Integer.toString((int) webCacheFile.getId()));
+            File resultsDir = new File(moduleTempResultPath.toAbsolutePath() + Integer.toString((int) webCacheFile.getId()));
             resultsDir.mkdirs();
             try {
                 executeDumper(eseDumperPath, tempWebCacheFile.getAbsolutePath(),
