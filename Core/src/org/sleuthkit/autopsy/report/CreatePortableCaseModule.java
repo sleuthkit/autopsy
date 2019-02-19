@@ -285,8 +285,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         File unknownTypeFolder = Paths.get(copiedFilesFolder.toString(), UNKNOWN_FILE_TYPE_FOLDER).toFile();
         if (! unknownTypeFolder.mkdir()) {
             handleError("Error creating folder " + unknownTypeFolder.toString(),
-                    Bundle.CreatePortableCaseModule_createCase_errorCreatingFolder(unknownTypeFolder.toString()), null, progressPanel);   
-                return;
+                Bundle.CreatePortableCaseModule_createCase_errorCreatingFolder(unknownTypeFolder.toString()), null, progressPanel);   
+            return;
         }
                 
     }
