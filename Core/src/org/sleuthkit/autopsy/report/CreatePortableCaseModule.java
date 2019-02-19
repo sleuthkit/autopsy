@@ -80,6 +80,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     private final Map<TagName, TagName> oldTagNameToNewTagName = new HashMap<>();
     
     public CreatePortableCaseModule() {
+        // Nothing to do here
     }
 
     @NbBundle.Messages({
@@ -240,6 +241,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         "# {0} - case folder",
         "CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists",
         "CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case",
+        "# {0} - folder",
+        "CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}",
     })
     private void createCase(File outputDir, ReportProgressPanel progressPanel) {
 
@@ -264,13 +267,27 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         // Create the base folder for the copied files
         copiedFilesFolder = Paths.get(caseFolder.toString(), FILE_FOLDER_NAME).toFile();
-        copiedFilesFolder.mkdir();
+        if (! copiedFilesFolder.mkdir()) {
+            handleError("Error creating folder " + copiedFilesFolder.toString(),
+                    Bundle.CreatePortableCaseModule_createCase_errorCreatingFolder(copiedFilesFolder.toString()), null, progressPanel);
+            return;
+        }
         
         // Create subfolders for the copied files
         for (FileTypeCategory cat:FILE_TYPE_CATEGORIES) {
-            Paths.get(copiedFilesFolder.toString(), cat.getDisplayName()).toFile().mkdir();
+            File subFolder = Paths.get(copiedFilesFolder.toString(), cat.getDisplayName()).toFile();
+            if (! subFolder.mkdir()) {
+                handleError("Error creating folder " + subFolder.toString(),
+                    Bundle.CreatePortableCaseModule_createCase_errorCreatingFolder(subFolder.toString()), null, progressPanel);   
+                return;
+            }
         }
-        Paths.get(copiedFilesFolder.toString(), UNKNOWN_FILE_TYPE_FOLDER).toFile().mkdir();
+        File unknownTypeFolder = Paths.get(copiedFilesFolder.toString(), UNKNOWN_FILE_TYPE_FOLDER).toFile();
+        if (! unknownTypeFolder.mkdir()) {
+            handleError("Error creating folder " + unknownTypeFolder.toString(),
+                    Bundle.CreatePortableCaseModule_createCase_errorCreatingFolder(unknownTypeFolder.toString()), null, progressPanel);   
+                return;
+        }
                 
     }
     
@@ -382,9 +399,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                         File exportFolder = Paths.get(copiedFilesFolder.toString(), exportSubFolder).toFile();
                         File localFile = new File(exportFolder, fileName);
                         ContentUtils.writeToFile(abstractFile, localFile);
-
-                        // Construct the relative path to the copied file
-                        String relativePath = FILE_FOLDER_NAME + File.separator +  exportSubFolder + File.separator + fileName;
                         
                         // Get the new parent object in the portable case database
                         Content oldParent = abstractFile.getParent();
@@ -392,6 +406,9 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                             throw new TskCoreException("Parent of file with ID " + abstractFile.getId() + " has not been created");
                         }
                         Content newParent = oldIdToNewContent.get(oldParent.getId());
+                        
+                        // Construct the relative path to the copied file
+                        String relativePath = FILE_FOLDER_NAME + File.separator +  exportSubFolder + File.separator + fileName;
 
                         newContent = skCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
                                 abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),

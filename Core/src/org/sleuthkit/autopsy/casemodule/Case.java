@@ -2043,9 +2043,10 @@ public class Case {
         if (portableCaseFolder.exists()) {
             throw new TskCoreException("Portable case folder " + portableCaseFolder.toString() + " already exists");
         }
-        portableCaseFolder.mkdirs();
+        if (! portableCaseFolder.mkdirs()) {
+            throw new TskCoreException("Error creating portable case folder " + portableCaseFolder.toString());
+        }
          
-        String dbFilePath = Paths.get(portableCaseFolder.toString(), SINGLE_USER_CASE_DB_NAME).toString();
         CaseDetails details = new CaseDetails(caseName, getNumber(), getExaminer(), 
                 getExaminerPhone(), getExaminerEmail(), getCaseNotes());
         try {
@@ -2058,6 +2059,7 @@ public class Case {
         
          // Create the Sleuthkit case
         SleuthkitCase portableSleuthkitCase;
+        String dbFilePath = Paths.get(portableCaseFolder.toString(), SINGLE_USER_CASE_DB_NAME).toString();
         portableSleuthkitCase = SleuthkitCase.newCase(dbFilePath);
         
         return portableSleuthkitCase;
