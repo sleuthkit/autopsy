@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -183,13 +184,13 @@ final class ExtractEdge extends Extract {
                     return;
                 }
 
-                this.getCookie(); // Not implemented yet
+                this.getCookie(webCacheFile, resultsDir); // Not implemented yet
 
                 if (context.dataSourceIngestIsCancelled()) {
                     return;
                 }
 
-                this.getDownload(); // Not implemented yet
+                this.getDownload(webCacheFile, resultsDir); // Not implemented yet
             } finally {
                 tempWebCacheFile.delete();
                 resultsDir.delete();
@@ -260,22 +261,107 @@ final class ExtractEdge extends Extract {
     /**
      * Search for bookmark files and make artifacts.
      */
-    private void getBookmark() {
-
+    private void getBookmark(){
     }
 
     /**
      * Queries for cookie files and adds artifacts
      */
-    private void getCookie() {
+    private void getCookie(AbstractFile origFile, File resultDir) throws TskCoreException{
+        File containerFiles[] = resultDir.listFiles((dir, name) -> name.toLowerCase().contains("cookie"));
 
+        if (containerFiles == null) {
+            this.addErrorMessage(Bundle.ExtractEdge_getHistory_containerFileNotFound());
+            return;
+        }
+
+        for (File file : containerFiles) {
+            Scanner fileScanner;
+            try {
+                fileScanner = new Scanner(new FileInputStream(file.toString()));
+            } catch (FileNotFoundException ex) {
+                logger.log(Level.WARNING, "Unable to find the ESEDatabaseView file at " + file.getPath(), ex); //NON-NLS
+                continue; // If we couldn't open this file, continue to the next file
+            }
+
+            Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+
+            try {
+                List<String> headers = null;
+                while (fileScanner.hasNext()) {
+                    String line = fileScanner.nextLine();
+                    if (headers == null) {
+                        headers = Arrays.asList(line.toLowerCase().split(","));
+                        continue;
+                    }
+
+                    BlackboardArtifact b = getCookieArtifact(origFile, headers, line);
+                    if (b != null) {
+                        bbartifacts.add(b);
+                        this.indexArtifact(b);
+                    }
+                }
+            } finally {
+                fileScanner.close();
+            }
+
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
+            }
+        }
     }
 
     /**
      * Queries for download files and adds artifacts
      */
-    private void getDownload() {
+    private void getDownload(AbstractFile origFile, File resultDir) throws TskCoreException {
+        ArrayList<File> downloadFiles = getDownloadFiles(resultDir);
+        
+        if (downloadFiles == null) {
+            this.addErrorMessage(Bundle.ExtractEdge_getHistory_containerFileNotFound());
+            return;
+        }
 
+        for (File file : downloadFiles) {
+            Scanner fileScanner;
+            try {
+                fileScanner = new Scanner(new FileInputStream(file.toString()));
+            } catch (FileNotFoundException ex) {
+                logger.log(Level.WARNING, "Unable to find the ESEDatabaseView file at " + file.getPath(), ex); //NON-NLS
+                continue; // If we couldn't open this file, continue to the next file
+            }
+
+            Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+
+            try {
+                List<String> headers = null;
+                while (fileScanner.hasNext()) {
+                    String line = fileScanner.nextLine();
+                    if (headers == null) {
+                        headers = Arrays.asList(line.toLowerCase().split(","));
+                        continue;
+                    }
+
+                    if (line.contains("iedownload")) {
+//                        BlackboardArtifact b = parseHistoryLine(origFile, headers, line);
+//                        if (b != null) {
+//                            bbartifacts.add(b);
+//                            this.indexArtifact(b);
+//                        }
+                    } 
+                }
+            } finally {
+                fileScanner.close();
+            }
+
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
+            }
+        }
     }
 
     private String getPathForESEDumper() {
@@ -354,6 +440,31 @@ final class ExtractEdge extends Extract {
 
         return bbart;
     }
+    
+    private BlackboardArtifact getCookieArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {        
+        String[] lineSplit = line.split(",");
+       
+        String accessTime = lineSplit[headers.indexOf("lastmodified")].trim();
+        Long ftime = null;
+        try {
+            Long epochtime = DATE_FORMATTER.parse(accessTime).getTime();
+            ftime = epochtime / 1000;
+        } catch (ParseException ex) {
+            logger.log(Level.WARNING, "The Accessed Time format in history file seems invalid " + accessTime, ex); //NON-NLS
+        }
+        
+        String domain = lineSplit[headers.indexOf("rdomain")].trim();
+        String name = hexToString(lineSplit[headers.indexOf("name")].trim());
+        String value = hexToString(lineSplit[headers.indexOf("value")].trim());
+        
+        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
+        bbart.addAttributes(createCookieAttributes(null, ftime, name, value, Bundle.ExtractEdge_programName(), flipDomain(domain)));
+        return bbart;
+    }
+    
+    private BlackboardArtifact getDownloadArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException { 
+        return null;
+    }
 
     private Collection<BlackboardAttribute> createHistoryAttributes(String url, Long accessTime,
             String referrer, String title, String programName, String domain, String user) throws TskCoreException {
@@ -383,5 +494,178 @@ final class ExtractEdge extends Extract {
                 RecentActivityExtracterModuleFactory.getModuleName(), user));
 
         return bbattributes;
+    }
+    
+    private Collection<BlackboardAttribute> createCookieAttributes(String url,
+            Long accessTime, String name, String value, String programName, String domain) {
+        
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : ""));
+
+        if (accessTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+                    RecentActivityExtracterModuleFactory.getModuleName(), accessTime));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (name != null) ? name : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (value != null) ? value : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : ""));
+
+        return bbattributes;
+    }
+    
+    private Collection<BlackboardAttribute> createDownloadAttributes(String path, String url, Long accessTime, String domain, String programName){
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+        
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (path != null) ? path : ""));
+        
+        long pathID = Util.findID(dataSource, path);
+        if (pathID != -1) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    pathID));
+        }
+         
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : ""));
+        
+        if (accessTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), accessTime));
+        }
+        
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : ""));
+        
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : ""));
+        
+        return bbattributes;
+    }
+
+    private String hexToString(String hexString) {
+        String[] hexValues = hexString.split(" ");
+        StringBuilder output = new StringBuilder();
+
+        for (String s : hexValues) {
+            try {
+                output.append((char) Integer.parseInt(s, 16));
+            } catch (NumberFormatException ex) {
+                return null;
+            }
+        }
+
+        return output.toString();
+    }
+    
+    // For cookies the RDomain is backwards ie com.microsoft this function flip
+    // it around for display, this function assumes a simple path with one or 
+    // two periods
+    private String flipDomain(String domain){
+        if(domain == null || domain.isEmpty())
+            return null;
+
+        String[] tokens = domain.split("\\.");
+
+        if(tokens.length < 2 || tokens.length > 3){
+            logger.log(Level.INFO, "Unexpected format for edge cookie domain: " + domain);
+            return domain; // don't know what to do, just send it back
+        }
+
+        StringBuilder buf = new StringBuilder();
+        if(tokens.length > 2){
+            buf.append(tokens[2]);
+            buf.append(".");
+        }
+        buf.append(tokens[1]);
+        buf.append(".");
+        buf.append(tokens[0]);
+
+        return buf.toString();
+    }
+    
+    private Hashtable<String, ArrayList<String>> getContainerIDTable(File resultDir){
+        Hashtable<String, ArrayList<String>> table = null;
+        File containerFiles[] = resultDir.listFiles((dir, name) -> name.contains("Containers"));
+
+        for (File file : containerFiles) {
+            Scanner fileScanner;
+            try {
+                fileScanner = new Scanner(new FileInputStream(file.toString()));
+            } catch (FileNotFoundException ex) {
+                logger.log(Level.WARNING, "Unable to find the ESEDatabaseView file at " + file.getPath(), ex); //NON-NLS
+                continue; // If we couldn't open this file, continue to the next file
+            }
+
+            try {
+                List<String> headers = null;
+                table = new Hashtable<>();
+                int nameIdx = 0;
+                int idIdx = 0;
+                while (fileScanner.hasNext()) {
+                    String line = fileScanner.nextLine();
+                    if (headers == null) {
+                        headers = Arrays.asList(line.toLowerCase().split(","));
+                        nameIdx = headers.indexOf("name");
+                        idIdx = headers.indexOf("containerid");
+                    }
+                    else{
+                        String[] row = line.split(",");
+                        String name = row[nameIdx];
+                        String id = row[idIdx];
+                        
+                        ArrayList<String> idList = table.get(name);
+                        if(idList == null){
+                            idList = new ArrayList<>();
+                            table.put(name, idList);
+                        } 
+                        
+                        idList.add(id);
+                    }
+                }
+            } finally {
+                fileScanner.close();
+            }
+        }
+        
+        return table;
+    }
+    
+    private ArrayList<File> getDownloadFiles(File resultDir){
+        Hashtable<String, ArrayList<String>> idTable = getContainerIDTable(resultDir);
+
+        ArrayList<String> idList = idTable.get("iedownload");
+        if(idList == null)
+            return null;
+   
+        ArrayList<File> fileList = new ArrayList<>();
+        for(String s : idList){
+            String fileName = "Container_" + s;
+            File[] files = resultDir.listFiles((dir, name) -> name.contains(fileName));
+            if(files != null){
+                fileList.addAll(Arrays.asList(files));
+            }
+        }
+
+       return fileList;
     }
 }
