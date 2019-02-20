@@ -32,12 +32,12 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
-import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
-import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Recent activity image ingest module
@@ -47,9 +47,9 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private final List<Extract> extractors = new ArrayList<>();
     private final List<Extract> browserExtractors = new ArrayList<>();
-    private IngestServices services = IngestServices.getInstance();
+    private final IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
-    private StringBuilder subCompleted = new StringBuilder();
+    private final StringBuilder subCompleted = new StringBuilder();
 
     RAImageIngestModule() {
     }

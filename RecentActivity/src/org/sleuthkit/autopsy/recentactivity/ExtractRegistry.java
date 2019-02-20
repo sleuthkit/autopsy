@@ -24,14 +24,17 @@ package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import static java.util.TimeZone.getTimeZone;
 import java.util.logging.Level;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -39,24 +42,19 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.recentactivity.UsbDeviceIdMapper.USBInfo;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import java.nio.file.Path;
-import static java.util.TimeZone.getTimeZone;
-import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
-import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -70,9 +68,8 @@ import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamExce
 })
 class ExtractRegistry extends Extract {
 
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
-    private String RR_PATH;
-    private String RR_FULL_PATH;
+    private final static Logger logger = Logger.getLogger(ExtractRegistry.class.getName());
+
     private Path rrHome;  // Path to the Autopsy version of RegRipper
     private Path rrFullHome; // Path to the full version of RegRipper
     private Content dataSource;
@@ -104,19 +101,19 @@ class ExtractRegistry extends Extract {
             executableToRun = RIP_PL;
         }
         rrHome = rrRoot.toPath();
-        RR_PATH = rrHome.resolve(executableToRun).toString();
+        String rrPath = rrHome.resolve(executableToRun).toString();
         rrFullHome = rrFullRoot.toPath();
-        RR_FULL_PATH = rrFullHome.resolve(executableToRun).toString();
+        String rrFullPath = rrFullHome.resolve(executableToRun).toString();
 
-        if (!(new File(RR_PATH).exists())) {
+        if (!(new File(rrPath).exists())) {
             throw new IngestModuleException(Bundle.RegRipperNotFound());
         }
-        if (!(new File(RR_FULL_PATH).exists())) {
+        if (!(new File(rrFullPath).exists())) {
             throw new IngestModuleException(Bundle.RegRipperFullNotFound());
         }
         if (PlatformUtil.isWindowsOS()) {
-            rrCmd.add(RR_PATH);
-            rrFullCmd.add(RR_FULL_PATH);
+            rrCmd.add(rrPath);
+            rrFullCmd.add(rrFullPath);
         } else {
             String perl;
             File usrBin = new File("/usr/bin/perl");
@@ -129,9 +126,9 @@ class ExtractRegistry extends Extract {
                 throw new IngestModuleException("perl not found in your system");
             }
             rrCmd.add(perl);
-            rrCmd.add(RR_PATH);
+            rrCmd.add(rrPath);
             rrFullCmd.add(perl);
-            rrFullCmd.add(RR_FULL_PATH);
+            rrFullCmd.add(rrFullPath);
         }
     }
 
@@ -416,7 +413,6 @@ class ExtractRegistry extends Extract {
                 Element artroot = (Element) artroots.item(0);
                 NodeList myartlist = artroot.getChildNodes();
                 String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
-                String winver = "";
 
                 // If all artifact nodes should really go under one Blackboard artifact, need to process it differently
                 switch (dataType) {
@@ -730,7 +726,7 @@ class ExtractRegistry extends Extract {
                                             } else {
                                                 //add attributes to existing artifact
                                                 BlackboardAttribute bbattr = bbart.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_USER_NAME));
-                                                
+
                                                 if (bbattr == null) {
                                                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                                                             parentModuleName, username));
@@ -797,7 +793,7 @@ class ExtractRegistry extends Extract {
                         break;
                 }
             } // for
-      
+
             return true;
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
@@ -842,7 +838,7 @@ class ExtractRegistry extends Extract {
                 if (line.contains(SECTION_DIVIDER) && previousLine != null) {
                     if (previousLine.contains(userInfoSection)) {
                         readUsers(bufferedReader, userSet);
-                    } 
+                    }
                 }
                 previousLine = line;
                 line = bufferedReader.readLine();
@@ -910,7 +906,7 @@ class ExtractRegistry extends Extract {
         } catch (ParseException ex) {
             logger.log(Level.SEVERE, "Error parsing the the date from the registry file", ex); //NON-NLS
         } catch (TskCoreException ex) {
-             logger.log(Level.SEVERE, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error updating TSK_OS_ACCOUNT artifacts to include newly parsed data.", ex); //NON-NLS
         }
         return false;
     }
@@ -940,8 +936,7 @@ class ExtractRegistry extends Extract {
             if (line.contains(userNameLabel)) {
                 String userNameAndIdString = line.replace(userNameLabel, "");
                 userName = userNameAndIdString.substring(0, userNameAndIdString.lastIndexOf('[')).trim();
-            }
-            else if (line.contains(sidLabel) && !userName.isEmpty()){
+            } else if (line.contains(sidLabel) && !userName.isEmpty()) {
                 String sid = line.replace(sidLabel, "").trim();
                 UserInfo userInfo = new UserInfo(userName, sid);
                 //continue reading this users information until end of file or a blank line between users
@@ -986,7 +981,7 @@ class ExtractRegistry extends Extract {
         /**
          * Create a UserInfo object
          *
-         * @param name         - the os user account name
+         * @param name          - the os user account name
          * @param userSidString - the SID for the user account
          */
         private UserInfo(String name, String userSidString) {
