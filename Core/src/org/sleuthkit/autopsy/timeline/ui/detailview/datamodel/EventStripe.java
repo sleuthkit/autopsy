@@ -19,19 +19,14 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.stream.Stream;
-import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 
@@ -76,14 +71,14 @@ public final class EventStripe implements MultiEvent<EventCluster> {
      */
     private final Set<Long> hashHits;
 
-    public static EventStripe merge(EventStripe u, EventStripe v) { //NOPMD
-        Preconditions.checkNotNull(u);
-        Preconditions.checkNotNull(v);
-        Preconditions.checkArgument(Objects.equals(u.description, v.description));
-        Preconditions.checkArgument(Objects.equals(u.lod, v.lod));
-        Preconditions.checkArgument(Objects.equals(u.type, v.type));
-        Preconditions.checkArgument(Objects.equals(u.parent, v.parent));
-        return new EventStripe(u, v);
+    public static EventStripe merge(EventStripe stripeA, EventStripe stripeB) {
+        Preconditions.checkNotNull(stripeA);
+        Preconditions.checkNotNull(stripeB);
+        Preconditions.checkArgument(Objects.equals(stripeA.description, stripeB.description));
+        Preconditions.checkArgument(Objects.equals(stripeA.lod, stripeB.lod));
+        Preconditions.checkArgument(Objects.equals(stripeA.type, stripeB.type));
+        Preconditions.checkArgument(Objects.equals(stripeA.parent, stripeB.parent));
+        return new EventStripe(stripeA, stripeB);
     }
 
     public EventStripe withParent(EventCluster parent) {

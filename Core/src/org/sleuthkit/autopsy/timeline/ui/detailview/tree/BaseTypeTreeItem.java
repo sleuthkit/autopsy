@@ -26,7 +26,6 @@ import java.util.function.Supplier;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
-import org.sleuthkit.datamodel.timeline.EventType;
 import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
 
 /**
@@ -48,7 +47,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
      *                   this tree item
      */
     BaseTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
-        super (event.getEventType().getBaseType(), comparator);
+        super(event.getEventType().getBaseType(), comparator);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)

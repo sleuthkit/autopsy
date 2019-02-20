@@ -18,15 +18,12 @@
  */
 package org.sleuthkit.autopsy.timeline.explorernodes;
 
-import com.google.common.collect.Iterables;
 import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.logging.Level;
-import static java.util.stream.Collectors.joining;
 import javax.swing.Action;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
