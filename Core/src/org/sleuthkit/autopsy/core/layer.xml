@@ -48,7 +48,7 @@
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDetailsAction.instance"/>
-            <file name="org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.instance"/>
+            <file name="org-sleuthkit-autopsy-casemodule-datasourcesummary-DataSourceSummaryAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseSaveAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseSaveAction"/>
@@ -183,7 +183,7 @@
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseDetailsAction.instance"/>
                 <attr name="position" intvalue="301"/>
             </file>
-            <file name="org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.shadow">
+            <file name="org-sleuthkit-autopsy-casemodule-datasourcesummary-DataSourceSummaryAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-datasourceSummary-DataSourceSummaryAction.instance"/>
                 <attr name="position" intvalue="302"/>
             </file>
