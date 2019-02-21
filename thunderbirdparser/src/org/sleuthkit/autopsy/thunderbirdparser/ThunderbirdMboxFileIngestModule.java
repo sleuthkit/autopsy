@@ -649,6 +649,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      */
     @Messages({"ThunderbirdMboxFileIngestModule.addContactArtifact.indexError=Failed to index the contact artifact for keyword search."})
     private BlackboardArtifact addContactArtifact(VCard vcard, AbstractFile abstractFile) throws NoCurrentCaseException {
+        Case currentCase = Case.getCurrentCaseThrows();
+        SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+        
         List<BlackboardAttribute> attributes = new ArrayList<>();
         
         addArtifactAttribute(vcard.getFormattedName().getValue(), ATTRIBUTE_TYPE.TSK_NAME_PERSON, attributes);
@@ -665,61 +668,19 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 addArtifactAttribute(telephone.getText(), ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, attributes);
             } else {
                 for (TelephoneType type : telephoneTypes) {
-                    BlackboardAttribute.ATTRIBUTE_TYPE attributeType;
-
-                    switch (type.getValue().toLowerCase()) {
-                        case VCARD_TEL_TYPE_HOME:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME;
-                            break;
-                        case VCARD_TEL_TYPE_WORK:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE;
-                            break;
-                        case VCARD_TEL_TYPE_TEXT:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TEXT;
-                            break;
-                        case VCARD_TEL_TYPE_FAX:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FAX;
-                            break;
-                        case VCARD_TEL_TYPE_CELL:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE;
-                            break;
-                        case VCARD_TEL_TYPE_VIDEO:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_VIDEO;
-                            break;
-                        case VCARD_TEL_TYPE_PAGER:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_PAGER;
-                            break;
-                        case VCARD_TEL_TYPE_TEXTPHONE:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TEXTPHONE;
-                            break;
-                        case VCARD_TEL_TYPE_MSG:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_VOICE_MESSAGING;
-                            break;
-                        case VCARD_TEL_TYPE_BBS:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_BBS;
-                            break;
-                        case VCARD_TEL_TYPE_MODEM:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MODEM;
-                            break;
-                        case VCARD_TEL_TYPE_CAR:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_CAR;
-                            break;
-                        case VCARD_TEL_TYPE_ISDN:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_ISDN;
-                            break;
-                        case VCARD_TEL_TYPE_PCS:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_PCS;
-                            break;
-                        case VCARD_TEL_TYPE_MAIN_NUMBER:
-                        case VCARD_TEL_TYPE_PREF:
-                        case VCARD_TEL_TYPE_VOICE:
-                            // Fall-thru
-                        default:
-                            attributeType = ATTRIBUTE_TYPE.TSK_PHONE_NUMBER;
-                            break;
+                    String attributeTypeName = "TSK_PHONE_" + type.getValue().toUpperCase();
+                    try {
+                        BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                        if (attributeType == null) {
+                            // Add this attribute type to the case database.
+                            tskCase.addArtifactAttributeType(attributeTypeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, type.getValue());
+                        }
+                        addArtifactAttribute(telephone.getText(), attributeType, attributes);
+                    } catch (TskCoreException ex) {
+                        System.out.println(); //DLG:
+                    } catch (TskDataException ex) {
+                        System.out.println(); //DLG:
                     }
-
-                    addArtifactAttribute(telephone.getText(), attributeType, attributes);
                 }
             }
         }
@@ -736,26 +697,19 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 addArtifactAttribute(email.getValue(), ATTRIBUTE_TYPE.TSK_EMAIL, attributes);
             } else {
                 for (EmailType type : emailTypes) {
-                    BlackboardAttribute.ATTRIBUTE_TYPE attributeType;
-
-                    switch (type.getValue().toLowerCase()) {
-                        case VCARD_EMAIL_TYPE_HOME:
-                            attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_HOME;
-                            break;
-                        case VCARD_EMAIL_TYPE_WORK:
-                            attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE;
-                            break;
-                        case VCARD_EMAIL_TYPE_X400:
-                            attributeType = ATTRIBUTE_TYPE.TSK_EMAIL_X400;
-                            break;
-                        case VCARD_EMAIL_TYPE_INTERNET:
-                            // Fall-thru
-                        default:
-                            attributeType = ATTRIBUTE_TYPE.TSK_EMAIL;
-                            break;
+                    String attributeTypeName = "TSK_EMAIL_" + type.getValue().toUpperCase();
+                    try {
+                        BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                        if (attributeType == null) {
+                            // Add this attribute type to the case database.
+                            tskCase.addArtifactAttributeType(attributeTypeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, type.getValue());
+                        }
+                        addArtifactAttribute(email.getValue(), attributeType, attributes);
+                    } catch (TskCoreException ex) {
+                        System.out.println(); //DLG:
+                    } catch (TskDataException ex) {
+                        System.out.println(); //DLG:
                     }
-
-                    addArtifactAttribute(email.getValue(), attributeType, attributes);
                 }
             }
         }
@@ -772,8 +726,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
    
         BlackboardArtifact artifact = null;
-        Case currentCase = Case.getCurrentCaseThrows();
-        SleuthkitCase tskCase = currentCase.getSleuthkitCase();
         org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
         try {
             // Create artifact if it doesn't already exist.
@@ -805,6 +757,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     }
 
     private void addArtifactAttribute(String stringVal, ATTRIBUTE_TYPE attrType, Collection<BlackboardAttribute> bbattributes) {
+        if (stringVal.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(attrType, EmailParserModuleFactory.getModuleName(), stringVal));
+        }
+    }
+    private void addArtifactAttribute(String stringVal, BlackboardAttribute.Type attrType, Collection<BlackboardAttribute> bbattributes) {
         if (stringVal.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(attrType, EmailParserModuleFactory.getModuleName(), stringVal));
         }
