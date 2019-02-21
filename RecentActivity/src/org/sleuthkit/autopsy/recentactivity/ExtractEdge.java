@@ -698,14 +698,14 @@ final class ExtractEdge extends Extract {
     /**
      * Creates a list of attributes for a history artifact.
      *
-     * @param url
-     * @param accessTime
-     * @param referrer
-     * @param title
-     * @param programName
-     * @param domain
-     * @param user
-     * @return
+     * @param url 
+     * @param accessTime Time url was accessed
+     * @param referrer referred url
+     * @param title title of the page
+     * @param programName module name
+     * @param domain domain of the url
+     * @param user user that accessed url
+     * @return List of BlackboardAttributes for giving attributes
      * @throws TskCoreException
      */
     private Collection<BlackboardAttribute> createHistoryAttribute(String url, Long accessTime,
