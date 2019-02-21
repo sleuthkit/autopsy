@@ -208,4 +208,186 @@ abstract class Extract {
     protected void setFoundData(boolean b){
         dataFound = b;
     }
+    
+    /**
+     * Returns the current case instance
+     * @return Current case instance
+     */
+    protected Case getCurrentCase(){
+        return this.currentCase;
+    }
+    
+    /**
+     * Creates a list of attributes for a history artifact.
+     *
+     * @param url 
+     * @param accessTime Time url was accessed
+     * @param referrer referred url
+     * @param title title of the page
+     * @param programName module name
+     * @param domain domain of the url
+     * @param user user that accessed url
+     * @return List of BlackboardAttributes for giving attributes
+     * @throws TskCoreException
+     */
+    protected Collection<BlackboardAttribute> createHistoryAttribute(String url, Long accessTime,
+            String referrer, String title, String programName, String domain, String user) throws TskCoreException {
+
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : ""));
+
+        if (accessTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), accessTime));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (referrer != null) ? referrer : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (title != null) ? title : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (user != null) ? user : ""));
+
+        return bbattributes;
+    }
+    
+    /**
+     * Creates a list of attributes for a cookie.
+     *
+     * @param url cookie url
+     * @param creationTime cookie creation time 
+     * @param name cookie name
+     * @param value cookie value
+     * @param programName Name of the module creating the attribute
+     * @param domain Domain of the URL
+     * @return List of BlackboarAttributes for the passed in attributes
+     */
+    protected Collection<BlackboardAttribute> createCookieAttributes(String url,
+            Long creationTime, String name, String value, String programName, String domain) {
+
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : ""));
+
+        if (creationTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+                    RecentActivityExtracterModuleFactory.getModuleName(), creationTime));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (name != null) ? name : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (value != null) ? value : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : ""));
+
+        return bbattributes;
+    }
+
+    /**
+     * Creates a list of bookmark attributes from the passed in parameters.
+     *
+     * @param url Bookmark url
+     * @param title Title of the bookmarked page
+     * @param creationTime Date & time at which the bookmark was created
+     * @param programName Name of the module creating the attribute
+     * @param domain The domain of the bookmark's url
+     * @return A collection of bookmark attributes
+     */
+    protected Collection<BlackboardAttribute> createBookmarkAttributes(String url, String title, Long creationTime, String programName, String domain) {
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (title != null) ? title : ""));
+
+        if (creationTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), creationTime));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : ""));
+
+        return bbattributes;
+    }
+
+     /**
+     * Creates a list of the attributes of a downloaded file
+     *
+     * @param path
+     * @param url URL of the downloaded file
+     * @param accessTime Time the download occurred
+     * @param domain Domain of the URL
+     * @param programName Name of the module creating the attribute
+     * @return A collection of attributed of a downloaded file
+     */
+    protected Collection<BlackboardAttribute> createDownloadAttributes(String path, Long pathID, String url, Long accessTime, String domain, String programName) {
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (path != null) ? path : ""));
+
+        if (pathID != null && pathID != -1) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    pathID));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : ""));
+
+        if (accessTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), accessTime));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : ""));
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : ""));
+
+        return bbattributes;
+    }
+    
+    
 }
