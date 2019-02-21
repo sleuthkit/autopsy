@@ -16,15 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.casemodule.multiusercasesbrowser;
 
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.MultiUserCaseNodeDataCollector;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -42,8 +43,8 @@ final class MultiUserCasesRootNode extends AbstractNode {
      * @param case A list of coordination service node data objects representing
      *             multi-user cases.
      */
-    MultiUserCasesRootNode() {
-        super(Children.create(new MultiUserCasesRootNodeChildren(), true));
+    MultiUserCasesRootNode(MultiUserCaseBrowserCustomizer childNodeCustomizer) {
+        super(Children.create(new MultiUserCasesRootNodeChildren(childNodeCustomizer), true));
     }
 
     /**
@@ -53,6 +54,12 @@ final class MultiUserCasesRootNode extends AbstractNode {
      */
     private static class MultiUserCasesRootNodeChildren extends ChildFactory<CaseNodeData> {
 
+        private MultiUserCaseBrowserCustomizer nodeCustomizer;
+        
+        MultiUserCasesRootNodeChildren(MultiUserCaseBrowserCustomizer nodeCustomizer) {
+            this.nodeCustomizer = nodeCustomizer;
+        }
+        
         @Override
         protected boolean createKeys(List<CaseNodeData> keys) {
             try {
@@ -66,7 +73,7 @@ final class MultiUserCasesRootNode extends AbstractNode {
 
         @Override
         protected Node createNodeForKey(CaseNodeData key) {
-            return new MultiUserCaseNode(key);
+            return new MultiUserCaseNode(key, this.nodeCustomizer);
         }
 
     }

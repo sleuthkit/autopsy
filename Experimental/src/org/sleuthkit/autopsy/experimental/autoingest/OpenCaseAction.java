@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2019 Basis Technology Corp.
+ * Copyright 2019-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
@@ -24,43 +24,44 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.OpenMultiUserCaseDialog;
+import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
- * An action that opens a multi-user case and hides the open multi-user case
- * dialog given the coordination service node data for the case.
+ * An action that opens a multi-user case known to the coordination service.
  */
-public final class OpenMultiUserCaseAction extends AbstractAction {
+final class OpenCaseAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(OpenMultiUserCaseAction.class.getName());
+    private static final Logger logger = Logger.getLogger(org.sleuthkit.autopsy.casemodule.OpenMultiUserCaseAction.class.getName());
     private final CaseNodeData caseNodeData;
 
     /**
-     * Constructs an action that opens a multi-user case and hides the open
-     * multi-user case dialog given the coordination service node data for the
-     * case.
+     * Constructs an action that opens a multi-user case known to the
+     * coordination service.
      *
-     * @param caseNodeData The coordination service node data for the case
-     *                     associated with this action.
+     * @param caseNodeData The coordination service node data for the case.
      */
     @NbBundle.Messages({
-        "OpenMultiUserCaseAction.menuItemText=Open Case"
+        "OpenCaseAction.menuItemText=Open"
     })
-    public OpenMultiUserCaseAction(CaseNodeData caseNodeData) {
-        super(Bundle.OpenMultiUserCaseAction_menuItemText());
+    public OpenCaseAction(CaseNodeData caseNodeData) {
+        super(Bundle.OpenCaseAction_menuItemText());
         this.caseNodeData = caseNodeData;
     }
 
     @NbBundle.Messages({
-        "# {0} - caseErrorMessage", "OpenMultiUserCaseAction.caseOpeningErrorErrorMsg=Failed to open case: {0}"
+        "# {0} - caseErrorMessage", "OpenCaseAction.errorMsg=Failed to open case: {0}"
     })
     @Override
-    public void actionPerformed(ActionEvent event) {
-        StartupWindowProvider.getInstance().close();
-        OpenMultiUserCaseDialog.getInstance().setVisible(false);
+    public void actionPerformed(ActionEvent e) {
         new Thread(() -> {
             String caseMetadataFilePath = null;
             File caseDirectory = caseNodeData.getDirectory().toFile();
@@ -80,21 +81,21 @@ public final class OpenMultiUserCaseAction extends AbstractAction {
                         logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
                     }
                     SwingUtilities.invokeLater(() -> {
-                        MessageNotifyUtil.Message.error(Bundle.OpenMultiUserCaseAction_caseOpeningErrorErrorMsg(ex.getLocalizedMessage()));
+                        MessageNotifyUtil.Message.error(Bundle.OpenCaseAction_errorMsg(ex.getLocalizedMessage()));
                         StartupWindowProvider.getInstance().open();
                         OpenMultiUserCaseDialog.getInstance().setVisible(true);
                     });
                 }
             } else {
                 SwingUtilities.invokeLater(() -> {
-                    MessageNotifyUtil.Message.error(Bundle.OpenMultiUserCaseAction_caseOpeningErrorErrorMsg("Could not locate case metadata file."));
+                    MessageNotifyUtil.Message.error(Bundle.OpenCaseAction_errorMsg("Could not locate case metadata file."));
                 });
             }
         }).start();
     }
 
     @Override
-    public OpenMultiUserCaseAction clone() throws CloneNotSupportedException {
+    public OpenCaseAction clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
 

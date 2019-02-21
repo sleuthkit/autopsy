@@ -88,7 +88,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
      * metadata file (.aut file). Upon confirming the selection, it will attempt
      * to open the case described by the file.
      */
-    void openCaseSelectionWindow() {
+    public void openCaseSelectionWindow() {
         String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
         String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
         if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {

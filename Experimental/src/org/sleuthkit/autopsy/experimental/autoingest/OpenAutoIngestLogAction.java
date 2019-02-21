@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.Desktop;
 import java.awt.event.ActionEvent;
@@ -26,7 +26,7 @@ import java.nio.file.Paths;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
@@ -34,10 +34,10 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  * An action that opens a case auto ingest log given the coordination service
  * node data for the case.
  */
-final class OpenCaseAutoIngestLogAction extends AbstractAction {
+public final class OpenAutoIngestLogAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(OpenCaseAutoIngestLogAction.class.getName());
+    private static final Logger logger = Logger.getLogger(OpenAutoIngestLogAction.class.getName());
     private static final String CASE_AUTO_INGEST_LOG_FILE_NAME = "auto_ingest_log.txt";
     private final Path caseAutoIngestLogFilePath;
 
@@ -48,17 +48,17 @@ final class OpenCaseAutoIngestLogAction extends AbstractAction {
      * @param caseNodeData The coordination service node data for the case.
      */
     @NbBundle.Messages({
-        "OpenCaseAutoIngestLogAction.menuItemText=Open Auto Ingest Log File"
+        "OpenAutoIngestLogAction.menuItemText=Open Auto Ingest Log File"
     })
-    OpenCaseAutoIngestLogAction(CaseNodeData caseNodeData) {
-        super(Bundle.OpenCaseAutoIngestLogAction_menuItemText());
+    public OpenAutoIngestLogAction(CaseNodeData caseNodeData) {
+        super(Bundle.OpenAutoIngestLogAction_menuItemText());
         this.caseAutoIngestLogFilePath = Paths.get(caseNodeData.getDirectory().toString(), CASE_AUTO_INGEST_LOG_FILE_NAME);
         this.setEnabled(caseAutoIngestLogFilePath.toFile().exists());
     }
 
     @NbBundle.Messages({
-        "OpenCaseAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.",
-        "OpenCaseAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details."
+        "OpenAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.",
+        "OpenAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details."
     })
     @Override
     public void actionPerformed(ActionEvent event) {
@@ -66,16 +66,16 @@ final class OpenCaseAutoIngestLogAction extends AbstractAction {
             if (caseAutoIngestLogFilePath.toFile().exists()) {
                 Desktop.getDesktop().edit(caseAutoIngestLogFilePath.toFile());
             } else {
-                MessageNotifyUtil.Message.error(Bundle.OpenCaseAutoIngestLogAction_deletedLogErrorMsg());
+                MessageNotifyUtil.Message.error(Bundle.OpenAutoIngestLogAction_deletedLogErrorMsg());
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Error opening case auto ingest log file at %s", caseAutoIngestLogFilePath), ex); //NON-NLS
-            MessageNotifyUtil.Message.error(Bundle.OpenCaseAutoIngestLogAction_logOpenFailedErrorMsg());
+            MessageNotifyUtil.Message.error(Bundle.OpenAutoIngestLogAction_logOpenFailedErrorMsg());
         }
     }
 
     @Override
-    public OpenCaseAutoIngestLogAction clone() throws CloneNotSupportedException {
+    public OpenAutoIngestLogAction clone() throws CloneNotSupportedException {
         super.clone();
         throw new CloneNotSupportedException();
     }
