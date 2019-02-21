@@ -168,7 +168,7 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
      */
     DataSource getSelectedDataSource() {
         Node selectedNode[] = explorerManager.getSelectedNodes();
-        if (selectedNode.length == 1) {
+        if (selectedNode.length == 1 &&  selectedNode[0] instanceof DataSourceSummaryEntryNode) {
             return ((DataSourceSummaryEntryNode) selectedNode[0]).getDataSource();
         }
         return null;
