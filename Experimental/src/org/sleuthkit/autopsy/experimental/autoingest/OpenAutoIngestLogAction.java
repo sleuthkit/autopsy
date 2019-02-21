@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  * An action that opens a case auto ingest log given the coordination service
  * node data for the case.
  */
-public final class OpenAutoIngestLogAction extends AbstractAction {
+final class OpenAutoIngestLogAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(OpenAutoIngestLogAction.class.getName());
@@ -50,7 +50,7 @@ public final class OpenAutoIngestLogAction extends AbstractAction {
     @NbBundle.Messages({
         "OpenAutoIngestLogAction.menuItemText=Open Auto Ingest Log File"
     })
-    public OpenAutoIngestLogAction(CaseNodeData caseNodeData) {
+    OpenAutoIngestLogAction(CaseNodeData caseNodeData) {
         super(Bundle.OpenAutoIngestLogAction_menuItemText());
         this.caseAutoIngestLogFilePath = Paths.get(caseNodeData.getDirectory().toString(), CASE_AUTO_INGEST_LOG_FILE_NAME);
         this.setEnabled(caseAutoIngestLogFilePath.toFile().exists());

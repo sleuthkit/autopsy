@@ -42,6 +42,13 @@ final class DeleteCasesForReprocessingAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Constructs an action that deletes everything except the auto ingest job
+     * input directories for one or more multi-user cases. This supports the use
+     * case where a case needs to be reprocessed, so the input directories are
+     * not deleted even though the coordination service nodes for the auto
+     * ingest jobs are deleted.
+     */
     @NbBundle.Messages({
         "DeleteCasesForReprocessingAction.menuItemText=Delete for Reprocessing"
     })

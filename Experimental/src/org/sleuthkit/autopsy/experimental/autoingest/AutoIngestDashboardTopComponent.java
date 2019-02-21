@@ -81,7 +81,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                     if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
                         EventQueue.invokeLater(() -> {  
                             AinStatusDashboardTopComponent.openTopComponent(dashboard.getMonitor());
-                            MultiUserCasesDashboardTopComponent.openTopComponent();
+                            CasesDashboardTopComponent.openTopComponent();
                         });          
                     }
                     tc.open();

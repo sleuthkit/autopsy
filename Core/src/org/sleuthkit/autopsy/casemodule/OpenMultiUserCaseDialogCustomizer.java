@@ -25,16 +25,15 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrowserCustomizer;
 
 /**
- * A customizer for a multi-user case browser panel that presents a tabular view
- * of the multi-user cases known to the coordination service in the open
- * multi-user case dialog.
+ * A customizer for the multi-user case browser panel used in the open
+ * multi-user case dialog to present a tabular view of the multi-user cases
+ * known to the coordination service.
  */
-final class OpenMultiUserCaseNodeCustomizer implements MultiUserCaseBrowserCustomizer {
+final class OpenMultiUserCaseDialogCustomizer implements MultiUserCaseBrowserCustomizer {
 
     @Override
     public List<Column> getColumns() {
         List<Column> properties = new ArrayList<>();
-//        properties.add(Column.DISPLAY_NAME);
         properties.add(Column.CREATE_DATE);
         properties.add(Column.DIRECTORY);
         return properties;

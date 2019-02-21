@@ -38,12 +38,14 @@ public interface MultiUserCaseBrowserCustomizer {
     @NbBundle.Messages({
         "MultiUserCaseBrowserCustomizer.column.displayName=Name",
         "MultiUserCaseBrowserCustomizer.column.createTime=Create Time",
-        "MultiUserCaseBrowserCustomizer.column.directory=Directory"
+        "MultiUserCaseBrowserCustomizer.column.directory=Directory",
+        "MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time"
     })
     public enum Column {
         DISPLAY_NAME(Bundle.MultiUserCaseBrowserCustomizer_column_displayName()),
         CREATE_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_createTime()),
-        DIRECTORY(Bundle.MultiUserCaseBrowserCustomizer_column_directory());
+        DIRECTORY(Bundle.MultiUserCaseBrowserCustomizer_column_directory()),
+        LAST_ACCESS_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_lastAccessTime());
 
         private final String displayName;
 

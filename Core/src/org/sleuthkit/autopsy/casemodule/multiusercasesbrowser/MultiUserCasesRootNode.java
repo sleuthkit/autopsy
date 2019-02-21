@@ -40,11 +40,11 @@ final class MultiUserCasesRootNode extends AbstractNode {
      * Constructs a root node for displaying MultiUserCaseNodes in a NetBeans
      * Explorer View.
      *
-     * @param case A list of coordination service node data objects representing
-     *             multi-user cases.
+     * @param customizer A customizer to use to customize the property sheets
+     *                   and actions of the child nodes.
      */
-    MultiUserCasesRootNode(MultiUserCaseBrowserCustomizer childNodeCustomizer) {
-        super(Children.create(new MultiUserCasesRootNodeChildren(childNodeCustomizer), true));
+    MultiUserCasesRootNode(MultiUserCaseBrowserCustomizer customizer) {
+        super(Children.create(new MultiUserCasesRootNodeChildren(customizer), true));
     }
 
     /**
@@ -55,11 +55,11 @@ final class MultiUserCasesRootNode extends AbstractNode {
     private static class MultiUserCasesRootNodeChildren extends ChildFactory<CaseNodeData> {
 
         private MultiUserCaseBrowserCustomizer nodeCustomizer;
-        
+
         MultiUserCasesRootNodeChildren(MultiUserCaseBrowserCustomizer nodeCustomizer) {
             this.nodeCustomizer = nodeCustomizer;
         }
-        
+
         @Override
         protected boolean createKeys(List<CaseNodeData> keys) {
             try {

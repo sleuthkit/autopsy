@@ -26,7 +26,7 @@ import org.openide.windows.WindowManager;
 /**
  * A singleton JDialog that allows a user to open a multi-user case.
  */
-public final class OpenMultiUserCaseDialog extends JDialog {
+final class OpenMultiUserCaseDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
     private static OpenMultiUserCaseDialog instance;

@@ -35,10 +35,15 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
  * https://platform.netbeans.org/tutorials/nbm-selection-1.html and
  * https://platform.netbeans.org/tutorials/nbm-selection-2.html for details.
  */
- final class DeleteCasesAction extends AbstractAction {
+final class DeleteCasesAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Constructs an action that completely deletes one or more multi-user
+     * cases, including any associated auto ingest job input directories and
+     * coordination service nodes.
+     */
     @NbBundle.Messages({
         "DeleteCasesAction.menuItemText=Delete Case and Jobs"
     })

@@ -29,7 +29,7 @@ final class ShowCaseDeletionStatusAction extends AbstractAction {
     @NbBundle.Messages({
         "ShowCaseDeletionStatusAction.menuItemText=Show Deletion Status"
     })
-    public ShowCaseDeletionStatusAction(CaseNodeData caseNodeData) {
+    ShowCaseDeletionStatusAction(CaseNodeData caseNodeData) {
         super(Bundle.ShowCaseDeletionStatusAction_menuItemText());
         this.caseNodeData = caseNodeData;
         setEnabled(false); // RJCTODO: Enable when implemented

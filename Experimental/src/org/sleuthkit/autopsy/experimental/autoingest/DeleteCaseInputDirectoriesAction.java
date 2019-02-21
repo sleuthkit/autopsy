@@ -42,6 +42,14 @@ final class DeleteCaseInputDirectoriesAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Constructs an action that deletes the auto ingest job input directories
+     * associated with one or more multi-user cases. The coordination service
+     * nodes for the auto ingest jobs are not deleted. This supports the use
+     * case where the directories may need to be directed to reclaim space, but
+     * the option to restore the directories without having the jobs be
+     * reprocessed is retained.
+     */
     @NbBundle.Messages({
         "DeleteCaseInputDirectoriesAction.menuItemText=Delete Input Directories"
     })

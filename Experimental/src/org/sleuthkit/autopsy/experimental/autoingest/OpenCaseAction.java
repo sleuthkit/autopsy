@@ -28,8 +28,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.OpenMultiUserCaseDialog;
-import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -40,7 +38,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 final class OpenCaseAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(org.sleuthkit.autopsy.casemodule.OpenMultiUserCaseAction.class.getName());
+    private static final Logger logger = Logger.getLogger(OpenCaseAction.class.getName());
     private final CaseNodeData caseNodeData;
 
     /**
@@ -52,7 +50,7 @@ final class OpenCaseAction extends AbstractAction {
     @NbBundle.Messages({
         "OpenCaseAction.menuItemText=Open"
     })
-    public OpenCaseAction(CaseNodeData caseNodeData) {
+    OpenCaseAction(CaseNodeData caseNodeData) {
         super(Bundle.OpenCaseAction_menuItemText());
         this.caseNodeData = caseNodeData;
     }
@@ -82,13 +80,11 @@ final class OpenCaseAction extends AbstractAction {
                     }
                     SwingUtilities.invokeLater(() -> {
                         MessageNotifyUtil.Message.error(Bundle.OpenCaseAction_errorMsg(ex.getLocalizedMessage()));
-                        StartupWindowProvider.getInstance().open();
-                        OpenMultiUserCaseDialog.getInstance().setVisible(true);
                     });
                 }
             } else {
                 SwingUtilities.invokeLater(() -> {
-                    MessageNotifyUtil.Message.error(Bundle.OpenCaseAction_errorMsg("Could not locate case metadata file."));
+                    MessageNotifyUtil.Message.error(Bundle.OpenCaseAction_errorMsg("Could not locate case metadata file.")); //NON-NLS
                 });
             }
         }).start();

@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCasesBrow
  * cases.
  */
 @TopComponent.Description(
-        preferredID = "MultiUserCasesDashboardTopComponent",
+        preferredID = "CasesDashboardTopComponent",
         persistenceType = TopComponent.PERSISTENCE_ALWAYS
 )
 @TopComponent.Registration(
@@ -39,16 +39,16 @@ import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCasesBrow
         openAtStartup = false
 )
 @TopComponent.OpenActionRegistration(
-        displayName = "#CTL_MultiUserCasesDashboardAction",
-        preferredID = "MultiUserCasesDashboardTopComponent"
+        displayName = "#CTL_CasesDashboardTopComponent",
+        preferredID = "CasesDashboardTopComponent"
 )
 @Messages({
-    "CTL_MultiUserCasesDashboardAction=Multi-User Cases Dashboard",
-    "CTL_MultiUserCasesDashboardTopComponent=Cases",
-    "HINT_MultiUserCasesDashboardTopComponent=This is an adminstrative dashboard for multi-user cases"
+    "CTL_CasesDashboardAction=Multi-User Cases Dashboard",
+    "CTL_CasesDashboardTopComponent=Cases",
+    "HINT_CasesDashboardTopComponent=This is an adminstrative dashboard for multi-user cases"
 })
-@SuppressWarnings("PMD.SingularField") // Prevent these warnings about generated code
-public final class MultiUserCasesDashboardTopComponent extends TopComponent implements ExplorerManager.Provider {
+@SuppressWarnings("PMD.SingularField") // Prevent warnings about generated code
+public final class CasesDashboardTopComponent extends TopComponent implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
     private final ExplorerManager explorerManager;
@@ -62,7 +62,7 @@ public final class MultiUserCasesDashboardTopComponent extends TopComponent impl
     // RJCTODO: Consider moving all of the dashboard code into its own 
     // admindashboards or dashboards package.
     public static void openTopComponent() {
-        MultiUserCasesDashboardTopComponent topComponent = (MultiUserCasesDashboardTopComponent) WindowManager.getDefault().findTopComponent("MultiUserCasesDashboardTopComponent");
+        CasesDashboardTopComponent topComponent = (CasesDashboardTopComponent) WindowManager.getDefault().findTopComponent("CasesDashboardTopComponent");
         if (topComponent != null) {
             if (!topComponent.isOpened()) {
                 Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
@@ -76,24 +76,20 @@ public final class MultiUserCasesDashboardTopComponent extends TopComponent impl
         }
     }
 
-    public MultiUserCasesDashboardTopComponent() {
+    /**
+     * Constructs a singleton top component that provides an adminstrative dashboard
+     * for multi-user cases. The top component is docked into the "dashboard
+     * mode" defined by the auto ingest jobs top component.
+     */
+    public CasesDashboardTopComponent() {
         initComponents();
-        setName(Bundle.CTL_MultiUserCasesDashboardTopComponent());
-        setToolTipText(Bundle.HINT_MultiUserCasesDashboardTopComponent());
+        setName(Bundle.CTL_CasesDashboardTopComponent());
+        setToolTipText(Bundle.HINT_CasesDashboardTopComponent());
         explorerManager = new ExplorerManager();
         associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
-        caseBrowserPanel = new MultiUserCasesBrowserPanel(explorerManager, new AutoIngestCasesDashboardNodeCustomizer());
+        caseBrowserPanel = new MultiUserCasesBrowserPanel(explorerManager, new CasesDashboardCustomizer());
         caseBrowserScrollPane.add(caseBrowserPanel);
         caseBrowserScrollPane.setViewportView(caseBrowserPanel);
-    }
-
-    @Override
-    public void componentOpened() {
-        //caseBrowserPanel.displayCases();
-    }
-
-    @Override
-    public void componentClosed() {
     }
 
     @Override
@@ -101,6 +97,11 @@ public final class MultiUserCasesDashboardTopComponent extends TopComponent impl
         return explorerManager;
     }
 
+    @Override
+    protected void componentOpened() {
+        caseBrowserPanel.displayCases();
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -112,7 +113,7 @@ public final class MultiUserCasesDashboardTopComponent extends TopComponent impl
         refreshButton = new javax.swing.JButton();
         caseBrowserScrollPane = new javax.swing.JScrollPane();
 
-        org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(MultiUserCasesDashboardTopComponent.class, "MultiUserCasesDashboardTopComponent.refreshButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(CasesDashboardTopComponent.class, "CasesDashboardTopComponent.refreshButton.text")); // NOI18N
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshButtonActionPerformed(evt);

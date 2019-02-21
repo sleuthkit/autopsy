@@ -25,22 +25,22 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrowserCustomizer;
 
 /**
- * A customizer for a multi-user case browser panel that presents a tabular view
- * of the multi-user cases known to the coordination service in the
- * administrative dashboard for auto ingest cases.
+ * A customizer for the multi-user case browser panel used in the administrative
+ * dashboard for auto ingest cases to present a tabular view of the multi-user
+ * cases known to the coordination service.
  */
-final class AutoIngestCasesDashboardNodeCustomizer implements MultiUserCaseBrowserCustomizer {
+final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
 
     private final DeleteCaseInputDirectoriesAction deleteCaseInputAction;
     private final DeleteCasesForReprocessingAction deleteCaseOutputAction;
     private final DeleteCasesAction deleteCaseAction;
 
     /**
-     * Constructs a customizer for a multi-user case browser panel that presents
-     * a tabular view of the multi-user cases known to the coordination service
-     * in the administrative dashboard for auto ingest cases.
+     * Constructs a customizer for the multi-user case browser panel used in the
+     * administrative dashboard for auto ingest cases to present a tabular view
+     * of the multi-user cases known to the coordination service.
      */
-    AutoIngestCasesDashboardNodeCustomizer() {
+    CasesDashboardCustomizer() {
         /*
          * These actions are shared by all nodes in order to support multiple
          * selection.
@@ -54,6 +54,7 @@ final class AutoIngestCasesDashboardNodeCustomizer implements MultiUserCaseBrows
     public List<Column> getColumns() {
         List<Column> properties = new ArrayList<>();
         properties.add(Column.CREATE_DATE);
+        properties.add(Column.LAST_ACCESS_DATE);
         properties.add(Column.DIRECTORY);
         return properties;
     }

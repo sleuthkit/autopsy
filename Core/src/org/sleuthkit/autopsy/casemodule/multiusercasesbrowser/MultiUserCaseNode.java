@@ -41,7 +41,7 @@ public final class MultiUserCaseNode extends AbstractNode {
 
     /**
      * Constructs a NetBeans Explorer View node that represents a multi-user
-     * casein a multi-user cases browser panel.
+     * case in a multi-user cases browser panel.
      *
      * @param caseNodeData The coordination service node data for the case.
      * @param customizer   A browser customizer that supplies the actions and
@@ -71,6 +71,9 @@ public final class MultiUserCaseNode extends AbstractNode {
                     break;
                 case DIRECTORY:
                     sheetSet.put(new NodeProperty<>(propName, propName, propName, caseNodeData.getDirectory().toString()));
+                    break;
+                case LAST_ACCESS_DATE:
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, caseNodeData.getLastAccessDate()));
                     break;
                 default:
                     break;

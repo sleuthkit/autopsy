@@ -68,8 +68,7 @@ public final class MultiUserCasesBrowserPanel extends javax.swing.JPanel impleme
         configureOutlineView();
         caseTableScrollPane.add(outlineView);
         caseTableScrollPane.setViewportView(outlineView);
-        this.setVisible(true);        
-        displayCases();
+        this.setVisible(true);
     }
 
     @Override
@@ -103,7 +102,7 @@ public final class MultiUserCasesBrowserPanel extends javax.swing.JPanel impleme
                 outline.setColumnSorted(index + 1, sortColumn.sortAscending(), sortColumn.sortRank());
             }
         }
-        
+
         /*
          * Hide the root node and configure the node selection mode.
          */
@@ -121,8 +120,8 @@ public final class MultiUserCasesBrowserPanel extends javax.swing.JPanel impleme
     }
 
     /**
-     * Fetches and displays the list of multi-user cases known to the
-     * coordination service in this browser.
+     * Refreshes the display of the list of multi-user cases known to the
+     * coordination service.
      */
     @NbBundle.Messages({
         "MultiUserCasesBrowserPanel.waitNode.message=Please Wait..."

@@ -48,7 +48,7 @@ final class OpenMultiUserCasePanel extends JPanel {
     OpenMultiUserCasePanel(JDialog parentDialog) {
         this.parentDialog = parentDialog;
         initComponents(); // Machine generated code 
-        caseBrowserPanel = new MultiUserCasesBrowserPanel(new ExplorerManager(), new OpenMultiUserCaseNodeCustomizer());
+        caseBrowserPanel = new MultiUserCasesBrowserPanel(new ExplorerManager(), new OpenMultiUserCaseDialogCustomizer());
         caseBrowserScrollPane.add(caseBrowserPanel);
         caseBrowserScrollPane.setViewportView(caseBrowserPanel);
         openSelectedCaseButton.setEnabled(false);
