@@ -83,6 +83,7 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             allIngestJobs.addAll(skCase.getIngestJobs());
             dataSources.addAll(skCase.getDataSources());
+            //if for some reason multiple OS_INFO_ARTIFACTS were created with the same parent object id this will only return one OSInfo object for them
             osInfoList = OSUtility.getOSInfo(skCase);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
@@ -118,11 +119,10 @@ final class DataSourceSummaryPanel extends javax.swing.JPanel {
                     //assumes only one Operating System per datasource
                     //get the datasource id from the OSInfo's first artifact if it has artifacts
                     if (!osInfo.getArtifacts().isEmpty() && osInfo.getArtifacts().get(0).getDataSource().getId() == selectedDataSource.getId()) {
-                        osName = osInfo.getOSName();
-                        //if this OSInfo object has a name use it otherwise keep checking OSInfo objects
                         if (!osName.isEmpty()) {
-                            break;
+                            osName += ", ";
                         }
+                        osName += osInfo.getOSName();
                     }
                 } catch (TskCoreException ignored) {
                     //unable to get datasource for the OSInfo Object 

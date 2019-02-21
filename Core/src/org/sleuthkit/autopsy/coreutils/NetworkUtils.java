@@ -92,6 +92,12 @@ public class NetworkUtils {
         if (base.matches(".*[~`!@#$%^&\\*\\(\\)\\+={}\\[\\];:\\?<>,/ ].*")) {
             return "";
         }
+        
+        //verify that the base domain actually has a '.', details JIRA-4609
+        if(!base.contains(".")) {
+            return "";
+        }
+        
         return base;
     }
 
