@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourceSummary;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.Frame;
 import java.util.Map;
@@ -34,10 +34,10 @@ import org.sleuthkit.datamodel.DataSource;
 final class DataSourceSummaryDialog extends javax.swing.JDialog implements Observer {
 
     private static final long serialVersionUID = 1L;
-    private DataSourceSummaryCountsPanel countsPanel;
-    private DataSourceSummaryDetailsPanel detailsPanel;
-    private DataSourceBrowser dataSourcesPanel;
-    private IngestJobInfoPanel ingestHistoryPanel;
+    private final DataSourceSummaryCountsPanel countsPanel;
+    private final DataSourceSummaryDetailsPanel detailsPanel;
+    private final DataSourceBrowser dataSourcesPanel;
+    private final IngestJobInfoPanel ingestHistoryPanel;
     private static final Logger logger = Logger.getLogger(DataSourceSummaryDialog.class.getName());
 
     /**

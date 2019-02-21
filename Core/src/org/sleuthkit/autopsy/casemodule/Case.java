@@ -68,7 +68,7 @@ import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
 import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
-import org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction;
+import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;

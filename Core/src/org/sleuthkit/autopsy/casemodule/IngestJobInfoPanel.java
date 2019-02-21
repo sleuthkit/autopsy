@@ -45,7 +45,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
     private List<IngestJobInfo> ingestJobs;
-    private List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
+    private final List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
     private IngestModuleTableModel ingestModuleTableModel = new IngestModuleTableModel(null);
     private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
@@ -96,7 +96,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         this.ingestJobTableModel = new IngestJobTableModel();
         this.ingestJobTable.setModel(ingestJobTableModel);
         //if there were ingest jobs select the first one by default
-        if (ingestJobsForSelectedDataSource.size() > 0) {
+        if (!ingestJobsForSelectedDataSource.isEmpty()) {
             ingestJobTable.setRowSelectionInterval(0, 0);
         }
         this.repaint();

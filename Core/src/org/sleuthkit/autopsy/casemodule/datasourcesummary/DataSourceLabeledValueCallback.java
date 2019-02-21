@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourceSummary;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.CaseDbAccessManager;
 class DataSourceLabeledValueCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
     private static final Logger logger = Logger.getLogger(DataSourceSingleValueCallback.class.getName());
-    private Map<Long, Map<String, Long>> dataSourceObjIdLabeledValues = new HashMap<>();
+    private final Map<Long, Map<String, Long>> dataSourceObjIdLabeledValues = new HashMap<>();
 
     @Override
     public void process(ResultSet rs) {

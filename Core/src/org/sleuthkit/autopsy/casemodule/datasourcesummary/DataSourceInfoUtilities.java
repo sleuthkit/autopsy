@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourceSummary;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.DataSource;
  * Utilities for getting information about a data source or all data sources
  * from the case database.
  */
-class DataSourceInfoUtilities {
+final class DataSourceInfoUtilities {
 
     private static final Logger logger = Logger.getLogger(DataSourceInfoUtilities.class.getName());
 

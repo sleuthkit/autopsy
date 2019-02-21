@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourceSummary;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.text.DecimalFormat;
 import java.util.Map;
@@ -148,11 +148,10 @@ class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
         "DataSourceSummaryDetailsPanel.units.petabytes= PB"
     })
     private String getSizeString(Long size) {
-        double approximateSize;
         if (size == null) {
             return "";
         }
-        approximateSize = size;
+        double approximateSize = size;
         if (approximateSize < SIZE_COVERSION_CONSTANT) {
             return String.valueOf(size) + Bundle.DataSourceSummaryDetailsPanel_units_bytes();
         }

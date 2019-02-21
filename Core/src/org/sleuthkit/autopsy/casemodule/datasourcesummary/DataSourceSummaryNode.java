@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourceSummary;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
@@ -91,7 +91,7 @@ final class DataSourceSummaryNode extends AbstractNode {
 
         @Override
         protected boolean createKeys(List<DataSourceSummary> list) {
-            if (dataSourceList != null && dataSourceList.size() > 0) {
+            if (dataSourceList != null && !dataSourceList.isEmpty()) {
                 list.addAll(dataSourceList);
             }
             return true;

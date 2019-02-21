@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourceSummary;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.EventQueue;
 import java.beans.PropertyVetoException;
@@ -35,7 +35,7 @@ import javax.swing.event.ListSelectionListener;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryNode.DataSourceSummaryEntryNode;
+import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryNode.DataSourceSummaryEntryNode;
 import static javax.swing.SwingConstants.RIGHT;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.datamodel.DataSource;
