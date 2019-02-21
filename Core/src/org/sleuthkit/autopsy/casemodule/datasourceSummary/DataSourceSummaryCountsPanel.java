@@ -218,12 +218,17 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         private static final long serialVersionUID = 1L;
         private final DataSource currentDataSource;
         private final List<String> columnHeaders = new ArrayList<>();
+        private static final int IMAGES_ROW_INDEX = 0;
+        private static final int VIDEOS_ROW_INDEX = 1;
+        private static final int AUDIO_ROW_INDEX = 2;
+        private static final int DOCUMENTS_ROW_INDEX = 3;
+        private static final int EXECUTABLES_ROW_INDEX = 4;
 
         /**
          * Create a FilesByMimeTypeTableModel for the speicified datasource.
          *
-         * @param selectedDataSource the datasource which this FilesByMimeTypeTablemodel
-         *                           will represent
+         * @param selectedDataSource the datasource which this
+         *                           FilesByMimeTypeTablemodel will represent
          */
         FilesByMimeTypeTableModel(DataSource selectedDataSource) {
             columnHeaders.add(Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_type_header());
@@ -253,15 +258,15 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
                 switch (rowIndex) {
-                    case 0:
+                    case IMAGES_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_images_row();
-                    case 1:
+                    case VIDEOS_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_videos_row();
-                    case 2:
+                    case AUDIO_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_audio_row();
-                    case 3:
+                    case DOCUMENTS_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_documents_row();
-                    case 4:
+                    case EXECUTABLES_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByMimeTypeTableModel_executables_row();
                     default:
                         break;
@@ -302,12 +307,16 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         private static final long serialVersionUID = 1L;
         private final DataSource currentDataSource;
         private final List<String> columnHeaders = new ArrayList<>();
-
+        private static final int ALL_FILES_ROW_INDEX = 0;
+        private static final int ALLOCATED_FILES_ROW_INDEX = 1;
+        private static final int UNALLOCATED_FILES_ROW_INDEX = 2;
+        private static final int SLACK_FILES_ROW_INDEX = 3;
+        private static final int DIRECTORIES_ROW_INDEX = 4;
         /**
          * Create a FilesByCategoryTableModel for the speicified datasource.
          *
-         * @param selectedDataSource the datasource which this FilesByCategoryTablemodel
-         *                           will represent
+         * @param selectedDataSource the datasource which this
+         *                           FilesByCategoryTablemodel will represent
          */
         FilesByCategoryTableModel(DataSource selectedDataSource) {
             columnHeaders.add(Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_type_header());
@@ -337,15 +346,15 @@ class DataSourceSummaryCountsPanel extends javax.swing.JPanel {
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (columnIndex == 0) {
                 switch (rowIndex) {
-                    case 0:
+                    case ALL_FILES_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_all_row();
-                    case 1:
+                    case ALLOCATED_FILES_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_allocated_row();
-                    case 2:
+                    case UNALLOCATED_FILES_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_unallocated_row();
-                    case 3:
+                    case SLACK_FILES_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_slack_row();
-                    case 4:
+                    case DIRECTORIES_ROW_INDEX:
                         return Bundle.DataSourceSummaryCountsPanel_FilesByCategoryTableModel_directory_row();
                     default:
                         break;

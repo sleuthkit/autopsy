@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.guiutils.GrayableCellRenderer;
  * cell contains a NodeProperty the value of that NodeProperty sets text to
  * empty string if null.
  */
-class RightAlignedTableCellRenderer extends GrayableCellRenderer {
+final class RightAlignedTableCellRenderer extends GrayableCellRenderer {
 
     private static final long serialVersionUID = 1L;
 
