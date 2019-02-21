@@ -84,17 +84,27 @@ class DataSourceSummaryDetailsPanel extends javax.swing.JPanel {
                 sizeString = getSizeString(selectedDataSource.getSize());
                 sectorSizeString = getSizeString(((Image) selectedDataSource).getSsize());
                 try {
+                    //older databases may have null as the hash values
                     md5String = ((Image) selectedDataSource).getMd5();
+                    if (md5String == null) {
+                        md5String = "";
+                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Unable to get MD5 for selected data source", ex);
                 }
                 try {
                     sha1String = ((Image) selectedDataSource).getSha1();
+                    if (sha1String == null) {
+                        sha1String = "";
+                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Unable to get SHA1 for selected data source", ex);
                 }
                 try {
                     sha256String = ((Image) selectedDataSource).getSha256();
+                    if (sha256String == null) {
+                        sha256String = "";
+                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.WARNING, "Unable to get SHA256 for selected data source", ex);
                 }
