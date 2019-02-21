@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
  * An action that opens a multi-user case and hides the open multi-user case
  * dialog given the coordination service node data for the case.
  */
- final class OpenMultiUserCaseAction extends AbstractAction {
+final class OpenMultiUserCaseAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(OpenMultiUserCaseAction.class.getName());
