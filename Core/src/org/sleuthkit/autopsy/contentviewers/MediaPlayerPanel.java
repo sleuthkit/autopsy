@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.swing.BoxLayout;
@@ -58,6 +59,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * This is a video player that is part of the Media View layered pane. It uses
+ * GStreamer to process the video and JavaFX to display it.
+ */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaViewPanel {
 
@@ -172,15 +177,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private int totalHours, totalMinutes, totalSeconds;
     private volatile PlayBin gstPlayBin;
     private GstVideoRendererPanel gstVideoRenderer;
-    private boolean autoTracking = false; // true if the slider is moving automatically
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlayBin player
     private AbstractFile currentFile;
     
     private Timer timer;
     private ExtractMedia extractMediaWorker;
     
-    private final long END_TIME_MARGIN_NS = 50000000;
-    private final int PLAYER_STATUS_UPDATE_INTERVAL_MS = 50;
+    private static final long END_TIME_MARGIN_NS = 50000000;
+    private static final int PLAYER_STATUS_UPDATE_INTERVAL_MS = 50;
 
     /**
      * Creates new form MediaViewVideoPanel
@@ -226,7 +230,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setValue(0);
         progressSlider.addChangeListener(new ChangeListener() {
             @Override
-            public void stateChanged(ChangeEvent e) {
+            public void stateChanged(ChangeEvent event) {
                 if (gstPlayBin == null) {
                     return;
                 }
@@ -252,19 +256,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing"); //NON-NLS
             Gst.init();
             gstInited = true;
-        } catch (GstException e) {
+        } catch (GstException ex) {
             gstInited = false;
-            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", e); //NON-NLS
+            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(
                     NbBundle.getMessage(this.getClass(), "GstVideoPanel.initGst.gstException.msg"),
-                    e.getMessage());
-            return false;
-        } catch (UnsatisfiedLinkError | NoClassDefFoundError | Exception e) {
-            gstInited = false;
-            logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and extraction capabilities", e); //NON-NLS
-            MessageNotifyUtil.Notify.error(
-                    NbBundle.getMessage(this.getClass(), "GstVideoPanel.initGst.otherException.msg"),
-                    e.getMessage());
+                    ex.getMessage());
             return false;
         }
 
@@ -314,7 +311,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             infoLabel.setToolTipText(path);
             pauseButton.setEnabled(true);
             progressSlider.setEnabled(true);
-            timer = new Timer(PLAYER_STATUS_UPDATE_INTERVAL_MS, e -> {
+            timer = new Timer(PLAYER_STATUS_UPDATE_INTERVAL_MS, event -> {
                 if (!progressSlider.getValueIsAdjusting()) {
                     long duration;
                     long position;
@@ -406,12 +403,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         synchronized (playbinLock) {
             if (gstPlayBin != null) {
-                if (gstPlayBin.isPlaying()) {
-                    if (gstPlayBin.stop() == StateChangeReturn.FAILURE) {
-                        logger.log(Level.WARNING, "Attempt to call PlayBin.stop() failed."); //NON-NLS
-                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                        return;
-                    }
+                if (gstPlayBin.isPlaying() && gstPlayBin.stop() == StateChangeReturn.FAILURE) {
+                    logger.log(Level.WARNING, "Attempt to call PlayBin.stop() failed."); //NON-NLS
+                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    return;
                 }
                 gstPlayBin.dispose();
                 gstPlayBin = null;
@@ -561,7 +556,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private javax.swing.JPanel videoPanel;
     // End of variables declaration//GEN-END:variables
 
-    /*
+    /**
      * Thread that extracts and plays a file
      */
     private class ExtractMedia extends SwingWorker<Long, Void> {
@@ -578,7 +573,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         @Override
         protected Long doInBackground() throws Exception {
             if (tempFile.exists() == false || tempFile.length() < sourceFile.getSize()) {
-                progress = ProgressHandle.createHandle(NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> ExtractMedia.this.cancel(true));
+                progress = ProgressHandle.createHandle(NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> this.cancel(true));
                 progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
                 progress.start(100);
                 try {
@@ -603,7 +598,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
             } catch (InterruptedException ex) {
                 logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
-            } catch (Exception ex) {
+            } catch (ExecutionException ex) {
                 logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
             } finally {
                 if (progress != null) {

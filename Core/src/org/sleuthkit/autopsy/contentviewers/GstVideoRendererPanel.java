@@ -21,10 +21,6 @@ package org.sleuthkit.autopsy.contentviewers;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -43,14 +39,13 @@ import org.freedesktop.gstreamer.elements.AppSink;
 /**
  * This is a video renderer for GStreamer.
  */
-class GstVideoRendererPanel extends JFXPanel {
+final class GstVideoRendererPanel extends JFXPanel {
     
     private static final String CAP_MIME_TYPE = "video/x-raw";
     private static final String CAP_BYTE_ORDER = (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN ? "format=BGRx" : "format=xRGB");
     private static final int PROP_MAX_BUFFERS = 5000;
     private AppSink videoSink;
     private ImageView fxImageView;
-    private BorderPane borderpane;
     
     /**
      * Create an instance.
@@ -65,7 +60,7 @@ class GstVideoRendererPanel extends JFXPanel {
      */
     private void initImageView() {
         fxImageView = new ImageView();  // Will hold the current video frame.
-        borderpane = new BorderPane(fxImageView); // Center and size ImageView.
+        BorderPane borderpane = new BorderPane(fxImageView); // Center and size ImageView.
         Scene scene = new Scene(borderpane); // Root of the JavaFX tree.
         setScene(scene);
 
@@ -147,10 +142,10 @@ class GstVideoRendererPanel extends JFXPanel {
          * @return The image.
          */
         private Image convertBytesToImage(byte[] pixels, int width, int height) {
-            WritableImage img = new WritableImage(width, height);
-            PixelWriter pw = img.getPixelWriter();
-            pw.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), pixels, 0, width * 4);
-            return img;
+            WritableImage image = new WritableImage(width, height);
+            PixelWriter pixelWriter = image.getPixelWriter();
+            pixelWriter.setPixels(0, 0, width, height, PixelFormat.getByteBgraInstance(), pixels, 0, width * 4);
+            return image;
         }
     }
 }

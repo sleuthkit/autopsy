@@ -163,6 +163,9 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
         lastFile = null;
     }
 
+    /**
+     * Panel used to display media content.
+     */
     protected interface MediaViewPanel {
 
         /**
