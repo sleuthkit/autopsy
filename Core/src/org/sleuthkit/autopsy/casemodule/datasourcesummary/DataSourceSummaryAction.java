@@ -29,7 +29,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 
-@ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction")
+@ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryAction")
 @ActionRegistration(displayName = "#CTL_DataSourceSummaryAction", lazy = false)
 @Messages({"CTL_DataSourceSummaryAction=Data Source Summary"})
 /**
