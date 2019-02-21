@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
  * A NetBeans Explorer View node that represents a multi-user case in a
  * multi-user cases browser panel.
  */
-public final class MultiUserCaseNode extends AbstractNode {
+final class MultiUserCaseNode extends AbstractNode {
 
     private final CaseNodeData caseNodeData;
     private final MultiUserCaseBrowserCustomizer customizer;

@@ -26,7 +26,6 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
-import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseNode;
 
 /**
  * A JPanel that allows a user to open a multi-user case.
@@ -184,10 +183,11 @@ final class OpenMultiUserCasePanel extends JPanel {
     private void openSelectedCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openSelectedCaseButtonActionPerformed
         ExplorerManager explorerManager = caseBrowserPanel.getExplorerManager();
         Node[] selectedNodes = explorerManager.getSelectedNodes();
-        if (selectedNodes.length > 0 && selectedNodes[0] instanceof MultiUserCaseNode) {
-            MultiUserCaseNode caseNode = (MultiUserCaseNode) selectedNodes[0];
-            CaseNodeData nodeData = caseNode.getLookup().lookup(CaseNodeData.class);
-            new OpenMultiUserCaseAction(nodeData).actionPerformed(evt);
+        if (selectedNodes.length > 0) {
+            CaseNodeData nodeData = selectedNodes[0].getLookup().lookup(CaseNodeData.class);
+            if (nodeData != null) {
+                new OpenMultiUserCaseAction(nodeData).actionPerformed(evt);
+            }
         }
     }//GEN-LAST:event_openSelectedCaseButtonActionPerformed
 
