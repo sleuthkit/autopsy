@@ -516,8 +516,7 @@ class MSOfficeEmbeddedContentExtractor {
      * @return
      */
     private String getFileRelativePath(String fileName) {
-        // Used explicit FWD slashes to maintain DB consistency across operating systems.
-        return "/" + moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
+        return Paths.get(moduleDirRelative, this.parentFileName, fileName).toString();
     }
 
     /**
