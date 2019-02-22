@@ -448,10 +448,6 @@
                 <binary-origin>release/modules/ext/StixLib.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/cxf-rt-rs-client-3.2.7.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\cxf-rt-rs-client-3.2.7.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jackson-core-2.9.7.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jackson-core-2.9.7.jar</binary-origin>
             </class-path-extension>
@@ -636,10 +632,6 @@
                 <binary-origin>release\modules\ext\slf4j-api-1.7.25.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jaxb-runtime-2.3.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\jaxb-runtime-2.3.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/geoapi-3.0.1.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\geoapi-3.0.1.jar</binary-origin>
             </class-path-extension>
@@ -666,6 +658,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sqlite-jdbc-3.25.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.25.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/cxf-rt-rs-client-3.3.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\cxf-rt-rs-client-3.3.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-tools-2.0.13.jar</runtime-relative-path>

@@ -21,8 +21,10 @@
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
-        <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.20"/>
-
+        <!-- Exclude the version of cxf-rt-rs-client from Tika 1.20, one of its depedencies breaks Ivy -->
+        <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.20">
+            <exclude module="cxf-rt-rs-client"/>
+        </dependency>
         
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
         <dependency conf="autopsy->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>

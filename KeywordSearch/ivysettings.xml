@@ -6,6 +6,4 @@
         <ibiblio name="maven.restlet.org" root="http://maven.restlet.com" m2compatible="true" />        
     </chain>
   </resolvers>
-  <!-- For Tika dependencies -->
-  <property name="packaging.type" value="jar"/>
 </ivysettings>

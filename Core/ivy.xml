@@ -19,7 +19,14 @@
         <dependency conf="core->default" org="com.drewnoakes" name="metadata-extractor" rev="2.8.1"/>
 
         <dependency conf="core->default" org="org.apache.tika" name="tika-core" rev="1.20"/>
-        <dependency conf="core->default" org="org.apache.tika" name="tika-parsers" rev="1.20"/>
+        <!-- Exclude the version of cxf-rt-rs-client from Tika 1.20, one of its depedencies breaks Ivy -->
+        <dependency conf="core->default" org="org.apache.tika" name="tika-parsers" rev="1.20">
+            <exclude module="cxf-rt-rs-client"/>
+        </dependency>
+        
+        <!-- Pull down the latest cxf-rt-rs-client which has the Ivy fix -->
+        <dependency conf="core->default" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.3.0"/>
+        
         <dependency conf="core->default" org="com.adobe.xmp" name="xmpcore" rev="5.1.2"/>
         <dependency conf="core->default" org="org.apache.zookeeper" name="zookeeper" rev="3.4.6"/>
 
@@ -33,14 +40,14 @@
         <dependency conf="core->default" org="org.jsoup" name="jsoup" rev="1.10.3"/>
         <dependency conf="core->default" org="com.googlecode.plist" name="dd-plist" rev="1.20"/>
 		
-		<dependency conf="core->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.9.7"/>
+        <dependency conf="core->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.9.7"/>
          
         <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         <dependency conf="core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         
         <!-- Tika 1.14 seems to declare a (transitive?) dependency on cleartk-util 3.2.2, but the most recent
         version available is 2.0.0  Overriding the version worked-->
-        <override  org="org.cleartk" module="cleartk-util" rev="2.0.0"/>
-        
+        <override  org="org.cleartk" module="cleartk-util" rev="2.0.0"/>       
+        <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>     
     </dependencies>
 </ivy-module>
