@@ -28,6 +28,7 @@ import ezvcard.property.Url;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -101,6 +103,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private FileManager fileManager;
     private IngestJobContext context;
     private Blackboard blackboard;
+    
+    private Case currentCase;
+    private SleuthkitCase tskCase;
 
     ThunderbirdMboxFileIngestModule() {
     }
@@ -110,6 +115,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         try {
+            currentCase = Case.getCurrentCaseThrows();
+            tskCase = currentCase.getSleuthkitCase();
             fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex);
@@ -649,69 +656,16 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      */
     @Messages({"ThunderbirdMboxFileIngestModule.addContactArtifact.indexError=Failed to index the contact artifact for keyword search."})
     private BlackboardArtifact addContactArtifact(VCard vcard, AbstractFile abstractFile) throws NoCurrentCaseException {
-        Case currentCase = Case.getCurrentCaseThrows();
-        SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-        
         List<BlackboardAttribute> attributes = new ArrayList<>();
         
         addArtifactAttribute(vcard.getFormattedName().getValue(), ATTRIBUTE_TYPE.TSK_NAME_PERSON, attributes);
         
         for (Telephone telephone : vcard.getTelephoneNumbers()) {
-            String telephoneText = telephone.getText();
-            if (telephoneText == null || telephoneText.isEmpty()) {
-                continue;
-            }
-            
-            // Add phone number to collection for later creation of TSK_CONTACT.
-            List<TelephoneType> telephoneTypes = telephone.getTypes();
-            if (telephoneTypes.isEmpty()) {
-                addArtifactAttribute(telephone.getText(), ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, attributes);
-            } else {
-                for (TelephoneType type : telephoneTypes) {
-                    String attributeTypeName = "TSK_PHONE_" + type.getValue().toUpperCase();
-                    try {
-                        BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
-                        if (attributeType == null) {
-                            // Add this attribute type to the case database.
-                            tskCase.addArtifactAttributeType(attributeTypeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, type.getValue());
-                        }
-                        addArtifactAttribute(telephone.getText(), attributeType, attributes);
-                    } catch (TskCoreException ex) {
-                        System.out.println(); //DLG:
-                    } catch (TskDataException ex) {
-                        System.out.println(); //DLG:
-                    }
-                }
-            }
+            attributes.addAll(generatePhoneAttributes(telephone, abstractFile));
         }
         
         for (Email email : vcard.getEmails()) {
-            String emailValue = email.getValue();
-            if (emailValue == null || emailValue.isEmpty()) {
-                continue;
-            }
-            
-            // Add phone number to collection for later creation of TSK_CONTACT.
-            List<EmailType> emailTypes = email.getTypes();
-            if (emailTypes.isEmpty()) {
-                addArtifactAttribute(email.getValue(), ATTRIBUTE_TYPE.TSK_EMAIL, attributes);
-            } else {
-                for (EmailType type : emailTypes) {
-                    String attributeTypeName = "TSK_EMAIL_" + type.getValue().toUpperCase();
-                    try {
-                        BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
-                        if (attributeType == null) {
-                            // Add this attribute type to the case database.
-                            tskCase.addArtifactAttributeType(attributeTypeName, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, type.getValue());
-                        }
-                        addArtifactAttribute(email.getValue(), attributeType, attributes);
-                    } catch (TskCoreException ex) {
-                        System.out.println(); //DLG:
-                    } catch (TskDataException ex) {
-                        System.out.println(); //DLG:
-                    }
-                }
-            }
+            attributes.addAll(generateEmailAttributes(email, abstractFile));
         }
         
         for (Url url : vcard.getUrls()) {
@@ -754,6 +708,114 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         return artifact;
+    }
+    
+    /**
+     * Generate phone attributes for a given VCard Telephone object.
+     * 
+     * @param telephone    The VCard Telephone from which to generate attributes.
+     * @param abstractFile The VCard file.
+     * 
+     * @return A list of attributes.
+     */
+    private List<BlackboardAttribute> generatePhoneAttributes(Telephone telephone, AbstractFile abstractFile) {
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        
+        String telephoneText = telephone.getText();
+        if (telephoneText == null || telephoneText.isEmpty()) {
+            return attributes;
+        }
+
+        // Add phone number to collection for later creation of TSK_CONTACT.
+        List<TelephoneType> telephoneTypes = telephone.getTypes();
+        if (telephoneTypes.isEmpty()) {
+            addArtifactAttribute(telephone.getText(), ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, attributes);
+        } else {
+            for (TelephoneType type : telephoneTypes) {
+                /*
+                 * Unfortunately, if the types are lower-case, they don't
+                 * get separated correctly into individual TelephoneTypes by
+                 * ez-vcard. Therefore, we must read them manually
+                 * ourselves.
+                 */
+                List<String> splitTelephoneTypes = Arrays.asList(
+                        type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
+
+                for (String splitType : splitTelephoneTypes) {
+                    String attributeTypeName = "TSK_PHONE_" + splitType;
+                    try {
+                        BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                        if (attributeType == null) {
+                            // Add this attribute type to the case database.
+                            attributeType = tskCase.addArtifactAttributeType(attributeTypeName,
+                                    BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                                    String.format("Phone (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+                        }
+                        addArtifactAttribute(telephone.getText(), attributeType, attributes);
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+                    } catch (TskDataException ex) {
+                        logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+                    }
+                }
+            }
+        }
+        
+        return attributes;
+    }
+    
+    /**
+     * Generate e-mail attributes for a given VCard Email object.
+     * 
+     * @param email        The VCard Email from which to generate attributes.
+     * @param abstractFile The VCard file.
+     * 
+     * @return A list of attributes.
+     */
+    private List<BlackboardAttribute> generateEmailAttributes(Email email, AbstractFile abstractFile) {
+        List<BlackboardAttribute> attributes = new ArrayList<>();
+        
+        String emailValue = email.getValue();
+        if (emailValue == null || emailValue.isEmpty()) {
+            return attributes;
+        }
+
+        // Add phone number to collection for later creation of TSK_CONTACT.
+        List<EmailType> emailTypes = email.getTypes();
+        if (emailTypes.isEmpty()) {
+            addArtifactAttribute(email.getValue(), ATTRIBUTE_TYPE.TSK_EMAIL, attributes);
+        } else {
+            for (EmailType type : emailTypes) {
+                /*
+                 * Unfortunately, if the types are lower-case, they don't
+                 * get separated correctly into individual EmailTypes by
+                 * ez-vcard. Therefore, we must read them manually
+                 * ourselves.
+                 */
+                List<String> splitEmailTypes = Arrays.asList(
+                        type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
+
+                for (String splitType : splitEmailTypes) {
+                    String attributeTypeName = "TSK_EMAIL_" + splitType;
+                    try {
+                        BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
+                        if (attributeType == null) {
+                            // Add this attribute type to the case database.
+                            attributeType = tskCase.addArtifactAttributeType(attributeTypeName, 
+                                    BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, 
+                                    String.format("Email (%s)", StringUtils.capitalize(splitType.toLowerCase())));
+                        }
+                        addArtifactAttribute(email.getValue(), attributeType, attributes);
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, String.format("Unable to retrieve attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+                    } catch (TskDataException ex) {
+                        logger.log(Level.SEVERE, String.format("Unable to add custom attribute type '%s' for file '%s' (id=%d).", attributeTypeName, abstractFile.getName(), abstractFile.getId()), ex);
+                    }
+                }
+            }
+        }
+        
+        return attributes;
     }
 
     private void addArtifactAttribute(String stringVal, ATTRIBUTE_TYPE attrType, Collection<BlackboardAttribute> bbattributes) {

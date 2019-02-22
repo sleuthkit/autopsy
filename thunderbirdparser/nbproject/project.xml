@@ -51,6 +51,10 @@
             </module-dependencies>
             <public-packages/>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-lang3-3.8.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang3-3.8.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-core-0.8.0-SNAPSHOT.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-core-0.8.0-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
