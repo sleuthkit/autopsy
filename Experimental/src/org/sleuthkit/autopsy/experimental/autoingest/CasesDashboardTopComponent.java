@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.util.logging.Level;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.windows.TopComponent;
@@ -25,6 +26,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCasesBrowserPanel;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A top component that provides an adminstrative dashboard for multi-user
@@ -51,6 +53,7 @@ import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCasesBrow
 public final class CasesDashboardTopComponent extends TopComponent implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(CasesDashboardTopComponent.class.getName());
     private final ExplorerManager explorerManager;
     private final MultiUserCasesBrowserPanel caseBrowserPanel;
 
@@ -63,23 +66,29 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
     // admindashboards or dashboards package.
     public static void openTopComponent() {
         CasesDashboardTopComponent topComponent = (CasesDashboardTopComponent) WindowManager.getDefault().findTopComponent("CasesDashboardTopComponent");
-        if (topComponent != null) {
-            if (!topComponent.isOpened()) {
-                Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
-                if (mode != null) {
-                    mode.dockInto(topComponent);
-                }
-                topComponent.open();
-            }
-            topComponent.toFront();
-            topComponent.requestActive();
+        if (topComponent == null) {
+            logger.log(Level.SEVERE, "Failed to find CasesDashboardTopComponent"); // NON-NLS
+            return;
         }
+
+        Mode mode = WindowManager.getDefault().findMode("dashboard"); // NON-NLS
+        if (mode == null) {
+            logger.log(Level.SEVERE, "Failed to find dashboard for CasesDashboardTopComponent, will not display"); // NON-NLS
+            return;
+        }
+
+        if (!topComponent.isOpened()) {
+            mode.dockInto(topComponent);
+            topComponent.open();
+        }
+        topComponent.toFront();
+        topComponent.requestActive();
     }
 
     /**
-     * Constructs a singleton top component that provides an adminstrative dashboard
-     * for multi-user cases. The top component is docked into the "dashboard
-     * mode" defined by the auto ingest jobs top component.
+     * Constructs a singleton top component that provides an adminstrative
+     * dashboard for multi-user cases. The top component is docked into the
+     * "dashboard mode" defined by the auto ingest jobs top component.
      */
     public CasesDashboardTopComponent() {
         initComponents();
@@ -101,7 +110,7 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
     protected void componentOpened() {
         caseBrowserPanel.displayCases();
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
