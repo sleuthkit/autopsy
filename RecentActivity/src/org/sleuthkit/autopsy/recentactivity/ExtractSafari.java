@@ -82,7 +82,7 @@ final class ExtractSafari extends Extract{
             processHistoryDB(dataSource, context);
         }catch(IOException | TskCoreException ex){
             this.addErrorMessage(Bundle.ExtractSafari_Error_Getting_History());
-            logger.log(Level.SEVERE, "Exception thrown while processing history file: " + ex);
+            logger.log(Level.SEVERE, "Exception thrown while processing history file: " + ex); //NON-NLS
         }
     }
     
