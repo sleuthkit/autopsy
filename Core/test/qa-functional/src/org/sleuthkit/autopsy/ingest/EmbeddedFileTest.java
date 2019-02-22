@@ -65,7 +65,7 @@ public class EmbeddedFileTest extends NbTestCase {
         super(name);
     }
 
-    
+    @Override
     public void setUp() {
 
         openCase = CaseUtils.createAsCurrentCase(CASE_NAME);
