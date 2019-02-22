@@ -2027,6 +2027,43 @@ public class Case {
             throw ex;
         }
     }
+    
+    /**
+     * Create an empty portable case from the current case
+     * 
+     * @param caseName           Case name
+     * @param portableCaseFolder Case folder - must not exist
+     * 
+     * @return The portable case database
+     * 
+     * @throws TskCoreException 
+     */
+    public SleuthkitCase createPortableCase(String caseName, File portableCaseFolder) throws TskCoreException {
+        
+        if (portableCaseFolder.exists()) {
+            throw new TskCoreException("Portable case folder " + portableCaseFolder.toString() + " already exists");
+        }
+        if (! portableCaseFolder.mkdirs()) {
+            throw new TskCoreException("Error creating portable case folder " + portableCaseFolder.toString());
+        }
+         
+        CaseDetails details = new CaseDetails(caseName, getNumber(), getExaminer(), 
+                getExaminerPhone(), getExaminerEmail(), getCaseNotes());
+        try {
+            CaseMetadata portableCaseMetadata = new CaseMetadata(Case.CaseType.SINGLE_USER_CASE, portableCaseFolder.toString(), 
+                caseName, details, metadata);
+            portableCaseMetadata.setCaseDatabaseName(SINGLE_USER_CASE_DB_NAME);
+        } catch (CaseMetadataException ex) {
+            throw new TskCoreException("Error creating case metadata", ex);
+        }
+        
+         // Create the Sleuthkit case
+        SleuthkitCase portableSleuthkitCase;
+        String dbFilePath = Paths.get(portableCaseFolder.toString(), SINGLE_USER_CASE_DB_NAME).toString();
+        portableSleuthkitCase = SleuthkitCase.newCase(dbFilePath);
+        
+        return portableSleuthkitCase;
+    }    
 
     /**
      * Checks current thread for an interrupt. Usage: checking for user

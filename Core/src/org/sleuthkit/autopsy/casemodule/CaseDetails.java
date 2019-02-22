@@ -65,7 +65,7 @@ public final class CaseDetails implements Serializable {
         examinerPhone = exPhone;
         examinerEmail = exEmail;
         caseNotes = notes;
-    }
+    }    
 
     /**
      * Get the case display name
@@ -115,7 +115,7 @@ public final class CaseDetails implements Serializable {
     /**
      * Get the case notes
      *
-     * @return notes - the note asssociated with the case
+     * @return notes - the note associated with the case
      */
     public String getCaseNotes() {
         return caseNotes;
