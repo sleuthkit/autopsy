@@ -78,6 +78,12 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
 
         try {
             if (dataSource instanceof Image) {
+                
+                if (((Image) dataSource).getPaths().length == 0) {
+                    logger.log(Level.SEVERE, String.format("Unable to process data source '%s' - image has no paths", dataSource.getName()));
+                    return IngestModule.ProcessResult.ERROR;
+                }
+                
                 List<VolumeSystem> volumeSystems = ((Image) dataSource).getVolumeSystems();
                 for (VolumeSystem volumeSystem : volumeSystems) {
                     for (Volume volume : volumeSystem.getVolumes()) {
