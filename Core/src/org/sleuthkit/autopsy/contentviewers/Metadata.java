@@ -138,7 +138,8 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         "Metadata.tableRowTitle.timezone=Time Zone",
         "Metadata.tableRowTitle.deviceId=Device ID",
         "Metadata.tableRowTitle.acquisitionDetails=Acquisition Details",
-        "Metadata.nodeText.unknown=Unknown"})
+        "Metadata.nodeText.unknown=Unknown",
+        "Metadata.nodeText.none=None"})
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
@@ -251,15 +252,20 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
             // Add all the data source paths to the "Local Path" value cell.
             String[] imagePaths = image.getPaths();
-            StringBuilder pathValues = new StringBuilder("<div>");
-            pathValues.append(imagePaths[0]);
-            pathValues.append("</div>");
-            for (int i=1; i < imagePaths.length; i++) {
-                pathValues.append("<div>");
-                pathValues.append(imagePaths[i]);
+            if (imagePaths.length > 0) {
+                StringBuilder pathValues = new StringBuilder("<div>");
+                pathValues.append(imagePaths[0]);
                 pathValues.append("</div>");
+                for (int i=1; i < imagePaths.length; i++) {
+                    pathValues.append("<div>");
+                    pathValues.append(imagePaths[i]);
+                    pathValues.append("</div>");
+                }
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), pathValues.toString());
+            } else {
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), 
+                        NbBundle.getMessage(this.getClass(), "Metadata.nodeText.none"));
             }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), pathValues.toString());
         }
         
         setText(sb.toString());

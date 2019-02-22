@@ -320,7 +320,8 @@ class TskDbDiff(object):
         id_objects_table = build_id_objects_table(conn.cursor(), isMultiUser)
         id_artifact_types_table = build_id_artifact_types_table(conn.cursor(), isMultiUser)
         id_reports_table = build_id_reports_table(conn.cursor(), isMultiUser)
-        id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table, id_reports_table)
+        id_images_table = build_id_image_names_table(conn.cursor(), isMultiUser)
+        id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table, id_reports_table, id_images_table)
 
         if isMultiUser: # Use PostgreSQL
             os.environ['PGPASSWORD']=pgSettings.password
@@ -333,14 +334,17 @@ class TskDbDiff(object):
                 for line in postgreSQL_db:
                     line = line.strip('\r\n ')
                     # Deal with pg_dump result file
-                    if (line.startswith('--') or line.lower().startswith('alter') or "pg_catalog" in line or "idle_in_transaction_session_timeout" in line or not line or 'INSERT INTO "image_gallery_groups_seen"' in line): # It's comment or alter statement or catalog entry or set idle entry or empty line
+                    if (line.startswith('--') or line.lower().startswith('alter') or "pg_catalog" in line or "idle_in_transaction_session_timeout" in line or not line): # It's comment or alter statement or catalog entry or set idle entry or empty line
                         continue
                     elif not line.endswith(';'): # Statement not finished
                         dump_line += line
                         continue
                     else:
                         dump_line += line
-                    dump_line = normalize_db_entry(dump_line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table) 
+                    if 'INSERT INTO image_gallery_groups_seen' in dump_line:
+                        dump_line = ''
+                        continue;
+                    dump_line = normalize_db_entry(dump_line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table)
                     db_log.write('%s\n' % dump_line)
                     dump_line = ''
             postgreSQL_db.close()
@@ -354,7 +358,7 @@ class TskDbDiff(object):
                 for line in conn.iterdump():
                     if 'INSERT INTO "image_gallery_groups_seen"' in line:
                         continue
-                    line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table)
+                    line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table, id_reports_table, id_images_table)
                     db_log.write('%s\n' % line)
         # Now sort the file  
         srtcmdlst = ["sort", dump_file, "-o", dump_file]
@@ -406,7 +410,7 @@ class PGSettings(object):
         return self.password
 
 
-def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info_table, objects_table, reports_table):
+def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info_table, objects_table, reports_table, images_table):
     """ Make testing more consistent and reasonable by doctoring certain db entries.
 
     Args:
@@ -515,6 +519,8 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             parent_path = vs_info_table[parent_id]
         elif parent_id in fs_info_table.keys():
             parent_path = fs_info_table[parent_id]
+        elif parent_id in images_table.keys():
+            parent_path = images_table[parent_id]
         elif parent_id == 'NULL':
             parent_path = "NULL"
         
@@ -620,6 +626,18 @@ def build_id_objects_table(db_cursor, isPostgreSQL):
     mapping = dict([(row[0], [row[1], row[2]]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT * FROM tsk_objects")])
     return mapping
 
+def build_id_image_names_table(db_cursor, isPostgreSQL):
+    """Build the map of object ids to name.
+
+    Args:
+        db_cursor: the database cursor
+    """
+    # for each row in the db, take the object id and name then create a tuple in the dictionary
+    # with the object id as the key and name, type as the value
+    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, name FROM tsk_image_names WHERE sequence=0")])
+    #data_sources which are logical file sets will be found in the files table
+    return mapping
+
 def build_id_artifact_types_table(db_cursor, isPostgreSQL):
     """Build the map of object ids to artifact ids.
 
@@ -642,7 +660,7 @@ def build_id_reports_table(db_cursor, isPostgreSQL):
     return mapping
 
 
-def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports_table):
+def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports_table, images_table):
     """Build the map of object ids to artifact ids.
 
     Args:
@@ -654,6 +672,7 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
     # make a copy of files_table and update it with new data from artifacts_table and reports_table
     mapping = files_table.copy()
     for k, v in objects_table.items():
+        path = ""
         if k not in mapping.keys(): # If the mapping table doesn't have data for obj_id
             if k in reports_table.keys(): # For a report we use the report path
                 par_obj_id = v[0]
@@ -665,6 +684,8 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table, reports
                     path = mapping[par_obj_id]
                 elif par_obj_id in reports_table.keys():
                     path = reports_table[par_obj_id]
+                elif par_obj_id in images_table.keys():
+                    path = images_table[par_obj_id]
                 mapping[k] = path + "/" + artifacts_table[k]
         elif v[0] not in mapping.keys():
             if v[0] in artifacts_table.keys():
