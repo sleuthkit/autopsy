@@ -74,32 +74,8 @@ import org.sleuthkit.datamodel.TskException;
  * structure and metadata.
  */
 public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
-    private static final String VCARD_TEL_TYPE_HOME = "home";
-    private static final String VCARD_TEL_TYPE_WORK = "work";
-    private static final String VCARD_TEL_TYPE_TEXT = "text";
-    private static final String VCARD_TEL_TYPE_VOICE = "voice";
-    private static final String VCARD_TEL_TYPE_FAX = "fax";
-    private static final String VCARD_TEL_TYPE_CELL = "cell";
-    private static final String VCARD_TEL_TYPE_VIDEO = "video";
-    private static final String VCARD_TEL_TYPE_PAGER = "pager";
-    private static final String VCARD_TEL_TYPE_TEXTPHONE = "textphone";
-    private static final String VCARD_TEL_TYPE_MAIN_NUMBER = "main-number";
-    private static final String VCARD_TEL_TYPE_MSG = "msg";
-    private static final String VCARD_TEL_TYPE_PREF = "pref";
-    private static final String VCARD_TEL_TYPE_BBS = "bbs";
-    private static final String VCARD_TEL_TYPE_MODEM = "modem";
-    private static final String VCARD_TEL_TYPE_CAR = "car";
-    private static final String VCARD_TEL_TYPE_ISDN = "isdn";
-    private static final String VCARD_TEL_TYPE_PCS = "pcs";
-    
-    private static final String VCARD_EMAIL_TYPE_HOME = "home";
-    private static final String VCARD_EMAIL_TYPE_WORK = "work";
-    private static final String VCARD_EMAIL_TYPE_INTERNET = "internet";
-    private static final String VCARD_EMAIL_TYPE_X400 = "x400";
-    private static final String VCARD_EMAIL_TYPE_PREF = "pref";
-
     private static final Logger logger = Logger.getLogger(ThunderbirdMboxFileIngestModule.class.getName());
-    private IngestServices services = IngestServices.getInstance();
+    private final IngestServices services = IngestServices.getInstance();
     private FileManager fileManager;
     private IngestJobContext context;
     private Blackboard blackboard;
@@ -107,6 +83,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private Case currentCase;
     private SleuthkitCase tskCase;
 
+    /**
+     * Empty constructor.
+     */
     ThunderbirdMboxFileIngestModule() {
     }
 
@@ -661,11 +640,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         addArtifactAttribute(vcard.getFormattedName().getValue(), ATTRIBUTE_TYPE.TSK_NAME_PERSON, attributes);
         
         for (Telephone telephone : vcard.getTelephoneNumbers()) {
-            attributes.addAll(generatePhoneAttributes(telephone, abstractFile));
+            addPhoneAttributes(telephone, abstractFile, attributes);
         }
         
         for (Email email : vcard.getEmails()) {
-            attributes.addAll(generateEmailAttributes(email, abstractFile));
+            addEmailAttributes(email, abstractFile, attributes);
         }
         
         for (Url url : vcard.getUrls()) {
@@ -715,15 +694,13 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * 
      * @param telephone    The VCard Telephone from which to generate attributes.
      * @param abstractFile The VCard file.
-     * 
-     * @return A list of attributes.
+     * @param attributes   The Collection to which generated attributes will be
+     *                     added.
      */
-    private List<BlackboardAttribute> generatePhoneAttributes(Telephone telephone, AbstractFile abstractFile) {
-        List<BlackboardAttribute> attributes = new ArrayList<>();
-        
+    private void addPhoneAttributes(Telephone telephone, AbstractFile abstractFile, Collection<BlackboardAttribute> attributes) {
         String telephoneText = telephone.getText();
         if (telephoneText == null || telephoneText.isEmpty()) {
-            return attributes;
+            return;
         }
 
         // Add phone number to collection for later creation of TSK_CONTACT.
@@ -760,8 +737,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 }
             }
         }
-        
-        return attributes;
     }
     
     /**
@@ -769,15 +744,13 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * 
      * @param email        The VCard Email from which to generate attributes.
      * @param abstractFile The VCard file.
-     * 
-     * @return A list of attributes.
+     * @param attributes   The Collection to which generated attributes will be
+     *                     added.
      */
-    private List<BlackboardAttribute> generateEmailAttributes(Email email, AbstractFile abstractFile) {
-        List<BlackboardAttribute> attributes = new ArrayList<>();
-        
+    private void addEmailAttributes(Email email, AbstractFile abstractFile, Collection<BlackboardAttribute> attributes) {
         String emailValue = email.getValue();
         if (emailValue == null || emailValue.isEmpty()) {
-            return attributes;
+            return;
         }
 
         // Add phone number to collection for later creation of TSK_CONTACT.
@@ -814,31 +787,61 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 }
             }
         }
-        
-        return attributes;
     }
 
+    /**
+     * Add an attribute of a specified type to a supplied Collection.
+     * 
+     * @param stringVal    The attribute value.
+     * @param attrType     The type of attribute to be added.
+     * @param bbattributes The Collection to which the attribute will be added.
+     */
     private void addArtifactAttribute(String stringVal, ATTRIBUTE_TYPE attrType, Collection<BlackboardAttribute> bbattributes) {
         if (stringVal.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(attrType, EmailParserModuleFactory.getModuleName(), stringVal));
         }
     }
+    /**
+     * Add an attribute of a specified type to a supplied Collection.
+     * 
+     * @param stringVal      The attribute value.
+     * @param attrType     The type of attribute to be added.
+     * @param bbattributes The Collection to which the attribute will be added.
+     */
     private void addArtifactAttribute(String stringVal, BlackboardAttribute.Type attrType, Collection<BlackboardAttribute> bbattributes) {
         if (stringVal.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(attrType, EmailParserModuleFactory.getModuleName(), stringVal));
         }
     }
+    /**
+     * Add an attribute of a specified type to a supplied Collection.
+     * 
+     * @param longVal      The attribute value.
+     * @param attrType     The type of attribute to be added.
+     * @param bbattributes The Collection to which the attribute will be added.
+     */
     private void addArtifactAttribute(long longVal, ATTRIBUTE_TYPE attrType, Collection<BlackboardAttribute> bbattributes) {
         if (longVal > 0) {
             bbattributes.add(new BlackboardAttribute(attrType, EmailParserModuleFactory.getModuleName(), longVal));
         }
     }
     
+    /**
+     * Post an error message for the user.
+     * 
+     * @param subj    The error subject.
+     * @param details The error details.
+     */
     void postErrorMessage(String subj, String details) {
         IngestMessage ingestMessage = IngestMessage.createErrorMessage(EmailParserModuleFactory.getModuleVersion(), subj, details);
         services.postMessage(ingestMessage);
     }
 
+    /**
+     * Get the IngestServices object.
+     * 
+     * @return The IngestServices object.
+     */
     IngestServices getServices() {
         return services;
     }
