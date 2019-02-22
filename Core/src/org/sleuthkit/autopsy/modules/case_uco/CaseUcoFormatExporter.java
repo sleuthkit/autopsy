@@ -42,13 +42,24 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
+/**
+ * Generates CASE-UCO report file for a data source
+ */
 public class CaseUcoFormatExporter {
-    
+
     private static final Logger logger = Logger.getLogger(CaseUcoFormatExporter.class.getName());
-    
+
     private CaseUcoFormatExporter() {
     }
-    
+
+    /**
+     * Generates CASE-UCO report for the selected data source.
+     *
+     * @param selectedDataSourceId Object ID of the data source
+     * @param reportOutputPath Full path to directory where to save CASE-UCO
+     * report file
+     * @param progressPanel ReportProgressPanel to update progress
+     */
     @NbBundle.Messages({
         "ReportCaseUco.noCaseOpen=Unable to open currect case",
         "ReportCaseUco.unableToCreateDirectories=Unable to create directory for CASE-UCO report",
@@ -58,9 +69,9 @@ public class CaseUcoFormatExporter {
         "ReportCaseUco.processing=Saving files in CASE-UCO format...",
         "ReportCaseUco.srcModuleName.text=CASE-UCO Report"
     })
-    @SuppressWarnings("deprecation")    
+    @SuppressWarnings("deprecation")
     public static void generateReport(Long selectedDataSourceId, String reportOutputPath, ReportProgressPanel progressPanel) {
-        
+
         // Start the progress bar and setup the report
         progressPanel.setIndeterminate(false);
         progressPanel.start();
@@ -164,7 +175,7 @@ public class CaseUcoFormatExporter {
                 }
             }
         }
-    }    
+    }
 
     private static void initializeJsonOutputFile(JsonGenerator catalog) throws IOException {
         catalog.writeStartObject();
@@ -177,6 +188,17 @@ public class CaseUcoFormatExporter {
         catalog.writeEndObject();
     }
 
+    /**
+     * Save info about the Autopsy case in CASE-UCo format
+     *
+     * @param skCase SleuthkitCase object
+     * @param catalog JsonGenerator object
+     * @return CASE-UCO trace ID object for the Autopsy case entry
+     * @throws TskCoreException
+     * @throws SQLException
+     * @throws IOException
+     * @throws NoCurrentCaseException
+     */
     private static String saveCaseInfo(SleuthkitCase skCase, JsonGenerator catalog) throws TskCoreException, SQLException, IOException, NoCurrentCaseException {
 
         // create a "trace" entry for the Autopsy case iteself
@@ -220,6 +242,18 @@ public class CaseUcoFormatExporter {
         return caseTraceId;
     }
 
+    /**
+     * Save info about the data source in CASE-UCo format
+     *
+     * @param selectedDataSourceId Object ID of the data source
+     * @param caseTraceId CASE-UCO trace ID object for the Autopsy case entry
+     * @param skCase SleuthkitCase object
+     * @param catalog JsonGenerator object
+     * @return
+     * @throws TskCoreException
+     * @throws SQLException
+     * @throws IOException
+     */
     private static String saveDataSourceInfo(Long selectedDataSourceId, String caseTraceId, SleuthkitCase skCase, JsonGenerator jsonGenerator) throws TskCoreException, SQLException, IOException {
 
         Long imageSize = (long) 0;
