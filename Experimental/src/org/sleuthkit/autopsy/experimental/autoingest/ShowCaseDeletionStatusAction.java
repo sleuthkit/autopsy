@@ -17,7 +17,7 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 final class ShowCaseDeletionStatusAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
-    private final CaseNodeData caseNodeData;
+    // private final CaseNodeData caseNodeData;
 
     /**
      * Constructs an action that shows a popup that enumerates the deletion
@@ -31,7 +31,7 @@ final class ShowCaseDeletionStatusAction extends AbstractAction {
     })
     ShowCaseDeletionStatusAction(CaseNodeData caseNodeData) {
         super(Bundle.ShowCaseDeletionStatusAction_menuItemText());
-        this.caseNodeData = caseNodeData;
+        // this.caseNodeData = caseNodeData; // RJCTODO: Use
         setEnabled(false); // RJCTODO: Enable when implemented
     }
 

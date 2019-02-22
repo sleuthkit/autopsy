@@ -53,14 +53,14 @@ final class DeleteCasesAction extends AbstractAction {
     }
 
     @Override
-    public void actionPerformed(ActionEvent e) {
-        final Collection<CaseNodeData> selectedNodeData = new ArrayList<>(Utilities.actionsGlobalContext().lookupAll(CaseNodeData.class));
-        if (!selectedNodeData.isEmpty()) {
-            /*
-             * RJCTODO: Create a background task that does the deletion and
-             * displays results in a dialog with a scrolling text pane.
-             */
-        }
+    public void actionPerformed(ActionEvent event) {
+//        final Collection<CaseNodeData> selectedNodeData = new ArrayList<>(Utilities.actionsGlobalContext().lookupAll(CaseNodeData.class));
+//        if (!selectedNodeData.isEmpty()) {
+//            /*
+//             * RJCTODO: Create a background task that does the deletion and
+//             * displays results in a dialog with a scrolling text pane.
+//             */
+//        }
     }
 
     @Override

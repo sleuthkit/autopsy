@@ -54,7 +54,7 @@ final class MultiUserCasesRootNode extends AbstractNode {
      */
     private static class MultiUserCasesRootNodeChildren extends ChildFactory<CaseNodeData> {
 
-        private MultiUserCaseBrowserCustomizer nodeCustomizer;
+        private final MultiUserCaseBrowserCustomizer nodeCustomizer;
 
         MultiUserCasesRootNodeChildren(MultiUserCaseBrowserCustomizer nodeCustomizer) {
             this.nodeCustomizer = nodeCustomizer;

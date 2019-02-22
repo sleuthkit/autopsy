@@ -31,34 +31,6 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 public interface MultiUserCaseBrowserCustomizer {
 
     /**
-     * An enumeration of the columns that can be added to the browser's tabular
-     * view. NOTE THAT THE DISPLAY_NAME COLUMN IS ADDED AUTOMATICALLY BY THE
-     * BROWSER AND ALL OTHER COLUMNS ARE OPTIONAL.
-     */
-    @NbBundle.Messages({
-        "MultiUserCaseBrowserCustomizer.column.displayName=Name",
-        "MultiUserCaseBrowserCustomizer.column.createTime=Create Time",
-        "MultiUserCaseBrowserCustomizer.column.directory=Directory",
-        "MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time"
-    })
-    public enum Column {
-        DISPLAY_NAME(Bundle.MultiUserCaseBrowserCustomizer_column_displayName()),
-        CREATE_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_createTime()),
-        DIRECTORY(Bundle.MultiUserCaseBrowserCustomizer_column_directory()),
-        LAST_ACCESS_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_lastAccessTime());
-
-        private final String displayName;
-
-        private Column(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
-
-    /**
      * Gets the columns the tabular view in the browser should display. The
      * columns will be displayed in the order in which they appear in the list.
      * NOTE THAT THE DISPLAY_NAME COLUMN IS ADDED AS THE FIRST COLUMN
@@ -110,7 +82,7 @@ public interface MultiUserCaseBrowserCustomizer {
      * A specification of the sorting details for a column in the browser's
      * OutlineView.
      */
-    public final static class SortColumn {
+    final class SortColumn {
 
         private final Column column;
         private final boolean sortAscending;
@@ -158,6 +130,34 @@ public interface MultiUserCaseBrowserCustomizer {
             return sortRank;
         }
 
+    }
+
+    /**
+     * An enumeration of the columns that can be added to the browser's tabular
+     * view. NOTE THAT THE DISPLAY_NAME COLUMN IS ADDED AUTOMATICALLY BY THE
+     * BROWSER AND ALL OTHER COLUMNS ARE OPTIONAL.
+     */
+    @NbBundle.Messages({
+        "MultiUserCaseBrowserCustomizer.column.displayName=Name",
+        "MultiUserCaseBrowserCustomizer.column.createTime=Create Time",
+        "MultiUserCaseBrowserCustomizer.column.directory=Directory",
+        "MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time"
+    })
+    public enum Column {
+        DISPLAY_NAME(Bundle.MultiUserCaseBrowserCustomizer_column_displayName()),
+        CREATE_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_createTime()),
+        DIRECTORY(Bundle.MultiUserCaseBrowserCustomizer_column_directory()),
+        LAST_ACCESS_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_lastAccessTime());
+
+        private final String displayName;
+
+        private Column(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
     }
 
 }
