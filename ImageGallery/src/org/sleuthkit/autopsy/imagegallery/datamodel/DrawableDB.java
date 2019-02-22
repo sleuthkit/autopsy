@@ -1577,11 +1577,20 @@ public final class DrawableDB {
         return map;
     }
     
-
+    /**
+     * Get the build status for the given data source.
+     * Will return UNKNOWN if the data source is not yet in the database.
+     * 
+     * @param dataSourceId
+     * 
+     * @return The status of the data source or UKNOWN if it is not found.
+     * 
+     * @throws TskCoreException 
+     */
     public DrawableDbBuildStatusEnum getDataSourceDbBuildStatus(Long dataSourceId) throws TskCoreException {   
         Map<Long, DrawableDbBuildStatusEnum> statusMap = getDataSourceDbBuildStatus();
         if (statusMap.containsKey(dataSourceId) == false) {
-            throw new TskCoreException("Data Source ID not found: " + dataSourceId);
+            return DrawableDbBuildStatusEnum.UNKNOWN;
         }
         return statusMap.get(dataSourceId);
     } 
