@@ -68,7 +68,7 @@ public class EmbeddedFileTest extends NbTestCase {
     
     public void setUp() {
 
-        openCase = CaseUtils.createAsCurrentCase(CASE_NAME + "_"+ System.currentTimeMillis());
+        openCase = CaseUtils.createAsCurrentCase(CASE_NAME);
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 

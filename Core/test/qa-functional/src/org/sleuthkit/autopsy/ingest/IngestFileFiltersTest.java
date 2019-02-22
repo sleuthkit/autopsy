@@ -78,7 +78,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     
     public void testBasicDir() {
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
-        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testBasicDir_"+ System.currentTimeMillis());
+        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testBasicDir");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -119,7 +119,7 @@ public class IngestFileFiltersTest extends NbTestCase {
     
     public void testExtAndDirWithOneRule() {
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
-        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testExtAndDirWithOneRule_"+ System.currentTimeMillis());
+        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testExtAndDirWithOneRule");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -154,7 +154,7 @@ public class IngestFileFiltersTest extends NbTestCase {
 
     public void testExtAndDirWithTwoRules() {
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
-        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testExtAndDirWithTwoRules_"+ System.currentTimeMillis());
+        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testExtAndDirWithTwoRules");
        
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
@@ -199,7 +199,7 @@ public class IngestFileFiltersTest extends NbTestCase {
    
     public void testFullFileNameRule() {
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
-        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testFullFileNameRule_"+ System.currentTimeMillis());
+        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testFullFileNameRule");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -234,7 +234,7 @@ public class IngestFileFiltersTest extends NbTestCase {
 
     public void testCarvingWithExtRuleAndUnallocSpace() {
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
-        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testCarvingWithExtRuleAndUnallocSpace_"+ System.currentTimeMillis());
+        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testCarvingWithExtRuleAndUnallocSpace");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -282,7 +282,7 @@ public class IngestFileFiltersTest extends NbTestCase {
   
     public void testCarvingNoUnallocatedSpace() {
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
-        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testCarvingNoUnallocatedSpace_"+ System.currentTimeMillis());
+        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testCarvingNoUnallocatedSpace");
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -316,7 +316,7 @@ public class IngestFileFiltersTest extends NbTestCase {
 
     public void testEmbeddedJpg() {
         Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
-        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testEmbeddedJpg_"+ System.currentTimeMillis());
+        Case currentCase = CaseUtils.createAsCurrentCase("IngestFilter_testEmbeddedJpg");
         LocalFilesDSProcessor dataSourceProcessor = new LocalFilesDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, ZIPFILE_PATH);
         

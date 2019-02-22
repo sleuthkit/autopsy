@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import org.netbeans.junit.NbModuleSuite;
 import org.sleuthkit.autopsy.casemodule.Case;
 import junit.framework.Test;
@@ -30,6 +31,7 @@ import org.openide.util.Exceptions;
 import junit.framework.Assert;
 import org.sleuthkit.autopsy.casemodule.ImageDSProcessor;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
@@ -85,6 +87,7 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testBitlockerEncryption() {
         try {
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
             Case openCase = CaseUtils.createAsCurrentCase(BITLOCKER_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, BITLOCKER_DETECTION_IMAGE_PATH);
@@ -155,6 +158,7 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testPasswordProtection() {
         try {
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
             Case openCase = CaseUtils.createAsCurrentCase(PASSWORD_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, PASSWORD_DETECTION_IMAGE_PATH);
@@ -250,6 +254,7 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testVeraCryptSupport() {
         try {
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
             Case openCase = CaseUtils.createAsCurrentCase(VERACRYPT_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, VERACRYPT_DETECTION_IMAGE_PATH);
@@ -293,6 +298,7 @@ public class EncryptionDetectionTest extends NbTestCase {
      */
     public void testSqlCipherEncryption() {
         try {
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "---- Starting ----");
             Case openCase = CaseUtils.createAsCurrentCase(SQLCIPHER_DETECTION_CASE_NAME);
             ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
             IngestUtils.addDataSource(dataSourceProcessor, SQLCIPHER_DETECTION_IMAGE_PATH);
