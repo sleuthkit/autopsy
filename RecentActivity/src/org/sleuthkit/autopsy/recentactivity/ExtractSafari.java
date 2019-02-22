@@ -42,31 +42,31 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Extract the bookmarks, cookies, downloads and history from Safari
- * 
+ *
  */
-final class ExtractSafari extends Extract{
-    
+final class ExtractSafari extends Extract {
+
     private final IngestServices services = IngestServices.getInstance();
-    
+
     // visit_time uses an epoch of Jan 1, 2001 thus the addition of 978307200
     private static final String SAFARI_HISTORY_QUERY = "SELECT url, title, visit_time + 978307200 as time FROM 'history_items' JOIN history_visits ON history_item = history_items.id;";
-    
+
     private static final String SAFARI_HISTORY_FILE_NAME = "History.db";
     private static final String SAFARI_DATABASE_EXT = ".db";
-    
+
     private static final String SAFARI_HEAD_URL = "url";
     private static final String SAFARI_HEAD_TITLE = "title";
     private static final String SAFARI_HEAD_TIME = "time";
-    
+
     private final Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Messages({
         "ExtractSafari_Module_Name=Safari",
         "ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files."
     })
-    
-    ExtractSafari(){
-        
+
+    ExtractSafari() {
+
     }
 
     @Override
@@ -77,91 +77,93 @@ final class ExtractSafari extends Extract{
     @Override
     void process(Content dataSource, IngestJobContext context) {
         setFoundData(false);
-        
-        try{
+
+        try {
             processHistoryDB(dataSource, context);
-        }catch(IOException | TskCoreException ex){
+        } catch (IOException | TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Getting_History());
             logger.log(Level.SEVERE, "Exception thrown while processing history file: " + ex); //NON-NLS
         }
     }
-    
+
     /**
      * Finds the all of the history.db files in the case looping through them to
      * find all of the history artifacts
-     * 
+     *
      * @throws TskCoreException
-     * @throws IOException 
+     * @throws IOException
      */
-    private void processHistoryDB(Content dataSource, IngestJobContext context)throws TskCoreException, IOException{
-        FileManager fileManager  = getCurrentCase().getServices().getFileManager();
-        
+    private void processHistoryDB(Content dataSource, IngestJobContext context) throws TskCoreException, IOException {
+        FileManager fileManager = getCurrentCase().getServices().getFileManager();
+
         List<AbstractFile> historyFiles = fileManager.findFiles(dataSource, SAFARI_HISTORY_FILE_NAME);
-        
-        if(historyFiles == null || historyFiles.isEmpty()){
+
+        if (historyFiles == null || historyFiles.isEmpty()) {
             return;
         }
-        
+
         this.setFoundData(true);
-        
+
         for (AbstractFile historyFile : historyFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
-            
+
             getHistory(context, historyFile);
         }
     }
-    
+
     /**
-     * Creates a temporary copy of historyFile and creates a list of 
+     * Creates a temporary copy of historyFile and creates a list of
      * BlackboardArtifacts for the history information in the file.
-     * 
+     *
      * @param historyFile AbstractFile version of the history file from the case
      * @throws TskCoreException
-     * @throws IOException 
+     * @throws IOException
      */
-    private void getHistory(IngestJobContext context, AbstractFile historyFile) throws TskCoreException, IOException{
-        if(historyFile.getSize() == 0)
+    private void getHistory(IngestJobContext context, AbstractFile historyFile) throws TskCoreException, IOException {
+        if (historyFile.getSize() == 0) {
             return;
-        
+        }
+
         Path tempHistoryPath = Paths.get(RAImageIngestModule.getRATempPath(
                 getCurrentCase(), getName()), historyFile.getName() + historyFile.getId() + SAFARI_DATABASE_EXT);
         File tempHistoryFile = tempHistoryPath.toFile();
-        
-        try{
+
+        try {
             ContentUtils.writeToFile(historyFile, tempHistoryFile, context::dataSourceIngestIsCancelled);
-        } catch(IOException ex){
+        } catch (IOException ex) {
             throw new IOException("Error writingToFile: " + historyFile, ex); //NON-NLS
         }
-        
-        try{
+
+        try {
             Collection<BlackboardArtifact> bbartifacts = getHistoryArtifacts(historyFile, tempHistoryPath);
-            if(!bbartifacts.isEmpty()){
-                  services.fireModuleDataEvent(new ModuleDataEvent(
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
             }
-        } finally{
+        } finally {
             tempHistoryFile.delete();
         }
     }
-    
+
     /**
-     * Queries the history db for the history information creating a list of 
+     * Queries the history db for the history information creating a list of
      * BlackBoardArtifact for each row returned from the db.
-     * 
+     *
      * @param origFile AbstractFile of the history file from the case
      * @param tempFilePath Path to temporary copy of the history db
      * @return Blackboard Artifacts for the history db
-     * @throws TskCoreException 
+     * @throws TskCoreException
      */
-    private Collection<BlackboardArtifact> getHistoryArtifacts(AbstractFile origFile, Path tempFilePath) throws TskCoreException{
+    private Collection<BlackboardArtifact> getHistoryArtifacts(AbstractFile origFile, Path tempFilePath) throws TskCoreException {
         List<HashMap<String, Object>> historyList = this.dbConnect(tempFilePath.toString(), SAFARI_HISTORY_QUERY);
-        
-        if(historyList == null || historyList.isEmpty())
+
+        if (historyList == null || historyList.isEmpty()) {
             return null;
-        
+        }
+
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (HashMap<String, Object> row : historyList) {
             String url = row.get(SAFARI_HEAD_URL).toString();
@@ -169,12 +171,11 @@ final class ExtractSafari extends Extract{
             Long time = (Double.valueOf(row.get(SAFARI_HEAD_TIME).toString())).longValue();
 
             BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
-            bbart.addAttributes(createHistoryAttribute(url, time, null, title, 
+            bbart.addAttributes(createHistoryAttribute(url, time, null, title,
                     this.getName(), NetworkUtils.extractDomain(url), null));
             bbartifacts.add(bbart);
         }
-        
+
         return bbartifacts;
     }
 }
-        
