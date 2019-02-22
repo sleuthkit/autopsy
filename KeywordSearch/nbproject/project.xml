@@ -293,6 +293,7 @@
                 <runtime-relative-path>ext/protobuf-java-2.5.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/protobuf-java-2.5.0.jar</binary-origin>
             </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/lucene-queries-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/lucene-queries-4.0.0.jar</binary-origin>
             </class-path-extension>
