@@ -37,9 +37,9 @@
                           <Component id="ingestJobsLabel" max="32767" attributes="0"/>
                           <Component id="ingestJobsScrollPane" pref="474" max="32767" attributes="0"/>
                           <Group type="102" alignment="1" attributes="0">
-                              <Component id="opperatingSystemLabel" min="-2" max="-2" attributes="0"/>
+                              <Component id="operatingSystemLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="opperatingSystemValueLabel" max="32767" attributes="0"/>
+                              <Component id="operatingSystemValueLabel" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
@@ -67,8 +67,8 @@
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="opperatingSystemLabel" alignment="1" min="-2" max="-2" attributes="0"/>
-                  <Component id="opperatingSystemValueLabel" min="-2" pref="14" max="-2" attributes="0"/>
+                  <Component id="operatingSystemLabel" alignment="1" min="-2" max="-2" attributes="0"/>
+                  <Component id="operatingSystemValueLabel" min="-2" pref="14" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
@@ -137,14 +137,14 @@
         </Component>
       </SubComponents>
     </Container>
-    <Component class="javax.swing.JLabel" name="opperatingSystemLabel">
+    <Component class="javax.swing.JLabel" name="operatingSystemLabel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryPanel.opperatingSystemLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/casemodule/datasourceSummary/Bundle.properties" key="DataSourceSummaryPanel.operatingSystemLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="opperatingSystemValueLabel">
+    <Component class="javax.swing.JLabel" name="operatingSystemValueLabel">
     </Component>
     <Component class="javax.swing.JLabel" name="fileCountsLabel">
       <Properties>

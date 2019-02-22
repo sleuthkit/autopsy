@@ -100,7 +100,7 @@ class ExtractIE extends Extract {
     }
 
     @Override
-    protected String getModuleName() {
+    protected String getName() {
         return NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
     }
 
@@ -123,9 +123,8 @@ class ExtractIE extends Extract {
             favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites"); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'url' files for Internet Explorer bookmarks.", ex); //NON-NLS
-            this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getBookmark.errMsg.errGettingBookmarks",
-                            this.getModuleName()));
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getBookmark.errMsg.errGettingBookmarks",
+                    this.getName()));
             return;
         }
 
@@ -164,16 +163,15 @@ class ExtractIE extends Extract {
                 bbartifacts.add(bbart);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  bookmark artifact.", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(Chrome.class, "ExtractIE.getBookmark.errMsg.errGettingBookmarks", //NON-NLS
-                                this.getModuleName(), fav.getName()));
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "ExtractIE.getBookmark.errMsg.errGettingBookmarks", //NON-NLS
+                        this.getName(), fav.getName()));
             }
         }
         try {
             blackboard.postArtifacts(bbartifacts, PARENT_MODULE_NAME);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Error while trying to post Internet Explorer bookmark artifact.", ex); //NON-NLS
-            this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getModuleName()));
+            this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getName()));
         }
     }
 
@@ -189,14 +187,12 @@ class ExtractIE extends Extract {
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex); //NON-NLS
-            this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getModuleName(),
-                            fav.getName()));
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getName(),
+                    fav.getName()));
         } catch (IndexOutOfBoundsException ex) {
             logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex); //NON-NLS
-            this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getModuleName(),
-                            fav.getName()));
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getName(),
+                    fav.getName()));
         }
 
         return "";
@@ -211,8 +207,7 @@ class ExtractIE extends Extract {
             cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies"); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error getting cookie files for IE"); //NON-NLS
-            this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errGettingFile", this.getModuleName()));
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errGettingFile", this.getName()));
             return;
         }
 
@@ -236,19 +231,17 @@ class ExtractIE extends Extract {
                 cookiesFile.read(cookiesBuffer, 0, cookiesFile.getSize());
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error reading bytes of Internet Explorer cookie.", ex); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errReadingIECookie",
-                                this.getModuleName(), cookiesFile.getName()));
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errReadingIECookie",
+                        this.getName(), cookiesFile.getName()));
                 continue;
             }
 
             String[] values = new String(cookiesBuffer).split("\n");
             String URL = values.length > 2 ? values[2] : "";
 
-            Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                    new BlackboardAttribute(
-                            TSK_DATETIME, PARENT_MODULE_NAME,
-                            cookiesFile.getCrtime()),
+            Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
+                    TSK_DATETIME, PARENT_MODULE_NAME,
+                    cookiesFile.getCrtime()),
                     new BlackboardAttribute(
                             TSK_NAME, PARENT_MODULE_NAME,
                             values.length > 0 ? values[0] : ""),
@@ -260,7 +253,7 @@ class ExtractIE extends Extract {
                             URL),
                     new BlackboardAttribute(
                             TSK_PROG_NAME, PARENT_MODULE_NAME,
-                            getModuleName()),
+                            getName()),
                     new BlackboardAttribute(
                             TSK_DOMAIN, PARENT_MODULE_NAME,
                             NetworkUtils.extractDomain(URL)));
@@ -269,9 +262,8 @@ class ExtractIE extends Extract {
                 bbart.addAttributes(bbattributes);
                 bbartifacts.add(bbart);
             } catch (TskCoreException ex) {
-                this.addErrorMessage(
-                        NbBundle.getMessage(Chrome.class, "ExtractIE.getCookie.errMsg.errReadingIECookie", //NON-NLS
-                                this.getModuleName(), cookiesFile.getName()));
+                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "ExtractIE.getCookie.errMsg.errReadingIECookie", //NON-NLS
+                        this.getName(), cookiesFile.getName()));
 
             }
         }
@@ -279,7 +271,7 @@ class ExtractIE extends Extract {
             blackboard.postArtifacts(bbartifacts, PARENT_MODULE_NAME);
         } catch (Blackboard.BlackboardException ex) {
             logger.log(Level.SEVERE, "Error while trying to post Internet Explorer cookie artifact.", ex); //NON-NLS
-            this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getModuleName()));
+            this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getName()));
         }
     }
 
@@ -292,8 +284,7 @@ class ExtractIE extends Extract {
         //JIRA-2385: Why are we getting the pasco library path for datasource we process?
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false); //NON-NLS
         if (pascoRoot == null) {
-            this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getModuleName()));
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getName()));
             logger.log(Level.SEVERE, "Error finding pasco program "); //NON-NLS
             return;
         }
@@ -313,7 +304,7 @@ class ExtractIE extends Extract {
             indexFiles = fileManager.findFiles(dataSource, "index.dat"); //NON-NLS
         } catch (TskCoreException ex) {
             this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errGettingHistFiles",
-                    this.getModuleName()));
+                    this.getName()));
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
             return;
         }
@@ -347,9 +338,8 @@ class ExtractIE extends Extract {
                 ContentUtils.writeToFile(indexFile, datFile, context::dataSourceIngestIsCancelled);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getModuleName(),
-                                datFile.getAbsolutePath()));
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getName(),
+                        datFile.getAbsolutePath()));
                 continue;
             }
 
@@ -372,8 +362,7 @@ class ExtractIE extends Extract {
                 datFile.delete();
             } else {
                 logger.log(Level.WARNING, "pasco execution failed on: {0}", filename); //NON-NLS
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getModuleName()));
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
             }
         }
 
@@ -382,13 +371,13 @@ class ExtractIE extends Extract {
                 blackboard.postArtifacts(historyArtifacts, PARENT_MODULE_NAME);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Error while trying to post Internet Explorer history artifact.", ex); //NON-NLS
-                this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getModuleName()));
+                this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getName()));
             }
             try {
                 blackboard.postArtifacts(accountArtifacts, PARENT_MODULE_NAME);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Error while trying to post Internet Explorer os account artifact.", ex); //NON-NLS
-                this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getModuleName()));
+                this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getName()));
             }
         }
     }
@@ -452,9 +441,8 @@ class ExtractIE extends Extract {
 
         File file = new File(fnAbs);
         if (file.exists() == false) {
-            this.addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getModuleName(),
-                            file.getName()));
+            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getName(),
+                    file.getName()));
             logger.log(Level.WARNING, "Pasco Output not found: {0}", file.getPath()); //NON-NLS
             return bbartifacts;
         }
@@ -472,10 +460,9 @@ class ExtractIE extends Extract {
             while (fileScanner.hasNext()) {
 
                 parseLine(origFile, fileScanner.nextLine()).ifPresent(urlVisit -> {
-                    Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(
-                            new BlackboardAttribute(
-                                    TSK_URL, PARENT_MODULE_NAME,
-                                    urlVisit.url),
+                    Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(new BlackboardAttribute(
+                            TSK_URL, PARENT_MODULE_NAME,
+                            urlVisit.url),
                             new BlackboardAttribute(
                                     TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
                                     urlVisit.time),
@@ -486,7 +473,7 @@ class ExtractIE extends Extract {
                             // @@@ NOte that other browser modules are adding TITLE in here for the title
                             new BlackboardAttribute(
                                     TSK_PROG_NAME, PARENT_MODULE_NAME,
-                                    getModuleName()),
+                                    getName()),
                             new BlackboardAttribute(
                                     TSK_USER_NAME, PARENT_MODULE_NAME,
                                     urlVisit.user));
@@ -524,9 +511,8 @@ class ExtractIE extends Extract {
             }
             return bbartifacts;
         } catch (FileNotFoundException ex) {
-            addErrorMessage(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getModuleName(),
-                            file.getName()));
+            addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getName(),
+                    file.getName()));
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return bbartifacts;
         }
@@ -572,9 +558,8 @@ class ExtractIE extends Extract {
                 Long epochtime = new SimpleDateFormat(PASCO_DATE_FORMAT).parse(actime).getTime();
                 ftime = epochtime / 1000;
             } catch (ParseException e) {
-                this.addErrorMessage(
-                        NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
-                                this.getModuleName()));
+                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
+                        this.getName()));
                 logger.log(Level.WARNING, String.format("Error parsing Pasco results, may have partial processing of corrupt file (id=%d)", origFile.getId()), e); //NON-NLS
             }
         }

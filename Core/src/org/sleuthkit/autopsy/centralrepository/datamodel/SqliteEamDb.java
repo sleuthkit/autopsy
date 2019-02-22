@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -431,6 +431,69 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             return super.getDataSources();
         } finally {
             releaseSharedLock();
+        }
+    }
+    
+    /**
+     * Changes the name of a data source in the DB
+     * 
+     * @param eamDataSource  The data source
+     * @param newName        The new name
+     * 
+     * @throws EamDbException 
+     */
+    @Override
+    public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSourceName(eamDataSource, newName);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+    
+    /**
+     * Updates the MD5 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSourceMd5Hash(eamDataSource);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+    
+    /**
+     * Updates the SHA-1 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSourceSha1Hash(eamDataSource);
+        } finally {
+            releaseExclusiveLock();
+        }
+    }
+    
+    /**
+     * Updates the SHA-256 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        try {
+            acquireExclusiveLock();
+            super.updateDataSourceSha256Hash(eamDataSource);
+        } finally {
+            releaseExclusiveLock();
         }
     }
 
