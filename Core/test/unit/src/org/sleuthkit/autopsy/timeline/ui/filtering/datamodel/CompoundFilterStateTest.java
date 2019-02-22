@@ -30,6 +30,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.CompoundFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
+import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.FileTypeFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.IntersectionFilter;
 
@@ -165,6 +167,40 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
         assertThat(instance, not(equalTo(instance2)));
     }
 
+    @Test
+    public void testSubFilterAddedListeners() {
+        System.out.println("subFilterAddedListeners");
+
+        DataSourcesFilter dataSourcesfilter = new TimelineFilter.DataSourcesFilter();
+        dataSourcesfilter.addSubFilter(new DataSourceFilter("data source 1", 1));
+        dataSourcesfilter.addSubFilter(new DataSourceFilter("data source 2", 2));
+        CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState = new CompoundFilterState<>(dataSourcesfilter);
+
+        dataSourcesFilterState.setSelected(true);
+        dataSourcesFilterState.getSubFilterStates().get(0).setSelected(true);
+        dataSourcesFilterState.getSubFilterStates().get(1).setSelected(false);
+
+        assertThat(dataSourcesFilterState.isDisabled(), is(false));
+        assertThat(dataSourcesFilterState.isSelected(), is(true));
+        assertThat(dataSourcesFilterState.getSubFilterStates().get(0).isDisabled(), is(false));
+        assertThat(dataSourcesFilterState.getSubFilterStates().get(1).isDisabled(), is(false));
+
+        dataSourcesfilter.addSubFilter(new DataSourceFilter("data source 3", 3));
+
+        assertThat(dataSourcesFilterState.getSubFilterStates().size(), is(3));
+
+        assertThat(dataSourcesFilterState.isDisabled(), is(false));
+        assertThat(dataSourcesFilterState.isSelected(), is(true));
+        assertThat(dataSourcesFilterState.getSubFilterStates().get(0).isDisabled(), is(false));
+        assertThat(dataSourcesFilterState.getSubFilterStates().get(0).isSelected(), is(true));
+        assertThat(dataSourcesFilterState.getSubFilterStates().get(1).isDisabled(), is(false));
+        assertThat(dataSourcesFilterState.getSubFilterStates().get(1).isSelected(), is(false));
+        assertThat(dataSourcesFilterState.getSubFilterStates().get(2).isDisabled(), is(false));
+        assertThat(dataSourcesFilterState.getSubFilterStates().get(2).isSelected(), is(false));
+
+        assertThat(dataSourcesFilterState, equalTo(dataSourcesFilterState.copyOf()));
+    }
+
     /**
      * Test of addSubFilterState method, of class CompoundFilterState.
      */
@@ -226,5 +262,30 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
 
         //subfilters of active filter should not be disabled.
         instance.getSubFilterStates().forEach(filterState -> assertThat(filterState.isDisabled(), is(false)));
+    }
+
+    /**
+     * Test of copyOf method, of class DefaultFilterState.
+     */
+    @Test
+    @Override
+    public void testCopyOf() {
+        super.testCopyOf();
+        System.out.println(this.getClass().getSimpleName() + " - copyOf");
+        
+        instance.setSelected(Boolean.TRUE);
+        instance.getSubFilterStates().get(0).setSelected(Boolean.TRUE);
+        instance.getSubFilterStates().get(1).setSelected(Boolean.FALSE);
+        
+        CompoundFilterState<TimelineFilter, CompoundFilter<TimelineFilter>> copyOf = instance.copyOf();
+        
+        assertEquals(instance, copyOf);
+        
+        assertThat(copyOf.isSelected(), is(true));
+        assertThat(copyOf.isDisabled(), is(false));
+        assertThat(copyOf.getSubFilterStates().get(0).isSelected(), is(true));
+        assertThat(copyOf.getSubFilterStates().get(0).isDisabled(), is(false));
+        assertThat(copyOf.getSubFilterStates().get(1).isSelected(), is(false));
+        assertThat(copyOf.getSubFilterStates().get(1).isDisabled(), is(false));
     }
 }

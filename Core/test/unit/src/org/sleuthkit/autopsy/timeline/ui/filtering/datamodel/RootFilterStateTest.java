@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import java.util.Collections;
-import java.util.function.Function;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 import org.junit.Before;
@@ -330,5 +329,30 @@ public class RootFilterStateTest extends FilterStateTestAbstract< RootFilterStat
         assertEquals(true, instance.hasActiveTagsFilters());
         instance.getTagsFilterState().setSelected(Boolean.FALSE);
         assertEquals(false, instance.hasActiveTagsFilters());
+    }
+    
+      /**
+     * Test of copyOf method, of class DefaultFilterState.
+     */
+    @Test
+    @Override
+    public void testCopyOf() {
+        super.testCopyOf();
+        System.out.println(this.getClass().getSimpleName() + " - copyOf");
+        
+        instance.setSelected(Boolean.TRUE);
+        instance.getSubFilterStates().get(0).setSelected(Boolean.TRUE);
+        instance.getSubFilterStates().get(1).setSelected(Boolean.FALSE);
+        
+        RootFilterState copyOf = instance.copyOf();
+        
+        assertEquals(instance, copyOf);
+        
+        assertThat(copyOf.isSelected(), is(true));
+        assertThat(copyOf.isDisabled(), is(false));
+        assertThat(copyOf.getSubFilterStates().get(0).isSelected(), is(true));
+        assertThat(copyOf.getSubFilterStates().get(0).isDisabled(), is(false));
+        assertThat(copyOf.getSubFilterStates().get(1).isSelected(), is(false));
+        assertThat(copyOf.getSubFilterStates().get(1).isDisabled(), is(false));
     }
 }
