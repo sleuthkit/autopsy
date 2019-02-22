@@ -32,6 +32,7 @@ final public class CorrelationAttributeNormalizer {
 
     //common seperators that may be removed for normalizing
     private static final String SEPERATORS_REGEX = "[\\s-:]";
+    private static final int MIN_PHONE_LENGTH = 5;
 
     /**
      * This is a utility class - no need for constructing or subclassing, etc...
@@ -164,6 +165,9 @@ final public class CorrelationAttributeNormalizer {
     private static String normalizePhone(String data) throws CorrelationAttributeNormalizationException {
         if (data.matches("\\+?[0-9()\\-\\s]+")) {
             String phoneNumber = data.replaceAll("[^0-9\\+]", "");
+            if(phoneNumber.length() <= MIN_PHONE_LENGTH) {
+                throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid phone number: %s", data));
+            }
             return phoneNumber;
         } else {
             throw new CorrelationAttributeNormalizationException(String.format("Data was expected to be a valid phone number: %s", data));
