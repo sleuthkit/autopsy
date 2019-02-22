@@ -37,6 +37,7 @@
                 <package>com.apple.eawt</package>
                 <package>com.apple.eawt.event</package>
                 <package>com.apple.eio</package>
+                <package>com.dd.plist</package>
                 <package>com.github.lgooddatepicker.components</package>
                 <package>com.github.lgooddatepicker.optionalusertools</package>
                 <package>com.github.lgooddatepicker.zinternaltools</package>
