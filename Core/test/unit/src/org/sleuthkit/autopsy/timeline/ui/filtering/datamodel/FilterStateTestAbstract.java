@@ -76,7 +76,7 @@ public abstract class FilterStateTestAbstract<FS extends FilterState<?>> {
      */
     @Test
     public void testCopyOf() {
-        System.out.println("copyOf");
+        System.out.println(this.getClass().getSimpleName()+ " - copyOf");
         FilterState<?> copyOf = instance.copyOf();
 
         assertEquals(instance, copyOf);

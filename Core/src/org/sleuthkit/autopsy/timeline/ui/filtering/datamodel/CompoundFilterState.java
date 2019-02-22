@@ -86,7 +86,7 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
             getFilter().getSubFilters().addListener((ListChangeListener.Change<? extends SubFilterType> change) -> {
                 while (change.next()) {
                     change.getAddedSubList().forEach((SubFilterType newSubFilter) -> {
-                        //if there is not alread a state for this filter
+                        //if there is not already a state for this filter
                         if (getSubFilterStates().stream().map(FilterState::getFilter).noneMatch(newSubFilter::equals)) {
                             //add the appropriate filter type: default or compound
                             if (newSubFilter instanceof CompoundFilter<?>) {
@@ -141,6 +141,8 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
     protected void addSubFilterState(FilterState< ? extends SubFilterType> newSubFilterState) {
         SubFilterType filter = newSubFilterState.getFilter();
         if (getSubFilterStates().stream().map(FilterState::getFilter).noneMatch(filter::equals)) {
+
+            //add the state first, and then the actual filter which will check for an existing state before adding another one.
             addSubFilterStateInternal(newSubFilterState);
             getFilter().getSubFilters().add(filter);
         }
@@ -225,4 +227,11 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
         }
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "CompoundFilterState{ selected=" + isSelected() + ", disabled=" + isDisabled() + ", activeProp=" + isActive() + ",subFilterStates=" + subFilterStates + '}';
+    }
+    
+    
 }
