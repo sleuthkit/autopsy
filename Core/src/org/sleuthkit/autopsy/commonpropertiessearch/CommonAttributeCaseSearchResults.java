@@ -173,7 +173,7 @@ final public class CommonAttributeCaseSearchResults {
         Map<String, CommonAttributeValue> valuesToKeep = new HashMap<>();
         Set<String> valuesToRemove = new HashSet<>();
         for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(dataSourceToValueList).entrySet()) {
-            for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataList()) {
+            for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataSet()) {
                 if (valuesToRemove.contains(value.getValue())) {
                     //do nothing this value will not be added
                 } else if (filterValue(attributeType, value, maximumPercentageThreshold, uniqueCaseDataSourceTuples, mimeTypesToFilterOn)) {
@@ -202,7 +202,7 @@ final public class CommonAttributeCaseSearchResults {
     private Map<String, CommonAttributeValueList> createTreeForCase(Map<String, CommonAttributeValue> valuesToKeepCurrentCase, Map<String, CommonAttributeValueList> dataSourceToValueList) throws EamDbException {
         Map<String, CommonAttributeValueList> treeForCase = new HashMap<>();
         for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(dataSourceToValueList).entrySet()) {
-            for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataList()) {
+            for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataSet()) {
                 if (valuesToKeepCurrentCase.containsKey(value.getValue())) {
                     if (!treeForCase.containsKey(mapOfValueLists.getKey())) {
                         treeForCase.put(mapOfValueLists.getKey(), new CommonAttributeValueList());

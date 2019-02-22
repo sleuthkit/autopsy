@@ -22,8 +22,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
@@ -76,15 +80,7 @@ final class InterCaseSearchResultsProcessor {
     }
 
     private String getInterCaseWhereClause() {
-        String tableName = EamDbUtil.correlationTypeToInstanceTableName(correlationType);
-        StringBuilder sqlString = new StringBuilder(250);
-        sqlString.append("value IN (SELECT value FROM ")
-                .append(tableName)
-                .append(" WHERE value IN (SELECT value FROM ")
-                .append(tableName)
-                .append(" WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value)")
-                .append(" GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
-        return sqlString.toString();
+        return "case_id=%s AND (known_status !=%s OR known_status IS NULL)";
     }
 
     private String getSingleInterCaseWhereClause() {
@@ -322,36 +318,49 @@ final class InterCaseSearchResultsProcessor {
         @Override
         public void process(ResultSet resultSet) {
             try {
+                Set<String> values = new HashSet<>();
                 while (resultSet.next()) {
-                    int resultId = InstanceTableCallback.getId(resultSet);
                     String corValue = InstanceTableCallback.getValue(resultSet);
                     if (corValue == null || HashUtility.isNoDataMd5(corValue)) {
                         continue;
                     }
-                    CorrelationCase correlationCase = EamDb.getInstance().getCaseById(InstanceTableCallback.getCaseId(resultSet));
-                    String caseName = correlationCase.getDisplayName();
-                    CorrelationDataSource correlationDatasource = EamDb.getInstance().getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
-                    //label datasource with it's id for uniqueness done in same manner as ImageGallery does in the DataSourceCell class
-                    String dataSourceNameKey = correlationDatasource.getName() + " (Id: " + correlationDatasource.getDataSourceObjectID() + ")";
-                    if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
-                        caseCollatedDataSourceCollections.put(caseName, new HashMap<String, CommonAttributeValueList>());
+                    values.add(corValue);
+                }
+                for (String corValue : values){
+                    //select * from _instances where value=corValue && case_id!=caseId
+                    List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(correlationType, corValue);
+ 
+                    if (instances.size() > 1) {
+                        for (CorrelationAttributeInstance instance : instances) {
+                            CorrelationCase correlationCase = instance.getCorrelationCase();
+                                String caseName = correlationCase.getDisplayName();
+                                CorrelationDataSource correlationDatasource = instance.getCorrelationDataSource();
+                                //label datasource with it's id for uniqueness done in same manner as ImageGallery does in the DataSourceCell class
+                                String dataSourceNameKey = correlationDatasource.getName() + " (Id: " + correlationDatasource.getDataSourceObjectID() + ")";
+                                if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
+                                    caseCollatedDataSourceCollections.put(caseName, new HashMap<String, CommonAttributeValueList>());
+                                }
+                                Map<String, CommonAttributeValueList> dataSourceToFile = caseCollatedDataSourceCollections.get(caseName);
+                                if (!dataSourceToFile.containsKey(dataSourceNameKey)) {
+                                    dataSourceToFile.put(dataSourceNameKey, new CommonAttributeValueList());
+                                }
+                                CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceNameKey);
+                                CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(instance.getID(), correlationType, NODE_TYPE.CASE_NODE);
+                                searchResult.setCurrentAttributeInst(instance);
+                                CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
+                                commonAttributeValue.addInstance(searchResult);
+                                valueList.addMetadataToList(commonAttributeValue);
+                                dataSourceToFile.put(dataSourceNameKey, valueList);
+                                caseCollatedDataSourceCollections.put(caseName, dataSourceToFile);
+                            }
+//                        }
                     }
-                    Map<String, CommonAttributeValueList> dataSourceToFile = caseCollatedDataSourceCollections.get(caseName);
-                    if (!dataSourceToFile.containsKey(dataSourceNameKey)) {
-                        dataSourceToFile.put(dataSourceNameKey, new CommonAttributeValueList());
-                    }
-                    CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceNameKey);
-                    CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType, NODE_TYPE.CASE_NODE);
-                    CorrelationAttributeInstance corrAttr = findSingleCorrelationAttribute(resultId);
-                    searchResult.setCurrentAttributeInst(corrAttr);
-                    CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
-                    commonAttributeValue.addInstance(searchResult);
-                    valueList.addMetadataToList(commonAttributeValue);
-                    dataSourceToFile.put(dataSourceNameKey, valueList);
-                    caseCollatedDataSourceCollections.put(caseName, dataSourceToFile);
+
                 }
             } catch (EamDbException | SQLException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
+            } catch (CorrelationAttributeNormalizationException ex) {
+                Exceptions.printStackTrace(ex);
             }
         }
 

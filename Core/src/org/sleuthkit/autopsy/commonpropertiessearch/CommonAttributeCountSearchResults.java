@@ -152,7 +152,7 @@ final public class CommonAttributeCountSearchResults {
             final Integer key = listOfValues.getKey();
             final CommonAttributeValueList values = listOfValues.getValue();
 
-            for (CommonAttributeValue value : values.getDelayedMetadataList()) { // Need the real metadata
+            for (CommonAttributeValue value : values.getDelayedMetadataSet()) { // Need the real metadata
 
                 //Intracase common attribute searches will have been created with an empty mimeTypesToInclude list 
                 //because when performing intra case search this filtering will have been done during the query of the case database 
@@ -209,7 +209,7 @@ final public class CommonAttributeCountSearchResults {
                 final CommonAttributeValueList instanceCountValue = this.instanceCountToAttributeValues.get(key);
                 if (instanceCountValue != null) {
                     instanceCountValue.removeMetaData(value);
-                    if (instanceCountValue.getDelayedMetadataList().isEmpty()) { // Check the real metadata
+                    if (instanceCountValue.getDelayedMetadataSet().isEmpty()) { // Check the real metadata
                         this.instanceCountToAttributeValues.remove(key);
                     }
                 }

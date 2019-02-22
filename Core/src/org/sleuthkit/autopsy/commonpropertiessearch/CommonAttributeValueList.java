@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.commonpropertiessearch;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Utility and wrapper model around data required for Common Files Search
@@ -67,6 +69,10 @@ final public class CommonAttributeValueList {
         return Collections.unmodifiableList(this.metadataList);
     }
     
+    public Set<CommonAttributeValue> getMetadataSet() {
+        return new HashSet<>(this.metadataList);
+    }
+    
     /**
      * Get the delayed list of value nodes. Only use for
      * determining how many CommonAttributeValues
@@ -75,6 +81,10 @@ final public class CommonAttributeValueList {
      */
     List<CommonAttributeValue> getDelayedMetadataList() {
         return Collections.unmodifiableList(this.delayedMetadataList);
+    }
+    
+       Set<CommonAttributeValue> getDelayedMetadataSet() {
+        return new HashSet<>(this.delayedMetadataList);
     }
     
     void removeMetaData(CommonAttributeValue commonVal) {
