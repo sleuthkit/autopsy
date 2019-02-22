@@ -65,7 +65,7 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
     // RJCTODO: Consider moving all of the dashboard code into its own 
     // admindashboards or dashboards package.
     public static void openTopComponent() {
-        CasesDashboardTopComponent topComponent = (CasesDashboardTopComponent) WindowManager.getDefault().findTopComponent("CasesDashboardTopComponent");
+        CasesDashboardTopComponent topComponent = (CasesDashboardTopComponent) WindowManager.getDefault().findTopComponent("CasesDashboardTopComponent"); // NON-NLS
         if (topComponent == null) {
             logger.log(Level.SEVERE, "Failed to find CasesDashboardTopComponent"); // NON-NLS
             return;
