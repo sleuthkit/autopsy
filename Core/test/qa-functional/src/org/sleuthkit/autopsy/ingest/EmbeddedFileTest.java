@@ -66,13 +66,9 @@ public class EmbeddedFileTest extends NbTestCase {
     }
 
     
-    /**
-     * 
-     * @param testName name of test (no white space)
-     */
-    public void setUpTest(String testName) {
-        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "-----------  Starting Test: " + testName + " ----------"); //NON-NLS
-        openCase = CaseUtils.createAsCurrentCase(CASE_NAME + "_" + testName+ "_"+ System.currentTimeMillis());
+    public void setUp() {
+
+        openCase = CaseUtils.createAsCurrentCase(CASE_NAME + "_"+ System.currentTimeMillis());
         ImageDSProcessor dataSourceProcessor = new ImageDSProcessor();
         IngestUtils.addDataSource(dataSourceProcessor, IMAGE_PATH);
 
@@ -97,9 +93,19 @@ public class EmbeddedFileTest extends NbTestCase {
         CaseUtils.closeCurrentCase();
     }
 
-    public void testEncryptionAndZipBomb() {
+    public void testAll() {
+        Logger.getLogger(this.getClass().getName()).log(Level.INFO, "----------------------   Embedded File Tests ---------------------");
+        runTestEncryptionAndZipBomb();
+        runTestExtension();
+        runTestBigFolder();
+        runTestDeepFolder();
+        runTestEmbeddedFile();
+        runTestContent();
+    }
+    
+    private void runTestEncryptionAndZipBomb() {
         try {
-            setUpTest("EncryptionAndZip");
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Starting");
             List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name LIKE '%%'");
             final String zipBombSetName = "Possible Zip Bomb";
             final String protectedName1 = "password_protected.zip";
@@ -144,10 +150,10 @@ public class EmbeddedFileTest extends NbTestCase {
         }
     }
 
-    public void testBigFolder() {
+    private void runTestBigFolder() {
         final int numOfFilesToTest = 1000;
         try {
-            setUpTest("BigFolder");
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Starting");
             //Get all files under 'big folder' directory except '.' '..' 'slack' files
             List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("parent_path LIKE '%big folder/' and name != '.' and name != '..' and extension NOT LIKE '%slack'");
             assertEquals(numOfFilesToTest, results.size()); //There are 1000 files 
@@ -170,9 +176,9 @@ public class EmbeddedFileTest extends NbTestCase {
         }
     }
 
-    public void testDeepFolder() {
+    private void runTestDeepFolder() {
         try {
-            setUpTest("DeepFolder");
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Starting");
             //Get all files under 'deep folder' directory except '.' '..'
             List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("parent_path LIKE '%deep folder/' and name != '.' and name != '..'");
             assertEquals(1, results.size());
@@ -192,9 +198,9 @@ public class EmbeddedFileTest extends NbTestCase {
         }
     }
 
-    public void testEmbeddedFile() {
+    private void runTestEmbeddedFile() {
         try {
-            setUpTest("EmbeddedFile");
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Starting");
             //Query level3.txt under '/ZIP/embedded/level3.zip/'
             List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("name = 'level3.txt' and parent_path = '/ZIP/embedded/level3.zip/'");
             assertEquals(1, results.size());
@@ -217,10 +223,10 @@ public class EmbeddedFileTest extends NbTestCase {
         }
     }
 
-    public void testContent() {
+    private void runTestContent() {
         final int numOfFilesToTest = 1029;
         try {
-            setUpTest("Content");
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Starting");
             //All files with txt extension should have the same hash value, 
             //except the zip file with txt extension and the .txt files extracted from password protected zip shouldn't have hash value
             List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere(
@@ -242,9 +248,9 @@ public class EmbeddedFileTest extends NbTestCase {
         }
     }
 
-    public void testExtension() {
+    private void runTestExtension() {
         try {
-            setUpTest("Extension");
+            Logger.getLogger(this.getClass().getName()).log(Level.INFO, "Starting");
             //Query zipFileWithTxtExtension.txt at extension folder
             List<AbstractFile> results = openCase.getSleuthkitCase().findAllFilesWhere("extension = 'txt' and parent_path = '/ZIP/extension/zipFileWithTxtExtension.txt/'");
             assertEquals(1, results.size());
