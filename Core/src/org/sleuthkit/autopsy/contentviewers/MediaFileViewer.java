@@ -36,24 +36,24 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
     private static final Logger LOGGER = Logger.getLogger(MediaFileViewer.class.getName());
     private AbstractFile lastFile;
     //UI
-    private final MediaPlayerPanel mediaPlayerPanel;
-    private final boolean mediaPlayerPanelInited;
+    private final MediaViewVideoPanel videoPanel;
+    private final boolean videoPanelInited;
     private final MediaViewImagePanel imagePanel;
     private final boolean imagePanelInited;
 
     private static final String IMAGE_VIEWER_LAYER = "IMAGE"; //NON-NLS
-    private static final String MEDIA_PLAYER_LAYER = "AUDIO_VIDEO"; //NON-NLS
+    private static final String VIDEO_VIEWER_LAYER = "VIDEO"; //NON-NLS
 
     /**
-     * Creates a new MediaFileViewer.
+     * Creates new form DataContentViewerVideo
      */
     public MediaFileViewer() {
 
         initComponents();
 
         // get the right panel for our platform
-        mediaPlayerPanel = new MediaPlayerPanel();
-        mediaPlayerPanelInited = mediaPlayerPanel.isInited();
+        videoPanel = MediaViewVideoPanel.createVideoPanel();
+        videoPanelInited = videoPanel.isInited();
 
         imagePanel = new MediaViewImagePanel();
         imagePanelInited = imagePanel.isInited();
@@ -64,9 +64,9 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private void customizeComponents() {
         add(imagePanel, IMAGE_VIEWER_LAYER);
-        add(mediaPlayerPanel, MEDIA_PLAYER_LAYER);
+        add(videoPanel, VIDEO_VIEWER_LAYER);
 
-        showImagePanel();
+        showVideoPanel(false);
     }
 
     /**
@@ -94,8 +94,8 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
         
         List<String> mimeTypes = new ArrayList<>();
         
-        mimeTypes.addAll(this.imagePanel.getSupportedMimeTypes());
-        mimeTypes.addAll(this.mediaPlayerPanel.getSupportedMimeTypes());
+        mimeTypes.addAll(this.imagePanel.getMimeTypes());
+        mimeTypes.addAll(this.videoPanel.getMimeTypes());
         
         return mimeTypes;
     }
@@ -123,12 +123,12 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
             final Dimension dims = MediaFileViewer.this.getSize();
             //logger.info("setting node on media viewer"); //NON-NLS
-            if (mediaPlayerPanelInited && mediaPlayerPanel.isSupported(file)) {
-                mediaPlayerPanel.loadFile(file, dims);
-                this.showVideoPanel();
+            if (videoPanelInited && videoPanel.isSupported(file)) {
+                videoPanel.setupVideo(file, dims);
+                this.showVideoPanel(true);
             } else if (imagePanelInited && imagePanel.isSupported(file)) {
                 imagePanel.showImageFx(file, dims);
-                this.showImagePanel();
+                this.showVideoPanel(false);
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Exception while setting node", e); //NON-NLS
@@ -136,19 +136,17 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
     }
 
     /**
-     * Show the media player panel.
+     * switch to visible video or image panel
+     *
+     * @param showVideo true if video panel, false if image panel
      */
-    private void showVideoPanel() {
+    private void showVideoPanel(boolean showVideo) {
         CardLayout layout = (CardLayout) this.getLayout();
-        layout.show(this, MEDIA_PLAYER_LAYER);
-    }
-    
-    /**
-     * Show the image panel.
-     */
-    private void showImagePanel() {
-        CardLayout layout = (CardLayout) this.getLayout();
-        layout.show(this, IMAGE_VIEWER_LAYER);
+        if (showVideo) {
+            layout.show(this, VIDEO_VIEWER_LAYER);
+        } else {
+            layout.show(this, IMAGE_VIEWER_LAYER);
+        }
     }
 
     @Override
@@ -158,27 +156,24 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     @Override
     public void resetComponent() {
-        mediaPlayerPanel.reset();
+        videoPanel.reset();
         imagePanel.reset();
         lastFile = null;
     }
 
-    /**
-     * Panel used to display media content.
-     */
-    protected interface MediaViewPanel {
+    interface MediaViewPanel {
 
         /**
          * @return supported mime types
          */
-        List<String> getSupportedMimeTypes();
+        List<String> getMimeTypes();
 
         /**
          * returns supported extensions (each starting with .)
          *
          * @return
          */
-        List<String> getSupportedExtensions();
+        List<String> getExtensionsList();
 
         boolean isSupported(AbstractFile file);
     }
