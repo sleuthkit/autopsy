@@ -245,7 +245,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @return supported mime types
      */
     @Override
-    public List<String> getSupportedMimeTypes() {
+    public List<String> getMimeTypes() {
         return Collections.unmodifiableList(Lists.newArrayList(supportedMimes));
     }
 
@@ -255,7 +255,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @return
      */
     @Override
-    public List<String> getSupportedExtensions() {
+    public List<String> getExtensionsList() {
         return getExtensions();
     }
 
