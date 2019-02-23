@@ -1,0 +1,10 @@
+MessageServiceConnectionInfo.ConnectionCheck.Everything=Invalid hostname, port number, username, and/or password.
+MessageServiceConnectionInfo.ConnectionCheck.Hostname=Invalid hostname.
+MessageServiceConnectionInfo.ConnectionCheck.Port=Invalid port number.
+MessageServiceConnectionInfo.ConnectionCheck.Username=Invalid username.
+MessageServiceConnectionInfo.ConnectionCheck.Password=Invalid password.
+MessageServiceConnectionInfo.ConnectionCheck.UsernameAndPassword=Invalid username and/or password.
+MessageServiceConnectionInfo.ConnectionCheck.HostnameOrPort=Invalid hostname and/or port number.
+MessageServiceConnectionInfo.MissingHostname=Missing hostname.
+MessageServiceConnectionInfo.MissingUsername=Missing username.
+MessageServiceConnectionInfo.MissingPassword=Missing password.
