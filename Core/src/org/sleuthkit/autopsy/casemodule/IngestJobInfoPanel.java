@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2018 Basis Technology Corp.
+ *
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.DataSource;
 
 /**
  * Panel for displaying ingest job history.
@@ -44,9 +45,11 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(IngestJobInfoPanel.class.getName());
     private List<IngestJobInfo> ingestJobs;
+    private final List<IngestJobInfo> ingestJobsForSelectedDataSource = new ArrayList<>();
     private IngestJobTableModel ingestJobTableModel = new IngestJobTableModel();
     private IngestModuleTableModel ingestModuleTableModel = new IngestModuleTableModel(null);
     private final DateFormat datetimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+    private DataSource selectedDataSource;
 
     /**
      * Creates new form IngestJobInfoPanel
@@ -61,7 +64,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     private void customizeComponents() {
         refresh();
         this.ingestJobTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
-            IngestJobInfo currJob = (ingestJobTable.getSelectedRow() < 0 ? null : this.ingestJobs.get(ingestJobTable.getSelectedRow()));
+            IngestJobInfo currJob = (ingestJobTable.getSelectedRow() < 0 ? null : this.ingestJobsForSelectedDataSource.get(ingestJobTable.getSelectedRow()));
             this.ingestModuleTableModel = new IngestModuleTableModel(currJob);
             this.ingestModuleTable.setModel(this.ingestModuleTableModel);
         });
@@ -75,20 +78,45 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         });
     }
 
+    /**
+     * Update the data source which ingest jobs are being displayed for
+     *
+     * @param selectedDataSource the data source to display ingest jobs for
+     */
+    public void updateIngestHistoryData(DataSource selectedDataSource) {
+        this.selectedDataSource = selectedDataSource;
+        ingestJobsForSelectedDataSource.clear();
+        if (selectedDataSource != null) {
+            for (IngestJobInfo jobInfo : ingestJobs) {
+                if (selectedDataSource.getId() == jobInfo.getObjectId()) {
+                    ingestJobsForSelectedDataSource.add(jobInfo);
+                }
+            }
+        }
+        this.ingestJobTableModel = new IngestJobTableModel();
+        this.ingestJobTable.setModel(ingestJobTableModel);
+        //if there were ingest jobs select the first one by default
+        if (!ingestJobsForSelectedDataSource.isEmpty()) {
+            ingestJobTable.setRowSelectionInterval(0, 0);
+        }
+        this.repaint();
+    }
+
+    /**
+     * Get the updated complete list of ingest jobs.
+     */
     private void refresh() {
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-            List<IngestJobInfo> ingestJobs = skCase.getIngestJobs();
-            this.ingestJobs = ingestJobs;
-            this.repaint();
+            this.ingestJobs = skCase.getIngestJobs();
+            updateIngestHistoryData(selectedDataSource);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    @Messages({"IngestJobInfoPanel.IngestJobTableModel.DataSource.header=Data Source",
-        "IngestJobInfoPanel.IngestJobTableModel.StartTime.header=Start Time",
+    @Messages({"IngestJobInfoPanel.IngestJobTableModel.StartTime.header=Start Time",
         "IngestJobInfoPanel.IngestJobTableModel.EndTime.header=End Time",
         "IngestJobInfoPanel.IngestJobTableModel.IngestStatus.header=Ingest Status"})
     private class IngestJobTableModel extends AbstractTableModel {
@@ -96,7 +124,6 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         private final List<String> columnHeaders = new ArrayList<>();
 
         IngestJobTableModel() {
-            columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_DataSource_header());
             columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_StartTime_header());
             columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_EndTime_header());
             columnHeaders.add(Bundle.IngestJobInfoPanel_IngestJobTableModel_IngestStatus_header());
@@ -104,7 +131,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
         @Override
         public int getRowCount() {
-            return ingestJobs.size();
+            return ingestJobsForSelectedDataSource.size();
         }
 
         @Override
@@ -114,24 +141,16 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
-            IngestJobInfo currIngestJob = ingestJobs.get(rowIndex);
+            IngestJobInfo currIngestJob = ingestJobsForSelectedDataSource.get(rowIndex);
             if (columnIndex == 0) {
-                try {
-                    SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
-                    return skCase.getContentById(currIngestJob.getObjectId()).getName();
-                } catch (TskCoreException | NoCurrentCaseException ex) {
-                    logger.log(Level.SEVERE, "Failed to get content from db", ex);
-                    return "";
-                }
-            } else if (columnIndex == 1) {
                 return datetimeFormat.format(currIngestJob.getStartDateTime());
-            } else if (columnIndex == 2) {
+            } else if (columnIndex == 1) {
                 Date endDate = currIngestJob.getEndDateTime();
                 if (endDate.getTime() == 0) {
                     return "N/A";
                 }
                 return datetimeFormat.format(currIngestJob.getEndDateTime());
-            } else if (columnIndex == 3) {
+            } else if (columnIndex == 2) {
                 return currIngestJob.getStatus().getDisplayName();
             }
             return null;

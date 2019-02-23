@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule.datasourceSummary;
+package org.sleuthkit.autopsy.casemodule.datasourcesummary;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
@@ -29,11 +29,12 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 
-@ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction")
+@ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryAction")
 @ActionRegistration(displayName = "#CTL_DataSourceSummaryAction", lazy = false)
 @Messages({"CTL_DataSourceSummaryAction=Data Source Summary"})
 /**
- * DataSourceSummaryAction action for the Case menu to activate a ViewSummaryInformationAction selecting the first data source.
+ * DataSourceSummaryAction action for the Case menu to activate a
+ * ViewSummaryInformationAction selecting the first data source.
  */
 public class DataSourceSummaryAction extends CallableSystemAction {
 
@@ -65,5 +66,10 @@ public class DataSourceSummaryAction extends CallableSystemAction {
     @Override
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
+    }
+
+    @Override
+    public boolean asynchronous() {
+        return false;
     }
 }

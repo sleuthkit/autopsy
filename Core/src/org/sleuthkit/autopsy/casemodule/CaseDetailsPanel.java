@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,23 +28,23 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * A panel that allows the user to view various properties of a case and change
+ * A panel that allows the user to view various details of a case and change
  * the display name of the case.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final class CasePropertiesPanel extends javax.swing.JPanel {
+final class CaseDetailsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(CasePropertiesPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(CaseDetailsPanel.class.getName());
     private Case theCase;
 
     /**
-     * Constructs a panel that allows the user to view various properties of the
+     * Constructs a panel that allows the user to view various details of the
      * current case and change the display name of the case.
      *
      * @param aCase A case.
      */
-    CasePropertiesPanel(Case caseInfo) {
+    CaseDetailsPanel(Case caseInfo) {
         initComponents();
         updateCaseInfo();
     }
@@ -109,18 +109,18 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         repaint();
     }
 
-    @Messages({"CasePropertiesPanel.casePanel.border.title=Case",
-        "CasePropertiesPanel.lbCaseUUIDLabel.text=Case UUID:",
-        "CasePropertiesPanel.examinerPanel.border.title=Examiner",
-        "CasePropertiesPanel.examinerLabel.text=Name:",
-        "CasePropertiesPanel.lbExaminerPhoneLabel.text=Phone:",
-        "CasePropertiesPanel.lbExaminerEmailLabel.text=Email:",
-        "CasePropertiesPanel.lbNotesLabel.text=Notes:",
-        "CasePropertiesPanel.pnOrganization.border.title=Organization",
-        "CasePropertiesPanel.lbOrganizationNameLabel.text=Name:",
-        "CasePropertiesPanel.lbPointOfContactNameLabel.text=Point of Contact:",
-        "CasePropertiesPanel.lbPointOfContactPhoneLabel.text=Phone:",
-        "CasePropertiesPanel.lbPointOfContactEmailLabel.text=Email:"})
+    @Messages({"CaseDetailsPanel.casePanel.border.title=Case",
+        "CaseDetailsPanel.lbCaseUUIDLabel.text=Case UUID:",
+        "CaseDetailsPanel.examinerPanel.border.title=Examiner",
+        "CaseDetailsPanel.examinerLabel.text=Name:",
+        "CaseDetailsPanel.lbExaminerPhoneLabel.text=Phone:",
+        "CaseDetailsPanel.lbExaminerEmailLabel.text=Email:",
+        "CaseDetailsPanel.lbNotesLabel.text=Notes:",
+        "CaseDetailsPanel.pnOrganization.border.title=Organization",
+        "CaseDetailsPanel.lbOrganizationNameLabel.text=Name:",
+        "CaseDetailsPanel.lbPointOfContactNameLabel.text=Point of Contact:",
+        "CaseDetailsPanel.lbPointOfContactPhoneLabel.text=Phone:",
+        "CaseDetailsPanel.lbPointOfContactEmailLabel.text=Email:"})
 
     /**
      * In this generated code below, there are 2 strings "Path" and "Remove"
@@ -182,21 +182,21 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         jTextArea1.setRows(5);
         jScrollPane1.setViewportView(jTextArea1);
 
-        casePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.casePanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        casePanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.casePanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
         caseNameLabel.setFont(caseNameLabel.getFont().deriveFont(caseNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseNameLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNameLabel.text")); // NOI18N
+        caseNameLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.caseNameLabel.text")); // NOI18N
         caseNameLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         caseNameLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         caseNameLabel.setPreferredSize(new java.awt.Dimension(82, 14));
 
         lbDbType.setFont(lbDbType.getFont().deriveFont(lbDbType.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        lbDbType.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbDbType.text")); // NOI18N
+        lbDbType.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbDbType.text")); // NOI18N
         lbDbType.setMaximumSize(new java.awt.Dimension(82, 14));
         lbDbType.setMinimumSize(new java.awt.Dimension(82, 14));
         lbDbType.setPreferredSize(new java.awt.Dimension(82, 14));
 
-        lbCaseUUIDLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbCaseUUIDLabel.text")); // NOI18N
+        lbCaseUUIDLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbCaseUUIDLabel.text")); // NOI18N
         lbCaseUUIDLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         lbCaseUUIDLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         lbCaseUUIDLabel.setPreferredSize(new java.awt.Dimension(82, 14));
@@ -206,16 +206,16 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         dbNameField.setMinimumSize(new java.awt.Dimension(25, 14));
 
         lbDbName.setFont(lbDbName.getFont().deriveFont(lbDbName.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        lbDbName.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbDbName.text")); // NOI18N
+        lbDbName.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbDbName.text")); // NOI18N
         lbDbName.setMaximumSize(new java.awt.Dimension(82, 14));
         lbDbName.setMinimumSize(new java.awt.Dimension(82, 14));
         lbDbName.setPreferredSize(new java.awt.Dimension(82, 14));
 
         caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNumberLabel.text")); // NOI18N
+        caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.caseNumberLabel.text")); // NOI18N
 
         caseDirLabel.setFont(caseDirLabel.getFont().deriveFont(caseDirLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseDirLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseDirLabel.text")); // NOI18N
+        caseDirLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.caseDirLabel.text")); // NOI18N
         caseDirLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         caseDirLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         caseDirLabel.setPreferredSize(new java.awt.Dimension(82, 14));
@@ -223,7 +223,7 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         caseDirField.setMinimumSize(new java.awt.Dimension(25, 14));
 
         crDateLabel.setFont(crDateLabel.getFont().deriveFont(crDateLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        crDateLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.crDateLabel.text")); // NOI18N
+        crDateLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.crDateLabel.text")); // NOI18N
         crDateLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         crDateLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         crDateLabel.setPreferredSize(new java.awt.Dimension(82, 14));
@@ -301,16 +301,16 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                 .addGap(6, 6, 6))
         );
 
-        examinerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        examinerPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.examinerPanel.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        lbNotesLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbNotesLabel.text")); // NOI18N
+        lbNotesLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbNotesLabel.text")); // NOI18N
         lbNotesLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         lbNotesLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         lbNotesLabel.setPreferredSize(new java.awt.Dimension(82, 14));
         lbNotesLabel.setRequestFocusEnabled(false);
 
         examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        examinerLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerLabel.text")); // NOI18N
+        examinerLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.examinerLabel.text")); // NOI18N
         examinerLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         examinerLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         examinerLabel.setPreferredSize(new java.awt.Dimension(82, 14));
@@ -329,12 +329,12 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
         taNotesText.setOpaque(false);
         caseNotesScrollPane.setViewportView(taNotesText);
 
-        lbExaminerEmailLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbExaminerEmailLabel.text")); // NOI18N
+        lbExaminerEmailLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbExaminerEmailLabel.text")); // NOI18N
         lbExaminerEmailLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         lbExaminerEmailLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         lbExaminerEmailLabel.setPreferredSize(new java.awt.Dimension(82, 14));
 
-        lbExaminerPhoneLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbExaminerPhoneLabel.text")); // NOI18N
+        lbExaminerPhoneLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbExaminerPhoneLabel.text")); // NOI18N
         lbExaminerPhoneLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         lbExaminerPhoneLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         lbExaminerPhoneLabel.setPreferredSize(new java.awt.Dimension(82, 14));
@@ -389,21 +389,21 @@ final class CasePropertiesPanel extends javax.swing.JPanel {
                 .addGap(6, 6, 6))
         );
 
-        pnOrganization.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.pnOrganization.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnOrganization.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.pnOrganization.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        lbOrganizationNameLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbOrganizationNameLabel.text")); // NOI18N
+        lbOrganizationNameLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbOrganizationNameLabel.text")); // NOI18N
         lbOrganizationNameLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         lbOrganizationNameLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         lbOrganizationNameLabel.setPreferredSize(new java.awt.Dimension(82, 14));
 
-        lbPointOfContactNameLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbPointOfContactNameLabel.text")); // NOI18N
+        lbPointOfContactNameLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbPointOfContactNameLabel.text")); // NOI18N
 
-        lbPointOfContactEmailLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbPointOfContactEmailLabel.text")); // NOI18N
+        lbPointOfContactEmailLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbPointOfContactEmailLabel.text")); // NOI18N
         lbPointOfContactEmailLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         lbPointOfContactEmailLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         lbPointOfContactEmailLabel.setPreferredSize(new java.awt.Dimension(82, 14));
 
-        lbPointOfContactPhoneLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbPointOfContactPhoneLabel.text")); // NOI18N
+        lbPointOfContactPhoneLabel.setText(org.openide.util.NbBundle.getMessage(CaseDetailsPanel.class, "CaseDetailsPanel.lbPointOfContactPhoneLabel.text")); // NOI18N
         lbPointOfContactPhoneLabel.setMaximumSize(new java.awt.Dimension(82, 14));
         lbPointOfContactPhoneLabel.setMinimumSize(new java.awt.Dimension(82, 14));
         lbPointOfContactPhoneLabel.setPreferredSize(new java.awt.Dimension(82, 14));
