@@ -1,3 +1,28 @@
+# {0} - File name
+CreatePortableCaseModule.addFilesToPortableCase.copyingFile=Copying file {0}
+# {0} - case folder
+CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists
+CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case
+# {0} - folder
+CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}
+CreatePortableCaseModule.generateReport.caseClosed=Current case has been closed
+# {0} - tag name
+CreatePortableCaseModule.generateReport.copyingFiles=Copying files tagged as {0}...
+CreatePortableCaseModule.generateReport.copyingTags=Copying tags...
+CreatePortableCaseModule.generateReport.creatingCase=Creating portable case database...
+CreatePortableCaseModule.generateReport.errorCopyingFiles=Error copying tagged files
+CreatePortableCaseModule.generateReport.errorCopyingTags=Error copying tags
+CreatePortableCaseModule.generateReport.noTagsSelected=No tags selected for export.
+# {0} - output folder
+CreatePortableCaseModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
+# {0} - output folder
+CreatePortableCaseModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder
+CreatePortableCaseModule.generateReport.verifying=Verifying selected parameters...
+CreatePortableCaseModule.getDescription.description=Copies selected tagged items to a new single-user case that will work anywhere
+CreatePortableCaseModule.getName.name=Portable Case
+CreatePortableCasePanel.error.errorLoadingTags=Error loading tags
+CreatePortableCasePanel.error.errorTitle=Error getting tag names for case
+CreatePortableCasePanel.error.noOpenCase=There is no case open
 OpenIDE-Module-Name=Report
 CTL_ReportWizardAction=Run Report
 ArtifactSelectionDialog.titleLabel.text=Select which artifacts you would like to report on:
@@ -269,4 +294,10 @@ ReportHTMLConfigurationPanel.headerTextField.text=
 ReportHTMLConfigurationPanel.footerTextField.text=
 ReportHTMLConfigurationPanel.headerLabel.text=Header:
 ReportHTMLConfigurationPanel.footerLabel.text=Footer:
+CreatePortableCasePanel.selectAllButton.text=Select All
+CreatePortableCasePanel.deselectAllButton.text=Deselect All
+CreatePortableCasePanel.outputFolderTextField.text=jTextField1
+CreatePortableCasePanel.chooseOutputFolderButton.text=Choose folder
+CreatePortableCasePanel.jLabel1.text=Export files tagged as:
+CreatePortableCasePanel.jLabel2.text=Select output folder:
 TableReportGenerator.StatusColumn.Header=Review Status
