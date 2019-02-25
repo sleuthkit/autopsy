@@ -282,7 +282,7 @@ public interface EamDb {
      *
      * @return List of artifact instances for a given type/value
      */
-    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
@@ -293,7 +293,18 @@ public interface EamDb {
      *
      * @return List of artifact instances for a given type/value
      */
-    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValueAndCase(CorrelationAttributeInstance.Type aType, String value, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException;
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+    
+    /**
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     *
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
+     *
+     * @return List of artifact instances for a given type/value
+     */
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException;
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath

@@ -512,7 +512,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }
     }
-
+    
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
@@ -531,7 +531,45 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
+    
+    /**
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     *
+     * @param aType The type of the artifact
+     * @param value The correlation value
+     *
+     * @return List of artifact instances for a given type/value
+     */
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
+        try {
+            acquireSharedLock();
+            return super.getArtifactInstancesByTypeValues(aType, values);
+        } finally {
+            releaseSharedLock();
+        }
+    }
 
+        /**
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     *
+     * @param aType The type of the artifact
+     * @param value The correlation value
+     *
+     * @return List of artifact instances for a given type/value
+     */
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
+        try {
+            acquireSharedLock();
+            return super.getArtifactInstancesByTypeValuesAndCases(aType, values, caseIds);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+    
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath

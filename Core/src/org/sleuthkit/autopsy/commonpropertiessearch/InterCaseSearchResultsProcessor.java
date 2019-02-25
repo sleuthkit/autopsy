@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.commonpropertiessearch;
 
+import com.google.common.collect.Iterables;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +39,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeInstance.NODE_TYPE;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -256,9 +257,9 @@ final class InterCaseSearchResultsProcessor {
                 for (String corValue : values) {
                     List<CorrelationAttributeInstance> instances;
                     if (targetCases.isEmpty()) {
-                        instances = EamDb.getInstance().getArtifactInstancesByTypeValue(correlationType, corValue);
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValues(correlationType, Arrays.asList(corValue));
                     } else {
-                        instances = EamDb.getInstance().getArtifactInstancesByTypeValueAndCase(correlationType, corValue, targetCases);
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValuesAndCases(correlationType, Arrays.asList(corValue), targetCases);
                     }
                     int size = instances.size();
                     if (size > 1) {
@@ -301,6 +302,7 @@ final class InterCaseSearchResultsProcessor {
      */
     private class InterCaseByCaseCallback implements InstanceTableCallback {
 
+        private static final int VALUE_BATCH_SIZE = 500;
         final Map<String, Map<String, CommonAttributeValueList>> caseCollatedDataSourceCollections = new HashMap<>();
         private final int caseID;
         private final int targetCase;
@@ -330,12 +332,12 @@ final class InterCaseSearchResultsProcessor {
                     }
                     values.add(corValue);
                 }
-                for (String corValue : values) {
+                for (List<String> valuesChunk : Iterables.partition(values, VALUE_BATCH_SIZE)) {
                     List<CorrelationAttributeInstance> instances;
                     if (targetCases.isEmpty()) {
-                        instances = EamDb.getInstance().getArtifactInstancesByTypeValue(correlationType, corValue);
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValues(correlationType, valuesChunk);
                     } else {
-                        instances = EamDb.getInstance().getArtifactInstancesByTypeValueAndCase(correlationType, corValue, targetCases);
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValuesAndCases(correlationType, valuesChunk, targetCases);
                     }
                     if (instances.size() > 1) {
                         for (CorrelationAttributeInstance instance : instances) {
@@ -354,7 +356,7 @@ final class InterCaseSearchResultsProcessor {
                             CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceNameKey);
                             CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(instance.getID(), correlationType, NODE_TYPE.CASE_NODE);
                             searchResult.setCurrentAttributeInst(instance);
-                            CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
+                            CommonAttributeValue commonAttributeValue = new CommonAttributeValue(instance.getCorrelationValue());
                             commonAttributeValue.addInstance(searchResult);
                             valueList.addMetadataToList(commonAttributeValue);
                             dataSourceToFile.put(dataSourceNameKey, valueList);
