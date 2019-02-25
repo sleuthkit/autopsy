@@ -414,7 +414,16 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
         if (bbArtifact != null && EamDb.isEnabled()) {
-            ret.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, false));
+            BlackboardArtifact correlatableArtifact = null;
+            if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbArtifact.getArtifactTypeID()) {
+                correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbArtifact);
+            }
+
+            if (correlatableArtifact == null) {
+                correlatableArtifact = bbArtifact;
+            }
+
+            ret.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, false));
         }
 
         // we can correlate based on the MD5 if it is enabled      
@@ -435,7 +444,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                         CorrelationDataSource.fromTSKDataSource(corCase, file.getDataSource()),
                                         file.getParentPath() + file.getName(),
                                         "",
-                                        file.getKnown(), 
+                                        file.getKnown(),
                                         file.getId()));
                             } catch (CorrelationAttributeNormalizationException ex) {
                                 LOGGER.log(Level.INFO, String.format("Unable to check create CorrelationAttribtueInstance for value %s and type %s.", md5, aType.toString()), ex);
@@ -655,7 +664,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         if (EamDb.isEnabled()) {
             return !getCorrelationAttributesFromNode(node).isEmpty();
         } else {
-           return this.file != null
+            return this.file != null
                     && this.file.getSize() > 0
                     && ((this.file.getMd5Hash() != null) && (!this.file.getMd5Hash().isEmpty()));
         }

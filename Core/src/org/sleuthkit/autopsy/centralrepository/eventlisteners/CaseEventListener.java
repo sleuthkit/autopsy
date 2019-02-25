@@ -297,7 +297,16 @@ final class CaseEventListener implements PropertyChangeListener {
                 return;
             }
 
-            List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
+            BlackboardArtifact correlatableArtifact = null;
+            if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbArtifact.getArtifactTypeID()) {
+                correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbArtifact);
+            }
+
+            if (correlatableArtifact == null) {
+                correlatableArtifact = bbArtifact;
+            }
+
+            List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, true);
             for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                 eamArtifact.setComment(comment);
                 try {
@@ -368,9 +377,18 @@ final class CaseEventListener implements PropertyChangeListener {
                     }
                     //if the Correlation Attribute will have no tags with a status which would prevent the current status from being changed 
                     if (!hasTagWithConflictingKnownStatus) {
+                        BlackboardArtifact correlatableArtifact = null;
+                        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbTag.getArtifact().getArtifactTypeID()) {
+                            correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbTag.getArtifact());
+                        }
+
+                        if (correlatableArtifact == null) {
+                            correlatableArtifact = bbTag.getArtifact();
+                        }
+
                         //Get the correlation atttributes that correspond to the current BlackboardArtifactTag if their status should be changed
                         //with the initial set of correlation attributes this should be a single correlation attribute
-                        List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbTag.getArtifact(), true);
+                        List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, true);
                         for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                             EamDb.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
                         }
@@ -455,7 +473,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 }
             } catch (EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding new data source to the central repository", ex); //NON-NLS
-            } 
+            }
         } // DATA_SOURCE_ADDED
     }
 
@@ -495,7 +513,7 @@ final class CaseEventListener implements PropertyChangeListener {
             }
         } // CURRENT_CASE
     }
-    
+
     private final class DataSourceNameChangedTask implements Runnable {
 
         private final EamDb dbManager;
@@ -508,12 +526,12 @@ final class CaseEventListener implements PropertyChangeListener {
 
         @Override
         public void run() {
-            
+
             final DataSourceNameChangedEvent dataSourceNameChangedEvent = (DataSourceNameChangedEvent) event;
             Content dataSource = dataSourceNameChangedEvent.getDataSource();
             String newName = (String) event.getNewValue();
-            
-            if (! StringUtils.isEmpty(newName)) {
+
+            if (!StringUtils.isEmpty(newName)) {
 
                 if (!EamDb.isEnabled()) {
                     return;

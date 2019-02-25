@@ -198,7 +198,16 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             startSection(html, "Central Repository Comments");
             List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
             if (artifact != null) {
-                instancesList.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(artifact, false));
+                BlackboardArtifact correlatableArtifact = null;
+                if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifact.getArtifactTypeID()) {
+                    correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(artifact);
+                }
+
+                if (correlatableArtifact == null) {
+                    correlatableArtifact = artifact;
+                }
+
+                instancesList.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, false));
             }
             try {
                 List<CorrelationAttributeInstance.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
