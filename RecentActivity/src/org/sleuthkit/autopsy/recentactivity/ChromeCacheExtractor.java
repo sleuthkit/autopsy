@@ -203,7 +203,7 @@ final class ChromeCacheExtractor {
                     tmpFile.deleteOnExit();
                 }
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to delete cache file copy %s", tempFilePathname), ex);
+                logger.log(Level.WARNING, String.format("Failed to delete cache file copy %s", tempFilePathname), ex);
             }
         }
     }
