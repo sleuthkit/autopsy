@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,25 +22,22 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import javax.swing.JDialog;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 
 /**
- * Panel for displaying the case information, including both case details and
- * ingest job history.
+ * Panel for displaying the case information, including case details.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class CaseInformationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    CasePropertiesPanel propertiesPanel;
+    private CaseDetailsPanel caseDetailsPanel;
 
     /**
-     * Constructs a panel for displaying the case information, including both
-     * case details and ingest job history.
+     * Constructs a panel for displaying the case information including case
+     * details.
      */
     CaseInformationPanel() {
         initComponents();
@@ -49,25 +46,18 @@ class CaseInformationPanel extends javax.swing.JPanel {
 
     @Messages({
         "CaseInformationPanel.caseDetails.header=Details",
-        "CaseInformationPanel.ingestJobInfo.header=Ingest History",
         "CaseInformationPanel.editDetailsButton.text=Edit Details",
         "CaseInformationPanel.editDetailsDialog.title=Edit Case Details"
     })
     private void customizeComponents() {
         try {
-            propertiesPanel = new CasePropertiesPanel(Case.getCurrentCaseThrows());
-        } catch (NoCurrentCaseException ex) { 
+            caseDetailsPanel = new CaseDetailsPanel(Case.getCurrentCaseThrows());
+        } catch (NoCurrentCaseException ex) {
             Logger.getLogger(CaseInformationPanel.class.getName()).log(Level.INFO, "Exception while getting open case.", ex);
         }
-        propertiesPanel.setSize(propertiesPanel.getPreferredSize());
-        this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), propertiesPanel);
-        this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
-        this.tabbedPane.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
-            }
-        });
+        caseDetailsPanel.setSize(caseDetailsPanel.getPreferredSize());
+        this.detailsPanel.add(caseDetailsPanel);
+        this.detailsPanel.setPreferredSize(caseDetailsPanel.getPreferredSize());
     }
 
     /**
@@ -89,11 +79,9 @@ class CaseInformationPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         outerDetailsPanel = new javax.swing.JPanel();
-        tabbedPane = new javax.swing.JTabbedPane();
         closeButton = new javax.swing.JButton();
         editDetailsButton = new javax.swing.JButton();
-
-        tabbedPane.setPreferredSize(new java.awt.Dimension(420, 200));
+        detailsPanel = new javax.swing.JPanel();
 
         org.openide.awt.Mnemonics.setLocalizedText(closeButton, org.openide.util.NbBundle.getMessage(CaseInformationPanel.class, "CaseInformationPanel.closeButton.text")); // NOI18N
 
@@ -104,27 +92,42 @@ class CaseInformationPanel extends javax.swing.JPanel {
             }
         });
 
+        javax.swing.GroupLayout detailsPanelLayout = new javax.swing.GroupLayout(detailsPanel);
+        detailsPanel.setLayout(detailsPanelLayout);
+        detailsPanelLayout.setHorizontalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 709, Short.MAX_VALUE)
+        );
+        detailsPanelLayout.setVerticalGroup(
+            detailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 219, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout outerDetailsPanelLayout = new javax.swing.GroupLayout(outerDetailsPanel);
         outerDetailsPanel.setLayout(outerDetailsPanelLayout);
         outerDetailsPanelLayout.setHorizontalGroup(
             outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 709, Short.MAX_VALUE)
             .addGroup(outerDetailsPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(editDetailsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 502, Short.MAX_VALUE)
                 .addComponent(closeButton)
                 .addContainerGap())
+            .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(detailsPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         outerDetailsPanelLayout.setVerticalGroup(
             outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(outerDetailsPanelLayout.createSequentialGroup()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
-                .addGap(0, 0, 0)
+                .addContainerGap(228, Short.MAX_VALUE)
                 .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(closeButton)
                     .addComponent(editDetailsButton))
                 .addContainerGap())
+            .addGroup(outerDetailsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(outerDetailsPanelLayout.createSequentialGroup()
+                    .addComponent(detailsPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 43, Short.MAX_VALUE)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -151,7 +154,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
         editCasePropertiesPanel.addSaveButtonAction((ActionEvent e) -> {
             editCasePropertiesDialog.setVisible(false);
             editCasePropertiesPanel.saveProperties();
-            propertiesPanel.updateCaseInfo();
+            caseDetailsPanel.updateCaseInfo();
 
         });
 
@@ -161,13 +164,13 @@ class CaseInformationPanel extends javax.swing.JPanel {
         editCasePropertiesDialog.setLocationRelativeTo(this);
         editCasePropertiesDialog.setVisible(true);
         editCasePropertiesDialog.toFront();
-        propertiesPanel.updateCaseInfo();
+        caseDetailsPanel.updateCaseInfo();
     }//GEN-LAST:event_editDetailsButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton closeButton;
+    private javax.swing.JPanel detailsPanel;
     private javax.swing.JButton editDetailsButton;
     private javax.swing.JPanel outerDetailsPanel;
-    private javax.swing.JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
 }

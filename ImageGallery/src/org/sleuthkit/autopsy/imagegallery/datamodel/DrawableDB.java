@@ -560,7 +560,7 @@ public final class DrawableDB {
                 try {
                     String sql = "CREATE TABLE IF NOT EXISTS datasources " //NON-NLS
                             + "( id INTEGER PRIMARY KEY, " //NON-NLS
-                            + " ds_obj_id integer UNIQUE NOT NULL, "
+                            + " ds_obj_id BIGINT UNIQUE NOT NULL, "
                             + " drawable_db_build_status VARCHAR(128) )"; //NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
@@ -570,8 +570,8 @@ public final class DrawableDB {
 
                 try {
                     String sql = "CREATE TABLE  if not exists drawable_files " //NON-NLS
-                            + "( obj_id INTEGER PRIMARY KEY, " //NON-NLS
-                            + " data_source_obj_id INTEGER NOT NULL, "
+                            + "( obj_id BIGINT PRIMARY KEY, " //NON-NLS
+                            + " data_source_obj_id BIGINT NOT NULL, "
                             + " path VARCHAR(255), " //NON-NLS
                             + " name VARCHAR(255), " //NON-NLS
                             + " created_time integer, " //NON-NLS
@@ -598,7 +598,7 @@ public final class DrawableDB {
                 try {
                     String sql = "CREATE TABLE if not exists hash_set_hits " //NON-NLS
                             + "(hash_set_id INTEGER REFERENCES hash_sets(hash_set_id) not null, " //NON-NLS
-                            + " obj_id INTEGER REFERENCES drawable_files(obj_id) not null, " //NON-NLS
+                            + " obj_id BIGINT REFERENCES drawable_files(obj_id) not null, " //NON-NLS
                             + " PRIMARY KEY (hash_set_id, obj_id))"; //NON-NLS
                     stmt.execute(sql);
                 } catch (SQLException ex) {
@@ -690,7 +690,7 @@ public final class DrawableDB {
             try {
                 String tableSchema
                         = "( group_id " + autogenKeyType + " PRIMARY KEY, " //NON-NLS
-                        + " data_source_obj_id integer DEFAULT 0, "
+                        + " data_source_obj_id BIGINT DEFAULT 0, "
                         + " value VARCHAR(255) not null, " //NON-NLS
                         + " attribute VARCHAR(255) not null, " //NON-NLS
                         + " is_analyzed integer DEFAULT 0, "
@@ -1577,11 +1577,20 @@ public final class DrawableDB {
         return map;
     }
     
-
+    /**
+     * Get the build status for the given data source.
+     * Will return UNKNOWN if the data source is not yet in the database.
+     * 
+     * @param dataSourceId
+     * 
+     * @return The status of the data source or UKNOWN if it is not found.
+     * 
+     * @throws TskCoreException 
+     */
     public DrawableDbBuildStatusEnum getDataSourceDbBuildStatus(Long dataSourceId) throws TskCoreException {   
         Map<Long, DrawableDbBuildStatusEnum> statusMap = getDataSourceDbBuildStatus();
         if (statusMap.containsKey(dataSourceId) == false) {
-            throw new TskCoreException("Data Source ID not found: " + dataSourceId);
+            return DrawableDbBuildStatusEnum.UNKNOWN;
         }
         return statusMap.get(dataSourceId);
     } 

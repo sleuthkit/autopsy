@@ -1,0 +1,75 @@
+/*! \page translations_page Translating This Document
+
+The Autopsy user base is global. You can help out by translating the UI and this documentation. 
+
+\section translations_doc Translating Documentation
+
+This section outlines how to translate this user documentation. To translate, you will need:
+- A git account
+- Basic familiarity with git
+- Text editor
+
+The Autopsy documentation is created by [Doxygen](http://www.doxygen.nl/) from ".dox" text files in the [docs/doxygen-user](https://github.com/sleuthkit/autopsy/tree/develop/docs/doxygen-user) folder in the Github repository.  
+
+The first step is to fork the [Autopsy Repository](https://github.com/sleuthkit/autopsy) into your Git account and make a clone of it into your environment so that you can make edits to the files.  
+
+As you are editing, you can review your documentation by installing Doxygen and running 'doxygen' from within the translations folder.   It will save the HTML to the 'user-docs' folder. 
+
+\subsection translations_doc_start Translating To a New Language
+
+If there is not already documentation in a language, then you need to make a copy of the entire English 'doxygen-user' folder and name it 'doxygen-user_AB' where AB is replaced by the 2 character [country code] (http://www.lingoes.net/en/translator/langcode.htm).  For example, 'doxygen-user_fr' for French and 'doxygen-user_ja' for Japanese. 
+
+Edit the Doxyfile to update the OUTPUT_LANGUAGE field.  For English it has:
+
+\code
+OUTPUT_LANGUAGE        = English
+\endcode
+
+Now, simply start translating the English documents. 
+
+\subsection translations_doc_update Updating The Documentation
+
+When new releases are made and the English documentation is updated, the other languages should be updated as well. To determine what has changed:
+- First, determine when the last time the documentation was changed.  From a command line, you can change into the translated documentation folder and type:
+
+\code
+    $ cd docs/doxygen-user_fr
+    $ git log -n 1 .
+    commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1111
+    Author: John Doe <jdoe@sleuthkit.org>
+    Date:   Tue Jan 1 22:56:09 2019 -0500
+    
+        update to quick start
+\endcode    
+
+This shows you that commit 94e4b1042af47908dd4a0b2959b3f6c3d4af1111 was the last translation update to occur for the French version. 
+
+- Next, determine what changed in the English version since then:
+
+\code
+    $ git diff 94e4b1042af47908dd4a0b2959b3f6c3d4af1111 ../doxygen-user
+    diff --git a/docs/doxygen-user/central_repo.dox b/docs/doxygen-user/central_repo.dox
+index 83d3407e8..e8cd01c1b 100644
+    --- a/docs/doxygen-user/central_repo.dox
+    +++ b/docs/doxygen-user/central_repo.dox
+    @@ -79,6 +79,16 @@ Descriptions of the property types:
+      - Phone numbers are currently only extracted from call logs, contact lists and message, which come from the Android Analyzer module.
+      - <b>USB Devices</b>
+      - USB device properties come from the registry parsing in the Recent Activity Module.
+     +- <b>Wireless Networks</b>
+     + - Wireless networks are correlated on SSIDs, and come from the registry par
+\endcode
+
+- Update the translated documentation accordingly based on what changed in the English version.
+
+- If you do not get to complete all of the changes, you should create a TODO.txt file that lists what was not updated so that other people know that not everything was updated. 
+
+\subsection translations_doc_commit Committing the Documentation
+
+You should submit a Github Pull Request when:
+- You complete a language.
+- You don't have time to do more work, but want to submit what you did.
+
+To get the code committed, send a [pull request](https://help.github.com/articles/about-pull-requests/) to the main Autopsy repository. 
+
+*/

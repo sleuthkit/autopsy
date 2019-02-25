@@ -1,0 +1,21 @@
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+
+AddRawImageTask.for.device=for device 
+AddRawImageTask.image.critical.error.adding=Critical error adding 
+AddRawImageTask.image.noncritical.error.adding=Non-critical error adding 
+AddRawImageTask.image.notExisting=is not existing.
+AddRawImageTask.noOpenCase.errMsg=No open case available.
+AddRawImageTask.progress.add.text=Adding raw image: 
+RawDSInputPanel.error.text=Path to multi-user data source is on "C:" drive
+RawDSInputPanel.noOpenCase.errMsg=Exception while getting open case.
+RawDSInputPanel.pathLabel.text=Browse for an unallocated space image file:
+RawDSInputPanel.errorLabel.text=Error Label
+RawDSInputPanel.browseButton.text=Browse
+RawDSInputPanel.pathTextField.text=
+RawDSInputPanel.jBreakFileUpLabel.text=Break image up into:
+RawDSInputPanel.jNoBreakupRadioButton.text=Do not break up
+RawDSInputPanel.j2GBBreakupRadioButton.text=2GB chunks
+RawDSInputPanel.timeZoneLabel.text=Please select the input timezone:
+RawDSProcessor.dataSourceType=Unallocated Space Image File

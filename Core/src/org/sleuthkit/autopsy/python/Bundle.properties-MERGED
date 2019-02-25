@@ -1,0 +1,4 @@
+JythonModuleLoader.errorMessages.failedToOpenModule=Failed to open {0}. See log for details.
+JythonModuleLoader.errorMessages.failedToLoadModule=Failed to load {0}.  {1}.  See log for details.
+JythonModuleLoader.pythonInterpreterError.msg=Failed to load python modules, See log for more details
+JythonModuleLoader.pythonInterpreterError.title=Python Modules
