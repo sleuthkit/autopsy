@@ -797,7 +797,7 @@ class ExtractRegistry extends Extract {
                         break;
                 }
             } // for
-            
+      
             return true;
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS

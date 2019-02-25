@@ -35,13 +35,30 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
 
     private final FilterType filter;
 
+    /**
+     * Selected = false, Disabled = false
+     *
+     * @param filter
+     */
     public DefaultFilterState(FilterType filter) {
         this(filter, false);
     }
 
+    /**
+     * Disabled = false
+     *
+     * @param filter
+     * @param selected True to select this filter initialy.
+     */
     public DefaultFilterState(FilterType filter, boolean selected) {
         this.filter = filter;
         this.selected.set(selected);
+    }
+
+    protected DefaultFilterState(FilterType filter, boolean selected, boolean disabled) {
+        this.filter = filter;
+        this.selected.set(selected);
+        this.disabled.set(disabled);
     }
 
     private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
@@ -75,7 +92,7 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
 
     @Override
     public boolean isDisabled() {
-        return disabledProperty().get();
+        return disabled.get();
     }
 
     @Override
@@ -136,12 +153,20 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
         if (!Objects.equals(this.filter, other.filter)) {
             return false;
         }
-        if (!Objects.equals(this.selected, other.selected)) {
+        if (!Objects.equals(this.isSelected(), other.isSelected())) {
             return false;
         }
-        if (!Objects.equals(this.disabled, other.disabled)) {
+        if (!Objects.equals(this.isDisabled(), other.isDisabled())) {
             return false;
         }
         return true;
     }
+
+    @Override
+    public String toString() {
+        activeProp.get();
+        return "DefaultFilterState{" + "filter=" + filter + ", selected=" + selected + ", disabled=" + disabled + ", activeProp=" + activeProp + '}';
+    }
+
+
 }

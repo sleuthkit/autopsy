@@ -70,10 +70,7 @@ public final class DescriptionFilter implements UIFilter {
         if (!Objects.equals(this.description, other.description)) {
             return false;
         }
-        if (this.descriptionLoD != other.descriptionLoD) {
-            return false;
-        }
-        return true;
+        return this.descriptionLoD == other.descriptionLoD;
     }
 
     @Override
