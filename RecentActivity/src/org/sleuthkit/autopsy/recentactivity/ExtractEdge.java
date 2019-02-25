@@ -29,7 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Level;
@@ -61,42 +61,42 @@ final class ExtractEdge extends Extract {
     private final Path moduleTempResultPath;
     private Content dataSource;
     private IngestJobContext context;
-    private Hashtable<String, ArrayList<String>> containersTable;
+    private HashMap<String, ArrayList<String>> containersTable;
 
-    private static final String EDGE = "Edge";
+    private static final String EDGE = "Edge"; //NON-NLS
 
-    private static final String EDGE_KEYWORD_VISIT = "Visited:";
-    private static final String IGNORE_COMMA_IN_QUOTES_REGEX = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+    private static final String EDGE_KEYWORD_VISIT = "Visited:"; //NON-NLS
+    private static final String IGNORE_COMMA_IN_QUOTES_REGEX = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"; //NON-NLS
 
-    private static final String EDGE_TABLE_TYPE_DOWNLOAD = "iedownload";
-    private static final String EDGE_TABLE_TYPE_HISTORY = "History";
-    private static final String EDGE_TABLE_TYPE_COOKIE = "cookie";
+    private static final String EDGE_TABLE_TYPE_DOWNLOAD = "iedownload"; //NON-NLS
+    private static final String EDGE_TABLE_TYPE_HISTORY = "History"; //NON-NLS
+    private static final String EDGE_TABLE_TYPE_COOKIE = "cookie"; //NON-NLS
 
-    private static final String EDGE_HEAD_URL = "url";
-    private static final String EDGE_HEAD_ACCESSTIME = "accessedtime";
-    private static final String EDGE_HEAD_NAME = "name";
-    private static final String EDGE_HEAD_CONTAINER_ID = "containerid";
-    private static final String EDGE_HEAD_RESPONSEHEAD = "responseheaders";
-    private static final String EDGE_HEAD_TITLE = "title";
-    private static final String EDGE_HEAD_RDOMAIN = "rdomain";
-    private static final String EDGE_HEAD_VALUE = "value";
-    private static final String EDGE_HEAD_LASTMOD = "lastmodified";
+    private static final String EDGE_HEAD_URL = "url"; //NON-NLS
+    private static final String EDGE_HEAD_ACCESSTIME = "accessedtime"; //NON-NLS
+    private static final String EDGE_HEAD_NAME = "name"; //NON-NLS
+    private static final String EDGE_HEAD_CONTAINER_ID = "containerid"; //NON-NLS
+    private static final String EDGE_HEAD_RESPONSEHEAD = "responseheaders"; //NON-NLS
+    private static final String EDGE_HEAD_TITLE = "title"; //NON-NLS
+    private static final String EDGE_HEAD_RDOMAIN = "rdomain"; //NON-NLS
+    private static final String EDGE_HEAD_VALUE = "value"; //NON-NLS
+    private static final String EDGE_HEAD_LASTMOD = "lastmodified"; //NON-NLS
 
-    private static final String EDGE_WEBCACHE_PREFIX = "WebCacheV01";
-    private static final String EDGE_CONTAINER_FILE_PREFIX = "Container_";
-    private static final String EDGE_CONTAINER_FILE_EXT = ".csv";
-    private static final String EDGE_WEBCACHE_EXT = ".dat";
+    private static final String EDGE_WEBCACHE_PREFIX = "WebCacheV01"; //NON-NLS
+    private static final String EDGE_CONTAINER_FILE_PREFIX = "Container_"; //NON-NLS
+    private static final String EDGE_CONTAINER_FILE_EXT = ".csv"; //NON-NLS
+    private static final String EDGE_WEBCACHE_EXT = ".dat"; //NON-NLS
 
-    private static final String ESE_TOOL_NAME = "ESEDatabaseView.exe";
-    private static final String EDGE_WEBCACHE_NAME = "WebCacheV01.dat";
-    private static final String EDGE_SPARTAN_NAME = "Spartan.edb";
-    private static final String EDGE_CONTAINTERS_FILE_NAME = "Containers.csv";
-    private static final String EDGE_FAVORITE_FILE_NAME = "Favorites.csv";
-    private static final String EDGE_OUTPUT_FILE_NAME = "Output.txt";
-    private static final String EDGE_ERROR_FILE_NAME = "File.txt";
+    private static final String ESE_TOOL_NAME = "ESEDatabaseView.exe"; //NON-NLS
+    private static final String EDGE_WEBCACHE_NAME = "WebCacheV01.dat"; //NON-NLS
+    private static final String EDGE_SPARTAN_NAME = "Spartan.edb"; //NON-NLS
+    private static final String EDGE_CONTAINTERS_FILE_NAME = "Containers.csv"; //NON-NLS
+    private static final String EDGE_FAVORITE_FILE_NAME = "Favorites.csv"; //NON-NLS
+    private static final String EDGE_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
+    private static final String EDGE_ERROR_FILE_NAME = "File.txt"; //NON-NLS
 
-    private static final String ESE_TOOL_FOLDER = "ESEDatabaseView";
-    private static final String EDGE_RESULT_FOLDER_NAME = "results";
+    private static final String ESE_TOOL_FOLDER = "ESEDatabaseView"; //NON-NLS
+    private static final String EDGE_RESULT_FOLDER_NAME = "results"; //NON-NLS
 
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a");
 
@@ -106,8 +106,12 @@ final class ExtractEdge extends Extract {
         "ExtractEdge_process_errMsg_webcacheFail=Failure processing Microsoft Edge WebCacheV01.dat file",
         "ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan.edb file",
         "ExtractEdge_Module_Name=Microsoft Edge",
-        "ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history",})
+        "ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history",
+    })
 
+    /**
+    * Extract the bookmarks, cookies, downloads and history from Microsoft Edge
+    */
     ExtractEdge() throws NoCurrentCaseException {
         moduleTempResultPath = Paths.get(RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), EDGE), EDGE_RESULT_FOLDER_NAME);
     }
@@ -221,7 +225,7 @@ final class ExtractEdge extends Extract {
                     return;
                 }
 
-                this.getCookie(webCacheFile, resultsDir);
+                this.getCookies(webCacheFile, resultsDir);
 
 //                if (context.dataSourceIngestIsCancelled()) {
 //                    return;
@@ -254,7 +258,7 @@ final class ExtractEdge extends Extract {
 
             //Run the dumper 
             String tempSpartanFileName = EDGE_WEBCACHE_PREFIX
-                    + Integer.toString((int) spartanFile.getId()) + EDGE_WEBCACHE_EXT; //NON-NLS
+                    + Integer.toString((int) spartanFile.getId()) + EDGE_WEBCACHE_EXT; 
             File tempSpartanFile = new File(RAImageIngestModule.getRATempPath(currentCase, EDGE), tempSpartanFileName);
 
             try {
@@ -274,7 +278,7 @@ final class ExtractEdge extends Extract {
                     return;
                 }
 
-                this.getBookmark(spartanFile, resultsDir);
+                this.getBookmarks(spartanFile, resultsDir);
 
             } finally {
                 tempSpartanFile.delete();
@@ -320,10 +324,10 @@ final class ExtractEdge extends Extract {
                     }
 
                     if (line.contains(EDGE_KEYWORD_VISIT)) {
-                        BlackboardArtifact b = getHistoryArtifact(origFile, headers, line);
-                        if (b != null) {
-                            bbartifacts.add(b);
-                            this.indexArtifact(b);
+                        BlackboardArtifact ba = getHistoryArtifact(origFile, headers, line);
+                        if (ba != null) {
+                            bbartifacts.add(ba);
+                            this.indexArtifact(ba);
                         }
                     }
                 }
@@ -347,14 +351,14 @@ final class ExtractEdge extends Extract {
      * @throws TskCoreException
      * @throws FileNotFoundException
      */
-    private void getBookmark(AbstractFile origFile, File resultDir) throws TskCoreException {
+    private void getBookmarks(AbstractFile origFile, File resultDir) throws TskCoreException {
         Scanner fileScanner;
         File favoriteFile = new File(resultDir, EDGE_FAVORITE_FILE_NAME);
 
         try {
             fileScanner = new Scanner(new FileInputStream(favoriteFile));
         } catch (FileNotFoundException ex) {
-            // This is a non-fatial error, if the favorites file is not found
+            // This is a non-fatal error, if the favorites file is not found
             // there might have not been any favorites\bookmarks
             return;
         }
@@ -370,10 +374,10 @@ final class ExtractEdge extends Extract {
                     continue;
                 }
 
-                BlackboardArtifact b = getBookmarkArtifact(origFile, headers, line);
-                if (b != null) {
-                    bbartifacts.add(b);
-                    this.indexArtifact(b);
+                BlackboardArtifact ba = getBookmarkArtifact(origFile, headers, line);
+                if (ba != null) {
+                    bbartifacts.add(ba);
+                    this.indexArtifact(ba);
                 }
             }
         } finally {
@@ -394,7 +398,7 @@ final class ExtractEdge extends Extract {
      * @param resultDir Output directory of ESEDatabaseViewer
      * @throws TskCoreException
      */
-    private void getCookie(AbstractFile origFile, File resultDir) throws TskCoreException {
+    private void getCookies(AbstractFile origFile, File resultDir) throws TskCoreException {
         File containerFiles[] = resultDir.listFiles((dir, name) -> name.toLowerCase().contains(EDGE_TABLE_TYPE_COOKIE));
 
         if (containerFiles == null) {
@@ -421,10 +425,10 @@ final class ExtractEdge extends Extract {
                         continue;
                     }
 
-                    BlackboardArtifact b = getCookieArtifact(origFile, headers, line);
-                    if (b != null) {
-                        bbartifacts.add(b);
-                        this.indexArtifact(b);
+                    BlackboardArtifact ba = getCookieArtifact(origFile, headers, line);
+                    if (ba != null) {
+                        bbartifacts.add(ba);
+                        this.indexArtifact(ba);
                     }
                 }
             } finally {
@@ -447,7 +451,7 @@ final class ExtractEdge extends Extract {
      * @throws TskCoreException
      * @throws FileNotFoundException 
      */
-    private void getDownload(AbstractFile origFile, File resultDir) throws TskCoreException, FileNotFoundException {
+    private void getDownloads(AbstractFile origFile, File resultDir) throws TskCoreException, FileNotFoundException {
         ArrayList<File> downloadFiles = getDownloadFiles(resultDir);
 
         if (downloadFiles == null) {
@@ -475,10 +479,10 @@ final class ExtractEdge extends Extract {
 
                     if (line.contains(EDGE_TABLE_TYPE_DOWNLOAD)) {
 
-                        BlackboardArtifact b = getDownloadArtifact(origFile, headers, line);
-                        if (b != null) {
-                            bbartifacts.add(b);
-                            this.indexArtifact(b);
+                        BlackboardArtifact ba = getDownloadArtifact(origFile, headers, line);
+                        if (ba != null) {
+                            bbartifacts.add(ba);
+                            this.indexArtifact(ba);
                         }
                     }
                 }
@@ -497,7 +501,7 @@ final class ExtractEdge extends Extract {
     /**
      * Find the location of ESEDatabaseViewer.exe
      *
-     * @return Absolute path to ESEDatabaseViewer.exe
+     * @return Absolute path to ESEDatabaseViewer.exe or null if the file is not found
      */
     private String getPathForESEDumper() {
         Path path = Paths.get(ESE_TOOL_FOLDER, ESE_TOOL_NAME);
@@ -513,25 +517,25 @@ final class ExtractEdge extends Extract {
     /**
      * Finds all of the WebCacheV01.dat files in the case
      *
-     * @return A list of WebCacheV01.dat files
+     * @return A list of WebCacheV01.dat files, possibly empty if none are found
      * @throws TskCoreException
      */
     private List<AbstractFile> fetchWebCacheDBFiles() throws TskCoreException {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
                 = currentCase.getServices().getFileManager();
-        return fileManager.findFiles(dataSource, EDGE_WEBCACHE_NAME, "WebCache");
+        return fileManager.findFiles(dataSource, EDGE_WEBCACHE_NAME, "WebCache"); //NON-NLS
     }
 
     /**
      * Finds all of the spartan.edb files in the case
      *
-     * @return A list of spartan files
+     * @return A list of spartan files, possibly empty if none are found
      * @throws TskCoreException
      */
     private List<AbstractFile> fetchSpartanDBFiles() throws TskCoreException {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
                 = currentCase.getServices().getFileManager();
-        return fileManager.findFiles(dataSource, EDGE_SPARTAN_NAME, "MicrosoftEdge");
+        return fileManager.findFiles(dataSource, EDGE_SPARTAN_NAME, "MicrosoftEdge"); //NON-NLS
     }
 
     /**
@@ -554,11 +558,11 @@ final class ExtractEdge extends Extract {
 
         List<String> commandLine = new ArrayList<>();
         commandLine.add(dumperPath);
-        commandLine.add("/table");
+        commandLine.add("/table");  //NON-NLS
         commandLine.add(inputFilePath);
-        commandLine.add("*");
-        commandLine.add("/scomma");
-        commandLine.add(outputDir + "\\" + "*.csv");
+        commandLine.add("*");  //NON-NLS
+        commandLine.add("/scomma");  //NON-NLS
+        commandLine.add(outputDir + "\\" + "*.csv");  //NON-NLS
 
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         processBuilder.redirectOutput(outputFilePath.toFile());
@@ -674,7 +678,7 @@ final class ExtractEdge extends Extract {
      * @param origFile File the table came from ie spartan.edb
      * @param headers List of table column headers
      * @param line The line or row of the table to parse
-     * @return BlackboardArtifact representation of the passed in line\table row
+     * @return BlackboardArtifact representation of the passed in line\table row or null if no Bookmark is found
      * @throws TskCoreException
      */
     private BlackboardArtifact getBookmarkArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {
@@ -698,17 +702,17 @@ final class ExtractEdge extends Extract {
      * Converts a space separated string of hex values to ascii characters.
      *
      * @param hexString
-     * @return "decoded" string
+     * @return "decoded" string or null if a non-hex value was found
      */
     private String hexToChar(String hexString) {
         String[] hexValues = hexString.split(" ");
         StringBuilder output = new StringBuilder();
 
-        for (String s : hexValues) {
+        for (String str : hexValues) {
             try {
-                int i = Integer.parseInt(s, 16);
-                if (i > 31) { // Ignore non-print characters
-                    output.append((char) i);
+                int value = Integer.parseInt(str, 16);
+                if (value > 31) { // Ignore non-print characters
+                    output.append((char) value);
                 }
             } catch (NumberFormatException ex) {
                 return null;
@@ -779,11 +783,11 @@ final class ExtractEdge extends Extract {
      *
      * @param resultDir Path to ESEDatabaseViewer output
      * @param type Type of table files 
-     * @return List of table files
+     * @return List of table files returns null if no files of that type are found
      * @throws FileNotFoundException
      */
     private ArrayList<File> getContainerFiles(File resultDir, String type) throws FileNotFoundException {
-        Hashtable<String, ArrayList<String>> idTable = getContainerIDTable(resultDir);
+        HashMap<String, ArrayList<String>> idTable = getContainerIDTable(resultDir);
 
         ArrayList<String> idList = idTable.get(type);
         if (idList == null) {
@@ -791,8 +795,8 @@ final class ExtractEdge extends Extract {
         }
 
         ArrayList<File> fileList = new ArrayList<>();
-        for (String s : idList) {
-            String fileName = EDGE_CONTAINER_FILE_PREFIX + s + EDGE_CONTAINER_FILE_EXT;
+        for (String str : idList) {
+            String fileName = EDGE_CONTAINER_FILE_PREFIX + str + EDGE_CONTAINER_FILE_EXT;
             fileList.add(new File(resultDir, fileName));
         }
 
@@ -807,16 +811,16 @@ final class ExtractEdge extends Extract {
      * files.
      *
      * @param resultDir Path to ESEDatabaseViewer output
-     * @return Hashtable with Key representing the table type, the value is a list of table ids for that type
+     * @return Hashmap with Key representing the table type, the value is a list of table ids for that type
      */
-    private Hashtable<String, ArrayList<String>> getContainerIDTable(File resultDir) throws FileNotFoundException {
+    private HashMap<String, ArrayList<String>> getContainerIDTable(File resultDir) throws FileNotFoundException {
 
         if (containersTable == null) {
             File containerFile = new File(resultDir, EDGE_CONTAINTERS_FILE_NAME);
 
             try (Scanner fileScanner = new Scanner(new FileInputStream(containerFile))) {
                 List<String> headers = null;
-                containersTable = new Hashtable<>();
+                containersTable = new HashMap<>();
                 int nameIdx = 0;
                 int idIdx = 0;
                 while (fileScanner.hasNext()) {
