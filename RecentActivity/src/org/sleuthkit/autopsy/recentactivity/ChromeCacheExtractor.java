@@ -28,9 +28,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,9 +95,8 @@ final class ChromeCacheExtractor {
     private final IngestServices services = IngestServices.getInstance();
     private Case currentCase;
     private FileManager fileManager;
- 
-    
-    private Map<String, CacheFileCopy> filesTable = new HashMap<>();
+
+    private final Map<String, CacheFileCopy> filesTable = new HashMap<>();
     
     /**
      * Encapsulates  abstract file for a cache file as well as a temp file copy
@@ -126,6 +125,9 @@ final class ChromeCacheExtractor {
         } 
     }
 
+    @NbBundle.Messages({
+        "ChromeCacheExtractor.moduleName=ChromeCacheExtractor"
+    })
     ChromeCacheExtractor(Content dataSource, IngestJobContext context ) {
         moduleName = NbBundle.getMessage(ChromeCacheExtractor.class, "ChromeCacheExtractor.moduleName");           
         this.dataSource = dataSource;
@@ -146,7 +148,8 @@ final class ChromeCacheExtractor {
              
             // Create an output folder to save any derived files
             absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName);
-            relOutputFolderName = RAImageIngestModule.getRelModuleOutputPath() + File.separator + moduleName;
+            relOutputFolderName = Paths.get( RAImageIngestModule.getRelModuleOutputPath(), moduleName).normalize().toString();
+            
             File dir = new File(absOutputFolderName);
             if (dir.exists() == false) {
                 dir.mkdirs();
@@ -450,10 +453,7 @@ final class ChromeCacheExtractor {
      * @throws TskCoreException 
      */
     List<AbstractFile> findCacheFiles(String cacheFileName) throws TskCoreException {
-        
-        List<AbstractFile> cacheFiles = fileManager.findFiles(dataSource, cacheFileName, DEFAULT_CACHE_STR); //NON-NLS
-        
-        return cacheFiles; 
+        return fileManager.findFiles(dataSource, cacheFileName, DEFAULT_CACHE_STR); //NON-NLS 
     }
     
     
@@ -875,7 +875,7 @@ final class ChromeCacheExtractor {
                             if (hdrNum == 1) { 
                                 httpResponse = headerLine;
                             } else {
-                                int nPos = headerLine.indexOf(":");
+                                int nPos = headerLine.indexOf(':');
                                 String key = headerLine.substring(0, nPos);
                                 String val= headerLine.substring(nPos+1);
                 
@@ -975,8 +975,9 @@ final class ChromeCacheExtractor {
             
             if (hasHTTPHeaders()) {
                 String str = getHTTPHeader("content-encoding");
-                if (str!=null) 
+                if (str != null) {
                     strBuilder.append(String.format("\t%s=%s", "content-encoding", str ));
+                }
             }
             
             return strBuilder.toString(); 
@@ -1050,12 +1051,10 @@ final class ChromeCacheExtractor {
         
         private final int dataSizes[];
         private final CacheAddress dataAddresses[];
-        ArrayList<CacheData> dataList = null;
+        private List<CacheData> dataList;
                 
         private final long flags;
-        private final int pad[] = new int[4];
-        
-        private final long selfHash;  // hash of the entry itself so far.
+       
         private String key;     // Key may be found within the entry or may be external
         
         CacheEntry(CacheAddress cacheAdress, CacheFileCopy cacheFileCopy ) {
@@ -1088,6 +1087,7 @@ final class ChromeCacheExtractor {
             uint32 = fileROBuf.getInt() & UINT32_MASK;
             longKeyAddresses = (uint32 != 0) ?  new CacheAddress(uint32, selfAddress.getCachePath()) : null;  
             
+            dataList = null;
             dataSizes= new int[4];
             for (int i = 0; i < 4; i++)  {
                 dataSizes[i] = fileROBuf.getInt();
@@ -1098,11 +1098,13 @@ final class ChromeCacheExtractor {
             }
         
             flags = fileROBuf.getInt() & UINT32_MASK;
+            // skip over pad 
             for (int i = 0; i < 4; i++)  {
-                pad[i] = fileROBuf.getInt();
+                fileROBuf.getInt();
             }
             
-            selfHash = fileROBuf.getInt() & UINT32_MASK;
+            // skip over self hash
+            fileROBuf.getInt();
         
             // get the key
             if (longKeyAddresses != null) {
@@ -1116,13 +1118,14 @@ final class ChromeCacheExtractor {
             }
             else {  // key stored within entry 
                 StringBuilder strBuilder = new StringBuilder(MAX_KEY_LEN);
-                int i = 0;
-                while (fileROBuf.remaining() > 0  && i < MAX_KEY_LEN)  {
-                    char c = (char)fileROBuf.get();
-                    if (c == '\0') { 
+                int keyLen = 0;
+                while (fileROBuf.remaining() > 0  && keyLen < MAX_KEY_LEN)  {
+                    char keyChar = (char)fileROBuf.get();
+                    if (keyChar == '\0') { 
                         break;
                     }
-                    strBuilder.append(c);
+                    strBuilder.append(keyChar);
+                    keyLen++;
                 }
 
                 key = strBuilder.toString();
