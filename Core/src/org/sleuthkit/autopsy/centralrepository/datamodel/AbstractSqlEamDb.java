@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
@@ -625,7 +626,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             // This data source is already in the central repo
             return eamDataSource;
         }
-        
+
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -650,7 +651,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 /*
                  * If nothing was inserted, then return the data source that
                  * exists in the Central Repository.
-                 * 
+                 *
                  * This is expected to occur with PostgreSQL Central Repository
                  * databases.
                  */
@@ -675,7 +676,7 @@ abstract class AbstractSqlEamDb implements EamDb {
              * If an exception was thrown causing us to not return a new data
              * source, attempt to get an existing data source with the same case
              * ID and data source object ID.
-             * 
+             *
              * This exception block is expected to occur with SQLite Central
              * Repository databases.
              */
@@ -1063,6 +1064,74 @@ abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws EamDbException
      */
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
+
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        String sql
+                = "SELECT "
+                + tableName
+                + ".id,"
+                + tableName
+                + ".value,"
+                + tableName
+                + ".file_obj_id,"
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
+                + tableName
+                + " LEFT JOIN cases ON "
+                + tableName
+                + ".case_id=cases.id"
+                + " LEFT JOIN data_sources ON "
+                + tableName
+                + ".data_source_id=data_sources.id"
+                + " WHERE value IN (";
+        StringBuilder inValuesBuilder = new StringBuilder(sql);
+        //WJS-TODO use non-stream solution to making statement for proper error handling
+        for (String value : values) {
+            if (value != null) {
+                inValuesBuilder.append("'");
+                inValuesBuilder.append(value);
+                inValuesBuilder.append("',");
+            }
+        }
+        inValuesBuilder.deleteCharAt(inValuesBuilder.length() - 1); //delete last comma
+        inValuesBuilder.append(")");
+        Connection conn = connect();
+
+        List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
+
+        CorrelationAttributeInstance artifactInstance;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet, aType);
+                artifactInstances.add(artifactInstance);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return artifactInstances;
+    }
+
+    /**
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     *
+     * @param aType The type of the artifact
+     * @param value The correlation value
+     *
+     * @return List of artifact instances for a given type/value
+     *
+     * @throws EamDbException
+     */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
 
@@ -1097,6 +1166,69 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, normalizedValue);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet, aType);
+                artifactInstances.add(artifactInstance);
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Error getting artifact instances by artifactType and artifactValue.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeResultSet(resultSet);
+            EamDbUtil.closeConnection(conn);
+        }
+
+        return artifactInstances;
+    }
+
+    /**
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     *
+     * @param aType The type of the artifact
+     * @param value The correlation value
+     *
+     * @return List of artifact instances for a given type/value
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValueAndCase(CorrelationAttributeInstance.Type aType, String value, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        String sql
+                = "SELECT "
+                + tableName
+                + ".id,"
+                + tableName
+                + ".value,"
+                + tableName
+                + ".file_obj_id,"
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
+                + tableName
+                + " LEFT JOIN cases ON "
+                + tableName
+                + ".case_id=cases.id"
+                + " LEFT JOIN data_sources ON "
+                + tableName
+                + ".data_source_id=data_sources.id"
+                + " WHERE value=? and "
+                + tableName
+                +".case_id in ('";
+        StringBuilder inValuesBuilder = new StringBuilder(sql);
+        inValuesBuilder.append(caseIds.stream().map(String::valueOf).collect(Collectors.joining("', '")));
+        inValuesBuilder.append("')");
+        String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
+        Connection conn = connect();
+        List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
+
+        CorrelationAttributeInstance artifactInstance;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            preparedStatement = conn.prepareStatement(inValuesBuilder.toString());
             preparedStatement.setString(1, normalizedValue);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {

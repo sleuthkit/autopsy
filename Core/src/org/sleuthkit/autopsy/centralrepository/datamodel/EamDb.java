@@ -286,6 +286,16 @@ public interface EamDb {
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     *
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
+     *
+     * @return List of artifact instances for a given type/value
+     */
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValueAndCase(CorrelationAttributeInstance.Type aType, String value, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException;
+    /**
+     * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath
      *
      * @param aType    EamArtifact.Type to search for

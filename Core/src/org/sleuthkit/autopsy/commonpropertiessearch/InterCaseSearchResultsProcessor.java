@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.commonpropertiessearch;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -240,6 +241,11 @@ final class InterCaseSearchResultsProcessor {
         public void process(ResultSet resultSet) {
             try {
                 Set<String> values = new HashSet<>();
+                List<Integer> targetCases = new ArrayList<>();
+                if (targetCase != 0) {
+                    targetCases.add(caseID);
+                    targetCases.add(targetCase);
+                }
                 while (resultSet.next()) {
                     String corValue = InstanceTableCallback.getValue(resultSet);
                     if (corValue == null || HashUtility.isNoDataMd5(corValue)) {
@@ -248,7 +254,12 @@ final class InterCaseSearchResultsProcessor {
                     values.add(corValue);
                 }
                 for (String corValue : values) {
-                    List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(correlationType, corValue);
+                    List<CorrelationAttributeInstance> instances;
+                    if (targetCases.isEmpty()) {
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValue(correlationType, corValue);
+                    } else {
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValueAndCase(correlationType, corValue, targetCases);
+                    }
                     int size = instances.size();
                     if (size > 1) {
                         CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
@@ -257,9 +268,7 @@ final class InterCaseSearchResultsProcessor {
                             CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(instance.getID(), correlationType, NODE_TYPE.COUNT_NODE);
                             searchResult.setCurrentAttributeInst(instance);
                             commonAttributeValue.addInstance(searchResult);
-                            if (!anotherCase && ((targetCase == 0 && instance.getCorrelationCase().getID() != caseID) || (targetCase == instance.getCorrelationCase().getID()))) {
-                                anotherCase = true;
-                            }
+                            anotherCase = anotherCase || instance.getCorrelationCase().getID() != caseID;
                         }
                         if (anotherCase) {
                             if (instanceCollatedCommonFiles.containsKey(size)) {
@@ -308,6 +317,11 @@ final class InterCaseSearchResultsProcessor {
         @Override
         public void process(ResultSet resultSet) {
             try {
+                List<Integer> targetCases = new ArrayList<>();
+                if (targetCase != 0) {
+                    targetCases.add(caseID);
+                    targetCases.add(targetCase);
+                }
                 Set<String> values = new HashSet<>();
                 while (resultSet.next()) {
                     String corValue = InstanceTableCallback.getValue(resultSet);
@@ -317,44 +331,34 @@ final class InterCaseSearchResultsProcessor {
                     values.add(corValue);
                 }
                 for (String corValue : values) {
-                    List<CorrelationAttributeInstance> instances = EamDb.getInstance().getArtifactInstancesByTypeValue(correlationType, corValue);
+                    List<CorrelationAttributeInstance> instances;
+                    if (targetCases.isEmpty()) {
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValue(correlationType, corValue);
+                    } else {
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValueAndCase(correlationType, corValue, targetCases);
+                    }
                     if (instances.size() > 1) {
-                        boolean addToResults = targetCase == 0;
-                        if (!addToResults) {
-                            for (CorrelationAttributeInstance instance : instances) {
-                                if (instance.getCorrelationCase().getID() == targetCase) {
-                                    System.out.println("Target case found in results");
-                                    addToResults = true;
-                                    break;
-                                }
+                        for (CorrelationAttributeInstance instance : instances) {
+                            CorrelationCase correlationCase = instance.getCorrelationCase();
+                            String caseName = correlationCase.getDisplayName();
+                            CorrelationDataSource correlationDatasource = instance.getCorrelationDataSource();
+                            //label datasource with it's id for uniqueness done in same manner as ImageGallery does in the DataSourceCell class
+                            String dataSourceNameKey = correlationDatasource.getName() + " (Id: " + correlationDatasource.getDataSourceObjectID() + ")";
+                            if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
+                                caseCollatedDataSourceCollections.put(caseName, new HashMap<>());
                             }
-                        }
-                        else {
-                            System.out.println("Target case is not set adding all results");
-                        }
-                        if (addToResults) {
-                            for (CorrelationAttributeInstance instance : instances) {
-                                CorrelationCase correlationCase = instance.getCorrelationCase();
-                                String caseName = correlationCase.getDisplayName();
-                                CorrelationDataSource correlationDatasource = instance.getCorrelationDataSource();
-                                //label datasource with it's id for uniqueness done in same manner as ImageGallery does in the DataSourceCell class
-                                String dataSourceNameKey = correlationDatasource.getName() + " (Id: " + correlationDatasource.getDataSourceObjectID() + ")";
-                                if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
-                                    caseCollatedDataSourceCollections.put(caseName, new HashMap<>());
-                                }
-                                Map<String, CommonAttributeValueList> dataSourceToFile = caseCollatedDataSourceCollections.get(caseName);
-                                if (!dataSourceToFile.containsKey(dataSourceNameKey)) {
-                                    dataSourceToFile.put(dataSourceNameKey, new CommonAttributeValueList());
-                                }
-                                CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceNameKey);
-                                CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(instance.getID(), correlationType, NODE_TYPE.CASE_NODE);
-                                searchResult.setCurrentAttributeInst(instance);
-                                CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
-                                commonAttributeValue.addInstance(searchResult);
-                                valueList.addMetadataToList(commonAttributeValue);
-                                dataSourceToFile.put(dataSourceNameKey, valueList);
-                                caseCollatedDataSourceCollections.put(caseName, dataSourceToFile);
+                            Map<String, CommonAttributeValueList> dataSourceToFile = caseCollatedDataSourceCollections.get(caseName);
+                            if (!dataSourceToFile.containsKey(dataSourceNameKey)) {
+                                dataSourceToFile.put(dataSourceNameKey, new CommonAttributeValueList());
                             }
+                            CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceNameKey);
+                            CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(instance.getID(), correlationType, NODE_TYPE.CASE_NODE);
+                            searchResult.setCurrentAttributeInst(instance);
+                            CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
+                            commonAttributeValue.addInstance(searchResult);
+                            valueList.addMetadataToList(commonAttributeValue);
+                            dataSourceToFile.put(dataSourceNameKey, valueList);
+                            caseCollatedDataSourceCollections.put(caseName, dataSourceToFile);
                         }
                     }
                 }
