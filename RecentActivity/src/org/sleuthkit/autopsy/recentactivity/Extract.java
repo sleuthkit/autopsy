@@ -22,6 +22,9 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -35,6 +38,7 @@ import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.*;
@@ -397,5 +401,25 @@ abstract class Extract {
         return bbattributes;
     }
     
-    
+    /**
+     * Create temporary file for the given AbstractFile
+     * 
+     * @param context
+     * @param file
+     * @return
+     * @throws IOException 
+     */
+    protected java.io.File createTemporaryFile(IngestJobContext context, AbstractFile file) throws IOException{
+        Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(
+                getCurrentCase(), getName()), file.getName() + file.getId() + file.getNameExtension());
+        java.io.File tempFile = tempFilePath.toFile();
+        
+        try {
+            ContentUtils.writeToFile(file, tempFile, context::dataSourceIngestIsCancelled);
+        } catch (IOException ex) {
+            throw new IOException("Error writingToFile: " + file, ex); //NON-NLS
+        }
+         
+        return tempFile;
+    }
 }

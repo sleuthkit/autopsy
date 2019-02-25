@@ -49,14 +49,13 @@ final class ExtractSafari extends Extract {
     private final IngestServices services = IngestServices.getInstance();
 
     // visit_time uses an epoch of Jan 1, 2001 thus the addition of 978307200
-    private static final String SAFARI_HISTORY_QUERY = "SELECT url, title, visit_time + 978307200 as time FROM 'history_items' JOIN history_visits ON history_item = history_items.id;";
+    private static final String HISTORY_QUERY = "SELECT url, title, visit_time + 978307200 as time FROM 'history_items' JOIN history_visits ON history_item = history_items.id;"; //NON-NLS
 
-    private static final String SAFARI_HISTORY_FILE_NAME = "History.db";
-    private static final String SAFARI_DATABASE_EXT = ".db";
+    private static final String HISTORY_FILE_NAME = "History.db"; //NON-NLS
 
-    private static final String SAFARI_HEAD_URL = "url";
-    private static final String SAFARI_HEAD_TITLE = "title";
-    private static final String SAFARI_HEAD_TIME = "time";
+    private static final String HEAD_URL = "url"; //NON-NLS
+    private static final String HEAD_TITLE = "title"; //NON-NLS
+    private static final String HEAD_TIME = "time"; //NON-NLS
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
 
@@ -65,6 +64,10 @@ final class ExtractSafari extends Extract {
         "ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files."
     })
 
+    /**
+    * Extract the bookmarks, cookies, downloads and history from Safari
+    *
+    */
     ExtractSafari() {
 
     }
@@ -96,7 +99,7 @@ final class ExtractSafari extends Extract {
     private void processHistoryDB(Content dataSource, IngestJobContext context) throws TskCoreException, IOException {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
-        List<AbstractFile> historyFiles = fileManager.findFiles(dataSource, SAFARI_HISTORY_FILE_NAME);
+        List<AbstractFile> historyFiles = fileManager.findFiles(dataSource, HISTORY_FILE_NAME);
 
         if (historyFiles == null || historyFiles.isEmpty()) {
             return;
@@ -126,9 +129,7 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        Path tempHistoryPath = Paths.get(RAImageIngestModule.getRATempPath(
-                getCurrentCase(), getName()), historyFile.getName() + historyFile.getId() + SAFARI_DATABASE_EXT);
-        File tempHistoryFile = tempHistoryPath.toFile();
+        File tempHistoryFile = this.createTemporaryFile(context, historyFile);
 
         try {
             ContentUtils.writeToFile(historyFile, tempHistoryFile, context::dataSourceIngestIsCancelled);
@@ -137,7 +138,7 @@ final class ExtractSafari extends Extract {
         }
 
         try {
-            Collection<BlackboardArtifact> bbartifacts = getHistoryArtifacts(historyFile, tempHistoryPath);
+            Collection<BlackboardArtifact> bbartifacts = getHistoryArtifacts(historyFile, tempHistoryFile.toPath());
             if (!bbartifacts.isEmpty()) {
                 services.fireModuleDataEvent(new ModuleDataEvent(
                         RecentActivityExtracterModuleFactory.getModuleName(),
@@ -154,11 +155,12 @@ final class ExtractSafari extends Extract {
      *
      * @param origFile AbstractFile of the history file from the case
      * @param tempFilePath Path to temporary copy of the history db
-     * @return Blackboard Artifacts for the history db
+     * @return Blackboard Artifacts for the history db or null if there are 
+     *          no history artifacts
      * @throws TskCoreException
      */
     private Collection<BlackboardArtifact> getHistoryArtifacts(AbstractFile origFile, Path tempFilePath) throws TskCoreException {
-        List<HashMap<String, Object>> historyList = this.dbConnect(tempFilePath.toString(), SAFARI_HISTORY_QUERY);
+        List<HashMap<String, Object>> historyList = this.dbConnect(tempFilePath.toString(), HISTORY_QUERY);
 
         if (historyList == null || historyList.isEmpty()) {
             return null;
@@ -166,9 +168,9 @@ final class ExtractSafari extends Extract {
 
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (HashMap<String, Object> row : historyList) {
-            String url = row.get(SAFARI_HEAD_URL).toString();
-            String title = row.get(SAFARI_HEAD_TITLE).toString();
-            Long time = (Double.valueOf(row.get(SAFARI_HEAD_TIME).toString())).longValue();
+            String url = row.get(HEAD_URL).toString();
+            String title = row.get(HEAD_TITLE).toString();
+            Long time = (Double.valueOf(row.get(HEAD_TIME).toString())).longValue();
 
             BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY);
             bbart.addAttributes(createHistoryAttribute(url, time, null, title,
