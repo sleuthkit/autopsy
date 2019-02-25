@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import com.dd.plist.NSArray;
+import com.dd.plist.NSDate;
 import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.NSString;
@@ -61,6 +62,7 @@ final class ExtractSafari extends Extract {
 
     private static final String HISTORY_FILE_NAME = "History.db"; //NON-NLS
     private static final String BOOKMARK_FILE_NAME = "Bookmarks.plist"; //NON-NLS
+    private static final String DOWNLOAD_FILE_NAME = "Downloads.plist"; //NON-NLS
 
     private static final String HEAD_URL = "url"; //NON-NLS
     private static final String HEAD_TITLE = "title"; //NON-NLS
@@ -70,6 +72,10 @@ final class ExtractSafari extends Extract {
     private static final String PLIST_KEY_URL = "URLString"; //NON-NLS
     private static final String PLIST_KEY_URI = "URIDictionary"; //NON-NLS
     private static final String PLIST_KEY_TITLE = "title"; //NON-NLS
+    private static final String PLIST_KEY_DOWNLOAD_URL = "DownloadEntryURL"; //NON-NLS
+    private static final String PLIST_KEY_DOWNLOAD_DATE = "DownloadEntryDateAddedKey"; //NON-NLS
+    private static final String PLIST_KEY_DOWNLOAD_PATH = "DownloadEntryPath"; //NON-NLS
+    private static final String PLIST_KEY_DOWNLOAD_HISTORY = "DownloadHistory"; //NON-NLS
 
     private final Logger logger = Logger.getLogger(this.getClass().getName());
 
@@ -109,6 +115,13 @@ final class ExtractSafari extends Extract {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
             logger.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
         }
+        
+         try {
+            processDownloadsPList(dataSource, context);
+        } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
+            this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
+            logger.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
+        }
     }
 
     /**
@@ -127,7 +140,7 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        this.setFoundData(true);
+        setFoundData(true);
 
         for (AbstractFile historyFile : historyFiles) {
             if (context.dataSourceIngestIsCancelled()) {
@@ -139,7 +152,7 @@ final class ExtractSafari extends Extract {
     }
 
     /**
-     *
+     * Finds all Bookmark.plist files and looks for bookmark entries
      * @param dataSource
      * @param context
      * @throws TskCoreException
@@ -158,7 +171,7 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        this.setFoundData(true);
+        setFoundData(true);
 
         for (AbstractFile file : files) {
             if (context.dataSourceIngestIsCancelled()) {
@@ -166,6 +179,38 @@ final class ExtractSafari extends Extract {
             }
 
             getBookmarks(context, file);
+        }
+    }
+    
+    /**
+     * Process the safari download.plist file.
+     * 
+     * @param dataSource
+     * @param context
+     * @throws TskCoreException
+     * @throws IOException
+     * @throws SAXException
+     * @throws PropertyListFormatException
+     * @throws ParseException
+     * @throws ParserConfigurationException
+     */
+    private void processDownloadsPList(Content dataSource, IngestJobContext context) throws TskCoreException, IOException, SAXException, PropertyListFormatException, ParseException, ParserConfigurationException {
+        FileManager fileManager = getCurrentCase().getServices().getFileManager();
+
+        List<AbstractFile> files = fileManager.findFiles(dataSource, DOWNLOAD_FILE_NAME);
+
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+
+        setFoundData(true);
+
+        for (AbstractFile file : files) {
+            if (context.dataSourceIngestIsCancelled()) {
+                break;
+            }
+
+            getDownloads(dataSource, context, file);
         }
     }
 
@@ -228,6 +273,39 @@ final class ExtractSafari extends Extract {
                 services.fireModuleDataEvent(new ModuleDataEvent(
                         RecentActivityExtracterModuleFactory.getModuleName(),
                         BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
+            }
+        } finally {
+            tempFile.delete();
+        }
+
+    }
+    
+    /**
+     * Creates a temporary downloads file from the AbstractFile and creates
+     * BlackboardArtifacts for the any downloads found.
+     *
+     * @param context IngestJobContext object
+     * @param file AbstractFile from case
+     * @throws TskCoreException
+     * @throws IOException
+     * @throws SAXException
+     * @throws PropertyListFormatException
+     * @throws ParseException
+     * @throws ParserConfigurationException
+     */
+    private void getDownloads(Content dataSource, IngestJobContext context, AbstractFile file) throws TskCoreException, IOException, SAXException, PropertyListFormatException, ParseException, ParserConfigurationException {
+        if (file.getSize() == 0) {
+            return;
+        }
+
+        File tempFile = createTemporaryFile(context, file);
+
+        try {
+            Collection<BlackboardArtifact> bbartifacts = getDownloadArtifacts(dataSource, file, tempFile);
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
             }
         } finally {
             tempFile.delete();
@@ -307,6 +385,66 @@ final class ExtractSafari extends Extract {
 
         return bbartifacts;
     }
+    
+    /**
+     * Finds the download entries in the tempFile and creates a list of artifacts from them.
+     * 
+     * @param origFile Download.plist file from case
+     * @param tempFile Temporary copy of download.plist file
+     * @return Collection of BlackboardArtifacts for the downloads in origFile
+     * @throws IOException
+     * @throws PropertyListFormatException
+     * @throws ParseException
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws TskCoreException 
+     */
+    private Collection<BlackboardArtifact> getDownloadArtifacts(Content dataSource, AbstractFile origFile, File tempFile)throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException, TskCoreException {
+         Collection<BlackboardArtifact> bbartifacts = null;
+
+        try {
+            while(true){
+                NSDictionary root = (NSDictionary)PropertyListParser.parse(tempFile);
+
+                if(root == null)
+                    break;
+
+                NSArray nsArray = (NSArray)root.get(PLIST_KEY_DOWNLOAD_HISTORY);
+
+                if(nsArray == null)
+                    break;
+           
+                NSObject[] objectArray = nsArray.getArray();
+                bbartifacts = new ArrayList<>();
+
+                for(NSObject obj: objectArray){
+                    if(obj instanceof NSDictionary){
+                        bbartifacts.add(parseDownloadDictionary(dataSource, origFile, (NSDictionary)obj));
+                    }
+                }
+                break;
+            }
+            
+        } catch (PropertyListFormatException ex) {
+            PropertyListFormatException plfe = new PropertyListFormatException(origFile.getName() + ": " + ex.getMessage());
+            plfe.setStackTrace(ex.getStackTrace());
+            throw plfe;
+        } catch (ParseException ex) {
+            ParseException pe = new ParseException(origFile.getName() + ": " + ex.getMessage(), ex.getErrorOffset());
+            pe.setStackTrace(ex.getStackTrace());
+            throw pe;
+        } catch (ParserConfigurationException ex) {
+            ParserConfigurationException pce = new ParserConfigurationException(origFile.getName() + ": " + ex.getMessage());
+            pce.setStackTrace(ex.getStackTrace());
+            throw pce;
+        } catch (SAXException ex) {
+            SAXException se = new SAXException(origFile.getName() + ": " + ex.getMessage());
+            se.setStackTrace(ex.getStackTrace());
+            throw se;
+        }
+
+        return bbartifacts;
+    }
 
     /**
      * Parses the plist object to find the bookmark child objects, then creates
@@ -345,9 +483,45 @@ final class ExtractSafari extends Extract {
 
             if (url != null || title != null) {
                 BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-                bbart.addAttributes(createBookmarkAttributes(url, title, null, this.getName(), NetworkUtils.extractDomain(url)));
+                bbart.addAttributes(createBookmarkAttributes(url, title, null, getName(), NetworkUtils.extractDomain(url)));
                 bbartifacts.add(bbart);
             }
         }
+    }
+    
+    /**
+     * Parse the NSDictionary object that represents one download.
+     * 
+     * @param origFile Download.plist file from the case
+     * @param entry One NSDictionary Object that represents one download instance
+     * @return a Blackboard Artifact for the download.
+     * @throws TskCoreException 
+     */
+    private BlackboardArtifact parseDownloadDictionary(Content dataSource, AbstractFile origFile, NSDictionary entry)throws TskCoreException {
+       String url = null;
+       String path = null;
+       Long time = null;
+       Long pathID = null;
+      
+       NSString nsstring = (NSString)entry.get(PLIST_KEY_DOWNLOAD_URL);
+       if(nsstring != null){
+           url = nsstring.toString();
+       }
+       
+       nsstring = (NSString)entry.get(PLIST_KEY_DOWNLOAD_PATH);
+       if(nsstring != null){
+           path = nsstring.toString();
+           pathID = Util.findID(dataSource, path); 
+       }
+       
+       NSDate date = (NSDate)entry.get(PLIST_KEY_DOWNLOAD_DATE);
+       if(date != null){
+           time = date.getDate().getTime();
+       }
+       
+       BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
+       bbart.addAttributes(this.createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName()));
+       
+       return bbart;
     }
 }
