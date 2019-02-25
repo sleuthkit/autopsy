@@ -47,7 +47,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
      *                   this tree item
      */
     BaseTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
-        super (event.getEventType().getBaseType(), comparator);
+        super(event.getEventType().getBaseType(), comparator);
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)

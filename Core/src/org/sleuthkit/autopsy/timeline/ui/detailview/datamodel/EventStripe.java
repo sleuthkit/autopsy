@@ -71,7 +71,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
      */
     private final Set<Long> hashHits;
 
-    public static EventStripe merge(EventStripe stripeA, EventStripe stripeB) { //NOPMD
+    public static EventStripe merge(EventStripe stripeA, EventStripe stripeB) {
         Preconditions.checkNotNull(stripeA);
         Preconditions.checkNotNull(stripeB);
         Preconditions.checkArgument(Objects.equals(stripeA.description, stripeB.description));
