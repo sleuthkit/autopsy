@@ -18,15 +18,22 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import com.dd.plist.NSArray;
+import com.dd.plist.NSDictionary;
+import com.dd.plist.NSObject;
+import com.dd.plist.NSString;
+import com.dd.plist.PropertyListFormatException;
+import com.dd.plist.PropertyListParser;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
+import javax.xml.parsers.ParserConfigurationException;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -39,6 +46,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.xml.sax.SAXException;
 
 /**
  * Extract the bookmarks, cookies, downloads and history from Safari
@@ -52,22 +60,28 @@ final class ExtractSafari extends Extract {
     private static final String HISTORY_QUERY = "SELECT url, title, visit_time + 978307200 as time FROM 'history_items' JOIN history_visits ON history_item = history_items.id;"; //NON-NLS
 
     private static final String HISTORY_FILE_NAME = "History.db"; //NON-NLS
+    private static final String BOOKMARK_FILE_NAME = "Bookmarks.plist"; //NON-NLS
 
     private static final String HEAD_URL = "url"; //NON-NLS
     private static final String HEAD_TITLE = "title"; //NON-NLS
     private static final String HEAD_TIME = "time"; //NON-NLS
 
+    private static final String PLIST_KEY_CHILDREN = "Children"; //NON-NLS
+    private static final String PLIST_KEY_URL = "URLString"; //NON-NLS
+    private static final String PLIST_KEY_URI = "URIDictionary"; //NON-NLS
+    private static final String PLIST_KEY_TITLE = "title"; //NON-NLS
+
     private final Logger logger = Logger.getLogger(this.getClass().getName());
 
     @Messages({
         "ExtractSafari_Module_Name=Safari",
-        "ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files."
-    })
+        "ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files.",
+        "ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files",})
 
     /**
-    * Extract the bookmarks, cookies, downloads and history from Safari
-    *
-    */
+     * Extract the bookmarks, cookies, downloads and history from Safari
+     *
+     */
     ExtractSafari() {
 
     }
@@ -83,9 +97,17 @@ final class ExtractSafari extends Extract {
 
         try {
             processHistoryDB(dataSource, context);
+
         } catch (IOException | TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Getting_History());
-            logger.log(Level.SEVERE, "Exception thrown while processing history file: " + ex); //NON-NLS
+            logger.log(Level.SEVERE, "Exception thrown while processing history file: {0}", ex); //NON-NLS
+        }
+
+        try {
+            processBookmarkPList(dataSource, context);
+        } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
+            this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
+            logger.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
         }
     }
 
@@ -117,6 +139,37 @@ final class ExtractSafari extends Extract {
     }
 
     /**
+     *
+     * @param dataSource
+     * @param context
+     * @throws TskCoreException
+     * @throws IOException
+     * @throws SAXException
+     * @throws PropertyListFormatException
+     * @throws ParseException
+     * @throws ParserConfigurationException
+     */
+    private void processBookmarkPList(Content dataSource, IngestJobContext context) throws TskCoreException, IOException, SAXException, PropertyListFormatException, ParseException, ParserConfigurationException {
+        FileManager fileManager = getCurrentCase().getServices().getFileManager();
+
+        List<AbstractFile> files = fileManager.findFiles(dataSource, BOOKMARK_FILE_NAME);
+
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+
+        this.setFoundData(true);
+
+        for (AbstractFile file : files) {
+            if (context.dataSourceIngestIsCancelled()) {
+                break;
+            }
+
+            getBookmarks(context, file);
+        }
+    }
+
+    /**
      * Creates a temporary copy of historyFile and creates a list of
      * BlackboardArtifacts for the history information in the file.
      *
@@ -129,7 +182,7 @@ final class ExtractSafari extends Extract {
             return;
         }
 
-        File tempHistoryFile = this.createTemporaryFile(context, historyFile);
+        File tempHistoryFile = createTemporaryFile(context, historyFile);
 
         try {
             ContentUtils.writeToFile(historyFile, tempHistoryFile, context::dataSourceIngestIsCancelled);
@@ -150,13 +203,46 @@ final class ExtractSafari extends Extract {
     }
 
     /**
+     * Creates a temporary bookmark file from the AbstractFile and creates
+     * BlackboardArtifacts for the any bookmarks found.
+     *
+     * @param context IngestJobContext object
+     * @param file AbstractFile from case
+     * @throws TskCoreException
+     * @throws IOException
+     * @throws SAXException
+     * @throws PropertyListFormatException
+     * @throws ParseException
+     * @throws ParserConfigurationException
+     */
+    private void getBookmarks(IngestJobContext context, AbstractFile file) throws TskCoreException, IOException, SAXException, PropertyListFormatException, ParseException, ParserConfigurationException {
+        if (file.getSize() == 0) {
+            return;
+        }
+
+        File tempFile = createTemporaryFile(context, file);
+
+        try {
+            Collection<BlackboardArtifact> bbartifacts = getBookmarkArtifacts(file, tempFile);
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
+            }
+        } finally {
+            tempFile.delete();
+        }
+
+    }
+
+    /**
      * Queries the history db for the history information creating a list of
      * BlackBoardArtifact for each row returned from the db.
      *
      * @param origFile AbstractFile of the history file from the case
      * @param tempFilePath Path to temporary copy of the history db
-     * @return Blackboard Artifacts for the history db or null if there are 
-     *          no history artifacts
+     * @return Blackboard Artifacts for the history db or null if there are no
+     * history artifacts
      * @throws TskCoreException
      */
     private Collection<BlackboardArtifact> getHistoryArtifacts(AbstractFile origFile, Path tempFilePath) throws TskCoreException {
@@ -179,5 +265,89 @@ final class ExtractSafari extends Extract {
         }
 
         return bbartifacts;
+    }
+
+    /**
+     * Parses the temporary version of bookmarks.plist and creates
+     *
+     * @param origFile The origFile Bookmark.plist file from the case
+     * @param tempFile The temporary local version of Bookmark.plist
+     * @return Collection of BlackboardArtifacts for the bookmarks in origFile
+     * @throws IOException
+     * @throws PropertyListFormatException
+     * @throws ParseException
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws TskCoreException
+     */
+    private Collection<BlackboardArtifact> getBookmarkArtifacts(AbstractFile origFile, File tempFile) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException, TskCoreException {
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+
+        try {
+            NSDictionary root = (NSDictionary) PropertyListParser.parse(tempFile);
+
+            parseBookmarkDictionary(bbartifacts, origFile, root);
+        } catch (PropertyListFormatException ex) {
+            PropertyListFormatException plfe = new PropertyListFormatException(origFile.getName() + ": " + ex.getMessage());
+            plfe.setStackTrace(ex.getStackTrace());
+            throw plfe;
+        } catch (ParseException ex) {
+            ParseException pe = new ParseException(origFile.getName() + ": " + ex.getMessage(), ex.getErrorOffset());
+            pe.setStackTrace(ex.getStackTrace());
+            throw pe;
+        } catch (ParserConfigurationException ex) {
+            ParserConfigurationException pce = new ParserConfigurationException(origFile.getName() + ": " + ex.getMessage());
+            pce.setStackTrace(ex.getStackTrace());
+            throw pce;
+        } catch (SAXException ex) {
+            SAXException se = new SAXException(origFile.getName() + ": " + ex.getMessage());
+            se.setStackTrace(ex.getStackTrace());
+            throw se;
+        }
+
+        return bbartifacts;
+    }
+
+    /**
+     * Parses the plist object to find the bookmark child objects, then creates
+     * an artifact with the bookmark information
+     *
+     * @param bbartifacts BlackboardArtifact list to add new the artifacts to
+     * @param origFile The origFile Bookmark.plist file from the case
+     * @param root NSDictionary object to parse
+     * @throws TskCoreException
+     */
+    private void parseBookmarkDictionary(Collection<BlackboardArtifact> bbartifacts, AbstractFile origFile, NSDictionary root) throws TskCoreException {
+        if (root.containsKey(PLIST_KEY_CHILDREN)) {
+            NSArray children = (NSArray) root.objectForKey(PLIST_KEY_CHILDREN);
+
+            if (children != null) {
+                for (NSObject obj : children.getArray()) {
+                    parseBookmarkDictionary(bbartifacts, origFile, (NSDictionary) obj);
+                }
+            }
+        } else if (root.containsKey(PLIST_KEY_URL)) {
+            String url = null;
+            String title = null;
+
+            NSString nsstr = (NSString) root.objectForKey(PLIST_KEY_URL);
+            if (nsstr != null) {
+                url = nsstr.toString();
+            }
+
+            NSDictionary dic = (NSDictionary) root.get(PLIST_KEY_URI);
+
+            nsstr = (NSString) root.objectForKey(PLIST_KEY_TITLE);
+
+            if (nsstr != null) {
+                title = ((NSString) dic.get(PLIST_KEY_TITLE)).toString();
+            }
+
+            if (url != null || title != null) {
+                BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
+                bbart.addAttributes(createBookmarkAttributes(url, title, null, this.getName(), NetworkUtils.extractDomain(url)));
+                bbartifacts.add(bbart);
+            }
+        }
     }
 }
