@@ -119,7 +119,7 @@ AutoIngestDashboard.JobsTableModel.ColumnHeader.StartedTime=Stage Started
 AutoIngestDashboard.JobsTableModel.ColumnHeader.CompletedTime=Job Completed
 AutoIngestDashboard.JobsTableModel.ColumnHeader.Stage=Stage
 AutoIngestDashboard.JobsTableModel.ColumnHeader.Status=Status
-AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath= Manifest File Path
+AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath=Manifest File Path
 AutoIngestDashboard.JobsTableModel.ColumnHeader.StageTime=Time in Stage
 AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder=Case 
 AutoIngestDashboard.JobsTableModel.ColumnHeader.Job=Job 
@@ -171,11 +171,7 @@ CTL_AutoIngestDashboardTopComponent=Auto Ingest Jobs
 DataSourceOnCDriveError.noOpenCase.errMsg=Warning: Exception while getting open case.
 DataSourceOnCDriveError.text=Warning: Path to multi-user data source is on "C:" drive
 GeneralFilter.archiveDesc.text=Archive Files (.zip, .rar, .arj, .7z, .7zip, .gzip, .gz, .bzip2, .tar, .tgz)
-OpenIDE-Module-Long-Description=\
-    This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution.  \
-    You can enable this module to use the new features.  \
-    The features should be stable, but their exact behavior and API are subject to change.  \n\n\
-    We make no guarantee that the API of this module will not change, so developers should be careful when relying on it.
+OpenIDE-Module-Long-Description=This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution.  You can enable this module to use the new features.  The features should be stable, but their exact behavior and API are subject to change.  \n\nWe make no guarantee that the API of this module will not change, so developers should be careful when relying on it.
 OpenIDE-Module-Name=Experimental
 OpenIDE-Module-Short-Description=This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution.
 DisplayLogDialog.cannotOpenLog=Unable to open the selected case log file

@@ -62,8 +62,6 @@ public class EamArtifactUtil {
                 .put(ATTRIBUTE_TYPE.TSK_ICCID.getTypeID(), CorrelationAttributeInstance.ICCID_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_SSID.getTypeID(), CorrelationAttributeInstance.SSID_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), CorrelationAttributeInstance.PHONE_TYPE_ID)
-                .put(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO.getTypeID(), CorrelationAttributeInstance.PHONE_TYPE_ID)
-                .put(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_FROM.getTypeID(), CorrelationAttributeInstance.PHONE_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_EMAIL_HOME.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
@@ -73,6 +71,26 @@ public class EamArtifactUtil {
                 .put(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
                 .build();
+    }
+    
+    /**
+     * 
+     * @param artifact
+     * @return 
+     */
+    public static BlackboardArtifact getTskAssociatedArtifact(BlackboardArtifact artifact) {
+        try {
+            BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+            if (attribute != null) {
+                return Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+            }
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Could not get associated artifact "
+                    + "for artifact with name %s and id %d",
+                    artifact.getName(), artifact.getId()));
+        }
+        
+        return null;
     }
 
     /**
@@ -90,10 +108,10 @@ public class EamArtifactUtil {
     public static List<CorrelationAttributeInstance> makeInstancesFromBlackboardArtifact(BlackboardArtifact artifact,
             boolean checkEnabled) {
         List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
-        if(artifact == null) {
+        if (artifact == null) {
             return eamArtifacts;
         }
-        
+
         try {
             int artifactTypeID = artifact.getArtifactTypeID();
             if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
@@ -111,6 +129,19 @@ public class EamArtifactUtil {
                             attribute,
                             CORRELATABLE_ATTRIBUTES.get(customAttributeTypeId)
                     );
+                } else {
+                    String attributeName = attribute.getAttributeType().getTypeName();
+
+                    if (attributeName == null) {
+                        continue;
+                    }
+
+                    if (attributeName.startsWith("TSK_PHONE_NUMBER_")) {
+                        addCorrelationAttributeToList(eamArtifacts, artifact,
+                                attribute,
+                                CorrelationAttributeInstance.PHONE_TYPE_ID
+                        );
+                    }
                 }
             }
         } catch (EamDbException ex) {
@@ -119,19 +150,19 @@ public class EamArtifactUtil {
             logger.log(Level.SEVERE, "Error getting attribute while getting type from BlackboardArtifact.", ex); // NON-NLS
             return null;
         }
-        
+
         return eamArtifacts;
     }
 
     /**
      * Add a CorrelationAttributeInstance of the specified type to the provided
-     * list if the artifact has an Attribute of the given type with a
-     * non empty value.
+     * list if the artifact has an Attribute of the given type with a non empty
+     * value.
      *
      * @param eamArtifacts    the list of CorrelationAttributeInstance objects
      *                        which should be added to
-     * @param artifact        the blackboard artifact which we are
-     *                        creating a CorrelationAttributeInstance for
+     * @param artifact        the blackboard artifact which we are creating a
+     *                        CorrelationAttributeInstance for
      * @param bbAttributeType the type of BlackboardAttribute we expect to exist
      *                        for a CorrelationAttributeInstance of this type
      *                        generated from this Blackboard Artifact
@@ -142,10 +173,10 @@ public class EamArtifactUtil {
      * @throws TskCoreException
      */
     private static void addCorrelationAttributeToList(List<CorrelationAttributeInstance> eamArtifacts, BlackboardArtifact artifact, BlackboardAttribute bbAttribute, int typeId) throws EamDbException, TskCoreException {
-        if(bbAttribute == null) {
+        if (bbAttribute == null) {
             return;
         }
-        
+
         String value = bbAttribute.getValueString();
         if ((null != value) && (value.isEmpty() == false)) {
             CorrelationAttributeInstance inst = makeCorrelationAttributeInstanceUsingTypeValue(artifact, EamDb.getInstance().getCorrelationTypeById(typeId), value);
@@ -263,10 +294,10 @@ public class EamArtifactUtil {
 
     /**
      * Create an EamArtifact from the given Content. Will return null if an
-     * artifact can not be created - this is not necessarily an error
-     * case, it just means an artifact can't be made. If creation
-     * fails due to an error (and not that the file is the wrong type or it has
-     * no hash), the error will be logged before returning.
+     * artifact can not be created - this is not necessarily an error case, it
+     * just means an artifact can't be made. If creation fails due to an error
+     * (and not that the file is the wrong type or it has no hash), the error
+     * will be logged before returning.
      *
      * Does not add the artifact to the database.
      *

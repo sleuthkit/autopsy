@@ -296,8 +296,17 @@ final class CaseEventListener implements PropertyChangeListener {
             if ((content instanceof AbstractFile) && (((AbstractFile) content).getKnown() == TskData.FileKnown.KNOWN)) {
                 return;
             }
+            
+            BlackboardArtifact correlatableArtifact = null;
+            if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbArtifact.getArtifactTypeID()) {
+                correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbArtifact);
+            }
 
-            List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
+            if(correlatableArtifact == null) {
+                correlatableArtifact = bbArtifact;
+            }
+
+            List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, true);
             for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                 eamArtifact.setComment(comment);
                 try {
@@ -368,9 +377,18 @@ final class CaseEventListener implements PropertyChangeListener {
                     }
                     //if the Correlation Attribute will have no tags with a status which would prevent the current status from being changed 
                     if (!hasTagWithConflictingKnownStatus) {
+                        BlackboardArtifact correlatableArtifact = null;
+                        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbTag.getArtifact().getArtifactTypeID()) {
+                            correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbTag.getArtifact());
+                        }
+
+                        if(correlatableArtifact == null) {
+                            correlatableArtifact = bbTag.getArtifact();
+                        }
+                        
                         //Get the correlation atttributes that correspond to the current BlackboardArtifactTag if their status should be changed
                         //with the initial set of correlation attributes this should be a single correlation attribute
-                        List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbTag.getArtifact(), true);
+                        List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, true);
                         for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                             EamDb.getInstance().setAttributeInstanceKnownStatus(eamArtifact, tagName.getKnownStatus());
                         }

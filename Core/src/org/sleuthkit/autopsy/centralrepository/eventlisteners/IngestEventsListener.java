@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -318,7 +319,7 @@ public class IngestEventsListener {
                 LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
                 return;
             }
-            
+
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED: {
                     jobProcessingExecutor.submit(new AnalysisCompleteTask(dbManager, evt));
@@ -332,10 +333,10 @@ public class IngestEventsListener {
     }
 
     private final class AnalysisCompleteTask implements Runnable {
-        
+
         private final EamDb dbManager;
         private final PropertyChangeEvent event;
-        
+
         private AnalysisCompleteTask(EamDb db, PropertyChangeEvent evt) {
             dbManager = db;
             event = evt;
@@ -361,15 +362,15 @@ public class IngestEventsListener {
             long dataSourceObjectId = -1;
             try {
                 dataSource = ((DataSourceAnalysisCompletedEvent) event).getDataSource();
-                
+
                 /*
-                 * We only care about Images for the purpose of
-                 * updating hash values.
+                 * We only care about Images for the purpose of updating hash
+                 * values.
                  */
                 if (!(dataSource instanceof Image)) {
                     return;
                 }
-                
+
                 dataSourceName = dataSource.getName();
                 dataSourceObjectId = dataSource.getId();
 
@@ -397,7 +398,7 @@ public class IngestEventsListener {
                         if (StringUtils.equals(imageMd5Hash, crMd5Hash) == false) {
                             correlationDataSource.setMd5(imageMd5Hash);
                         }
-                        
+
                         String imageSha1Hash = image.getSha1();
                         if (imageSha1Hash == null) {
                             imageSha1Hash = "";
@@ -406,7 +407,7 @@ public class IngestEventsListener {
                         if (StringUtils.equals(imageSha1Hash, crSha1Hash) == false) {
                             correlationDataSource.setSha1(imageSha1Hash);
                         }
-                        
+
                         String imageSha256Hash = image.getSha256();
                         if (imageSha256Hash == null) {
                             imageSha256Hash = "";
@@ -460,8 +461,18 @@ public class IngestEventsListener {
             List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
 
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
+                //Get the associated artifact for TSK_INTERESTING_ARTIFACT_HITs
+                BlackboardArtifact correlatableArtifact = null;
+                if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbArtifact.getArtifactTypeID()) {
+                    correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbArtifact);
+                }
+                
+                if(correlatableArtifact == null) {
+                    correlatableArtifact = bbArtifact;
+                }
+
                 // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
-                List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(bbArtifact, true);
+                List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, true);
                 for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                     try {
                         // Only do something with this artifact if it's unique within the job
