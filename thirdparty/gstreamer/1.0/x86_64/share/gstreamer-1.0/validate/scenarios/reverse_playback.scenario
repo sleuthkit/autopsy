@@ -1,0 +1,2 @@
+description, seek=true, reverse-playback=true
+seek, name=Reverse-seek, playback-time=0.0, rate=-1.0, start="max(duration - 15.0, 0.0)", stop=duration, flags=accurate+flush
