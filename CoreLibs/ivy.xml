@@ -12,7 +12,9 @@
         <dependency org="com.google.code.gson" name="gson" rev="2.8.1"/>      
         
         <!-- for viewers -->
-        <dependency conf="autopsy_core->*" org="com.googlecode.gstreamer-java" name="gstreamer-java" rev="1.5"/>
+        <dependency conf="autopsy_core->*" org="org.freedesktop.gstreamer" name="gst1-java-core" rev="0.9.3"/>
+        <dependency conf="autopsy_core->*" org="net.java.dev.jna" name="jna" rev="3.4.0"/>
+        <dependency conf="autopsy_core->*" org="net.java.dev.jna" name="platform" rev="3.4.0"/>
         
         <!-- for file search -->
         <dependency conf="autopsy_core->*" org="com.github.lgooddatepicker" name="LGoodDatePicker" rev="10.3.1"/>
@@ -67,5 +69,9 @@
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-thumbsdb" rev="3.2" />
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-core" rev="3.2" />
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.2" />
+        
+        <!-- conflict resolutions for multiple JAR versions -->
+        <conflict org="net.java.dev.jna" module="jna" rev="3.4.0"/>
+        <conflict org="net.java.dev.jna" module="platform" rev="3.4.0"/>
     </dependencies>
 </ivy-module>
