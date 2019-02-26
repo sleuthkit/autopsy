@@ -119,8 +119,8 @@ final public class CommonAttributeCaseSearchResults {
                 throw new EamDbException("Unable to get current case while performing filtering", ex);
             }
             Map<String, CommonAttributeValueList> currentCaseDataSourceMap = metadata.get(currentCaseName);
-            if (currentCaseDataSourceMap == null) {
-                return null;
+            if (currentCaseDataSourceMap == null) { //there are no results
+                return new HashMap<>(); 
             }
             CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
                     .getDefaultCorrelationTypes()
