@@ -94,9 +94,7 @@ public class EventNode extends DisplayableItemNode {
         properties.put(new NodeProperty<>("icon", Bundle.NodeProperty_displayName_icon(), "icon", true)); // NON-NLS //gets overridden with icon
         properties.put(new TimeProperty("time", Bundle.NodeProperty_displayName_dateTime(), "time ", getDateTimeString()));// NON-NLS
         properties.put(new NodeProperty<>("description", Bundle.NodeProperty_displayName_description(), "description", event.getFullDescription())); // NON-NLS
-        // todo: change filesystem events to use MACB notation.    
-        properties.put(new NodeProperty<>("eventType", Bundle.NodeProperty_displayName_eventType(), "event type",
-                event.getEventType().getDisplayName())); // NON-NLS
+        properties.put(new NodeProperty<>("eventType", Bundle.NodeProperty_displayName_eventType(), "event type", event.getEventType().getDisplayName())); // NON-NLS
 
         return sheet;
     }
