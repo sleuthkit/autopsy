@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.contentviewers;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A file content viewer for HTML files.
@@ -30,7 +29,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 final class HtmlPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(HtmlPanel.class.getName());
     
     private String htmlText;
     

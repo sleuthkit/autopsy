@@ -26,7 +26,6 @@ import java.util.logging.Level;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -39,9 +38,6 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
     private static final Logger logger = Logger.getLogger(HtmlViewer.class.getName());
     
     private static final String[] SUPPORTED_MIMETYPES = new String[]{"text/html"};
-    
-    private BlackboardArtifact artifact;
-    private AbstractFile abstractFile;
     
     /**
      * Creates new form HtmlViewerPanel
