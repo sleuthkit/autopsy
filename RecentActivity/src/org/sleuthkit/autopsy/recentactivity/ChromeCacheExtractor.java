@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -73,6 +74,7 @@ import org.sleuthkit.datamodel.TskException;
  */
 final class ChromeCacheExtractor {
     
+    private final static String DEFAULT_CACHE_STR = "default/cache";
     private final static String BROTLI_MIMETYPE ="application/x-brotli";
     
     private final static long UINT32_MASK = 0xFFFFFFFFl;
@@ -93,8 +95,7 @@ final class ChromeCacheExtractor {
     private final IngestServices services = IngestServices.getInstance();
     private Case currentCase;
     private FileManager fileManager;
- 
-    
+
     private final Map<String, CacheFileCopy> filesTable = new HashMap<>();
     
     /**
@@ -124,6 +125,9 @@ final class ChromeCacheExtractor {
         } 
     }
 
+    @NbBundle.Messages({
+        "ChromeCacheExtractor.moduleName=ChromeCacheExtractor"
+    })
     ChromeCacheExtractor(Content dataSource, IngestJobContext context ) {
         moduleName = NbBundle.getMessage(ChromeCacheExtractor.class, "ChromeCacheExtractor.moduleName");           
         this.dataSource = dataSource;
@@ -136,7 +140,7 @@ final class ChromeCacheExtractor {
      * 
      * @throws IngestModuleException 
      */
-    void init() throws IngestModuleException {
+    void moduleInit() throws IngestModuleException {
         
         try {
             currentCase = Case.getCurrentCaseThrows();
@@ -144,7 +148,8 @@ final class ChromeCacheExtractor {
              
             // Create an output folder to save any derived files
             absOutputFolderName = RAImageIngestModule.getRAOutputPath(currentCase, moduleName);
-            relOutputFolderName = RAImageIngestModule.getRelModuleOutputPath() + File.separator + moduleName;
+            relOutputFolderName = Paths.get( RAImageIngestModule.getRelModuleOutputPath(), moduleName).normalize().toString();
+            
             File dir = new File(absOutputFolderName);
             if (dir.exists() == false) {
                 dir.mkdirs();
@@ -153,6 +158,30 @@ final class ChromeCacheExtractor {
             String msg = "Failed to get current case.";
             throw new IngestModuleException(msg, ex);
         } 
+    }
+    
+    /**
+     * Initializes the module to extract cache from a specific folder.
+     * 
+     * @param cachePath - path where cache files are found 
+     * 
+     * @throws org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException 
+     */
+    void subInit(String cachePath) throws IngestModuleException {
+        
+        filesTable.clear();
+        
+        String cacheAbsOutputFolderName = this.getAbsOutputFolderName() + cachePath;
+        File outDir = new File(cacheAbsOutputFolderName);
+        if (outDir.exists() == false) {
+            outDir.mkdirs();
+        }
+        
+        String cacheTempPath = RAImageIngestModule.getRATempPath(currentCase, moduleName) + cachePath;
+        File tempDir = new File(cacheTempPath);
+        if (tempDir.exists() == false) {
+            tempDir.mkdirs();
+        }
     }
     
     /**
@@ -174,7 +203,7 @@ final class ChromeCacheExtractor {
                     tmpFile.deleteOnExit();
                 }
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to delete cache file copy %s", tempFilePathname), ex);
+                logger.log(Level.WARNING, String.format("Failed to delete cache file copy %s", tempFilePathname), ex);
             }
         }
     }
@@ -198,147 +227,226 @@ final class ChromeCacheExtractor {
     }
     
     /**
-     * Extracts the data from Chrome cache
+     * Extracts the data from Chrome caches 
+     * 
+     * A data source may have multiple Chrome user profiles and caches.
+     * 
      */
-    void getCache() {
+    void getCaches() {
         
          try {
-           init();
+           moduleInit();
         } catch (IngestModuleException ex) {
             String msg = "Failed to initialize ChromeCacheExtractor.";
             logger.log(Level.SEVERE, msg, ex);
             return;
         }
         
+         // Find all possible caches 
+        List<AbstractFile> indexFiles;
+        try {
+            indexFiles = findCacheFiles("index");
+            
+            // Get each of the caches
+            for (AbstractFile indexFile: indexFiles) {       
+                getCache(indexFile);
+            }
+        
+        } catch (TskCoreException ex) {
+                String msg = "Failed to find cache index files";
+                logger.log(Level.SEVERE, msg, ex);
+        } 
+    }
+    
+    /**
+     * Extracts the cache for the specified cache index file.
+     * 
+     * @param cacheIndexFile 
+     */
+    void getCache(AbstractFile indexAbstractFile) {
+        
+        String cachePath = indexAbstractFile.getParentPath();
         Optional<CacheFileCopy> indexFile;
         try {
-            // find the index file
-            indexFile = findAndCopyCacheFile("index");
+            subInit(cachePath);
+             
+            indexFile = this.getCacheFileCopy(indexAbstractFile.getName(), cachePath);
             if (!indexFile.isPresent()) {
+                String msg = String.format("Failed to find copy cache index file %s", indexAbstractFile.getUniquePath());
+                logger.log(Level.SEVERE, msg);
                 return;
             }
-            
+
             for (int i = 0; i < 4; i ++)  {
-                Optional<CacheFileCopy> dataFile = findAndCopyCacheFile(String.format("data_%1d",i));
+                Optional<CacheFileCopy> dataFile = findAndCopyCacheFile(String.format("data_%1d",i), cachePath );
                 if (!dataFile.isPresent()) {
                     return;
                 }
             }
-            
+
         } catch (TskCoreException | IngestModuleException ex) {
-            String msg = "Failed to find cache files";
+            String msg = "Failed to find cache files in path " + cachePath;
             logger.log(Level.SEVERE, msg, ex);
             return;
         } 
 
-        logger.log(Level.INFO, "{0}- Now reading Cache index file", new Object[]{moduleName}); //NON-NLS
-            
+        logger.log(Level.INFO, "{0}- Now reading Cache index file from path {1}", new Object[]{moduleName, cachePath }); //NON-NLS
+
         List<AbstractFile> derivedFiles = new ArrayList<>();
-        
+
         ByteBuffer indexFileROBuffer = indexFile.get().getByteBuffer();
         IndexFileHeader indexHdr = new IndexFileHeader(indexFileROBuffer);
- 
+
         // seek past the header
         indexFileROBuffer.position(INDEXFILE_HDR_SIZE);
 
         // Process each address in the table
         for (int i = 0; i <  indexHdr.getTableLen(); i++) {
-            CacheAddress addr = new CacheAddress(indexFileROBuffer.getInt() & UINT32_MASK);
+            CacheAddress addr = new CacheAddress(indexFileROBuffer.getInt() & UINT32_MASK, cachePath);
             
             if (addr.isInitialized()) {
-                String fileName = addr.getFilename(); 
                 try {
-                    Optional<CacheFileCopy> cacheFileCopy = this.getCacheFileCopy(fileName);
-                    if (!cacheFileCopy.isPresent()) {
-                        logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", addr)); //NON-NLS
-                    }
-                    
-                    // Get the cache entry and its data segments
-                    CacheEntry cacheEntry = new CacheEntry(addr, cacheFileCopy.get() );
-                    List<CacheData> dataEntries = cacheEntry.getData();
-                    
-                    for (int j = 0; j < dataEntries.size(); j++) {
-                        CacheData data = dataEntries.get(j);
-                        String dataFilename = data.getAddress().getFilename();
-                        Optional<AbstractFile> dataFile = this.findCacheFile(dataFilename);
-                        
-                        boolean isBrotliCompressed = false;
-                        if (data.getType() != CacheDataTypeEnum.HTTP_HEADER && cacheEntry.isBrotliCompressed() ) {
-                            isBrotliCompressed = true;
-                        }
-                        
-                        Collection<BlackboardAttribute> sourceAttributes = new ArrayList<>();
-                        sourceAttributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                            moduleName,
-                            ((cacheEntry.getKey() != null) ? cacheEntry.getKey() : ""))); //NON-NLS
-                        
-                        if (dataFile.isPresent()) {
-                            if (data.isInExternalFile() )  {
-                                try {
-                                    BlackboardArtifact sourceArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
-                                    if (sourceArtifact != null) {
-                                        sourceArtifact.addAttributes(sourceAttributes);
-                                    }
-                                    BlackboardArtifact webCacheArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
-                                    
-                                    if (isBrotliCompressed) {
-                                        dataFile.get().setMIMEType(BROTLI_MIMETYPE);
-                                        dataFile.get().save();
-                                    }
-                                } catch (TskException ex) {
-                                    logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
-                                }
-                            } else {
-                           
-                                // Data segments in "data_x" files are saved in individual files and added as derived files
-                                String filename = data.save();
-                                String relPathname = getRelOutputFolderName() + File.separator + filename; 
-                                DerivedFile derivedFile = fileManager.addDerivedFile(filename, relPathname,
-                                                                        data.getDataLength(), 
-                                                                        cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), // TBD 
-                                                                        true, 
-                                                                        dataFile.get(), 
-                                                                        "",
-                                                                        moduleName, 
-                                                                        VERSION_NUMBER, 
-                                                                        "", 
-                                                                        TskData.EncodingType.NONE);
-
-                                derivedFiles.add(derivedFile);
-                                try {
-                                    BlackboardArtifact sourceArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
-                                    if (sourceArtifact != null) {
-                                        sourceArtifact.addAttributes(sourceAttributes);
-                                    }    
-                                    BlackboardArtifact webCacheArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
-                                    if (isBrotliCompressed) {
-                                        derivedFile.setMIMEType(BROTLI_MIMETYPE);
-                                        derivedFile.save();
-                                    }
-                                } catch (TskException ex) {
-                                    logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
-                                }
-                            }
-                        }
-                    }
-            
-                } catch (TskCoreException | IngestModuleException ex) {
+                    List<DerivedFile> addedFiles = this.getCacheEntry(addr);
+                    derivedFiles.addAll(addedFiles);
+                }
+                catch (TskCoreException | IngestModuleException ex) {
                    logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", addr)); //NON-NLS
                 } 
             }  
         }
-        
+
         derivedFiles.forEach((derived) -> {
             services.fireModuleContentEvent(new ModuleContentEvent(derived));
          });
-        
+
         context.addFilesToJob(derivedFiles);
         
         services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_SOURCE));
         services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE));
-       
+
         cleanup();
     }
+    
+    /**
+     * Gets the cache entry at the specified address.
+     * 
+     * Extracts the files if needed and adds as derived files, creates artifacts
+     * 
+     * @param cacheEntryAddress cache entry address
+     * 
+     * @return Optional derived file, is a derived file is added for the given entry
+     */
+    List<DerivedFile> getCacheEntry(CacheAddress cacheEntryAddress) throws TskCoreException, IngestModuleException {
+         
+        List<DerivedFile> derivedFiles = new ArrayList<>();
+        
+        String fileName = cacheEntryAddress.getFilename(); 
+        String cachePath = cacheEntryAddress.getCachePath();
+            
+        
+        Optional<CacheFileCopy> cacheFileCopy = this.getCacheFileCopy(fileName, cachePath);
+        if (!cacheFileCopy.isPresent()) {
+            logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", cacheEntryAddress)); //NON-NLS
+        }
+
+        // Get the cache entry and its data segments
+        CacheEntry cacheEntry = new CacheEntry(cacheEntryAddress, cacheFileCopy.get() );
+        List<CacheData> dataEntries = cacheEntry.getData();
+
+        BlackboardAttribute urlAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                                                    moduleName,
+                                                    ((cacheEntry.getKey() != null) ? cacheEntry.getKey() : ""));
+        
+        BlackboardAttribute createTimeAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                                                    moduleName,
+                                                    cacheEntry.getCreationTime());
+        
+        for (int j = 0; j < dataEntries.size(); j++) {
+            CacheData data = dataEntries.get(j);
+            String dataFilename = data.getAddress().getFilename();
+            Optional<AbstractFile> dataFile = this.findCacheFile(dataFilename, cachePath);
+
+            boolean isBrotliCompressed = false;
+            if (data.getType() != CacheDataTypeEnum.HTTP_HEADER && cacheEntry.isBrotliCompressed() ) {
+                isBrotliCompressed = true;
+            }
+
+            Collection<BlackboardAttribute> sourceArtifactAttributes = new ArrayList<>();
+            sourceArtifactAttributes.add(urlAttr);
+            sourceArtifactAttributes.add(createTimeAttr);
+
+            Collection<BlackboardAttribute> webCacheAttributes = new ArrayList<>();
+            webCacheAttributes.add(urlAttr);
+            webCacheAttributes.add(createTimeAttr);
+            
+            // RAMAN TBD: how to associate the entry data_n file as the source of this artifact??
+            
+            if (dataFile.isPresent()) {
+                if (data.isInExternalFile() )  {
+                    try {
+                        BlackboardArtifact sourceArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
+                        if (sourceArtifact != null) {
+                            sourceArtifact.addAttributes(sourceArtifactAttributes);
+                        }
+                        
+                        BlackboardArtifact webCacheArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
+                        if (sourceArtifact != null) {
+                            webCacheArtifact.addAttributes(webCacheAttributes);
+                        }
+                        
+                        if (isBrotliCompressed) {
+                            dataFile.get().setMIMEType(BROTLI_MIMETYPE);
+                            dataFile.get().save();
+                        }
+                    } catch (TskException ex) {
+                        logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
+                    }
+                } else {
+
+                    // Data segments in "data_x" files are saved in individual files and added as derived files
+                    String filename = data.save();
+
+                    String relPathname = getRelOutputFolderName() + data.getAddress().getCachePath() + filename; 
+
+                    DerivedFile derivedFile = fileManager.addDerivedFile(filename, relPathname,
+                                                            data.getDataLength(), 
+                                                            cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), // TBD 
+                                                            true, 
+                                                            dataFile.get(), 
+                                                            "",
+                                                            moduleName, 
+                                                            VERSION_NUMBER, 
+                                                            "", 
+                                                            TskData.EncodingType.NONE);
+
+               
+                    try {
+                        BlackboardArtifact sourceArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
+                        if (sourceArtifact != null) {
+                            sourceArtifact.addAttributes(sourceArtifactAttributes);
+                        }    
+                        
+                        BlackboardArtifact webCacheArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
+                        if (sourceArtifact != null) {
+                            webCacheArtifact.addAttributes(webCacheAttributes);
+                        }
+                        
+                        if (isBrotliCompressed) {
+                            derivedFile.setMIMEType(BROTLI_MIMETYPE);
+                            derivedFile.save();
+                        }
+
+                        
+                        derivedFiles.add(derivedFile);
+                    } catch (TskException ex) {
+                        logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
+                    }
+                }
+            }
+        }
+        
+        return derivedFiles;
+     }
     
     /**
      * Finds abstract file for cache file with a specified name
@@ -347,12 +455,12 @@ final class ChromeCacheExtractor {
      * @return Opt
      * @throws TskCoreException 
      */
-    Optional<AbstractFile> findCacheFile(String cacheFileName) throws TskCoreException {
+    Optional<AbstractFile> findCacheFile(String cacheFileName, String cachePath) throws TskCoreException {
         
-        List<AbstractFile> cacheFiles = fileManager.findFiles(dataSource, cacheFileName, "default/cache"); //NON-NLS
+        List<AbstractFile> cacheFiles = fileManager.findFiles(dataSource, cacheFileName, cachePath); //NON-NLS
         if (!cacheFiles.isEmpty()) {
             for (AbstractFile abstractFile: cacheFiles ) {
-                if (abstractFile.getUniquePath().trim().endsWith("default/cache")) {
+                if (abstractFile.getUniquePath().trim().endsWith(DEFAULT_CACHE_STR)) {
                     return Optional.of(abstractFile);
                 }
             }
@@ -362,6 +470,18 @@ final class ChromeCacheExtractor {
         return Optional.empty(); 
     }
     
+     /**
+     * Finds abstract file(s) for a cache file with the specified name.
+     * 
+     * @param cacheFileName
+     * @return list of abstract files matching the specified file name
+     * @throws TskCoreException 
+     */
+    List<AbstractFile> findCacheFiles(String cacheFileName) throws TskCoreException {
+        return fileManager.findFiles(dataSource, cacheFileName, DEFAULT_CACHE_STR); //NON-NLS 
+    }
+    
+    
     /**
      * Returns CacheFileCopy for the specified file from the file table.
      * Find the file and creates a copy if it isn't already in the table.
@@ -370,32 +490,33 @@ final class ChromeCacheExtractor {
      * @return CacheFileCopy
      * @throws TskCoreException 
      */
-    Optional<CacheFileCopy> getCacheFileCopy(String cacheFileName) throws TskCoreException, IngestModuleException {
+    Optional<CacheFileCopy> getCacheFileCopy(String cacheFileName, String cachePath) throws TskCoreException, IngestModuleException {
         
         // Check if the file is already in the table
-        if (filesTable.containsKey(cacheFileName)) {
-            return Optional.of(filesTable.get(cacheFileName));
+        String fileTableKey = cachePath + cacheFileName;
+        if (filesTable.containsKey(fileTableKey)) {
+            return Optional.of(filesTable.get(fileTableKey));
         }
         
-        return findAndCopyCacheFile(cacheFileName);
+        return findAndCopyCacheFile(cacheFileName, cachePath);
     }
- 
+     
     /**
-     * Finds the specified cache file and makes a temporary copy.
+     * Finds the specified cache file under the specified path, and makes a temporary copy.
      * 
      * @param cacheFileName
      * @return Cache file copy
      * @throws TskCoreException 
      */ 
-    Optional<CacheFileCopy> findAndCopyCacheFile(String cacheFileName) throws TskCoreException, IngestModuleException  {
+    Optional<CacheFileCopy> findAndCopyCacheFile(String cacheFileName, String cachePath) throws TskCoreException, IngestModuleException  {
         
-        Optional<AbstractFile> cacheFileOptional = findCacheFile(cacheFileName);
+        Optional<AbstractFile> cacheFileOptional = findCacheFile(cacheFileName, cachePath);
         if (!cacheFileOptional.isPresent()) {
             return Optional.empty(); 
         }
         
         AbstractFile cacheFile = cacheFileOptional.get();
-        String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName) + File.separator + cacheFile.getName(); //NON-NLS
+        String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName) + cachePath + cacheFile.getName(); //NON-NLS
         try {
             File newFile = new File(tempFilePathname);
             ContentUtils.writeToFile(cacheFile, newFile, context::dataSourceIngestIsCancelled);
@@ -409,7 +530,7 @@ final class ChromeCacheExtractor {
             CacheFileCopy cacheFileCopy = new CacheFileCopy(cacheFile, randomAccessFile, cacheFileROBuf );
             
             if (!cacheFileName.startsWith("f_")) {
-                filesTable.put(cacheFileName, cacheFileCopy);
+                filesTable.put(cachePath + cacheFileName, cacheFileCopy);
             }
             
             return Optional.of(cacheFileCopy);
@@ -548,10 +669,14 @@ final class ChromeCacheExtractor {
         private final String fileName;
         private final int fileNumber;
         
+        private final String cachePath;
         
-        CacheAddress(long uint32) {
+        
+        CacheAddress(long uint32, String cachePath) {
             
             uint32CacheAddr = uint32;
+            this.cachePath = cachePath;
+            
             int fileTypeEnc = (int)(uint32CacheAddr &  FILE_TYPE_MASK) >> FILE_TYPE_OFFSET;
             fileType = CacheFileTypeEnum.values()[fileTypeEnc];
             
@@ -586,6 +711,10 @@ final class ChromeCacheExtractor {
         
         String getFilename() {
             return fileName;
+        }
+        
+        String getCachePath() {
+            return cachePath;
         }
         
         boolean isInExternalFile() {
@@ -721,7 +850,7 @@ final class ChromeCacheExtractor {
                 return;
             }
             
-            cacheFileCopy = getCacheFileCopy(address.getFilename()).get();
+            cacheFileCopy = getCacheFileCopy(address.getFilename(), address.getCachePath()).get();
             if (!address.isInExternalFile() ) {
                 
                 this.data = new byte [length];
@@ -771,7 +900,7 @@ final class ChromeCacheExtractor {
                             if (hdrNum == 1) { 
                                 httpResponse = headerLine;
                             } else {
-                                int nPos = headerLine.indexOf(":");
+                                int nPos = headerLine.indexOf(':');
                                 String key = headerLine.substring(0, nPos);
                                 String val= headerLine.substring(nPos+1);
                 
@@ -830,7 +959,7 @@ final class ChromeCacheExtractor {
                 fileName = String.format("%s__%08x", address.getFilename(), address.getUint32CacheAddr());
             }
             
-            String filePathName = getAbsOutputFolderName() + File.separator + fileName;
+            String filePathName = getAbsOutputFolderName() + address.getCachePath() + fileName;
             save(filePathName);
             
             return  fileName;
@@ -871,8 +1000,9 @@ final class ChromeCacheExtractor {
             
             if (hasHTTPHeaders()) {
                 String str = getHTTPHeader("content-encoding");
-                if (str!=null) 
+                if (str != null) {
                     strBuilder.append(String.format("\t%s=%s", "content-encoding", str ));
+                }
             }
             
             return strBuilder.toString(); 
@@ -946,12 +1076,10 @@ final class ChromeCacheExtractor {
         
         private final int dataSizes[];
         private final CacheAddress dataAddresses[];
-        ArrayList<CacheData> dataList = null;
+        private List<CacheData> dataList;
                 
         private final long flags;
-        private final int pad[] = new int[4];
-        
-        private final long selfHash;  // hash of the entry itself so far.
+       
         private String key;     // Key may be found within the entry or may be external
         
         CacheEntry(CacheAddress cacheAdress, CacheFileCopy cacheFileCopy ) {
@@ -968,10 +1096,10 @@ final class ChromeCacheExtractor {
             hash = fileROBuf.getInt() & UINT32_MASK;
             
             long uint32 = fileROBuf.getInt() & UINT32_MASK;
-            nextAddress = (uint32 != 0) ?  new CacheAddress(uint32) : null;  
+            nextAddress = (uint32 != 0) ?  new CacheAddress(uint32, selfAddress.getCachePath()) : null;  
            
             uint32 = fileROBuf.getInt() & UINT32_MASK;
-            rankingsNodeAddress = (uint32 != 0) ?  new CacheAddress(uint32) : null;  
+            rankingsNodeAddress = (uint32 != 0) ?  new CacheAddress(uint32, selfAddress.getCachePath()) : null;  
             
             reuseCount = fileROBuf.getInt();
             refetchCount = fileROBuf.getInt();
@@ -982,23 +1110,26 @@ final class ChromeCacheExtractor {
             keyLen = fileROBuf.getInt();
             
             uint32 = fileROBuf.getInt() & UINT32_MASK;
-            longKeyAddresses = (uint32 != 0) ?  new CacheAddress(uint32) : null;  
+            longKeyAddresses = (uint32 != 0) ?  new CacheAddress(uint32, selfAddress.getCachePath()) : null;  
             
+            dataList = null;
             dataSizes= new int[4];
             for (int i = 0; i < 4; i++)  {
                 dataSizes[i] = fileROBuf.getInt();
             }
             dataAddresses = new CacheAddress[4];
             for (int i = 0; i < 4; i++)  {
-                dataAddresses[i] =  new CacheAddress(fileROBuf.getInt() & UINT32_MASK);
+                dataAddresses[i] =  new CacheAddress(fileROBuf.getInt() & UINT32_MASK, selfAddress.getCachePath());
             }
         
             flags = fileROBuf.getInt() & UINT32_MASK;
+            // skip over pad 
             for (int i = 0; i < 4; i++)  {
-                pad[i] = fileROBuf.getInt();
+                fileROBuf.getInt();
             }
             
-            selfHash = fileROBuf.getInt() & UINT32_MASK;
+            // skip over self hash
+            fileROBuf.getInt();
         
             // get the key
             if (longKeyAddresses != null) {
@@ -1012,13 +1143,14 @@ final class ChromeCacheExtractor {
             }
             else {  // key stored within entry 
                 StringBuilder strBuilder = new StringBuilder(MAX_KEY_LEN);
-                int i = 0;
-                while (fileROBuf.remaining() > 0  && i < MAX_KEY_LEN)  {
-                    char c = (char)fileROBuf.get();
-                    if (c == '\0') { 
+                int keyLen = 0;
+                while (fileROBuf.remaining() > 0  && keyLen < MAX_KEY_LEN)  {
+                    char keyChar = (char)fileROBuf.get();
+                    if (keyChar == '\0') { 
                         break;
                     }
-                    strBuilder.append(c);
+                    strBuilder.append(keyChar);
+                    keyLen++;
                 }
 
                 key = strBuilder.toString();
