@@ -119,8 +119,9 @@ final public class CommonAttributeCaseSearchResults {
                 throw new EamDbException("Unable to get current case while performing filtering", ex);
             }
             Map<String, CommonAttributeValueList> currentCaseDataSourceMap = metadata.get(currentCaseName);
+            Map<String, Map<String, CommonAttributeValueList>> filteredCaseNameToDataSourcesTree = new HashMap<>();
             if (currentCaseDataSourceMap == null) { //there are no results
-                return new HashMap<>(); 
+                return filteredCaseNameToDataSourcesTree;
             }
             CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
                     .getDefaultCorrelationTypes()
@@ -129,13 +130,14 @@ final public class CommonAttributeCaseSearchResults {
                     .findFirst().get();
             //Call countUniqueDataSources once to reduce the number of DB queries needed to get the frequencyPercentage
             Double uniqueCaseDataSourceTuples = EamDb.getInstance().getCountUniqueDataSources().doubleValue();
-            Map<String, Map<String, CommonAttributeValueList>> filteredCaseNameToDataSourcesTree = new HashMap<>();
             Map<String, CommonAttributeValue> valuesToKeepCurrentCase = getValuesToKeepFromCurrentCase(currentCaseDataSourceMap, attributeType, percentageThreshold, uniqueCaseDataSourceTuples);
             for (Entry<String, Map<String, CommonAttributeValueList>> mapOfDataSources : Collections.unmodifiableMap(metadata).entrySet()) {
                 if (!mapOfDataSources.getKey().equals(currentCaseName)) {
                     //rebuild the metadata structure with items from the current case substituted for their matches in other cases results we want to filter out removed
                     Map<String, CommonAttributeValueList> newTreeForCase = createTreeForCase(valuesToKeepCurrentCase, mapOfDataSources.getValue());
-                    filteredCaseNameToDataSourcesTree.put(mapOfDataSources.getKey(), newTreeForCase);
+                    if (!newTreeForCase.isEmpty()) {
+                        filteredCaseNameToDataSourcesTree.put(mapOfDataSources.getKey(), newTreeForCase);
+                    }
                 }
             }
             return filteredCaseNameToDataSourcesTree;
