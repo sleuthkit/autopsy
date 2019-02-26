@@ -106,9 +106,9 @@ final class InterCaseSearchResultsProcessor {
      */
     private String getFileQuery(Set<String> mimeTypesToFilterOn) throws EamDbException {
         String query;
-        query = "md5 as value from tsk_files where known!=" + TskData.FileKnown.KNOWN.getFileKnownValue() + " AND md5 IS NOT NULL";
+        query = "md5 AS value FROM tsk_files WHERE known!=" + TskData.FileKnown.KNOWN.getFileKnownValue() + " AND md5 IS NOT NULL"; //NON-NLS
         if (!mimeTypesToFilterOn.isEmpty()) {
-            query = query + " AND mime_type IS NOT NULL AND mime_type IN ('" + String.join("', '", mimeTypesToFilterOn) + "')";
+            query = query + " AND mime_type IS NOT NULL AND mime_type IN ('" + String.join("', '", mimeTypesToFilterOn) + "')";  //NON-NLS
         }
         return query;
     }
