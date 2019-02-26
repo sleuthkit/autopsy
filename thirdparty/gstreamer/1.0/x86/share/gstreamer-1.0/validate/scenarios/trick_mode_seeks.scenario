@@ -1,0 +1,9 @@
+description, duration=10.0, seek=true, need-clock-sync=true, min-media-duration=8.0, min-video-track=1
+seek, name=Fast-forward-seek, playback-time="min(5.0, duration*0.0625)", rate=2.0,  start=0.0, flags=flush+trickmode-key-units
+seek, name=Fast-forward-seek, playback-time="min(10.0, duration*0.0625)", rate=4.0,  start=0.0, flags=flush+trickmode-key-units
+seek, name=Fast-forward-seek, playback-time="min(20.0, duration*0.125)", rate=8.0,  start=0.0, flags=flush+trickmode-key-units
+seek, name=Fast-forward-seek, playback-time="min(40.0, duration*0.25)", rate=16.0, start=0.0, flags=flush+trickmode-key-units
+seek, name=Fast-forward-seek, playback-time="min(80.0, duration*0.50)", rate=32.0, start=0.0, flags=flush+trickmode-key-units
+# and go back to regular playback
+seek, name=regular-playback, playback-time="min(160.0, duration*0.75)", rate=1.0, start=0.0, flags=flush
+stop, playback-time="min(10.0, duration*0.0625)"

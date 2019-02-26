@@ -102,7 +102,6 @@
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>
         <copy file="${basedir}/Running_Linux_OSX.txt" tofile="${zip-tmp}/${app.name}/Running_Linux_OSX.txt"/>
         <copy file="${basedir}/unix_setup.sh" tofile="${zip-tmp}/${app.name}/unix_setup.sh"/>
-        <unzip src="${thirdparty.dir}/gstreamer/windows/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
             
         
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
