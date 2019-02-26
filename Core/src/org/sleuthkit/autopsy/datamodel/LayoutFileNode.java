@@ -30,6 +30,7 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import static org.sleuthkit.autopsy.datamodel.FileNode.getIconForFileType;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
@@ -64,8 +65,12 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
         if (lf.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-icon-16.png"); //NON-NLS
-        } else if (lf.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.RENAME_ME)) {
-            this.setIconBaseWithExtension(FileNode.getIconForFileType(lf));
+        } else if (lf.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE)) {
+            if (lf.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+            } else {
+                this.setIconBaseWithExtension(FileNode.getIconForFileType(lf));
+            }
         } else {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
         }
