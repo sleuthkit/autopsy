@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -107,7 +107,6 @@ final public class CommonAttributeCaseSearchResults {
      *                            not be more common than
      * @param resultTypeId        the ID of the result type contained in the
      *                            metadata
-     * @param mimeTypesToFilterOn the mimetypes to include in our results
      *
      * @return metadata
      */
@@ -121,7 +120,7 @@ final public class CommonAttributeCaseSearchResults {
             }
             Map<String, CommonAttributeValueList> currentCaseDataSourceMap = metadata.get(currentCaseName);
             if (currentCaseDataSourceMap == null) {
-                throw new EamDbException("No data for current case found in results, indicating there are no results and nothing will be filtered");
+                return null;
             }
             CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
                     .getDefaultCorrelationTypes()
@@ -159,7 +158,6 @@ final public class CommonAttributeCaseSearchResults {
      *                                   should not be more common than
      * @param uniqueCaseDataSourceTuples the number of unique data sources in
      *                                   the CR
-     * @param mimeTypesToFilterOn        the mimetypes to include in our results
      *
      * @return a map of correlation value to CommonAttributeValue for results
      *         from the current case
@@ -223,7 +221,6 @@ final public class CommonAttributeCaseSearchResults {
      *                                   should not be more common than
      * @param uniqueCaseDataSourceTuples the number of unique data sources in
      *                                   the CR
-     * @param mimeTypesToInclude         the mimetypes to include in our results
      *
      * @return true if the value should be filtered and removed from what is
      *         shown to the user, false if the value should not be removed and

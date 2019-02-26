@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,7 +76,7 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         CorrelationCase correlationCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         this.correlationCaseName = correlationCase.getDisplayName();
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.corAttrType);
-                Set<String> mimeTypesToFilterOn = new HashSet<>();
+        Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
         }

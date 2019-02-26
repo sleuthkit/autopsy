@@ -41,7 +41,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil.updateSchemaVersion;
@@ -1054,38 +1053,43 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
     }
 
-    /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
-     *
-     * @param aType The type of the artifact
-     * @param value The correlation value
-     *
-     * @return List of artifact instances for a given type/value
-     *
-     * @throws EamDbException
-     */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         return getArtifactInstancesByTypeValues(aType, Arrays.asList(value));
     }
-    
-   /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
-     *
-     * @param aType The type of the artifact
-     * @param value The correlation value
-     *
-     * @return List of artifact instances for a given type/value
-     *
-     * @throws EamDbException
-     */
+
+
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
         return getArtifactInstances(prepareGetInstancesSql(aType, values), aType);
     }
-
+    
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        String sql
+                = " and "
+                + tableName
+                + ".case_id in ('";
+        StringBuilder inValuesBuilder = new StringBuilder(prepareGetInstancesSql(aType, values));
+        inValuesBuilder.append(sql);
+        inValuesBuilder.append(caseIds.stream().map(String::valueOf).collect(Collectors.joining("', '")));
+        inValuesBuilder.append("')");
+        return getArtifactInstances(inValuesBuilder.toString(), aType);
+    }
+    
+    /**
+     * Get the select statement for retrieving correlation attribute instances
+     * from the CR for a given type with values matching the specified values
+     *
+     * @param aType  The type of the artifact
+     * @param values The list of correlation values to get
+     *               CorrelationAttributeInstances for
+     *
+     * @return the select statement as a String
+     *
+     * @throws CorrelationAttributeNormalizationException
+     */
     private String prepareGetInstancesSql(CorrelationAttributeInstance.Type aType, List<String> values) throws CorrelationAttributeNormalizationException {
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
@@ -1118,6 +1122,20 @@ abstract class AbstractSqlEamDb implements EamDb {
         return inValuesBuilder.toString();
     }
 
+    /**
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValues of the given eamArtifact.
+     *
+     * @param aType  The type of the artifact
+     * @param values The list of correlation values to get
+     *               CorrelationAttributeInstances for
+     *
+     * @return List of artifact instances for a given type with the specified
+     *         values
+     *
+     * @throws CorrelationAttributeNormalizationException
+     * @throws EamDbException
+     */
     private List<CorrelationAttributeInstance> getArtifactInstances(String sql, CorrelationAttributeInstance.Type aType) throws CorrelationAttributeNormalizationException, EamDbException {
         Connection conn = connect();
         List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
@@ -1139,31 +1157,6 @@ abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeConnection(conn);
         }
         return artifactInstances;
-    }
-
-    /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
-     *
-     * @param aType The type of the artifact
-     * @param value The correlation value
-     *
-     * @return List of artifact instances for a given type/value
-     *
-     * @throws EamDbException
-     */
-    @Override
-    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
-        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
-        String sql
-                = " and "
-                + tableName
-                + ".case_id in ('";
-        StringBuilder inValuesBuilder = new StringBuilder(prepareGetInstancesSql(aType, values));
-        inValuesBuilder.append(sql);
-        inValuesBuilder.append(caseIds.stream().map(String::valueOf).collect(Collectors.joining("', '")));
-        inValuesBuilder.append("')");
-        return getArtifactInstances(inValuesBuilder.toString(), aType);
     }
 
     /**

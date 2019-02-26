@@ -513,15 +513,6 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
     
-    /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
-     *
-     * @param aType The type of the artifact
-     * @param value The correlation value
-     *
-     * @return List of artifact instances for a given type/value
-     */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         try {
@@ -532,15 +523,6 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
     
-    /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
-     *
-     * @param aType The type of the artifact
-     * @param value The correlation value
-     *
-     * @return List of artifact instances for a given type/value
-     */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
         try {
@@ -551,15 +533,6 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
 
-        /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
-     *
-     * @param aType The type of the artifact
-     * @param value The correlation value
-     *
-     * @return List of artifact instances for a given type/value
-     */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
         try {

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,18 +22,15 @@ package org.sleuthkit.autopsy.commonpropertiessearch;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Stores the results from the various types of common attribute searching
@@ -194,7 +191,7 @@ final public class CommonAttributeCountSearchResults {
 
         int count = 0;
         for (CommonAttributeValueList data : this.instanceCountToAttributeValues.values()) {
-            for (CommonAttributeValue md5 : data.getDelayedMetadataList()) {
+            for (CommonAttributeValue md5 : data.getDelayedMetadataSet()) {
                 count += md5.getInstanceCount();
             }
         }
