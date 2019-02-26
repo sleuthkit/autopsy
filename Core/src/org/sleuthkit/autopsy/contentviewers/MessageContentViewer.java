@@ -464,9 +464,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         headersTextArea.setText("");
         rtfbodyTextPane.setText("");
-        htmlPanel.reset(); //DLG: htmlbodyTextPane.setText("");
+        htmlPanel.reset();
         textbodyTextArea.setText("");
-        //DLG: showImagesToggleButton.setEnabled(false);
         msgbodyTabbedPane.setEnabled(false);
     }
 
@@ -574,10 +573,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         directionText.setEnabled(false);
         ccLabel.setEnabled(true);
-
-        //DLG: showImagesToggleButton.setEnabled(true);
-        //DLG: showImagesToggleButton.setText("Show Images");
-        //DLG: showImagesToggleButton.setSelected(false);
 
         try {
             this.fromText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));
