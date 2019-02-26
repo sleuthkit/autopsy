@@ -42,7 +42,7 @@ import org.sleuthkit.datamodel.TskData;
 public class EamArtifactUtil {
 
     private static final Logger logger = Logger.getLogger(EamArtifactUtil.class.getName());
-    private static final ImmutableMap<Integer, Integer> CORRELATABLE_ATTRIBUTES;
+    private static final ImmutableMap<Integer, Integer> TSK_ATTRIBUTE_MAP;
 
     public EamArtifactUtil() {
     }
@@ -53,7 +53,7 @@ public class EamArtifactUtil {
     }
 
     static {
-        CORRELATABLE_ATTRIBUTES = ImmutableMap.<Integer, Integer>builder()
+        TSK_ATTRIBUTE_MAP = ImmutableMap.<Integer, Integer>builder()
                 .put(ATTRIBUTE_TYPE.TSK_DOMAIN.getTypeID(), CorrelationAttributeInstance.DOMAIN_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_DEVICE_ID.getTypeID(), CorrelationAttributeInstance.USBID_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_MAC_ADDRESS.getTypeID(), CorrelationAttributeInstance.MAC_TYPE_ID)
@@ -63,19 +63,12 @@ public class EamArtifactUtil {
                 .put(ATTRIBUTE_TYPE.TSK_SSID.getTypeID(), CorrelationAttributeInstance.SSID_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getTypeID(), CorrelationAttributeInstance.PHONE_TYPE_ID)
                 .put(ATTRIBUTE_TYPE.TSK_EMAIL.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
-                .put(ATTRIBUTE_TYPE.TSK_EMAIL_HOME.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
-                .put(ATTRIBUTE_TYPE.TSK_EMAIL_OFFICE.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
-                .put(ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
-                .put(ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
-                .put(ATTRIBUTE_TYPE.TSK_EMAIL_FROM.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
-                .put(ATTRIBUTE_TYPE.TSK_EMAIL_TO.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
-                .put(ATTRIBUTE_TYPE.TSK_EMAIL_REPLYTO.getTypeID(), CorrelationAttributeInstance.EMAIL_TYPE_ID)
                 .build();
     }
 
     /**
-     * Retrieves the associated artifact for interesting items or returns 
-     * the same reference if no associated artifact could be found.
+     * Retrieves the associated artifact for interesting items or returns the
+     * same reference if no associated artifact could be found.
      *
      * @param artifact TSK_INTERESTING_ARTIFACT_HIT
      *
@@ -83,17 +76,14 @@ public class EamArtifactUtil {
      */
     public static BlackboardArtifact resolveArtifact(BlackboardArtifact artifact) {
         try {
-            if(artifact == null) {
-                return artifact;
-            }
-            
             if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifact.getArtifactTypeID()) {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
+                    //Get the blackboard artifact from the database
                     return Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                 }
             }
-            
+            //Otherwise, return the paramter iteslf since there was no resolution
             return artifact;
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Could not get associated artifact "
@@ -106,9 +96,7 @@ public class EamArtifactUtil {
 
     /**
      * Static factory method to examine a BlackboardArtifact to determine if it
-     * has contents that can be used for Correlation. If so, return a
-     * EamArtifact with a single EamArtifactInstance within. If not, return
-     * null.
+     * has contents that can be used for Correlation.
      *
      * @param artifact     BlackboardArtifact to examine
      * @param checkEnabled If true, only create a CorrelationAttribute if it is
@@ -116,8 +104,7 @@ public class EamArtifactUtil {
      *
      * @return List of EamArtifacts
      */
-    public static List<CorrelationAttributeInstance> makeInstancesFromBlackboardArtifact(BlackboardArtifact artifact,
-            boolean checkEnabled) {
+    public static List<CorrelationAttributeInstance> makeInstancesFromBlackboardArtifact(BlackboardArtifact artifact) {
         List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
         if (artifact == null) {
             return eamArtifacts;
@@ -125,33 +112,32 @@ public class EamArtifactUtil {
 
         try {
             int artifactTypeID = artifact.getArtifactTypeID();
+            //Pull emails out of TSK_KEYWORD_HITs
             if (artifactTypeID == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 BlackboardAttribute setNameAttr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
-                if (setNameAttr != null
-                        && EamArtifactUtil.getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
+                if (setNameAttr != null && getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
                     BlackboardAttribute emailKeywordHit = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD));
                     addCorrelationAttributeToList(eamArtifacts, artifact, emailKeywordHit, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                 }
-            }
-            for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                Integer customAttributeTypeId = attribute.getAttributeType().getTypeID();
-                if (CORRELATABLE_ATTRIBUTES.containsKey(customAttributeTypeId)) {
-                    addCorrelationAttributeToList(eamArtifacts, artifact,
-                            attribute,
-                            CORRELATABLE_ATTRIBUTES.get(customAttributeTypeId)
-                    );
-                } else {
-                    String attributeName = attribute.getAttributeType().getTypeName();
+            } else {
+                for (BlackboardAttribute attribute : artifact.getAttributes()) {
+                    Integer attributeTypeId = attribute.getAttributeType().getTypeID();
+                    if (TSK_ATTRIBUTE_MAP.containsKey(attributeTypeId)) {
+                        addCorrelationAttributeToList(eamArtifacts, artifact, attribute, TSK_ATTRIBUTE_MAP.get(attributeTypeId));
+                    } else {
+                        //Fallback to name matching, this was suppose to be a temporary response to dealing with
+                        //the growing number of derivatives in phone and email artifacts
+                        String attributeName = attribute.getAttributeType().getTypeName();
+                        if (attributeName == null) {
+                            continue;
+                        }
 
-                    if (attributeName == null) {
-                        continue;
-                    }
-
-                    if (attributeName.startsWith("TSK_PHONE_NUMBER_")) {
-                        addCorrelationAttributeToList(eamArtifacts, artifact,
-                                attribute,
-                                CorrelationAttributeInstance.PHONE_TYPE_ID
-                        );
+                        if (attributeName.startsWith("TSK_PHONE_NUMBER_")) {
+                            addCorrelationAttributeToList(eamArtifacts, artifact, attribute, CorrelationAttributeInstance.PHONE_TYPE_ID);
+                        } else if (attributeName.startsWith("TSK_EMAIL_") && !attributeName.startsWith("TSK_EMAIL_CONTENT")) {
+                            //Pull any email derivatives that are not contents
+                            addCorrelationAttributeToList(eamArtifacts, artifact, attribute, CorrelationAttributeInstance.EMAIL_TYPE_ID);
+                        }
                     }
                 }
             }

@@ -31,7 +31,6 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -465,7 +464,7 @@ public class IngestEventsListener {
                 BlackboardArtifact correlatableArtifact = EamArtifactUtil.resolveArtifact(bbArtifact);
 
                 // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
-                List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, true);
+                List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact);
                 for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                     try {
                         // Only do something with this artifact if it's unique within the job

@@ -415,7 +415,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
         if (bbArtifact != null && EamDb.isEnabled()) {
             BlackboardArtifact correlatableArtifact = EamArtifactUtil.resolveArtifact(bbArtifact);
-            ret.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, false));
+            ret.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact));
         }
 
         // we can correlate based on the MD5 if it is enabled      

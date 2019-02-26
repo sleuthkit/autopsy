@@ -199,7 +199,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
             if (artifact != null) {
                 BlackboardArtifact correlatableArtifact = EamArtifactUtil.resolveArtifact(artifact);
-                instancesList.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, false));
+                instancesList.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact));
             }
             try {
                 List<CorrelationAttributeInstance.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
