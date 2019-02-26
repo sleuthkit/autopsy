@@ -45,7 +45,6 @@ final public class CommonAttributeCountSearchResults {
 
     // maps instance count to list of attribute values. 
     private final Map<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
-    private final Set<String> mimeTypesToInclude;
     private final int percentageThreshold;
     private final int resultTypeId;
 
@@ -58,15 +57,13 @@ final public class CommonAttributeCountSearchResults {
      *                            common, value of 0 is disabled
      * @param resultType          The type of Correlation Attribute being
      *                            searched for
-     * @param mimeTypesToFilterOn Set of mime types to include for intercase
-     *                            searches
+
      */
-    CommonAttributeCountSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType, Set<String> mimeTypesToFilterOn) {
+    CommonAttributeCountSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType) {
         //wrap in a new object in case any client code has used an unmodifiable collection
         this.instanceCountToAttributeValues = new HashMap<>(metadata);
         this.percentageThreshold = percentageThreshold;
         this.resultTypeId = resultType.getId();
-        this.mimeTypesToInclude = mimeTypesToFilterOn;
     }
 
     /**
@@ -82,7 +79,6 @@ final public class CommonAttributeCountSearchResults {
         this.instanceCountToAttributeValues = new HashMap<>(metadata);
         this.percentageThreshold = percentageThreshold;
         this.resultTypeId = CorrelationAttributeInstance.FILES_TYPE_ID;
-        this.mimeTypesToInclude = new HashSet<>(); //don't filter on mimetypes
     }
 
     /**
@@ -153,35 +149,7 @@ final public class CommonAttributeCountSearchResults {
             final CommonAttributeValueList values = listOfValues.getValue();
 
             for (CommonAttributeValue value : values.getDelayedMetadataSet()) { // Need the real metadata
-
-                //Intracase common attribute searches will have been created with an empty mimeTypesToInclude list 
-                //because when performing intra case search this filtering will have been done during the query of the case database 
-                boolean mimeTypeToRemove = false;  //allow code to be more efficient by not attempting to remove the same value multiple times
-                if (!mimeTypesToInclude.isEmpty()) { //only do the mime type filtering when mime types aren't empty
-                    for (AbstractCommonAttributeInstance commonAttr : value.getInstances()) {
-                        AbstractFile abstractFile = commonAttr.getAbstractFile();
-                        if (abstractFile != null) {
-                            String mimeType = commonAttr.getAbstractFile().getMIMEType();
-                            if (mimeType != null && !mimeTypesToInclude.contains(mimeType)) {
-                                if (itemsToRemove.containsKey(key)) {
-                                    itemsToRemove.get(key).add(value);
-                                } else {
-                                    List<CommonAttributeValue> toRemove = new ArrayList<>();
-                                    toRemove.add(value);
-                                    itemsToRemove.put(key, toRemove);
-                                }
-                                //value will be removed as the mime type existed and was not in the set to be included
-                                //because value is removed this value does not need to be checked further
-                                mimeTypeToRemove = true;
-                                break;
-                            }
-                        }
-                        if (mimeTypeToRemove) {
-                            break;
-                        }
-                    }
-                }
-                if (!mimeTypeToRemove && maximumPercentageThreshold != 0) {  //only do the frequency filtering when a max % was set
+                if (maximumPercentageThreshold != 0) {  //only do the frequency filtering when a max % was set
                     try {
                         Double uniqueTypeValueTuples = eamDb.getCountUniqueCaseDataSourceTuplesHavingTypeValue(
                                 attributeType, value.getValue()).doubleValue();

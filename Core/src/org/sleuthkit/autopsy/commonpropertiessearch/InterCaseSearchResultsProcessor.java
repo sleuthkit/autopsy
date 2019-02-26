@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -42,8 +44,13 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeInstance.NODE_TYPE;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Used to process and return CorrelationCase values from the EamDB for
@@ -51,12 +58,11 @@ import org.sleuthkit.datamodel.HashUtility;
  */
 final class InterCaseSearchResultsProcessor {
 
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
     /**
      * The CorrelationAttributeInstance.Type this Processor will query on
      */
     private final Type correlationType;
-
-    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
 
     /**
      * The initial CorrelationAttributeInstance ids lookup query.
@@ -112,6 +118,15 @@ final class InterCaseSearchResultsProcessor {
         return null;
     }
 
+    private String getFileQuery(Set<String> mimeTypesToFilterOn) throws EamDbException {
+        String query;
+        query = "md5 as value from tsk_files where known!=" + TskData.FileKnown.KNOWN.getFileKnownValue() + " AND md5 IS NOT NULL";
+        if (!mimeTypesToFilterOn.isEmpty()) {
+            query = query + " AND mime_type IS NOT NULL AND mime_type IN ('" + String.join("', '", mimeTypesToFilterOn) + "')";
+        }
+        return query;
+    }
+
     /**
      * Given the current case, fins all intercase common files from the EamDb
      * and builds maps of case name to maps of data source name to
@@ -122,21 +137,25 @@ final class InterCaseSearchResultsProcessor {
      * @return map of Case name to Maps of Datasources and their
      *         CommonAttributeValueLists
      */
-    Map<String, Map<String, CommonAttributeValueList>> findInterCaseValuesByCase(Case currentCase) {
+    Map<String, Map<String, CommonAttributeValueList>> findInterCaseValuesByCase(Case currentCase, Set<String> mimeTypesToFilterOn) {
         try {
 
             EamDb dbManager = EamDb.getInstance();
-
             int caseId = dbManager.getCase(currentCase).getID();
             InterCaseByCaseCallback instancetableCallback = new InterCaseByCaseCallback(caseId);
-            dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
-                    TskData.FileKnown.KNOWN.getFileKnownValue()),
-                    instancetableCallback);
-
+            if (correlationType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                currentCase.getSleuthkitCase().getCaseDbAccessManager().select(getFileQuery(mimeTypesToFilterOn), instancetableCallback);
+            } else {
+                dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
+                        TskData.FileKnown.KNOWN.getFileKnownValue()),
+                        instancetableCallback);
+            }
             return instancetableCallback.getInstanceCollatedCommonFiles();
 
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
         }
         return new HashMap<>();
     }
@@ -147,21 +166,26 @@ final class InterCaseSearchResultsProcessor {
      *
      * @param currentCase The current TSK Case.
      */
-    Map<Integer, CommonAttributeValueList> findInterCaseValuesByCount(Case currentCase) {
+    Map<Integer, CommonAttributeValueList> findInterCaseValuesByCount(Case currentCase, Set<String> mimeTypesToFilterOn) {
         try {
 
             EamDb dbManager = EamDb.getInstance();
 
             int caseId = dbManager.getCase(currentCase).getID();
             InterCaseByCountCallback instancetableCallback = new InterCaseByCountCallback(caseId);
-            dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
-                    TskData.FileKnown.KNOWN.getFileKnownValue()),
-                    instancetableCallback);
-
+            if (correlationType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                currentCase.getSleuthkitCase().getCaseDbAccessManager().select(getFileQuery(mimeTypesToFilterOn), instancetableCallback);
+            } else {
+                dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
+                        TskData.FileKnown.KNOWN.getFileKnownValue()),
+                        instancetableCallback);
+            }
             return instancetableCallback.getInstanceCollatedCommonFiles();
 
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
         }
         return new HashMap<>();
     }
@@ -174,17 +198,24 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase  The case of interest. Matches must exist in this case.
      */
-    Map<Integer, CommonAttributeValueList> findSingleInterCaseValuesByCount(Case currentCase, CorrelationCase singleCase) {
+    Map<Integer, CommonAttributeValueList> findSingleInterCaseValuesByCount(Case currentCase, Set<String> mimeTypesToFilterOn, CorrelationCase singleCase) {
         try {
             EamDb dbManager = EamDb.getInstance();
             int caseId = dbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
             InterCaseByCountCallback instancetableCallback = new InterCaseByCountCallback(caseId, targetCaseId);
-            dbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
-                    TskData.FileKnown.KNOWN.getFileKnownValue()), instancetableCallback);
+            if (correlationType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                currentCase.getSleuthkitCase().getCaseDbAccessManager().select(getFileQuery(mimeTypesToFilterOn), instancetableCallback);
+            } else {
+                dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
+                        TskData.FileKnown.KNOWN.getFileKnownValue()),
+                        instancetableCallback);
+            }
             return instancetableCallback.getInstanceCollatedCommonFiles();
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
         }
         return new HashMap<>();
     }
@@ -202,30 +233,36 @@ final class InterCaseSearchResultsProcessor {
      * @param currentCase The current TSK Case.
      * @param singleCase  The case of interest. Matches must exist in this case.
      */
-    Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseValuesByCase(Case currentCase, CorrelationCase singleCase) {
+    Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseValuesByCase(Case currentCase, Set<String> mimeTypesToFilterOn, CorrelationCase singleCase) {
         try {
 
             EamDb dbManager = EamDb.getInstance();
             int caseId = dbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
             InterCaseByCaseCallback instancetableCallback = new InterCaseByCaseCallback(caseId, targetCaseId);
-            dbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
-                    TskData.FileKnown.KNOWN.getFileKnownValue()), instancetableCallback);
-
+            if (correlationType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                currentCase.getSleuthkitCase().getCaseDbAccessManager().select(getFileQuery(mimeTypesToFilterOn), instancetableCallback);
+            } else {
+                dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
+                        TskData.FileKnown.KNOWN.getFileKnownValue()),
+                        instancetableCallback);
+            }
             return instancetableCallback.getInstanceCollatedCommonFiles();
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
         }
         return new HashMap<>();
     }
 
     /**
      * Callback to use with findInterCaseValuesByCount which generates a list of
-     * md5s for common files search
+     * values for common property search
      */
-    private class InterCaseByCountCallback implements InstanceTableCallback {
+    private class InterCaseByCountCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback, InstanceTableCallback {
 
-        final Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new HashMap<>();
+        private final Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new HashMap<>();
         private final int caseID;
         private final int targetCase;
 
@@ -298,12 +335,12 @@ final class InterCaseSearchResultsProcessor {
 
     /**
      * Callback to use with findInterCaseValuesByCount which generates a list of
-     * md5s for common files search
+     * values for common property search
      */
-    private class InterCaseByCaseCallback implements InstanceTableCallback {
+    private class InterCaseByCaseCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback, InstanceTableCallback {
 
         private static final int VALUE_BATCH_SIZE = 500;
-        final Map<String, Map<String, CommonAttributeValueList>> caseCollatedDataSourceCollections = new HashMap<>();
+        private final Map<String, Map<String, CommonAttributeValueList>> caseCollatedDataSourceCollections = new HashMap<>();
         private final int caseID;
         private final int targetCase;
 
