@@ -70,8 +70,8 @@ final public class CommonAttributeValueList {
     }
 
     /**
-     * Get the delayed set of value nodes. Only use for determining which values and how many
-     * CommonAttributeValues actually exist in the list.
+     * Get the delayed set of value nodes. Only use for determining which values
+     * and how many CommonAttributeValues actually exist in the list.
      *
      * @return metadataList the set of nodes
      */

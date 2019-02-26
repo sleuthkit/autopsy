@@ -141,7 +141,7 @@ final class InterCaseSearchResultsProcessor {
 
         } catch (EamDbException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
-        } 
+        }
         return new HashMap<>();
     }
 
@@ -172,7 +172,7 @@ final class InterCaseSearchResultsProcessor {
 
         } catch (EamDbException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
-        } 
+        }
         return new HashMap<>();
     }
 
@@ -238,7 +238,7 @@ final class InterCaseSearchResultsProcessor {
             return instancetableCallback.getInstanceCollatedCommonFiles();
         } catch (EamDbException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
-        } 
+        }
         return new HashMap<>();
     }
 
@@ -307,7 +307,7 @@ final class InterCaseSearchResultsProcessor {
                 }
             } catch (SQLException | EamDbException | CorrelationAttributeNormalizationException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
-            } 
+            }
         }
 
         Map<Integer, CommonAttributeValueList> getInstanceCollatedCommonFiles() {
@@ -316,8 +316,8 @@ final class InterCaseSearchResultsProcessor {
     }
 
     /**
-     * Callback to use with findInterCaseValuesByCase which generates a map of maps of
-     * values for common property search
+     * Callback to use with findInterCaseValuesByCase which generates a map of
+     * maps of values for common property search
      */
     private class InterCaseByCaseCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback, InstanceTableCallback {
 
@@ -385,7 +385,7 @@ final class InterCaseSearchResultsProcessor {
                 }
             } catch (EamDbException | SQLException | CorrelationAttributeNormalizationException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
-            } 
+            }
         }
 
         Map<String, Map<String, CommonAttributeValueList>> getInstanceCollatedCommonFiles() {

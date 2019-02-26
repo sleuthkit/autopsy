@@ -275,7 +275,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException{
+    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException {
         try {
             acquireExclusiveLock();
             super.addDataSourceObjectId(rowId, dataSourceObjectId);
@@ -433,14 +433,14 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
-    
+
     /**
      * Changes the name of a data source in the DB
-     * 
-     * @param eamDataSource  The data source
-     * @param newName        The new name
-     * 
-     * @throws EamDbException 
+     *
+     * @param eamDataSource The data source
+     * @param newName       The new name
+     *
+     * @throws EamDbException
      */
     @Override
     public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
@@ -451,7 +451,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }
     }
-    
+
     /**
      * Updates the MD5 hash value in an existing data source in the database.
      *
@@ -466,7 +466,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }
     }
-    
+
     /**
      * Updates the SHA-1 hash value in an existing data source in the database.
      *
@@ -481,9 +481,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }
     }
-    
+
     /**
-     * Updates the SHA-256 hash value in an existing data source in the database.
+     * Updates the SHA-256 hash value in an existing data source in the
+     * database.
      *
      * @param eamDataSource The data source to update
      */
@@ -512,7 +513,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }
     }
-    
+
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         try {
@@ -522,7 +523,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
-    
+
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
         try {
@@ -542,7 +543,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
-    
+
     /**
      * Retrieves eamArtifact instances from the database that are associated
      * with the aType and filePath

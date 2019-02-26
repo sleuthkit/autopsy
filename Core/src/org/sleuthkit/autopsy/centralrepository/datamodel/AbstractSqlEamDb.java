@@ -1058,12 +1058,11 @@ abstract class AbstractSqlEamDb implements EamDb {
         return getArtifactInstancesByTypeValues(aType, Arrays.asList(value));
     }
 
-
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
         return getArtifactInstances(prepareGetInstancesSql(aType, values), aType);
     }
-    
+
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
@@ -1077,7 +1076,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         inValuesBuilder.append("')");
         return getArtifactInstances(inValuesBuilder.toString(), aType);
     }
-    
+
     /**
      * Get the select statement for retrieving correlation attribute instances
      * from the CR for a given type with values matching the specified values

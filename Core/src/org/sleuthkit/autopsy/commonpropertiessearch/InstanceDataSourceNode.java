@@ -110,8 +110,7 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
     }
 
     /**
-     * ChildFactory which builds DisplayableItem from the metadata data
-     * sources.
+     * ChildFactory which builds DisplayableItem from the metadata data sources.
      */
     static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeInstance> {
 

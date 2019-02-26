@@ -54,7 +54,7 @@ final public class CommonAttributeCountSearchResults {
      *                            common, value of 0 is disabled
      * @param resultType          The type of Correlation Attribute being
      *                            searched for
-
+     *
      */
     CommonAttributeCountSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType) {
         //wrap in a new object in case any client code has used an unmodifiable collection
