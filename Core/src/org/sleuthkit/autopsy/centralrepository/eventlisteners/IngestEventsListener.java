@@ -461,15 +461,8 @@ public class IngestEventsListener {
             List<CorrelationAttributeInstance> eamArtifacts = new ArrayList<>();
 
             for (BlackboardArtifact bbArtifact : bbArtifacts) {
-                //Get the associated artifact for TSK_INTERESTING_ARTIFACT_HITs
-                BlackboardArtifact correlatableArtifact = null;
-                if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbArtifact.getArtifactTypeID()) {
-                    correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbArtifact);
-                }
-
-                if (correlatableArtifact == null) {
-                    correlatableArtifact = bbArtifact;
-                }
+                //Get the associated artifact for TSK_INTERESTING_ARTIFACT_HITs               
+                BlackboardArtifact correlatableArtifact = EamArtifactUtil.resolveArtifact(bbArtifact);
 
                 // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
                 List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, true);

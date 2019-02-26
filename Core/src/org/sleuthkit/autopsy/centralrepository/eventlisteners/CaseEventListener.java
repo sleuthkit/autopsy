@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -297,15 +297,7 @@ final class CaseEventListener implements PropertyChangeListener {
                 return;
             }
 
-            BlackboardArtifact correlatableArtifact = null;
-            if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbArtifact.getArtifactTypeID()) {
-                correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbArtifact);
-            }
-
-            if (correlatableArtifact == null) {
-                correlatableArtifact = bbArtifact;
-            }
-
+            BlackboardArtifact correlatableArtifact = EamArtifactUtil.resolveArtifact(bbArtifact);
             List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, true);
             for (CorrelationAttributeInstance eamArtifact : convertedArtifacts) {
                 eamArtifact.setComment(comment);
@@ -377,15 +369,7 @@ final class CaseEventListener implements PropertyChangeListener {
                     }
                     //if the Correlation Attribute will have no tags with a status which would prevent the current status from being changed 
                     if (!hasTagWithConflictingKnownStatus) {
-                        BlackboardArtifact correlatableArtifact = null;
-                        if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbTag.getArtifact().getArtifactTypeID()) {
-                            correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbTag.getArtifact());
-                        }
-
-                        if (correlatableArtifact == null) {
-                            correlatableArtifact = bbTag.getArtifact();
-                        }
-
+                        BlackboardArtifact correlatableArtifact = EamArtifactUtil.resolveArtifact(bbTag.getArtifact());
                         //Get the correlation atttributes that correspond to the current BlackboardArtifactTag if their status should be changed
                         //with the initial set of correlation attributes this should be a single correlation attribute
                         List<CorrelationAttributeInstance> convertedArtifacts = EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, true);

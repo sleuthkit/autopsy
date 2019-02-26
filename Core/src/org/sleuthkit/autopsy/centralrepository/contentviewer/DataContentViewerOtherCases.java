@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -414,15 +414,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // correlate on blackboard artifact attributes if they exist and supported
         BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
         if (bbArtifact != null && EamDb.isEnabled()) {
-            BlackboardArtifact correlatableArtifact = null;
-            if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == bbArtifact.getArtifactTypeID()) {
-                correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(bbArtifact);
-            }
-
-            if (correlatableArtifact == null) {
-                correlatableArtifact = bbArtifact;
-            }
-
+            BlackboardArtifact correlatableArtifact = EamArtifactUtil.resolveArtifact(bbArtifact);
             ret.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, false));
         }
 

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -198,15 +198,7 @@ public class AnnotationsContentViewer extends javax.swing.JPanel implements Data
             startSection(html, "Central Repository Comments");
             List<CorrelationAttributeInstance> instancesList = new ArrayList<>();
             if (artifact != null) {
-                BlackboardArtifact correlatableArtifact = null;
-                if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifact.getArtifactTypeID()) {
-                    correlatableArtifact = EamArtifactUtil.getTskAssociatedArtifact(artifact);
-                }
-
-                if (correlatableArtifact == null) {
-                    correlatableArtifact = artifact;
-                }
-
+                BlackboardArtifact correlatableArtifact = EamArtifactUtil.resolveArtifact(artifact);
                 instancesList.addAll(EamArtifactUtil.makeInstancesFromBlackboardArtifact(correlatableArtifact, false));
             }
             try {

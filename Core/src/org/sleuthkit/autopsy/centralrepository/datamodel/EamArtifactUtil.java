@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
+ * Util for creating and retrieving correlation attributes
  */
 public class EamArtifactUtil {
 
@@ -74,17 +74,27 @@ public class EamArtifactUtil {
     }
 
     /**
+     * Retrieves the associated artifact for interesting items or returns 
+     * the same reference if no associated artifact could be found.
      *
-     * @param artifact
+     * @param artifact TSK_INTERESTING_ARTIFACT_HIT
      *
-     * @return
+     * @return TSK_ASSOCIATED_ARTIFACT or the artifact parameter itself
      */
-    public static BlackboardArtifact getTskAssociatedArtifact(BlackboardArtifact artifact) {
+    public static BlackboardArtifact resolveArtifact(BlackboardArtifact artifact) {
         try {
-            BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
-            if (attribute != null) {
-                return Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+            if(artifact == null) {
+                return artifact;
             }
+            
+            if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifact.getArtifactTypeID()) {
+                BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                if (attribute != null) {
+                    return Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                }
+            }
+            
+            return artifact;
         } catch (NoCurrentCaseException | TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Could not get associated artifact "
                     + "for artifact with name %s and id %d",
@@ -318,7 +328,7 @@ public class EamArtifactUtil {
             return null;
         }
 
-        // We need a hash to make the artifact
+        // We need a hash to make the artifactForInstance
         String md5 = af.getMd5Hash();
         if (md5 == null || md5.isEmpty() || HashUtility.isNoDataMd5(md5)) {
             return null;
