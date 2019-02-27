@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,16 +43,16 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb
 public final class PostgresEamDbSettings {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDbSettings.class.getName());
-    private final String DEFAULT_HOST = ""; // NON-NLS
-    private final int DEFAULT_PORT = 5432;
-    private final String DEFAULT_DBNAME = "central_repository"; // NON-NLS
-    private final String DEFAULT_USERNAME = "";
-    private final String DEFAULT_PASSWORD = "";
-    private final String VALIDATION_QUERY = "SELECT version()"; // NON-NLS
-    private final String JDBC_BASE_URI = "jdbc:postgresql://"; // NON-NLS
-    private final String JDBC_DRIVER = "org.postgresql.Driver"; // NON-NLS
-    private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*"; // only lower case
-    private final String DB_USER_NAMES_REGEX = "[a-zA-Z]\\w*";
+    private final static String DEFAULT_HOST = ""; // NON-NLS
+    private final static int DEFAULT_PORT = 5432;
+    private final static String DEFAULT_DBNAME = "central_repository"; // NON-NLS
+    private final static String DEFAULT_USERNAME = "";
+    private final static String DEFAULT_PASSWORD = "";
+    private final static String VALIDATION_QUERY = "SELECT version()"; // NON-NLS
+    private final static String JDBC_BASE_URI = "jdbc:postgresql://"; // NON-NLS
+    private final static String JDBC_DRIVER = "org.postgresql.Driver"; // NON-NLS
+    private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*"; // only lower case
+    private final static String DB_USER_NAMES_REGEX = "[a-zA-Z]\\w*";
     private String host;
     private int port;
     private String dbName;
@@ -425,7 +425,7 @@ public final class PostgresEamDbSettings {
             stmt.execute(createDataSourcesTable.toString());
             stmt.execute(dataSourceIdx1);
             stmt.execute(dataSourceIdx2);
-            
+
             stmt.execute(createReferenceSetsTable.toString());
             stmt.execute(referenceSetsIdx1);
 
@@ -561,8 +561,8 @@ public final class PostgresEamDbSettings {
      * instance table. %s will exist in the template where the name of the new
      * table will be addedd.
      *
-     * @return a String which is a template for adding an index to the file_obj_id
-     *         column of a _instances table
+     * @return a String which is a template for adding an index to the
+     *         file_obj_id column of a _instances table
      */
     static String getAddObjectIdIndexTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.

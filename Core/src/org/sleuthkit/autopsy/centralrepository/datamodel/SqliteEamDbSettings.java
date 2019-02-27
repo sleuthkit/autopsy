@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,19 +43,19 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb
 public final class SqliteEamDbSettings {
 
     private final static Logger LOGGER = Logger.getLogger(SqliteEamDbSettings.class.getName());
-    private final String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
-    private final String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
-    private final String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
-    private final String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
-    private final String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
-    private static final String PRAGMA_SYNC_OFF = "PRAGMA synchronous = OFF";
-    private static final String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous = NORMAL";
-    private static final String PRAGMA_JOURNAL_WAL = "PRAGMA journal_mode = WAL";
-    private static final String PRAGMA_READ_UNCOMMITTED_TRUE = "PRAGMA read_uncommitted = True";
-    private static final String PRAGMA_ENCODING_UTF8 = "PRAGMA encoding = 'UTF-8'";
-    private static final String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
-    private static final String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
-    private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*(\\.db)?";
+    private final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
+    private final static String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
+    private final static String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
+    private final static String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
+    private final static String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
+    private final static String PRAGMA_SYNC_OFF = "PRAGMA synchronous = OFF";
+    private final static String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous = NORMAL";
+    private final static String PRAGMA_JOURNAL_WAL = "PRAGMA journal_mode = WAL";
+    private final static String PRAGMA_READ_UNCOMMITTED_TRUE = "PRAGMA read_uncommitted = True";
+    private final static String PRAGMA_ENCODING_UTF8 = "PRAGMA encoding = 'UTF-8'";
+    private final static String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
+    private final static String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
+    private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*(\\.db)?";
     private String dbName;
     private String dbDirectory;
     private int bulkThreshold;
