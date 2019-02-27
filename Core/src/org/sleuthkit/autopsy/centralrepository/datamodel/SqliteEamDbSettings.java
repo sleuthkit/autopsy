@@ -293,7 +293,7 @@ public final class SqliteEamDbSettings {
         createDataSourcesTable.append("sha1 text DEFAULT NULL,");
         createDataSourcesTable.append("sha256 text DEFAULT NULL,");
         createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
-        createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
+        createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id)");
         createDataSourcesTable.append(")");
 
         String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
