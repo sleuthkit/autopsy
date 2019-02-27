@@ -144,8 +144,6 @@ AutoIngestJobsNode.status.text=Status
 AutoIngestJobsPanel.waitNode.text=Please Wait...
 AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report.
 AutoIngestMetricsDialog.title.text=Auto Ingest Metrics
-CaseDeletionTask.error.failedToExclusivelyLockCase=Failed to exclusively lock the case, it may be in use.
-CaseDeletionTask.error.failedToLockCase=A coordination service error occurred while trying to lock the case for deletion: {0}.
 CaseDeletionTask.progress.connectingToCoordSvc=Connecting to coordination service (ZooKeeper)...
 # {0} - case name
 CaseDeletionTask.progress.deletingCase=Deleting {0}...
@@ -191,7 +189,6 @@ DeleteCaseInputDirectoriesAction.menuItemText=Delete Input Directories
 DeleteCasesAction.menuItemText=Delete Case and Jobs
 DeleteCasesForReprocessingAction.menuItemText=Delete for Reprocessing
 GeneralFilter.archiveDesc.text=Archive Files (.zip, .rar, .arj, .7z, .7zip, .gzip, .gz, .bzip2, .tar, .tgz)
-<<<<<<< HEAD
 HINT_CasesDashboardTopComponent=This is an adminstrative dashboard for multi-user cases
 OpenAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.
 OpenAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details.
@@ -199,10 +196,7 @@ OpenAutoIngestLogAction.menuItemText=Open Auto Ingest Log File
 # {0} - caseErrorMessage
 OpenCaseAction.errorMsg=Failed to open case: {0}
 OpenCaseAction.menuItemText=Open
-OpenIDE-Module-Long-Description=This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution.  You can enable this module to use the new features.  The features should be stable, but their exact behavior and API are subject to change.  \n\nWe make no guarantee that the API of this module will not change, so developers should be careful when relying on it.
-=======
 OpenIDE-Module-Long-Description=This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution. You can enable this module to use the new features. The features should be stable, but their exact behavior and API are subject to change.\n\nWe make no guarantee that the API of this module will not change, so developers should be careful when relying on it.
->>>>>>> upstream/develop
 OpenIDE-Module-Name=Experimental
 OpenIDE-Module-Short-Description=This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution.
 DisplayLogDialog.cannotOpenLog=Unable to open the selected case log file
