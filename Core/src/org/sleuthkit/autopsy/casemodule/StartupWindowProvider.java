@@ -21,7 +21,11 @@ package org.sleuthkit.autopsy.casemodule;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
+import javax.swing.JPanel;
+import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.commandline.CommandLineIngestManager;
+import org.sleuthkit.autopsy.commandline.CommandLineOptionProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -58,6 +62,13 @@ public class StartupWindowProvider implements StartupWindowInterface {
             Collection<? extends StartupWindowInterface> startupWindows
                     = Lookup.getDefault().lookupAll(StartupWindowInterface.class);
 
+            // first check whether Autopsy is being run from command line
+            if (isRunningFromCommandLine()) {
+                logger.log(Level.INFO, "Autopsy is running from command line"); //NON-NLS
+                System.out.println("Autopsy is running from command line");
+                return;
+            }
+
             int windowsCount = startupWindows.size();
             if (windowsCount == 1) {
                 startupWindowToUse = startupWindows.iterator().next();
@@ -92,6 +103,36 @@ public class StartupWindowProvider implements StartupWindowInterface {
             }
         }
     }
+    
+    private boolean isRunningFromCommandLine() {
+
+        boolean runningFromCommandLine = false;
+        // first look up all OptionProcessors and see if running from command line option is set
+        Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
+        Iterator<? extends OptionProcessor> optionsIterator = optionProcessors.iterator();
+        while (optionsIterator.hasNext()) {
+            // find CommandLineOptionProcessor
+            OptionProcessor processor = optionsIterator.next();
+            if (!(processor instanceof CommandLineOptionProcessor)) {
+                continue;
+            }
+
+            // check if we are running from command line
+            runningFromCommandLine = ((CommandLineOptionProcessor) processor).isRunFromCommandLine();
+            if (!runningFromCommandLine) {
+                // if we are NOT running from command line, exit here and don't start IngestJobRunningService");
+                return false;
+            }
+
+            // Autopsy is running from command line
+            CommandLineIngestManager ingestManager = new CommandLineIngestManager();
+            startupWindowToUse = ingestManager.getStartupWindow();
+            ingestManager.start();
+            return true;
+        }
+
+        return false;
+    }    
 
     @Override
     public void open() {
