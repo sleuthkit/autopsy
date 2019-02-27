@@ -32,6 +32,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import javax.xml.parsers.ParserConfigurationException;
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -63,6 +65,7 @@ final class ExtractSafari extends Extract {
     private static final String HISTORY_FILE_NAME = "History.db"; //NON-NLS
     private static final String BOOKMARK_FILE_NAME = "Bookmarks.plist"; //NON-NLS
     private static final String DOWNLOAD_FILE_NAME = "Downloads.plist"; //NON-NLS
+    private static final String COOKIE_FILE_NAME = "Cookies.binarycookies"; //NON-NLS
 
     private static final String HEAD_URL = "url"; //NON-NLS
     private static final String HEAD_TITLE = "title"; //NON-NLS
@@ -82,7 +85,9 @@ final class ExtractSafari extends Extract {
     @Messages({
         "ExtractSafari_Module_Name=Safari",
         "ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files.",
-        "ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files",})
+        "ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files",
+        "ExtractSafari_Error_Parsing_Cookies=An error occured while processing Safari Bookmark files",
+    })
 
     /**
      * Extract the bookmarks, cookies, downloads and history from Safari
@@ -121,6 +126,13 @@ final class ExtractSafari extends Extract {
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
             logger.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
+        }
+
+        try {
+            processBinaryCookieFile(dataSource, context);
+        } catch (IOException | TskCoreException ex) {
+            this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Cookies());
+            logger.log(Level.SEVERE, "Exception thrown while processing Safarri cookies file: {0}", ex); //NON-NLS
         }
     }
 
@@ -211,6 +223,32 @@ final class ExtractSafari extends Extract {
             }
 
             getDownloads(dataSource, context, file);
+        }
+    }
+    
+    /**
+     * Process the Safari Cookie file.
+     * @param dataSource
+     * @param context
+     * @throws TskCoreException
+     * @throws IOException
+     */
+    private void processBinaryCookieFile(Content dataSource, IngestJobContext context) throws TskCoreException, IOException {
+        FileManager fileManager = getCurrentCase().getServices().getFileManager();
+
+        List<AbstractFile> files = fileManager.findFiles(dataSource, COOKIE_FILE_NAME);
+
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+
+        setFoundData(true);
+
+        for (AbstractFile file : files) {
+            if (context.dataSourceIngestIsCancelled()) {
+                break;
+            }
+            getCookies(context, file);
         }
     }
 
@@ -311,6 +349,39 @@ final class ExtractSafari extends Extract {
             tempFile.delete();
         }
 
+    }
+    
+    /**
+     * Creates a temporary copy of the Cookie file and creates a list of cookie 
+     * BlackboardArtifacts
+     * 
+     * @param context IngetstJobContext
+     * @param file Original Cookie file from the case
+     * @throws TskCoreException
+     * @throws IOException
+     */
+    private void getCookies(IngestJobContext context, AbstractFile file) throws TskCoreException, IOException {
+        if (file.getSize() == 0) {
+            return;
+        }
+
+        File tempFile = null;
+
+        try {
+            tempFile = createTemporaryFile(context, file);
+
+            Collection<BlackboardArtifact> bbartifacts = getCookieArtifacts(file, tempFile);
+
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
+            }
+        } finally {
+            if (tempFile != null) {
+                tempFile.delete();
+            }
+        }
     }
 
     /**
@@ -445,6 +516,36 @@ final class ExtractSafari extends Extract {
 
         return bbartifacts;
     }
+    
+    /**
+     * Finds the cookies in the tempFile creating a list of BlackboardArtifacts
+     * each representing one cookie.
+     *
+     * @param origFile Original Cookies.binarycookie file from case
+     * @param tempFile Temporary copy of the cookies file
+     * @return List of Blackboard Artifacts, one for each cookie
+     * @throws TskCoreException
+     * @throws IOException
+     */
+    private Collection<BlackboardArtifact> getCookieArtifacts(AbstractFile origFile, File tempFile) throws TskCoreException, IOException {
+        Collection<BlackboardArtifact> bbartifacts = null;
+        BinaryCookieReader reader = BinaryCookieReader.initalizeReader(tempFile);
+
+        if (reader != null) {
+            bbartifacts = new ArrayList<>();
+
+            Iterator<Cookie> iter = reader.iterator();
+            while (iter.hasNext()) {
+                Cookie cookie = iter.next();
+
+                BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
+                bbart.addAttributes(createCookieAttributes(cookie.getURL(), cookie.getCreationDate(), cookie.getName(), cookie.getValue(), this.getName(), NetworkUtils.extractDomain(cookie.getURL())));
+                bbartifacts.add(bbart);
+            }
+        }
+
+        return bbartifacts;
+    }
 
     /**
      * Parses the plist object to find the bookmark child objects, then creates
@@ -491,37 +592,38 @@ final class ExtractSafari extends Extract {
     
     /**
      * Parse the NSDictionary object that represents one download.
-     * 
+     *
      * @param origFile Download.plist file from the case
-     * @param entry One NSDictionary Object that represents one download instance
+     * @param entry One NSDictionary Object that represents one download
+     * instance
      * @return a Blackboard Artifact for the download.
-     * @throws TskCoreException 
+     * @throws TskCoreException
      */
-    private BlackboardArtifact parseDownloadDictionary(Content dataSource, AbstractFile origFile, NSDictionary entry)throws TskCoreException {
-       String url = null;
-       String path = null;
-       Long time = null;
-       Long pathID = null;
-      
-       NSString nsstring = (NSString)entry.get(PLIST_KEY_DOWNLOAD_URL);
-       if(nsstring != null){
-           url = nsstring.toString();
-       }
-       
-       nsstring = (NSString)entry.get(PLIST_KEY_DOWNLOAD_PATH);
-       if(nsstring != null){
-           path = nsstring.toString();
-           pathID = Util.findID(dataSource, path); 
-       }
-       
-       NSDate date = (NSDate)entry.get(PLIST_KEY_DOWNLOAD_DATE);
-       if(date != null){
-           time = date.getDate().getTime();
-       }
-       
-       BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
-       bbart.addAttributes(this.createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName()));
-       
-       return bbart;
+    private BlackboardArtifact parseDownloadDictionary(Content dataSource, AbstractFile origFile, NSDictionary entry) throws TskCoreException {
+        String url = null;
+        String path = null;
+        Long time = null;
+        Long pathID = null;
+
+        NSString nsstring = (NSString) entry.get(PLIST_KEY_DOWNLOAD_URL);
+        if (nsstring != null) {
+            url = nsstring.toString();
+        }
+
+        nsstring = (NSString) entry.get(PLIST_KEY_DOWNLOAD_PATH);
+        if (nsstring != null) {
+            path = nsstring.toString();
+            pathID = Util.findID(dataSource, path);
+        }
+
+        NSDate date = (NSDate) entry.get(PLIST_KEY_DOWNLOAD_DATE);
+        if (date != null) {
+            time = date.getDate().getTime();
+        }
+
+        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
+        bbart.addAttributes(this.createDownloadAttributes(path, pathID, url, time, NetworkUtils.extractDomain(url), getName()));
+
+        return bbart;
     }
 }
