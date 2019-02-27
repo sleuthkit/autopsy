@@ -109,7 +109,6 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
     @Override
     public void setFile(AbstractFile file) {
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        abstractFile = file;
         htmlPanel.setHtmlText(getHtmlText(file));
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
