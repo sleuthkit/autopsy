@@ -27,7 +27,9 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
 
 /**
+ * Specialization of CompoundFilterState for TagName/Tags-Filter.
  *
+ * Newly added subfilters made to be SELECTED when they are added.
  */
 public class TagsFilterState extends CompoundFilterState<TagNameFilter, TagsFilter> {
 
