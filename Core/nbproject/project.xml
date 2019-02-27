@@ -334,7 +334,6 @@
                 <package>org.sleuthkit.autopsy.ingest.events</package>
                 <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
-                <package>org.sleuthkit.autopsy.modules.case_uco</package>
                 <package>org.sleuthkit.autopsy.modules.encryptiondetection</package>
                 <package>org.sleuthkit.autopsy.modules.filetypeid</package>
                 <package>org.sleuthkit.autopsy.modules.hashdatabase</package>

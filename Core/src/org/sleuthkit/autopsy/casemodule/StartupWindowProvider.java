@@ -111,7 +111,7 @@ public class StartupWindowProvider implements StartupWindowInterface {
     /**
      * Checks whether Autopsy is running from command line. There is an
      * OptionProcessor that is responsible for processing command line inputs.
-     * IfAutopsy is indeed running from command line, then use the command line
+     * If Autopsy is indeed running from command line, then use the command line
      * startup window and kick off command line processing.
      *
      * @return True if running from command line, false otherwise

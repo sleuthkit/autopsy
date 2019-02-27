@@ -35,7 +35,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static final long serialVersionUID = 1L;
     private static final String TITLE = NbBundle.getMessage(StartupWindow.class, "StartupWindow.title.text");
     private static final Dimension DIMENSIONS = new Dimension(750, 400);
-    private static CueBannerPanel welcomeWindow = null;
+    private static CueBannerPanel welcomeWindow;
 
     public StartupWindow() {
         super(WindowManager.getDefault().getMainWindow(), TITLE, true);
