@@ -38,6 +38,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.FileSystem;
@@ -47,6 +50,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
@@ -78,6 +82,15 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     
     // Maps old TagName to new TagName
     private final Map<TagName, TagName> oldTagNameToNewTagName = new HashMap<>();
+
+    // Map of old artifact type ID to new artifact type ID. There will only be changes if custom artifact types are present.
+    private final Map<Integer, Integer> oldArtTypeIdToNewArtTypeId = new HashMap<>();
+    
+    // Map of old attribute type ID to new attribute type ID. There will only be changes if custom attr types are present.
+    private final Map<Integer, BlackboardAttribute.Type> oldAttrTypeIdToNewAttrType = new HashMap<>();
+    
+    // Map of old artifact ID to new artifact
+    private final Map<Long, BlackboardArtifact> oldArtifactIdToNewArtifact = new HashMap<>();
     
     public CreatePortableCaseModule() {
         // Nothing to do here
@@ -132,6 +145,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         "CreatePortableCaseModule.generateReport.copyingTags=Copying tags...",
         "# {0} - tag name",
         "CreatePortableCaseModule.generateReport.copyingFiles=Copying files tagged as {0}...",
+        "# {0} - tag name",
+        "CreatePortableCaseModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...",
         "# {0} - output folder",
         "CreatePortableCaseModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist",
         "# {0} - output folder",
@@ -139,7 +154,10 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         "CreatePortableCaseModule.generateReport.noTagsSelected=No tags selected for export.",
         "CreatePortableCaseModule.generateReport.caseClosed=Current case has been closed",
         "CreatePortableCaseModule.generateReport.errorCopyingTags=Error copying tags",
-        "CreatePortableCaseModule.generateReport.errorCopyingFiles=Error copying tagged files"
+        "CreatePortableCaseModule.generateReport.errorCopyingFiles=Error copying tagged files",
+        "CreatePortableCaseModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts",
+        "# {0} - attribute type name",
+        "CreatePortableCaseModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
     })
     @Override
     public void generateReport(String reportPath, ReportProgressPanel progressPanel) {
@@ -222,6 +240,35 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             handleError("Error copying tagged files", Bundle.CreatePortableCaseModule_generateReport_errorCopyingFiles(), ex, progressPanel);
             return;
         } 
+        
+        // Set up tracking to support any custom artifact or attribute types
+        for (BlackboardArtifact.ARTIFACT_TYPE type:BlackboardArtifact.ARTIFACT_TYPE.values()) {
+            oldArtTypeIdToNewArtTypeId.put(type.getTypeID(), type.getTypeID());
+        }
+        for (BlackboardAttribute.ATTRIBUTE_TYPE type:BlackboardAttribute.ATTRIBUTE_TYPE.values()) {
+            try {
+                oldAttrTypeIdToNewAttrType.put(type.getTypeID(), skCase.getAttributeType(type.getLabel()));
+            } catch (TskCoreException ex) {
+                handleError("Error looking up attribute name " + type.getLabel(),
+                        Bundle.CreatePortableCaseModule_generateReport_errorLookingUpAttrType(type.getLabel()),
+                        ex, progressPanel);
+            }
+        }
+        
+        // Copy the tagged artifacts and associated files
+        try {
+            for(TagName tagName:tagNames) {
+                // Check for cancellation 
+                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    return;
+                }
+                progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_copyingArtifacts(tagName.getDisplayName()));
+                addArtifactsToPortableCase(tagName, progressPanel);
+            }
+        } catch (TskCoreException ex) {
+            handleError("Error copying tagged artifacts", Bundle.CreatePortableCaseModule_generateReport_errorCopyingArtifacts(), ex, progressPanel);
+            return;
+        }         
 
         // Close the case connections and clear out the maps
         cleanup();
@@ -298,10 +345,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
      * @param progressPanel
      * @throws TskCoreException 
      */
-    @NbBundle.Messages({
-        "# {0} - File name",
-        "CreatePortableCaseModule.addFilesToPortableCase.copyingFile=Copying file {0}",  
-    })
     private void addFilesToPortableCase(TagName oldTagName, ReportProgressPanel progressPanel) throws TskCoreException {
         
         // Get all the tags in the current case
@@ -317,19 +360,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             
             Content content = tag.getContent();
             if (content instanceof AbstractFile) {
-                AbstractFile file = (AbstractFile) content;
-                String filePath = file.getParentPath() + file.getName();
-                progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_addFilesToPortableCase_copyingFile(filePath));
-                
-                long newFileId;
-                CaseDbTransaction trans = skCase.beginTransaction();
-                try {
-                    newFileId = copyContent(file, trans);
-                    trans.commit();
-                } catch (TskCoreException ex) {
-                    trans.rollback();
-                    throw(ex);
-                }
+                long newFileId = copyContentToPortableCase(content, progressPanel);
                 
                 // Tag the file
                 if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
@@ -338,6 +369,182 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 skCase.addContentTag(newIdToContent.get(newFileId), oldTagNameToNewTagName.get(tag.getName()), tag.getComment(), tag.getBeginByteOffset(), tag.getEndByteOffset());
             }
         }  
+    }
+    
+    /**
+     * Add all artifacts with a given tag to the portable case.
+     * 
+     * @param oldTagName
+     * @param progressPanel
+     * @throws TskCoreException 
+     */
+    private void addArtifactsToPortableCase(TagName oldTagName, ReportProgressPanel progressPanel) throws TskCoreException {
+       
+        List<BlackboardArtifactTag> tags = currentCase.getServices().getTagsManager().getBlackboardArtifactTagsByTagName(oldTagName);
+        
+        // Copy the artifacts into the portable case along with their content and tag
+        for (BlackboardArtifactTag tag : tags) {
+            
+            // Check for cancellation 
+            if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                return;
+            }
+            
+            // Copy the source content
+            Content content = tag.getContent();
+            long newContentId = copyContentToPortableCase(content, progressPanel);
+            
+            // Copy the artifact
+            BlackboardArtifact newArtifact = copyArtifact(newContentId, tag.getArtifact());
+            
+            // Tag the artfiact
+            if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
+                throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName());
+            }
+            skCase.addBlackboardArtifactTag(newArtifact, oldTagNameToNewTagName.get(tag.getName()), tag.getComment());
+        }  
+    }    
+    
+    // TODO
+    // custom artifact types
+    // cache
+    private BlackboardArtifact copyArtifact(long newContentId, BlackboardArtifact artifactToCopy) throws TskCoreException {
+        
+        if (oldArtifactIdToNewArtifact.containsKey(artifactToCopy.getArtifactID())) {
+            return oldArtifactIdToNewArtifact.get(artifactToCopy.getArtifactID());
+        }
+        
+        // First create the associated artifact (if present)
+        BlackboardAttribute oldAssociatedAttribute = artifactToCopy.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+        List<BlackboardAttribute> newAttrs = new ArrayList<>();
+        if (oldAssociatedAttribute != null) {
+            BlackboardArtifact oldAssociatedArtifact = currentCase.getSleuthkitCase().getBlackboardArtifact(oldAssociatedAttribute.getValueLong());
+            BlackboardArtifact newAssociatedArtifact = copyArtifact(newContentId, oldAssociatedArtifact);
+            newAttrs.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, 
+                        String.join(",", oldAssociatedAttribute.getSources()), newAssociatedArtifact.getArtifactID()));
+        }
+        
+        // Create the new artifact
+        int newArtifactTypeId = getNewArtifactTypeId(artifactToCopy);
+        BlackboardArtifact newArtifact = skCase.newBlackboardArtifact(newArtifactTypeId, newContentId);
+        List<BlackboardAttribute> oldAttrs = artifactToCopy.getAttributes();
+        
+        // Copy over each attribute, making sure the type is in the new case.
+        for (BlackboardAttribute oldAttr:oldAttrs) {
+            
+            // The associated artifact has already been handled
+            if (oldAttr.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
+                continue;
+            }
+                
+            BlackboardAttribute.Type newAttributeType = getNewAttributeType(oldAttr);
+            switch (oldAttr.getValueType()) {
+                case BYTE:
+                    newAttrs.add(new BlackboardAttribute(newAttributeType, String.join(",", oldAttr.getSources()),
+                            oldAttr.getValueBytes()));
+                    break;
+                case DOUBLE:
+                    newAttrs.add(new BlackboardAttribute(newAttributeType, String.join(",", oldAttr.getSources()),
+                            oldAttr.getValueDouble()));
+                    break;
+                case INTEGER:
+                    newAttrs.add(new BlackboardAttribute(newAttributeType, String.join(",", oldAttr.getSources()),
+                            oldAttr.getValueInt()));
+                    break;
+                case DATETIME:    
+                case LONG:
+                    newAttrs.add(new BlackboardAttribute(newAttributeType, String.join(",", oldAttr.getSources()),
+                            oldAttr.getValueLong()));
+                    break;
+                case STRING:
+                    newAttrs.add(new BlackboardAttribute(newAttributeType, String.join(",", oldAttr.getSources()),
+                            oldAttr.getValueString()));
+                    break;
+                default:
+                    throw new TskCoreException("Unexpected attribute value type found: " + oldAttr.getValueType().getLabel());
+            }
+        }
+        
+        newArtifact.addAttributes(newAttrs);
+        
+        oldArtifactIdToNewArtifact.put(artifactToCopy.getArtifactID(), newArtifact);
+        return newArtifact;
+    }
+    
+    /**
+     * Get the artifact type ID in the portable case and create new artifact type if needed.
+     * For built-in artifacts this will be the same as the original.
+     * 
+     * @param oldArtifactTypeId The artifact type ID in the current case
+     * 
+     * @return The corresponding artifact type ID in the portable case
+     */
+    private int getNewArtifactTypeId(BlackboardArtifact oldArtifact) throws TskCoreException {
+        if (oldArtTypeIdToNewArtTypeId.containsKey(oldArtifact.getArtifactTypeID())) {
+            return oldArtTypeIdToNewArtTypeId.get(oldArtifact.getArtifactTypeID());
+        }
+        
+        BlackboardArtifact.Type oldCustomType = skCase.getArtifactType(oldArtifact.getArtifactTypeName());
+        try {
+            BlackboardArtifact.Type newCustomType = skCase.addBlackboardArtifactType(oldCustomType.getTypeName(), oldCustomType.getDisplayName());
+            oldArtTypeIdToNewArtTypeId.put(oldArtifact.getArtifactTypeID(), newCustomType.getTypeID());
+            return newCustomType.getTypeID();
+        } catch (TskDataException ex) {
+            throw new TskCoreException("Error creating new artifact type " + oldCustomType.getTypeName(), ex);
+        }
+    }
+    
+    /**
+     * Get the attribute type ID in the portable case and create new attribute type if needed.
+     * For built-in attributes this will be the same as the original.
+     * 
+     * @param oldAttributeTypeId The attribute type ID in the current case
+     * 
+     * @return The corresponding attribute type in the portable case
+     */
+    private BlackboardAttribute.Type getNewAttributeType(BlackboardAttribute oldAttribute) throws TskCoreException {
+        BlackboardAttribute.Type oldAttrType = oldAttribute.getAttributeType();
+        if (oldAttrTypeIdToNewAttrType.containsKey(oldAttrType.getTypeID())) {
+            return oldAttrTypeIdToNewAttrType.get(oldAttrType.getTypeID());
+        }
+        
+        try {
+            BlackboardAttribute.Type newCustomType = skCase.addArtifactAttributeType(oldAttrType.getTypeName(), 
+                    oldAttrType.getValueType(), oldAttrType.getDisplayName());
+            oldAttrTypeIdToNewAttrType.put(oldAttribute.getAttributeType().getTypeID(), newCustomType);
+            return newCustomType;
+        } catch (TskDataException ex) {
+            throw new TskCoreException("Error creating new attribute type " + oldAttrType.getTypeName(), ex);
+        }
+    }
+
+    /**
+     * Top level method to copy a content object to the portable case.
+     * 
+     * @param content
+     * @param progressPanel
+     * 
+     * @return The object ID of the copied content in the portable case
+     * 
+     * @throws TskCoreException 
+     */
+    @NbBundle.Messages({
+        "# {0} - File name",
+        "CreatePortableCaseModule.copyContentToPortableCase.copyingFile=Copying file {0}",  
+    })    
+    private long copyContentToPortableCase(Content content, ReportProgressPanel progressPanel) throws TskCoreException {
+        progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_copyContentToPortableCase_copyingFile(content.getUniquePath()));
+
+        long newFileId;
+        CaseDbTransaction trans = skCase.beginTransaction();
+        try {
+            newFileId = copyContent(content, trans);
+            trans.commit();
+            return newFileId;
+        } catch (TskCoreException ex) {
+            trans.rollback();
+            throw(ex);
+        }
     }
     
     /**
