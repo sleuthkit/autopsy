@@ -293,6 +293,8 @@ final class ChromeCacheExtractor {
         logger.log(Level.INFO, "{0}- Now reading Cache index file from path {1}", new Object[]{moduleName, cachePath }); //NON-NLS
 
         List<AbstractFile> derivedFiles = new ArrayList<>();
+        Collection<BlackboardArtifact> sourceArtifacts = new ArrayList<>();
+        Collection<BlackboardArtifact> webCacheArtifacts = new ArrayList<>();
 
         ByteBuffer indexFileROBuffer = indexFile.get().getByteBuffer();
         IndexFileHeader indexHdr = new IndexFileHeader(indexFileROBuffer);
@@ -306,11 +308,11 @@ final class ChromeCacheExtractor {
             
             if (addr.isInitialized()) {
                 try {
-                    List<DerivedFile> addedFiles = this.getCacheEntry(addr);
+                    List<DerivedFile> addedFiles = this.getCacheEntry(addr, sourceArtifacts, webCacheArtifacts);
                     derivedFiles.addAll(addedFiles);
                 }
                 catch (TskCoreException | IngestModuleException ex) {
-                   logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", addr)); //NON-NLS
+                   logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", addr), ex); //NON-NLS
                 } 
             }  
         }
@@ -321,8 +323,8 @@ final class ChromeCacheExtractor {
 
         context.addFilesToJob(derivedFiles);
         
-        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_SOURCE));
-        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE));
+        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_SOURCE, !sourceArtifacts.isEmpty() ? sourceArtifacts : null));
+        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, !webCacheArtifacts.isEmpty() ? webCacheArtifacts : null));
 
         cleanup();
     }
@@ -333,10 +335,12 @@ final class ChromeCacheExtractor {
      * Extracts the files if needed and adds as derived files, creates artifacts
      * 
      * @param cacheEntryAddress cache entry address
+     * @param sourceArtifacts any source artifacts created are added to this collection
+     * @param webCacheArtifacts any web cache artifacts created are added to this collection
      * 
      * @return Optional derived file, is a derived file is added for the given entry
      */
-    List<DerivedFile> getCacheEntry(CacheAddress cacheEntryAddress) throws TskCoreException, IngestModuleException {
+    List<DerivedFile> getCacheEntry(CacheAddress cacheEntryAddress, Collection<BlackboardArtifact> sourceArtifacts, Collection<BlackboardArtifact> webCacheArtifacts ) throws TskCoreException, IngestModuleException {
          
         List<DerivedFile> derivedFiles = new ArrayList<>();
         
@@ -361,7 +365,14 @@ final class ChromeCacheExtractor {
                                                     moduleName,
                                                     cacheEntry.getCreationTime());
         
-        for (int j = 0; j < dataEntries.size(); j++) {
+        BlackboardAttribute hhtpHeaderAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS,
+                                                    moduleName,
+                                                    cacheEntry.getHTTPHeaders());
+         
+        
+        // Only process the first payload data segment in each entry
+        //  first data segement has the HTTP headers, 2nd is the payload
+        for (int j = 1; j < dataEntries.size() && j < 2; j++) {
             CacheData data = dataEntries.get(j);
             String dataFilename = data.getAddress().getFilename();
             Optional<AbstractFile> dataFile = this.findCacheFile(dataFilename, cachePath);
@@ -378,8 +389,7 @@ final class ChromeCacheExtractor {
             Collection<BlackboardAttribute> webCacheAttributes = new ArrayList<>();
             webCacheAttributes.add(urlAttr);
             webCacheAttributes.add(createTimeAttr);
-            
-            // RAMAN TBD: how to associate the entry data_n file as the source of this artifact??
+            webCacheAttributes.add(hhtpHeaderAttr);
             
             if (dataFile.isPresent()) {
                 if (data.isInExternalFile() )  {
@@ -387,11 +397,13 @@ final class ChromeCacheExtractor {
                         BlackboardArtifact sourceArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
                         if (sourceArtifact != null) {
                             sourceArtifact.addAttributes(sourceArtifactAttributes);
+                            sourceArtifacts.add(sourceArtifact);
                         }
                         
                         BlackboardArtifact webCacheArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
-                        if (sourceArtifact != null) {
+                        if (webCacheArtifact != null) {
                             webCacheArtifact.addAttributes(webCacheAttributes);
+                            webCacheArtifacts.add(webCacheArtifact);
                         }
                         
                         if (isBrotliCompressed) {
@@ -407,8 +419,8 @@ final class ChromeCacheExtractor {
                     String filename = data.save();
 
                     String relPathname = getRelOutputFolderName() + data.getAddress().getCachePath() + filename; 
-
-                    DerivedFile derivedFile = fileManager.addDerivedFile(filename, relPathname,
+                    try {
+                        DerivedFile derivedFile = fileManager.addDerivedFile(filename, relPathname,
                                                             data.getDataLength(), 
                                                             cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), cacheEntry.getCreationTime(), // TBD 
                                                             true, 
@@ -419,16 +431,27 @@ final class ChromeCacheExtractor {
                                                             "", 
                                                             TskData.EncodingType.NONE);
 
-               
-                    try {
                         BlackboardArtifact sourceArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
                         if (sourceArtifact != null) {
                             sourceArtifact.addAttributes(sourceArtifactAttributes);
+                            sourceArtifacts.add(sourceArtifact);
                         }    
-                        
-                        BlackboardArtifact webCacheArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
-                        if (sourceArtifact != null) {
+                       
+                        BlackboardArtifact webCacheArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE); 
+                        if (webCacheArtifact != null) {
                             webCacheArtifact.addAttributes(webCacheAttributes);
+                            
+                            webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
+                                moduleName, 
+                                dataFile.get().getUniquePath())); //NON-NLS
+                                                      
+                                long pathID = Util.findID(dataSource, dataFile.get().getUniquePath()); //NON-NLS
+                                if (pathID != -1) {
+                                    webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                                            moduleName, pathID));
+                                }
+                
+                            webCacheArtifacts.add(webCacheArtifact);
                         }
                         
                         if (isBrotliCompressed) {
@@ -436,7 +459,6 @@ final class ChromeCacheExtractor {
                             derivedFile.save();
                         }
 
-                        
                         derivedFiles.add(derivedFile);
                     } catch (TskException ex) {
                         logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
@@ -832,6 +854,28 @@ final class ChromeCacheExtractor {
         
         String getHTTPHeader(String key) {
             return this.httpHeaders.get(key);
+        }
+        
+        /**
+         * Returns all HTTP headers as a single '\n' separated string
+         * 
+         * @return 
+         */
+        String getHTTPHeaders() {
+            if (!hasHTTPHeaders()) {
+                return "";
+            }
+            
+            StringBuilder sb = new StringBuilder();
+            httpHeaders.entrySet().forEach((entry) -> {
+                if (sb.length() > 0) {
+                    sb.append(" \n");
+                }
+                sb.append(String.format("%s : %s",
+                        entry.getKey(), entry.getValue()));
+            });
+                                    
+            return sb.toString();
         }
         
         String getHTTPRespone() {
@@ -1243,6 +1287,19 @@ final class ChromeCacheExtractor {
             }
             // First data segment has the HTTP headers, if any
             return dataList.get(0).getHTTPHeader(key);
+        }
+        
+        /**
+         * Returns the all the HTTP headers as a single string
+         * 
+         * @return header value, null if not found
+         */
+        String getHTTPHeaders() {
+            if ((dataList == null) || dataList.isEmpty()) {
+                return null;
+            }
+            // First data segment has the HTTP headers, if any
+            return dataList.get(0).getHTTPHeaders();
         }
         
         /**
