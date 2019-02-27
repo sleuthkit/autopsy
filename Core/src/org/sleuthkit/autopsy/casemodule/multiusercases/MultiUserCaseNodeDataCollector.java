@@ -16,9 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.casemodule.multiusercases;
 
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.LinkOption;
@@ -28,6 +27,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Queries the coordination service to collect the multi-user case node data
  * stored in the case directory lock ZooKeeper nodes.
  */
-final class MultiUserCaseNodeDataCollector {
+final public class MultiUserCaseNodeDataCollector {
 
     private static final Logger logger = Logger.getLogger(MultiUserCaseNodeDataCollector.class.getName());
     private static final String CASE_AUTO_INGEST_LOG_NAME = "AUTO_INGEST_LOG.TXT"; //NON-NLS

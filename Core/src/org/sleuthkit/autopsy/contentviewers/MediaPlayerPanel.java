@@ -256,7 +256,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing"); //NON-NLS
             Gst.init();
             gstInited = true;
-        } catch (GstException ex) {
+        } catch (GstException | UnsatisfiedLinkError ex) {
             gstInited = false;
             logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(

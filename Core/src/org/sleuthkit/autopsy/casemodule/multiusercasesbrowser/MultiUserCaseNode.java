@@ -16,44 +16,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.casemodule.multiusercasesbrowser;
 
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-import org.openide.util.NbBundle;
+import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrowserCustomizer.Column;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
 /**
- * A NetBeans Explorer View node that represents a multi-user case.
+ * A NetBeans Explorer View node that represents a multi-user case in a
+ * multi-user cases browser panel.
  */
 final class MultiUserCaseNode extends AbstractNode {
 
     private final CaseNodeData caseNodeData;
+    private final MultiUserCaseBrowserCustomizer customizer;
 
     /**
      * Constructs a NetBeans Explorer View node that represents a multi-user
-     * case.
+     * case in a multi-user cases browser panel.
      *
      * @param caseNodeData The coordination service node data for the case.
+     * @param customizer   A browser customizer that supplies the actions and
+     *                     property sheet properties of the node.
      */
-    MultiUserCaseNode(CaseNodeData caseNodeData) {
-        super(Children.LEAF);
+    MultiUserCaseNode(CaseNodeData caseNodeData, MultiUserCaseBrowserCustomizer customizer) {
+        super(Children.LEAF, Lookups.fixed(caseNodeData));
         super.setName(caseNodeData.getDisplayName());
-        setName(caseNodeData.getDisplayName());
-        setDisplayName(caseNodeData.getDisplayName());
+        super.setDisplayName(caseNodeData.getDisplayName());
         this.caseNodeData = caseNodeData;
+        this.customizer = customizer;
     }
 
-    @NbBundle.Messages({
-        "MultiUserCaseNode.column.name=Name",
-        "MultiUserCaseNode.column.createTime=Create Time",
-        "MultiUserCaseNode.column.path=Path"
-    })
     @Override
     protected Sheet createSheet() {
         Sheet sheet = super.createSheet();
@@ -62,42 +63,36 @@ final class MultiUserCaseNode extends AbstractNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-        sheetSet.put(new NodeProperty<>(Bundle.MultiUserCaseNode_column_name(),
-                Bundle.MultiUserCaseNode_column_name(),
-                Bundle.MultiUserCaseNode_column_name(),
-                caseNodeData.getDisplayName()));
-        sheetSet.put(new NodeProperty<>(Bundle.MultiUserCaseNode_column_createTime(),
-                Bundle.MultiUserCaseNode_column_createTime(),
-                Bundle.MultiUserCaseNode_column_createTime(),
-                caseNodeData.getCreateDate()));
-        sheetSet.put(new NodeProperty<>(Bundle.MultiUserCaseNode_column_path(),
-                Bundle.MultiUserCaseNode_column_path(),
-                Bundle.MultiUserCaseNode_column_path(),
-                caseNodeData.getDirectory().toString()));
+        for (Column property : customizer.getColumns()) {
+            String propName = property.getDisplayName();
+            switch (property) {
+                case CREATE_DATE:
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, caseNodeData.getCreateDate()));
+                    break;
+                case DIRECTORY:
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, caseNodeData.getDirectory().toString()));
+                    break;
+                case LAST_ACCESS_DATE:
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, caseNodeData.getLastAccessDate()));
+                    break;
+                default:
+                    break;
+            }
+        }
         return sheet;
     }
 
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new OpenMultiUserCaseAction(this.caseNodeData));
-        actions.add(new OpenCaseAutoIngestLogAction(this.caseNodeData));
+        actions.addAll(customizer.getActions(caseNodeData));
+        actions.addAll(Arrays.asList(super.getActions(context)));
         return actions.toArray(new Action[actions.size()]);
     }
 
     @Override
     public Action getPreferredAction() {
-        return new OpenMultiUserCaseAction(this.caseNodeData);
+        return customizer.getPreferredAction(caseNodeData);
     }
 
-    /**
-     * Gets the coordintaion service case node data this Explorer View node
-     * represents.
-     *
-     * @return The case node data.
-     */
-    CaseNodeData getCaseNodeData() {
-        return this.caseNodeData;
-    }
-    
 }
