@@ -257,18 +257,20 @@ final class VcardParser {
                         continue;
                     }
 
-                     String type = photo.getType();
+                    String type = photo.getType();
                     if (type == null) {
                         // Skip this photo since no type is defined.
                         continue;
                     }
 
+                    // Get the file extension for the subtype.
                     type = type.toLowerCase();
                     if (type.startsWith("image/")) {
                         type = type.substring(6);
                     }
                     String extension = photoTypeExtensions.get(type);
 
+                    // Read the photo data and create a derived file from it.
                     byte[] data = photo.getData();
                     String extractedFileName = String.format("photo_%d%s", i, extension == null ? "" : extension);
                     String extractedFilePath = Paths.get(outputPath, extractedFileName).toString();
@@ -309,7 +311,7 @@ final class VcardParser {
     }
     
     /**
-     * Creates a unique name for a file by concatentating the file name and the
+     * Creates a unique name for a file by concatenating the file name and the
      * file object id.
      *
      * @param file The file.
@@ -331,7 +333,7 @@ final class VcardParser {
      */
     private String getFileRelativePath(String parentFileName, String fileName) throws NoCurrentCaseException {
         // Used explicit FWD slashes to maintain DB consistency across operating systems.
-        return "/" + getRelModuleOutputPath() + "/" + parentFileName + "/" + fileName; //NON-NLS
+        return Paths.get(getRelModuleOutputPath(), parentFileName, fileName).toString();
     }
     
     /**
