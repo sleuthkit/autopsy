@@ -70,7 +70,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             FileTypeCategory.EXECUTABLE, FileTypeCategory.IMAGE, FileTypeCategory.VIDEO);
     
     private Case currentCase = null;
-    private SleuthkitCase skCase = null;
+    private SleuthkitCase portableSkCase = null;
     private File caseFolder = null;
     private File copiedFilesFolder = null;
     
@@ -200,10 +200,10 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         
         // Create the case.
-        // skCase and caseFolder will be set here.
+        // portableSkCase and caseFolder will be set here.
         progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_creatingCase());
         createCase(outputDir, progressPanel);
-        if (skCase == null) {
+        if (portableSkCase == null) {
             // The error has already been handled
             return;
         }
@@ -218,7 +218,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_copyingTags());
         try {
             for(TagName tagName:tagNames) {
-                TagName newTagName = skCase.addOrUpdateTagName(tagName.getDisplayName(), tagName.getDescription(), tagName.getColor(), tagName.getKnownStatus());
+                TagName newTagName = portableSkCase.addOrUpdateTagName(tagName.getDisplayName(), tagName.getDescription(), tagName.getColor(), tagName.getKnownStatus());
                 oldTagNameToNewTagName.put(tagName, newTagName);
             }
         } catch (TskCoreException ex) {
@@ -247,7 +247,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         }
         for (BlackboardAttribute.ATTRIBUTE_TYPE type:BlackboardAttribute.ATTRIBUTE_TYPE.values()) {
             try {
-                oldAttrTypeIdToNewAttrType.put(type.getTypeID(), skCase.getAttributeType(type.getLabel()));
+                oldAttrTypeIdToNewAttrType.put(type.getTypeID(), portableSkCase.getAttributeType(type.getLabel()));
             } catch (TskCoreException ex) {
                 handleError("Error looking up attribute name " + type.getLabel(),
                         Bundle.CreatePortableCaseModule_generateReport_errorLookingUpAttrType(type.getLabel()),
@@ -279,7 +279,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
 
     /**
      * Create the case directory and case database. 
-     * skCase will be set if this completes without error.
+     * portableSkCase will be set if this completes without error.
      * 
      * @param outputDir  The parent for the case folder
      * @param progressPanel 
@@ -305,7 +305,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         // Create the case
         try {
-            skCase = currentCase.createPortableCase(caseName, caseFolder);
+            portableSkCase = currentCase.createPortableCase(caseName, caseFolder);
         } catch (TskCoreException ex) {
             handleError("Error creating case " + caseName + " in folder " + caseFolder.toString(),
                 Bundle.CreatePortableCaseModule_createCase_errorCreatingCase(), ex, progressPanel);  
@@ -341,8 +341,9 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     /**
      * Add all files with a given tag to the portable case.
      * 
-     * @param oldTagName
-     * @param progressPanel
+     * @param oldTagName    The TagName object from the current case
+     * @param progressPanel The progress panel
+     * 
      * @throws TskCoreException 
      */
     private void addFilesToPortableCase(TagName oldTagName, ReportProgressPanel progressPanel) throws TskCoreException {
@@ -366,7 +367,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
                     throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName());
                 }
-                skCase.addContentTag(newIdToContent.get(newFileId), oldTagNameToNewTagName.get(tag.getName()), tag.getComment(), tag.getBeginByteOffset(), tag.getEndByteOffset());
+                portableSkCase.addContentTag(newIdToContent.get(newFileId), oldTagNameToNewTagName.get(tag.getName()), tag.getComment(), tag.getBeginByteOffset(), tag.getEndByteOffset());
             }
         }  
     }
@@ -374,8 +375,9 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     /**
      * Add all artifacts with a given tag to the portable case.
      * 
-     * @param oldTagName
-     * @param progressPanel
+     * @param oldTagName    The TagName object from the current case
+     * @param progressPanel The progress panel
+     * 
      * @throws TskCoreException 
      */
     private void addArtifactsToPortableCase(TagName oldTagName, ReportProgressPanel progressPanel) throws TskCoreException {
@@ -401,13 +403,20 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
                 throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName());
             }
-            skCase.addBlackboardArtifactTag(newArtifact, oldTagNameToNewTagName.get(tag.getName()), tag.getComment());
+            portableSkCase.addBlackboardArtifactTag(newArtifact, oldTagNameToNewTagName.get(tag.getName()), tag.getComment());
         }  
     }    
     
-    // TODO
-    // custom artifact types
-    // cache
+    /**
+     * Copy an artifact into the new case. Will also copy any associated artifacts
+     * 
+     * @param newContentId   The content ID (in the portable case) of the source content
+     * @param artifactToCopy The artifact to copy
+     * 
+     * @return The new artifact in the portable case
+     * 
+     * @throws TskCoreException 
+     */
     private BlackboardArtifact copyArtifact(long newContentId, BlackboardArtifact artifactToCopy) throws TskCoreException {
         
         if (oldArtifactIdToNewArtifact.containsKey(artifactToCopy.getArtifactID())) {
@@ -426,7 +435,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         // Create the new artifact
         int newArtifactTypeId = getNewArtifactTypeId(artifactToCopy);
-        BlackboardArtifact newArtifact = skCase.newBlackboardArtifact(newArtifactTypeId, newContentId);
+        BlackboardArtifact newArtifact = portableSkCase.newBlackboardArtifact(newArtifactTypeId, newContentId);
         List<BlackboardAttribute> oldAttrs = artifactToCopy.getAttributes();
         
         // Copy over each attribute, making sure the type is in the new case.
@@ -484,9 +493,9 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             return oldArtTypeIdToNewArtTypeId.get(oldArtifact.getArtifactTypeID());
         }
         
-        BlackboardArtifact.Type oldCustomType = skCase.getArtifactType(oldArtifact.getArtifactTypeName());
+        BlackboardArtifact.Type oldCustomType = currentCase.getSleuthkitCase().getArtifactType(oldArtifact.getArtifactTypeName());
         try {
-            BlackboardArtifact.Type newCustomType = skCase.addBlackboardArtifactType(oldCustomType.getTypeName(), oldCustomType.getDisplayName());
+            BlackboardArtifact.Type newCustomType = portableSkCase.addBlackboardArtifactType(oldCustomType.getTypeName(), oldCustomType.getDisplayName());
             oldArtTypeIdToNewArtTypeId.put(oldArtifact.getArtifactTypeID(), newCustomType.getTypeID());
             return newCustomType.getTypeID();
         } catch (TskDataException ex) {
@@ -509,7 +518,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         }
         
         try {
-            BlackboardAttribute.Type newCustomType = skCase.addArtifactAttributeType(oldAttrType.getTypeName(), 
+            BlackboardAttribute.Type newCustomType = portableSkCase.addArtifactAttributeType(oldAttrType.getTypeName(), 
                     oldAttrType.getValueType(), oldAttrType.getDisplayName());
             oldAttrTypeIdToNewAttrType.put(oldAttribute.getAttributeType().getTypeID(), newCustomType);
             return newCustomType;
@@ -521,8 +530,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     /**
      * Top level method to copy a content object to the portable case.
      * 
-     * @param content
-     * @param progressPanel
+     * @param content       The content object to copy
+     * @param progressPanel The progress panel
      * 
      * @return The object ID of the copied content in the portable case
      * 
@@ -536,7 +545,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_copyContentToPortableCase_copyingFile(content.getUniquePath()));
 
         long newFileId;
-        CaseDbTransaction trans = skCase.beginTransaction();
+        CaseDbTransaction trans = portableSkCase.beginTransaction();
         try {
             newFileId = copyContent(content, trans);
             trans.commit();
@@ -575,18 +584,18 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         Content newContent;
         if (content instanceof Image) {
             Image image = (Image)content;
-            newContent = skCase.addImage(image.getType(), image.getSsize(), image.getSize(), image.getName(), 
+            newContent = portableSkCase.addImage(image.getType(), image.getSsize(), image.getSize(), image.getName(), 
                     new ArrayList<>(), image.getTimeZone(), image.getMd5(), image.getSha1(), image.getSha256(), image.getDeviceId(), trans);
         } else if (content instanceof VolumeSystem) {
             VolumeSystem vs = (VolumeSystem)content;
-            newContent = skCase.addVolumeSystem(parentId, vs.getType(), vs.getOffset(), vs.getBlockSize(), trans);
+            newContent = portableSkCase.addVolumeSystem(parentId, vs.getType(), vs.getOffset(), vs.getBlockSize(), trans);
         } else if (content instanceof Volume) {
             Volume vs = (Volume)content;
-            newContent = skCase.addVolume(parentId, vs.getAddr(), vs.getStart(), vs.getLength(), 
+            newContent = portableSkCase.addVolume(parentId, vs.getAddr(), vs.getStart(), vs.getLength(), 
                     vs.getDescription(), vs.getFlags(), trans);
         } else if (content instanceof FileSystem) {
             FileSystem fs = (FileSystem)content;
-            newContent = skCase.addFileSystem(parentId, fs.getImageOffset(), fs.getFsType(), fs.getBlock_size(), 
+            newContent = portableSkCase.addFileSystem(parentId, fs.getImageOffset(), fs.getFsType(), fs.getBlock_size(), 
                     fs.getBlock_count(), fs.getRoot_inum(), fs.getFirst_inum(), fs.getLastInum(), 
                     fs.getName(), trans);
         } else if (content instanceof AbstractFile) {
@@ -594,10 +603,10 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             
             if (abstractFile instanceof LocalFilesDataSource) {
                 LocalFilesDataSource localFilesDS = (LocalFilesDataSource)abstractFile;
-                newContent = skCase.addLocalFilesDataSource(localFilesDS.getDeviceId(), localFilesDS.getName(), localFilesDS.getTimeZone(), trans);    
+                newContent = portableSkCase.addLocalFilesDataSource(localFilesDS.getDeviceId(), localFilesDS.getName(), localFilesDS.getTimeZone(), trans);    
             } else {
                 if (abstractFile.isDir()) {
-                    newContent = skCase.addLocalDirectory(parentId, abstractFile.getName(), trans);
+                    newContent = portableSkCase.addLocalDirectory(parentId, abstractFile.getName(), trans);
                 } else {
                     try {
                         // Copy the file
@@ -617,7 +626,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                         // Construct the relative path to the copied file
                         String relativePath = FILE_FOLDER_NAME + File.separator +  exportSubFolder + File.separator + fileName;
 
-                        newContent = skCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
+                        newContent = portableSkCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
                                 abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),
                                 abstractFile.getMd5Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
                                 true, TskData.EncodingType.NONE, 
@@ -666,9 +675,9 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         newIdToContent.clear();
         oldTagNameToNewTagName.clear();
         currentCase = null;
-        if (skCase != null) {
+        if (portableSkCase != null) {
             // We want to close the database connections here but it is currently not possible. JIRA-4736
-            skCase = null;
+            portableSkCase = null;
         }
         caseFolder = null;
         copiedFilesFolder = null;
