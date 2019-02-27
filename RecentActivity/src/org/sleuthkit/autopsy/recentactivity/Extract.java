@@ -201,7 +201,19 @@ abstract class Extract {
         return moduleName;
     }
 
+    /**
+     * Returns the state of foundData
+     * @return 
+     */
     public boolean foundData() {
         return dataFound;
+    }
+    
+    /**
+     * Sets the value of foundData
+     * @param foundData 
+     */
+    protected void setFoundData(boolean foundData){
+        dataFound = foundData;
     }
 }
