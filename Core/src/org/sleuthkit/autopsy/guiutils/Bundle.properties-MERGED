@@ -1,0 +1,3 @@
+StatusIconCellRenderer.tooltiptext.error=An error occurred
+StatusIconCellRenderer.tooltiptext.ok=OK
+StatusIconCellRenderer.tooltiptext.warning=A warning occurred

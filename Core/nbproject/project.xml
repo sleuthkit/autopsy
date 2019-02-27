@@ -313,6 +313,8 @@
                 <package>org.sleuthkit.autopsy.appservices</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
                 <package>org.sleuthkit.autopsy.casemodule.events</package>
+                <package>org.sleuthkit.autopsy.casemodule.multiusercases</package>
+                <package>org.sleuthkit.autopsy.casemodule.multiusercasesbrowser</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
                 <package>org.sleuthkit.autopsy.contentviewers</package>
                 <package>org.sleuthkit.autopsy.coordinationservice</package>
