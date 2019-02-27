@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
