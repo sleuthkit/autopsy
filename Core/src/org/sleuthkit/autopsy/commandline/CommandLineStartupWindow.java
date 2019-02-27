@@ -19,18 +19,23 @@
 package org.sleuthkit.autopsy.commandline;
 
 import javax.swing.JDialog;
-import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
 
 /**
  * Implementation of startup window for running Autopsy from command line.
+ *
+ * IMPORTANT: We do NOT want to register this class as ServiceProvider. We want only
+ * the default Autopsy StartupWindow to be found via
+ * Lookup.getDefault().lookupAll(StartupWindowInterface.class);
  */
-@ServiceProvider(service = StartupWindowInterface.class)
 public class CommandLineStartupWindow extends JDialog implements StartupWindowInterface {
+    
+    private static final String TITLE = NbBundle.getMessage(CommandLineStartupWindow.class, "CommandLineStartupWindow.title.text");
 
     public CommandLineStartupWindow() {
-        super(WindowManager.getDefault().getMainWindow(), "Running From Command Line", true);
+        super(WindowManager.getDefault().getMainWindow(), TITLE, true);
         add(new CommandLinePanel());
         pack();
         setResizable(false);

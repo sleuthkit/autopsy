@@ -33,7 +33,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
-import javax.swing.JPanel;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.LifecycleManager;
 import org.openide.util.Lookup;
@@ -41,7 +40,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
@@ -81,7 +79,6 @@ public class CommandLineIngestManager {
     public void start() {
         jobProcessingTask = new JobProcessingTask();
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
-        return;
     }
 
     public void stop() {
@@ -98,10 +95,6 @@ public class CommandLineIngestManager {
 
         // shut down Autopsy
         LifecycleManager.getDefault().exit();
-    }
-
-    public StartupWindowInterface getStartupWindow() {
-        return new CommandLineStartupWindow();
     }
 
     private final class JobProcessingTask implements Runnable {

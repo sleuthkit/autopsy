@@ -21,11 +21,11 @@ package org.sleuthkit.autopsy.casemodule;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
-import javax.swing.JPanel;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.commandline.CommandLineIngestManager;
 import org.sleuthkit.autopsy.commandline.CommandLineOptionProcessor;
+import org.sleuthkit.autopsy.commandline.CommandLineStartupWindow;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -58,16 +58,20 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
     private void init() {
         if (startupWindowToUse == null) {
+            // first check whether we are running from command line
+            if (isRunningFromCommandLine()) {
+                // Autopsy is running from command line
+                logger.log(Level.INFO, "Running from command line"); //NON-NLS
+                System.out.println("Running from command line");
+                startupWindowToUse = new CommandLineStartupWindow();
+                CommandLineIngestManager ingestManager = new CommandLineIngestManager();
+                ingestManager.start();
+                return;
+            }
+
             //discover the registered windows
             Collection<? extends StartupWindowInterface> startupWindows
                     = Lookup.getDefault().lookupAll(StartupWindowInterface.class);
-
-            // first check whether Autopsy is being run from command line
-            if (isRunningFromCommandLine()) {
-                logger.log(Level.INFO, "Autopsy is running from command line"); //NON-NLS
-                System.out.println("Autopsy is running from command line");
-                return;
-            }
 
             int windowsCount = startupWindows.size();
             if (windowsCount == 1) {
@@ -103,7 +107,15 @@ public class StartupWindowProvider implements StartupWindowInterface {
             }
         }
     }
-    
+
+    /**
+     * Checks whether Autopsy is running from command line. There is an
+     * OptionProcessor that is responsible for processing command line inputs.
+     * IfAutopsy is indeed running from command line, then use the command line
+     * startup window and kick off command line processing.
+     *
+     * @return True if running from command line, false otherwise
+     */
     private boolean isRunningFromCommandLine() {
 
         boolean runningFromCommandLine = false;
@@ -125,14 +137,10 @@ public class StartupWindowProvider implements StartupWindowInterface {
             }
 
             // Autopsy is running from command line
-            CommandLineIngestManager ingestManager = new CommandLineIngestManager();
-            startupWindowToUse = ingestManager.getStartupWindow();
-            ingestManager.start();
             return true;
         }
-
         return false;
-    }    
+    }
 
     @Override
     public void open() {
