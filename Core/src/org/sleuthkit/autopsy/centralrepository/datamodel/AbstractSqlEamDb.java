@@ -61,7 +61,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     static final String SCHEMA_MINOR_VERSION_KEY = "SCHEMA_MINOR_VERSION";
     static final String CREATION_SCHEMA_MAJOR_VERSION_KEY = "CREATION_SCHEMA_MAJOR_VERSION";
     static final String CREATION_SCHEMA_MINOR_VERSION_KEY = "CREATION_SCHEMA_MINOR_VERSION";
-    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 2);
+    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 3);
 
     protected final List<CorrelationAttributeInstance.Type> defaultCorrelationTypes;
 
@@ -625,7 +625,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             // This data source is already in the central repo
             return eamDataSource;
         }
-        
+
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -650,7 +650,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 /*
                  * If nothing was inserted, then return the data source that
                  * exists in the Central Repository.
-                 * 
+                 *
                  * This is expected to occur with PostgreSQL Central Repository
                  * databases.
                  */
@@ -675,7 +675,7 @@ abstract class AbstractSqlEamDb implements EamDb {
              * If an exception was thrown causing us to not return a new data
              * source, attempt to get an existing data source with the same case
              * ID and data source object ID.
-             * 
+             *
              * This exception block is expected to occur with SQLite Central
              * Repository databases.
              */
@@ -3582,7 +3582,28 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','" + creationMajorVer + "')");
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "','" + creationMinorVer + "')");
             }
-
+            /*
+             * Update to 1.3
+             */
+            if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 3)) < 0) {
+                switch (selectedPlatform) {
+                    case POSTGRESQL:
+                        statement.execute("ALTER TABLE data_sources DROP CONSTRAINT datasource_unique");
+                        statement.execute("ALTER TABLE data_sources ADD CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id)");
+                        
+                        break;
+                    case SQLITE:
+                        statement.execute("ALTER TABLE data_sources RENAME TO old_data_sources");
+                        statement.execute(SqliteEamDbSettings.getCreateDataSourcesTableStatement());
+                        statement.execute(SqliteEamDbSettings.getAddDataSourcesNameIndexStatement());
+                        statement.execute(SqliteEamDbSettings.getAddDataSourcesObjectIdIndexStatement());
+                        statement.execute("INSERT INTO data_sources SELECT * FROM old_data_sources");
+                        statement.execute("DROP TABLE old_data_sources");
+                        break;
+                    default:
+                        throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
+                }
+            }
             updateSchemaVersion(conn);
             conn.commit();
             logger.log(Level.INFO, String.format("Central Repository schema updated to version %s", SOFTWARE_CR_DB_SCHEMA_VERSION));
