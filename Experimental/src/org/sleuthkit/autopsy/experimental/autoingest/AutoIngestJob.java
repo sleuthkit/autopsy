@@ -651,7 +651,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
         PENDING,
         PROCESSING,
         COMPLETED,
-        DELETED
+        DELETED // No longer used, retained for legacy jobs only.
     }
 
     /**

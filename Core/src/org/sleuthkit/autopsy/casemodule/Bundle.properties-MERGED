@@ -11,7 +11,7 @@ Case.deleteCaseFailureMessageBox.message=Error deleting case: {0}
 Case.deleteCaseFailureMessageBox.title=Failed to Delete Case
 Case.exceptionMessage.cancelledByUser=Cancelled by user.
 Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first.
-Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or there is a problem with the coordination service.
+Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user.
 Case.exceptionMessage.cannotLocateMainWindow=Cannot locate main application window
 Case.exceptionMessage.cannotOpenMultiUserCaseNoSettings=Multi-user settings are missing (see Tools, Options, Multi-user tab), cannot open a multi-user case.
 # {0} - exception message
@@ -34,10 +34,9 @@ Case.exceptionMessage.couldNotSaveDbNameToMetadataFile=Failed to save case datab
 Case.exceptionMessage.couldNotUpdateCaseNodeData=Failed to update coordination service node data:\n{0}.
 Case.exceptionMessage.emptyCaseDir=Must specify a case directory path.
 Case.exceptionMessage.emptyCaseName=Must specify a case name.
-Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details
+Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details.
 # {0} - exception message
 Case.exceptionMessage.execExceptionWrapperMessage={0}
-Case.exceptionMessage.failedToDeleteCoordinationServiceNodes=Failed to delete the coordination service nodes for the case.
 # {0} - exception message
 Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata:\n{0}.
 Case.exceptionMessage.metadataUpdateError=Failed to update case metadata
@@ -55,18 +54,46 @@ Case.progressMessage.clearingTempDirectory=Clearing case temp directory...
 Case.progressMessage.closingApplicationServiceResources=Closing case-specific application service resources...
 Case.progressMessage.closingCaseDatabase=Closing case database...
 Case.progressMessage.closingCaseLevelServices=Closing case-level services...
+Case.progressMessage.connectingToCoordSvc=Connecting to coordination service...
 Case.progressMessage.creatingCaseDatabase=Creating case database...
 Case.progressMessage.creatingCaseDirectory=Creating case directory...
 Case.progressMessage.creatingCaseNodeData=Creating coordination service node data...
+Case.progressMessage.deletingAutoIngestLogCoordSvcNode=Deleting case auto ingest log coordination service node...
 Case.progressMessage.deletingCaseDatabase=Deleting case database...
 Case.progressMessage.deletingCaseDirectory=Deleting case directory...
-Case.progressMessage.deletingCoordinationServiceNodes=Deleting coordination service nodes...
+Case.progressMessage.deletingDirectroyCoordinationServiceNode=Deleting case ersource coordination service node...
+Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resources coordination service node...
 Case.progressMessage.deletingTextIndex=Deleting text index...
+# {0} - exception message
+Case.progressMessage.errorConnectingToCoordSvc=An occurred connecting to the coordination service (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorDeletingCaseDb=An occurred deleting the case database (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorDeletingCaseDir=An occurred deleting the case directory (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorDeletingCaseDirLockNode=An occurred deleting the case directory lock node (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorDeletingJobLogLockNode=An occurred deleting the case auto ingest log lock node (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorDeletingResourcesLockNode=An occurred deleting the case resources lock node (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorDeletingTextIndex=An occurred deleting the text index for the case (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorGettingCoordSvcNodeData=Failed to get the coordination service case node data (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorLockingCase=An error occurred exclusively locking the case for deletion (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorLockingCaseName=An error occurred exclusively locking the case name for deletion (see log for details): {0}.
+# {0} - exception message
+Case.progressMessage.errorSavingDeletedItemsFlags=An occurred saving the deleted items flags in the coordination service database (see log for details): {0}.
+Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case...
+Case.progressMessage.missingCoordSvcNodeData=Missing coordination service node data.
 Case.progressMessage.openingApplicationServiceResources=Opening application service case resources...
 Case.progressMessage.openingCaseDatabase=Opening case database...
 Case.progressMessage.openingCaseLevelServices=Opening case-level services...
 Case.progressMessage.preparing=Preparing...
 Case.progressMessage.preparingToOpenCaseResources=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>
+Case.progressMessage.removingCaseFromRecentCases=Removing case from Recent Cases menu...
 Case.progressMessage.savingCaseMetadata=Saving case metadata to file...
 Case.progressMessage.settingUpNetworkCommunications=Setting up network communications...
 Case.progressMessage.shuttingDownNetworkCommunications=Shutting down network communications...
@@ -159,13 +186,6 @@ LogicalFilesDspPanel.subTypeComboBox.l01FileOption.text=Logical evidence file (L
 LogicalFilesDspPanel.subTypeComboBox.localFilesOption.text=Local files and folders
 Menu/Case/OpenRecentCase=Open Recent Case
 CTL_CaseDeleteAction=Delete Case
-MultiUserCaseNode.column.createTime=Create Time
-MultiUserCaseNode.column.name=Name
-MultiUserCaseNode.column.path=Path
-MultiUserCasesBrowserPanel.waitNode.message=Please Wait...
-OpenCaseAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.
-OpenCaseAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details.
-OpenCaseAutoIngestLogAction.menuItemText=Open Auto Ingest Log File
 OpenIDE-Module-Name=Case
 NewCaseVisualPanel1.caseNameLabel.text_1=Case Name:
 NewCaseVisualPanel1.caseDirLabel.text=Base Directory:
@@ -419,5 +439,6 @@ CaseDetailsPanel.lbDbType.text=Case Type:
 CaseDetailsPanel.caseNameLabel.text=Case Name:
 OpenMultiUserCasePanel.searchLabel.text=Select any case and start typing to search by case name
 OpenMultiUserCasePanel.cancelButton.text=Cancel
-OpenMultiUserCasePanel.openSelectedCaseButton.text=Open Selected Case
 OpenMultiUserCasePanel.openSingleUserCaseButton.text=Open Single-User Case...
+OpenMultiUserCasePanel.openSelectedCaseButton.text=Open Selected Case
+OpenMultiUserCasePanel.searchLabel.text=Select any case and start typing to search by case name

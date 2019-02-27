@@ -925,123 +925,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     }
 
     /**
-     * Deletes a case. This includes deleting the case directory, the text
-     * index, and the case database. This does not include the directories
-     * containing the data sources and their manifests.
-     *
-     * @param caseName          The name of the case.
-     * @param caseDirectoryPath The path to the case directory.
-     *
-     * @return A result code indicating success, partial success, or failure.
-     */
-    CaseDeletionResult deleteCase(String caseName, Path caseDirectoryPath) {
-        if (state != State.RUNNING) {
-            return CaseDeletionResult.FAILED;
-        }
-
-        CaseDeletionResult result = CaseDeletionResult.FULLY_DELETED;
-        List<Lock> manifestFileLocks = new ArrayList<>();
-        try {
-            synchronized (jobsLock) {
-                /*
-                 * Get the case metadata.
-                 */
-                CaseMetadata metaData;
-                Path caseMetaDataFilePath = Paths.get(caseDirectoryPath.toString(), caseName + CaseMetadata.getFileExtension());
-                try {
-                    metaData = new CaseMetadata(caseMetaDataFilePath);
-                } catch (CaseMetadata.CaseMetadataException ex) {
-                    sysLogger.log(Level.SEVERE, String.format("Failed to get case metadata file %s for case %s at %s", caseMetaDataFilePath, caseName, caseDirectoryPath), ex);
-                    return CaseDeletionResult.FAILED;
-                }
-
-                /*
-                 * Do a fresh input directory scan.
-                 */
-                InputDirScanner scanner = new InputDirScanner();
-                scanner.scan();
-                Set<Path> manifestPaths = casesToManifests.get(caseName);
-                if (null == manifestPaths) {
-                    sysLogger.log(Level.SEVERE, String.format("No manifest paths found for case %s at %s", caseName, caseDirectoryPath));
-                    return CaseDeletionResult.FAILED;
-                }
-
-                /*
-                 * Get exclusive locks on all of the manifests for the case.
-                 * This will exclude other auot ingest nodes from doing anything
-                 * with the case.
-                 */
-                for (Path manifestPath : manifestPaths) {
-                    try {
-                        Lock lock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString());
-                        if (null != lock) {
-                            manifestFileLocks.add(lock);
-                        } else {
-                            return CaseDeletionResult.FAILED;
-                        }
-                    } catch (CoordinationServiceException ex) {
-                        sysLogger.log(Level.SEVERE, String.format("Error attempting to acquire manifest lock for %s for case %s at %s", manifestPath, caseName, caseDirectoryPath), ex);
-                        return CaseDeletionResult.FAILED;
-                    }
-                }
-
-                try {
-                    /*
-                     * Physically delete the case.
-                     */
-                    Case.deleteCase(metaData);
-                } catch (CaseActionException ex) {
-                    sysLogger.log(Level.SEVERE, String.format("Failed to physically delete case %s at %s", caseName, caseDirectoryPath), ex);
-                    return CaseDeletionResult.FAILED;
-                }
-
-                /*
-                 * Mark each job (manifest file) as deleted
-                 */
-                for (Path manifestPath : manifestPaths) {
-                    try {
-                        AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
-                        AutoIngestJob deletedJob = new AutoIngestJob(nodeData);
-                        deletedJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.DELETED);
-                        this.updateCoordinationServiceManifestNode(deletedJob);
-                    } catch (AutoIngestJobNodeData.InvalidDataException | AutoIngestJobException ex) {
-                        sysLogger.log(Level.WARNING, String.format("Invalid auto ingest job node data for %s", manifestPath), ex);
-                        return CaseDeletionResult.PARTIALLY_DELETED;
-                    } catch (InterruptedException | CoordinationServiceException ex) {
-                        sysLogger.log(Level.SEVERE, String.format("Error attempting to set delete flag on manifest data for %s for case %s at %s", manifestPath, caseName, caseDirectoryPath), ex);
-                        return CaseDeletionResult.PARTIALLY_DELETED;
-                    }
-                }
-
-                /*
-                 * Remove the jobs for the case from the pending jobs queue and
-                 * completed jobs list.
-                 */
-                removeJobs(manifestPaths, pendingJobs);
-                removeJobs(manifestPaths, completedJobs);
-                casesToManifests.remove(caseName);
-            }
-
-            eventPublisher.publishRemotely(new AutoIngestCaseDeletedEvent(caseName, LOCAL_HOST_NAME, getSystemUserNameProperty()));
-            setChanged();
-            notifyObservers(Event.CASE_DELETED);
-            return result;
-
-        } finally {
-            /*
-             * Always release the manifest locks, regardless of the outcome.
-             */
-            for (Lock lock : manifestFileLocks) {
-                try {
-                    lock.release();
-                } catch (CoordinationServiceException ex) {
-                    sysLogger.log(Level.SEVERE, String.format("Failed to release manifest file lock when deleting case %s at %s", caseName, caseDirectoryPath), ex);
-                }
-            }
-        }
-    }
-
-    /**
      * Get the current snapshot of the job lists.
      *
      * @return Snapshot of jobs lists
@@ -1339,7 +1222,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                     case COMPLETED:
                                         addCompletedJob(manifest, nodeData);
                                         break;
-                                    case DELETED:
+                                    case DELETED: // No longer used, retained for legacy jobs only.
                                         /*
                                          * Ignore jobs marked as "deleted."
                                          */
@@ -2411,7 +2294,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             /*
              * Acquire and hold a case name lock so that only one node at as
              * time can scan the output directory at a time. This prevents
-             * making duplicate cases for the saem auto ingest case.
+             * making duplicate cases for the same auto ingest case.
              */
             try (Lock caseLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseName, 30, TimeUnit.MINUTES)) {
                 if (null != caseLock) {

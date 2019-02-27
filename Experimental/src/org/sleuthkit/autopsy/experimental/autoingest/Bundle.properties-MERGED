@@ -59,7 +59,6 @@ AutoIngestControlPanel.Cancelling=Cancelling...
 AutoIngestControlPanel.completedTable.toolTipText=The Completed table shows all Jobs that have been processed already
 AutoIngestControlPanel.ConfigLocked=The shared configuration directory is locked because upload from another node is in progress. \nIf this is an error, you can unlock the directory and then retry the upload.
 AutoIngestControlPanel.ConfigLockedTitle=Configuration directory locked
-AutoIngestControlPanel.DeletionFailed=Deletion failed for job
 AutoIngestControlPanel.EnableConfigurationSettings=Enable shared configuration from the options panel before uploading
 AutoIngestControlPanel.errorMessage.caseDeprioritization=An error occurred when deprioritizing the case. Some or all jobs may not have been deprioritized.
 AutoIngestControlPanel.errorMessage.casePrioritization=An error occurred when prioritizing the case. Some or all jobs may not have been prioritized.
@@ -119,7 +118,7 @@ AutoIngestDashboard.JobsTableModel.ColumnHeader.StartedTime=Stage Started
 AutoIngestDashboard.JobsTableModel.ColumnHeader.CompletedTime=Job Completed
 AutoIngestDashboard.JobsTableModel.ColumnHeader.Stage=Stage
 AutoIngestDashboard.JobsTableModel.ColumnHeader.Status=Status
-AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath= Manifest File Path
+AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath=Manifest File Path
 AutoIngestDashboard.JobsTableModel.ColumnHeader.StageTime=Time in Stage
 AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder=Case 
 AutoIngestDashboard.JobsTableModel.ColumnHeader.Job=Job 
@@ -130,6 +129,7 @@ AutoIngestDashboard.tbServicesStatusMessage.Message.Up=up
 AutoIngestDashboard.tbServicesStatusMessage.Message.Down=down
 AutoIngestDashboard.tbServicesStatusMessage.Message.Unknown=unknown
 AutoIngestDashboardTopComponent.exceptionMessage.failedToCreateDashboard=Failed to create Auto Ingest Dashboard.
+AutoIngestJobsDeletionTask.error.failedToGetJobNodes=Failed to get auto ingest job node data from coordination service.
 AutoIngestJobsNode.caseName.text=Case Name
 AutoIngestJobsNode.dataSource.text=Data Source
 AutoIngestJobsNode.hostName.text=Host Name
@@ -144,6 +144,21 @@ AutoIngestJobsNode.status.text=Status
 AutoIngestJobsPanel.waitNode.text=Please Wait...
 AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report.
 AutoIngestMetricsDialog.title.text=Auto Ingest Metrics
+CaseDeletionTask.error.failedToExclusivelyLockCase=Failed to exclusively lock the case, it may be in use.
+CaseDeletionTask.error.failedToLockCase=A coordination service error occurred while trying to lock the case for deletion: {0}.
+CaseDeletionTask.progress.connectingToCoordSvc=Connecting to coordination service (ZooKeeper)...
+# {0} - case name
+CaseDeletionTask.progress.deletingCase=Deleting {0}...
+# {0} - exception message
+CaseDeletionTask.progress.errorConnectingToCoordSvc=Failed to connect to coordination service (see log for details): {0}
+# {0} - exception message
+CaseDeletionTask.progress.errorDeletingOutput=The following error occurred deleting the case output (see log for details): {0}
+# {0} - exception message
+CaseDeletionTask.progress.errorLockingCase=A coordination service error occurred while trying to lock the case (see log for details): {0}.
+CaseDeletionTask.progress.failedToLockCase=Failed to exclusively lock the case, it may be in use, did not delete.
+CaseDeletionTask.progress.gettingJobNodeData=Getting coordination service node data for the auto ingest jobs...
+CaseDeletionTask.progress.lockingCase=Acquiring exclusive lock for case...
+CaseDeletionTask.progress.lockingJobs=Acquiring exclusive locks on all of the auto ingest job directories...
 ConfirmationDialog.DoNotDelete=Do not delete
 ConfirmationDialog.Delete=Permanently delete
 ConfirmationDialog.DeleteAreYouSure=The entire case will be removed. Are you sure you want to delete case 
@@ -168,14 +183,22 @@ CTL_AinStatusDashboardTopComponent=Auto Ingest Nodes
 CTL_AutoIngestDashboardAction=Auto Ingest Jobs
 CTL_AutoIngestDashboardOpenAction=Auto Ingest Dashboard
 CTL_AutoIngestDashboardTopComponent=Auto Ingest Jobs
+CTL_CasesDashboardAction=Multi-User Cases Dashboard
+CTL_CasesDashboardTopComponent=Cases
 DataSourceOnCDriveError.noOpenCase.errMsg=Warning: Exception while getting open case.
 DataSourceOnCDriveError.text=Warning: Path to multi-user data source is on "C:" drive
+DeleteCaseInputDirectoriesAction.menuItemText=Delete Input Directories
+DeleteCasesAction.menuItemText=Delete Case and Jobs
+DeleteCasesForReprocessingAction.menuItemText=Delete for Reprocessing
 GeneralFilter.archiveDesc.text=Archive Files (.zip, .rar, .arj, .7z, .7zip, .gzip, .gz, .bzip2, .tar, .tgz)
-OpenIDE-Module-Long-Description=\
-    This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution.  \
-    You can enable this module to use the new features.  \
-    The features should be stable, but their exact behavior and API are subject to change.  \n\n\
-    We make no guarantee that the API of this module will not change, so developers should be careful when relying on it.
+HINT_CasesDashboardTopComponent=This is an adminstrative dashboard for multi-user cases
+OpenAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.
+OpenAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details.
+OpenAutoIngestLogAction.menuItemText=Open Auto Ingest Log File
+# {0} - caseErrorMessage
+OpenCaseAction.errorMsg=Failed to open case: {0}
+OpenCaseAction.menuItemText=Open
+OpenIDE-Module-Long-Description=This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution.  You can enable this module to use the new features.  The features should be stable, but their exact behavior and API are subject to change.  \n\nWe make no guarantee that the API of this module will not change, so developers should be careful when relying on it.
 OpenIDE-Module-Name=Experimental
 OpenIDE-Module-Short-Description=This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution.
 DisplayLogDialog.cannotOpenLog=Unable to open the selected case log file
@@ -284,6 +307,7 @@ PrioritizationAction.prioritizeJobAction.error=Failed to prioritize job "%s".
 PrioritizationAction.prioritizeJobAction.title=Prioritize Job
 PrioritizedIconCellRenderer.notPrioritized.tooltiptext=This job has not been prioritized.
 PrioritizedIconCellRenderer.prioritized.tooltiptext=This job has been prioritized. The most recently prioritized job should be processed next.
+ShowCaseDeletionStatusAction.menuItemText=Show Deletion Status
 SingleUserCaseImporter.NonUniqueOutputFolder=Output folder not unique. Skipping 
 SingleUserCaseImporter.WillImport=Will import:
 SingleUserCaseImporter.None=None
@@ -381,7 +405,6 @@ AutoIngestControlPanel.bnShowProgress.text=Ingest Progress
 AutoIngestControlPanel.bnCancelJob.text=&Cancel Job
 AutoIngestControlPanel.bnCancelModule.text=Cancel &Module
 AutoIngestControlPanel.bnReprocessJob.text=Reprocess Job
-AutoIngestControlPanel.bnDeleteCase.text=&Delete Case
 AutoIngestControlPanel.bnShowCaseLog.text=Show Case &Log
 AutoIngestControlPanel.bnPause.text=Pause
 AutoIngestControlPanel.bnRefresh.text=&Refresh
@@ -407,3 +430,4 @@ AinStatusDashboard.refreshButton.text=&Refresh
 AinStatusDashboard.clusterMetricsButton.text=Auto Ingest &Metrics
 AinStatusDashboard.nodeStatusTableTitle.text=Auto Ingest Nodes
 AinStatusDashboard.healthMonitorButton.text=Health Monitor
+CasesDashboardTopComponent.refreshButton.text=Refresh

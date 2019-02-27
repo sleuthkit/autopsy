@@ -72,7 +72,7 @@ final class AutoIngestMetricsCollector {
                     switch (processingStatus) {
                         case PENDING:
                         case PROCESSING:
-                        case DELETED:
+                        case DELETED: // No longer used, retained for legacy jobs only.
                             /*
                              * These are not jobs we care about for metrics, so
                              * we will ignore them.
