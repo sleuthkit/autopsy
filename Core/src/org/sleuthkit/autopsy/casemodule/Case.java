@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -68,7 +68,7 @@ import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
 import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
-import org.sleuthkit.autopsy.casemodule.datasourceSummary.DataSourceSummaryAction;
+import org.sleuthkit.autopsy.casemodule.datasourcesummary.DataSourceSummaryAction;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -762,11 +762,11 @@ public class Case {
                     logger.log(Level.INFO, String.format("Used %d s to fail to acquire case directory coordination service lock for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
                     throw new CaseActionException(Bundle.Case_exceptionMessage_failedToDeleteCoordinationServiceNodes(), ex);
                 }
-            }
-            try {
-                deleteCoordinationServiceNodes(metadata, progressIndicator);
-            } catch (CoordinationServiceException ex) {
-                throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock(), ex);
+                try {
+                    deleteCoordinationServiceNodes(metadata, progressIndicator);
+                } catch (CoordinationServiceException ex) {
+                    throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock(), ex);
+                }
             }
         } finally {
             progressIndicator.finish();
@@ -1091,19 +1091,18 @@ public class Case {
      *
      * @param caseDir The full path of the case directory.
      *
-     * @return The lock.
+     * @return The lock or null if the lock could not be acquired.
      *
      * @throws CaseActionException with a user-friendly message if the lock
-     *                             cannot be acquired.
+     *                             cannot be acquired due to an exception.
      */
-    @Messages({"Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources"})
+    @Messages({
+        "Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources"
+    })
     private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseDir) throws CaseActionException {
         try {
             String resourcesNodeName = caseDir + "_resources";
             Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, RESOURCES_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
-            if (null == lock) {
-                throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
-            }
             return lock;
         } catch (InterruptedException ex) {
             throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
@@ -1172,7 +1171,7 @@ public class Case {
                  */
                 CallableSystemAction.get(AddImageAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
-                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
@@ -1226,7 +1225,7 @@ public class Case {
                  */
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
-                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseDetailsAction.class).setEnabled(false);
                 CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
@@ -1910,7 +1909,9 @@ public class Case {
                 progressIndicator.progress(Bundle.Case_progressMessage_preparingToOpenCaseResources());
                 acquireSharedCaseDirLock(metadata.getCaseDirectory());
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
-                    assert (resourcesLock != null); // Use reference to avoid compile time warning.
+                    if (null == resourcesLock) {
+                        throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
+                    }
                     open(isNewCase, progressIndicator);
                 } catch (CaseActionException ex) {
                     releaseSharedCaseDirLock(getMetadata().getCaseDirectory());
@@ -2026,6 +2027,43 @@ public class Case {
             close(progressIndicator);
             throw ex;
         }
+    }
+
+    /**
+     * Create an empty portable case from the current case
+     *
+     * @param caseName           Case name
+     * @param portableCaseFolder Case folder - must not exist
+     *
+     * @return The portable case database
+     *
+     * @throws TskCoreException
+     */
+    public SleuthkitCase createPortableCase(String caseName, File portableCaseFolder) throws TskCoreException {
+
+        if (portableCaseFolder.exists()) {
+            throw new TskCoreException("Portable case folder " + portableCaseFolder.toString() + " already exists");
+        }
+        if (!portableCaseFolder.mkdirs()) {
+            throw new TskCoreException("Error creating portable case folder " + portableCaseFolder.toString());
+        }
+
+        CaseDetails details = new CaseDetails(caseName, getNumber(), getExaminer(),
+                getExaminerPhone(), getExaminerEmail(), getCaseNotes());
+        try {
+            CaseMetadata portableCaseMetadata = new CaseMetadata(Case.CaseType.SINGLE_USER_CASE, portableCaseFolder.toString(),
+                    caseName, details, metadata);
+            portableCaseMetadata.setCaseDatabaseName(SINGLE_USER_CASE_DB_NAME);
+        } catch (CaseMetadataException ex) {
+            throw new TskCoreException("Error creating case metadata", ex);
+        }
+
+        // Create the Sleuthkit case
+        SleuthkitCase portableSleuthkitCase;
+        String dbFilePath = Paths.get(portableCaseFolder.toString(), SINGLE_USER_CASE_DB_NAME).toString();
+        portableSleuthkitCase = SleuthkitCase.newCase(dbFilePath);
+
+        return portableSleuthkitCase;
     }
 
     /**
@@ -2455,7 +2493,9 @@ public class Case {
                  */
                 progressIndicator.progress(Bundle.Case_progressMessage_preparing());
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseDirectory())) {
-                    assert (null != resourcesLock);
+                    if (null == resourcesLock) {
+                        throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
+                    }
                     close(progressIndicator);
                 } finally {
                     /*

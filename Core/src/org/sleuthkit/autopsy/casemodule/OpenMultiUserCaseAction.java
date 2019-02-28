@@ -24,7 +24,7 @@ import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.SwingUtilities;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
@@ -42,6 +42,9 @@ final class OpenMultiUserCaseAction extends AbstractAction {
      * Constructs an action that opens a multi-user case and hides the open
      * multi-user case dialog given the coordination service node data for the
      * case.
+     *
+     * @param caseNodeData The coordination service node data for the case
+     *                     associated with this action.
      */
     @NbBundle.Messages({
         "OpenMultiUserCaseAction.menuItemText=Open Case"
@@ -92,7 +95,6 @@ final class OpenMultiUserCaseAction extends AbstractAction {
 
     @Override
     public OpenMultiUserCaseAction clone() throws CloneNotSupportedException {
-        super.clone();
         throw new CloneNotSupportedException();
     }
 

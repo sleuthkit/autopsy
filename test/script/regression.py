@@ -388,7 +388,8 @@ class TestRunner(object):
         try:
             shutil.copytree(output_html_report_dir, gold_html_report_dir)
         except OSError as e:
-            errors.append(e.error())
+            errors.append("Error: OSError while attempting to copy file " + e.filename)
+            errors.append(str(e) + "\n")
         except Exception as e:
             errors.append("Error: Unknown fatal error when rebuilding the gold html report.")
             errors.append(str(e) + "\n")
@@ -1074,7 +1075,8 @@ class TestResultsDiffer(object):
                 diff_file.write(str(e.output.decode("utf-8")))
                 return False
         except OSError as e:
-            e.print_error()
+            Errors.print_error("Error: OSError while performing html report diff")
+            Errors.print_error(str(e) + "\n")
             return False
         except Exception as e:
             Errors.print_error("Error: Unknown fatal error comparing reports.")
