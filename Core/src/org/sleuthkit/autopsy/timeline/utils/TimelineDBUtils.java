@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.timeline.utils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
-import java.util.regex.Pattern;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;

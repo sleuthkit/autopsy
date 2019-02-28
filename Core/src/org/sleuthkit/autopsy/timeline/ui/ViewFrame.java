@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
+import org.sleuthkit.autopsy.timeline.actions.CreateManualEvent;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
@@ -216,6 +217,8 @@ final public class ViewFrame extends BorderPane {
     private ToggleButton listToggle;
 
     @FXML
+    private Button addEventButton;
+    @FXML
     private Button snapShotButton;
     @FXML
     private Button refreshButton;
@@ -395,6 +398,7 @@ final public class ViewFrame extends BorderPane {
         controller.viewModeProperty().addListener(viewMode -> syncViewMode());
         syncViewMode();
 
+        ActionUtils.configureButton(new CreateManualEvent(controller), addEventButton);
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
 
         /////configure start and end pickers
