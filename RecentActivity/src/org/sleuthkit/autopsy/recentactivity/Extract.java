@@ -248,7 +248,7 @@ abstract class Extract {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (url != null) ? url : ""));
+                (url != null) ? url : "")); //NON-NLS
 
         if (accessTime != null) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
@@ -257,23 +257,23 @@ abstract class Extract {
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (referrer != null) ? referrer : ""));
+                (referrer != null) ? referrer : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (title != null) ? title : ""));
+                (title != null) ? title : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (programName != null) ? programName : ""));
+                (programName != null) ? programName : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (domain != null) ? domain : ""));
+                (domain != null) ? domain : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (user != null) ? user : ""));
+                (user != null) ? user : "")); //NON-NLS
 
         return bbattributes;
     }
@@ -295,7 +295,7 @@ abstract class Extract {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (url != null) ? url : ""));
+                (url != null) ? url : "")); //NON-NLS
 
         if (creationTime != null) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
@@ -304,19 +304,19 @@ abstract class Extract {
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (name != null) ? name : ""));
+                (name != null) ? name : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (value != null) ? value : ""));
+                (value != null) ? value : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (programName != null) ? programName : ""));
+                (programName != null) ? programName : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (domain != null) ? domain : ""));
+                (domain != null) ? domain : "")); //NON-NLS
 
         return bbattributes;
     }
@@ -336,11 +336,11 @@ abstract class Extract {
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (url != null) ? url : ""));
+                (url != null) ? url : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (title != null) ? title : ""));
+                (title != null) ? title : "")); //NON-NLS
 
         if (creationTime != null) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
@@ -349,11 +349,11 @@ abstract class Extract {
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (programName != null) ? programName : ""));
+                (programName != null) ? programName : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (domain != null) ? domain : ""));
+                (domain != null) ? domain : "")); //NON-NLS
 
         return bbattributes;
     }
@@ -373,7 +373,7 @@ abstract class Extract {
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (path != null) ? path : ""));
+                (path != null) ? path : "")); //NON-NLS
 
         if (pathID != null && pathID != -1) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
@@ -383,7 +383,7 @@ abstract class Extract {
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (url != null) ? url : ""));
+                (url != null) ? url : "")); //NON-NLS
 
         if (accessTime != null) {
             bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
@@ -392,21 +392,22 @@ abstract class Extract {
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (domain != null) ? domain : ""));
+                (domain != null) ? domain : "")); //NON-NLS
 
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (programName != null) ? programName : ""));
+                (programName != null) ? programName : "")); //NON-NLS
 
         return bbattributes;
     }
     
     /**
-     * Create temporary file for the given AbstractFile
+     * Create temporary file for the given AbstractFile.  The new file will be 
+     * created in the temp directory for the module with a unique file name.
      * 
      * @param context
      * @param file
-     * @return
+     * @return Newly created copy of the AbstractFile
      * @throws IOException 
      */
     protected java.io.File createTemporaryFile(IngestJobContext context, AbstractFile file) throws IOException{

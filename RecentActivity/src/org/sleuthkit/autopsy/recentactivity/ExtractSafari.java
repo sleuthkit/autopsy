@@ -82,17 +82,17 @@ final class ExtractSafari extends Extract {
     private static final String PLIST_KEY_DOWNLOAD_PATH = "DownloadEntryPath"; //NON-NLS
     private static final String PLIST_KEY_DOWNLOAD_HISTORY = "DownloadHistory"; //NON-NLS
 
-    private final Logger logger = Logger.getLogger(this.getClass().getName());
+    private static final Logger LOG = Logger.getLogger(ExtractSafari.class.getName());
 
     @Messages({
         "ExtractSafari_Module_Name=Safari",
         "ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files.",
         "ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files",
-        "ExtractSafari_Error_Parsing_Cookies=An error occured while processing Safari Bookmark files",
+        "ExtractSafari_Error_Parsing_Cookies=An error occured while processing Safari Cookies files",
     })
 
     /**
-     * Extract the bookmarks, cookies, downloads and history from Safari
+     * Extract the bookmarks, cookies, downloads and history from Safari.
      *
      */
     ExtractSafari() {
@@ -113,34 +113,34 @@ final class ExtractSafari extends Extract {
 
         } catch (IOException | TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Getting_History());
-            logger.log(Level.SEVERE, "Exception thrown while processing history file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while processing history file: {0}", ex); //NON-NLS
         }
 
         try {
             processBookmarkPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
-            logger.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
         }
         
          try {
             processDownloadsPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
-            logger.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Download.plist file: {0}", ex); //NON-NLS
         }
 
         try {
             processBinaryCookieFile(dataSource, context);
         } catch (IOException | TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Cookies());
-            logger.log(Level.SEVERE, "Exception thrown while processing Safarri cookies file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while processing Safari cookies file: {0}", ex); //NON-NLS
         }
     }
 
     /**
      * Finds the all of the history.db files in the case looping through them to
-     * find all of the history artifacts
+     * find all of the history artifacts.
      *
      * @throws TskCoreException
      * @throws IOException
@@ -166,7 +166,7 @@ final class ExtractSafari extends Extract {
     }
 
     /**
-     * Finds all Bookmark.plist files and looks for bookmark entries
+     * Finds all Bookmark.plist files and looks for bookmark entries.
      * @param dataSource
      * @param context
      * @throws TskCoreException
@@ -348,14 +348,16 @@ final class ExtractSafari extends Extract {
                         BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
             }
         } finally {
-            tempFile.delete();
+            if (tempFile != null) {
+                tempFile.delete();
+            }
         }
 
     }
     
     /**
      * Creates a temporary copy of the Cookie file and creates a list of cookie 
-     * BlackboardArtifacts
+     * BlackboardArtifacts.
      * 
      * @param context IngetstJobContext
      * @param file Original Cookie file from the case
@@ -551,7 +553,7 @@ final class ExtractSafari extends Extract {
 
     /**
      * Parses the plist object to find the bookmark child objects, then creates
-     * an artifact with the bookmark information
+     * an artifact with the bookmark information.
      *
      * @param bbartifacts BlackboardArtifact list to add new the artifacts to
      * @param origFile The origFile Bookmark.plist file from the case
