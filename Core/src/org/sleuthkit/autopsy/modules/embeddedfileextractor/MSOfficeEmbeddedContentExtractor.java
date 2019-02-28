@@ -302,8 +302,9 @@ class MSOfficeEmbeddedContentExtractor {
         }
         List<ExtractedFile> listOfExtractedImages = new ArrayList<>();
         byte[] data = null;
+        int pictureNumber = 0;
         for (Picture picture : listOfAllPictures) {
-            String fileName = picture.suggestFullFileName();
+            String fileName = String.valueOf(pictureNumber) + picture.suggestFullFileName();
             try {
                 data = picture.getContent();
             } catch (Exception ex) {
@@ -312,6 +313,7 @@ class MSOfficeEmbeddedContentExtractor {
             writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
             // TODO Extract more info from the Picture viz ctime, crtime, atime, mtime
             listOfExtractedImages.add(new ExtractedFile(fileName, getFileRelativePath(fileName), picture.getSize()));
+            pictureNumber++;
         }
 
         return listOfExtractedImages;
