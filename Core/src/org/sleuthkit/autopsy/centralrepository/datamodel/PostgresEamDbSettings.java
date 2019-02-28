@@ -491,7 +491,7 @@ public final class PostgresEamDbSettings {
                 + "name text NOT NULL,datasource_obj_id BIGINT,md5 text DEFAULT NULL,"
                 + "sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
-                + "CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id))";
+                + "CONSTRAINT datasource_unique UNIQUE (case_id, datasource_obj_id))";
     }
 
     /**

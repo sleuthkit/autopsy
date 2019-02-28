@@ -3588,6 +3588,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 switch (selectedPlatform) {
                     case POSTGRESQL:
                         statement.execute("ALTER TABLE data_sources DROP CONSTRAINT datasource_unique");
+                        //unique constraint for upgraded data_sources table is purposefully different than new data_sources table
                         statement.execute("ALTER TABLE data_sources ADD CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id)");
 
                         break;
@@ -3595,7 +3596,12 @@ abstract class AbstractSqlEamDb implements EamDb {
                         statement.execute("DROP INDEX IF EXISTS data_sources_name");
                         statement.execute("DROP INDEX IF EXISTS data_sources_object_id");
                         statement.execute("ALTER TABLE data_sources RENAME TO old_data_sources");
-                        statement.execute(SqliteEamDbSettings.getCreateDataSourcesTableStatement());
+                        //unique constraint for upgraded data_sources table is purposefully different than new data_sources table
+                        statement.execute("CREATE TABLE IF NOT EXISTS data_sources (id integer primary key autoincrement NOT NULL,"
+                                + "case_id integer NOT NULL,device_id text NOT NULL,name text NOT NULL,datasource_obj_id integer,"
+                                + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
+                                + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
+                                + "CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id))");
                         statement.execute(SqliteEamDbSettings.getAddDataSourcesNameIndexStatement());
                         statement.execute(SqliteEamDbSettings.getAddDataSourcesObjectIdIndexStatement());
                         statement.execute("INSERT INTO data_sources SELECT * FROM old_data_sources");
