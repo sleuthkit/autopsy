@@ -344,17 +344,19 @@ final class ChromeCacheExtractor {
          
         List<DerivedFile> derivedFiles = new ArrayList<>();
         
-        String fileName = cacheEntryAddress.getFilename(); 
+        String cacheEntryFileName = cacheEntryAddress.getFilename(); 
         String cachePath = cacheEntryAddress.getCachePath();
             
         
-        Optional<CacheFileCopy> cacheFileCopy = this.getCacheFileCopy(fileName, cachePath);
-        if (!cacheFileCopy.isPresent()) {
-            logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", cacheEntryAddress)); //NON-NLS
+        Optional<CacheFileCopy> cacheEntryFile = this.getCacheFileCopy(cacheEntryFileName, cachePath);
+        if (!cacheEntryFile.isPresent()) {
+            String msg = String.format("Failed to get cache entry at address %s", cacheEntryAddress);
+            throw new IngestModuleException(msg);
         }
 
+        
         // Get the cache entry and its data segments
-        CacheEntry cacheEntry = new CacheEntry(cacheEntryAddress, cacheFileCopy.get() );
+        CacheEntry cacheEntry = new CacheEntry(cacheEntryAddress, cacheEntryFile.get() );
         List<CacheData> dataEntries = cacheEntry.getData();
 
         BlackboardAttribute urlAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
@@ -400,10 +402,22 @@ final class ChromeCacheExtractor {
                             sourceArtifacts.add(sourceArtifact);
                         }
                         
-                        BlackboardArtifact webCacheArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
+                        BlackboardArtifact webCacheArtifact = cacheEntryFile.get().getAbstractFile().newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE);
                         if (webCacheArtifact != null) {
                             webCacheArtifact.addAttributes(webCacheAttributes);
-                            webCacheArtifacts.add(webCacheArtifact);
+           
+                             // Add path of f_* file as attribute
+                            webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
+                                moduleName, 
+                                dataFile.get().getUniquePath())); //NON-NLS
+                            
+                            long pathID = Util.findID(dataSource, dataFile.get().getUniquePath()); //NON-NLS
+                            if (pathID != -1) {
+                                webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                                        moduleName, pathID));
+                            }
+                            
+                             webCacheArtifacts.add(webCacheArtifact);
                         }
                         
                         if (isBrotliCompressed) {
@@ -417,7 +431,6 @@ final class ChromeCacheExtractor {
 
                     // Data segments in "data_x" files are saved in individual files and added as derived files
                     String filename = data.save();
-
                     String relPathname = getRelOutputFolderName() + data.getAddress().getCachePath() + filename; 
                     try {
                         DerivedFile derivedFile = fileManager.addDerivedFile(filename, relPathname,
@@ -437,19 +450,19 @@ final class ChromeCacheExtractor {
                             sourceArtifacts.add(sourceArtifact);
                         }    
                        
-                        BlackboardArtifact webCacheArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE); 
+                        BlackboardArtifact webCacheArtifact =  cacheEntryFile.get().getAbstractFile().newArtifact(ARTIFACT_TYPE.TSK_WEB_CACHE); 
                         if (webCacheArtifact != null) {
                             webCacheArtifact.addAttributes(webCacheAttributes);
                             
+                            // Add path of derived file as attribute
                             webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
                                 moduleName, 
-                                dataFile.get().getUniquePath())); //NON-NLS
-                                                      
-                                long pathID = Util.findID(dataSource, dataFile.get().getUniquePath()); //NON-NLS
-                                if (pathID != -1) {
-                                    webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
-                                            moduleName, pathID));
-                                }
+                                derivedFile.getUniquePath())); //NON-NLS 
+                            long pathID = Util.findID(dataSource, derivedFile.getUniquePath()); //NON-NLS
+                            if (pathID != -1) {
+                                webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                                        moduleName, pathID));
+                            }
                 
                             webCacheArtifacts.add(webCacheArtifact);
                         }
