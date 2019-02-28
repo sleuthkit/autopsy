@@ -165,7 +165,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
      * Lazily setup Singleton connection on first request.
      *
      * @param foreignKeys -ignored arguement with postgres databases
-     * 
+     *
      * @return A connection from the connection pool.
      *
      * @throws EamDbException

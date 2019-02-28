@@ -477,7 +477,7 @@ public final class PostgresEamDbSettings {
                 + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
                 + "foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL)");
     }
-    
+
     /**
      * Get the statement String for creating a new data_sources table in a
      * Postgres central repository.

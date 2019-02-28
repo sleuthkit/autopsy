@@ -3594,7 +3594,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                     case SQLITE:
                         statement.execute("DROP INDEX IF EXISTS data_sources_name");
                         statement.execute("DROP INDEX IF EXISTS data_sources_object_id");
-                        statement.execute("ALTER TABLE data_sources RENAME TO old_data_sources");                 
+                        statement.execute("ALTER TABLE data_sources RENAME TO old_data_sources");
                         statement.execute(SqliteEamDbSettings.getCreateDataSourcesTableStatement());
                         statement.execute(SqliteEamDbSettings.getAddDataSourcesNameIndexStatement());
                         statement.execute(SqliteEamDbSettings.getAddDataSourcesObjectIdIndexStatement());
