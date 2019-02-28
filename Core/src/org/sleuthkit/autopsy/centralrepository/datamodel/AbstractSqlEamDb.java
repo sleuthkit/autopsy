@@ -108,7 +108,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Setup and create a connection to the selected database implementation
      */
-    protected abstract Connection connect() throws EamDbException;
+    protected abstract Connection connect(boolean foreignKeys) throws EamDbException;
 
     /**
      * Add a new name/value pair in the db_info table.
@@ -120,7 +120,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void newDbInfo(String name, String value) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         String sql = "INSERT INTO db_info (name, value) VALUES (?, ?) "
@@ -141,7 +141,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
     @Override
     public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
         PreparedStatement preparedStatement = null;
         String sql = "UPDATE data_sources SET datasource_obj_id=? WHERE id=?";
         try {
@@ -168,7 +168,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public String getDbInfo(String name) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -213,7 +213,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void updateDbInfo(String name, String value) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         String sql = "UPDATE db_info SET value=? WHERE name=?";
@@ -252,7 +252,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return cRCase;
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
         PreparedStatement preparedStatement = null;
 
         String sql = "INSERT INTO cases(case_uid, org_id, case_name, creation_date, case_number, "
@@ -362,7 +362,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         String sql = "UPDATE cases "
@@ -447,7 +447,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return The retrieved case
      */
     private CorrelationCase getCaseByUUIDFromCr(String caseUUID) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         CorrelationCase eamCaseResult = null;
         PreparedStatement preparedStatement = null;
@@ -508,7 +508,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return The retrieved case
      */
     private CorrelationCase getCaseByIdFromCr(int caseId) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         CorrelationCase eamCaseResult = null;
         PreparedStatement preparedStatement = null;
@@ -548,7 +548,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<CorrelationCase> getCases() throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<CorrelationCase> cases = new ArrayList<>();
         CorrelationCase eamCaseResult;
@@ -626,7 +626,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return eamDataSource;
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         //The conflict clause exists in case multiple nodes are trying to add the data source because it did not exist at the same time
@@ -733,7 +733,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     private CorrelationDataSource getDataSourceFromCr(int correlationCaseId, Long dataSourceObjectId) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         CorrelationDataSource eamDataSourceResult = null;
         PreparedStatement preparedStatement = null;
@@ -797,7 +797,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @return The data source
      */
     private CorrelationDataSource getDataSourceByIdFromCr(CorrelationCase correlationCase, int dataSourceId) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         CorrelationDataSource eamDataSourceResult = null;
         PreparedStatement preparedStatement = null;
@@ -834,7 +834,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<CorrelationDataSource> getDataSources() throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<CorrelationDataSource> dataSources = new ArrayList<>();
         CorrelationDataSource eamDataSourceResult;
@@ -904,7 +904,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation data source is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         String sql = "UPDATE data_sources "
@@ -940,7 +940,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
 
@@ -983,7 +983,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void addArtifactInstance(CorrelationAttributeInstance eamArtifact) throws EamDbException {
         checkAddArtifactInstanceNulls(eamArtifact);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
 
@@ -1068,7 +1068,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
 
@@ -1133,7 +1133,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (filePath == null) {
             throw new EamDbException("Correlation value is null");
         }
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
 
@@ -1197,7 +1197,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public Long getCountArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         Long instanceCount = 0L;
         PreparedStatement preparedStatement = null;
@@ -1251,7 +1251,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         Long instanceCount = 0L;
         PreparedStatement preparedStatement = null;
@@ -1284,7 +1284,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
     @Override
     public Long getCountUniqueDataSources() throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         Long instanceCount = 0L;
         PreparedStatement preparedStatement = null;
@@ -1321,7 +1321,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public Long getCountArtifactInstancesByCaseDataSource(CorrelationDataSource correlationDataSource) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         Long instanceCount = 0L;
         List<CorrelationAttributeInstance.Type> artifactTypes = getDefinedCorrelationTypes();
@@ -1394,7 +1394,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void commitAttributeInstancesBulk() throws EamDbException {
         List<CorrelationAttributeInstance.Type> artifactTypes = getDefinedCorrelationTypes();
 
-        Connection conn = connect();
+        Connection conn = connect(true);
         PreparedStatement bulkPs = null;
 
         try {
@@ -1501,7 +1501,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return;
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         int counter = 0;
         PreparedStatement bulkPs = null;
@@ -1589,7 +1589,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (eamArtifact.getCorrelationDataSource() == null) {
             throw new EamDbException("Correlation data source is null");
         }
-        Connection conn = connect();
+        Connection conn = connect(true);
         PreparedStatement preparedQuery = null;
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         String sqlUpdate
@@ -1639,7 +1639,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -1707,7 +1707,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation file path is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -1776,7 +1776,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation data source is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedUpdate = null;
         PreparedStatement preparedQuery = null;
@@ -1858,7 +1858,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
 
@@ -1922,7 +1922,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation type is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
 
@@ -1981,7 +1981,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         Long badInstances = 0L;
         PreparedStatement preparedStatement = null;
@@ -2028,7 +2028,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         Collection<String> caseNames = new LinkedHashSet<>();
 
@@ -2087,7 +2087,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     private void deleteReferenceSetEntry(int referenceSetID) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         String sql = "DELETE FROM reference_sets WHERE id=?";
@@ -2113,7 +2113,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     private void deleteReferenceSetEntries(int referenceSetID) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         String sql = "DELETE FROM %s WHERE reference_set_id=?";
@@ -2186,7 +2186,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String normalizeValued = CorrelationAttributeNormalizer.normalize(this.getCorrelationTypeById(correlationTypeID), value);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         Long matchingInstances = 0L;
         PreparedStatement preparedStatement = null;
@@ -2232,7 +2232,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             return false;
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         Long badInstances = 0L;
         PreparedStatement preparedStatement = null;
@@ -2275,7 +2275,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Callback interface is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
@@ -2319,7 +2319,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Where clause is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
@@ -2350,7 +2350,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("EamOrganization already has an ID");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
         ResultSet generatedKeys = null;
         PreparedStatement preparedStatement = null;
         String sql = "INSERT INTO organizations(org_name, poc_name, poc_email, poc_phone) VALUES (?, ?, ?, ?) "
@@ -2389,7 +2389,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<EamOrganization> getOrganizations() throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<EamOrganization> orgs = new ArrayList<>();
         PreparedStatement preparedStatement = null;
@@ -2424,7 +2424,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public EamOrganization getOrganizationByID(int orgID) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -2492,7 +2492,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void updateOrganization(EamOrganization updatedOrganization) throws EamDbException {
         testArgument(updatedOrganization);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
         PreparedStatement preparedStatement = null;
         String sql = "UPDATE organizations SET org_name = ?, poc_name = ?, poc_email = ?, poc_phone = ? WHERE id = ?";
         try {
@@ -2515,7 +2515,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public void deleteOrganization(EamOrganization organizationToDelete) throws EamDbException {
         testArgument(organizationToDelete);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
         PreparedStatement checkIfUsedStatement = null;
         ResultSet resultSet = null;
         String checkIfUsedSql = "SELECT (select count(*) FROM cases WHERE org_id=?) + (select count(*) FROM reference_sets WHERE org_id=?)";
@@ -2566,7 +2566,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Type on the EamGlobalSet is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
@@ -2618,7 +2618,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public EamGlobalSet getReferenceSetByID(int referenceSetID) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement1 = null;
         ResultSet resultSet = null;
@@ -2660,7 +2660,7 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
 
         List<EamGlobalSet> results = new ArrayList<>();
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement1 = null;
         ResultSet resultSet = null;
@@ -2701,7 +2701,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation type is null");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
 
@@ -2737,7 +2737,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public boolean referenceSetExists(String referenceSetName, String version) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement1 = null;
         ResultSet resultSet = null;
@@ -2774,7 +2774,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Null set of EamGlobalFileInstance");
         }
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement bulkPs = null;
         try {
@@ -2827,7 +2827,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String aValue) throws EamDbException, CorrelationAttributeNormalizationException {
         String normalizeValued = CorrelationAttributeNormalizer.normalize(aType, aValue);
 
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<EamGlobalFileInstance> globalFileInstances = new ArrayList<>();
         PreparedStatement preparedStatement1 = null;
@@ -2888,7 +2888,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     public int newCorrelationTypeNotKnownId(CorrelationAttributeInstance.Type newType) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         PreparedStatement preparedStatementQuery = null;
@@ -2941,7 +2941,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     private int newCorrelationTypeKnownId(CorrelationAttributeInstance.Type newType) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         PreparedStatement preparedStatementQuery = null;
@@ -2987,7 +2987,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
     @Override
     public List<CorrelationAttributeInstance.Type> getDefinedCorrelationTypes() throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<CorrelationAttributeInstance.Type> aTypes = new ArrayList<>();
         PreparedStatement preparedStatement = null;
@@ -3022,7 +3022,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<CorrelationAttributeInstance.Type> getEnabledCorrelationTypes() throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<CorrelationAttributeInstance.Type> aTypes = new ArrayList<>();
         PreparedStatement preparedStatement = null;
@@ -3057,7 +3057,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public List<CorrelationAttributeInstance.Type> getSupportedCorrelationTypes() throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         List<CorrelationAttributeInstance.Type> aTypes = new ArrayList<>();
         PreparedStatement preparedStatement = null;
@@ -3090,7 +3090,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void updateCorrelationType(CorrelationAttributeInstance.Type aType) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         PreparedStatement preparedStatement = null;
         String sql = "UPDATE correlation_types SET display_name=?, db_table_name=?, supported=?, enabled=? WHERE id=?";
@@ -3144,7 +3144,7 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     private CorrelationAttributeInstance.Type getCorrelationTypeByIdFromCr(int typeId) throws EamDbException {
-        Connection conn = connect();
+        Connection conn = connect(true);
 
         CorrelationAttributeInstance.Type aType;
         PreparedStatement preparedStatement = null;
@@ -3338,12 +3338,13 @@ abstract class AbstractSqlEamDb implements EamDb {
         Statement statement = null;
         PreparedStatement preparedStatement = null;
         Connection conn = null;
+        EamDbPlatformEnum selectedPlatform = null;
         try {
 
-            conn = connect();
+            conn = connect(false);
             conn.setAutoCommit(false);
             statement = conn.createStatement();
-
+            selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
             int minorVersion = 0;
             String minorVersionStr = null;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
@@ -3396,8 +3397,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 logger.log(Level.INFO, "Central Repository is of newer version than software creates");
                 return;
             }
-
-            EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
 
             /*
              * Update to 1.1
@@ -3590,10 +3589,12 @@ abstract class AbstractSqlEamDb implements EamDb {
                     case POSTGRESQL:
                         statement.execute("ALTER TABLE data_sources DROP CONSTRAINT datasource_unique");
                         statement.execute("ALTER TABLE data_sources ADD CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id)");
-                        
+
                         break;
                     case SQLITE:
-                        statement.execute("ALTER TABLE data_sources RENAME TO old_data_sources");
+                        statement.execute("DROP INDEX IF EXISTS data_sources_name");
+                        statement.execute("DROP INDEX IF EXISTS data_sources_object_id");
+                        statement.execute("ALTER TABLE data_sources RENAME TO old_data_sources");                 
                         statement.execute(SqliteEamDbSettings.getCreateDataSourcesTableStatement());
                         statement.execute(SqliteEamDbSettings.getAddDataSourcesNameIndexStatement());
                         statement.execute(SqliteEamDbSettings.getAddDataSourcesObjectIdIndexStatement());
