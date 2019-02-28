@@ -46,9 +46,13 @@ import static javax.swing.JOptionPane.DEFAULT_OPTION;
 import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
 import javax.swing.JPanel;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
@@ -138,7 +142,20 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // Set background of every nth row as light grey.
         TableCellRenderer renderer = new DataContentViewerOtherCasesTableCellRenderer();
         otherCasesTable.setDefaultRenderer(Object.class, renderer);
-
+        
+        // Configure column sorting.
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(otherCasesTable.getModel());
+        otherCasesTable.setRowSorter(sorter);
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+        
+        int caseNameColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.CASE_NAME.ordinal();
+        sortKeys.add(new RowSorter.SortKey(caseNameColumnIndex, SortOrder.ASCENDING));
+        
+        int dataSourceColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.DATA_SOURCE.ordinal();
+        sortKeys.add(new RowSorter.SortKey(dataSourceColumnIndex, SortOrder.ASCENDING));
+        
+        sorter.setSortKeys(sortKeys);
+        sorter.sort();
     }
 
     @Messages({"DataContentViewerOtherCases.correlatedArtifacts.isEmpty=There are no files or artifacts to correlate.",
