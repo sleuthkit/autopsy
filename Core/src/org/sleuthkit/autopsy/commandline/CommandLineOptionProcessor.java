@@ -102,7 +102,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                     return;
                 }
 
-                if (modeString.toLowerCase().equals("true")) {
+                if (modeString.equalsIgnoreCase("true")) {
                     this.runFromCommandLine = true;
                 }
 

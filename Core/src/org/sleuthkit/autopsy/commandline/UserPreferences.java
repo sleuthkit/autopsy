@@ -24,7 +24,7 @@ import org.openide.util.NbPreferences;
  * Provides convenient access to a UserPreferences node for user preferences
  * with default values.
  */
-public class UserPreferences {
+public final class UserPreferences {
 
     private static final java.util.prefs.Preferences preferences = NbPreferences.forModule(UserPreferences.class);
     private static final String COMMAND_LINE_MODE_RESULTS_FOLDER = "CommandLineModeResultsFolder"; // NON-NLS

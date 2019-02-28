@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.commandline;
 
+import java.awt.Dimension;
 import javax.swing.JDialog;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -33,9 +34,11 @@ import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
 public class CommandLineStartupWindow extends JDialog implements StartupWindowInterface {
     
     private static final String TITLE = NbBundle.getMessage(CommandLineStartupWindow.class, "CommandLineStartupWindow.title.text");
+    private static final Dimension DIMENSIONS = new Dimension(300, 50);
 
     public CommandLineStartupWindow() {
         super(WindowManager.getDefault().getMainWindow(), TITLE, true);
+        setSize(DIMENSIONS);
         add(new CommandLinePanel());
         pack();
         setResizable(false);

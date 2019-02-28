@@ -131,13 +131,7 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
             // check if we are running from command line
             runningFromCommandLine = ((CommandLineOptionProcessor) processor).isRunFromCommandLine();
-            if (!runningFromCommandLine) {
-                // if we are NOT running from command line, exit here and don't start IngestJobRunningService");
-                return false;
-            }
-
-            // Autopsy is running from command line
-            return true;
+            return runningFromCommandLine;
         }
         return false;
     }

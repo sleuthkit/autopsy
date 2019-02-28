@@ -68,7 +68,6 @@ public class CommandLineIngestManager {
     private static final Logger LOGGER = Logger.getLogger(CommandLineIngestManager.class.getName());
     private static final String JOB_RUNNING_THREAD_NAME = "command-line-job-running-service-%d";
     private final ExecutorService jobProcessingExecutor;
-    private JobProcessingTask jobProcessingTask;
     private Future<?> jobProcessingTaskFuture;
     private Path rootOutputDirectory;
 
@@ -77,7 +76,7 @@ public class CommandLineIngestManager {
     }
 
     public void start() {
-        jobProcessingTask = new JobProcessingTask();
+        JobProcessingTask jobProcessingTask = new JobProcessingTask();
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
     }
 
@@ -156,7 +155,6 @@ public class CommandLineIngestManager {
                     System.out.println("Data source file not found " + dataSourcePath);
                     return;
                 }
-                DataSource dataSource = new DataSource("", Paths.get(dataSourcePath));
 
                 // read options panel configuration
                 String rootOutputDir = UserPreferences.getCommandLineModeResultsFolder();
@@ -181,6 +179,7 @@ public class CommandLineIngestManager {
                     return;
                 }
 
+                DataSource dataSource = new DataSource("", Paths.get(dataSourcePath));
                 try {
                     // run data source processor
                     runDataSourceProcessor(caseForJob, dataSource);
@@ -264,7 +263,6 @@ public class CommandLineIngestManager {
         private void runDataSourceProcessor(Case caseForJob, DataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
             LOGGER.log(Level.INFO, "Adding data source {0} ", dataSource.getPath().toString());
-            DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
 
             // Get an ordered list of data source processors to try
             List<AutoIngestDataSourceProcessor> validDataSourceProcessors;
@@ -282,7 +280,8 @@ public class CommandLineIngestManager {
                 LOGGER.log(Level.SEVERE, "Unsupported data source {0}", dataSource.getPath());  // NON-NLS
                 return;
             }
-
+            
+            DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             synchronized (ingestLock) {
                 // Try each DSP in decreasing order of confidence
                 for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
