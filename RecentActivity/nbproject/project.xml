@@ -76,7 +76,7 @@
             <public-packages/>
             <class-path-extension>
                 <runtime-relative-path>ext/dd-plist-1.20.jar</runtime-relative-path>
-                <binary-origin>C:\Users\kelly\Workspace\autopsy\RecentActivity\release\modules\ext\dd-plist-1.20.jar</binary-origin>
+                <binary-origin>release/modules/ext/dd-plist-1.20.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
