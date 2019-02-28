@@ -66,6 +66,8 @@ final class ExtractSafari extends Extract {
     private static final String BOOKMARK_FILE_NAME = "Bookmarks.plist"; //NON-NLS
     private static final String DOWNLOAD_FILE_NAME = "Downloads.plist"; //NON-NLS
     private static final String COOKIE_FILE_NAME = "Cookies.binarycookies"; //NON-NLS
+    private static final String COOKIE_FOLDER = "Cookies";
+    private static final String SAFARI_FOLDER = "Safari";
 
     private static final String HEAD_URL = "url"; //NON-NLS
     private static final String HEAD_TITLE = "title"; //NON-NLS
@@ -146,7 +148,7 @@ final class ExtractSafari extends Extract {
     private void processHistoryDB(Content dataSource, IngestJobContext context) throws TskCoreException, IOException {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
-        List<AbstractFile> historyFiles = fileManager.findFiles(dataSource, HISTORY_FILE_NAME);
+        List<AbstractFile> historyFiles = fileManager.findFiles(dataSource, HISTORY_FILE_NAME, SAFARI_FOLDER);
 
         if (historyFiles == null || historyFiles.isEmpty()) {
             return;
@@ -177,7 +179,7 @@ final class ExtractSafari extends Extract {
     private void processBookmarkPList(Content dataSource, IngestJobContext context) throws TskCoreException, IOException, SAXException, PropertyListFormatException, ParseException, ParserConfigurationException {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
-        List<AbstractFile> files = fileManager.findFiles(dataSource, BOOKMARK_FILE_NAME);
+        List<AbstractFile> files = fileManager.findFiles(dataSource, BOOKMARK_FILE_NAME, SAFARI_FOLDER);
 
         if (files == null || files.isEmpty()) {
             return;
@@ -209,7 +211,7 @@ final class ExtractSafari extends Extract {
     private void processDownloadsPList(Content dataSource, IngestJobContext context) throws TskCoreException, IOException, SAXException, PropertyListFormatException, ParseException, ParserConfigurationException {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
-        List<AbstractFile> files = fileManager.findFiles(dataSource, DOWNLOAD_FILE_NAME);
+        List<AbstractFile> files = fileManager.findFiles(dataSource, DOWNLOAD_FILE_NAME, SAFARI_FOLDER);
 
         if (files == null || files.isEmpty()) {
             return;
@@ -236,7 +238,7 @@ final class ExtractSafari extends Extract {
     private void processBinaryCookieFile(Content dataSource, IngestJobContext context) throws TskCoreException, IOException {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
-        List<AbstractFile> files = fileManager.findFiles(dataSource, COOKIE_FILE_NAME);
+        List<AbstractFile> files = fileManager.findFiles(dataSource, COOKIE_FILE_NAME, COOKIE_FOLDER);
 
         if (files == null || files.isEmpty()) {
             return;
