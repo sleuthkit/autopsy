@@ -304,7 +304,7 @@ class MSOfficeEmbeddedContentExtractor {
         byte[] data = null;
         int pictureNumber = 0; //added to ensure uniqueness in cases where suggestFullFileName returns duplicates
         for (Picture picture : listOfAllPictures) {
-            String fileName =  UNKNOWN_IMAGE_NAME_PREFIX +pictureNumber + picture.suggestFileExtension();
+            String fileName =  UNKNOWN_IMAGE_NAME_PREFIX +pictureNumber +"."+ picture.suggestFileExtension();
             try {
                 data = picture.getContent();
             } catch (Exception ex) {
