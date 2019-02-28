@@ -72,7 +72,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     private Blackboard blackboard;
     
     private Case currentCase;
-    private SleuthkitCase tskCase;
 
     /**
      * Empty constructor.
