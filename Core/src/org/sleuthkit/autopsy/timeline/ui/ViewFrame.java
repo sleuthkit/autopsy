@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
-import org.sleuthkit.autopsy.timeline.actions.CreateManualEvent;
+import org.sleuthkit.autopsy.timeline.actions.AddManualEvent;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
@@ -117,13 +117,13 @@ final public class ViewFrame extends BorderPane {
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); //NON-NLS
     private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
 
-    private NotificationState notificationState = NotificationState.Ready;
-
-    enum NotificationState {
-        Showing,
-        Paused,
-        Ready;
-    }
+//    private NotificationState notificationState = NotificationState.Ready;
+//
+//    enum NotificationState {
+//        Showing,
+//        Paused,
+//        Ready;
+//    }
 
     /**
      * Region that will be stacked in between the no-events "dialog" and the
@@ -279,24 +279,24 @@ final public class ViewFrame extends BorderPane {
         }
     };
 
-    private final Timer notificationTimer = new Timer(30_000, new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent actionEvent) {
-            Platform.runLater(() -> {
-                switch (notificationState) {
-                    case Ready:
-                        break;
-                    case Showing:
-                        notificationPane.hide();
-                        notificationState = NotificationState.Paused;
-                        break;
-                    case Paused:
-                        notificationState = NotificationState.Ready;
-                        break;
-                }
-            });
-        }
-    });
+//    private final Timer notificationTimer = new Timer(30_000, new ActionListener() {
+//        @Override
+//        public void actionPerformed(ActionEvent actionEvent) {
+//            Platform.runLater(() -> {
+//                switch (notificationState) {
+//                    case Ready:
+//                        break;
+//                    case Showing:
+//                        notificationPane.hide();
+//                        notificationState = NotificationState.Paused;
+//                        break;
+//                    case Paused:
+//                        notificationState = NotificationState.Ready;
+//                        break;
+//                }
+//            });
+//        }
+//    });
 
     /**
      * hides the notification pane on any event
@@ -398,7 +398,7 @@ final public class ViewFrame extends BorderPane {
         controller.viewModeProperty().addListener(viewMode -> syncViewMode());
         syncViewMode();
 
-        ActionUtils.configureButton(new CreateManualEvent(controller), addEventButton);
+        ActionUtils.configureButton(new AddManualEvent(controller), addEventButton);
         ActionUtils.configureButton(new SaveSnapshotAsReport(controller, notificationPane::getContent), snapShotButton);
 
         /////configure start and end pickers
@@ -462,7 +462,7 @@ final public class ViewFrame extends BorderPane {
         refreshTimeUI(); //populate the view
 
         refreshHistorgram();
-        notificationTimer.start();
+//        notificationTimer.start();
     }
 
     /**
@@ -478,18 +478,18 @@ final public class ViewFrame extends BorderPane {
 
         Platform.runLater(() -> {
             hostedView.setNeedsRefresh();
-            switch (notificationState) {
-                case Paused:
-                    break;
-                case Ready:
+//            switch (notificationState) {
+//                case Paused:
+//                    break;
+//                case Ready:
                     notificationPane.show(Bundle.ViewFrame_tagsAddedOrDeleted());
-                    notificationState = NotificationState.Showing;
-                    break;
-                case Showing:
-                    notificationPane.setText(Bundle.ViewFrame_tagsAddedOrDeleted());
-                    notificationTimer.restart();
-                    break;
-            }
+//                    notificationState = NotificationState.Showing;
+//                    break;
+//                case Showing:
+//                    notificationPane.setText(Bundle.ViewFrame_tagsAddedOrDeleted());
+//                    notificationTimer.restart();
+//                    break;
+//            }
         });
     }
 
@@ -506,8 +506,8 @@ final public class ViewFrame extends BorderPane {
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         Platform.runLater(() -> {
             notificationPane.hide();
-            notificationState = NotificationState.Paused;
-            notificationTimer.restart();
+//            notificationState = NotificationState.Paused;
+//            notificationTimer.restart();
             refreshHistorgram();
         });
     }
@@ -526,19 +526,19 @@ final public class ViewFrame extends BorderPane {
         Platform.runLater(() -> {
             if (hostedView.needsRefresh() == false) {
                 hostedView.setNeedsRefresh();
-                switch (notificationState) {
-                    case Paused:
-                        break;
-                    case Ready:
+//                switch (notificationState) {
+//                    case Paused:
+//                        break;
+//                    case Ready:
                         notificationPane.show(Bundle.ViewFrame_notification_cacheInvalidated());
-                        notificationState = NotificationState.Showing;
-                        notificationTimer.restart();
-                        break;
-                    case Showing:
-                        notificationPane.setText(Bundle.ViewFrame_notification_cacheInvalidated());
-                        notificationTimer.restart();
-                        break;
-                }
+//                        notificationState = NotificationState.Showing;
+//                        notificationTimer.restart();
+//                        break;
+//                    case Showing:
+//                        notificationPane.setText(Bundle.ViewFrame_notification_cacheInvalidated());
+//                        notificationTimer.restart();
+//                        break;
+//                }
             }
         });
     }
