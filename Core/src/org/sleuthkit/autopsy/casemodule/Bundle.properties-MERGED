@@ -58,26 +58,26 @@ Case.progressMessage.connectingToCoordSvc=Connecting to coordination service...
 Case.progressMessage.creatingCaseDatabase=Creating case database...
 Case.progressMessage.creatingCaseDirectory=Creating case directory...
 Case.progressMessage.creatingCaseNodeData=Creating coordination service node data...
-Case.progressMessage.deletingAutoIngestLogCoordSvcNode=Deleting case auto ingest log coordination service node...
+Case.progressMessage.deletingAutoIngestLogCoordSvcNode=Deleting case auto ingest log lock coordination service node...
 Case.progressMessage.deletingCaseDatabase=Deleting case database...
 Case.progressMessage.deletingCaseDirectory=Deleting case directory...
-Case.progressMessage.deletingDirectroyCoordinationServiceNode=Deleting case ersource coordination service node...
-Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resources coordination service node...
+Case.progressMessage.deletingDirectoryCoordinationServiceNode=Deleting case directory lock coordination service node...
+Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resourceslock coordination service node...
 Case.progressMessage.deletingTextIndex=Deleting text index...
 # {0} - exception message
-Case.progressMessage.errorConnectingToCoordSvc=An occurred connecting to the coordination service (see log for details): {0}.
+Case.progressMessage.errorConnectingToCoordSvc=An error occurred connecting to the coordination service (see log for details): {0}.
 # {0} - exception message
-Case.progressMessage.errorDeletingCaseDb=An occurred deleting the case database (see log for details): {0}.
+Case.progressMessage.errorDeletingCaseDb=An error occurred deleting the case database (see log for details): {0}.
 # {0} - exception message
-Case.progressMessage.errorDeletingCaseDir=An occurred deleting the case directory (see log for details): {0}.
+Case.progressMessage.errorDeletingCaseDir=An error occurred deleting the case directory (see log for details): {0}.
 # {0} - exception message
-Case.progressMessage.errorDeletingCaseDirLockNode=An occurred deleting the case directory lock node (see log for details): {0}.
+Case.progressMessage.errorDeletingCaseDirLockNode=An error occurred deleting the case directory lock node (see log for details): {0}.
 # {0} - exception message
-Case.progressMessage.errorDeletingJobLogLockNode=An occurred deleting the case auto ingest log lock node (see log for details): {0}.
+Case.progressMessage.errorDeletingJobLogLockNode=An error occurred deleting the case auto ingest log lock node (see log for details): {0}.
 # {0} - exception message
-Case.progressMessage.errorDeletingResourcesLockNode=An occurred deleting the case resources lock node (see log for details): {0}.
+Case.progressMessage.errorDeletingResourcesLockNode=An error occurred deleting the case resources lock node (see log for details): {0}.
 # {0} - exception message
-Case.progressMessage.errorDeletingTextIndex=An occurred deleting the text index for the case (see log for details): {0}.
+Case.progressMessage.errorDeletingTextIndex=An error occurred deleting the text index for the case (see log for details): {0}.
 # {0} - exception message
 Case.progressMessage.errorGettingCoordSvcNodeData=Failed to get the coordination service case node data (see log for details): {0}.
 # {0} - exception message
@@ -85,7 +85,7 @@ Case.progressMessage.errorLockingCase=An error occurred exclusively locking the 
 # {0} - exception message
 Case.progressMessage.errorLockingCaseName=An error occurred exclusively locking the case name for deletion (see log for details): {0}.
 # {0} - exception message
-Case.progressMessage.errorSavingDeletedItemsFlags=An occurred saving the deleted items flags in the coordination service database (see log for details): {0}.
+Case.progressMessage.errorSavingDeletedItemsFlags=An error occurred saving the deleted items flags in the coordination service database (see log for details): {0}.
 Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case...
 Case.progressMessage.missingCoordSvcNodeData=Missing coordination service node data.
 Case.progressMessage.openingApplicationServiceResources=Opening application service case resources...
@@ -232,7 +232,7 @@ AddImageWizardAddingProgressVisual.progressTextArea.border.title=Status
 AddImageAction.wizard.title=Add Data Source
 AddImageAction.ingestConfig.ongoingIngest.msg=<html>Ingest is ongoing on another data source. Adding a new source now might slow down the current ingest.<br />Do you want to proceed and add a new data source now?</html>
 AddImageAction.ingestConfig.ongoingIngest.title=Ingest in progress
-AddImageTask.run.progress.adding=Adding\: {0}
+AddImageTask.run.progress.adding=Adding: {0}
 AddImageTask.interrupt.exception.msg=Error stopping add-image process.
 AddImageWizardAddingProgressPanel.isValid.focusNext=Next >
 AddImageWizardAddingProgressPanel.stateStarted.progressBarText=*This process may take some time for large data sources.
@@ -246,41 +246,33 @@ AddImageWizardIngestConfigPanel.dsProcDone.noErrs.text=*Data Source added.
 AddImageWizardIngestConfigPanel.dsProcDone.errs.text=*Errors encountered in adding Data Source.
 AddImageWizardIngestConfigVisual.getName.text=Configure Ingest Modules
 AddImageWizardIterator.stepXofN=Step {0} of {1}
-AddLocalFilesTask.localFileAdd.progress.text=Adding\: {0}/{1}
-Case.getCurCase.exception.noneOpen=Cannot get the current case; there is no case open\!
-Case.open.msgDlg.updated.msg=Updated case database schema.\nA backup copy of the database with the following path has been made\:\n {0}
+AddLocalFilesTask.localFileAdd.progress.text=Adding: {0}/{1}
+Case.getCurCase.exception.noneOpen=Cannot get the current case; there is no case open!
+Case.open.msgDlg.updated.msg=Updated case database schema.\nA backup copy of the database with the following path has been made:\n {0}
 Case.open.msgDlg.updated.title=Case Database Schema Update
-Case.checkImgExist.confDlg.doesntExist.msg=One of the images associated with \n\
-this case are missing. Would you like to search for them now?\n\
-Previously, the image was located at\:\n\
-{0}\n\
-Please note that you will still be able to browse directories and generate reports\n\
-if you choose No, but you will not be able to view file content or run the ingest process.
+Case.checkImgExist.confDlg.doesntExist.msg=One of the images associated with \nthis case are missing. Would you like to search for them now?\nPreviously, the image was located at:\n{0}\nPlease note that you will still be able to browse directories and generate reports\nif you choose No, but you will not be able to view file content or run the ingest process.
 Case.checkImgExist.confDlg.doesntExist.title=Missing Image
 Case.addImg.exception.msg=Error adding image to the case
 Case.updateCaseName.exception.msg=Error while trying to update the case name.
 Case.updateExaminer.exception.msg=Error while trying to update the examiner.
 Case.updateCaseNum.exception.msg=Error while trying to update the case number.
 Case.exception.errGetRootObj=Error getting root objects.
-Case.createCaseDir.exception.existNotDir=Cannot create case directory, it already exists and is not a directory\: {0}
-Case.createCaseDir.exception.existCantRW=Cannot create case directory, it already exists and cannot read/write\: {0}
-Case.createCaseDir.exception.cantCreate=Cannot create case directory or it already exists\: {0}
-Case.createCaseDir.exception.cantCreateCaseDir=Could not create case directory\: {0}
-Case.createCaseDir.exception.cantCreateModDir=Could not create modules output directory\: {0}
-Case.createCaseDir.exception.cantCreateReportsDir=Could not create reports output directory\: {0}
+Case.createCaseDir.exception.existNotDir=Cannot create case directory, it already exists and is not a directory: {0}
+Case.createCaseDir.exception.existCantRW=Cannot create case directory, it already exists and cannot read/write: {0}
+Case.createCaseDir.exception.cantCreate=Cannot create case directory or it already exists: {0}
+Case.createCaseDir.exception.cantCreateCaseDir=Could not create case directory: {0}
+Case.createCaseDir.exception.cantCreateModDir=Could not create modules output directory: {0}
+Case.createCaseDir.exception.cantCreateReportsDir=Could not create reports output directory: {0}
 Case.CollaborationSetup.FailNotify.ErrMsg=Failed to connect to any other nodes that may be collaborating on this case.
 Case.CollaborationSetup.FailNotify.Title=Connection Failure
 Case.GetCaseTypeGivenPath.Failure=Unable to get case type
 Case.metaDataFileCorrupt.exception.msg=The case metadata file (.aut) is corrupted.
 Case.deleteReports.deleteFromDiskException.log.msg=Unable to delete the report from the disk.
 Case.deleteReports.deleteFromDiskException.msg=Unable to delete the report {0} from the disk.\nYou may manually delete it from {1}
-CaseDeleteAction.closeConfMsg.text=Are you sure want to close and delete this case? \n\
-     Case Name\: {0}\n\
-     Case Directory\: {1}
-CaseDeleteAction.closeConfMsg.title=Warning\: Closing the Current Case
-CaseDeleteAction.msgDlg.fileInUse.msg=The delete action cannot be fully completed because the folder or file in it is open by another program.\n\n\
-Close the folder and file and try again or you can delete the case manually.
-CaseDeleteAction.msgDlg.fileInUse.title=Error\: Folder In Use
+CaseDeleteAction.closeConfMsg.text=Are you sure want to close and delete this case? \nCase Name: {0}\nCase Directory: {1}
+CaseDeleteAction.closeConfMsg.title=Warning: Closing the Current Case
+CaseDeleteAction.msgDlg.fileInUse.msg=The delete action cannot be fully completed because the folder or file in it is open by another program.\n\nClose the folder and file and try again or you can delete the case manually.
+CaseDeleteAction.msgDlg.fileInUse.title=Error: Folder In Use
 CaseDeleteAction.msgDlg.caseDelete.msg=Case {0} has been deleted.
 CaseOpenAction.autFilter.title={0} Case File ( {1})
 CaseCreateAction.msgDlg.cantCreateCase.msg=Cannot create case
@@ -309,16 +301,15 @@ NewCaseWizardAction.newCase.windowTitle.text=New Case Information
 NewCaseWizardAction.getName.text=New Case Wizard
 NewCaseWizardAction.databaseProblem1.text=Cannot open database. Cancelling case creation.
 NewCaseWizardAction.databaseProblem2.text=Error
-NewCaseWizardPanel1.validate.errMsg.invalidSymbols=The Case Name cannot contain any of the following symbols\: \\ / \: * ? " &lt; > |
+NewCaseWizardPanel1.validate.errMsg.invalidSymbols=The Case Name cannot contain any of the following symbols: \\ / : * ? " &lt; > |
 NewCaseWizardPanel1.validate.errMsg.dirExists=Case directory ''{0}'' already exists.
-NewCaseWizardPanel1.validate.confMsg.createDir.msg=The base directory "{0}" does not exist. \n\n\
- Do you want to create that directory?
+NewCaseWizardPanel1.validate.confMsg.createDir.msg=The base directory "{0}" does not exist. \n\nDo you want to create that directory?
 NewCaseWizardPanel1.validate.confMsg.createDir.title=Create directory
-NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg=Error\: Could not create case parent directory {0}
+NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg=Error: Could not create case parent directory {0}
 NewCaseWizardPanel1.validate.errMsg.prevCreateBaseDir.msg=Prevented from creating base directory {0}
-NewCaseWizardPanel1.validate.errMsg.cantCreateDir=Error\: Could not create directory.
-NewCaseWizardPanel1.validate.errMsg.invalidBaseDir.msg=ERROR\: The Base Directory that you entered is not valid.\nPlease enter a valid Base Directory.
-NewCaseWizardPanel1.createDir.errMsg.cantCreateDir.msg=ERROR\: Could not create the case directory. \nPlease enter a valid Case Name and Directory.
+NewCaseWizardPanel1.validate.errMsg.cantCreateDir=Error: Could not create directory.
+NewCaseWizardPanel1.validate.errMsg.invalidBaseDir.msg=ERROR: The Base Directory that you entered is not valid.\nPlease enter a valid Base Directory.
+NewCaseWizardPanel1.createDir.errMsg.cantCreateDir.msg=ERROR: Could not create the case directory. \nPlease enter a valid Case Name and Directory.
 NewCaseWizardPanel2.validate.errCreateCase.msg=Error creating case
 OpenRecentCasePanel.colName.caseName=Case Name
 OpenRecentCasePanel.colName.path=Path
@@ -348,15 +339,15 @@ StartupWindow.title.text=Welcome
 UpdateRecentCases.menuItem.clearRecentCases.text=Clear Recent Cases
 UpdateRecentCases.menuItem.empty=-Empty-
 AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text=Cancel
-NewCaseVisualPanel1.CaseFolderOnCDriveError.text=Warning: Path to multi-user case folder is on \"C:\" drive
-NewCaseVisualPanel1.CaseFolderOnInternalDriveWindowsError.text=Warning: Path to case folder is on \"C:\" drive. Case folder is created on the target system
+NewCaseVisualPanel1.CaseFolderOnCDriveError.text=Warning: Path to multi-user case folder is on "C:" drive
+NewCaseVisualPanel1.CaseFolderOnInternalDriveWindowsError.text=Warning: Path to case folder is on "C:" drive. Case folder is created on the target system
 NewCaseVisualPanel1.CaseFolderOnInternalDriveLinuxError.text=Warning: Path to case folder is on the target system. Create case folder in mounted drive.
 CollaborationMonitor.addingDataSourceStatus.msg={0} adding data source
 CollaborationMonitor.analyzingDataSourceStatus.msg={0} analyzing {1}
 MissingImageDialog.lbWarning.text=
 MissingImageDialog.lbWarning.toolTipText=
 NewCaseVisualPanel1.caseParentDirWarningLabel.text=
-NewCaseVisualPanel1.multiUserCaseRadioButton.text=Multi-user		
+NewCaseVisualPanel1.multiUserCaseRadioButton.text=Multi-user\t\t
 NewCaseVisualPanel1.singleUserCaseRadioButton.text=Single-user
 NewCaseVisualPanel1.caseTypeLabel.text=Case Type: 
 SingleUserCaseConverter.BadDatabaseFileName=Database file does not exist!
@@ -365,7 +356,7 @@ SingleUserCaseConverter.NonUniqueDatabaseName=Database name not unique.
 SingleUserCaseConverter.UnableToCopySourceImages=Unable to copy source images
 SingleUserCaseConverter.CanNotOpenDatabase=Unable to open database
 CloseCaseWhileIngesting.Warning=Ingest is running. Are you sure you want to close the case?
-CloseCaseWhileIngesting.Warning.title=Warning\: This will close the current case
+CloseCaseWhileIngesting.Warning.title=Warning: This will close the current case
 CasePropertiesForm.imagesTable.columnModel.title1=Remove
 CasePropertiesForm.imagesTable.columnModel.title0=Path
 IngestJobInfoPanel.jLabel1.text=Ingest Modules

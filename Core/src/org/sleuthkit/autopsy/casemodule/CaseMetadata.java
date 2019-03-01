@@ -190,10 +190,6 @@ public final class CaseMetadata {
         readFromFile();
     }
 
-    public CaseMetadata(String metadataFilePath) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     /**
      * Gets the full path to the case metadata file.
      *

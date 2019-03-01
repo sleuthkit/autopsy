@@ -69,7 +69,7 @@ GetTagNameDialog.createTag=Create Tag
 GetTagNameDialog.cancelName=Cancel
 GetTagNameDialog.mustSupplyTtagName.msg=Must supply a tag name to continue.
 GetTagNameDialog.tagNameErr=Tag Name
-GetTagNameDialog.illegalChars.msg=The tag name contains illegal characters.\nCannot contain any of the following symbols\: \\ \: * ? " < > | , ;
+GetTagNameDialog.illegalChars.msg=The tag name contains illegal characters.\nCannot contain any of the following symbols: \\ : * ? " < > | , ;
 GetTagNameDialog.illegalCharsErr=Illegal Characters
 GetTagNameDialog.unableToAddTagNameToCase.msg=Unable to add the {0} tag name to the case.
 GetTagNameDialog.taggingErr=Tagging Error
@@ -80,7 +80,7 @@ OpenLogFolder.error1=Log File Not Found: {0}
 OpenLogFolder.CouldNotOpenLogFolder=Could not open log folder 
 CTL_OpenLogFolder=Open Log Folder
 CTL_OpenOutputFolder=Open Output Folder
-OpenOutputFolder.error1=Output Folder Not Found\: {0}
+OpenOutputFolder.error1=Output Folder Not Found: {0}
 OpenOutputFolder.noCaseOpen=No open case, therefore no current output folder available.
 OpenOutputFolder.CouldNotOpenOutputFolder=Could not open output folder 
 # {0} - old tag name

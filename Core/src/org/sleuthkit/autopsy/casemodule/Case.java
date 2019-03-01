@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import com.google.common.annotations.Beta;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -99,6 +100,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
+import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -701,7 +703,7 @@ public class Case {
             CaseMetadata metadata = currentCase.getMetadata();
             closeCurrentCase();
             ProgressIndicator progressIndicator = new ModalDialogProgressIndicator(mainFrame, Bundle.Case_progressIndicatorTitle_deletingCase());
-            deleteCase(metadata, progressIndicator);
+            deleteCase(metadata, true, progressIndicator);
         }
     }
 
@@ -885,16 +887,19 @@ public class Case {
     /**
      * Deletes a case. The case to be deletd must not be the "current case."
      *
-     * @param metadata          The case metadata.
-     * @param progressIndicator A progress indicator.
+     * @param metadata            The case metadata.
+     * @param deleteCaseLockNodes Whether or not to delete the coordination
+     *                            service lock nodes for the case.
+     * @param progressIndicator   A progress indicator.
      *
      * @throws CaseActionException If there were one or more errors deleting the
      *                             case.
      */
+    @Beta
     @Messages({
         "Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first."
     })
-    public static void deleteCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
+    public static void deleteCase(CaseMetadata metadata, boolean deleteCaseLockNodes, ProgressIndicator progressIndicator) throws CaseActionException {
         synchronized (caseActionSerializationLock) {
             if (null != currentCase) {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_cannotDeleteCurrentCase());
@@ -924,8 +929,8 @@ public class Case {
      */
     @Messages({
         "Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details.",
-        "# {0} - exception message", "Case.progressMessage.errorDeletingTextIndex=An occurred deleting the text index for the case (see log for details): {0}.",
-        "# {0} - exception message", "Case.progressMessage.errorDeletingCaseDir=An occurred deleting the case directory (see log for details): {0}."
+        "# {0} - exception message", "Case.progressMessage.errorDeletingTextIndex=An error occurred deleting the text index for the case (see log for details): {0}.",
+        "# {0} - exception message", "Case.progressMessage.errorDeletingCaseDir=An error occurred deleting the case directory (see log for details): {0}."
     })
     private static void deleteSingleUserCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
         boolean errorsOccurred = false;
@@ -963,7 +968,7 @@ public class Case {
      */
     @Messages({
         "Case.progressMessage.connectingToCoordSvc=Connecting to coordination service...",
-        "# {0} - exception message", "Case.progressMessage.errorConnectingToCoordSvc=An occurred connecting to the coordination service (see log for details): {0}.",
+        "# {0} - exception message", "Case.progressMessage.errorConnectingToCoordSvc=An error occurred connecting to the coordination service (see log for details): {0}.",
         "Case.progressMessage.checkingForOtherUser=Checking to see if another user has the case open...",
         "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user.",
         "# {0} - exception message", "Case.progressMessage.errorLockingCaseName=An error occurred exclusively locking the case name for deletion (see log for details): {0}.",
@@ -971,8 +976,8 @@ public class Case {
         "Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case...",
         "# {0} - exception message", "Case.progressMessage.errorGettingCoordSvcNodeData=Failed to get the coordination service case node data (see log for details): {0}.",
         "Case.progressMessage.missingCoordSvcNodeData=Missing coordination service node data.",
-        "# {0} - exception message", "Case.progressMessage.errorDeletingCaseDb=An occurred deleting the case database (see log for details): {0}.",
-        "# {0} - exception message", "Case.progressMessage.errorSavingDeletedItemsFlags=An occurred saving the deleted items flags in the coordination service database (see log for details): {0}."
+        "# {0} - exception message", "Case.progressMessage.errorDeletingCaseDb=An error occurred deleting the case database (see log for details): {0}.",
+        "# {0} - exception message", "Case.progressMessage.errorSavingDeletedItemsFlags=An error occurred saving the deleted items flags in the coordination service database (see log for details): {0}."
     })
     private static void deleteMultiUserCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
         CaseNodeData caseNodeData;
@@ -987,17 +992,27 @@ public class Case {
             throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
         }
 
+        /*
+         * Acquire an exclusive case name lock. This will prevent auto ingest
+         * nodes from attempting to search for the case directory before it is
+         * deleted.
+         */
         progressIndicator.progress(Bundle.Case_progressMessage_checkingForOtherUser());
-        try (CoordinationService.Lock nameLock = coordinationService.tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseName())) {
-
+        final String caseNameLockName = TimeStampUtils.removeTimeStamp(metadata.getCaseName());
+        try (CoordinationService.Lock nameLock = coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseNameLockName)) {
             if (nameLock == null) {
                 logger.log(Level.INFO, String.format("Could not delete %s (%s) in %s because the case name was in use by another host", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
                 progressIndicator.progress(Bundle.Case_exceptionMessage_cannotGetLockToDeleteCase());
                 throw new CaseActionException(Bundle.Case_exceptionMessage_cannotGetLockToDeleteCase());
             }
 
+            /*
+             * Acquire an exclusive case directory lock. This ensures that no
+             * other node (host) currently has the case open and prevents
+             * another node (host) from trying to open the case as it is being
+             * deleted.
+             */
             try (CoordinationService.Lock dirLock = coordinationService.tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
-
                 if (dirLock == null) {
                     logger.log(Level.INFO, String.format("Could not delete %s (%s) in %s because the case was in use by another host", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
                     progressIndicator.progress(Bundle.Case_exceptionMessage_cannotGetLockToDeleteCase());
@@ -1060,6 +1075,7 @@ public class Case {
 
         deleteCaseResourcesCoordinationServiceNode(metadata, progressIndicator, coordinationService);
         deleteCaseAutoIngestLogCoordinationServiceNode(metadata, progressIndicator, coordinationService);
+        // RJCTODO: Delete case name lock node
 
         if (!errorsOccurred) {
             deleteCaseDirectoryCoordinationServiceNode(metadata, progressIndicator, coordinationService);
@@ -1096,7 +1112,8 @@ public class Case {
      */
     @Messages({
         "Case.progressMessage.deletingCaseDatabase=Deleting case database...",})
-    private static void deleteCaseDatabase(CaseMetadata metadata, ProgressIndicator progressIndicator, CaseNodeData caseNodeData) throws UserPreferencesException, ClassNotFoundException, SQLException {
+    private static void deleteCaseDatabase(CaseMetadata metadata, ProgressIndicator progressIndicator,
+            CaseNodeData caseNodeData) throws UserPreferencesException, ClassNotFoundException, SQLException {
         if (caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.CASE_DB)) {
             return;
         }
@@ -1213,8 +1230,8 @@ public class Case {
      * @param progressIndicator A progress indicator.
      */
     @Messages({
-        "Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resources coordination service node...",
-        "# {0} - exception message", "Case.progressMessage.errorDeletingResourcesLockNode=An occurred deleting the case resources lock node (see log for details): {0}."
+        "Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resourceslock coordination service node...",
+        "# {0} - exception message", "Case.progressMessage.errorDeletingResourcesLockNode=An error occurred deleting the case resources lock node (see log for details): {0}."
     })
     static void deleteCaseResourcesCoordinationServiceNode(CaseMetadata metadata, ProgressIndicator progressIndicator, CoordinationService coordinationService) {
         progressIndicator.progress(Bundle.Case_progressMessage_deletingResourcesCoordSvcNode());
@@ -1235,8 +1252,8 @@ public class Case {
      * @param progressIndicator A progress indicator.
      */
     @Messages({
-        "Case.progressMessage.deletingAutoIngestLogCoordSvcNode=Deleting case auto ingest log coordination service node...",
-        "# {0} - exception message", "Case.progressMessage.errorDeletingJobLogLockNode=An occurred deleting the case auto ingest log lock node (see log for details): {0}."
+        "Case.progressMessage.deletingAutoIngestLogCoordSvcNode=Deleting case auto ingest log lock coordination service node...",
+        "# {0} - exception message", "Case.progressMessage.errorDeletingJobLogLockNode=An error occurred deleting the case auto ingest log lock node (see log for details): {0}."
     })
     static void deleteCaseAutoIngestLogCoordinationServiceNode(CaseMetadata metadata, ProgressIndicator progressIndicator, CoordinationService coordinationService) {
         progressIndicator.progress(Bundle.Case_progressMessage_deletingAutoIngestLogCoordSvcNode());
@@ -1261,8 +1278,8 @@ public class Case {
      *                          operation.
      */
     @Messages({
-        "Case.progressMessage.deletingDirectroyCoordinationServiceNode=Deleting case ersource coordination service node...",
-        "# {0} - exception message", "Case.progressMessage.errorDeletingCaseDirLockNode=An occurred deleting the case directory lock node (see log for details): {0}."
+        "Case.progressMessage.deletingDirectoryCoordinationServiceNode=Deleting case directory lock coordination service node...",
+        "# {0} - exception message", "Case.progressMessage.errorDeletingCaseDirLockNode=An error occurred deleting the case directory lock node (see log for details): {0}."
     })
     static void deleteCaseDirectoryCoordinationServiceNode(CaseMetadata metadata, ProgressIndicator progressIndicator, CoordinationService coordinationService) {
         String caseDirectoryLockNodePath = metadata.getCaseDirectory();
@@ -1321,7 +1338,6 @@ public class Case {
                  */
                 SleuthkitCase caseDb = newCurrentCase.getSleuthkitCase();
                 String backupDbPath = caseDb.getBackupDatabasePath();
-
                 if (null != backupDbPath) {
                     JOptionPane.showMessageDialog(
                             mainFrame,
@@ -3318,7 +3334,7 @@ public class Case {
         } else {
             progressIndicator = new LoggingProgressIndicator();
         }
-        deleteCase(metadata, progressIndicator);
+        deleteCase(metadata, true, progressIndicator);
     }
 
 }
