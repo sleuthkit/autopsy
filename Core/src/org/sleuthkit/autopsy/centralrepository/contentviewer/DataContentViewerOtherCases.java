@@ -345,28 +345,34 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * Set the number of unique cases and data sources.
      */
     @Messages({
-        "DataContentViewerOtherCases.foundIn.text=Found in %d cases and %d data sources."
+        "DataContentViewerOtherCases.foundIn.text=Found %d instances in %d cases and %d data sources."
     })
     private void setOccurrenceCounts() {
         DataContentViewerOtherCasesTableModel model = (DataContentViewerOtherCasesTableModel) otherCasesTable.getModel();
         
-        // Note: Relying on the case name isn't a fool-proof way of determining
-        // a case to be unique. We should improve this in the future.
         int caseColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.CASE_NAME.ordinal();
+        int deviceColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.DEVICE.ordinal();
+        
+        /*
+         * We also need a unique set of data sources. We rely on device ID for
+         * this. To mitigate edge cases where a device ID could be duplicated
+         * in the same case (e.g. "report.xml"), we put the device ID and case
+         * name in a key-value pair.
+         * 
+         * Note: Relying on the case name isn't a fool-proof way of determining
+         * a case to be unique. We should improve this in the future.
+         */
         Set<String> cases = new HashSet<>();
+        Map<String, String> devices = new HashMap();
+        
         for (int i=0; i < model.getRowCount(); i++) {
             String caseName = (String) model.getValueAt(i, caseColumnIndex);
-            cases.add(caseName);
-        }
-        
-        int deviceColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.DEVICE.ordinal();
-        Set<String> devices = new HashSet<>();
-        for (int i=0; i < model.getRowCount(); i++) {
             String deviceId = (String) model.getValueAt(i, deviceColumnIndex);
-            devices.add(deviceId);
+            cases.add(caseName);
+            devices.put(deviceId, caseName);
         }
         
-        foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), cases.size(), devices.size()));
+        foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), model.getRowCount(), cases.size(), devices.size()));
     }
 
     /**
@@ -891,7 +897,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             .addGap(0, 61, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 61, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 53, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -903,7 +909,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 61, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 53, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
