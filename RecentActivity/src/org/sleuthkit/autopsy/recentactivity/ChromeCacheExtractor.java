@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,8 +75,8 @@ import org.sleuthkit.datamodel.TskException;
  */
 final class ChromeCacheExtractor {
     
-    private final static String DEFAULT_CACHE_STR = "default/cache";
-    private final static String BROTLI_MIMETYPE ="application/x-brotli";
+    private final static String DEFAULT_CACHE_STR = "default/cache"; //NON-NLS
+    private final static String BROTLI_MIMETYPE ="application/x-brotli"; //NON-NLS
     
     private final static long UINT32_MASK = 0xFFFFFFFFl;
     
@@ -84,7 +85,7 @@ final class ChromeCacheExtractor {
     
     private final static Logger logger = Logger.getLogger(ChromeCacheExtractor.class.getName());
     
-    private static final String VERSION_NUMBER = "1.0.0";
+    private static final String VERSION_NUMBER = "1.0.0"; //NON-NLS
     private final String moduleName;
     
     private String absOutputFolderName;
@@ -128,8 +129,8 @@ final class ChromeCacheExtractor {
     @NbBundle.Messages({
         "ChromeCacheExtractor.moduleName=ChromeCacheExtractor"
     })
-    ChromeCacheExtractor(Content dataSource, IngestJobContext context ) {
-        moduleName = NbBundle.getMessage(ChromeCacheExtractor.class, "ChromeCacheExtractor.moduleName");           
+    ChromeCacheExtractor(Content dataSource, IngestJobContext context ) { 
+        moduleName = Bundle.ChromeCacheExtractor_moduleName();
         this.dataSource = dataSource;
         this.context = context;
     }
@@ -155,7 +156,7 @@ final class ChromeCacheExtractor {
                 dir.mkdirs();
             }
         } catch (NoCurrentCaseException ex) {
-            String msg = "Failed to get current case.";
+            String msg = "Failed to get current case."; //NON-NLS
             throw new IngestModuleException(msg, ex);
         } 
     }
@@ -193,17 +194,17 @@ final class ChromeCacheExtractor {
     void cleanup () {
         
         for (Entry<String, CacheFileCopy> entry : this.filesTable.entrySet()) {
-            String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName) + File.separator + entry.getKey(); 
+            Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(currentCase, moduleName), entry.getKey() ); 
             try {
                 entry.getValue().getFileCopy().getChannel().close();
                 entry.getValue().getFileCopy().close();
                
-                File tmpFile = new File(tempFilePathname);
+                File tmpFile = tempFilePath.toFile();
                 if (!tmpFile.delete()) {
                     tmpFile.deleteOnExit();
                 }
             } catch (IOException ex) {
-                logger.log(Level.WARNING, String.format("Failed to delete cache file copy %s", tempFilePathname), ex);
+                logger.log(Level.WARNING, String.format("Failed to delete cache file copy %s", tempFilePath.toString()), ex); //NON-NLS
             }
         }
     }
@@ -211,7 +212,7 @@ final class ChromeCacheExtractor {
     /**
      * Returns the location of output folder for this module
      * 
-     * @return 
+     * @return absolute location of output folder
      */
     private String getAbsOutputFolderName() {
         return absOutputFolderName;
@@ -220,7 +221,7 @@ final class ChromeCacheExtractor {
      /**
      * Returns the relative location of output folder for this module
      * 
-     * @return 
+     * @return relative location of output folder
      */
     private String getRelOutputFolderName() {
         return relOutputFolderName;
@@ -237,7 +238,7 @@ final class ChromeCacheExtractor {
          try {
            moduleInit();
         } catch (IngestModuleException ex) {
-            String msg = "Failed to initialize ChromeCacheExtractor.";
+            String msg = "Failed to initialize ChromeCacheExtractor."; //NON-NLS
             logger.log(Level.SEVERE, msg, ex);
             return;
         }
@@ -245,7 +246,7 @@ final class ChromeCacheExtractor {
          // Find all possible caches 
         List<AbstractFile> indexFiles;
         try {
-            indexFiles = findCacheFiles("index");
+            indexFiles = findCacheFiles("index"); //NON-NLS
             
             // Get each of the caches
             for (AbstractFile indexFile: indexFiles) {       
@@ -253,7 +254,7 @@ final class ChromeCacheExtractor {
             }
         
         } catch (TskCoreException ex) {
-                String msg = "Failed to find cache index files";
+                String msg = "Failed to find cache index files"; //NON-NLS
                 logger.log(Level.SEVERE, msg, ex);
         } 
     }
@@ -285,7 +286,7 @@ final class ChromeCacheExtractor {
             }
 
         } catch (TskCoreException | IngestModuleException ex) {
-            String msg = "Failed to find cache files in path " + cachePath;
+            String msg = "Failed to find cache files in path " + cachePath; //NON-NLS
             logger.log(Level.SEVERE, msg, ex);
             return;
         } 
@@ -323,7 +324,7 @@ final class ChromeCacheExtractor {
 
         context.addFilesToJob(derivedFiles);
         
-        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_SOURCE, !sourceArtifacts.isEmpty() ? sourceArtifacts : null));
+        services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE, !sourceArtifacts.isEmpty() ? sourceArtifacts : null));
         services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE, !webCacheArtifacts.isEmpty() ? webCacheArtifacts : null));
 
         cleanup();
@@ -350,7 +351,7 @@ final class ChromeCacheExtractor {
         
         Optional<CacheFileCopy> cacheEntryFile = this.getCacheFileCopy(cacheEntryFileName, cachePath);
         if (!cacheEntryFile.isPresent()) {
-            String msg = String.format("Failed to get cache entry at address %s", cacheEntryAddress);
+            String msg = String.format("Failed to get cache entry at address %s", cacheEntryAddress); //NON-NLS
             throw new IngestModuleException(msg);
         }
 
@@ -396,7 +397,7 @@ final class ChromeCacheExtractor {
             if (dataFile.isPresent()) {
                 if (data.isInExternalFile() )  {
                     try {
-                        BlackboardArtifact sourceArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
+                        BlackboardArtifact sourceArtifact = dataFile.get().newArtifact(ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
                         if (sourceArtifact != null) {
                             sourceArtifact.addAttributes(sourceArtifactAttributes);
                             sourceArtifacts.add(sourceArtifact);
@@ -409,9 +410,9 @@ final class ChromeCacheExtractor {
                              // Add path of f_* file as attribute
                             webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
                                 moduleName, 
-                                dataFile.get().getUniquePath())); //NON-NLS
+                                dataFile.get().getUniquePath()));
                             
-                            long pathID = Util.findID(dataSource, dataFile.get().getUniquePath()); //NON-NLS
+                            long pathID = Util.findID(dataSource, dataFile.get().getUniquePath());
                             if (pathID != -1) {
                                 webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
                                         moduleName, pathID));
@@ -444,7 +445,7 @@ final class ChromeCacheExtractor {
                                                             "", 
                                                             TskData.EncodingType.NONE);
 
-                        BlackboardArtifact sourceArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_SOURCE);
+                        BlackboardArtifact sourceArtifact = derivedFile.newArtifact(ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
                         if (sourceArtifact != null) {
                             sourceArtifact.addAttributes(sourceArtifactAttributes);
                             sourceArtifacts.add(sourceArtifact);
@@ -457,8 +458,8 @@ final class ChromeCacheExtractor {
                             // Add path of derived file as attribute
                             webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
                                 moduleName, 
-                                derivedFile.getUniquePath())); //NON-NLS 
-                            long pathID = Util.findID(dataSource, derivedFile.getUniquePath()); //NON-NLS
+                                derivedFile.getUniquePath()));
+                            long pathID = Util.findID(dataSource, derivedFile.getUniquePath());
                             if (pathID != -1) {
                                 webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
                                         moduleName, pathID));
@@ -571,11 +572,11 @@ final class ChromeCacheExtractor {
             return Optional.of(cacheFileCopy);
         }
         catch (ReadContentInputStream.ReadContentInputStreamException ex) {
-            String msg = String.format("Error reading Chrome cache file '%s' (id=%d).",
-                    cacheFile.getName(), cacheFile.getId());
+            String msg = String.format("Error reading Chrome cache file '%s' (id=%d).", //NON-NLS
+                    cacheFile.getName(), cacheFile.getId()); 
             throw new IngestModuleException(msg, ex);
         } catch (IOException ex) {
-            String msg = String.format("Error writing temp Chrome cache file '%s' (id=%d).",
+            String msg = String.format("Error writing temp Chrome cache file '%s' (id=%d).", //NON-NLS
                     cacheFile.getName(), cacheFile.getId());
             throw new IngestModuleException(msg, ex);
         }

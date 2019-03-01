@@ -53,6 +53,7 @@ Metadata.nodeText.truncated=(results truncated)
 Metadata.nodeText.unknown=Unknown
 Metadata.tableRowTitle.acquisitionDetails=Acquisition Details
 Metadata.tableRowTitle.deviceId=Device ID
+Metadata.tableRowTitle.downloadSource=Downloaded From
 Metadata.tableRowTitle.imageType=Type
 Metadata.tableRowTitle.mimeType=MIME Type
 Metadata.tableRowTitle.name=Name

@@ -23,6 +23,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -235,7 +236,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
      * @return the relative path of the module output folder
      */
     static String getRelModuleOutputPath() throws NoCurrentCaseException {
-        return Case.getCurrentCaseThrows().getModuleOutputDirectoryRelativePath() + File.separator
-                + "RecentActivity";
+        return Paths.get(Case.getCurrentCaseThrows().getModuleOutputDirectoryRelativePath(), 
+                            "RecentActivity").normalize().toString() ;  //NON-NLS
     }
 }
