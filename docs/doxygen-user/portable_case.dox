@@ -14,11 +14,11 @@ For example, Alice's original case could look like this:
 
 \image html portable_case_original_version.png
 
-The portable version looks like this:
+The the portable version could like this:
 
 \image html portable_case_portable_version.png
 
-Alice only tagged eight files and results, so most of the original content is no longer in the case. Some of the data sources had no tagged items so they're not included at all. The file structure of any tagged files is preserved - you can see that the tagged image in the screenshot is still in the same location, but the non-tagged files are gone. 
+Alice only tagged eight files and results, so most of the original content is no longer in the case. Some of the data sources had no tagged items so they're not included at all. The file structure of any tagged files is preserved - you can see that the tagged image in the screenshot is still in the same location, but the non-tagged files are gone. Note that although the original images (such as "image1.vhd") appear in the tree, their contents are not included in the portable case.
 
 \section portable_case_creation Creating a Portable Case
 
@@ -36,5 +36,13 @@ Here you can see the new portable case. It will be named with the original case 
 \image html portable_case_folder.png
 
 \section portable_case_usage Using a Portable Case
+
+Portable cases generally behave like any other Autopsy case. You can run ingest, do keyword searches, use the timeline viewer, etc. One point to note is that while the original image names appear in the case, they will no longer have any data associated with them. 
+
+\image html portable_case_empty_image.png
+
+This may cause warning or error messages when using ingest modules that run on the full image, such as the \ref data_source_integrity_page.
+
+You can also add additonal data sources to the portable case if you wish. The case will no longer be portable, but if desired you could generate a new portable case that will include tagged files and results from the new data sources as well as the original case. 
 
 */
