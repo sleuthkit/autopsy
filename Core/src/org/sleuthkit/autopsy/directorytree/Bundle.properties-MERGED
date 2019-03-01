@@ -11,6 +11,7 @@ ExternalViewerAction.actionPerformed.failure.open.url=Cannot open URL
 ExternalViewerAction.actionPerformed.failure.permission.message=Permission to open the file was denied.
 ExternalViewerAction.actionPerformed.failure.support.message=This platform (operating system) does not support opening a file in an editor this way.
 ExternalViewerAction.actionPerformed.failure.title=Open File Failure
+ExternalViewerShortcutAction.title.text=Open in External Viewer
 ExtractAction.noOpenCase.errMsg=No open case available.
 ExtractUnallocAction.imageError=Error extracting unallocated space from image
 ExtractUnallocAction.noFiles=No unallocated files found on volume
