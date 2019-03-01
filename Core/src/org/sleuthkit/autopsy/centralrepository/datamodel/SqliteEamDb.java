@@ -114,7 +114,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         try {
             acquireExclusiveLock();
 
-            Connection conn = connect(true);
+            Connection conn = connect();
 
             try {
 
@@ -191,11 +191,9 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             if (!EamDb.isEnabled()) {
                 throw new EamDbException("Central Repository module is not enabled"); // NON-NLS
             }
-
             if (connectionPool == null) {
                 setupConnectionPool(foreignKeys);
             }
-
             try {
                 return connectionPool.getConnection();
             } catch (SQLException ex) {
@@ -204,6 +202,18 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
 
+    /**
+     * Lazily setup Singleton connection on first request with foreign keys enforced.
+     *
+     * @return A connection from the connection pool.
+     *
+     * @throws EamDbException
+     */
+    @Override
+    protected Connection connect() throws EamDbException {
+        return connect(true);
+    }
+    
     @Override
     protected String getConflictClause() {
         // For sqlite, our conflict clause is part of the table schema

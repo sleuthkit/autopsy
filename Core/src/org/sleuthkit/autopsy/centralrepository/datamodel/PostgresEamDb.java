@@ -104,7 +104,7 @@ final class PostgresEamDb extends AbstractSqlEamDb {
 
     @Override
     public void reset() throws EamDbException {
-        Connection conn = connect(true);
+        Connection conn = connect();
 
         try {
             Statement dropContent = conn.createStatement();
@@ -173,6 +173,18 @@ final class PostgresEamDb extends AbstractSqlEamDb {
     @Override
     protected Connection connect(boolean foreignKeys) throws EamDbException {
         //foreignKeys boolean is ignored for postgres
+        return connect();
+    }
+
+    /**
+     * Lazily setup Singleton connection on first request.
+     *
+     * @return A connection from the connection pool.
+     *
+     * @throws EamDbException
+     */
+    @Override
+    protected Connection connect() throws EamDbException {
         synchronized (this) {
             if (!EamDb.isEnabled()) {
                 throw new EamDbException("Central Repository module is not enabled"); // NON-NLS
@@ -182,7 +194,6 @@ final class PostgresEamDb extends AbstractSqlEamDb {
                 setupConnectionPool();
             }
         }
-
         try {
             return connectionPool.getConnection();
         } catch (SQLException ex) {
