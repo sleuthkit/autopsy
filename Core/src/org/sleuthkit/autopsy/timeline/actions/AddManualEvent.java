@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.timeline.actions;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.TimeZone;
@@ -54,6 +53,7 @@ import org.sleuthkit.autopsy.timeline.PromptDialogManager;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION;
@@ -64,8 +64,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
- * Action that prompts the user for the event data and then adds it to the case
- * via an artifact.
+ * Action that allows the user the manually cerate timeline events. It prompts
+ * the user for event data and then adds it to the case via an artifact.
  */
 public class AddManualEvent extends Action {
 
@@ -75,6 +75,10 @@ public class AddManualEvent extends Action {
 
     private final TimeLineController controller;
 
+    /**
+     * Initialize the custom value extractor used by the ValidationSupport for
+     * the LocalDateTimeTextField.
+     */
     static {
         ValueExtractor.addObservableValueExtractor(LocalDateTimeTextField.class::isInstance,
                 control -> ((LocalDateTimeTextField) control).localDateTimeProperty());
@@ -88,31 +92,48 @@ public class AddManualEvent extends Action {
         this.controller = controller;
         setGraphic(new ImageView(ADD_EVENT_IMAGE));
         setLongText(Bundle.CreateManualEvent_longText());
-        setEventHandler(actionEvent -> new EventCreationDialog(controller).showAndWait().ifPresent(this::addEvent));
+
+        setEventHandler(actionEvent -> {
+            //shoe the dialog and if it completed normally add the event.
+            new EventCreationDialog(controller).showAndWait().ifPresent(this::addEvent);
+        });
     }
 
+    /**
+     * Use the supplied ManualEventInfo to make an TSK_TL_EVENT artifact which
+     * will trigger adding a TimelineEvent.
+     *
+     * @param eventInfo The ManualEventInfo with the info needed to create an
+     *                  event.
+     *
+     * @throws IllegalArgumentException
+     */
     private void addEvent(ManualEventInfo eventInfo) throws IllegalArgumentException {
         SleuthkitCase sleuthkitCase = controller.getEventsModel().getSleuthkitCase();
 
         try {
-            BlackboardArtifact artifact = sleuthkitCase.newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT, eventInfo.datasource.getId());
-            Collection<BlackboardAttribute> attributes = Arrays.asList(
+            //Use the current examiners name plus a fixed string as the source / module name.
+            String source = MANUAL_CREATION + ": " + sleuthkitCase.getCurrentExaminer().getLoginName();
+
+            BlackboardArtifact artifact = sleuthkitCase.newBlackboardArtifact(TSK_TL_EVENT, eventInfo.datasource.getId());
+            artifact.addAttributes(Arrays.asList(
                     new BlackboardAttribute(
-                            TSK_TL_EVENT_TYPE, MANUAL_CREATION,
+                            TSK_TL_EVENT_TYPE, source,
                             EventType.OTHER.getTypeID()),
                     new BlackboardAttribute(
-                            TSK_DESCRIPTION, MANUAL_CREATION,
+                            TSK_DESCRIPTION, source,
                             eventInfo.description),
                     new BlackboardAttribute(
-                            TSK_DATETIME, MANUAL_CREATION,
+                            TSK_DATETIME, source,
                             eventInfo.time)
-            );
-            artifact.addAttributes(attributes);
-            sleuthkitCase.getBlackboard().postArtifact(artifact, MANUAL_CREATION);
+            ));
+            try {
+                sleuthkitCase.getBlackboard().postArtifact(artifact, source);
+            } catch (Blackboard.BlackboardException ex) {
+                logger.log(Level.SEVERE, "Error posting artifact to the blackboard.", ex);
+            }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creatig new artifact.", ex);
-        } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Error posting artifact to the blackboard.", ex);
         }
     }
 
@@ -121,12 +142,17 @@ public class AddManualEvent extends Action {
      */
     private static class EventCreationDialog extends Dialog<ManualEventInfo> {
 
+        /**
+         * Custom DialogPane defined below.
+         */
         private final EventCreationDialogPane eventCreationDialogPane;
 
         EventCreationDialog(TimeLineController controller) {
             this.eventCreationDialogPane = new EventCreationDialogPane(controller);
             setTitle("Add Event");
             setDialogPane(eventCreationDialogPane);
+
+            //We can't do these steps until after the dialog is shown or we get an error.
             setOnShown(dialogEvent -> {
                 Platform.runLater(() -> {
                     PromptDialogManager.setDialogIcons(this);
@@ -134,6 +160,7 @@ public class AddManualEvent extends Action {
                 });
             });
 
+            // convert button presses to ManualEventInfo
             setResultConverter(buttonType
                     -> (buttonType == ButtonType.OK)
                             ? eventCreationDialogPane.getManualEventInfo()
@@ -142,7 +169,7 @@ public class AddManualEvent extends Action {
         }
 
         /**
-         * The dialog pane that hosts the controls that allows the user to enter
+         * The DialogPane that hosts the controls that allows the user to enter
          * the event information.
          */
         static private class EventCreationDialogPane extends DialogPane {
@@ -178,25 +205,27 @@ public class AddManualEvent extends Action {
 
                 try {
                     dataSourceChooser.getItems().setAll(controller.getAutopsyCase().getSleuthkitCase().getDataSources());
+                    dataSourceChooser.getSelectionModel().select(0);
+                    dataSourceChooser.setConverter(new StringConverter<DataSource>() {
+                        @Override
+                        public String toString(DataSource dataSource) {
+                            return dataSource.getName() + "(ID: " + dataSource.getId() + ")";
+                        }
 
+                        @Override
+                        public DataSource fromString(String string) {
+                            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                        }
+                    });
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting datasources in case.", ex);
                     SwingUtilities.invokeLater(() -> MessageNotifyUtil.Message.error(Bundle.AddManualEvent_EventCreationDialogPane_initialize_dataSourcesError()));
                 }
-                dataSourceChooser.getSelectionModel().select(0);
-                dataSourceChooser.setConverter(new StringConverter<DataSource>() {
-                    @Override
-                    public String toString(DataSource dataSource) {
-                        return dataSource.getName() + "(ID: " + dataSource.getId() + ")";
-                    }
-
-                    @Override
-                    public DataSource fromString(String string) {
-                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-                    }
-                });
             }
 
+            /**
+             * Install/Configure the ValidationSupport.
+             */
             void installValidation() {
                 validationSupport.registerValidator(descriptionTextField, false, Validator.createEmptyValidator("Description is required"));
                 validationSupport.registerValidator(timePicker, false, Validator.createPredicateValidator(Objects::nonNull, "Invalid datetime"));
@@ -204,10 +233,18 @@ public class AddManualEvent extends Action {
 
                 validationSupport.initInitialDecoration();
 
+                //The ok button is only enabled if all fields are validated.
                 lookupButton(ButtonType.OK).disableProperty().bind(validationSupport.invalidProperty());
             }
 
+            /**
+             * Combine the user entered data into a ManulEventInfo object.
+             *
+             * @return The ManualEventInfo containing the user entered event
+             *         info.
+             */
             ManualEventInfo getManualEventInfo() {
+                //Trim off the offset part of the string from the chooser, to get something that ZoneId can parse.
                 String zone = StringUtils.substringAfter(timeZoneChooser.getValue(), ")").trim();
                 long toEpochSecond = timePicker.getLocalDateTime().atZone(ZoneId.of(zone)).toEpochSecond();
                 return new ManualEventInfo(dataSourceChooser.getValue(), descriptionTextField.getText(), toEpochSecond);
@@ -216,7 +253,7 @@ public class AddManualEvent extends Action {
     }
 
     /**
-     * Minimal info required to manually create a timeline event.
+     * Info required from user to manually create a timeline event.
      */
     private static class ManualEventInfo {
 
