@@ -354,10 +354,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         int deviceColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.DEVICE.ordinal();
         
         /*
-         * We also need a unique set of data sources. We rely on device ID for
-         * this. To mitigate edge cases where a device ID could be duplicated
-         * in the same case (e.g. "report.xml"), we put the device ID and case
-         * name in a key-value pair.
+         * We need a unique set of data sources. We rely on device ID for this.
+         * To mitigate edge cases where a device ID could be duplicated in the
+         * same case (e.g. "report.xml"), we put the device ID and case name in
+         * a key-value pair.
          * 
          * Note: Relying on the case name isn't a fool-proof way of determining
          * a case to be unique. We should improve this in the future.
