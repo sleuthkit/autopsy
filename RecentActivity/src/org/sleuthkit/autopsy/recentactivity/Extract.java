@@ -22,13 +22,18 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -41,7 +46,14 @@ import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskException;
+
 
 abstract class Extract {
 
@@ -410,7 +422,7 @@ abstract class Extract {
      * @return Newly created copy of the AbstractFile
      * @throws IOException 
      */
-    protected java.io.File createTemporaryFile(IngestJobContext context, AbstractFile file) throws IOException{
+    protected File createTemporaryFile(IngestJobContext context, AbstractFile file) throws IOException{
         Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(
                 getCurrentCase(), getName()), file.getName() + file.getId() + file.getNameExtension());
         java.io.File tempFile = tempFilePath.toFile();

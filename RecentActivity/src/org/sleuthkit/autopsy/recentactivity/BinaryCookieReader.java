@@ -53,7 +53,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
     private final int[] pageSizeArray;
     private final File cookieFile;
 
-    private final Logger LOG = Logger.getLogger(BinaryCookieReader.class.getName());
+    private static final Logger LOG = Logger.getLogger(BinaryCookieReader.class.getName());
 
     /**
      * The binary cookie reader encapsulates all the knowledge of how to read the mac
@@ -96,6 +96,8 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
                 for (int cnt = 0; cnt < pageCount; cnt++) {
                     sizeArray[cnt] = dataStream.readInt();
                 }
+                
+                LOG.log(Level.INFO, "No cookies found in {0}", cookieFile.getName()); //NON-NLS
             }
 
             reader = new BinaryCookieReader(cookieFile, sizeArray);
@@ -128,21 +130,24 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
          * The cookiePageIterator iterates the binarycookie file by page.
          */
         CookiePageIterator() {
+            if(pageSizeArray == null || pageSizeArray.length == 0) {
+                return;
+            }
+            
             try {
                 dataStream = new DataInputStream(new FileInputStream(cookieFile));
                 // skip to the first page
                 dataStream.skipBytes((2 * SIZEOF_INT_BYTES) + (pageSizeArray.length * SIZEOF_INT_BYTES));
             } catch (IOException ex) {
-                LOG.log(Level.WARNING, "Error occured creating DataInputStream", new Object[]{cookieFile.getName(), ex}); //NON-NLS
+                
+                String errorMessage = String.format("An error occurred creating an input stream for %s", cookieFile.getName());
+                LOG.log(Level.WARNING, errorMessage, ex); //NON-NLS
                 closeStream(); // Just incase the error was from skip
             }
         }
 
         /**
-         * hasNext manages reading of each cookie page and creating the Cookie
-         * Page objects. If the currentIterator returns false from hadNext, read
-         * the next page and create and new instance of
-         * CookiePage\CookieIterator.
+         * Returns true if there are more cookies in the binarycookie file.  
          *
          * @return True if there are more cookies
          */
@@ -152,7 +157,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
             if (dataStream == null) {
                 return false;
             }
-
+            
             if (currentIterator == null || !currentIterator.hasNext()) {
                 try {
 
@@ -170,7 +175,8 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
                     pageIndex++;
                 } catch (IOException ex) {
                     closeStream();
-                    LOG.log(Level.WARNING, "A read error occured for file {0} page {1} {2}", new Object[]{cookieFile.getName(), pageIndex, ex}); //NON-NLS
+                    String errorMessage = String.format("A read error occured for file %s (pageIndex = %d)", cookieFile.getName(), pageIndex);
+                    LOG.log(Level.WARNING, errorMessage, ex); //NON-NLS
                     return false;
                 }
             }
@@ -179,14 +185,14 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
         }
 
         /**
-         * Get the next cookie from current the current CookieIterator.
+         * Get the next cookie from the current CookieIterator.
          *
          * @return The next cookie
          */
         @Override
         public Cookie next() {
             // Just in case someone uses next without hasNext, this check will
-            // make sure there is more elements and that we iterate properly 
+            // make sure there are more elements and that we iterate properly 
             // through the pages.
             if (!hasNext()) {
                 throw new NoSuchElementException();
@@ -203,7 +209,8 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
                     dataStream.close();
                     dataStream = null;
                 } catch (IOException ex) {
-                    LOG.log(Level.WARNING, "SafariCookieReader unable to close DataInputStream for file {0} {1}", new Object[]{cookieFile.getName(), ex}); //NON-NLS
+                    String errorMessage = String.format("An error occurred trying to close stream for file %s", cookieFile.getName());
+                    LOG.log(Level.WARNING, errorMessage, ex); //NON-NLS
                 }
             }
         }
@@ -221,12 +228,12 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
          * Setup the CookiePage object. Calidates that the page bytes are in the
          * correct format by checking for the header value of 0x0100.
          *
-         * @param page
+         * @param page byte array representing a cookie page
          * @throws IOException
          */
         CookiePage(byte[] page) throws IOException {
             if (page == null || page.length == 0) {
-                throw new IllegalArgumentException("Invalid value for page passes to CookiePage constructor"); //NON-NLS
+                throw new IllegalArgumentException("Invalid value for page passed to CookiePage constructor"); //NON-NLS
             }
 
             pageBuffer = ByteBuffer.wrap(page);
@@ -248,7 +255,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
         }
 
         /**
-         * Returns in instance of a CookieIterator
+         * Returns an instance of a CookieIterator.
          *
          * @return CookieIterator
          */
@@ -265,7 +272,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
             int index = 0;
 
             /**
-             * Checks to see if there are more cookies
+             * Checks to see if there are more cookies.
              *
              * @return True if there are more cookies, false if there are not
              */
@@ -279,7 +286,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
             }
 
             /**
-             * Gets the next cookie from the page
+             * Gets the next cookie from the page.
              *
              * @return Next cookie
              */
@@ -307,8 +314,8 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
 
         private final static int COOKIE_HEAD_SKIP = 16;
 
-        private final Double expirationDate;
-        private final Double creationDate;
+        private final double expirationDate;
+        private final double creationDate;
 
         private final String name;
         private final String url;
@@ -322,7 +329,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
          */
         protected Cookie(byte[] cookieBytes) {
             if (cookieBytes == null || cookieBytes.length == 0) {
-                throw new IllegalArgumentException("Invalid value for cookieBytes passes to Cookie constructor"); //NON-NLS
+                throw new IllegalArgumentException("Invalid value for cookieBytes passed to Cookie constructor"); //NON-NLS
             }
 
             ByteBuffer byteBuffer = ByteBuffer.wrap(cookieBytes);
@@ -350,20 +357,20 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
          * Returns the expiration date of the cookie represented by this cookie
          * object.
          *
-         * @return
+         * @return Cookie expiration date in milliseconds with java epoch
          */
         public final Long getExpirationDate() {
-            return expirationDate.longValue() + MAC_EPOC_FIX;
+            return ((long)expirationDate) + MAC_EPOC_FIX;
         }
 
         /**
          * Returns the creation date of the cookie represented by this cookie
          * object.
          *
-         * @return
+         * @return Cookie creation date in milliseconds with java epoch
          */
         public final Long getCreationDate() {
-            return creationDate.longValue() + MAC_EPOC_FIX;
+            return ((long)creationDate) + MAC_EPOC_FIX;
         }
 
         /**
@@ -403,14 +410,12 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
         }
 
         /**
-         * Give an array a bytes and an offset in the array this function will
-         * copy the bytes from offset to the first null terminator into a new
-         * array. The bytes in the new array will be returned as a string not
-         * including the null terminator.
+         * Creates an ascii string from the bytes in byteArray starting at
+         * offset ending at the first null terminator found.
          *
-         * @param byteArray
-         * @param offset
-         * @return
+         * @param byteArray Array of bytes
+         * @param offset starting offset in the array
+         * @return String with bytes converted to ascii
          */
         private String decodeString(byte[] byteArray, int offset) {
             byte[] stringBytes = new byte[byteArray.length - offset];
