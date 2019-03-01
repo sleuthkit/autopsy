@@ -37,7 +37,10 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(HtmlViewer.class.getName());
     
-    private static final String[] SUPPORTED_MIMETYPES = new String[]{"text/html"};
+    private static final String[] SUPPORTED_MIMETYPES = new String[]{
+            "text/html",
+            "application/xhtml+xml"
+    };
     
     /**
      * Creates new form HtmlViewerPanel

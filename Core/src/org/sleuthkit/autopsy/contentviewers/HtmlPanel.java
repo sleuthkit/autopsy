@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.contentviewers;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A file content viewer for HTML files.
@@ -29,6 +30,7 @@ import org.openide.util.NbBundle.Messages;
 final class HtmlPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(HtmlPanel.class.getName());
     
     private String htmlText;
     
@@ -103,6 +105,7 @@ final class HtmlPanel extends javax.swing.JPanel {
                 showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_show());
                 this.htmlbodyTextPane.setText(wrapInHtmlBody(cleanseHTML(htmlText)));
             }
+
             htmlbodyTextPane.setCaretPosition(0);
             showImagesToggleButton.setEnabled(true);
         }
@@ -137,10 +140,10 @@ final class HtmlPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 203, Short.MAX_VALUE)
-                .addComponent(showImagesToggleButton))
-            .addComponent(htmlScrollPane)
+            .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(showImagesToggleButton)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
