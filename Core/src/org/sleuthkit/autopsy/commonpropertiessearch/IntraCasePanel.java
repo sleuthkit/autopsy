@@ -154,6 +154,7 @@ public final class IntraCasePanel extends javax.swing.JPanel {
         categoriesLabel.setName(""); // NOI18N
 
         buttonGroup.add(selectedFileCategoriesButton);
+        selectedFileCategoriesButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.selectedFileCategoriesButton.text")); // NOI18N
         selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
         selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
@@ -181,7 +182,6 @@ public final class IntraCasePanel extends javax.swing.JPanel {
         });
 
         buttonGroup.add(allFileCategoriesRadioButton);
-        allFileCategoriesRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.allFileCategoriesRadioButton.text")); // NOI18N
         allFileCategoriesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.allFileCategoriesRadioButton.toolTipText")); // NOI18N
         allFileCategoriesRadioButton.addActionListener(new java.awt.event.ActionListener() {
