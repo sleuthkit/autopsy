@@ -552,12 +552,13 @@ final class ChromeCacheExtractor {
         }
         
         AbstractFile cacheFile = cacheFileOptional.get();
+        RandomAccessFile randomAccessFile = null;
         String tempFilePathname = RAImageIngestModule.getRATempPath(currentCase, moduleName) + cachePath + cacheFile.getName(); //NON-NLS
         try {
             File newFile = new File(tempFilePathname);
             ContentUtils.writeToFile(cacheFile, newFile, context::dataSourceIngestIsCancelled);
             
-            RandomAccessFile randomAccessFile = new RandomAccessFile(tempFilePathname, "r");
+            randomAccessFile = new RandomAccessFile(tempFilePathname, "r");
             FileChannel roChannel = randomAccessFile.getChannel();
             ByteBuffer cacheFileROBuf = roChannel.map(FileChannel.MapMode.READ_ONLY, 0,
                                                         (int) roChannel.size());
@@ -571,15 +572,20 @@ final class ChromeCacheExtractor {
             
             return Optional.of(cacheFileCopy);
         }
-        catch (ReadContentInputStream.ReadContentInputStreamException ex) {
-            String msg = String.format("Error reading Chrome cache file '%s' (id=%d).", //NON-NLS
-                    cacheFile.getName(), cacheFile.getId()); 
+        catch (IOException ex) {
+           
+            try {
+                if (randomAccessFile != null) {
+                    randomAccessFile.close();
+                }
+            }
+            catch (IOException ex2) {
+                logger.log(Level.SEVERE, "Error while trying to close temp file after exception.", ex2); //NON-NLS
+            }
+            String msg = String.format("Error reading/copying Chrome cache file '%s' (id=%d).", //NON-NLS
+                                            cacheFile.getName(), cacheFile.getId()); 
             throw new IngestModuleException(msg, ex);
-        } catch (IOException ex) {
-            String msg = String.format("Error writing temp Chrome cache file '%s' (id=%d).", //NON-NLS
-                    cacheFile.getName(), cacheFile.getId());
-            throw new IngestModuleException(msg, ex);
-        }
+        } 
     }
     
     /**
