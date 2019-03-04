@@ -74,11 +74,13 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract SEUQA = new SearchEngineURLQueryAnalyzer();
         Extract osExtract = new ExtractOs();
         Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer();
+        Extract safari = new ExtractSafari();
 
         extractors.add(chrome);
         extractors.add(firefox);
         extractors.add(iexplore);
         extractors.add(edge);
+        extractors.add(safari);
         extractors.add(recentDocuments);
         extractors.add(SEUQA); // this needs to run after the web browser modules
         extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
@@ -89,6 +91,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         browserExtractors.add(firefox);
         browserExtractors.add(iexplore);
         browserExtractors.add(edge);
+        browserExtractors.add(safari);
 
         for (Extract extractor : extractors) {
             extractor.init();
