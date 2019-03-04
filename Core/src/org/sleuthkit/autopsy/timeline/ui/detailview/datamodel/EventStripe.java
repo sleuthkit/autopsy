@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
+import static java.util.Collections.singleton;
 import static java.util.Comparator.comparing;
 import java.util.Objects;
 import java.util.Optional;

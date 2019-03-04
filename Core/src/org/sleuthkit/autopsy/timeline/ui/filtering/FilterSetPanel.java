@@ -124,15 +124,14 @@ final public class FilterSetPanel extends BorderPane {
         filteredEvents.descriptionLODProperty().addListener(applyFiltersListener);
         filteredEvents.timeRangeProperty().addListener(applyFiltersListener);
 
-        filteredEvents.filterProperty().addListener(observable -> refresh());
-        refresh();
+        filteredEvents.filterProperty().addListener(observable -> refreshFilterUI());
+        refreshFilterUI();
 
         hiddenDescriptionsListView.setItems(controller.getQuickHideFilters());
         hiddenDescriptionsListView.setCellFactory(listView -> getNewDiscriptionFilterListCell());
 
         //show and hide the "hidden descriptions" panel depending on the current view mode
         controller.viewModeProperty().addListener(observable -> {
-            applyFilters();
             switch (controller.getViewMode()) {
                 case COUNTS:
                 case LIST:
@@ -163,7 +162,7 @@ final public class FilterSetPanel extends BorderPane {
         FXMLConstructor.construct(this, "FilterSetPanel.fxml"); // NON-NLS
     }
 
-    private void refresh() {
+    private void refreshFilterUI() {
         Platform.runLater(()
                 -> filterTreeTable.setRoot(new FilterTreeItem(filteredEvents.filterProperty().get().copyOf(), expansionMap)));
     }
