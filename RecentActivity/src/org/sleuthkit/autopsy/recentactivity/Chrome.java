@@ -37,11 +37,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -81,21 +83,43 @@ class Chrome extends Extract {
     private final Logger logger = Logger.getLogger(this.getClass().getName());
     private Content dataSource;
     private IngestJobContext context;
+    
+    @Messages({
+        "Progress_Message_Chrome_History=Chrome History",
+        "Progress_Message_Chrome_Bookmarks=Chrome Bookmarks",
+        "Progress_Message_Chrome_Cookies=Chrome Cookies",
+        "Progress_Message_Chrome_Downloads=Chrome Downloads",
+        "Progress_Message_Chrome_FormHistory=Chrome Form History",
+        "Progress_Message_Chrome_AutoFill=Chrome Auto Fill",
+        "Progress_Message_Chrome_Logins=Chrome Logins",
+    })
 
     Chrome() {
         moduleName = NbBundle.getMessage(Chrome.class, "Chrome.moduleName");
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+        
+        progressBar.progress(Bundle.Progress_Message_Chrome_History());
         this.getHistory();
+        
+        progressBar.progress(Bundle.Progress_Message_Chrome_Bookmarks());
         this.getBookmark();
+        
+        progressBar.progress(Bundle.Progress_Message_Chrome_Cookies());
         this.getCookie();
+        
+        progressBar.progress(Bundle.Progress_Message_Chrome_Logins());
         this.getLogins();
+        
+        progressBar.progress(Bundle.Progress_Message_Chrome_AutoFill());
         this.getAutofill();
+        
+        progressBar.progress(Bundle.Progress_Message_Chrome_Downloads());
         this.getDownload();
     }
 

@@ -43,6 +43,7 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -107,6 +108,9 @@ final class ExtractEdge extends Extract {
         "ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan.edb file",
         "ExtractEdge_Module_Name=Microsoft Edge",
         "ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history",
+        "Progress_Message_Edge_History=Microsoft Edge History",
+        "Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks",
+        "Progress_Message_Edge_Cookies=Microsoft Edge Cookies",
     })
 
     /**
@@ -122,7 +126,7 @@ final class ExtractEdge extends Extract {
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context) {
+    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
         this.setFoundData(false);
@@ -164,12 +168,13 @@ final class ExtractEdge extends Extract {
         }
 
         try {
-            this.processWebCacheDbFile(esedumper, webCacheFiles);
+            this.processWebCacheDbFile(esedumper, webCacheFiles, progressBar);
         } catch (IOException | TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_webcacheFail());
             LOG.log(Level.SEVERE, "Error returned from processWebCacheDbFile", ex); // NON-NLS
         }
 
+        progressBar.progress(Bundle.Progress_Message_Edge_Bookmarks());
         try {
             this.processSpartanDbFile(esedumper, spartanFiles);
         } catch (IOException | TskCoreException ex) {
@@ -187,7 +192,7 @@ final class ExtractEdge extends Extract {
      * @throws IOException
      * @throws TskCoreException
      */
-    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles) throws IOException, TskCoreException {
+    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles, DataSourceIngestModuleProgress progressBar) throws IOException, TskCoreException {
 
         for (AbstractFile webCacheFile : webCacheFiles) {
 
@@ -218,13 +223,17 @@ final class ExtractEdge extends Extract {
                 if (context.dataSourceIngestIsCancelled()) {
                     return;
                 }
-
+                
+                progressBar.progress(Bundle.Progress_Message_Edge_History());
+                
                 this.getHistory(webCacheFile, resultsDir);
 
                 if (context.dataSourceIngestIsCancelled()) {
                     return;
                 }
 
+                progressBar.progress(Bundle.Progress_Message_Edge_Cookies());
+                
                 this.getCookies(webCacheFile, resultsDir);
 
 //                if (context.dataSourceIngestIsCancelled()) {

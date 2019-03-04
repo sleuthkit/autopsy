@@ -52,6 +52,7 @@ import org.xml.sax.SAXException;
 import java.nio.file.Path;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -66,7 +67,8 @@ import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamExce
  */
 @NbBundle.Messages({
     "RegRipperNotFound=Autopsy RegRipper executable not found.",
-    "RegRipperFullNotFound=Full version RegRipper executable not found."
+    "RegRipperFullNotFound=Full version RegRipper executable not found.",
+    "Progress_Message_Analyze_Registry=Analyzing Registry Files"
 })
 class ExtractRegistry extends Extract {
 
@@ -969,9 +971,11 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
+        
+        progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
         analyzeRegistryFiles();
 
     }
