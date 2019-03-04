@@ -186,9 +186,9 @@ public abstract class AbstractCommonAttributeSearcher {
      * when checkType is ONLY_TEXT_FILES. ".doc", ".docx", ".odt", ".xls",
      * ".xlsx", ".ppt", ".pptx" ".txt", ".rtf", ".log", ".text", ".xml" ".html",
      * ".htm", ".css", ".js", ".php", ".aspx" ".pdf"
+     * //ignore text/plain due to large number of results with that type 
      */
     static final Set<String> TEXT_FILES_MIME_TYPES = Stream.of(
-            "text/plain", //NON-NLS
             "application/rtf", //NON-NLS
             "application/pdf", //NON-NLS
             "text/css", //NON-NLS
