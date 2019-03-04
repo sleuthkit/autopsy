@@ -1,4 +1,4 @@
-DrawableTileBase.externalViewerAction.text=Open in External Viewer
+DrawableTileBase.externalViewerAction.text=Open in External Viewer (Ctrl+E)
 DrawableTileBase.menuItem.extractFiles=Extract File(s)
 DrawableTileBase.menuItem.showContentViewer=Show Content Viewer
 DrawableUIBase.errorLabel.OOMText=Insufficent memory

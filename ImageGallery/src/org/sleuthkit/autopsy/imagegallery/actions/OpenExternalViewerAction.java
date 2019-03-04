@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
  * Wraps {@link ExternalViewerAction} in a ControlsFX {@link Action} with
  * appropriate text and graphic
  */
-@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer (Ctrl+E)",
+@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer",
         "OpenExternalViewerAction.displayName=External Viewer"})
 public class OpenExternalViewerAction extends Action {
 

@@ -86,7 +86,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  *
  * TODO: refactor ExternalViewerAction to supply its own name
  */
-@NbBundle.Messages({"DrawableTileBase.externalViewerAction.text=Open in External Viewer (Ctrl+E)"})
+@NbBundle.Messages({"DrawableTileBase.externalViewerAction.text=Open in External Viewer"})
 public abstract class DrawableTileBase extends DrawableUIBase {
 
     private static final Logger logger = Logger.getLogger(DrawableTileBase.class.getName());
