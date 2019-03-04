@@ -135,7 +135,7 @@ public abstract class AbstractCommonAttributeSearcher {
         Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new TreeMap<>();
 
         for (CommonAttributeValue md5Metadata : commonFiles.values()) {
-            Integer size = md5Metadata.getInstanceCount();
+            Integer size = md5Metadata.getDataSources().size();
 
             if (instanceCollatedCommonFiles.containsKey(size)) {
                 instanceCollatedCommonFiles.get(size).addMetadataToList(md5Metadata);

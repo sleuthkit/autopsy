@@ -165,7 +165,6 @@ public final class IntraCasePanel extends javax.swing.JPanel {
 
         pictureVideoCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(pictureVideoCheckbox, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.pictureVideoCheckbox.text")); // NOI18N
-        pictureVideoCheckbox.setEnabled(false);
         pictureVideoCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pictureVideoCheckboxActionPerformed(evt);
@@ -174,7 +173,6 @@ public final class IntraCasePanel extends javax.swing.JPanel {
 
         documentsCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(documentsCheckbox, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.documentsCheckbox.text")); // NOI18N
-        documentsCheckbox.setEnabled(false);
         documentsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 documentsCheckboxActionPerformed(evt);

@@ -54,13 +54,13 @@ final public class CommonAttributeValue {
         return this.fileInstances.stream().map(AbstractCommonAttributeInstance::getCaseName).collect(Collectors.joining(", "));
     }
 
-    public String getDataSources() {
+    public Set<String> getDataSources() {
         Set<String> sources = new HashSet<>();
         for (AbstractCommonAttributeInstance data : this.fileInstances) {
             sources.add(data.getDataSource());
         }
 
-        return String.join(", ", sources);
+        return sources;
     }
 
     void addInstance(AbstractCommonAttributeInstance metadata) {
