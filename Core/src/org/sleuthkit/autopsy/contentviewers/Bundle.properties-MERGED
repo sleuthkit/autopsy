@@ -32,6 +32,8 @@ GstVideoPanel.progress.buffering=Buffering...
 GstVideoPanel.progressLabel.bufferingErr=Error buffering file
 GstVideoPanel.progress.infoLabel.updateErr=Error updating video progress: {0}
 GstVideoPanel.ExtractMedia.progress.buffering=Buffering {0}
+HtmlPanel_showImagesToggleButton_hide=Hide Images
+HtmlPanel_showImagesToggleButton_show=Show Images
 MediaFileViewer.AccessibleContext.accessibleDescription=
 MediaFileViewer.title=Media
 MediaFileViewer.toolTip=Displays supported multimedia files (images, videos, audio)
@@ -44,8 +46,6 @@ MediaViewVideoPanel.infoLabel.text=info
 MediaViewImagePanel.imgFileTooLarge.msg=Could not load image file (too large): {0}
 
 MessageContentViewer.AtrachmentsPanel.title=Attachments
-MessageContentViewer.showImagesToggleButton.hide.text=Hide Images
-MessageContentViewer.showImagesToggleButton.text=Show Images
 MessageContentViewer.title=Message
 MessageContentViewer.toolTip=Displays messages.
 Metadata.nodeText.none=None
@@ -139,6 +139,7 @@ MediaViewImagePanel.zoomResetButton.text=Reset
 MediaViewImagePanel.zoomTextField.text=
 MediaViewImagePanel.rotationTextField.text=
 MediaViewImagePanel.rotateLeftButton.toolTipText=
+HtmlPanel.showImagesToggleButton.text=Show Images
 # {0} - tableName
 SQLiteViewer.readTable.errorText=Error getting rows for table: {0}
 # {0} - tableName
