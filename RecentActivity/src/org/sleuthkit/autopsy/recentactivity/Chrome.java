@@ -97,6 +97,9 @@ class Chrome extends Extract {
         this.getLogins();
         this.getAutofill();
         this.getDownload();
+        
+        ChromeCacheExtractor chromeCacheExtractor = new ChromeCacheExtractor(dataSource, context);
+        chromeCacheExtractor.getCaches();
     }
 
     /**
