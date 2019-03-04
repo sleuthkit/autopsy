@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * tries to open it in the user's system with the default or user specified
  * associated application.
  */
-@Messages({"ExternalViewerShortcutAction.title.text=Open in External Viewer"})
+@Messages({"ExternalViewerShortcutAction.title.text=Open in External Viewer (Ctrl+E)"})
 public class ExternalViewerShortcutAction extends AbstractAction {
     public static final KeyStroke EXTERNAL_VIEWER_SHORTCUT = KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK);
     
