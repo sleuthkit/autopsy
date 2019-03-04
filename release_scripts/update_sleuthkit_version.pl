@@ -31,11 +31,10 @@ sub main {
 	update_tsk_version();
 	update_core_project_properties();
 	update_core_project_xml();
-	
+    update_unix_setup();
+    
 	print "Files updated.  You need to commit and push them\n";
 }
-
-
 
 
 
@@ -194,6 +193,39 @@ sub update_core_project_xml {
 }
 
 
+# update the tskversion.xml
+sub update_unix_setup {
+    
+    my $orig = "unix_setup.sh";
+    my $temp = "${orig}-bak";
+    
+    print "Updating the version in ${orig}\n";
+    
+    open (CONF_IN, "<${orig}") or die "Cannot open ${orig}";
+    open (CONF_OUT, ">${temp}") or die "Cannot open ${temp}";
+    
+    my $found = 0;
+    while (<CONF_IN>) {
+        if (/^TSK_VERSION=/) {
+            print CONF_OUT "TSK_VERSION=${VER}\n";
+            $found++;
+        }
+        else {
+            print CONF_OUT $_;
+        }
+    }
+    close (CONF_IN);
+    close (CONF_OUT);
+    
+    if ($found != 1) {
+        die "$found (instead of 1) occurrences of TSK_VERSION found in ${orig}";
+    }
+    
+    unlink ($orig) or die "Error deleting ${orig}";
+    rename ($temp, $orig) or die "Error renaming tmp $orig file";
+    system("git add ${orig}") unless ($TESTING);
+    
+}
 
 
 main();

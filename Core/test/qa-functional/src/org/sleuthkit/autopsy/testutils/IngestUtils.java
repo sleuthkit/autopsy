@@ -61,7 +61,7 @@ public final class IngestUtils {
         DataSourceProcessorCallback.DataSourceProcessorResult result = null;
         try {
             if (!dataSourcePath.toFile().exists()) {
-                Assert.fail("Data source not found: " + dataSourcePath.toString());
+                Assert.fail("IngestUtils.addDataSource: Data source not found: " + dataSourcePath.toString());
             }
             UUID taskId = UUID.randomUUID();
             Case.getCurrentCaseThrows().notifyAddingDataSource(taskId);
@@ -69,14 +69,14 @@ public final class IngestUtils {
             result = callBack.getResult();
             if (result.equals(DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS)) {
                 String joinedErrors = String.join(System.lineSeparator(), callBack.getErrorMessages());
-                Assert.fail(String.format("Error(s) occurred while running the data source processor: %s", joinedErrors));
+                Assert.fail(String.format("IngestUtils.addDataSource: Error(s) occurred while running the data source processor: %s", joinedErrors));
             }
             for (Content c:callBack.getDataSourceContent()) {
                 Case.getCurrentCaseThrows().notifyDataSourceAdded(c, taskId);
             }
         } catch (AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | NoCurrentCaseException | InterruptedException ex) {
             Exceptions.printStackTrace(ex);
-            Assert.fail(ex.getMessage());
+            Assert.fail("IngestUtils.addDataSource: " + ex.getMessage());
         }
     }
 
