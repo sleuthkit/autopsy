@@ -6,4 +6,7 @@
         <conf name="recent-activity"/>
       
     </configurations>
+	<dependencies>
+		<dependency conf="recent-activity->default" org="com.googlecode.plist" name="dd-plist" rev="1.20"/>
+	</dependencies>
 </ivy-module>
