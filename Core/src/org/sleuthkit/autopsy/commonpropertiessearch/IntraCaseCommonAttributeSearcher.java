@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -137,7 +138,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
             }
         }
 
-        Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
+        TreeMap<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
 
         return new CommonAttributeCountSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
     }

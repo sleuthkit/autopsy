@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
@@ -41,7 +42,7 @@ final public class CommonAttributeCountSearchResults {
     private static final Logger LOGGER = Logger.getLogger(CommonAttributeCountSearchResults.class.getName());
 
     // maps instance count to list of attribute values. 
-    private final Map<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
+    private final TreeMap<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
     private final int percentageThreshold;
     private final int resultTypeId;
 
@@ -58,7 +59,7 @@ final public class CommonAttributeCountSearchResults {
      */
     CommonAttributeCountSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType) {
         //wrap in a new object in case any client code has used an unmodifiable collection
-        this.instanceCountToAttributeValues = new HashMap<>(metadata);
+        this.instanceCountToAttributeValues = new TreeMap<>(metadata);
         this.percentageThreshold = percentageThreshold;
         this.resultTypeId = resultType.getId();
     }
@@ -73,7 +74,7 @@ final public class CommonAttributeCountSearchResults {
      */
     CommonAttributeCountSearchResults(Map<Integer, CommonAttributeValueList> metadata, int percentageThreshold) {
         //wrap in a new object in case any client code has used an unmodifiable collection
-        this.instanceCountToAttributeValues = new HashMap<>(metadata);
+        this.instanceCountToAttributeValues = new TreeMap<>(metadata);
         this.percentageThreshold = percentageThreshold;
         this.resultTypeId = CorrelationAttributeInstance.FILES_TYPE_ID;
     }

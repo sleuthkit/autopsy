@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
@@ -173,7 +174,7 @@ final class InterCaseSearchResultsProcessor {
         } catch (EamDbException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
-        return new HashMap<>();
+        return new TreeMap<>();
     }
 
     /**
@@ -205,7 +206,7 @@ final class InterCaseSearchResultsProcessor {
         } catch (EamDbException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
-        return new HashMap<>();
+        return new TreeMap<>();
     }
 
     /**
@@ -248,7 +249,7 @@ final class InterCaseSearchResultsProcessor {
      */
     private class InterCaseByCountCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback, InstanceTableCallback {
 
-        private final Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new HashMap<>();
+        private final TreeMap<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new TreeMap<>();
         private final int caseID;
         private final int targetCase;
 
@@ -311,7 +312,7 @@ final class InterCaseSearchResultsProcessor {
         }
 
         Map<Integer, CommonAttributeValueList> getInstanceCollatedCommonFiles() {
-            return Collections.unmodifiableMap(instanceCollatedCommonFiles);
+            return Collections.unmodifiableSortedMap(instanceCollatedCommonFiles);
         }
     }
 
