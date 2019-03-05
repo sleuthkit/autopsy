@@ -1,0 +1,7 @@
+description, seek=true, handles-states=true, needs_preroll=true
+pause, playback-time=0.0
+seek, playback-time=0.0, start="duration - 0.5", flags=accurate+flush
+seek, playback-time=0.0, start=position-0.1, repeat="min(10, (duration - 0.6))/0.1", flags=accurate+flush
+play, playback-time=0.0
+stop, playback-time=1.0
+

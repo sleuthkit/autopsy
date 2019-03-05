@@ -23,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.datasourceSummary.ViewSummaryInformationAction;
+import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;

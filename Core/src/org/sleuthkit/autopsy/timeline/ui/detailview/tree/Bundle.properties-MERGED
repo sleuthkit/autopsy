@@ -1,0 +1,4 @@
+EventsTree.Label.text=Sort By:
+TreeComparator.Count.displayName=Count
+TreeComparator.Description.displayName=Description
+TreeComparator.Type.displayName=Type
