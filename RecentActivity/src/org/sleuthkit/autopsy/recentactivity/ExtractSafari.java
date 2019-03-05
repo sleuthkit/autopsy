@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -91,6 +92,10 @@ final class ExtractSafari extends Extract {
         "ExtractSafari_Error_Getting_History=An error occurred while processing Safari history files.",
         "ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files",
         "ExtractSafari_Error_Parsing_Cookies=An error occured while processing Safari Cookies files",
+        "Progress_Message_Safari_History=Safari History",
+        "Progress_Message_Safari_Bookmarks=Safari Bookmarks",
+        "Progress_Message_Safari_Cookies=Safari Cookies",
+        "Progress_Message_Safari_Downloads=Safari Downloads",
     })
 
     /**
@@ -107,9 +112,10 @@ final class ExtractSafari extends Extract {
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context) {
+    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         setFoundData(false);
-
+        
+        progressBar.progress(Bundle.Progress_Message_Safari_Cookies());
         try {
             processHistoryDB(dataSource, context);
 
@@ -118,6 +124,7 @@ final class ExtractSafari extends Extract {
             LOG.log(Level.SEVERE, "Exception thrown while processing history file: {0}", ex); //NON-NLS
         }
 
+        progressBar.progress(Bundle.Progress_Message_Safari_Bookmarks());
         try {
             processBookmarkPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
@@ -125,13 +132,15 @@ final class ExtractSafari extends Extract {
             LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
         }
         
-         try {
+        progressBar.progress(Bundle.Progress_Message_Safari_Downloads());
+        try {
             processDownloadsPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
             LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Download.plist file: {0}", ex); //NON-NLS
         }
 
+        progressBar.progress(Bundle.Progress_Message_Safari_Cookies());
         try {
             processBinaryCookieFile(dataSource, context);
         } catch (IOException | TskCoreException ex) {

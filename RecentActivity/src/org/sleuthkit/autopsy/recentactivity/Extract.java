@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -85,7 +86,7 @@ abstract class Extract {
     void configExtractor() throws IngestModuleException  {        
     }
 
-    abstract void process(Content dataSource, IngestJobContext context);
+    abstract void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar);
 
     void complete() {
     }

@@ -45,12 +45,14 @@ import java.util.logging.Level;
 import org.apache.commons.io.FilenameUtils;
 
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -63,6 +65,15 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
+
+@Messages({
+    "Progress_Message_Firefox_History=Firefox History",
+    "Progress_Message_Firefox_Bookmarks=Firefox Bookmarks",
+    "Progress_Message_Firefox_Cookies=Firefox Cookies",
+    "Progress_Message_Firefox_Downloads=Firefox Downloads",
+    "Progress_Message_Firefox_FormHistory=Firefox Form History",
+    "Progress_Message_Firefox_AutoFill=Firefox Auto Fill"
+})
 
 /**
  * Firefox recent activity extraction
@@ -96,15 +107,27 @@ class Firefox extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_History());
         this.getHistory();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_Bookmarks());
         this.getBookmark();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_Downloads());
         this.getDownload();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_Cookies());
         this.getCookie();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_FormHistory());
         this.getFormsHistory();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_AutoFill());
         this.getAutofillProfiles();
     }
 
