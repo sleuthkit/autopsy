@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,10 +33,12 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
@@ -323,6 +325,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         tableModel.clearTable();
         correlationAttributes.clear();
         earliestCaseDate.setText(Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable());
+        foundInLabel.setText("");
     }
 
     @Override
@@ -353,6 +356,40 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     @Override
     public int isPreferred(Node node) {
         return 1;
+    }
+    
+    /**
+     * Set the number of unique cases and data sources.
+     */
+    @Messages({
+        "DataContentViewerOtherCases.foundIn.text=Found %d instances in %d cases and %d data sources."
+    })
+    private void setOccurrenceCounts() {
+        DataContentViewerOtherCasesTableModel model = (DataContentViewerOtherCasesTableModel) otherCasesTable.getModel();
+        
+        int caseColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.CASE_NAME.ordinal();
+        int deviceColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.DEVICE.ordinal();
+        
+        /*
+         * We need a unique set of data sources. We rely on device ID for this.
+         * To mitigate edge cases where a device ID could be duplicated in the
+         * same case (e.g. "report.xml"), we put the device ID and case name in
+         * a key-value pair.
+         * 
+         * Note: Relying on the case name isn't a fool-proof way of determining
+         * a case to be unique. We should improve this in the future.
+         */
+        Set<String> cases = new HashSet<>();
+        Map<String, String> devices = new HashMap();
+        
+        for (int i=0; i < model.getRowCount(); i++) {
+            String caseName = (String) model.getValueAt(i, caseColumnIndex);
+            String deviceId = (String) model.getValueAt(i, deviceColumnIndex);
+            cases.add(caseName);
+            devices.put(deviceId, caseName);
+        }
+        
+        foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), model.getRowCount(), cases.size(), devices.size()));
     }
 
     /**
@@ -737,7 +774,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         } else {
             setColumnWidths();
         }
+        
         setEarliestCaseDate();
+        setOccurrenceCounts();
     }
 
     /**
@@ -789,7 +828,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         otherCasesTable = new javax.swing.JTable();
         earliestCaseLabel = new javax.swing.JLabel();
         earliestCaseDate = new javax.swing.JLabel();
-        tableStatusPanel = new javax.swing.JPanel();
+        foundInLabel = new javax.swing.JLabel();
 
         rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
             public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
@@ -835,44 +874,31 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         org.openide.awt.Mnemonics.setLocalizedText(earliestCaseDate, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.earliestCaseDate.text")); // NOI18N
 
-        tableStatusPanel.setPreferredSize(new java.awt.Dimension(1500, 16));
-
-        javax.swing.GroupLayout tableStatusPanelLayout = new javax.swing.GroupLayout(tableStatusPanel);
-        tableStatusPanel.setLayout(tableStatusPanelLayout);
-        tableStatusPanelLayout.setHorizontalGroup(
-            tableStatusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        tableStatusPanelLayout.setVerticalGroup(
-            tableStatusPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 16, Short.MAX_VALUE)
-        );
+        org.openide.awt.Mnemonics.setLocalizedText(foundInLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.foundInLabel.text")); // NOI18N
 
         javax.swing.GroupLayout tableContainerPanelLayout = new javax.swing.GroupLayout(tableContainerPanel);
         tableContainerPanel.setLayout(tableContainerPanelLayout);
         tableContainerPanelLayout.setHorizontalGroup(
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, tableContainerPanelLayout.createSequentialGroup()
-                .addComponent(tableStatusPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1282, Short.MAX_VALUE)
-                .addGap(218, 218, 218))
-            .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 1508, Short.MAX_VALUE)
             .addGroup(tableContainerPanelLayout.createSequentialGroup()
                 .addComponent(earliestCaseLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(earliestCaseDate)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(66, 66, 66)
+                .addComponent(foundInLabel)
+                .addGap(0, 1157, Short.MAX_VALUE))
         );
         tableContainerPanelLayout.setVerticalGroup(
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, tableContainerPanelLayout.createSequentialGroup()
-                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
-                .addGap(2, 2, 2)
+                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 71, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(earliestCaseLabel)
-                    .addComponent(earliestCaseDate))
-                .addGap(0, 0, 0)
-                .addComponent(tableStatusPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
+                    .addComponent(earliestCaseDate)
+                    .addComponent(foundInLabel))
+                .addGap(6, 6, 6))
         );
 
         javax.swing.GroupLayout otherCasesPanelLayout = new javax.swing.GroupLayout(otherCasesPanel);
@@ -885,10 +911,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         otherCasesPanelLayout.setVerticalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 483, Short.MAX_VALUE)
+            .addGap(0, 61, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 53, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -900,7 +926,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 59, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 53, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -924,6 +950,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private javax.swing.JLabel earliestCaseDate;
     private javax.swing.JLabel earliestCaseLabel;
     private javax.swing.JMenuItem exportToCSVMenuItem;
+    private javax.swing.JLabel foundInLabel;
     private javax.swing.JPanel otherCasesPanel;
     private javax.swing.JTable otherCasesTable;
     private javax.swing.JPopupMenu rightClickPopupMenu;
@@ -932,7 +959,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private javax.swing.JMenuItem showCommonalityMenuItem;
     private javax.swing.JPanel tableContainerPanel;
     private javax.swing.JScrollPane tableScrollPane;
-    private javax.swing.JPanel tableStatusPanel;
     // End of variables declaration//GEN-END:variables
 
     /**
