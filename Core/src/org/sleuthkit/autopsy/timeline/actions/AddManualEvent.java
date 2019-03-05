@@ -77,7 +77,7 @@ public class AddManualEvent extends Action {
 
     /**
      * Initialize the custom value extractor used by the ValidationSupport for
-     * the LocalDateTimeTextField.
+     * the LocalDateTimeTextField in the EventCreationDialogPane.
      */
     static {
         ValueExtractor.addObservableValueExtractor(LocalDateTimeTextField.class::isInstance,
@@ -119,7 +119,7 @@ public class AddManualEvent extends Action {
             artifact.addAttributes(Arrays.asList(
                     new BlackboardAttribute(
                             TSK_TL_EVENT_TYPE, source,
-                            EventType.OTHER.getTypeID()),
+                            EventType.USER_CREATED.getTypeID()),
                     new BlackboardAttribute(
                             TSK_DESCRIPTION, source,
                             eventInfo.description),
