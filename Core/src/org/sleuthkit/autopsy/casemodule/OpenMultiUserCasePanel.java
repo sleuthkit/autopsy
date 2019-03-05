@@ -18,13 +18,14 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCasesBrowserPanel;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.event.ListSelectionEvent;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.coordinationservice.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 
 /**
  * A JPanel that allows a user to open a multi-user case.
@@ -46,9 +47,9 @@ final class OpenMultiUserCasePanel extends JPanel {
     OpenMultiUserCasePanel(JDialog parentDialog) {
         this.parentDialog = parentDialog;
         initComponents(); // Machine generated code 
-        caseBrowserPanel = new MultiUserCasesBrowserPanel();
-        caseExplorerScrollPane.add(caseBrowserPanel);
-        caseExplorerScrollPane.setViewportView(caseBrowserPanel);
+        caseBrowserPanel = new MultiUserCasesBrowserPanel(new ExplorerManager(), new OpenMultiUserCaseDialogCustomizer());
+        caseBrowserScrollPane.add(caseBrowserPanel);
+        caseBrowserScrollPane.setViewportView(caseBrowserPanel);
         openSelectedCaseButton.setEnabled(false);
         caseBrowserPanel.addListSelectionListener((ListSelectionEvent event) -> {
             openSelectedCaseButton.setEnabled(caseBrowserPanel.getExplorerManager().getSelectedNodes().length > 0);
@@ -60,7 +61,7 @@ final class OpenMultiUserCasePanel extends JPanel {
      * the coordination service..
      */
     void refreshDisplay() {
-        caseBrowserPanel.refreshCases();
+        caseBrowserPanel.displayCases();
     }
 
     /**
@@ -75,8 +76,8 @@ final class OpenMultiUserCasePanel extends JPanel {
         openSingleUserCaseButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         searchLabel = new javax.swing.JLabel();
-        caseExplorerScrollPane = new javax.swing.JScrollPane();
         openSelectedCaseButton = new javax.swing.JButton();
+        caseBrowserScrollPane = new javax.swing.JScrollPane();
 
         setName("Completed Cases"); // NOI18N
         setPreferredSize(new java.awt.Dimension(960, 485));
@@ -115,17 +116,19 @@ final class OpenMultiUserCasePanel extends JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(caseExplorerScrollPane)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(searchLabel)
-                        .addGap(32, 32, 32)
-                        .addComponent(openSingleUserCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 96, Short.MAX_VALUE)
-                        .addComponent(openSelectedCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addComponent(searchLabel)
+                .addGap(32, 32, 32)
+                .addComponent(openSingleUserCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 172, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 74, Short.MAX_VALUE)
+                .addComponent(openSelectedCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(caseBrowserScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 948, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelButton, openSelectedCaseButton, openSingleUserCaseButton});
@@ -133,15 +136,18 @@ final class OpenMultiUserCasePanel extends JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addComponent(caseExplorerScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(462, 462, 462)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(openSingleUserCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(searchLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(openSelectedCaseButton))
                 .addContainerGap())
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(caseBrowserScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 445, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(49, Short.MAX_VALUE)))
         );
 
         layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {cancelButton, openSelectedCaseButton, openSingleUserCaseButton});
@@ -177,16 +183,17 @@ final class OpenMultiUserCasePanel extends JPanel {
     private void openSelectedCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openSelectedCaseButtonActionPerformed
         ExplorerManager explorerManager = caseBrowserPanel.getExplorerManager();
         Node[] selectedNodes = explorerManager.getSelectedNodes();
-        if (selectedNodes.length > 0 && selectedNodes[0] instanceof MultiUserCaseNode) {
-            MultiUserCaseNode caseNode = (MultiUserCaseNode) selectedNodes[0];
-            CaseNodeData nodeData = caseNode.getCaseNodeData();
-            new OpenMultiUserCaseAction(nodeData).actionPerformed(evt);
+        if (selectedNodes.length > 0) {
+            CaseNodeData nodeData = selectedNodes[0].getLookup().lookup(CaseNodeData.class);
+            if (nodeData != null) {
+                new OpenMultiUserCaseAction(nodeData).actionPerformed(evt);
+            }
         }
     }//GEN-LAST:event_openSelectedCaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
-    private javax.swing.JScrollPane caseExplorerScrollPane;
+    private javax.swing.JScrollPane caseBrowserScrollPane;
     private javax.swing.JButton openSelectedCaseButton;
     private javax.swing.JButton openSingleUserCaseButton;
     private javax.swing.JLabel searchLabel;
