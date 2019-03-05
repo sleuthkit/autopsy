@@ -1,0 +1,42 @@
+CollapseClusterAction.text=Collapse
+DetailViewPane.advancedLayoutOptionsButtonLabel.text=Advanced Layout Options
+DetailViewPane.bandByTypeBox.text=Band by Type
+DetailViewPane.countsRadio.text=Show Counts Only
+DetailViewPane.hiddenRadio.text=Hide Description
+DetailViewPane.loggedTask.backButton=Back (Cancel)
+DetailViewPane.loggedTask.continueButton=Continue
+DetailViewPane.loggedTask.name=Updating Details View
+# {0} - number of events
+DetailViewPane.loggedTask.prompt=You are about to show details for {0} events.  This might be very slow and could exhaust available memory.\n\nDo you want to continue?
+DetailViewPane.loggedTask.queryDb=Retrieving event data
+DetailViewPane.loggedTask.updateUI=Populating view
+DetailViewPane.oneEventPerRowBox.text=One Per Row
+DetailViewPane.pinnedLaneLabel.text=Pinned Events
+DetailViewPane.primaryLaneLabel.text=All Events (Filtered)
+DetailViewPane.showRadio.text=Show Full Description
+DetailViewPane.truncateAllBox.text=Truncate Descriptions
+DetailViewPane.truncateSliderLabel.text=max description width (px):
+EventBundleNodeBase.toolTip.loading=loading...
+EventClusterNode.loggedTask.name=Load sub events
+# {0} - hash set count string
+EventNodeBase.toolTip.hashSetHits=\n\nHash Set Hits\n{0}
+EventNodeBase.toolTip.loading2=loading tooltip
+# {0} - tag count string
+EventNodeBase.toolTip.tags=\n\nTags\n{0}
+# {0} - counts
+# {1} - event type
+# {2} - description
+# {3} - start date/time
+# {4} - end date/time
+EventNodeBase.tooltip.text={0} {1} events\n{2}\nbetween\t{3}\nand   \t{4}
+ExpandClusterAction.text=Expand
+# {0} - date/time at guideline position
+GuideLine.tooltip.text={0}\nRight-click to remove.\nDrag to reposition.
+HideDescriptionAction.displayMsg=Hide this group from the details view.
+HideDescriptionAction.displayName=Hide
+PinEventAction.text=Pin
+PinnedChartLane.pinnedEventsListener.errorMessage=Error adding pinned event to lane.
+PlaceMArkerAction.name=Place Marker
+PrimaryDetailsChartLane.stripeChangeListener.errorMessage=Error adding stripe to chart lane.
+UnhideDescriptionAction.displayName=Unhide
+UnPinEventAction.text=Unpin

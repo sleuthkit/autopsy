@@ -1,0 +1,18 @@
+EventRow.updateItem.errorMessage=Error getting event by id.
+EventTableCell.updateItem.errorMessage=Error getting event by id.
+ListChart.errorMsg=There was a problem getting the content for the selected event.
+# {0} - the number of events
+ListTimeline.eventCountLabel.text={0} events
+ListTimeline.hashHitTooltip.error=There was a problem getting the hash set names for the selected event.
+# {0} - hash set names
+ListTimeline.hashHitTooltip.text=Hash Sets:\n{0}
+ListTimeline.taggedTooltip.error=There was a problem getting the tag names for the selected event.
+# {0} - tag names
+ListTimeline.taggedTooltip.text=Tags:\n{0}
+ListView.EventTypeCell.accessedTooltip=File Accessed ( A )
+ListView.EventTypeCell.changedTooltip=File Changed ( C )
+ListView.EventTypeCell.createdTooltip=File Created ( B, for Born )
+ListView.EventTypeCell.modifiedTooltip=File Modified ( M )
+ListViewPane.loggedTask.name=Updating List View
+ListViewPane.loggedTask.queryDb=Retrieving event data
+ListViewPane.loggedTask.updateUI=Populating view

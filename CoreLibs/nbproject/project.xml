@@ -587,24 +587,24 @@
                 <package>org.dom4j.util</package>
                 <package>org.dom4j.xpath</package>
                 <package>org.dom4j.xpp</package>
-                <package>org.gstreamer</package>
-                <package>org.gstreamer.controller</package>
-                <package>org.gstreamer.elements</package>
-                <package>org.gstreamer.elements.good</package>
-                <package>org.gstreamer.event</package>
-                <package>org.gstreamer.example</package>
-                <package>org.gstreamer.glib</package>
-                <package>org.gstreamer.interfaces</package>
-                <package>org.gstreamer.io</package>
-                <package>org.gstreamer.lowlevel</package>
-                <package>org.gstreamer.lowlevel.annotations</package>
-                <package>org.gstreamer.media</package>
-                <package>org.gstreamer.media.event</package>
-                <package>org.gstreamer.message</package>
-                <package>org.gstreamer.query</package>
-                <package>org.gstreamer.swing</package>
-                <package>org.gstreamer.swt</package>
-                <package>org.gstreamer.swt.overlay</package>
+                <package>org.freedesktop.gstreamer</package>
+                <package>org.freedesktop.gstreamer.controller</package>
+                <package>org.freedesktop.gstreamer.elements</package>
+                <package>org.freedesktop.gstreamer.elements.good</package>
+                <package>org.freedesktop.gstreamer.event</package>
+                <package>org.freedesktop.gstreamer.example</package>
+                <package>org.freedesktop.gstreamer.glib</package>
+                <package>org.freedesktop.gstreamer.interfaces</package>
+                <package>org.freedesktop.gstreamer.io</package>
+                <package>org.freedesktop.gstreamer.lowlevel</package>
+                <package>org.freedesktop.gstreamer.lowlevel.annotations</package>
+                <package>org.freedesktop.gstreamer.media</package>
+                <package>org.freedesktop.gstreamer.media.event</package>
+                <package>org.freedesktop.gstreamer.message</package>
+                <package>org.freedesktop.gstreamer.query</package>
+                <package>org.freedesktop.gstreamer.swing</package>
+                <package>org.freedesktop.gstreamer.swt</package>
+                <package>org.freedesktop.gstreamer.swt.overlay</package>
                 <package>org.hyperic.jni</package>
                 <package>org.hyperic.sigar</package>
                 <package>org.hyperic.sigar.cmd</package>
@@ -967,8 +967,8 @@
                 <binary-origin>release/modules/ext/common-lang-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gstreamer-java-1.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gstreamer-java-1.5.jar</binary-origin>
+                <runtime-relative-path>ext/gst1-java-core-0.9.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gst1-java-core-0.9.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>

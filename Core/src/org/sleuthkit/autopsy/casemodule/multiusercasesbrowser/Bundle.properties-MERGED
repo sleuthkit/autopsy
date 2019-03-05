@@ -1,0 +1,5 @@
+MultiUserCaseBrowserCustomizer.column.createTime=Create Time
+MultiUserCaseBrowserCustomizer.column.directory=Directory
+MultiUserCaseBrowserCustomizer.column.displayName=Name
+MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time
+MultiUserCasesBrowserPanel.waitNode.message=Please Wait...
