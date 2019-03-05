@@ -126,7 +126,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm()); //NOI18N
                 fxPanel.setScene(scene);
 
-                //bind size of image to that of scene, while keeping proportions
                 fxImageView.setSmooth(true);
                 fxImageView.setCache(true);
 
@@ -142,11 +141,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }
 
     /**
-     * clear the displayed image
+     * Clear the displayed image
      */
     public void reset() {
         Platform.runLater(() -> {
+            fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
             fxImageView.setImage(null);
+            
             scrollPane.setContent(null);
             scrollPane.setContent(fxImageView);
         });
