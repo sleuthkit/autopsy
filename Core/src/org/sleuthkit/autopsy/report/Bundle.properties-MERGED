@@ -1,5 +1,5 @@
 # {0} - File name
-CreatePortableCaseModule.addFilesToPortableCase.copyingFile=Copying file {0}
+CreatePortableCaseModule.copyContentToPortableCase.copyingFile=Copying file {0}
 # {0} - case folder
 CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists
 CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case
@@ -7,11 +7,16 @@ CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case
 CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}
 CreatePortableCaseModule.generateReport.caseClosed=Current case has been closed
 # {0} - tag name
+CreatePortableCaseModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...
+# {0} - tag name
 CreatePortableCaseModule.generateReport.copyingFiles=Copying files tagged as {0}...
 CreatePortableCaseModule.generateReport.copyingTags=Copying tags...
 CreatePortableCaseModule.generateReport.creatingCase=Creating portable case database...
+CreatePortableCaseModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
 CreatePortableCaseModule.generateReport.errorCopyingFiles=Error copying tagged files
 CreatePortableCaseModule.generateReport.errorCopyingTags=Error copying tags
+# {0} - attribute type name
+CreatePortableCaseModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
 CreatePortableCaseModule.generateReport.noTagsSelected=No tags selected for export.
 # {0} - output folder
 CreatePortableCaseModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
