@@ -62,7 +62,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     static final String SCHEMA_MINOR_VERSION_KEY = "SCHEMA_MINOR_VERSION";
     static final String CREATION_SCHEMA_MAJOR_VERSION_KEY = "CREATION_SCHEMA_MAJOR_VERSION";
     static final String CREATION_SCHEMA_MINOR_VERSION_KEY = "CREATION_SCHEMA_MINOR_VERSION";
-    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 2);
+    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 3);
 
     protected final List<CorrelationAttributeInstance.Type> defaultCorrelationTypes;
 
@@ -105,6 +105,11 @@ abstract class AbstractSqlEamDb implements EamDb {
             bulkArtifacts.put(EamDbUtil.correlationTypeToInstanceTableName(type), new ArrayList<>());
         });
     }
+
+    /**
+     * Setup and create a connection to the selected database implementation
+     */
+    protected abstract Connection connect(boolean foreignKeys) throws EamDbException;
 
     /**
      * Setup and create a connection to the selected database implementation
@@ -3382,12 +3387,13 @@ abstract class AbstractSqlEamDb implements EamDb {
         Statement statement = null;
         PreparedStatement preparedStatement = null;
         Connection conn = null;
+        EamDbPlatformEnum selectedPlatform = null;
         try {
 
-            conn = connect();
+            conn = connect(false);
             conn.setAutoCommit(false);
             statement = conn.createStatement();
-
+            selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
             int minorVersion = 0;
             String minorVersionStr = null;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
@@ -3440,8 +3446,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 logger.log(Level.INFO, "Central Repository is of newer version than software creates");
                 return;
             }
-
-            EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
 
             /*
              * Update to 1.1
@@ -3626,7 +3630,36 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','" + creationMajorVer + "')");
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "','" + creationMinorVer + "')");
             }
+            /*
+             * Update to 1.3
+             */
+            if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 3)) < 0) {
+                switch (selectedPlatform) {
+                    case POSTGRESQL:
+                        statement.execute("ALTER TABLE data_sources DROP CONSTRAINT datasource_unique");
+                        //unique constraint for upgraded data_sources table is purposefully different than new data_sources table
+                        statement.execute("ALTER TABLE data_sources ADD CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id)");
 
+                        break;
+                    case SQLITE:
+                        statement.execute("DROP INDEX IF EXISTS data_sources_name");
+                        statement.execute("DROP INDEX IF EXISTS data_sources_object_id");
+                        statement.execute("ALTER TABLE data_sources RENAME TO old_data_sources");
+                        //unique constraint for upgraded data_sources table is purposefully different than new data_sources table
+                        statement.execute("CREATE TABLE IF NOT EXISTS data_sources (id integer primary key autoincrement NOT NULL,"
+                                + "case_id integer NOT NULL,device_id text NOT NULL,name text NOT NULL,datasource_obj_id integer,"
+                                + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
+                                + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
+                                + "CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id))");
+                        statement.execute(SqliteEamDbSettings.getAddDataSourcesNameIndexStatement());
+                        statement.execute(SqliteEamDbSettings.getAddDataSourcesObjectIdIndexStatement());
+                        statement.execute("INSERT INTO data_sources SELECT * FROM old_data_sources");
+                        statement.execute("DROP TABLE old_data_sources");
+                        break;
+                    default:
+                        throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
+                }
+            }
             updateSchemaVersion(conn);
             conn.commit();
             logger.log(Level.INFO, String.format("Central Repository schema updated to version %s", SOFTWARE_CR_DB_SCHEMA_VERSION));

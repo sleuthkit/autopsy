@@ -38,11 +38,13 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -94,11 +96,13 @@ final class ExtractEdge extends Extract {
     private static final String EDGE_FAVORITE_FILE_NAME = "Favorites.csv"; //NON-NLS
     private static final String EDGE_OUTPUT_FILE_NAME = "Output.txt"; //NON-NLS
     private static final String EDGE_ERROR_FILE_NAME = "File.txt"; //NON-NLS
+    private static final String EDGE_WEBCACHE_FOLDER_NAME = "WebCache"; //NON-NLS
+    private static final String EDGE_SPARTAN_FOLDER_NAME = "MicrosoftEdge"; //NON-NLS
 
     private static final String ESE_TOOL_FOLDER = "ESEDatabaseView"; //NON-NLS
     private static final String EDGE_RESULT_FOLDER_NAME = "results"; //NON-NLS
 
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a");
+    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a"); //NON-NLS
 
     @Messages({
         "ExtractEdge_process_errMsg_unableFindESEViewer=Unable to find ESEDatabaseViewer",
@@ -107,6 +111,9 @@ final class ExtractEdge extends Extract {
         "ExtractEdge_process_errMsg_spartanFail=Failure processing Microsoft Edge spartan.edb file",
         "ExtractEdge_Module_Name=Microsoft Edge",
         "ExtractEdge_getHistory_containerFileNotFound=Error while trying to analyze Edge history",
+        "Progress_Message_Edge_History=Microsoft Edge History",
+        "Progress_Message_Edge_Bookmarks=Microsoft Edge Bookmarks",
+        "Progress_Message_Edge_Cookies=Microsoft Edge Cookies",
     })
 
     /**
@@ -122,7 +129,7 @@ final class ExtractEdge extends Extract {
     }
 
     @Override
-    void process(Content dataSource, IngestJobContext context) {
+    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
         this.setFoundData(false);
@@ -164,30 +171,31 @@ final class ExtractEdge extends Extract {
         }
 
         try {
-            this.processWebCacheDbFile(esedumper, webCacheFiles);
+            this.processWebCacheDbFile(esedumper, webCacheFiles, progressBar);
         } catch (IOException | TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_webcacheFail());
             LOG.log(Level.SEVERE, "Error returned from processWebCacheDbFile", ex); // NON-NLS
         }
 
+        progressBar.progress(Bundle.Progress_Message_Edge_Bookmarks());
         try {
             this.processSpartanDbFile(esedumper, spartanFiles);
         } catch (IOException | TskCoreException ex) {
-            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_webcacheFail());
+            this.addErrorMessage(Bundle.ExtractEdge_process_errMsg_spartanFail());
             LOG.log(Level.SEVERE, "Error returned from processSpartanDbFile", ex); // NON-NLS
         }
     }
 
     /**
-     * Dump the tables from WebCacheV01.dat and look for the data contained with
-     * in those files including downloads, cookies and history.
+     * Process WebCacheV01.dat ese database file creating artifacts for cookies,
+     * and history contained within.
      *
      * @param eseDumperPath Path to ESEDatabaseView.exe
      * @param webCacheFiles List of case WebCacheV01.dat files
      * @throws IOException
      * @throws TskCoreException
      */
-    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles) throws IOException, TskCoreException {
+    void processWebCacheDbFile(String eseDumperPath, List<AbstractFile> webCacheFiles, DataSourceIngestModuleProgress progressBar) throws IOException, TskCoreException {
 
         for (AbstractFile webCacheFile : webCacheFiles) {
 
@@ -218,30 +226,29 @@ final class ExtractEdge extends Extract {
                 if (context.dataSourceIngestIsCancelled()) {
                     return;
                 }
-
+                
+                progressBar.progress(Bundle.Progress_Message_Edge_History());
+                
                 this.getHistory(webCacheFile, resultsDir);
 
                 if (context.dataSourceIngestIsCancelled()) {
                     return;
                 }
 
+                progressBar.progress(Bundle.Progress_Message_Edge_Cookies());
+                
                 this.getCookies(webCacheFile, resultsDir);
 
-//                if (context.dataSourceIngestIsCancelled()) {
-//                    return;
-//                }
-//                Putting downloads on hold
-//                this.getDownload(webCacheFile, resultsDir); 
             } finally {
                 tempWebCacheFile.delete();
-                resultsDir.delete();
+                FileUtil.deleteFileDir(resultsDir);
             }
         }
     }
 
     /**
-     * Creates a temp version of the database and runs the ESEDatabaseView tool
-     * to dump each of the database tables into a temporary folder.
+     * Process spartan.edb ese database file creating artifacts for the bookmarks
+     * contained within.
      *
      * @param eseDumperPath Path to ESEDatabaseViewer
      * @param spartanFiles List of the case spartan.edb files
@@ -282,7 +289,7 @@ final class ExtractEdge extends Extract {
 
             } finally {
                 tempSpartanFile.delete();
-                resultsDir.delete();
+                FileUtil.deleteFileDir(resultsDir);
             }
         }
     }
@@ -392,7 +399,7 @@ final class ExtractEdge extends Extract {
     }
 
     /**
-     * Queries for cookie files and adds artifacts
+     * Queries for cookie files and adds artifacts.
      *
      * @param origFile Original case file
      * @param resultDir Output directory of ESEDatabaseViewer
@@ -444,7 +451,9 @@ final class ExtractEdge extends Extract {
     }
 
     /**
-     * Queries for download files and adds artifacts
+     * Queries for download files and adds artifacts.
+     * 
+     * Leaving for future use.
      * 
      * @param origFile Original case file
      * @param resultDir Output directory of ESEDatabaseViewer
@@ -523,7 +532,7 @@ final class ExtractEdge extends Extract {
     private List<AbstractFile> fetchWebCacheDBFiles() throws TskCoreException {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
                 = currentCase.getServices().getFileManager();
-        return fileManager.findFiles(dataSource, EDGE_WEBCACHE_NAME, "WebCache"); //NON-NLS
+        return fileManager.findFiles(dataSource, EDGE_WEBCACHE_NAME, EDGE_WEBCACHE_FOLDER_NAME);
     }
 
     /**
@@ -535,7 +544,7 @@ final class ExtractEdge extends Extract {
     private List<AbstractFile> fetchSpartanDBFiles() throws TskCoreException {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
                 = currentCase.getServices().getFileManager();
-        return fileManager.findFiles(dataSource, EDGE_SPARTAN_NAME, "MicrosoftEdge"); //NON-NLS
+        return fileManager.findFiles(dataSource, EDGE_SPARTAN_NAME, EDGE_SPARTAN_FOLDER_NAME);
     }
 
     /**
@@ -621,7 +630,7 @@ final class ExtractEdge extends Extract {
      * @throws TskCoreException
      */
     private BlackboardArtifact getCookieArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {
-        String[] lineSplit = line.split(",");
+        String[] lineSplit = line.split(","); // NON-NLS
 
         String accessTime = lineSplit[headers.indexOf(EDGE_HEAD_LASTMOD)].trim();
         Long ftime = null;
@@ -635,9 +644,10 @@ final class ExtractEdge extends Extract {
         String domain = lineSplit[headers.indexOf(EDGE_HEAD_RDOMAIN)].trim();
         String name = hexToChar(lineSplit[headers.indexOf(EDGE_HEAD_NAME)].trim());
         String value = hexToChar(lineSplit[headers.indexOf(EDGE_HEAD_VALUE)].trim());
+        String url = flipDomain(domain);
 
         BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
-        bbart.addAttributes(createCookieAttributes(null, ftime, name, value, this.getName(), flipDomain(domain)));
+        bbart.addAttributes(createCookieAttributes(url, ftime, name, value, this.getName(), NetworkUtils.extractDomain(url)));
         return bbart;
     }
 
@@ -655,18 +665,12 @@ final class ExtractEdge extends Extract {
      * @throws TskCoreException
      */
     private BlackboardArtifact getDownloadArtifact(AbstractFile origFile, List<String> headers, String line) throws TskCoreException {
-
-//        String[] lineSplit = line.split(",");
-//
-//        String url = lineSplit[headers.indexOf(EDGE_HEAD_URL)];
-//
-//        String rheader = lineSplit[headers.indexOf(EDGE_HEAD_RESPONSEHEAD)];
-//
-//        String decodedheader = this.hexToASCII(rheader);
-//        BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
-//        bbart.addAttributes(createDownloadAttributes(decodedheader, "Test2", null, "microsoft.com", this.getName()));
-//        return bbart;
-        return null;
+        BlackboardArtifact bbart = null;
+        
+        String[] lineSplit = line.split(","); // NON-NLS
+        String rheader = lineSplit[headers.indexOf(EDGE_HEAD_RESPONSEHEAD)];
+        
+        return bbart;
     }
 
     /**
@@ -686,7 +690,7 @@ final class ExtractEdge extends Extract {
         String[] lineSplit = line.split(IGNORE_COMMA_IN_QUOTES_REGEX, -1);
 
         String url = lineSplit[headers.indexOf(EDGE_HEAD_URL)];
-        String title = lineSplit[headers.indexOf(EDGE_HEAD_TITLE)].replace("\"", "");
+        String title = lineSplit[headers.indexOf(EDGE_HEAD_TITLE)].replace("\"", ""); // NON-NLS
 
         if (url.isEmpty()) {
             return null;
@@ -697,7 +701,7 @@ final class ExtractEdge extends Extract {
                 this.getName(), NetworkUtils.extractDomain(url)));
         return bbart;
     }
-    
+
     /**
      * Converts a space separated string of hex values to ascii characters.
      *
@@ -705,7 +709,7 @@ final class ExtractEdge extends Extract {
      * @return "decoded" string or null if a non-hex value was found
      */
     private String hexToChar(String hexString) {
-        String[] hexValues = hexString.split(" ");
+        String[] hexValues = hexString.split(" "); // NON-NLS
         StringBuilder output = new StringBuilder();
 
         for (String str : hexValues) {
@@ -738,7 +742,7 @@ final class ExtractEdge extends Extract {
             return null;
         }
 
-        String[] tokens = domain.split("\\.");
+        String[] tokens = domain.split("\\."); // NON-NLS
 
         if (tokens.length < 2 || tokens.length > 3) {
             return domain; // don't know what to do, just send it back as is
@@ -830,7 +834,7 @@ final class ExtractEdge extends Extract {
                         nameIdx = headers.indexOf(EDGE_HEAD_NAME);
                         idIdx = headers.indexOf(EDGE_HEAD_CONTAINER_ID);
                     } else {
-                        String[] row = line.split(",");
+                        String[] row = line.split(","); // NON-NLS
                         String name = row[nameIdx];
                         String id = row[idIdx];
 
