@@ -140,45 +140,40 @@ AutoIngestJobsNode.status.text=Status
 AutoIngestJobsPanel.waitNode.text=Please Wait...
 AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report.
 AutoIngestMetricsDialog.title.text=Auto Ingest Metrics
-CaseDeletionTask.error.failedToLockInputDirs=Failed to exclusively lock the input directory {0}.
-CaseDeletionTask.progress.acquiringCaseDirLock=Acquiring exclusive case directory lock for case...
-CaseDeletionTask.progress.acquiringCaseNameLock=Acquiring exclusive case name lock for case...
-CaseDeletionTask.progress.connectingToCoordSvc=Connecting to the coordination service (ZooKeeper)...
-# {0} - case name
+CaseDeletionTask.progress.acquiringCaseDirLock=Acquiring exclusive case directory lock
+CaseDeletionTask.progress.acquiringCaseNameLock=Acquiring exclusive case name lock
+CaseDeletionTask.progress.acquiringInputDirLocks=Acquiring exclusive input directory locks
+CaseDeletionTask.progress.connectingToCoordSvc=Connecting to the coordination service
 CaseDeletionTask.progress.deletingCase=Deleting case {0}...
+CaseDeletionTask.progress.deletingCaseOutput=Deleting case output
+CaseDeletionTask.progress.deletingDirLockNode=Deleting case directory lock node
 # {0} - input directory name
-CaseDeletionTask.progress.deletingInputDir=Deleting input directory {0}...
-# {0} - exception message
-CaseDeletionTask.progress.errorConnectingToCoordSvc=Failed to connect to the coordination service (see log for details): {0}
-# {0} - input directory name
+CaseDeletionTask.progress.deletingInputDir=Deleting input directory {0}
+CaseDeletionTask.progress.deletingInputDirLockNodes=Deleting input directory lock nodes
+CaseDeletionTask.progress.deletingInputDirs=Deleting input directory
+CaseDeletionTask.progress.deletingJobLogLockNode=Deleting auto ingest job log lock node
+CaseDeletionTask.progress.deletingNameLockNode=Deleting case name lock node
+CaseDeletionTask.progress.deletingOutput=Deleting case output
+CaseDeletionTask.progress.deletingResourcesLockNode=Deleting case resources lock node
+CaseDeletionTask.progress.errorConnectingToCoordSvc=Failed to connect to the coordination service (see log for details): {0}.
 CaseDeletionTask.progress.errorDeletingInputDir=An error occurred deleting the input directory at {0}
-# {0} - exception message
-CaseDeletionTask.progress.errorDeletingOutput=An error occurred deleting the case output (see log for details): {0}
-CaseDeletionTask.progress.errorLockingCase=An error occurred while trying to exclusively lock the case (see log for details): {0}.
-# {0} - exception message
+CaseDeletionTask.progress.errorDeletingOutput=An error occurred deleting the case output (see log for details): {0}.
 CaseDeletionTask.progress.errorLockingCaseDir=An error occurred while trying to acquire the exclusive directory lock for the case (see log for details): {0}.
-# {0} - exception message
 CaseDeletionTask.progress.errorLockingCaseName=An error occurred while trying to acquire the exclusive name lock for the case (see log for details): {0}.
-# {0} - input directory name
-# {1} - exception message
 CaseDeletionTask.progress.errorlockingInputDir=An error occurred Acquiring the exclusive lock on input directory {0} (see log for details): {1}
-# {0} - input directory name
-# {1} - exception message
-CaseDeletionTask.progress.errorReleasingInputDirLock=An error occurred releasing the exclusive lock on input directory {0} (see log for details): {1}
-# {0} - exception message
-CaseDeletionTask.progress.errorReleasingInputLock=An error occurred releasing the input directory lock (see log for details): {0}
+CaseDeletionTask.progress.errorReleasingInputDirLock=An error occurred releasing the exclusive lock on input directory {0} (see log for details): {1}.
+CaseDeletionTask.progress.errorReleasingInputLock=An error occurred releasing the input directory lock (see log for details): {0}.
 CaseDeletionTask.progress.failedToLockCase=Failed to exclusively lock the case, it may be in use, did not delete.
-# {0} - input directory name
 CaseDeletionTask.progress.failedToLockInputDir=Failed to exclusively lock the input directory {0}.
-CaseDeletionTask.progress.failedToLockInputDirs=Failed to exclusively lock the input directory {0}.
-CaseDeletionTask.progress.gettingJobNodeData=Getting coordination service node data for the auto ingest jobs...
-CaseDeletionTask.progress.lockingCase=Acquiring exclusive locks for case...
+CaseDeletionTask.progress.gettingJobNodeData=Getting node data for auto ingest jobs
+CaseDeletionTask.progress.locatingCaseMetadataFile=Locating case metadata file
 # {0} - input directory name
-CaseDeletionTask.progress.lockingInputDir=Acquiring exclusive lock on input directory {0}...
-CaseDeletionTask.progress.lockingInputDirs=Acquiring exclusive locks on the input directories...
-CaseDeletionTask.progress.lockingJobs=Acquiring exclusive locks on all of the auto ingest job directories...
-# {0} - input directory name
-CaseDeletionTask.progress.releasingInputDirLock=Releasing the exclusive lock on input directory {0}...
+CaseDeletionTask.progress.lockingInputDir=Acquiring exclusive lock on input directory {0}
+CaseDeletionTask.progress.releasingInputDirLock=Releasing the exclusive lock on input directory {0}
+CaseDeletionTask.progress.releasingInputDirLocks=Acquiring exclusive input directory locks
+# {0} - manifest file path
+CaseDeletionTask.progress.releasingManifestLock=Releasing the exclusive lock on manifest file {0}
+CaseDeletionTask.progress.releasingManifestLocks=Acquiring exclusive manifest file locks
 ConfirmationDialog.DoNotDelete=Do not delete
 ConfirmationDialog.Delete=Permanently delete
 ConfirmationDialog.DeleteAreYouSure=The entire case will be removed. Are you sure you want to delete case 
@@ -450,3 +445,4 @@ AinStatusDashboard.clusterMetricsButton.text=Auto Ingest &Metrics
 AinStatusDashboard.nodeStatusTableTitle.text=Auto Ingest Nodes
 AinStatusDashboard.healthMonitorButton.text=Health Monitor
 CasesDashboardTopComponent.refreshButton.text=Refresh
+AutoIngestCasesDeletionDialog.jLabel1.text=Progress

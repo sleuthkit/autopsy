@@ -26,4 +26,4 @@ PerformancePanel.ImgTest.fileReadLabel.MBReadPerSec.text={0} MB read / sec ({1})
 PerformancePanel.dbTest.status.running=Running DB Test
 PerformancePanel.dbTest.dbLabel.recordsPerSec.text={0} records / sec
 PerformancePanel.dbTest.dbLabel.errPerformQuery.text=Error Performing Query
-PerformancePanel.done.statusMsg.err.text=Error\: {0}
+PerformancePanel.done.statusMsg.err.text=Error: {0}

@@ -1,5 +1,5 @@
 # {0} - File name
-CreatePortableCaseModule.addFilesToPortableCase.copyingFile=Copying file {0}
+CreatePortableCaseModule.copyContentToPortableCase.copyingFile=Copying file {0}
 # {0} - case folder
 CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists
 CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case
@@ -7,11 +7,16 @@ CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case
 CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}
 CreatePortableCaseModule.generateReport.caseClosed=Current case has been closed
 # {0} - tag name
+CreatePortableCaseModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...
+# {0} - tag name
 CreatePortableCaseModule.generateReport.copyingFiles=Copying files tagged as {0}...
 CreatePortableCaseModule.generateReport.copyingTags=Copying tags...
 CreatePortableCaseModule.generateReport.creatingCase=Creating portable case database...
+CreatePortableCaseModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
 CreatePortableCaseModule.generateReport.errorCopyingFiles=Error copying tagged files
 CreatePortableCaseModule.generateReport.errorCopyingTags=Error copying tags
+# {0} - attribute type name
+CreatePortableCaseModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
 CreatePortableCaseModule.generateReport.noTagsSelected=No tags selected for export.
 # {0} - output folder
 CreatePortableCaseModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
@@ -81,7 +86,7 @@ FileReportDataTypes.path.text=Full Path
 FileReportText.getName.text=Files - Text
 FileReportText.getDesc.text=A tab delimited text file containing information about individual files in the case.
 ReportBodyFile.progress.querying=Querying files...
-ReportBodyFile.ingestWarning.text=Warning, this report was run before ingest services completed!
+ReportBodyFile.ingestWarning.text=Warning, this report was run before ingest services completed\!
 ReportBodyFile.progress.loading=Loading files...
 ReportBodyFile.progress.processing=Now processing {0}...
 ReportBodyFile.getName.text=TSK Body File
@@ -223,13 +228,13 @@ ReportHTML.getName.text=HTML Report
 ReportHTML.getDesc.text=A report about results and tagged items in HTML format.
 ReportHTML.writeIndex.title=for case {0}
 ReportHTML.writeIndex.noFrames.msg=Your browser is not compatible with our frame setup.
-ReportHTML.writeIndex.noFrames.seeNav=Please see <a href="content\nav.html">the navigation page</a> for artifact links,
-ReportHTML.writeIndex.seeSum=and <a href="contentsummary.html">the summary page</a> for a case summary.
+ReportHTML.writeIndex.noFrames.seeNav=Please see <a href\="content\nav.html">the navigation page</a> for artifact links,
+ReportHTML.writeIndex.seeSum=and <a href\="content\summary.html">the summary page</a> for a case summary.
 ReportHTML.writeNav.title=Report Navigation
 ReportHTML.writeNav.h1=Report Navigation
 ReportHTML.writeNav.summary=Case Summary
 ReportHTML.writeSum.title=Case Summary
-ReportHTML.writeSum.warningMsg=<span>Warning, this report was run before ingest services completed!</span>
+ReportHTML.writeSum.warningMsg=<span>Warning, this report was run before ingest services completed\!</span>
 #
 # autopsy/test/scripts/regression.py._html_report_diff() uses reportGenOn.text, caseName, caseNum, 
 # examiner as a regex signature to skip report.html and summary.html

@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
@@ -53,9 +56,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public final class CasesDashboardTopComponent extends TopComponent implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
+     private static final String TASK_THREAD_NAME = "Case-dashboard-task-%d";   
     private static final Logger logger = Logger.getLogger(CasesDashboardTopComponent.class.getName());
     private final ExplorerManager explorerManager;
     private final MultiUserCasesBrowserPanel caseBrowserPanel;
+    private final Executor executor;
 
     /**
      * Opens a singleton top component that provides an adminstrative dashboard
@@ -99,6 +104,7 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
         caseBrowserPanel = new MultiUserCasesBrowserPanel(explorerManager, new CasesDashboardCustomizer());
         caseBrowserScrollPane.add(caseBrowserPanel);
         caseBrowserScrollPane.setViewportView(caseBrowserPanel);
+        executor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(TASK_THREAD_NAME).build()); // RJCTODO: Need shutdown
     }
 
     @Override
