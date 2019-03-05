@@ -35,6 +35,7 @@ final public class CommonAttributeValue {
 
     private final String value;
     private final List<AbstractCommonAttributeInstance> fileInstances;
+    private String tokenFileName = null;
 
     CommonAttributeValue(String value) {
         this.value = value;
@@ -45,6 +46,10 @@ final public class CommonAttributeValue {
         return this.value;
     }
 
+    String getTokenFileName(){
+        return tokenFileName;
+    }
+    
     /**
      * concatenate cases this value was seen into a single string
      *
@@ -64,6 +69,9 @@ final public class CommonAttributeValue {
     }
 
     void addInstance(AbstractCommonAttributeInstance metadata) {
+        if (tokenFileName==null){
+            tokenFileName = metadata.getAbstractFile().getName();
+        }
         this.fileInstances.add(metadata);
     }
 
