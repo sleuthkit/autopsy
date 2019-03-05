@@ -57,7 +57,7 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
         // @@ We seem to be doing this string concat twice.  We also do it in getDataSources()
         this.dataSources = String.join(", ", data.getDataSources());
         this.value = data.getValue();
-        this.setDisplayName(String.format(Bundle.CommonAttributeValueNode_CommonAttributeValueNode_format(), this.value));
+        this.setDisplayName(data.getTokenFileName());
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 
