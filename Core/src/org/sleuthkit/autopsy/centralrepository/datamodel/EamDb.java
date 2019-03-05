@@ -24,7 +24,6 @@ import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
-import org.sleuthkit.datamodel.CaseDbSchemaVersionNumber;
 
 /**
  * Main interface for interacting with the database
@@ -200,27 +199,29 @@ public interface EamDb {
      * Creates new Data Source in the database
      *
      * @param eamDataSource the data source to add
-     * 
-     * @return - A CorrelationDataSource object with data source's central repository id
+     *
+     * @return - A CorrelationDataSource object with data source's central
+     *         repository id
      */
     CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
-    
+
     /**
      * Updates the MD5 hash value in an existing data source in the database.
      *
      * @param eamDataSource The data source to update
      */
     void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException;
-    
+
     /**
      * Updates the SHA-1 hash value in an existing data source in the database.
      *
      * @param eamDataSource The data source to update
      */
     void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException;
-    
+
     /**
-     * Updates the SHA-256 hash value in an existing data source in the database.
+     * Updates the SHA-256 hash value in an existing data source in the
+     * database.
      *
      * @param eamDataSource The data source to update
      */
@@ -257,14 +258,14 @@ public interface EamDb {
 
     /**
      * Changes the name of a data source in the DB
-     * 
-     * @param eamDataSource  The data source
-     * @param newName        The new name
-     * 
-     * @throws EamDbException 
+     *
+     * @param eamDataSource The data source
+     * @param newName       The new name
+     *
+     * @throws EamDbException
      */
     void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException;
-    
+
     /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
      * Data Source first.
@@ -275,14 +276,52 @@ public interface EamDb {
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValues of the given eamArtifact.
+     *
+     * @param aType  EamArtifact.Type to search for
+     * @param values The list of correlation values to get
+     *               CorrelationAttributeInstances for
+     *
+     * @return List of artifact instances for a given type with the specified
+     *         values
+     *
+     * @throws CorrelationAttributeNormalizationException
+     * @throws EamDbException
+     */
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException;
+
+    /**
+     * Retrieves eamArtifact instances from the database that are associated
      * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
      *
-     * @param aType EamArtifact.Type to search for
-     * @param value Value to search for
+     * @param aType The type of the artifact
+     * @param value The correlation value
      *
      * @return List of artifact instances for a given type/value
+     *
+     * @throws CorrelationAttributeNormalizationException
+     * @throws EamDbException
      */
     List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException;
+
+    /**
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValues of the given eamArtifact
+     * for the specified cases.
+     *
+     * @param aType   The type of the artifact
+     * @param values  The list of correlation values to get
+     *                CorrelationAttributeInstances for
+     * @param caseIds The list of central repository case ids to get
+     *                CorrelationAttributeInstances for
+     *
+     * @return List of artifact instances for a given type with the specified
+     *         values for the specified cases
+     *
+     * @throws CorrelationAttributeNormalizationException
+     * @throws EamDbException
+     */
+    List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException;
 
     /**
      * Retrieves eamArtifact instances from the database that are associated
@@ -341,7 +380,7 @@ public interface EamDb {
      * Retrieves number of eamArtifact instances in the database that are
      * associated with the given data source.
      *
-     * @param correlationDataSource   Data source to search for
+     * @param correlationDataSource Data source to search for
      *
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource

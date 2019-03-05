@@ -69,7 +69,7 @@
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-thumbsdb" rev="3.2" />
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-core" rev="3.2" />
         <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.2" />
-        
+		    <dependency conf="autopsy_core->default" org="com.googlecode.plist" name="dd-plist" rev="1.20"/>
         <!-- conflict resolutions for multiple JAR versions -->
         <conflict org="net.java.dev.jna" module="jna" rev="3.4.0"/>
         <conflict org="net.java.dev.jna" module="platform" rev="3.4.0"/>
