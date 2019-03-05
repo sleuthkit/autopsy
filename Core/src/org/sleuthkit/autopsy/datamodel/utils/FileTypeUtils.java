@@ -162,7 +162,7 @@ public final class FileTypeUtils {
         /**
          * Images, Videos, flash Animations, etc
          */
-        VISUAL(Bundle.FileTypeCategory_Media_displayName(),
+        VISUAL(Bundle.FileTypeCategory_Visual_displayName(),
                 VISUAL_MEDIA_MIME_TYPES,
                 Collections.emptyList()),
         /**
