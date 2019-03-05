@@ -130,22 +130,17 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), url));
+                   RecentActivityExtracterModuleFactory.getModuleName(), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), name));
+                    RecentActivityExtracterModuleFactory.getModuleName(), name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), datetime));
+                    RecentActivityExtracterModuleFactory.getModuleName(), datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"),
+                    RecentActivityExtracterModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
             if (domain != null && domain.isEmpty() == false) {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), domain));
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
 
             BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
@@ -245,25 +240,19 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), url));
+                    RecentActivityExtracterModuleFactory.getModuleName(), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), datetime));
+                    RecentActivityExtracterModuleFactory.getModuleName(), datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), (name != null) ? name : ""));
+                    RecentActivityExtracterModuleFactory.getModuleName(), (name != null) ? name : ""));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), value));
+                    RecentActivityExtracterModuleFactory.getModuleName(), value));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"),
+                    RecentActivityExtracterModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
             if (domain != null && domain.isEmpty() == false) {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), domain));
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
             BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
             if (bbart != null) {
@@ -534,30 +523,24 @@ class ExtractIE extends Extract {
                 BlackboardArtifact bbart = origFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), realurl));
+                        RecentActivityExtracterModuleFactory.getModuleName(), realurl));
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), ftime));
+                        RecentActivityExtracterModuleFactory.getModuleName(), ftime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), ""));
+                       RecentActivityExtracterModuleFactory.getModuleName(), ""));
                 // @@@ NOte that other browser modules are adding TITLE in hre for the title
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"),
+                        RecentActivityExtracterModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(),
                                 "ExtractIE.moduleName.text")));
                 if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            NbBundle.getMessage(this.getClass(),
-                                    "ExtractIE.parentModuleName.noSpace"), domain));
+                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
                 }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), user));
+                        RecentActivityExtracterModuleFactory.getModuleName(), user));
                 bbart.addAttributes(bbattributes);
 
                 // index the artifact for keyword search
