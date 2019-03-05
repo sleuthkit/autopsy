@@ -395,7 +395,7 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
             ZoomState newZoom = eventsModel.getZoomState();
 
             //if the ZoomState haven't actually changed, just bail
-            if (Objects.equals(currentZoom, newZoom)) {
+            if (needsRefresh() == false && Objects.equals(currentZoom, newZoom)) {
                 return true;
             }
 

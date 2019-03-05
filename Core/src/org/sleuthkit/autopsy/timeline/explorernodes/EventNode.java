@@ -184,7 +184,7 @@ public class EventNode extends DisplayableItemNode {
             super(name, String.class, displayName, shortDescription);
             setValue("suppressCustomEditor", Boolean.TRUE); // remove the "..." (editing) button NON-NLS
             this.value = value;
-            TimeLineController.getTimeZone().addListener(timeZone -> {
+            TimeLineController.timeZoneProperty().addListener(timeZone -> {
                 try {
                     setValue(getDateTimeString());
                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {

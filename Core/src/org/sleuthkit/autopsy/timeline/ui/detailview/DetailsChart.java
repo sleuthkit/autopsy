@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.MissingResourceException;
 import java.util.function.Predicate;
@@ -45,6 +46,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.actions.AddManualEvent;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
@@ -276,9 +278,12 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             contextMenu.hide();
         }
 
+        long selectedTimeMillis = getXAxis().getValueForDisplay(getXAxis().parentToLocal(mouseEvent.getX(), 0).getX()).getMillis();
+
         //make and assign a new context menu based on the given mouseEvent
         setContextMenu(ActionUtils.createContextMenu(Arrays.asList(
                 new PlaceMarkerAction(this, mouseEvent),
+                new AddManualEvent(controller, selectedTimeMillis),
                 ActionUtils.ACTION_SEPARATOR,
                 TimeLineChart.newZoomHistoyActionGroup(getController())
         )));

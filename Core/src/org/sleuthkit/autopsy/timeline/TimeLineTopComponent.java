@@ -281,7 +281,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         Platform.runLater(this::initFXComponents);
 
         //set up listeners 
-        TimeLineController.getTimeZone().addListener(timeZone -> dataResultPanel.setPath(getResultViewerSummaryString()));
+        TimeLineController.timeZoneProperty().addListener(timeZone -> dataResultPanel.setPath(getResultViewerSummaryString()));
         controller.getSelectedEventIDs().addListener(selectedEventsListener);
 
         //Listen to ViewMode and adjust GUI componenets as needed.

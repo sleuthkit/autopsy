@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -88,6 +90,10 @@ public class AddManualEvent extends Action {
         "CreateManualEvent.text=Add Event",
         "CreateManualEvent.longText=Manually add an event to the timeline."})
     public AddManualEvent(TimeLineController controller) {
+        this(controller, System.currentTimeMillis());
+    }
+
+    public AddManualEvent(TimeLineController controller, long epochMillis) {
         super(Bundle.CreateManualEvent_text());
         this.controller = controller;
         setGraphic(new ImageView(ADD_EVENT_IMAGE));
@@ -95,7 +101,7 @@ public class AddManualEvent extends Action {
 
         setEventHandler(actionEvent -> {
             //shoe the dialog and if it completed normally add the event.
-            new EventCreationDialog(controller).showAndWait().ifPresent(this::addEvent);
+            new EventCreationDialog(controller, epochMillis).showAndWait().ifPresent(this::addEvent);
         });
     }
 
@@ -147,8 +153,8 @@ public class AddManualEvent extends Action {
          */
         private final EventCreationDialogPane eventCreationDialogPane;
 
-        EventCreationDialog(TimeLineController controller) {
-            this.eventCreationDialogPane = new EventCreationDialogPane(controller);
+        EventCreationDialog(TimeLineController controller, long epochMillis) {
+            this.eventCreationDialogPane = new EventCreationDialogPane(controller, epochMillis);
             setTitle("Add Event");
             setDialogPane(eventCreationDialogPane);
 
@@ -187,9 +193,10 @@ public class AddManualEvent extends Action {
             private final ValidationSupport validationSupport = new ValidationSupport();
             private final TimeLineController controller;
 
-            EventCreationDialogPane(TimeLineController controller) {
+            EventCreationDialogPane(TimeLineController controller, long epochMillis) {
                 this.controller = controller;
                 FXMLConstructor.construct(this, "EventCreationDialog.fxml");
+                timePicker.setLocalDateTime( LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis) , TimeLineController.getTimeZoneID()));
             }
 
             @FXML
@@ -198,10 +205,8 @@ public class AddManualEvent extends Action {
                 assert descriptionTextField != null : "fx:id=\"descriptionTextField\" was not injected: check your FXML file 'EventCreationDialog.fxml'.";
 
                 timeZoneChooser.getItems().setAll(timeZoneList);
-                timeZoneChooser.getSelectionModel().select(TimeZoneUtils.createTimeZoneString(TimeZone.getDefault()));
+                timeZoneChooser.getSelectionModel().select(TimeZoneUtils.createTimeZoneString(TimeLineController.getTimeZone()));
                 TextFields.bindAutoCompletion(timeZoneChooser.getEditor(), timeZoneList);
-
-                timePicker.setLocalDateTime(LocalDateTime.now());
 
                 try {
                     dataSourceChooser.getItems().setAll(controller.getAutopsyCase().getSleuthkitCase().getDataSources());
