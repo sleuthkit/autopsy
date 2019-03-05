@@ -37,6 +37,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -493,9 +494,10 @@ class Chrome extends Extract {
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                String fullPath = result.get("full_path").toString(); //NON-NLS
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
-                        RecentActivityExtracterModuleFactory.getModuleName(), (result.get("full_path").toString()))); //NON-NLS
-                long pathID = Util.findID(dataSource, (result.get("full_path").toString())); //NON-NLS
+                        RecentActivityExtracterModuleFactory.getModuleName(), fullPath)); 
+                long pathID = Util.findID(dataSource, fullPath); 
                 if (pathID != -1) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID,
                             NbBundle.getMessage(this.getClass(),
@@ -521,6 +523,20 @@ class Chrome extends Extract {
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
+                }
+                
+                // find the downloaded file and create a TSK_DOWNLOAD_SOURCE for it..
+                try {
+                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(fullPath), FilenameUtils.getPath(fullPath))) {
+                        BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
+                        downloadSourceArt.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                            NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                            ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
+                        bbartifacts.add(downloadSourceArt);
+                        break;   
+                    }
+                } catch (TskCoreException ex) {
+                     logger.log(Level.SEVERE, String.format("Error creating download source artifact for file  '%s'", fullPath), ex); //NON-NLS
                 }
             }
 
