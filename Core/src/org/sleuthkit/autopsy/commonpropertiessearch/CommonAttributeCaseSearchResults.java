@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNor
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Stores the results from the various types of common attribute searching
@@ -55,11 +54,9 @@ final public class CommonAttributeCaseSearchResults {
      *                            common, value of 0 is disabled
      * @param resultType          The type of Correlation Attribute being
      *                            searched for
-     * @param mimeTypesToFilterOn Set of mime types to include for intercase
-     *                            searches
      */
-    CommonAttributeCaseSearchResults(Map<String, Map<String, CommonAttributeValueList>> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType, Set<String> mimeTypesToFilterOn) {
-        this.caseNameToDataSources = filterMetadata(metadata, percentageThreshold, resultType.getId(), mimeTypesToFilterOn);
+    CommonAttributeCaseSearchResults(Map<String, Map<String, CommonAttributeValueList>> metadata, int percentageThreshold, CorrelationAttributeInstance.Type resultType) {
+        this.caseNameToDataSources = filterMetadata(metadata, percentageThreshold, resultType.getId());
     }
 
     /**
@@ -71,7 +68,7 @@ final public class CommonAttributeCaseSearchResults {
      *                            common, value of 0 is disabled
      */
     CommonAttributeCaseSearchResults(Map<String, Map<String, CommonAttributeValueList>> metadata, int percentageThreshold) {
-        this.caseNameToDataSources = filterMetadata(metadata, percentageThreshold, CorrelationAttributeInstance.FILES_TYPE_ID, new HashSet<>());
+        this.caseNameToDataSources = filterMetadata(metadata, percentageThreshold, CorrelationAttributeInstance.FILES_TYPE_ID);
     }
 
     /**
@@ -110,11 +107,10 @@ final public class CommonAttributeCaseSearchResults {
      *                            not be more common than
      * @param resultTypeId        the ID of the result type contained in the
      *                            metadata
-     * @param mimeTypesToFilterOn the mimetypes to include in our results
      *
      * @return metadata
      */
-    private Map<String, Map<String, CommonAttributeValueList>> filterMetadata(Map<String, Map<String, CommonAttributeValueList>> metadata, int percentageThreshold, int resultTypeId, Set<String> mimeTypesToFilterOn) {
+    private Map<String, Map<String, CommonAttributeValueList>> filterMetadata(Map<String, Map<String, CommonAttributeValueList>> metadata, int percentageThreshold, int resultTypeId) {
         try {
             final String currentCaseName;
             try {
@@ -123,8 +119,9 @@ final public class CommonAttributeCaseSearchResults {
                 throw new EamDbException("Unable to get current case while performing filtering", ex);
             }
             Map<String, CommonAttributeValueList> currentCaseDataSourceMap = metadata.get(currentCaseName);
-            if (currentCaseDataSourceMap == null) {
-                throw new EamDbException("No data for current case found in results, indicating there are no results and nothing will be filtered");
+            Map<String, Map<String, CommonAttributeValueList>> filteredCaseNameToDataSourcesTree = new HashMap<>();
+            if (currentCaseDataSourceMap == null) { //there are no results
+                return filteredCaseNameToDataSourcesTree;
             }
             CorrelationAttributeInstance.Type attributeType = CorrelationAttributeInstance
                     .getDefaultCorrelationTypes()
@@ -133,13 +130,14 @@ final public class CommonAttributeCaseSearchResults {
                     .findFirst().get();
             //Call countUniqueDataSources once to reduce the number of DB queries needed to get the frequencyPercentage
             Double uniqueCaseDataSourceTuples = EamDb.getInstance().getCountUniqueDataSources().doubleValue();
-            Map<String, Map<String, CommonAttributeValueList>> filteredCaseNameToDataSourcesTree = new HashMap<>();
-            Map<String, CommonAttributeValue> valuesToKeepCurrentCase = getValuesToKeepFromCurrentCase(currentCaseDataSourceMap, attributeType, percentageThreshold, uniqueCaseDataSourceTuples, mimeTypesToFilterOn);
+            Map<String, CommonAttributeValue> valuesToKeepCurrentCase = getValuesToKeepFromCurrentCase(currentCaseDataSourceMap, attributeType, percentageThreshold, uniqueCaseDataSourceTuples);
             for (Entry<String, Map<String, CommonAttributeValueList>> mapOfDataSources : Collections.unmodifiableMap(metadata).entrySet()) {
                 if (!mapOfDataSources.getKey().equals(currentCaseName)) {
                     //rebuild the metadata structure with items from the current case substituted for their matches in other cases results we want to filter out removed
                     Map<String, CommonAttributeValueList> newTreeForCase = createTreeForCase(valuesToKeepCurrentCase, mapOfDataSources.getValue());
-                    filteredCaseNameToDataSourcesTree.put(mapOfDataSources.getKey(), newTreeForCase);
+                    if (!newTreeForCase.isEmpty()) {
+                        filteredCaseNameToDataSourcesTree.put(mapOfDataSources.getKey(), newTreeForCase);
+                    }
                 }
             }
             return filteredCaseNameToDataSourcesTree;
@@ -162,21 +160,20 @@ final public class CommonAttributeCaseSearchResults {
      *                                   should not be more common than
      * @param uniqueCaseDataSourceTuples the number of unique data sources in
      *                                   the CR
-     * @param mimeTypesToFilterOn        the mimetypes to include in our results
      *
      * @return a map of correlation value to CommonAttributeValue for results
      *         from the current case
      *
      * @throws EamDbException
      */
-    private Map<String, CommonAttributeValue> getValuesToKeepFromCurrentCase(Map<String, CommonAttributeValueList> dataSourceToValueList, CorrelationAttributeInstance.Type attributeType, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples, Set<String> mimeTypesToFilterOn) throws EamDbException {
+    private Map<String, CommonAttributeValue> getValuesToKeepFromCurrentCase(Map<String, CommonAttributeValueList> dataSourceToValueList, CorrelationAttributeInstance.Type attributeType, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws EamDbException {
         Map<String, CommonAttributeValue> valuesToKeep = new HashMap<>();
         Set<String> valuesToRemove = new HashSet<>();
         for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(dataSourceToValueList).entrySet()) {
-            for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataList()) {
+            for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataSet()) {
                 if (valuesToRemove.contains(value.getValue())) {
                     //do nothing this value will not be added
-                } else if (filterValue(attributeType, value, maximumPercentageThreshold, uniqueCaseDataSourceTuples, mimeTypesToFilterOn)) {
+                } else if (filterValue(attributeType, value, maximumPercentageThreshold, uniqueCaseDataSourceTuples)) {
                     valuesToRemove.add(value.getValue());
                 } else {
                     valuesToKeep.put(value.getValue(), value);
@@ -202,7 +199,7 @@ final public class CommonAttributeCaseSearchResults {
     private Map<String, CommonAttributeValueList> createTreeForCase(Map<String, CommonAttributeValue> valuesToKeepCurrentCase, Map<String, CommonAttributeValueList> dataSourceToValueList) throws EamDbException {
         Map<String, CommonAttributeValueList> treeForCase = new HashMap<>();
         for (Entry<String, CommonAttributeValueList> mapOfValueLists : Collections.unmodifiableMap(dataSourceToValueList).entrySet()) {
-            for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataList()) {
+            for (CommonAttributeValue value : mapOfValueLists.getValue().getDelayedMetadataSet()) {
                 if (valuesToKeepCurrentCase.containsKey(value.getValue())) {
                     if (!treeForCase.containsKey(mapOfValueLists.getKey())) {
                         treeForCase.put(mapOfValueLists.getKey(), new CommonAttributeValueList());
@@ -226,7 +223,6 @@ final public class CommonAttributeCaseSearchResults {
      *                                   should not be more common than
      * @param uniqueCaseDataSourceTuples the number of unique data sources in
      *                                   the CR
-     * @param mimeTypesToInclude         the mimetypes to include in our results
      *
      * @return true if the value should be filtered and removed from what is
      *         shown to the user, false if the value should not be removed and
@@ -234,20 +230,7 @@ final public class CommonAttributeCaseSearchResults {
      *
      * @throws EamDbException
      */
-    private boolean filterValue(CorrelationAttributeInstance.Type attributeType, CommonAttributeValue value, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples, Set<String> mimeTypesToInclude) throws EamDbException {
-        //Intracase common attribute searches will have been created with an empty mimeTypesToInclude list 
-        //because when performing intra case search this filtering will have been done during the query of the case database 
-        if (!mimeTypesToInclude.isEmpty()) { //only do the mime type filtering when mime types aren't empty
-            for (AbstractCommonAttributeInstance commonAttr : value.getInstances()) {
-                AbstractFile abstractFile = commonAttr.getAbstractFile();
-                if (abstractFile != null) {
-                    String mimeType = abstractFile.getMIMEType();
-                    if (mimeType != null && !mimeTypesToInclude.contains(mimeType)) {
-                        return true;
-                    }
-                }
-            }
-        }
+    private boolean filterValue(CorrelationAttributeInstance.Type attributeType, CommonAttributeValue value, int maximumPercentageThreshold, Double uniqueCaseDataSourceTuples) throws EamDbException {
         if (maximumPercentageThreshold != 0) {  //only do the frequency filtering when a max % was set
             try {
                 Double uniqueTypeValueTuples = EamDb.getInstance().getCountUniqueCaseDataSourceTuplesHavingTypeValue(
