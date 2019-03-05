@@ -38,6 +38,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -181,8 +182,8 @@ final class ExtractEdge extends Extract {
     }
 
     /**
-     * Dump the tables from WebCacheV01.dat and look for the data contained with
-     * in those files including downloads, cookies and history.
+     * Process WebCacheV01.dat ese database file creating artifacts for cookies,
+     * and history contained within.
      *
      * @param eseDumperPath Path to ESEDatabaseView.exe
      * @param webCacheFiles List of case WebCacheV01.dat files
@@ -231,21 +232,14 @@ final class ExtractEdge extends Extract {
 
             } finally {
                 tempWebCacheFile.delete();
-                
-                // Emppty the result dir
-                File[] resultFiles = resultsDir.listFiles();
-                for (File file : resultFiles) {
-                    file.delete();
-                }
-             
-                resultsDir.delete();
+                FileUtil.deleteFileDir(resultsDir);
             }
         }
     }
 
     /**
-     * Creates a temp version of the database and runs the ESEDatabaseView tool
-     * to dump each of the database tables into a temporary folder.
+     * Process spartan.edb ese database file creating artifacts for the bookmarks
+     * contained within.
      *
      * @param eseDumperPath Path to ESEDatabaseViewer
      * @param spartanFiles List of the case spartan.edb files
@@ -286,14 +280,7 @@ final class ExtractEdge extends Extract {
 
             } finally {
                 tempSpartanFile.delete();
-                
-                // Empty the result dir
-                File[] resultFiles = resultsDir.listFiles();
-                for (File file : resultFiles) {
-                    file.delete();
-                }
-                
-                resultsDir.delete();
+                FileUtil.deleteFileDir(resultsDir);
             }
         }
     }
@@ -536,7 +523,7 @@ final class ExtractEdge extends Extract {
     private List<AbstractFile> fetchWebCacheDBFiles() throws TskCoreException {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
                 = currentCase.getServices().getFileManager();
-        return fileManager.findFiles(dataSource, EDGE_WEBCACHE_NAME, EDGE_WEBCACHE_FOLDER_NAME); //NON-NLS
+        return fileManager.findFiles(dataSource, EDGE_WEBCACHE_NAME, EDGE_WEBCACHE_FOLDER_NAME);
     }
 
     /**
@@ -548,7 +535,7 @@ final class ExtractEdge extends Extract {
     private List<AbstractFile> fetchSpartanDBFiles() throws TskCoreException {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
                 = currentCase.getServices().getFileManager();
-        return fileManager.findFiles(dataSource, EDGE_SPARTAN_NAME, EDGE_SPARTAN_FOLDER_NAME); //NON-NLS
+        return fileManager.findFiles(dataSource, EDGE_SPARTAN_NAME, EDGE_SPARTAN_FOLDER_NAME);
     }
 
     /**
