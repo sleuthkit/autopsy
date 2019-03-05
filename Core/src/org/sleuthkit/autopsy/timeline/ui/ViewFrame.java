@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-18 Basis Technology Corp.
+ * Copyright 2011-19 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
-import org.sleuthkit.autopsy.timeline.actions.AddManualEvent;
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.Subscribe;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -64,7 +61,6 @@ import javafx.scene.paint.Color;
 import javafx.util.Callback;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
-import javax.swing.Timer;
 import jfxtras.scene.control.LocalDateTimePicker;
 import jfxtras.scene.control.LocalDateTimeTextField;
 import jfxtras.scene.control.ToggleGroupValue;
@@ -80,11 +76,11 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.LoggedTask;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
+import org.sleuthkit.autopsy.timeline.actions.AddManualEvent;
 import org.sleuthkit.autopsy.timeline.actions.Back;
 import org.sleuthkit.autopsy.timeline.actions.ResetFilters;
 import org.sleuthkit.autopsy.timeline.actions.SaveSnapshotAsReport;
@@ -98,7 +94,6 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 import org.sleuthkit.autopsy.timeline.ui.detailview.tree.EventsTree;
 import org.sleuthkit.autopsy.timeline.ui.listvew.ListViewPane;
 import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -116,14 +111,6 @@ final public class ViewFrame extends BorderPane {
     private static final Image WARNING = new Image("org/sleuthkit/autopsy/timeline/images/warning_triangle.png", 16, 16, true, true); //NON-NLS
     private static final Image REFRESH = new Image("org/sleuthkit/autopsy/timeline/images/arrow-circle-double-135.png"); //NON-NLS
     private static final Background GRAY_BACKGROUND = new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY));
-
-//    private NotificationState notificationState = NotificationState.Ready;
-//
-//    enum NotificationState {
-//        Showing,
-//        Paused,
-//        Ready;
-//    }
 
     /**
      * Region that will be stacked in between the no-events "dialog" and the
@@ -278,25 +265,6 @@ final public class ViewFrame extends BorderPane {
             }
         }
     };
-
-//    private final Timer notificationTimer = new Timer(30_000, new ActionListener() {
-//        @Override
-//        public void actionPerformed(ActionEvent actionEvent) {
-//            Platform.runLater(() -> {
-//                switch (notificationState) {
-//                    case Ready:
-//                        break;
-//                    case Showing:
-//                        notificationPane.hide();
-//                        notificationState = NotificationState.Paused;
-//                        break;
-//                    case Paused:
-//                        notificationState = NotificationState.Ready;
-//                        break;
-//                }
-//            });
-//        }
-//    });
 
     /**
      * hides the notification pane on any event
@@ -462,7 +430,6 @@ final public class ViewFrame extends BorderPane {
         refreshTimeUI(); //populate the view
 
         refreshHistorgram();
-//        notificationTimer.start();
     }
 
     /**
@@ -475,21 +442,9 @@ final public class ViewFrame extends BorderPane {
      */
     @Subscribe
     public void handleTimeLineTagUpdate(TagsUpdatedEvent event) {
-
         Platform.runLater(() -> {
             hostedView.setNeedsRefresh();
-//            switch (notificationState) {
-//                case Paused:
-//                    break;
-//                case Ready:
-                    notificationPane.show(Bundle.ViewFrame_tagsAddedOrDeleted());
-//                    notificationState = NotificationState.Showing;
-//                    break;
-//                case Showing:
-//                    notificationPane.setText(Bundle.ViewFrame_tagsAddedOrDeleted());
-//                    notificationTimer.restart();
-//                    break;
-//            }
+            notificationPane.show(Bundle.ViewFrame_tagsAddedOrDeleted());
         });
     }
 
@@ -506,14 +461,11 @@ final public class ViewFrame extends BorderPane {
     public void handleRefreshRequested(RefreshRequestedEvent event) {
         Platform.runLater(() -> {
             notificationPane.hide();
-//            notificationState = NotificationState.Paused;
-//            notificationTimer.restart();
             refreshHistorgram();
         });
     }
 
     /**
-     *
      * NOTE: This ViewFrame must be registered with the filteredEventsModel's
      * EventBus in order for this handler to be invoked.
      *
@@ -521,24 +473,12 @@ final public class ViewFrame extends BorderPane {
      */
     @Subscribe
     @NbBundle.Messages({
-        "ViewFrame.notification.cacheInvalidated=The event data has changed, the visualization may be out of date."})
+        "ViewFrame.notification.cacheInvalidated=The event data has been updated, the visualization may be out of date."})
     public void handleCacheInvalidated(FilteredEventsModel.CacheInvalidatedEvent event) {
         Platform.runLater(() -> {
             if (hostedView.needsRefresh() == false) {
                 hostedView.setNeedsRefresh();
-//                switch (notificationState) {
-//                    case Paused:
-//                        break;
-//                    case Ready:
-                        notificationPane.show(Bundle.ViewFrame_notification_cacheInvalidated());
-//                        notificationState = NotificationState.Showing;
-//                        notificationTimer.restart();
-//                        break;
-//                    case Showing:
-//                        notificationPane.setText(Bundle.ViewFrame_notification_cacheInvalidated());
-//                        notificationTimer.restart();
-//                        break;
-//                }
+                notificationPane.show(Bundle.ViewFrame_notification_cacheInvalidated());
             }
         });
     }
