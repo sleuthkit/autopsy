@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,7 +76,6 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         CorrelationCase correlationCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         this.correlationCaseName = correlationCase.getDisplayName();
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.corAttrType);
-        Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseValuesByCount(Case.getCurrentCase(), correlationCase);
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
@@ -84,7 +83,9 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         if (isFilterByDoc()) {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
-        return new CommonAttributeCountSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
+        Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseValuesByCount(Case.getCurrentCase(), mimeTypesToFilterOn, correlationCase);
+
+        return new CommonAttributeCountSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType);
     }
 
     /**
@@ -104,7 +105,6 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         CorrelationCase correlationCase = this.getCorrelationCaseFromId(this.corrleationCaseId);
         this.correlationCaseName = correlationCase.getDisplayName();
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(this.corAttrType);
-        Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseValuesByCase(Case.getCurrentCase(), correlationCase);
         Set<String> mimeTypesToFilterOn = new HashSet<>();
         if (isFilterByMedia()) {
             mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
@@ -112,7 +112,9 @@ public class SingleInterCaseCommonAttributeSearcher extends InterCaseCommonAttri
         if (isFilterByDoc()) {
             mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
         }
-        return new CommonAttributeCaseSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType, mimeTypesToFilterOn);
+        Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findSingleInterCaseValuesByCase(Case.getCurrentCase(), mimeTypesToFilterOn, correlationCase);
+
+        return new CommonAttributeCaseSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType);
     }
 
     @NbBundle.Messages({
