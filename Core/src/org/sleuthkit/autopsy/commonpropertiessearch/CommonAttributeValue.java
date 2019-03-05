@@ -69,7 +69,7 @@ final public class CommonAttributeValue {
     }
 
     void addInstance(AbstractCommonAttributeInstance metadata) {
-        if (tokenFileName==null){
+        if (tokenFileName==null && metadata.getAbstractFile() != null){
             tokenFileName = metadata.getAbstractFile().getName();
         }
         this.fileInstances.add(metadata);
