@@ -5,6 +5,7 @@ DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contai
 DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?
 DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.
 DirectoryTreeTopComponent.resultsView.title=Listing
+ExternalViewerAction.actionPerformed.failure.exe.message=The file is an executable and will not be opened.
 ExternalViewerAction.actionPerformed.failure.IO.message=There is no associated editor for files of this type or the associated application failed to launch.
 ExternalViewerAction.actionPerformed.failure.missingFile.message=The file no longer exists.
 ExternalViewerAction.actionPerformed.failure.open.url=Cannot open URL

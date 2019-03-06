@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,6 +48,7 @@ public class ExternalViewerAction extends AbstractAction {
     private final AbstractFile fileObject;
     private String fileObjectExt;
     final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr", ".cmd"}; //NON-NLS
+    private boolean isExecutable;
 
     ExternalViewerAction(String title, AbstractFile file, boolean isSlackFile) {
         super(title);
@@ -90,7 +91,19 @@ public class ExternalViewerAction extends AbstractAction {
     }
 
     @Override
+    @Messages({
+        "# {0} - file name",
+        "ExternalViewerAction.actionPerformed.failure.title=Open File Failure {0}",
+        "ExternalViewerAction.actionPerformed.failure.exe.message=The file is an executable and will not be opened."
+    })
     public void actionPerformed(ActionEvent e) {
+        if (isExecutable) {
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                    Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(),
+                    Bundle.ExternalViewerAction_actionPerformed_failure_title(this.fileObject.getName()),
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
         // Get the temp folder path of the case
         Case openCase;
         try {
@@ -129,8 +142,6 @@ public class ExternalViewerAction extends AbstractAction {
      * @param file     the file object
      */
     @Messages({
-        "# {0} - file name",
-        "ExternalViewerAction.actionPerformed.failure.title=Open File Failure {0}",
         "ExternalViewerAction.actionPerformed.failure.IO.message=There is no associated editor for files of this type or the associated application failed to launch.",
         "ExternalViewerAction.actionPerformed.failure.support.message=This platform (operating system) does not support opening a file in an editor this way.",
         "ExternalViewerAction.actionPerformed.failure.missingFile.message=The file no longer exists.",
@@ -203,7 +214,7 @@ public class ExternalViewerAction extends AbstractAction {
      *
      * @param path URL to open
      */
-     @Messages({
+    @Messages({
         "ExternalViewerAction.actionPerformed.urlFailure.title=Open URL Failure"})
     public static void openURL(String path) {
         String url_path = path.replaceAll("\\\\", "/");
