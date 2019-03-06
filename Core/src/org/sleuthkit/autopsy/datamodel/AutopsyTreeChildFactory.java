@@ -89,7 +89,6 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 List<DataSource> dataSources = tskCase.getDataSources();
                 
-                //Sort the datasources so the user can find them easier in large cases
                 Collections.sort(dataSources, new Comparator<DataSource>() {
                     @Override
                     public int compare(DataSource dataS1, DataSource dataS2) {

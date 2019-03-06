@@ -125,7 +125,6 @@ public class DataSourcesNode extends DisplayableItemNode {
                     currentKeys = new ArrayList<>(Arrays.asList(content));
                 }
                 
-                //Sort the datasources so the user can find them easier in large cases
                 Collections.sort(currentKeys, new Comparator<Content>() {
                     @Override
                     public int compare(Content content1, Content content2) {
