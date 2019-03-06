@@ -58,7 +58,7 @@ public class ExternalViewerAction extends AbstractAction {
         String fileName = fileObject.getName();
         int extPos = fileName.lastIndexOf('.');
 
-        boolean isExecutable = false;
+        isExecutable = false;
         if (extPos != -1) {
             String extension = fileName.substring(extPos, fileName.length()).toLowerCase();
             fileObjectExt = extension;
@@ -102,6 +102,7 @@ public class ExternalViewerAction extends AbstractAction {
                     Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(),
                     Bundle.ExternalViewerAction_actionPerformed_failure_title(this.fileObject.getName()),
                     JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         // Get the temp folder path of the case
