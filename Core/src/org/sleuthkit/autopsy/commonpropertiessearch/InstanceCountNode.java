@@ -54,7 +54,7 @@ public final class InstanceCountNode extends DisplayableItemNode {
      * @param attributeValues
      */
     @NbBundle.Messages({
-        "InstanceCountNode.displayName=Files with %s instances (%s)"
+        "InstanceCountNode.displayName=Exists in %s data sources (%s)"
     })
     public InstanceCountNode(int instanceCount, CommonAttributeValueList attributeValues) {
         super(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), false));

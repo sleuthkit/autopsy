@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
@@ -285,7 +286,7 @@ final class InterCaseSearchResultsProcessor {
                     } else {
                         instances = EamDb.getInstance().getArtifactInstancesByTypeValuesAndCases(correlationType, Arrays.asList(corValue), targetCases);
                     }
-                    int size = instances.size();
+                    int size = instances.stream().map(instance -> instance.getCorrelationDataSource().getID()).collect(Collectors.toSet()).size();
                     if (size > 1) {
                         CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
                         boolean anotherCase = false;
