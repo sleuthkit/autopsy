@@ -21,11 +21,10 @@ package org.sleuthkit.autopsy.timeline.actions;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Arrays;
+import static java.util.Arrays.asList;
 import java.util.List;
 import java.util.Objects;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -66,9 +65,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
- * Action that allows the user the manually cerate timeline events. It prompts
+ * Action that allows the user the manually create timeline events. It prompts
  * the user for event data and then adds it to the case via an artifact.
  */
+@NbBundle.Messages({
+    "CreateManualEvent.text=Add Event",
+    "CreateManualEvent.longText=Manually add an event to the timeline."})
 public class AddManualEvent extends Action {
 
     private final static Logger logger = Logger.getLogger(AddManualEvent.class.getName());
@@ -86,14 +88,29 @@ public class AddManualEvent extends Action {
                 control -> ((LocalDateTimeTextField) control).localDateTimeProperty());
     }
 
-    @NbBundle.Messages({
-        "CreateManualEvent.text=Add Event",
-        "CreateManualEvent.longText=Manually add an event to the timeline."})
+    /**
+     * Create an Action that allows the user the manually create timeline
+     * events. It prompts the user for event data with a dialog and then adds it
+     * to the case via an artifact. The datetiem in the dialog will be set to
+     * "now" when the action is invoked.
+     *
+     * @param controller The controller for this action to use.
+     *
+     */
     public AddManualEvent(TimeLineController controller) {
-        this(controller, System.currentTimeMillis());
+        this(controller, null);
     }
 
-    public AddManualEvent(TimeLineController controller, long epochMillis) {
+    /**
+     * Create an Action that allows the user the manually create timeline
+     * events. It prompts the user for event data with a dialog and then adds it
+     * to the case via an artifact.
+     *
+     * @param controller  The controller for this action to use.
+     * @param epochMillis The initial datetime to populate the dialog with. The
+     *                    user can ove ride this.
+     */
+    public AddManualEvent(TimeLineController controller, Long epochMillis) {
         super(Bundle.CreateManualEvent_text());
         this.controller = controller;
         setGraphic(new ImageView(ADD_EVENT_IMAGE));
@@ -122,7 +139,7 @@ public class AddManualEvent extends Action {
             String source = MANUAL_CREATION + ": " + sleuthkitCase.getCurrentExaminer().getLoginName();
 
             BlackboardArtifact artifact = sleuthkitCase.newBlackboardArtifact(TSK_TL_EVENT, eventInfo.datasource.getId());
-            artifact.addAttributes(Arrays.asList(
+            artifact.addAttributes(asList(
                     new BlackboardAttribute(
                             TSK_TL_EVENT_TYPE, source,
                             EventType.USER_CREATED.getTypeID()),
@@ -143,17 +160,13 @@ public class AddManualEvent extends Action {
         }
     }
 
-    /**
-     * The dialog that allows the user to enter the event information.
-     */
+    /** The dialog that allows the user to enter the event information. */
     private static class EventCreationDialog extends Dialog<ManualEventInfo> {
 
-        /**
-         * Custom DialogPane defined below.
-         */
+        /** Custom DialogPane defined below. */
         private final EventCreationDialogPane eventCreationDialogPane;
 
-        EventCreationDialog(TimeLineController controller, long epochMillis) {
+        EventCreationDialog(TimeLineController controller, Long epochMillis) {
             this.eventCreationDialogPane = new EventCreationDialogPane(controller, epochMillis);
             setTitle("Add Event");
             setDialogPane(eventCreationDialogPane);
@@ -193,10 +206,14 @@ public class AddManualEvent extends Action {
             private final ValidationSupport validationSupport = new ValidationSupport();
             private final TimeLineController controller;
 
-            EventCreationDialogPane(TimeLineController controller, long epochMillis) {
+            EventCreationDialogPane(TimeLineController controller, Long epochMillis) {
                 this.controller = controller;
                 FXMLConstructor.construct(this, "EventCreationDialog.fxml");
-                timePicker.setLocalDateTime( LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis) , TimeLineController.getTimeZoneID()));
+                if (epochMillis == null) {
+                    timePicker.setLocalDateTime(LocalDateTime.now());
+                } else {
+                    timePicker.setLocalDateTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), TimeLineController.getTimeZoneID()));
+                }
             }
 
             @FXML
