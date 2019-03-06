@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -53,6 +54,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.*;
 
@@ -71,6 +73,16 @@ class ExtractIE extends Extract {
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
+    
+    @Messages({
+        "Progress_Message_IE_History=IE History",
+        "Progress_Message_IE_Bookmarks=IE Bookmarks",
+        "Progress_Message_IE_Cookies=IE Cookies",
+        "Progress_Message_IE_Downloads=IE Downloads",
+        "Progress_Message_IE_FormHistory=IE Form History",
+        "Progress_Message_IE_AutoFill=IE Auto Fill",
+        "Progress_Message_IE_Logins=IE Logins",
+    })
 
     ExtractIE() throws NoCurrentCaseException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
@@ -79,12 +91,18 @@ class ExtractIE extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+        
+        progressBar.progress(Bundle.Progress_Message_IE_Bookmarks());
         this.getBookmark();
+        
+        progressBar.progress(Bundle.Progress_Message_IE_Cookies());
         this.getCookie();
+        
+        progressBar.progress(Bundle.Progress_Message_IE_History());
         this.getHistory();
     }
 

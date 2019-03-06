@@ -34,6 +34,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -44,142 +45,149 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Extract the <i>:Zone.Indentifier<i> files and create Artifact objects for them.
+ * Extract the <i>:Zone.Indentifier<i> alternate data stream files.
  */
-final class ExtractZoneIdentifier extends Extract{
-    
+final class ExtractZoneIdentifier extends Extract {
+
     private static final Logger LOG = Logger.getLogger(ExtractEdge.class.getName());
-    
-    private final IngestServices services = IngestServices.getInstance();
-    
+
     private static final String ZONE_IDENIFIER_FILE = "%:Zone.Identifier"; //NON-NLS
     private static final String ZONE_IDENIFIER = ":Zone.Identifier"; //NON-NLS
+    
+    @Messages({
+        "ExtractZone_process_errMsg_find=A failure occured while searching for :Zone.Indentifier files.",
+        "ExtractZone_process_errMsg=A error occured processing ':Zone.Indentifier' files.",
+        "ExtractZone_progress_Msg=Extracting :Zone.Identifer files"
+    })
 
     @Override
-    void process(Content dataSource, IngestJobContext context) {
-       
+    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
+
+        progressBar.progress(Bundle.ExtractZone_progress_Msg());
+        
         List<AbstractFile> zoneFiles = null;
-        try{
+        try {
             zoneFiles = findZoneFiles(dataSource);
-        } catch(TskCoreException ex){
-            
+        } catch (TskCoreException ex) {
+            addErrorMessage(Bundle.ExtractZone_process_errMsg_find());
+            LOG.log(Level.SEVERE, "Unable to find zone identifier files, exception thrown. ", ex);
         }
-        
-        if(zoneFiles == null || zoneFiles.isEmpty())
+
+        if (zoneFiles == null || zoneFiles.isEmpty()) {
             return;
-        
+        }
+
         Collection<BlackboardArtifact> sourceArtifacts = new ArrayList<>();
         Collection<BlackboardArtifact> downloadArtifacts = new ArrayList<>();
-        
-        for(AbstractFile zoneFile: zoneFiles){
-            processZoneFile(context, dataSource, zoneFile, sourceArtifacts, downloadArtifacts); 
+
+        for (AbstractFile zoneFile : zoneFiles) {
+            try{
+                processZoneFile(context, dataSource, zoneFile, sourceArtifacts, downloadArtifacts);
+            } catch(TskCoreException ex) {
+                addErrorMessage(Bundle.ExtractZone_process_errMsg());
+                String message = String.format("Failed to process zone identifier file  %s", zoneFile.getName()); //NON-NLS
+                LOG.log(Level.WARNING, message, ex);
+            }
         }
         
+        IngestServices services = IngestServices.getInstance();
+
         if (!sourceArtifacts.isEmpty()) {
             services.fireModuleDataEvent(new ModuleDataEvent(
                     RecentActivityExtracterModuleFactory.getModuleName(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE, sourceArtifacts));
         }
-        
+
         if (!downloadArtifacts.isEmpty()) {
             services.fireModuleDataEvent(new ModuleDataEvent(
                     RecentActivityExtracterModuleFactory.getModuleName(),
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadArtifacts));
         }
     }
-    
+
     /**
      * Process a single Zone Identifier file.
-     * 
-     * @param context IngetJobContext
-     * @param dataSource Content
-     * @param zoneFile Zone Indentifier file
-     * @param sourceArtifacts List for TSK_DOWNLOAD_SOURCE artifacts
+     *
+     * @param context           IngetJobContext
+     * @param dataSource        Content
+     * @param zoneFile          Zone Indentifier file
+     * @param sourceArtifacts   List for TSK_DOWNLOAD_SOURCE artifacts
      * @param downloadArtifacts List for TSK_WEB_DOWNLOAD aritfacts
      */
     private void processZoneFile(IngestJobContext context, Content dataSource,
-            AbstractFile zoneFile, Collection<BlackboardArtifact> sourceArtifacts, 
-            Collection<BlackboardArtifact> downloadArtifacts){
+            AbstractFile zoneFile, Collection<BlackboardArtifact> sourceArtifacts,
+            Collection<BlackboardArtifact> downloadArtifacts) throws TskCoreException {
 
         File tempFile = null;
         ZoneIdentifierInfo zoneInfo = null;
-        try{
+        try {
             tempFile = createTemporaryZoneFile(context, zoneFile);
-        } catch(IOException ex) {
+        } catch (IOException ex) {
             String message = String.format("Unable to create temporary File for %s", zoneFile.getName()); //NON-NLS
             LOG.log(Level.WARNING, message, ex);
-        } 
+        }
 
-        try{
+        try {
             zoneInfo = new ZoneIdentifierInfo(tempFile);
-        } catch(IOException ex){
+        } catch (IOException ex) {
             String message = String.format("Unable to parse temporary File for %s", zoneFile.getName()); //NON-NLS
             LOG.log(Level.WARNING, message, ex);
         } finally {
-            if(tempFile != null){
+            if (tempFile != null) {
                 tempFile.delete();
             }
         }
 
-        if(zoneInfo == null) {
+        if (zoneInfo == null) {
             return;
         }
 
-        AbstractFile downloadFile = null;
-        try{
-            downloadFile = getDownloadFile(dataSource, zoneFile);
-        } catch(TskCoreException ex) {
+        AbstractFile downloadFile = getDownloadFile(dataSource, zoneFile);
 
-        }
-
-        if(downloadFile != null){
+        if (downloadFile != null) {
             BlackboardArtifact sourcebba = createDownloadSourceArtifact(downloadFile, zoneInfo);
-            if(sourcebba != null){
+            if (sourcebba != null) {
                 sourceArtifacts.add(sourcebba);
             }
 
-            try{
-                if(downloadFile.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) == 0){
-                    BlackboardArtifact downloadbba = createDownloadArtifact(zoneFile, zoneInfo);
-                    if(downloadbba != null){
-                        downloadArtifacts.add(downloadbba);
-                    }
+            if (downloadFile.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) == 0) {
+                BlackboardArtifact downloadbba = createDownloadArtifact(zoneFile, zoneInfo);
+                if (downloadbba != null) {
+                    downloadArtifacts.add(downloadbba);
                 }
-            } catch(TskCoreException ex) {
-
             }
         }
     }
-    
+
     /**
-     * Returns a list of all the file that end in <i>:Zone.Identifier<i>
-     * 
+     * Find a list of all the file that end in <i>:Zone.Identifier<i>.
+     *
      * @param dataSource Content
-     * 
+     *
      * @return A list of zone identifier files
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     private List<AbstractFile> findZoneFiles(Content dataSource) throws TskCoreException {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
                 = currentCase.getServices().getFileManager();
-        
+
         return fileManager.findFiles(dataSource, ZONE_IDENIFIER_FILE);
     }
-    
+
     /**
-     * Finds the file that is represently by the Zone Indentifer file.
-     * 
+     * Find the file that the Zone.Identifer file was created alongside.
+     *
      * @param dataSource Content
-     * @param zoneFile The zone identifier case file
-     * 
+     * @param zoneFile   The zone identifier case file
+     *
      * @return The downloaded file or null if a file was not found
-     * 
-     * @throws TskCoreException 
+     *
+     * @throws TskCoreException
      */
     private AbstractFile getDownloadFile(Content dataSource, AbstractFile zoneFile) throws TskCoreException {
         AbstractFile downloadFile = null;
-        
+
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
                 = currentCase.getServices().getFileManager();
 
@@ -187,85 +195,87 @@ final class ExtractZoneIdentifier extends Extract{
 
         List<AbstractFile> fileList = fileManager.findFiles(dataSource, downloadFileName, zoneFile.getParentPath());
 
-        if(fileList.size() == 1) {
-            downloadFile =  fileList.get(0);
+        if (fileList.size() == 1) {
+            downloadFile = fileList.get(0);
         }
 
         return downloadFile;
     }
-    
+
     /**
-     * Creates a Download Source Artifact for the given ZoneIdentifierInfo object.
-     * 
-     * @param downloadFile AbstractFile representing the file downloaded, not the zone indentifier file.
-     * @param zoneInfo Zone Indentifer file wrapper object
-     * 
+     * Create a Download Source Artifact for the given ZoneIdentifierInfo
+     * object.
+     *
+     * @param downloadFile AbstractFile representing the file downloaded, not
+     *                     the zone indentifier file.
+     * @param zoneInfo     Zone Indentifer file wrapper object
+     *
      * @return TSK_DOWNLOAD_SOURCE object for given parameters
      */
-    private BlackboardArtifact createDownloadSourceArtifact(AbstractFile downloadFile, ZoneIdentifierInfo zoneInfo){
-        
+    private BlackboardArtifact createDownloadSourceArtifact(AbstractFile downloadFile, ZoneIdentifierInfo zoneInfo) {
+
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-        
+
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-        RecentActivityExtracterModuleFactory.getModuleName(),
-        (zoneInfo.getURL() != null) ? zoneInfo.getURL() : "")); //NON-NLS
-        
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (zoneInfo.getURL() != null) ? zoneInfo.getURL() : "")); //NON-NLS
+
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
-        RecentActivityExtracterModuleFactory.getModuleName(),
-        (zoneInfo.getURL() != null) ? NetworkUtils.extractDomain(zoneInfo.getURL()) : "")); //NON-NLS
-        
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (zoneInfo.getURL() != null) ? NetworkUtils.extractDomain(zoneInfo.getURL()) : "")); //NON-NLS
+
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION,
-        RecentActivityExtracterModuleFactory.getModuleName(),
-        (zoneInfo.getZoneIdAsString() != null) ? zoneInfo.getZoneIdAsString() : "")); //NON-NLS
-        
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (zoneInfo.getZoneIdAsString() != null) ? zoneInfo.getZoneIdAsString() : "")); //NON-NLS
+
         return addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE, downloadFile, bbattributes);
     }
-    
+
     /**
      * Create a TSK_WEB_DOWNLOAD Artifact for the given zone indentifier file.
-     * 
+     *
      * @param zoneFile Zone identifier file
      * @param zoneInfo ZoneIdentifierInfo file wrapper object
-     * 
+     *
      * @return BlackboardArifact for the given parameters
      */
-    private BlackboardArtifact createDownloadArtifact(AbstractFile zoneFile, ZoneIdentifierInfo zoneInfo){
-        
+    private BlackboardArtifact createDownloadArtifact(AbstractFile zoneFile, ZoneIdentifierInfo zoneInfo) {
+
         Collection<BlackboardAttribute> bbattributes = createDownloadAttributes(
-                null, null, 
-                zoneInfo.getURL(), null, 
-                (zoneInfo.getURL() != null ? NetworkUtils.extractDomain(zoneInfo.getURL()) : ""), 
+                null, null,
+                zoneInfo.getURL(), null,
+                (zoneInfo.getURL() != null ? NetworkUtils.extractDomain(zoneInfo.getURL()) : ""),
                 null);
         return addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, zoneFile, bbattributes);
     }
-    
+
     /**
-     * Creates a copy of the given zoneFile.
-     * 
+     * Create a copy of the given zone file.
+     *
      * @param context IngestJobContext
-     * @param file zoneFile from case
-     * 
+     * @param file    zoneFile from case
+     *
      * @return File object representing the newly created file
-     * 
-     * @throws IOException 
+     *
+     * @throws IOException
      */
-    private File createTemporaryZoneFile(IngestJobContext context, AbstractFile zoneFile) throws IOException{
+    private File createTemporaryZoneFile(IngestJobContext context, AbstractFile zoneFile) throws IOException {
         // Replace the invalid character in the file name.
         String fileName = zoneFile.getName().replace(":", "_"); //NON-NLS
-        
+
         Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(
-          getCurrentCase(), getName()), fileName + zoneFile.getId());
+                getCurrentCase(), getName()), fileName + zoneFile.getId());
         java.io.File tempFile = tempFilePath.toFile();
-        
+
         try {
             ContentUtils.writeToFile(zoneFile, tempFile, context::dataSourceIngestIsCancelled);
         } catch (IOException ex) {
             throw new IOException("Error writingToFile: " + zoneFile, ex); //NON-NLS
         }
-         
+
         return tempFile;
     }
-   
+
     @Messages({
         "LOCAL_MACHINE_ZONE=Local Machine Zone",
         "LOCAL_INTRANET_ZONE=Local Intranet Zone",
@@ -273,68 +283,70 @@ final class ExtractZoneIdentifier extends Extract{
         "INTENET_ZONE=Internet Zone",
         "RESTRICTED_ZONE=Restricted Sites Zone"
     })
-    
+
     /**
-     * Wrapper class for information in the :ZoneIdentifier file.  The ZoneIdentifier
-     * file has a simple format of <i>key<i>=<i>value<i>. There are four known
-     * keys: ZoneId, ReferrerUrl, HostUrl, and LastWriterPackageFamilyName.  Not
-     * all browsers will put all values in the file, in fact most will only supply
-     * the ZoneId.  Only Edge supplies the LastWriterPackageFamilyName.
+     * Wrapper class for information in the :ZoneIdentifier file. The
+     * Zone.Identifier file has a simple format of <i>key<i>=<i>value<i>. There
+     * are four known keys: ZoneId, ReferrerUrl, HostUrl, and
+     * LastWriterPackageFamilyName. Not all browsers will put all values in the
+     * file, in fact most will only supply the ZoneId. Only Edge supplies the
+     * LastWriterPackageFamilyName.
      */
-    private final class ZoneIdentifierInfo{
+    private final class ZoneIdentifierInfo {
+
         private static final String ZONE_ID = "zoneid"; //NON-NLS
         private static final String REFERRER_URL = "referrerurl"; //NON-NLS
         private static final String HOST_URL = "hosturl"; //NON-NLS
         private static final String FAMILY_NAME = "lastwriterpackagefamilyname"; //NON-NLS
-        
+
         private final HashMap<String, String> dataMap = new HashMap<>();
-        
+
         /**
          * Opens the zone file, reading for the key\value pairs and puts them
          * into a HashMap.
-         * 
+         *
          * @param zoneFile The ZoneIdentifier file
-         * 
+         *
          * @throws FileNotFoundException
-         * @throws IOException 
+         * @throws IOException
          */
-        ZoneIdentifierInfo(File zoneFile) throws FileNotFoundException, IOException{
+        ZoneIdentifierInfo(File zoneFile) throws FileNotFoundException, IOException {
             String line;
-            try(BufferedReader reader = new BufferedReader(new FileReader(zoneFile))) {
-                while((line = reader.readLine()) != null){
+            try (BufferedReader reader = new BufferedReader(new FileReader(zoneFile))) {
+                while ((line = reader.readLine()) != null) {
                     String[] tokens = line.split("=");
-                    
-                    if(tokens.length < 2){
+
+                    if (tokens.length < 2) {
                         continue; //Nothing interesting in this line
                     }
-                    
+
                     dataMap.put(tokens[0].trim().toLowerCase(), tokens[1].trim());
                 }
-            }  
+            }
         }
-        
+
         /**
-         * Returns the integer zone id
-         * 
+         * Get the integer zone id
+         *
          * @return interger zone id or -1 if unknown
          */
-        int getZoneId(){
+        int getZoneId() {
             int zoneValue = -1;
             String value = dataMap.get(ZONE_ID);
-            if(value != null){
+            if (value != null) {
                 zoneValue = Integer.parseInt(value);
             }
-            
+
             return zoneValue;
         }
-        
+
         /**
          * Get the string description of the zone id.
-         * 
+         *
          * @return String description or null if a zone id was not found
          */
-        String getZoneIdAsString(){
-            switch(getZoneId()){
+        String getZoneIdAsString() {
+            switch (getZoneId()) {
                 case 0:
                     return Bundle.LOCAL_MACHINE_ZONE();
                 case 1:
@@ -349,33 +361,33 @@ final class ExtractZoneIdentifier extends Extract{
                     return null;
             }
         }
-        
+
         /**
          * Get the URL from which the file was downloaded.
-         * 
+         *
          * @return String url or null if a host url was not found
          */
-        String getURL(){
+        String getURL() {
             return dataMap.get(HOST_URL);
         }
-        
+
         /**
          * Get the referrer url.
-         * 
+         *
          * @return String url or null if a host url was not found
          */
-        String getReferrer(){
-           return dataMap.get(REFERRER_URL);
+        String getReferrer() {
+            return dataMap.get(REFERRER_URL);
         }
-        
+
         /**
          * Gets the string value for the key LastWriterPackageFamilyName.
-         * 
+         *
          * @return String value or null if the value was not found
          */
-        String getFamilyName(){
+        String getFamilyName() {
             return dataMap.get(FAMILY_NAME);
         }
     }
-    
+
 }
