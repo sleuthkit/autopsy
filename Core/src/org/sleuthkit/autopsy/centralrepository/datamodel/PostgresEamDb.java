@@ -164,6 +164,21 @@ final class PostgresEamDb extends AbstractSqlEamDb {
     /**
      * Lazily setup Singleton connection on first request.
      *
+     * @param foreignKeys -ignored arguement with postgres databases
+     *
+     * @return A connection from the connection pool.
+     *
+     * @throws EamDbException
+     */
+    @Override
+    protected Connection connect(boolean foreignKeys) throws EamDbException {
+        //foreignKeys boolean is ignored for postgres
+        return connect();
+    }
+
+    /**
+     * Lazily setup Singleton connection on first request.
+     *
      * @return A connection from the connection pool.
      *
      * @throws EamDbException
@@ -179,7 +194,6 @@ final class PostgresEamDb extends AbstractSqlEamDb {
                 setupConnectionPool();
             }
         }
-
         try {
             return connectionPool.getConnection();
         } catch (SQLException ex) {

@@ -153,7 +153,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * Setup a connection pool for db connections.
      *
      */
-    private void setupConnectionPool() throws EamDbException {
+    private void setupConnectionPool(boolean foreignKeysEnabled) throws EamDbException {
 
         if (dbSettings.dbFileExists() == false) {
             throw new EamDbException("Central repository database missing");
@@ -169,27 +169,31 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         connectionPool.setMaxIdle(-1);
         connectionPool.setMaxWaitMillis(1000);
         connectionPool.setValidationQuery(dbSettings.getValidationQuery());
-        connectionPool.setConnectionInitSqls(Arrays.asList("PRAGMA foreign_keys = ON"));
+        if (foreignKeysEnabled) {
+            connectionPool.setConnectionInitSqls(Arrays.asList("PRAGMA foreign_keys = ON"));
+        } else {
+            connectionPool.setConnectionInitSqls(Arrays.asList("PRAGMA foreign_keys = OFF"));
+        }
     }
 
     /**
      * Lazily setup Singleton connection on first request.
+     *
+     * @param foreignKeys determines if foreign keys should be enforced during this connection for SQLite
      *
      * @return A connection from the connection pool.
      *
      * @throws EamDbException
      */
     @Override
-    protected Connection connect() throws EamDbException {
+    protected Connection connect(boolean foreignKeys) throws EamDbException {
         synchronized (this) {
             if (!EamDb.isEnabled()) {
                 throw new EamDbException("Central Repository module is not enabled"); // NON-NLS
             }
-
             if (connectionPool == null) {
-                setupConnectionPool();
+                setupConnectionPool(foreignKeys);
             }
-
             try {
                 return connectionPool.getConnection();
             } catch (SQLException ex) {
@@ -198,6 +202,18 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
 
+    /**
+     * Lazily setup Singleton connection on first request with foreign keys enforced.
+     *
+     * @return A connection from the connection pool.
+     *
+     * @throws EamDbException
+     */
+    @Override
+    protected Connection connect() throws EamDbException {
+        return connect(true);
+    }
+    
     @Override
     protected String getConflictClause() {
         // For sqlite, our conflict clause is part of the table schema
