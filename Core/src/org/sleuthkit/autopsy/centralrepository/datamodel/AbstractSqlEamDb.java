@@ -1095,6 +1095,9 @@ abstract class AbstractSqlEamDb implements EamDb {
      * @throws CorrelationAttributeNormalizationException
      */
     private String prepareGetInstancesSql(CorrelationAttributeInstance.Type aType, List<String> values) throws CorrelationAttributeNormalizationException {
+        if (aType == null) {
+            throw new CorrelationAttributeNormalizationException("Cannot get instances for null correlation type");
+        }
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
                 = "SELECT "
