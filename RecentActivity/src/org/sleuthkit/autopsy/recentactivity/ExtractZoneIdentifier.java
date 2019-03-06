@@ -19,12 +19,9 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -33,7 +30,6 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -42,6 +38,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -53,7 +50,7 @@ final class ExtractZoneIdentifier extends Extract {
 
     private static final String ZONE_IDENIFIER_FILE = "%:Zone.Identifier"; //NON-NLS
     private static final String ZONE_IDENIFIER = ":Zone.Identifier"; //NON-NLS
-    
+
     @Messages({
         "ExtractZone_process_errMsg_find=A failure occured while searching for :Zone.Indentifier files.",
         "ExtractZone_process_errMsg=A error occured processing ':Zone.Indentifier' files.",
@@ -64,7 +61,7 @@ final class ExtractZoneIdentifier extends Extract {
     void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
 
         progressBar.progress(Bundle.ExtractZone_progress_Msg());
-        
+
         List<AbstractFile> zoneFiles = null;
         try {
             zoneFiles = findZoneFiles(dataSource);
@@ -81,15 +78,15 @@ final class ExtractZoneIdentifier extends Extract {
         Collection<BlackboardArtifact> downloadArtifacts = new ArrayList<>();
 
         for (AbstractFile zoneFile : zoneFiles) {
-            try{
+            try {
                 processZoneFile(context, dataSource, zoneFile, sourceArtifacts, downloadArtifacts);
-            } catch(TskCoreException ex) {
+            } catch (TskCoreException ex) {
                 addErrorMessage(Bundle.ExtractZone_process_errMsg());
                 String message = String.format("Failed to process zone identifier file  %s", zoneFile.getName()); //NON-NLS
                 LOG.log(Level.WARNING, message, ex);
             }
         }
-        
+
         IngestServices services = IngestServices.getInstance();
 
         if (!sourceArtifacts.isEmpty()) {
@@ -118,24 +115,13 @@ final class ExtractZoneIdentifier extends Extract {
             AbstractFile zoneFile, Collection<BlackboardArtifact> sourceArtifacts,
             Collection<BlackboardArtifact> downloadArtifacts) throws TskCoreException {
 
-        File tempFile = null;
         ZoneIdentifierInfo zoneInfo = null;
-        try {
-            tempFile = createTemporaryZoneFile(context, zoneFile);
-        } catch (IOException ex) {
-            String message = String.format("Unable to create temporary File for %s", zoneFile.getName()); //NON-NLS
-            LOG.log(Level.WARNING, message, ex);
-        }
 
         try {
-            zoneInfo = new ZoneIdentifierInfo(tempFile);
+            zoneInfo = new ZoneIdentifierInfo(zoneFile);
         } catch (IOException ex) {
             String message = String.format("Unable to parse temporary File for %s", zoneFile.getName()); //NON-NLS
             LOG.log(Level.WARNING, message, ex);
-        } finally {
-            if (tempFile != null) {
-                tempFile.delete();
-            }
         }
 
         if (zoneInfo == null) {
@@ -145,12 +131,14 @@ final class ExtractZoneIdentifier extends Extract {
         AbstractFile downloadFile = getDownloadFile(dataSource, zoneFile);
 
         if (downloadFile != null) {
-            BlackboardArtifact sourcebba = createDownloadSourceArtifact(downloadFile, zoneInfo);
-            if (sourcebba != null) {
-                sourceArtifacts.add(sourcebba);
+            if (getArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE, zoneFile) == null) {
+                BlackboardArtifact sourcebba = createDownloadSourceArtifact(downloadFile, zoneInfo);
+                if (sourcebba != null) {
+                    sourceArtifacts.add(sourcebba);
+                }
             }
 
-            if (downloadFile.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD) == 0) {
+            if (getArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile) == null) {
                 BlackboardArtifact downloadbba = createDownloadArtifact(zoneFile, zoneInfo);
                 if (downloadbba != null) {
                     downloadArtifacts.add(downloadbba);
@@ -197,6 +185,13 @@ final class ExtractZoneIdentifier extends Extract {
 
         if (fileList.size() == 1) {
             downloadFile = fileList.get(0);
+
+            // Check that the download file and the zone file came from the same dir
+            if (!downloadFile.getParentPath().equals(zoneFile.getParentPath())) {
+                downloadFile = null;
+            } else if (zoneFile.getMetaAddr() != downloadFile.getMetaAddr()) {
+                downloadFile = null;
+            }
         }
 
         return downloadFile;
@@ -250,30 +245,23 @@ final class ExtractZoneIdentifier extends Extract {
     }
 
     /**
-     * Create a copy of the given zone file.
+     * Determine if an artifact of the given type exists for the AbstractFile.
      *
-     * @param context IngestJobContext
-     * @param file    zoneFile from case
+     * @param type BlackboardArtifact type
+     * @param file AbstraceFile
      *
-     * @return File object representing the newly created file
+     * @return Returns the existing BlackboardArtifact or null if none exists
      *
-     * @throws IOException
+     * @throws TskCoreException
      */
-    private File createTemporaryZoneFile(IngestJobContext context, AbstractFile zoneFile) throws IOException {
-        // Replace the invalid character in the file name.
-        String fileName = zoneFile.getName().replace(":", "_"); //NON-NLS
-
-        Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(
-                getCurrentCase(), getName()), fileName + zoneFile.getId());
-        java.io.File tempFile = tempFilePath.toFile();
-
-        try {
-            ContentUtils.writeToFile(zoneFile, tempFile, context::dataSourceIngestIsCancelled);
-        } catch (IOException ex) {
-            throw new IOException("Error writingToFile: " + zoneFile, ex); //NON-NLS
+    private BlackboardArtifact getArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile file) throws TskCoreException {
+        for (BlackboardArtifact artifact : currentCase.getSleuthkitCase().getBlackboardArtifacts(type)) {
+            if (artifact.getDataSource().getId() == file.getDataSourceObjectId()) {
+                return artifact;
+            }
         }
 
-        return tempFile;
+        return null;
     }
 
     @Messages({
@@ -310,9 +298,9 @@ final class ExtractZoneIdentifier extends Extract {
          * @throws FileNotFoundException
          * @throws IOException
          */
-        ZoneIdentifierInfo(File zoneFile) throws FileNotFoundException, IOException {
+        ZoneIdentifierInfo(AbstractFile zoneFile) throws FileNotFoundException, IOException {
             String line;
-            try (BufferedReader reader = new BufferedReader(new FileReader(zoneFile))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(zoneFile)))) {
                 while ((line = reader.readLine()) != null) {
                     String[] tokens = line.split("=");
 
