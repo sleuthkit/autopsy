@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.JLNK;
 import org.sleuthkit.autopsy.coreutils.JLnkParser;
 import org.sleuthkit.autopsy.coreutils.JLnkParserException;
@@ -53,6 +54,10 @@ class RecentDocumentsByLnk extends Extract {
     private IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
+    
+    @Messages({
+        "Progress_Message_Extract_Resent_Docs=Recent Documents",
+    })
 
     /**
      * Find the documents that Windows stores about recent documents and make
@@ -123,10 +128,12 @@ class RecentDocumentsByLnk extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+        
+        progressBar.progress(Bundle.Progress_Message_Extract_Resent_Docs());
         this.getRecentDocuments();
     }
 }

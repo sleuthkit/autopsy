@@ -22,9 +22,6 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,17 +31,15 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.logging.Level;
-import javax.annotation.concurrent.Immutable;
-import org.apache.commons.lang3.StringUtils;
+import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -53,29 +48,14 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_ACCOUNT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ReadContentInputStream;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import static org.sleuthkit.autopsy.recentactivity.Bundle.*;
 
 /**
  * Extracts activity from Internet Explorer browser, as well as recent documents
@@ -84,47 +64,59 @@ import org.sleuthkit.datamodel.TskCoreException;
 class ExtractIE extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
-    private static final String PARENT_MODULE_NAME
-            = NbBundle.getMessage(ExtractIE.class, "ExtractIE.parentModuleName.noSpace");
-    private static final String PASCO_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-    private static final String JAVA_PATH = PlatformUtil.getJavaPath();
-
     private final String moduleTempResultsDir;
+    private String PASCO_LIB_PATH;
+    private final String JAVA_PATH;
     private static final String RESOURCE_URL_PREFIX = "res://";
-
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
 
+    @Messages({
+        "Progress_Message_IE_History=IE History",
+        "Progress_Message_IE_Bookmarks=IE Bookmarks",
+        "Progress_Message_IE_Cookies=IE Cookies",
+        "Progress_Message_IE_Downloads=IE Downloads",
+        "Progress_Message_IE_FormHistory=IE Form History",
+        "Progress_Message_IE_AutoFill=IE Auto Fill",
+        "Progress_Message_IE_Logins=IE Logins",})
+
     ExtractIE() throws NoCurrentCaseException {
+        moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
         moduleTempResultsDir = RAImageIngestModule.getRATempPath(Case.getCurrentCaseThrows(), "IE") + File.separator + "results"; //NON-NLS
+        JAVA_PATH = PlatformUtil.getJavaPath();
     }
 
     @Override
-    protected String getName() {
-        return NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
-    }
-
-    @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+
+        progressBar.progress(Bundle.Progress_Message_IE_Bookmarks());
         this.getBookmark();
+
+        progressBar.progress(Bundle.Progress_Message_IE_Cookies());
         this.getCookie();
+
+        progressBar.progress(Bundle.Progress_Message_IE_History());
         this.getHistory();
+
     }
 
     /**
      * Finds the files storing bookmarks and creates artifacts
      */
+    @Messages({"ExtractIE.getBookmark.errMsg.errGettingBookmarks=Error getting Internet Explorer Bookmarks.",
+        "ExtractIE.getBookmark.errMsg.errPostingBookmarks=Error posting Internet Explorer Bookmark artifacts."
+    })
     private void getBookmark() {
         List<AbstractFile> favoritesFiles;
         try {
             favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites"); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'url' files for Internet Explorer bookmarks.", ex); //NON-NLS
-            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getBookmark.errMsg.errGettingBookmarks",
-                    this.getName()));
+            this.addErrorMessage(Bundle.ExtractIE_getBookmark_errMsg_errGettingBookmarks());
             return;
         }
 
@@ -144,70 +136,91 @@ class ExtractIE extends Extract {
                 break;
             }
 
-            Collection<BlackboardAttribute> bbattributes = Arrays.asList(
-                    new BlackboardAttribute(
-                            TSK_URL, PARENT_MODULE_NAME, getURLFromIEBookmarkFile(fav)),
-                    new BlackboardAttribute(
-                            TSK_TITLE, PARENT_MODULE_NAME, fav.getName()),
-                    new BlackboardAttribute(
-                            TSK_DATETIME_CREATED, PARENT_MODULE_NAME, fav.getCrtime()),
-                    new BlackboardAttribute(
-                            TSK_PROG_NAME, PARENT_MODULE_NAME,
-                            NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")),
-                    new BlackboardAttribute(
-                            TSK_DOMAIN, PARENT_MODULE_NAME, NetworkUtils.extractDomain(getURLFromIEBookmarkFile(fav))));
-            try {
-                BlackboardArtifact bbart = fav.newArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK);
-                bbart.addAttributes(bbattributes);
+            String url = getURLFromIEBookmarkFile(fav);
 
+            String name = fav.getName();
+            Long datetime = fav.getCrtime();
+            String Tempdate = datetime.toString();
+            datetime = Long.valueOf(Tempdate);
+            String domain = extractDomain(url);
+
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                    RecentActivityExtracterModuleFactory.getModuleName(), url));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
+                    RecentActivityExtracterModuleFactory.getModuleName(), name));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), datetime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
+            if (domain != null && domain.isEmpty() == false) {
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+            }
+
+            BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
+            if (bbart != null) {
                 bbartifacts.add(bbart);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  bookmark artifact.", ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "ExtractIE.getBookmark.errMsg.errGettingBookmarks", //NON-NLS
-                        this.getName(), fav.getName()));
             }
         }
         try {
-            blackboard.postArtifacts(bbartifacts, PARENT_MODULE_NAME);
+            blackboard.postArtifacts(bbartifacts, moduleName);
         } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Error while trying to post Internet Explorer bookmark artifact.", ex); //NON-NLS
-            this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getName()));
+            this.addErrorMessage(Bundle.ExtractIE_getBookmark_errMsg_errPostingBookmarks());
+            logger.log(Level.SEVERE, "Exception thrown while posting IE bookmark artifact.", ex); //NON-NLS
         }
     }
 
     private String getURLFromIEBookmarkFile(AbstractFile fav) {
-        String line;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(fav)));) {
-            while (null != (line = reader.readLine())) {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(fav)));
+        String line, url = "";
+        try {
+            line = reader.readLine();
+            while (null != line) {
                 // The actual shortcut line we are interested in is of the
                 // form URL=http://path/to/website
                 if (line.startsWith("URL")) { //NON-NLS
-                    return StringUtils.substringAfter(line, "="); //NON-NLS
+                    url = line.substring(line.indexOf("=") + 1);
+                    break;
                 }
+                line = reader.readLine();
             }
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed to read from content: " + fav.getName(), ex); //NON-NLS
-            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getName(),
-                    fav.getName()));
+            this.addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg", this.getName(),
+                            fav.getName()));
         } catch (IndexOutOfBoundsException ex) {
             logger.log(Level.WARNING, "Failed while getting URL of IE bookmark. Unexpected format of the bookmark file: " + fav.getName(), ex); //NON-NLS
-            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getName(),
-                    fav.getName()));
+            this.addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getURLFromIEBmkFile.errMsg2", this.getName(),
+                            fav.getName()));
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, "Failed to close reader.", ex); //NON-NLS
+            }
         }
 
-        return "";
+        return url;
     }
 
     /**
      * Finds files that store cookies and adds artifacts for them.
      */
+    @Messages({
+        "ExtractIE.getCookie.errMsg.errPostingCookiess=Error posting Internet Explorer Cookie artifacts."
+    })
     private void getCookie() {
         List<AbstractFile> cookiesFiles;
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies"); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error getting cookie files for IE"); //NON-NLS
-            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errGettingFile", this.getName()));
+            this.addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errGettingFile", this.getName()));
             return;
         }
 
@@ -226,65 +239,69 @@ class ExtractIE extends Extract {
                 continue;
             }
 
-            byte[] cookiesBuffer = new byte[(int) cookiesFile.getSize()];
+            byte[] t = new byte[(int) cookiesFile.getSize()];
             try {
-                cookiesFile.read(cookiesBuffer, 0, cookiesFile.getSize());
+                final int bytesRead = cookiesFile.read(t, 0, cookiesFile.getSize());
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error reading bytes of Internet Explorer cookie.", ex); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errReadingIECookie",
-                        this.getName(), cookiesFile.getName()));
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.getCookie.errMsg.errReadingIECookie",
+                                this.getName(), cookiesFile.getName()));
                 continue;
             }
+            String cookieString = new String(t);
+            String[] values = cookieString.split("\n");
+            String url = values.length > 2 ? values[2] : "";
+            String value = values.length > 1 ? values[1] : "";
+            String name = values.length > 0 ? values[0] : "";
+            Long datetime = cookiesFile.getCrtime();
+            String tempDate = datetime.toString();
+            datetime = Long.valueOf(tempDate);
+            String domain = extractDomain(url);
 
-            String[] values = new String(cookiesBuffer).split("\n");
-            String URL = values.length > 2 ? values[2] : "";
-
-            Collection<BlackboardAttribute> bbattributes = Arrays.asList(new BlackboardAttribute(
-                    TSK_DATETIME, PARENT_MODULE_NAME,
-                    cookiesFile.getCrtime()),
-                    new BlackboardAttribute(
-                            TSK_NAME, PARENT_MODULE_NAME,
-                            values.length > 0 ? values[0] : ""),
-                    new BlackboardAttribute(
-                            TSK_VALUE, PARENT_MODULE_NAME,
-                            values.length > 1 ? values[1] : ""),
-                    new BlackboardAttribute(
-                            TSK_URL, PARENT_MODULE_NAME,
-                            URL),
-                    new BlackboardAttribute(
-                            TSK_PROG_NAME, PARENT_MODULE_NAME,
-                            getName()),
-                    new BlackboardAttribute(
-                            TSK_DOMAIN, PARENT_MODULE_NAME,
-                            NetworkUtils.extractDomain(URL)));
-            try {
-                BlackboardArtifact bbart = cookiesFile.newArtifact(TSK_WEB_COOKIE);
-                bbart.addAttributes(bbattributes);
+            Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                    RecentActivityExtracterModuleFactory.getModuleName(), url));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME,
+                    RecentActivityExtracterModuleFactory.getModuleName(), datetime));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(), (name != null) ? name : ""));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
+                    RecentActivityExtracterModuleFactory.getModuleName(), value));
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
+            if (domain != null && domain.isEmpty() == false) {
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
+            }
+            BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+            if (bbart != null) {
                 bbartifacts.add(bbart);
-            } catch (TskCoreException ex) {
-                this.addErrorMessage(NbBundle.getMessage(Chrome.class, "ExtractIE.getCookie.errMsg.errReadingIECookie", //NON-NLS
-                        this.getName(), cookiesFile.getName()));
-
             }
         }
         try {
-            blackboard.postArtifacts(bbartifacts, PARENT_MODULE_NAME);
+            blackboard.postArtifacts(bbartifacts, moduleName);
         } catch (Blackboard.BlackboardException ex) {
-            logger.log(Level.SEVERE, "Error while trying to post Internet Explorer cookie artifact.", ex); //NON-NLS
-            this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getName()));
+            this.addErrorMessage(Bundle.ExtractIE_getCookie_errMsg_errPostinCookiess());
+            logger.log(Level.SEVERE, "Exception thrown while posting IE cookie artifact.", ex); //NON-NLS
         }
     }
 
     /**
      * Locates index.dat files, runs Pasco on them, and creates artifacts.
      */
+    @Messages({
+        "ExtractIE.getHistory.errMsg.errPostingHistory=Error posting Internet Explorer History artifacts."
+    })
     private void getHistory() {
         logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
+        boolean foundHistory = false;
 
-        //JIRA-2385: Why are we getting the pasco library path for datasource we process?
         final File pascoRoot = InstalledFileLocator.getDefault().locate("pasco2", ExtractIE.class.getPackage().getName(), false); //NON-NLS
         if (pascoRoot == null) {
-            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getName()));
+            this.addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.unableToGetHist", this.getName()));
             logger.log(Level.SEVERE, "Error finding pasco program "); //NON-NLS
             return;
         }
@@ -292,8 +309,8 @@ class ExtractIE extends Extract {
         final String pascoHome = pascoRoot.getAbsolutePath();
         logger.log(Level.INFO, "Pasco2 home: {0}", pascoHome); //NON-NLS
 
-        String pascoLibPath = pascoHome + File.separator + "pasco2.jar" + File.pathSeparator //NON-NLS
-                              + pascoHome + File.separator + "*";
+        PASCO_LIB_PATH = pascoHome + File.separator + "pasco2.jar" + File.pathSeparator //NON-NLS
+                         + pascoHome + File.separator + "*";
 
         File resultsDir = new File(moduleTempResultsDir);
         resultsDir.mkdirs();
@@ -316,20 +333,18 @@ class ExtractIE extends Extract {
         }
 
         dataFound = true;
-        boolean foundHistory = false;
-        Collection<BlackboardArtifact> historyArtifacts = new ArrayList<>();
-        Collection<BlackboardArtifact> accountArtifacts = new ArrayList<>();
-
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
+        String temps;
+        String indexFileName;
         for (AbstractFile indexFile : indexFiles) {
-            /*
-             * Since each result represent an index.dat file, just create these
-             * files with the following notation: index<Number>.dat (i.e.
-             * index0.dat, index1.dat,..., indexN.dat), where <Number> is the
-             * obj_id of the file. Write each index.dat file to a temp
-             * directory. *
-             */
-            String indexFileName = "index" + indexFile.getId() + ".dat"; //NON-NLS
-            String temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName; //NON-NLS
+            // Since each result represent an index.dat file,
+            // just create these files with the following notation:
+            // index<Number>.dat (i.e. index0.dat, index1.dat,..., indexN.dat)
+            // Write each index.dat file to a temp directory.
+            //BlackboardArtifact bbart = fsc.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+            indexFileName = "index" + Integer.toString((int) indexFile.getId()) + ".dat"; //NON-NLS
+            //indexFileName = "index" + Long.toString(bbart.getArtifactID()) + ".dat";
+            temps = RAImageIngestModule.getRATempPath(currentCase, "IE") + File.separator + indexFileName; //NON-NLS
             File datFile = new File(temps);
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -338,46 +353,42 @@ class ExtractIE extends Extract {
                 ContentUtils.writeToFile(indexFile, datFile, context::dataSourceIngestIsCancelled);
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Error while trying to write index.dat file " + datFile.getAbsolutePath(), e); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getName(),
-                        datFile.getAbsolutePath()));
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errWriteFile", this.getName(),
+                                datFile.getAbsolutePath()));
                 continue;
             }
 
             String filename = "pasco2Result." + indexFile.getId() + ".txt"; //NON-NLS
-            boolean bPascProcSuccess = executePasco(pascoLibPath, temps, filename);
+            boolean bPascProcSuccess = executePasco(temps, filename);
             if (context.dataSourceIngestIsCancelled()) {
                 return;
             }
 
-            //At this point pasco2 proccessed the index file.
-            //Now fetch the results, parse them and the delete the file.
+            //At this point pasco2 proccessed the index files.
+            //Now fetch the results, parse them and the delete the files.
             if (bPascProcSuccess) {
                 // Don't add TSK_OS_ACCOUNT artifacts to the ModuleDataEvent
-                HashMultimap<ARTIFACT_TYPE, BlackboardArtifact> artifacts = parsePascoOutput(indexFile, filename);
-                historyArtifacts.addAll(artifacts.get(TSK_WEB_HISTORY));
-                accountArtifacts.addAll(artifacts.get(TSK_OS_ACCOUNT));
+                bbartifacts.addAll(parsePascoOutput(indexFile, filename).stream()
+                        .filter(bbart -> bbart.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID())
+                        .collect(Collectors.toList()));
                 foundHistory = true;
 
-                //Delete index<n>.dat file since it was succcessfully parsed by Pasco
+                //Delete index<n>.dat file since it was succcessfully by Pasco
                 datFile.delete();
             } else {
-                logger.log(Level.WARNING, "pasco execution failed on: {0}", filename); //NON-NLS
-                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
+                logger.log(Level.WARNING, "pasco execution failed on: {0}", this.getName()); //NON-NLS
+                this.addErrorMessage(
+                        NbBundle.getMessage(this.getClass(), "ExtractIE.getHistory.errMsg.errProcHist", this.getName()));
             }
         }
 
         if (foundHistory) {
             try {
-                blackboard.postArtifacts(historyArtifacts, PARENT_MODULE_NAME);
+                blackboard.postArtifacts(bbartifacts, moduleName);
             } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Error while trying to post Internet Explorer history artifact.", ex); //NON-NLS
-                this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getName()));
-            }
-            try {
-                blackboard.postArtifacts(accountArtifacts, PARENT_MODULE_NAME);
-            } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Error while trying to post Internet Explorer os account artifact.", ex); //NON-NLS
-                this.addErrorMessage(Bundle.Extractor_errPostingArtifacts(getName()));
+                this.addErrorMessage(Bundle.ExtractIE_getHistory_errMsg_errPostingHistory());
+                logger.log(Level.SEVERE, "Exception thrown while posting IE cookie artifact.", ex); //NON-NLS
             }
         }
     }
@@ -388,22 +399,22 @@ class ExtractIE extends Extract {
      * @param indexFilePath  Path to local index.dat file to analyze
      * @param outputFileName Name of file to save output to
      *
-     * @return Success. False if there is an error executing pasco.
+     * @return false on error
      */
-    private boolean executePasco(String pascoLibraryPath, String indexFilePath, String outputFileName) {
+    private boolean executePasco(String indexFilePath, String outputFileName) {
         boolean success = true;
         try {
             final String outputFileFullPath = moduleTempResultsDir + File.separator + outputFileName;
             final String errFileFullPath = moduleTempResultsDir + File.separator + outputFileName + ".err"; //NON-NLS
             logger.log(Level.INFO, "Writing pasco results to: {0}", outputFileFullPath); //NON-NLS   
-            List<String> commandLine = Arrays.asList(
-                    JAVA_PATH,
-                    "-cp",//NON-NLS
-                    pascoLibraryPath,
-                    "isi.pasco2.Main", //NON-NLS
-                    "-T", //NON-NLS
-                    "history", //NON-NLS
-                    indexFilePath);
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add(JAVA_PATH);
+            commandLine.add("-cp"); //NON-NLS
+            commandLine.add(PASCO_LIB_PATH);
+            commandLine.add("isi.pasco2.Main"); //NON-NLS
+            commandLine.add("-T"); //NON-NLS
+            commandLine.add("history");  //NON-NLS
+            commandLine.add(indexFilePath);
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
             processBuilder.redirectOutput(new File(outputFileFullPath));
             processBuilder.redirectError(new File(errFileFullPath));
@@ -434,15 +445,16 @@ class ExtractIE extends Extract {
      *
      * @return A collection of created artifacts
      */
-    private HashMultimap<BlackboardArtifact.ARTIFACT_TYPE, BlackboardArtifact> parsePascoOutput(AbstractFile origFile, String pascoOutputFileName) {
-        HashMultimap<BlackboardArtifact.ARTIFACT_TYPE, BlackboardArtifact> bbartifacts = HashMultimap.create();
+    private Collection<BlackboardArtifact> parsePascoOutput(AbstractFile origFile, String pascoOutputFileName) {
 
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String fnAbs = moduleTempResultsDir + File.separator + pascoOutputFileName;
 
         File file = new File(fnAbs);
         if (file.exists() == false) {
-            this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getName(),
-                    file.getName()));
+            this.addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getName(),
+                            file.getName()));
             logger.log(Level.WARNING, "Pasco Output not found: {0}", file.getPath()); //NON-NLS
             return bbartifacts;
         }
@@ -452,151 +464,145 @@ class ExtractIE extends Extract {
         if (file.length() == 0) {
             return bbartifacts;
         }
-        try (Scanner fileScanner = new Scanner(new FileInputStream(file.toString()));) {
 
-            // Keep a list of reported user accounts to avoid repeats.
-            // Initialize it with the empty string to represent an unknown user.
-            Set<String> reportedUserAccounts = Sets.newHashSet("");
-            while (fileScanner.hasNext()) {
-
-                parseLine(origFile, fileScanner.nextLine()).ifPresent(urlVisit -> {
-                    Collection<BlackboardAttribute> bbattributes = Lists.newArrayList(new BlackboardAttribute(
-                            TSK_URL, PARENT_MODULE_NAME,
-                            urlVisit.url),
-                            new BlackboardAttribute(
-                                    TSK_DATETIME_ACCESSED, PARENT_MODULE_NAME,
-                                    urlVisit.time),
-                            //JIRA-2386: why are we adding an attribute that is always blank?
-                            new BlackboardAttribute(
-                                    TSK_REFERRER, PARENT_MODULE_NAME,
-                                    ""),
-                            // @@@ NOte that other browser modules are adding TITLE in here for the title
-                            new BlackboardAttribute(
-                                    TSK_PROG_NAME, PARENT_MODULE_NAME,
-                                    getName()),
-                            new BlackboardAttribute(
-                                    TSK_USER_NAME, PARENT_MODULE_NAME,
-                                    urlVisit.user));
-
-                    if (isIgnoredUrl(urlVisit.url) == false) {
-                        bbattributes.add(new BlackboardAttribute(
-                                TSK_DOMAIN, PARENT_MODULE_NAME,
-                                urlVisit.domain));
-                    }
-                    try {
-                        BlackboardArtifact bbart = origFile.newArtifact(TSK_WEB_HISTORY);
-                        bbart.addAttributes(bbattributes);
-                        bbartifacts.put(TSK_WEB_HISTORY, bbart);
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Error while trying to create Internet Explorer history artifact.", ex); //NON-NLS
-                        addErrorMessage(
-                                NbBundle.getMessage(Chrome.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
-                                        origFile.getName()));
-                    }
-                    if (reportedUserAccounts.contains(urlVisit.user) == false) {
-                        try {
-                            BlackboardArtifact osAttr = origFile.newArtifact(TSK_OS_ACCOUNT);
-                            osAttr.addAttribute(new BlackboardAttribute(TSK_USER_NAME, PARENT_MODULE_NAME, urlVisit.user));
-                            bbartifacts.put(TSK_OS_ACCOUNT, osAttr);
-                            reportedUserAccounts.add(urlVisit.user);
-                        } catch (TskCoreException ex) {
-                            logger.log(Level.SEVERE, "Error while trying to create Internet Explorer  os account artifact.", ex); //NON-NLS
-                            addErrorMessage(
-                                    NbBundle.getMessage(Chrome.class, "ExtractIE.getHistory.errMsg.errProcHist", //NON-NLS
-                                            origFile.getName()));
-                        }
-                    }
-                });
-
-            }
-            return bbartifacts;
+        Scanner fileScanner;
+        try {
+            fileScanner = new Scanner(new FileInputStream(file.toString()));
         } catch (FileNotFoundException ex) {
-            addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getName(),
-                    file.getName()));
+            this.addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getName(),
+                            file.getName()));
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
             return bbartifacts;
         }
+        while (fileScanner.hasNext()) {
+            String line = fileScanner.nextLine();
+            if (!line.startsWith("URL")) {   //NON-NLS
+                continue;
+            }
 
-    }
+            String[] lineBuff = line.split("\\t"); //NON-NLS
 
-    private Optional<URLVisit> parseLine(AbstractFile origFile, String line) {
+            if (lineBuff.length < 4) {
+                logger.log(Level.INFO, "Found unrecognized IE history format."); //NON-NLS
+                continue;
+            }
 
-        if (!line.startsWith("URL")) {   //NON-NLS
-            return Optional.empty();
-        }
+            String actime = lineBuff[3];
+            Long ftime = (long) 0;
+            String user = "";
+            String realurl = null;
+            String domain;
 
-        String[] lineBuff = line.split("\\t"); //NON-NLS
+            /*
+             * We've seen two types of lines: URL http://XYZ.com .... URL
+             * Visited: Joe@http://XYZ.com ....
+             */
+            if (lineBuff[1].contains("@")) {
+                String url[] = lineBuff[1].split("@", 2);
 
-        if (lineBuff.length < 4) {
-            logger.log(Level.INFO, "Found unrecognized IE history format."); //NON-NLS
-            return Optional.empty();
-        }
-        String user;
-        String realurl;
+                /*
+                 * Verify the left portion of the URL is valid.
+                 */
+                domain = extractDomain(url[0]);
 
+                if (domain != null && domain.isEmpty() == false) {
+                    /*
+                     * Use the entire input for the URL.
+                     */
+                    realurl = lineBuff[1].trim();
+                } else {
+                    /*
+                     * Use the left portion of the input for the user, and the
+                     * right portion for the host.
+                     */
+                    user = url[0];
+                    user = user.replace("Visited:", ""); //NON-NLS
+                    user = user.replace(":Host:", ""); //NON-NLS
+                    user = user.replaceAll("(:)(.*?)(:)", "");
+                    user = user.trim();
+                    realurl = url[1];
+                    realurl = realurl.replace("Visited:", ""); //NON-NLS
+                    realurl = realurl.replaceAll(":(.*?):", "");
+                    realurl = realurl.replace(":Host:", ""); //NON-NLS
+                    realurl = realurl.trim();
+                    domain = extractDomain(realurl);
+                }
+            } else {
+                /*
+                 * Use the entire input for the URL.
+                 */
+                realurl = lineBuff[1].trim();
+                domain = extractDomain(realurl);
+            }
 
-        /*
-         * We've seen two types of lines: URL http://XYZ.com .... URL Visited:
-         * Joe@http://XYZ.com ....
-         */
-        if (lineBuff[1].contains("@")) {
-            String splitLine[] = lineBuff[1].split("@", 2);
-            //TODO: does the order matter?  is this the same processing to both?
-            user = splitLine[0].replace("Visited:", "").replace(":Host:", "").replaceAll(":(.*?):", "").trim(); // NON-NLS
-            realurl = splitLine[1].replace("Visited:", "").replaceAll(":(.*?):", "").replace(":Host:", "").trim(); //NON-NLS
-        } else {
-            user = "";
-            realurl = lineBuff[1].trim();
-        }
+            if (!actime.isEmpty()) {
+                try {
+                    Long epochtime = dateFormatter.parse(actime).getTime();
+                    ftime = epochtime / 1000;
+                } catch (ParseException e) {
+                    this.addErrorMessage(
+                            NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
+                                    this.getName()));
+                    logger.log(Level.WARNING, String.format("Error parsing Pasco results, may have partial processing of corrupt file (id=%d)", origFile.getId()), e); //NON-NLS
+                }
+            }
 
-        String domain = NetworkUtils.extractDomain(realurl);
-        String actime = lineBuff[3];
-        Long ftime = (long) 0;
-
-        if (!actime.isEmpty()) {
             try {
-                Long epochtime = new SimpleDateFormat(PASCO_DATE_FORMAT).parse(actime).getTime();
-                ftime = epochtime / 1000;
-            } catch (ParseException e) {
-                this.addErrorMessage(NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsingEntry",
-                        this.getName()));
-                logger.log(Level.WARNING, String.format("Error parsing Pasco results, may have partial processing of corrupt file (id=%d)", origFile.getId()), e); //NON-NLS
+                BlackboardArtifact bbart = origFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
+                Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
+                        RecentActivityExtracterModuleFactory.getModuleName(), realurl));
+                //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
+
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                        RecentActivityExtracterModuleFactory.getModuleName(), ftime));
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
+                        RecentActivityExtracterModuleFactory.getModuleName(), ""));
+                // @@@ NOte that other browser modules are adding TITLE in hre for the title
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(),
+                        NbBundle.getMessage(this.getClass(),
+                                "ExtractIE.moduleName.text")));
+                if (domain != null && domain.isEmpty() == false) {
+                    bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
+                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
+                }
+                bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
+                        RecentActivityExtracterModuleFactory.getModuleName(), user));
+                bbart.addAttributes(bbattributes);
+
+                // index the artifact for keyword search
+                this.indexArtifact(bbart);
+                bbartifacts.add(bbart);
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex); //NON-NLS
             }
         }
-
-        return Optional.of(new URLVisit(user, realurl, domain, ftime));
+        fileScanner.close();
+        return bbartifacts;
     }
 
     /**
+     * Extract the domain from the supplied URL. This method does additional
+     * checks to detect invalid URLs.
      *
-     * Determine if the URL should be ignored.
+     * @param url The URL from which to extract the domain.
      *
-     * @param url The URL to test.
-     *
-     * @return True if the URL should be ignored; otherwise false.
+     * @return The domain.
      */
-    private boolean isIgnoredUrl(String url) {
-        /*
-         * Ignore blank URLs and URLs that begin with the matched text.
-         */
-        return StringUtils.isBlank(url)
-               || url.toLowerCase().startsWith(RESOURCE_URL_PREFIX);
-    }
-
-    @Immutable
-    private static class URLVisit {
-
-        private final String user;
-        private final String url;
-        private final String domain;
-        private final Long time;
-
-        URLVisit(String user, String url, String domain, Long ftime) {
-            this.user = user;
-            this.url = url;
-            this.domain = domain;
-            this.time = ftime;
+    private String extractDomain(String url) {
+        if (url == null || url.isEmpty()) {
+            return url;
         }
 
+        if (url.toLowerCase().startsWith(RESOURCE_URL_PREFIX)) {
+            /*
+             * Ignore URLs that begin with the matched text.
+             */
+            return null;
+        }
+
+        return NetworkUtils.extractDomain(url);
     }
 }

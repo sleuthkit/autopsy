@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,16 @@
  */
 package org.sleuthkit.autopsy.commonpropertiessearch;
 
+import com.google.common.collect.Iterables;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -32,12 +38,13 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.InstanceTableCallback;
 import org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeInstance.NODE_TYPE;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.HashUtility;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Used to process and return CorrelationCase values from the EamDB for
@@ -45,22 +52,12 @@ import org.sleuthkit.datamodel.HashUtility;
  */
 final class InterCaseSearchResultsProcessor {
 
+    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
+    private static final String INTER_CASE_WHERE_CLAUSE = "case_id=%s AND (known_status !=%s OR known_status IS NULL)"; //NON-NLS
     /**
      * The CorrelationAttributeInstance.Type this Processor will query on
      */
     private final Type correlationType;
-
-    private static final Logger LOGGER = Logger.getLogger(CommonAttributePanel.class.getName());
-
-    /**
-     * The initial CorrelationAttributeInstance ids lookup query.
-     */
-    private final String interCaseWhereClause;
-
-    /**
-     * The single CorrelationAttributeInstance object retrieval query
-     */
-    private final String singleInterCaseWhereClause;
 
     /**
      * Used in the InterCaseCommonAttributeSearchers to find common attribute
@@ -71,32 +68,6 @@ final class InterCaseSearchResultsProcessor {
      */
     InterCaseSearchResultsProcessor(CorrelationAttributeInstance.Type theType) {
         this.correlationType = theType;
-        interCaseWhereClause = getInterCaseWhereClause();
-        singleInterCaseWhereClause = getSingleInterCaseWhereClause();
-    }
-
-    private String getInterCaseWhereClause() {
-        String tableName = EamDbUtil.correlationTypeToInstanceTableName(correlationType);
-        StringBuilder sqlString = new StringBuilder(250);
-        sqlString.append("value IN (SELECT value FROM ")
-                .append(tableName)
-                .append(" WHERE value IN (SELECT value FROM ")
-                .append(tableName)
-                .append(" WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value)")
-                .append(" GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
-        return sqlString.toString();
-    }
-
-    private String getSingleInterCaseWhereClause() {
-        String tableName = EamDbUtil.correlationTypeToInstanceTableName(correlationType);
-        StringBuilder sqlString = new StringBuilder(250);
-        sqlString.append("value IN (SELECT value FROM ")
-                .append(tableName)
-                .append(" WHERE value IN (SELECT value FROM ")
-                .append(tableName)
-                .append(" WHERE case_id=%s AND (known_status !=%s OR known_status IS NULL) GROUP BY value)")
-                .append(" AND (case_id=%s OR case_id=%s) GROUP BY value HAVING COUNT(DISTINCT case_id) > 1) ORDER BY value");
-        return sqlString.toString();
     }
 
     /**
@@ -123,29 +94,52 @@ final class InterCaseSearchResultsProcessor {
     }
 
     /**
+     * Get the portion of the select query which will get md5 values for files
+     * from the current case which are potentially being correlated on.
+     *
+     * @param mimeTypesToFilterOn the set of mime types to filter on
+     *
+     * @return the portion of a query which follows the SELECT keyword for
+     *         finding MD5s which we are correlating on
+     *
+     * @throws EamDbException
+     */
+    private String getFileQuery(Set<String> mimeTypesToFilterOn) throws EamDbException {
+        String query;
+        query = "md5 AS value FROM tsk_files WHERE known!=" + TskData.FileKnown.KNOWN.getFileKnownValue() + " AND md5 IS NOT NULL"; //NON-NLS
+        if (!mimeTypesToFilterOn.isEmpty()) {
+            query = query + " AND mime_type IS NOT NULL AND mime_type IN ('" + String.join("', '", mimeTypesToFilterOn) + "')";  //NON-NLS
+        }
+        return query;
+    }
+
+    /**
      * Given the current case, fins all intercase common files from the EamDb
      * and builds maps of case name to maps of data source name to
      * CommonAttributeValueList.
      *
-     * @param currentCase The current TSK Case.
+     * @param currentCase         The current TSK Case.
+     * @param mimeTypesToFilterOn the set of mime types to filter on
      *
      * @return map of Case name to Maps of Datasources and their
      *         CommonAttributeValueLists
      */
-    Map<String, Map<String, CommonAttributeValueList>> findInterCaseValuesByCase(Case currentCase) {
+    Map<String, Map<String, CommonAttributeValueList>> findInterCaseValuesByCase(Case currentCase, Set<String> mimeTypesToFilterOn) {
         try {
-            InterCaseByCaseCallback instancetableCallback = new InterCaseByCaseCallback();
+
             EamDb dbManager = EamDb.getInstance();
-
             int caseId = dbManager.getCase(currentCase).getID();
-
-            dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
-                    TskData.FileKnown.KNOWN.getFileKnownValue()),
-                    instancetableCallback);
-
+            InterCaseByCaseCallback instancetableCallback = new InterCaseByCaseCallback(caseId);
+            if (correlationType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                currentCase.getSleuthkitCase().getCaseDbAccessManager().select(getFileQuery(mimeTypesToFilterOn), instancetableCallback);
+            } else {
+                dbManager.processInstanceTableWhere(correlationType, String.format(INTER_CASE_WHERE_CLAUSE, caseId,
+                        TskData.FileKnown.KNOWN.getFileKnownValue()),
+                        instancetableCallback);
+            }
             return instancetableCallback.getInstanceCollatedCommonFiles();
 
-        } catch (EamDbException ex) {
+        } catch (EamDbException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
         return new HashMap<>();
@@ -153,24 +147,30 @@ final class InterCaseSearchResultsProcessor {
 
     /**
      * Given the current case, fins all intercase common files from the EamDb
-     * and builds maps of obj id to md5 and case.
+     * and builds maps of obj id to value and case.
      *
-     * @param currentCase The current TSK Case.
+     * @param currentCase         The current TSK Case.
+     * @param mimeTypesToFilterOn the set of mime types to filter on
+     *
+     * @return map of number of instances to CommonAttributeValueLists
      */
-    Map<Integer, CommonAttributeValueList> findInterCaseValuesByCount(Case currentCase) {
+    Map<Integer, CommonAttributeValueList> findInterCaseValuesByCount(Case currentCase, Set<String> mimeTypesToFilterOn) {
         try {
-            InterCaseByCountCallback instancetableCallback = new InterCaseByCountCallback();
+
             EamDb dbManager = EamDb.getInstance();
 
             int caseId = dbManager.getCase(currentCase).getID();
-
-            dbManager.processInstanceTableWhere(correlationType, String.format(interCaseWhereClause, caseId,
-                    TskData.FileKnown.KNOWN.getFileKnownValue()),
-                    instancetableCallback);
-
+            InterCaseByCountCallback instancetableCallback = new InterCaseByCountCallback(caseId);
+            if (correlationType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                currentCase.getSleuthkitCase().getCaseDbAccessManager().select(getFileQuery(mimeTypesToFilterOn), instancetableCallback);
+            } else {
+                dbManager.processInstanceTableWhere(correlationType, String.format(INTER_CASE_WHERE_CLAUSE, caseId,
+                        TskData.FileKnown.KNOWN.getFileKnownValue()),
+                        instancetableCallback);
+            }
             return instancetableCallback.getInstanceCollatedCommonFiles();
 
-        } catch (EamDbException ex) {
+        } catch (EamDbException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
         return new HashMap<>();
@@ -179,21 +179,30 @@ final class InterCaseSearchResultsProcessor {
     /**
      * Given the current case, and a specific case of interest, finds common
      * files which exist between cases from the EamDb. Builds maps of obj id to
-     * md5 and case.
+     * value and case.
      *
-     * @param currentCase The current TSK Case.
-     * @param singleCase  The case of interest. Matches must exist in this case.
+     * @param currentCase         The current TSK Case.
+     * @param mimeTypesToFilterOn the set of mime types to filter on
+     * @param singleCase          The case of interest. Matches must exist in
+     *                            this case.
+     *
+     * @return map of number of instances to CommonAttributeValueLists
      */
-    Map<Integer, CommonAttributeValueList> findSingleInterCaseValuesByCount(Case currentCase, CorrelationCase singleCase) {
+    Map<Integer, CommonAttributeValueList> findSingleInterCaseValuesByCount(Case currentCase, Set<String> mimeTypesToFilterOn, CorrelationCase singleCase) {
         try {
-            InterCaseByCountCallback instancetableCallback = new InterCaseByCountCallback();
             EamDb dbManager = EamDb.getInstance();
             int caseId = dbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
-            dbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
-                    TskData.FileKnown.KNOWN.getFileKnownValue(), caseId, targetCaseId), instancetableCallback);
+            InterCaseByCountCallback instancetableCallback = new InterCaseByCountCallback(caseId, targetCaseId);
+            if (correlationType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                currentCase.getSleuthkitCase().getCaseDbAccessManager().select(getFileQuery(mimeTypesToFilterOn), instancetableCallback);
+            } else {
+                dbManager.processInstanceTableWhere(correlationType, String.format(INTER_CASE_WHERE_CLAUSE, caseId,
+                        TskData.FileKnown.KNOWN.getFileKnownValue()),
+                        instancetableCallback);
+            }
             return instancetableCallback.getInstanceCollatedCommonFiles();
-        } catch (EamDbException ex) {
+        } catch (EamDbException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
         return new HashMap<>();
@@ -204,24 +213,30 @@ final class InterCaseSearchResultsProcessor {
      * files which exist between cases from the EamDb. Builds map of case name
      * to maps of data source name to CommonAttributeValueList.
      *
-     * @param currentCase The current TSK Case.
+     * @param currentCase         The current TSK Case.
+     * @param mimeTypesToFilterOn the set of mime types to filter on
+     * @param singleCase          The case of interest. Matches must exist in
+     *                            this case.
      *
      * @return map of Case name to Maps of Datasources and their
      *         CommonAttributeValueLists
-     *
-     * @param currentCase The current TSK Case.
-     * @param singleCase  The case of interest. Matches must exist in this case.
      */
-    Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseValuesByCase(Case currentCase, CorrelationCase singleCase) {
+    Map<String, Map<String, CommonAttributeValueList>> findSingleInterCaseValuesByCase(Case currentCase, Set<String> mimeTypesToFilterOn, CorrelationCase singleCase) {
         try {
-            InterCaseByCaseCallback instancetableCallback = new InterCaseByCaseCallback();
+
             EamDb dbManager = EamDb.getInstance();
             int caseId = dbManager.getCase(currentCase).getID();
             int targetCaseId = singleCase.getID();
-            dbManager.processInstanceTableWhere(correlationType, String.format(singleInterCaseWhereClause, caseId,
-                    TskData.FileKnown.KNOWN.getFileKnownValue(), caseId, targetCaseId), instancetableCallback);
+            InterCaseByCaseCallback instancetableCallback = new InterCaseByCaseCallback(caseId, targetCaseId);
+            if (correlationType.getId() == CorrelationAttributeInstance.FILES_TYPE_ID) {
+                currentCase.getSleuthkitCase().getCaseDbAccessManager().select(getFileQuery(mimeTypesToFilterOn), instancetableCallback);
+            } else {
+                dbManager.processInstanceTableWhere(correlationType, String.format(INTER_CASE_WHERE_CLAUSE, caseId,
+                        TskData.FileKnown.KNOWN.getFileKnownValue()),
+                        instancetableCallback);
+            }
             return instancetableCallback.getInstanceCollatedCommonFiles();
-        } catch (EamDbException ex) {
+        } catch (EamDbException | TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Error accessing EamDb processing CaseInstancesTable.", ex);
         }
         return new HashMap<>();
@@ -229,81 +244,70 @@ final class InterCaseSearchResultsProcessor {
 
     /**
      * Callback to use with findInterCaseValuesByCount which generates a list of
-     * md5s for common files search
+     * values for common property search
      */
-    private class InterCaseByCountCallback implements InstanceTableCallback {
+    private class InterCaseByCountCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback, InstanceTableCallback {
 
-        final Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new HashMap<>();
+        private final Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new HashMap<>();
+        private final int caseID;
+        private final int targetCase;
 
-        private CommonAttributeValue commonAttributeValue = null;
-        private String previousRowMd5 = "";
+        private InterCaseByCountCallback(int caseId) {
+            this(caseId, 0);
+        }
+
+        private InterCaseByCountCallback(int caseId, int targetCase) {
+            this.caseID = caseId;
+            this.targetCase = targetCase;
+        }
 
         @Override
         public void process(ResultSet resultSet) {
             try {
+                Set<String> values = new HashSet<>();
+                List<Integer> targetCases = new ArrayList<>();
+                if (targetCase != 0) {
+                    targetCases.add(caseID);
+                    targetCases.add(targetCase);
+                }
                 while (resultSet.next()) {
-
-                    int resultId = InstanceTableCallback.getId(resultSet);
                     String corValue = InstanceTableCallback.getValue(resultSet);
-                    if (previousRowMd5.isEmpty()) {
-                        previousRowMd5 = corValue;
-                    }
                     if (corValue == null || HashUtility.isNoDataMd5(corValue)) {
                         continue;
                     }
-
-                    countAndAddCommonAttributes(corValue, resultId);
-
+                    values.add(corValue);
                 }
-                //Add the final instance(s)
-                if (commonAttributeValue != null) {
-                    int size = commonAttributeValue.getInstanceCount();
-                    if (instanceCollatedCommonFiles.containsKey(size)) {
-                        instanceCollatedCommonFiles.get(size).addMetadataToList(commonAttributeValue);
+                for (String corValue : values) {
+                    List<CorrelationAttributeInstance> instances;
+                    if (targetCases.isEmpty()) {
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValues(correlationType, Arrays.asList(corValue));
                     } else {
-                        CommonAttributeValueList value = new CommonAttributeValueList();
-                        value.addMetadataToList(commonAttributeValue);
-                        instanceCollatedCommonFiles.put(size, value);
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValuesAndCases(correlationType, Arrays.asList(corValue), targetCases);
+                    }
+                    int size = instances.size();
+                    if (size > 1) {
+                        CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
+                        boolean anotherCase = false;
+                        for (CorrelationAttributeInstance instance : instances) {
+                            CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(instance.getID(), correlationType, NODE_TYPE.COUNT_NODE);
+                            searchResult.setCurrentAttributeInst(instance);
+                            commonAttributeValue.addInstance(searchResult);
+                            anotherCase = anotherCase || instance.getCorrelationCase().getID() != caseID;
+                        }
+                        if (anotherCase) {
+                            if (instanceCollatedCommonFiles.containsKey(size)) {
+                                instanceCollatedCommonFiles.get(size).addMetadataToList(commonAttributeValue);
+                            } else {
+                                CommonAttributeValueList value = new CommonAttributeValueList();
+                                value.addMetadataToList(commonAttributeValue);
+                                instanceCollatedCommonFiles.put(size, value);
+                            }
+                        }
                     }
                 }
-            } catch (SQLException ex) {
+            } catch (SQLException | EamDbException | CorrelationAttributeNormalizationException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
             }
-        }
-
-        /**
-         * Add a resultId to the list of matches for a given corValue, which
-         * counts to number of instances of that match, determining which
-         * InstanceCountNode the match will be added to.
-         *
-         * @param corValue the value which matches
-         * @param resultId the CorrelationAttributeInstance id to be retrieved
-         *                 later.
-         */
-        private void countAndAddCommonAttributes(String corValue, int resultId) {
-            if (commonAttributeValue == null) {
-                commonAttributeValue = new CommonAttributeValue(corValue);
-            }
-            if (!corValue.equals(previousRowMd5)) {
-                int size = commonAttributeValue.getInstanceCount();
-                if (instanceCollatedCommonFiles.containsKey(size)) {
-                    instanceCollatedCommonFiles.get(size).addMetadataToList(commonAttributeValue);
-                } else {
-                    CommonAttributeValueList value = new CommonAttributeValueList();
-                    value.addMetadataToList(commonAttributeValue);
-                    instanceCollatedCommonFiles.put(size, value);
-                }
-
-                commonAttributeValue = new CommonAttributeValue(corValue);
-                previousRowMd5 = corValue;
-            }
-            // we don't *have* all the information for the rows in the CR,
-            //  so we need to consult the present case via the SleuthkitCase object
-            // Later, when the FileInstanceNode is built. Therefore, build node generators for now.
-            CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType, NODE_TYPE.COUNT_NODE);
-            CorrelationAttributeInstance corrAttr = findSingleCorrelationAttribute(resultId);
-            searchResult.setCurrentAttributeInst(corrAttr);
-            commonAttributeValue.addInstance(searchResult);
         }
 
         Map<Integer, CommonAttributeValueList> getInstanceCollatedCommonFiles() {
@@ -312,45 +316,74 @@ final class InterCaseSearchResultsProcessor {
     }
 
     /**
-     * Callback to use with findInterCaseValuesByCount which generates a list of
-     * md5s for common files search
+     * Callback to use with findInterCaseValuesByCase which generates a map of
+     * maps of values for common property search
      */
-    private class InterCaseByCaseCallback implements InstanceTableCallback {
+    private class InterCaseByCaseCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback, InstanceTableCallback {
 
-        final Map<String, Map<String, CommonAttributeValueList>> caseCollatedDataSourceCollections = new HashMap<>();
+        private static final int VALUE_BATCH_SIZE = 500;
+        private final Map<String, Map<String, CommonAttributeValueList>> caseCollatedDataSourceCollections = new HashMap<>();
+        private final int caseID;
+        private final int targetCase;
+
+        private InterCaseByCaseCallback(int caseId) {
+            this(caseId, 0);
+        }
+
+        private InterCaseByCaseCallback(int caseId, int targetCase) {
+            this.caseID = caseId;
+            this.targetCase = targetCase;
+        }
 
         @Override
         public void process(ResultSet resultSet) {
             try {
+                List<Integer> targetCases = new ArrayList<>();
+                if (targetCase != 0) {
+                    targetCases.add(caseID);
+                    targetCases.add(targetCase);
+                }
+                Set<String> values = new HashSet<>();
                 while (resultSet.next()) {
-                    int resultId = InstanceTableCallback.getId(resultSet);
                     String corValue = InstanceTableCallback.getValue(resultSet);
                     if (corValue == null || HashUtility.isNoDataMd5(corValue)) {
                         continue;
                     }
-                    CorrelationCase correlationCase = EamDb.getInstance().getCaseById(InstanceTableCallback.getCaseId(resultSet));
-                    String caseName = correlationCase.getDisplayName();
-                    CorrelationDataSource correlationDatasource = EamDb.getInstance().getDataSourceById(correlationCase, InstanceTableCallback.getDataSourceId(resultSet));
-                    //label datasource with it's id for uniqueness done in same manner as ImageGallery does in the DataSourceCell class
-                    String dataSourceNameKey = correlationDatasource.getName() + " (Id: " + correlationDatasource.getDataSourceObjectID() + ")";
-                    if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
-                        caseCollatedDataSourceCollections.put(caseName, new HashMap<String, CommonAttributeValueList>());
-                    }
-                    Map<String, CommonAttributeValueList> dataSourceToFile = caseCollatedDataSourceCollections.get(caseName);
-                    if (!dataSourceToFile.containsKey(dataSourceNameKey)) {
-                        dataSourceToFile.put(dataSourceNameKey, new CommonAttributeValueList());
-                    }
-                    CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceNameKey);
-                    CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(resultId, correlationType, NODE_TYPE.CASE_NODE);
-                    CorrelationAttributeInstance corrAttr = findSingleCorrelationAttribute(resultId);
-                    searchResult.setCurrentAttributeInst(corrAttr);
-                    CommonAttributeValue commonAttributeValue = new CommonAttributeValue(corValue);
-                    commonAttributeValue.addInstance(searchResult);
-                    valueList.addMetadataToList(commonAttributeValue);
-                    dataSourceToFile.put(dataSourceNameKey, valueList);
-                    caseCollatedDataSourceCollections.put(caseName, dataSourceToFile);
+                    values.add(corValue);
                 }
-            } catch (EamDbException | SQLException ex) {
+                for (List<String> valuesChunk : Iterables.partition(values, VALUE_BATCH_SIZE)) {
+                    List<CorrelationAttributeInstance> instances;
+                    if (targetCases.isEmpty()) {
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValues(correlationType, valuesChunk);
+                    } else {
+                        instances = EamDb.getInstance().getArtifactInstancesByTypeValuesAndCases(correlationType, valuesChunk, targetCases);
+                    }
+                    if (instances.size() > 1) {
+                        for (CorrelationAttributeInstance instance : instances) {
+                            CorrelationCase correlationCase = instance.getCorrelationCase();
+                            String caseName = correlationCase.getDisplayName();
+                            CorrelationDataSource correlationDatasource = instance.getCorrelationDataSource();
+                            //label datasource with it's id for uniqueness done in same manner as ImageGallery does in the DataSourceCell class
+                            String dataSourceNameKey = correlationDatasource.getName() + " (Id: " + correlationDatasource.getDataSourceObjectID() + ")";
+                            if (!caseCollatedDataSourceCollections.containsKey(caseName)) {
+                                caseCollatedDataSourceCollections.put(caseName, new HashMap<>());
+                            }
+                            Map<String, CommonAttributeValueList> dataSourceToFile = caseCollatedDataSourceCollections.get(caseName);
+                            if (!dataSourceToFile.containsKey(dataSourceNameKey)) {
+                                dataSourceToFile.put(dataSourceNameKey, new CommonAttributeValueList());
+                            }
+                            CommonAttributeValueList valueList = dataSourceToFile.get(dataSourceNameKey);
+                            CentralRepoCommonAttributeInstance searchResult = new CentralRepoCommonAttributeInstance(instance.getID(), correlationType, NODE_TYPE.CASE_NODE);
+                            searchResult.setCurrentAttributeInst(instance);
+                            CommonAttributeValue commonAttributeValue = new CommonAttributeValue(instance.getCorrelationValue());
+                            commonAttributeValue.addInstance(searchResult);
+                            valueList.addMetadataToList(commonAttributeValue);
+                            dataSourceToFile.put(dataSourceNameKey, valueList);
+                            caseCollatedDataSourceCollections.put(caseName, dataSourceToFile);
+                        }
+                    }
+                }
+            } catch (EamDbException | SQLException | CorrelationAttributeNormalizationException ex) {
                 LOGGER.log(Level.WARNING, "Error getting artifact instances from database.", ex); // NON-NLS
             }
         }
