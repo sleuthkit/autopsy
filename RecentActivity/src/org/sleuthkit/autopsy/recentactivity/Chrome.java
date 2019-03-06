@@ -515,7 +515,7 @@ class Chrome extends Extract {
                 tempList = this.dbConnect(temps, DOWNLOAD_QUERY_V30);
             }
 
-            logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2}artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
+            logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 String fullPath = result.get("full_path").toString(); //NON-NLS
@@ -553,9 +553,8 @@ class Chrome extends Extract {
                 try {
                     for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(fullPath), FilenameUtils.getPath(fullPath))) {
                         BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-                        downloadSourceArt.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                            NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                            ((result.get("url").toString() != null) ? result.get("url").toString() : ""))); //NON-NLS
+                        downloadSourceArt.addAttributes(createDownloadSourceAttributes(result.get("url").toString()));
+                     
                         bbartifacts.add(downloadSourceArt);
                         break;   
                     }

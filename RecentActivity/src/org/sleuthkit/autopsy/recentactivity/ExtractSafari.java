@@ -646,10 +646,7 @@ final class ExtractSafari extends Extract {
         // find the downloaded file and create a TSK_DOWNLOAD_SOURCE for it.
         for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(path), FilenameUtils.getPath(path))) {
             BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-            if (url != null) {
-                downloadSourceArt.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                                            RecentActivityExtracterModuleFactory.getModuleName(), url));
-            }
+            downloadSourceArt.addAttributes(createDownloadSourceAttributes(url));
             bbartifacts.add(downloadSourceArt);
             break;
         }

@@ -538,8 +538,7 @@ class Firefox extends Extract {
                  try {
                     for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
                         BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-                        downloadSourceArt.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                            NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), source)); //NON-NLS
+                        downloadSourceArt.addAttributes(createDownloadSourceAttributes(source));
                         bbartifacts.add(downloadSourceArt);
                         break;
                     }
@@ -673,8 +672,7 @@ class Firefox extends Extract {
                  try {
                     for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
                         BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
-                        downloadSourceArt.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                            NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), url)); //NON-NLS
+                        downloadSourceArt.addAttributes(createDownloadSourceAttributes(url));
                         bbartifacts.add(downloadSourceArt);
                         break;
                     }
