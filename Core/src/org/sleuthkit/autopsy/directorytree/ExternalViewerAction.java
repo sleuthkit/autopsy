@@ -203,6 +203,8 @@ public class ExternalViewerAction extends AbstractAction {
      *
      * @param path URL to open
      */
+     @Messages({
+        "ExternalViewerAction.actionPerformed.urlFailure.title=Open URL Failure"})
     public static void openURL(String path) {
         String url_path = path.replaceAll("\\\\", "/");
         try {
@@ -211,31 +213,31 @@ public class ExternalViewerAction extends AbstractAction {
             logger.log(Level.WARNING, "Could not find a viewer for the given URL: " + url_path, ex); //NON-NLS
             JOptionPane.showMessageDialog(null,
                     Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
                     JOptionPane.ERROR_MESSAGE);
         } catch (UnsupportedOperationException ex) {
             logger.log(Level.WARNING, "Platform cannot open " + url_path + " in the defined editor.", ex); //NON-NLS
             JOptionPane.showMessageDialog(null,
                     Bundle.ExternalViewerAction_actionPerformed_failure_support_message(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
                     JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException ex) {
             logger.log(Level.WARNING, "Could not find the given URL: " + url_path, ex); //NON-NLS
             JOptionPane.showMessageDialog(null,
                     Bundle.ExternalViewerAction_actionPerformed_failure_missingFile_message(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
                     JOptionPane.ERROR_MESSAGE);
         } catch (SecurityException ex) {
             logger.log(Level.WARNING, "Could not get permission to open the given URL: " + url_path, ex); //NON-NLS
             JOptionPane.showMessageDialog(null,
                     Bundle.ExternalViewerAction_actionPerformed_failure_permission_message(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
                     JOptionPane.ERROR_MESSAGE);
         } catch (URISyntaxException ex) {
             logger.log(Level.WARNING, "Could not open URL provided: " + url_path, ex);
             JOptionPane.showMessageDialog(null,
                     Bundle.ExternalViewerAction_actionPerformed_failure_open_url(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
                     JOptionPane.ERROR_MESSAGE);
         }
     }
