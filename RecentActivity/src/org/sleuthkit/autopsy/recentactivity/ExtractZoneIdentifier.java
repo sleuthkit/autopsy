@@ -73,6 +73,18 @@ final class ExtractZoneIdentifier extends Extract {
         if (zoneFiles == null || zoneFiles.isEmpty()) {
             return;
         }
+        
+        ArrayList<Long> knownPathIDs = null;
+        try {
+            knownPathIDs = getPathIDsForType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
+        } catch (TskCoreException ex) {
+            addErrorMessage(Bundle.ExtractZone_process_errMsg());
+            LOG.log(Level.SEVERE, "Failed to build PathIDs List for TSK_WEB_DOWNLOAD", ex);
+        }
+
+        if (knownPathIDs == null) {
+            return;
+        }
 
         Collection<BlackboardArtifact> sourceArtifacts = new ArrayList<>();
         Collection<BlackboardArtifact> downloadArtifacts = new ArrayList<>();
@@ -129,19 +141,20 @@ final class ExtractZoneIdentifier extends Extract {
         }
 
         AbstractFile downloadFile = getDownloadFile(dataSource, zoneFile);
+        ArrayList<Long> knownPathIDs = getPathIDsForType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
 
         if (downloadFile != null) {
-            if (getArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE, zoneFile) == null) {
-                BlackboardArtifact sourcebba = createDownloadSourceArtifact(downloadFile, zoneInfo);
-                if (sourcebba != null) {
-                    sourceArtifacts.add(sourcebba);
-                }
-            }
-
-            if (getArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile) == null) {
+            if (!knownPathIDs.contains(downloadFile.getDataSourceObjectId())) {
                 BlackboardArtifact downloadbba = createDownloadArtifact(zoneFile, zoneInfo);
                 if (downloadbba != null) {
                     downloadArtifacts.add(downloadbba);
+                }
+            }
+
+            if (downloadFile.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE) == 0) {
+                BlackboardArtifact sourcebba = createDownloadSourceArtifact(downloadFile, zoneInfo);
+                if (sourcebba != null) {
+                    sourceArtifacts.add(sourcebba);
                 }
             }
         }
@@ -245,23 +258,27 @@ final class ExtractZoneIdentifier extends Extract {
     }
 
     /**
-     * Determine if an artifact of the given type exists for the AbstractFile.
+     * Creates a list of PathIDs for the given Artifact type.
      *
-     * @param type BlackboardArtifact type
-     * @param file AbstraceFile
+     * @param type BlackboardArtifact.ARTIFACT_TYPE
      *
-     * @return Returns the existing BlackboardArtifact or null if none exists
+     * @return A list of PathIDs
      *
      * @throws TskCoreException
      */
-    private BlackboardArtifact getArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile file) throws TskCoreException {
+    private ArrayList<Long> getPathIDsForType(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
+        ArrayList<Long> idList = new ArrayList();
         for (BlackboardArtifact artifact : currentCase.getSleuthkitCase().getBlackboardArtifacts(type)) {
-            if (artifact.getDataSource().getId() == file.getDataSourceObjectId()) {
-                return artifact;
+            BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
+
+            if (pathIDAttribute != null) {
+                long contentID = pathIDAttribute.getValueLong();
+                if (contentID != -1) {
+                    idList.add(contentID);
+                }
             }
         }
-
-        return null;
+        return idList;
     }
 
     @Messages({
