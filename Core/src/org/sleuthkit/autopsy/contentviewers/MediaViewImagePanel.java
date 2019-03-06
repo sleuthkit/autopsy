@@ -60,7 +60,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Image viewer part of the Media View layered pane. Uses JavaFX to display the
  * image.
  */
-@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer",
+@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer (Ctrl+E)",
     "MediaViewImagePanel.errorLabel.text=Could not load file into Media View.",
     "MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insufficent memory."})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
