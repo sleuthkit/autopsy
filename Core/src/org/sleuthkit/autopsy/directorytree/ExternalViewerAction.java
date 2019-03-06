@@ -99,7 +99,7 @@ public class ExternalViewerAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         if (isExecutable) {
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(),
+                    Bundle.ExternalViewerAction_actionPerformed_failure_exe_message(),
                     Bundle.ExternalViewerAction_actionPerformed_failure_title(this.fileObject.getName()),
                     JOptionPane.ERROR_MESSAGE);
             return;
