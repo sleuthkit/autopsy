@@ -120,7 +120,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
             progressBar.progress(extracter.getName(), i);
 
             try {
-                extracter.process(dataSource, context);
+                extracter.process(dataSource, context, progressBar);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
