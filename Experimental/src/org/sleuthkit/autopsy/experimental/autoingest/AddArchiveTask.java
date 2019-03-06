@@ -122,10 +122,12 @@ class AddArchiveTask implements Runnable {
                 numExtractedFilesRemaining = extractedFiles.size();
             } catch (ArchiveUtil.ArchiveExtractionException ex) {
                 // delete extracted contents
-                logger.log(Level.SEVERE,"Exception while extracting archive contents into {0}. Deleteing the directory", destinationFolder.toString());
+                logger.log(Level.SEVERE, "Exception while extracting archive contents into " + destinationFolder.toString() + ". Deleteing the directory", ex);
                 FileUtils.deleteDirectory(destinationFolder.toFile());
                 throw ex;
             }
+            
+            List<String> unclaimedFiles = new ArrayList<>(extractedFiles);
 
             // lookup all AutomatedIngestDataSourceProcessors so that we only do it once. 
             // LocalDisk, LocalFiles, and ArchiveDSP are removed from the list.
@@ -159,7 +161,7 @@ class AddArchiveTask implements Runnable {
                  * if we do not move the data sources out of the extracted
                  * contents folder, those data source files will get added twice
                  * and can potentially result in duplicate keyword hits.
-                 */
+                 
                 Path newFolder = createDirectoryForFile(file, currentCase.getModuleDirectory());
                 if (newFolder.toString().isEmpty()) {
                     // unable to create directory
@@ -170,9 +172,9 @@ class AddArchiveTask implements Runnable {
                 }
 
                 // Copy it to a different folder                     
-                FileUtils.copyFileToDirectory(fileObject, newFolder.toFile());
-                Path newFilePath = Paths.get(newFolder.toString(), FilenameUtils.getName(file));
-
+                //FileUtils.copyFileToDirectory(fileObject, newFolder.toFile());
+                //Path newFilePath = Paths.get(newFolder.toString(), FilenameUtils.getName(file));
+*/
                 // Try each DSP in decreasing order of confidence
                 boolean success = false;
                 for (AutoIngestDataSourceProcessor selectedProcessor : validDataSourceProcessors) {
@@ -181,9 +183,9 @@ class AddArchiveTask implements Runnable {
                     synchronized (archiveDspLock) {
                         UUID taskId = UUID.randomUUID();
                         currentCase.notifyAddingDataSource(taskId);
-                        AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, newFilePath);
+                        AutoIngestDataSource internalDataSource = new AutoIngestDataSource(deviceId, fileObject.toPath());
                         DataSourceProcessorCallback internalArchiveDspCallBack = new AddDataSourceCallback(currentCase, internalDataSource, taskId, archiveDspLock);
-                        selectedProcessor.process(deviceId, newFilePath, progressMonitor, internalArchiveDspCallBack);
+                        selectedProcessor.process(deviceId, fileObject.toPath(), progressMonitor, internalArchiveDspCallBack);
                         archiveDspLock.wait();
 
                         // at this point we got the content object(s) from the current DSP.
@@ -200,6 +202,10 @@ class AddArchiveTask implements Runnable {
                         // if we are here it means the data source was added successfully
                         success = true;
                         newDataSources.addAll(internalDataSource.getContent());
+                        
+                        // this extracted file has been "claimed" by one of the DSPs,
+                        // remove it from the list of Logical Files that will be added later
+                        unclaimedFiles.remove(file);
                         
                         // update data source info
                         for (Content c:internalDataSource.getContent()) {
@@ -227,7 +233,7 @@ class AddArchiveTask implements Runnable {
                     }
                 }
 
-                if (success) {
+                /*if (success) {
                     // one of the DSPs successfully processed the data source. delete the 
                     // copy of the data source in the original extracted archive folder. 
                     // otherwise the data source is going to be added again as a logical file.
@@ -238,12 +244,12 @@ class AddArchiveTask implements Runnable {
                     // copy of the data source in the temporary folder. the data source is 
                     // going to be added as a logical file with the rest of the extracted contents.
                     FileUtils.deleteQuietly(newFolder.toFile());
-                }
+                }*/
             }
 
             // after all archive contents have been examined (and moved to separate folders if necessary), 
             // add remaining extracted contents as one logical file set
-            if (numExtractedFilesRemaining > 0) {
+            if (unclaimedFiles.size() > 0) {
                 progressMonitor.setProgressText(String.format("Adding: %s", destinationFolder.toString()));
                 logger.log(Level.INFO, "Adding directory {0} as logical file set", destinationFolder.toString());
                 synchronized (archiveDspLock) {
@@ -260,7 +266,7 @@ class AddArchiveTask implements Runnable {
                     String archiveFileName = FilenameUtils.getName(archivePath);
 
                     LocalFilesDSProcessor localFilesDSP = new LocalFilesDSProcessor();
-                    localFilesDSP.run(deviceId, archiveFileName, pathsList, progressMonitor, internalArchiveDspCallBack);
+                    localFilesDSP.run(deviceId, archiveFileName, unclaimedFiles, progressMonitor, internalArchiveDspCallBack);
 
                     archiveDspLock.wait();
 
