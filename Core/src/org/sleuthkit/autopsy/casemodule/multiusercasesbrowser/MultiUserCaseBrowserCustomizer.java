@@ -148,6 +148,7 @@ public interface MultiUserCaseBrowserCustomizer {
         CREATE_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_createTime()),
         DIRECTORY(Bundle.MultiUserCaseBrowserCustomizer_column_directory()),
         LAST_ACCESS_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_lastAccessTime());
+        // RJCTODO: Add properties for deleted items flags
 
         private final String displayName;
 

@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.progress.ProgressIndicator;
 /**
  * A task that deletes a case produced via auto ingest.
  */
-final class DeleteAutoIngestCaseTask extends AutoIngestCaseDeletionTask {
+final class DeleteCaseInputAndOutputTask extends DeleteCaseTask {
 
     /**
      * Constructs a task that deletes a case produced via auto ingest.
@@ -33,7 +33,7 @@ final class DeleteAutoIngestCaseTask extends AutoIngestCaseDeletionTask {
      *                     data for the case.
      * @param progress     A progress indicator.
      */
-    DeleteAutoIngestCaseTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
+    DeleteCaseInputAndOutputTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
         super(caseNodeData, progress);
     }
 

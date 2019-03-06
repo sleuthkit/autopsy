@@ -31,23 +31,26 @@ import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrows
  */
 final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
 
-    private final DeleteCaseInputDirectoriesAction deleteCaseInputAction;
-    private final DeleteCasesForReprocessingAction deleteCaseOutputAction;
-    private final DeleteCasesAction deleteCaseAction;
+    private final DeleteCaseInputAction deleteCaseInputAction;
+    private final DeleteCaseOutputAction deleteCaseOutputAction;
+    private final DeleteCaseInputAndOutputAction deleteCaseAction;
 
     /**
      * Constructs a customizer for the multi-user case browser panel used in the
      * administrative dashboard for auto ingest cases to present a tabular view
      * of the multi-user cases known to the coordination service.
+     *
+     * @param executor An executor for tasks for actions that do work in the
+     *                 background.
      */
     CasesDashboardCustomizer() {
         /*
          * These actions are shared by all nodes in order to support multiple
          * selection.
          */
-        deleteCaseInputAction = new DeleteCaseInputDirectoriesAction();
-        deleteCaseOutputAction = new DeleteCasesForReprocessingAction();
-        deleteCaseAction = new DeleteCasesAction();
+        deleteCaseInputAction = new DeleteCaseInputAction();
+        deleteCaseOutputAction = new DeleteCaseOutputAction();
+        deleteCaseAction = new DeleteCaseInputAndOutputAction();
     }
 
     @Override
@@ -79,7 +82,6 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         actions.add(deleteCaseInputAction);
         actions.add(deleteCaseOutputAction);
         actions.add(deleteCaseAction);
-        actions.add(new ShowCaseDeletionStatusAction(nodeData));
         return actions;
     }
 

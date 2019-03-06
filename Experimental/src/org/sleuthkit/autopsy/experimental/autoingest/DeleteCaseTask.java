@@ -45,10 +45,10 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobNodeData.Inval
  * A base class for tasks that delete part or all of a case produced via auto
  * ingest.
  */
-abstract class AutoIngestCaseDeletionTask implements Runnable {
+abstract class DeleteCaseTask implements Runnable {
 
     private static final String RESOURCES_LOCK_SUFFIX = "_resources"; //NON-NLS
-    private static final Logger logger = CaseDashboardLogger.getLogger();
+    private static final Logger logger = AutoIngestDashboardLogger.getLogger();
     private final CaseNodeData caseNodeData;
     private final ProgressIndicator progress;
     private final List<AutoIngestJobNodeData> nodeDataForAutoIngestJobs;
@@ -63,7 +63,7 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
      *                     data for the case to be deleted.
      * @param progress     A progress indicator.
      */
-    AutoIngestCaseDeletionTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
+    DeleteCaseTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
         this.caseNodeData = caseNodeData;
         this.progress = progress;
         this.nodeDataForAutoIngestJobs = new ArrayList<>();
@@ -72,15 +72,15 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
 
     @Override
     @NbBundle.Messages({
-        "CaseDeletionTask.progress.connectingToCoordSvc=Connecting to the coordination service",
-        "CaseDeletionTask.progress.acquiringCaseNameLock=Acquiring exclusive case name lock",
-        "CaseDeletionTask.progress.acquiringCaseDirLock=Acquiring exclusive case directory lock",
-        "CaseDeletionTask.progress.gettingJobNodeData=Getting node data for auto ingest jobs",
-        "CaseDeletionTask.progress.acquiringInputDirLocks=Acquiring exclusive input directory locks"
+        "DeleteCaseTask.progress.connectingToCoordSvc=Connecting to the coordination service",
+        "DeleteCaseTask.progress.acquiringCaseNameLock=Acquiring exclusive case name lock",
+        "DeleteCaseTask.progress.acquiringCaseDirLock=Acquiring exclusive case directory lock",
+        "DeleteCaseTask.progress.gettingJobNodeData=Getting node data for auto ingest jobs",
+        "DeleteCaseTask.progress.acquiringInputDirLocks=Acquiring exclusive input directory locks"
     })
     public void run() {
         try {
-            progress.start(Bundle.CaseDeletionTask_progress_connectingToCoordSvc());
+            progress.start(Bundle.DeleteCaseTask_progress_connectingToCoordSvc());
             try {
                 coordinationService = CoordinationService.getInstance();
             } catch (CoordinationService.CoordinationServiceException ex) {
@@ -95,7 +95,7 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
              * auto ingest nodes from searching for and finding the case
              * directory of the case to be deleted.
              */
-            progress.progress(Bundle.CaseDeletionTask_progress_acquiringCaseNameLock());
+            progress.progress(Bundle.DeleteCaseTask_progress_acquiringCaseNameLock());
             logger.log(Level.INFO, String.format("Exclusively locking the case name for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
             final String caseNameLockName = TimeStampUtils.removeTimeStamp(caseNodeData.getName());
             try (CoordinationService.Lock nameLock = coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseNameLockName)) {
@@ -113,7 +113,7 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
                  * deleted open and prevents another node from trying to open
                  * the case as it is being deleted.
                  */
-                progress.progress(Bundle.CaseDeletionTask_progress_acquiringCaseDirLock());
+                progress.progress(Bundle.DeleteCaseTask_progress_acquiringCaseDirLock());
                 logger.log(Level.INFO, String.format("Exclusively locking the case directory for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
                 try (CoordinationService.Lock caseLock = CoordinationService.getInstance().tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseNodeData.getDirectory().toString())) {
                     if (caseLock == null) {
@@ -121,7 +121,7 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
                         return;
                     }
 
-                    progress.progress(Bundle.CaseDeletionTask_progress_gettingJobNodeData());
+                    progress.progress(Bundle.DeleteCaseTask_progress_gettingJobNodeData());
                     logger.log(Level.INFO, String.format("Fetching auto ingest job node data for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
                     try {
                         getAutoIngestJobNodeData();
@@ -131,7 +131,7 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
                     }
 
                     if (!nodeDataForAutoIngestJobs.isEmpty()) {
-                        progress.progress(Bundle.CaseDeletionTask_progress_acquiringInputDirLocks());
+                        progress.progress(Bundle.DeleteCaseTask_progress_acquiringInputDirLocks());
                         logger.log(Level.INFO, String.format("Exclusively locking the case directories for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
                         getInputDirectoryLocks();
                         if (manifestFileLocks.isEmpty()) {
@@ -193,15 +193,15 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
      * be called when holding all of the exclusive locks for the case.
      */
     @NbBundle.Messages({
-        "CaseDeletionTask.progress.deletingInputDirs=Deleting input directory",
-        "# {0} - input directory name", "CaseDeletionTask.progress.deletingInputDir=Deleting input directory {0}"
+        "DeleteCaseTask.progress.deletingInputDirs=Deleting input directory",
+        "# {0} - input directory name", "DeleteCaseTask.progress.deletingInputDir=Deleting input directory {0}"
     })
     protected void deleteInputDirectories() {
-        progress.progress(Bundle.CaseDeletionTask_progress_deletingInputDirs());
+        progress.progress(Bundle.DeleteCaseTask_progress_deletingInputDirs());
         logger.log(Level.INFO, String.format("Deleting input directories for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
         for (AutoIngestJobNodeData jobNodeData : nodeDataForAutoIngestJobs) {
             final Path inputDirPath = jobNodeData.getManifestFilePath().getParent();
-            progress.progress(Bundle.CaseDeletionTask_progress_deletingInputDir(inputDirPath));
+            progress.progress(Bundle.DeleteCaseTask_progress_deletingInputDir(inputDirPath));
             logger.log(Level.INFO, String.format("Deleting input directory %s for %s (%s) in %s", inputDirPath, caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
             if (FileUtil.deleteDir(new File(inputDirPath.toString()))) {
                 logger.log(Level.WARNING, String.format("Failed to delete the input directory %s for %s (%s) in %s", inputDirPath, caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
@@ -216,11 +216,11 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
      * the case.
      */
     @NbBundle.Messages({
-        "CaseDeletionTask.progress.locatingCaseMetadataFile=Locating case metadata file",
-        "CaseDeletionTask.progress.deletingCaseOutput=Deleting case output"
+        "DeleteCaseTask.progress.locatingCaseMetadataFile=Locating case metadata file",
+        "DeleteCaseTask.progress.deletingCaseOutput=Deleting case output"
     })
     protected void deleteCaseOutput() {
-        progress.progress(Bundle.CaseDeletionTask_progress_locatingCaseMetadataFile());
+        progress.progress(Bundle.DeleteCaseTask_progress_locatingCaseMetadataFile());
         logger.log(Level.INFO, String.format("Locating metadata file for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
         String metadataFilePath = null;
         final File caseDirectory = caseNodeData.getDirectory().toFile();
@@ -234,7 +234,7 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
         }
 
         if (metadataFilePath != null) {
-            progress.progress(Bundle.CaseDeletionTask_progress_deletingCaseOutput());
+            progress.progress(Bundle.DeleteCaseTask_progress_deletingCaseOutput());
             logger.log(Level.INFO, String.format("Deleting output for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
             try {
                 Case.deleteCase(new CaseMetadata(Paths.get(metadataFilePath)), false, progress);
@@ -254,13 +254,13 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
      * locks for all of the input directories for the case.
      */
     @Messages({
-        "CaseDeletionTask.progress.deletingJobLogLockNode=Deleting auto ingest job log lock node",
-        "CaseDeletionTask.progress.deletingResourcesLockNode=Deleting case resources lock node",
-        "CaseDeletionTask.progress.deletingDirLockNode=Deleting case directory lock node",
-        "CaseDeletionTask.progress.deletingNameLockNode=Deleting case name lock node"
+        "DeleteCaseTask.progress.deletingJobLogLockNode=Deleting auto ingest job log lock node",
+        "DeleteCaseTask.progress.deletingResourcesLockNode=Deleting case resources lock node",
+        "DeleteCaseTask.progress.deletingDirLockNode=Deleting case directory lock node",
+        "DeleteCaseTask.progress.deletingNameLockNode=Deleting case name lock node"
     })
     protected void deleteCaseLockNodes() {
-        progress.progress(Bundle.CaseDeletionTask_progress_deletingJobLogLockNode());
+        progress.progress(Bundle.DeleteCaseTask_progress_deletingJobLogLockNode());
         logger.log(Level.INFO, String.format("Deleting case auto ingest job log lock node for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
         Path logFilePath = AutoIngestJobLogger.getLogPath(caseNodeData.getDirectory());
         try {
@@ -270,7 +270,7 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
             // RJCTODO: Set delete flags 
         }
 
-        progress.progress(Bundle.CaseDeletionTask_progress_deletingResourcesLockNode());
+        progress.progress(Bundle.DeleteCaseTask_progress_deletingResourcesLockNode());
         logger.log(Level.INFO, String.format("Deleting case resources log lock node for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
         String resourcesLockNodePath = caseNodeData.getDirectory().toString() + RESOURCES_LOCK_SUFFIX;
         try {
@@ -280,7 +280,7 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
             // RJCTODO: Set delete flags 
         }
 
-        progress.progress(Bundle.CaseDeletionTask_progress_deletingDirLockNode());
+        progress.progress(Bundle.DeleteCaseTask_progress_deletingDirLockNode());
         logger.log(Level.INFO, String.format("Deleting case directory lock node for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
         final Path caseDirectoryPath = caseNodeData.getDirectory();
         try {
@@ -290,7 +290,7 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
             // RJCTODO: Set delete flags 
         }
 
-        progress.progress(Bundle.CaseDeletionTask_progress_deletingNameLockNode());
+        progress.progress(Bundle.DeleteCaseTask_progress_deletingNameLockNode());
         logger.log(Level.INFO, String.format("Deleting case name lock node for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
         final String caseNameLockName = TimeStampUtils.removeTimeStamp(caseNodeData.getName());
         try {
@@ -306,10 +306,10 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
      * called after releasing all of the locks for the case.
      */
     @Messages({
-        "CaseDeletionTask.progress.deletingInputDirLockNodes=Deleting input directory lock nodes"
+        "DeleteCaseTask.progress.deletingInputDirLockNodes=Deleting input directory lock nodes"
     })
     protected void deleteInputDirectoryLockNodes() {
-        progress.progress(Bundle.CaseDeletionTask_progress_deletingInputDirLockNodes());
+        progress.progress(Bundle.DeleteCaseTask_progress_deletingInputDirLockNodes());
         logger.log(Level.INFO, String.format("Deleting input directory lock nodes for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
         for (AutoIngestJobNodeData jobNodeData : nodeDataForAutoIngestJobs) {
             try {
@@ -369,12 +369,12 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
      *         could not be obtained.
      */
     @NbBundle.Messages({
-        "# {0} - input directory name", "CaseDeletionTask.progress.lockingInputDir=Acquiring exclusive lock on input directory {0}",})
+        "# {0} - input directory name", "DeleteCaseTask.progress.lockingInputDir=Acquiring exclusive lock on input directory {0}",})
     private void getInputDirectoryLocks() {
         for (AutoIngestJobNodeData autoIngestJobNodeData : nodeDataForAutoIngestJobs) {
             final Path inputDirPath = autoIngestJobNodeData.getManifestFilePath().getParent();
             try {
-                progress.progress(Bundle.CaseDeletionTask_progress_lockingInputDir(inputDirPath));
+                progress.progress(Bundle.DeleteCaseTask_progress_lockingInputDir(inputDirPath));
                 final CoordinationService.Lock inputDirLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, autoIngestJobNodeData.getManifestFilePath().toString());
                 if (null != inputDirLock) {
                     manifestFileLocks.put(autoIngestJobNodeData.getManifestFilePath(), inputDirLock);
@@ -396,17 +396,17 @@ abstract class AutoIngestCaseDeletionTask implements Runnable {
      * for the case.
      */
     @NbBundle.Messages({
-        "CaseDeletionTask.progress.releasingManifestLocks=Acquiring exclusive manifest file locks",
-        "# {0} - manifest file path", "CaseDeletionTask.progress.releasingManifestLock=Releasing the exclusive lock on manifest file {0}"
+        "DeleteCaseTask.progress.releasingManifestLocks=Acquiring exclusive manifest file locks",
+        "# {0} - manifest file path", "DeleteCaseTask.progress.releasingManifestLock=Releasing the exclusive lock on manifest file {0}"
     })
     private void releaseInputDirectoryLocks() {
         if (!manifestFileLocks.isEmpty()) {
-            progress.progress(Bundle.CaseDeletionTask_progress_releasingManifestLocks());
+            progress.progress(Bundle.DeleteCaseTask_progress_releasingManifestLocks());
             for (Map.Entry<Path, CoordinationService.Lock> entry : manifestFileLocks.entrySet()) {
                 final Path manifestFilePath = entry.getKey();
                 final CoordinationService.Lock manifestFileLock = entry.getValue();
                 try {
-                    progress.progress(Bundle.CaseDeletionTask_progress_releasingManifestLock(manifestFilePath));
+                    progress.progress(Bundle.DeleteCaseTask_progress_releasingManifestLock(manifestFilePath));
                     manifestFileLock.release();
                 } catch (CoordinationServiceException ex) {
                     logger.log(Level.SEVERE, String.format("Error re3leasing exclusive lock on %s for %s (%s) in %s", manifestFilePath, caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()), ex);

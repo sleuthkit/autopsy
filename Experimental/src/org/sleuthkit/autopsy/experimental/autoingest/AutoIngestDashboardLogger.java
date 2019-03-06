@@ -30,26 +30,25 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
- * A logger for the case dashboard log.
+ * A logger for the auto ingest dashboard log.
  */
-final class CaseDashboardLogger {
+final class AutoIngestDashboardLogger {
 
     private static final int LOG_SIZE = 50000000; // In bytes, zero is unlimited, set to roughly 10mb currently
     private static final int LOG_FILE_COUNT = 10;
-    private static final Logger logger = Logger.getLogger("CaseDashboardLogger"); //NON-NLS
+    private static final Logger logger = Logger.getLogger("AutoIngestDashboardLogger"); //NON-NLS
     private static final String NEWLINE = System.lineSeparator();
-    @GuardedBy("AutoIngestSystemLogger")
+    @GuardedBy("AutoIngestDashboardLogger")
     private static boolean configured;
 
     /**
-     * Gets a logger for the auto ingest system log, separate from both the case
-     * auto ingest log and the application log.
+     * Gets a logger for the auto ingest dashboard log.
      *
      * @return The logger.
      */
     synchronized static Logger getLogger() {
         if (!configured) {
-            Path logFilePath = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "var", "log", "case_dashboard.log");
+            Path logFilePath = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "var", "log", "auto_ingest_dashboard.log");  //NON-NLS
             try {
                 FileHandler fileHandler = new FileHandler(logFilePath.toString(), LOG_SIZE, LOG_FILE_COUNT);
                 fileHandler.setEncoding(PlatformUtil.getLogFileEncoding());
@@ -86,7 +85,7 @@ final class CaseDashboardLogger {
     /**
      * Prevents instantiation of this utility class.
      */
-    private CaseDashboardLogger() {
+    private AutoIngestDashboardLogger() {
     }
 
 }

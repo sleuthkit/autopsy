@@ -94,6 +94,10 @@ AutoIngestControlPanel.runningTable.toolTipText=The Running table displays the c
 AutoIngestControlPanel.SharedConfigurationDisabled=Shared configuration disabled
 AutoIngestControlPanel.ShowLogFailed.Message=Case log file does not exist
 AutoIngestControlPanel.ShowLogFailed.Title=Unable to display case log
+# {0} - case db status
+# {1} - search svc Status
+# {2} - coord svc Status
+# {3} - msg broker status
 AutoIngestControlPanel.tbServicesStatusMessage.Message=Case databases {0}, keyword search {1}, coordination {2}, messaging {3} 
 AutoIngestControlPanel.tbServicesStatusMessage.Message.Down=down
 AutoIngestControlPanel.tbServicesStatusMessage.Message.Unknown=unknown
@@ -125,7 +129,6 @@ AutoIngestDashboard.tbServicesStatusMessage.Message.Up=up
 AutoIngestDashboard.tbServicesStatusMessage.Message.Down=down
 AutoIngestDashboard.tbServicesStatusMessage.Message.Unknown=unknown
 AutoIngestDashboardTopComponent.exceptionMessage.failedToCreateDashboard=Failed to create Auto Ingest Dashboard.
-AutoIngestJobsDeletionTask.error.failedToGetJobNodes=Failed to get auto ingest job node data from coordination service.
 AutoIngestJobsNode.caseName.text=Case Name
 AutoIngestJobsNode.dataSource.text=Data Source
 AutoIngestJobsNode.hostName.text=Host Name
@@ -140,40 +143,6 @@ AutoIngestJobsNode.status.text=Status
 AutoIngestJobsPanel.waitNode.text=Please Wait...
 AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report.
 AutoIngestMetricsDialog.title.text=Auto Ingest Metrics
-CaseDeletionTask.progress.acquiringCaseDirLock=Acquiring exclusive case directory lock
-CaseDeletionTask.progress.acquiringCaseNameLock=Acquiring exclusive case name lock
-CaseDeletionTask.progress.acquiringInputDirLocks=Acquiring exclusive input directory locks
-CaseDeletionTask.progress.connectingToCoordSvc=Connecting to the coordination service
-CaseDeletionTask.progress.deletingCase=Deleting case {0}...
-CaseDeletionTask.progress.deletingCaseOutput=Deleting case output
-CaseDeletionTask.progress.deletingDirLockNode=Deleting case directory lock node
-# {0} - input directory name
-CaseDeletionTask.progress.deletingInputDir=Deleting input directory {0}
-CaseDeletionTask.progress.deletingInputDirLockNodes=Deleting input directory lock nodes
-CaseDeletionTask.progress.deletingInputDirs=Deleting input directory
-CaseDeletionTask.progress.deletingJobLogLockNode=Deleting auto ingest job log lock node
-CaseDeletionTask.progress.deletingNameLockNode=Deleting case name lock node
-CaseDeletionTask.progress.deletingOutput=Deleting case output
-CaseDeletionTask.progress.deletingResourcesLockNode=Deleting case resources lock node
-CaseDeletionTask.progress.errorConnectingToCoordSvc=Failed to connect to the coordination service (see log for details): {0}.
-CaseDeletionTask.progress.errorDeletingInputDir=An error occurred deleting the input directory at {0}
-CaseDeletionTask.progress.errorDeletingOutput=An error occurred deleting the case output (see log for details): {0}.
-CaseDeletionTask.progress.errorLockingCaseDir=An error occurred while trying to acquire the exclusive directory lock for the case (see log for details): {0}.
-CaseDeletionTask.progress.errorLockingCaseName=An error occurred while trying to acquire the exclusive name lock for the case (see log for details): {0}.
-CaseDeletionTask.progress.errorlockingInputDir=An error occurred Acquiring the exclusive lock on input directory {0} (see log for details): {1}
-CaseDeletionTask.progress.errorReleasingInputDirLock=An error occurred releasing the exclusive lock on input directory {0} (see log for details): {1}.
-CaseDeletionTask.progress.errorReleasingInputLock=An error occurred releasing the input directory lock (see log for details): {0}.
-CaseDeletionTask.progress.failedToLockCase=Failed to exclusively lock the case, it may be in use, did not delete.
-CaseDeletionTask.progress.failedToLockInputDir=Failed to exclusively lock the input directory {0}.
-CaseDeletionTask.progress.gettingJobNodeData=Getting node data for auto ingest jobs
-CaseDeletionTask.progress.locatingCaseMetadataFile=Locating case metadata file
-# {0} - input directory name
-CaseDeletionTask.progress.lockingInputDir=Acquiring exclusive lock on input directory {0}
-CaseDeletionTask.progress.releasingInputDirLock=Releasing the exclusive lock on input directory {0}
-CaseDeletionTask.progress.releasingInputDirLocks=Acquiring exclusive input directory locks
-# {0} - manifest file path
-CaseDeletionTask.progress.releasingManifestLock=Releasing the exclusive lock on manifest file {0}
-CaseDeletionTask.progress.releasingManifestLocks=Acquiring exclusive manifest file locks
 ConfirmationDialog.DoNotDelete=Do not delete
 ConfirmationDialog.Delete=Permanently delete
 ConfirmationDialog.DeleteAreYouSure=The entire case will be removed. Are you sure you want to delete case 
@@ -202,14 +171,41 @@ CTL_CasesDashboardAction=Multi-User Cases Dashboard
 CTL_CasesDashboardTopComponent=Cases
 DataSourceOnCDriveError.noOpenCase.errMsg=Warning: Exception while getting open case.
 DataSourceOnCDriveError.text=Warning: Path to multi-user data source is on "C:" drive
-DeleteCaseInputDirectoriesAction.menuItemText=Delete Input Directories
-DeleteCasesAction.menuItemText=Delete Case and Jobs
-DeleteCasesForReprocessingAction.menuItemText=Delete for Reprocessing
+DeleteCaseInputAction.menuItemText=Delete Input
+DeleteCaseInputAction.progressDisplayName=Delete Input
+DeleteCaseInputAction.taskName=input
+DeleteCaseInputAndOutputAction.menuItemText=Delete Input and Output
+DeleteCaseInputAndOutputAction.progressDisplayName=Delete Input and Output
+DeleteCaseInputAndOutputAction.taskName=input-and-output
+DeleteCaseOutputAction.menuItemText=Delete Output
+DeleteCaseOutputAction.progressDisplayName=Delete Output
+DeleteCaseOutputAction.taskName=output
+DeleteCaseTask.progress.acquiringCaseDirLock=Acquiring exclusive case directory lock
+DeleteCaseTask.progress.acquiringCaseNameLock=Acquiring exclusive case name lock
+DeleteCaseTask.progress.acquiringInputDirLocks=Acquiring exclusive input directory locks
+DeleteCaseTask.progress.connectingToCoordSvc=Connecting to the coordination service
+DeleteCaseTask.progress.deletingCaseOutput=Deleting case output
+DeleteCaseTask.progress.deletingDirLockNode=Deleting case directory lock node
+# {0} - input directory name
+DeleteCaseTask.progress.deletingInputDir=Deleting input directory {0}
+DeleteCaseTask.progress.deletingInputDirLockNodes=Deleting input directory lock nodes
+DeleteCaseTask.progress.deletingInputDirs=Deleting input directory
+DeleteCaseTask.progress.deletingJobLogLockNode=Deleting auto ingest job log lock node
+DeleteCaseTask.progress.deletingNameLockNode=Deleting case name lock node
+DeleteCaseTask.progress.deletingResourcesLockNode=Deleting case resources lock node
+DeleteCaseTask.progress.gettingJobNodeData=Getting node data for auto ingest jobs
+DeleteCaseTask.progress.locatingCaseMetadataFile=Locating case metadata file
+# {0} - input directory name
+DeleteCaseTask.progress.lockingInputDir=Acquiring exclusive lock on input directory {0}
+# {0} - manifest file path
+DeleteCaseTask.progress.releasingManifestLock=Releasing the exclusive lock on manifest file {0}
+DeleteCaseTask.progress.releasingManifestLocks=Acquiring exclusive manifest file locks
 GeneralFilter.archiveDesc.text=Archive Files (.zip, .rar, .arj, .7z, .7zip, .gzip, .gz, .bzip2, .tar, .tgz)
 HINT_CasesDashboardTopComponent=This is an adminstrative dashboard for multi-user cases
 OpenAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.
 OpenAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details.
 OpenAutoIngestLogAction.menuItemText=Open Auto Ingest Log File
+# {0} - caseErrorMessage
 OpenCaseAction.errorMsg=Failed to open case: {0}
 OpenCaseAction.menuItemText=Open
 OpenIDE-Module-Long-Description=This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution. You can enable this module to use the new features. The features should be stable, but their exact behavior and API are subject to change.\n\nWe make no guarantee that the API of this module will not change, so developers should be careful when relying on it.
@@ -321,7 +317,6 @@ PrioritizationAction.prioritizeJobAction.error=Failed to prioritize job "%s".
 PrioritizationAction.prioritizeJobAction.title=Prioritize Job
 PrioritizedIconCellRenderer.notPrioritized.tooltiptext=This job has not been prioritized.
 PrioritizedIconCellRenderer.prioritized.tooltiptext=This job has been prioritized. The most recently prioritized job should be processed next.
-ShowCaseDeletionStatusAction.menuItemText=Show Deletion Status
 SingleUserCaseImporter.NonUniqueOutputFolder=Output folder not unique. Skipping 
 SingleUserCaseImporter.WillImport=Will import:
 SingleUserCaseImporter.None=None

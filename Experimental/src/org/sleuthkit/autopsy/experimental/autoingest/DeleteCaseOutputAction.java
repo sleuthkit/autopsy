@@ -25,6 +25,7 @@ import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
  * An action that deletes everything except the auto ingest job input
@@ -32,13 +33,8 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
  * where a case needs to be reprocessed, so the input directories are not
  * deleted even though the coordination service nodes for the auto ingest jobs
  * are deleted.
- *
- * This cases to delete are discovered by querying the actions global context
- * lookup for CaseNodeData objects. See
- * https://platform.netbeans.org/tutorials/nbm-selection-1.html and
- * https://platform.netbeans.org/tutorials/nbm-selection-2.html for details.
  */
-final class DeleteCasesForReprocessingAction extends AbstractAction {
+final class DeleteCaseOutputAction extends DeleteCaseAction {
 
     private static final long serialVersionUID = 1L;
 
@@ -50,26 +46,22 @@ final class DeleteCasesForReprocessingAction extends AbstractAction {
      * ingest jobs are deleted.
      */
     @NbBundle.Messages({
-        "DeleteCasesForReprocessingAction.menuItemText=Delete for Reprocessing"
+        "DeleteCaseOutputAction.menuItemText=Delete Output",
+        "DeleteCaseOutputAction.progressDisplayName=Delete Output",
+        "DeleteCaseOutputAction.taskName=output"        
     })
-    DeleteCasesForReprocessingAction() {
-        super(Bundle.DeleteCasesForReprocessingAction_menuItemText());
-        setEnabled(false); // RJCTODO: Enable when implemented
+    DeleteCaseOutputAction() {
+        super(Bundle.DeleteCaseOutputAction_menuItemText(), Bundle.DeleteCaseOutputAction_progressDisplayName(), Bundle.DeleteCaseOutputAction_taskName());
     }
 
     @Override
-    public void actionPerformed(ActionEvent event) {
-        final Collection<CaseNodeData> selectedNodeData = new ArrayList<>(Utilities.actionsGlobalContext().lookupAll(CaseNodeData.class));
-//        if (!selectedNodeData.isEmpty()) {
-//            /*
-//             * RJCTODO: Create a background task that does the deletion and
-//             * displays results in a dialog with a scrolling text pane.
-//             */
-//        }
+    DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
+        return new DeleteCaseOutputTask(caseNodeData, progress);
     }
-
+    
     @Override
-    public DeleteCasesForReprocessingAction clone() throws CloneNotSupportedException {
+    public DeleteCaseOutputAction clone() throws CloneNotSupportedException {
+        super.clone();
         throw new CloneNotSupportedException();
     }
 

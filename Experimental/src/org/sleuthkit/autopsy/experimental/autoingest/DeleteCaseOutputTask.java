@@ -22,32 +22,31 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
- * A task to delete the auto ingest job input directories for a case produced
- * via auto ingest, while leaving the auto ingest job coordination service nodes
- * and the rest of the case intact. The use case is freeing space while
- * retaining the option to restore the input directories, effectively restoring
- * the case.
+ * A task to delete the auto ingest job coordination service nodes and the
+ * output for a case produced via auto ingest, while leaving the auto ingest job
+ * input directories intact. The use case is reprocessing a case with a clean
+ * slate without having to restore the input directories.
  */
-final class DeleteAutoIngestCaseInputTask extends AutoIngestCaseDeletionTask {
+final class DeleteCaseOutputTask extends DeleteCaseTask {
 
     /**
-     * Constructs a task to delete the auto ingest job input directories for a
-     * case produced via auto ingest, while leaving the auto ingest job
-     * coordination service nodes and the rest of the case intact. The use case
-     * is freeing space while retaining the option to restore the input
-     * directories, effectively restoring the case.
+     * Constructs a task to delete the auto ingest job coordination service
+     * nodes and the output for a case produced via auto ingest, while leaving
+     * the auto ingest job input directories intact. The use case is
+     * reprocessing a case with a clean slate without having to restore the
+     * input directories.
      *
      * @param caseNodeData The case directory lock coordination service node
      *                     data for the case.
      * @param progress     A progress indicator.
      */
-    DeleteAutoIngestCaseInputTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
+    DeleteCaseOutputTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
         super(caseNodeData, progress);
     }
 
     @Override
     void deleteWhileHoldingAllLocks() {
-        deleteInputDirectories();
+        deleteCaseOutput();
     }
 
     @Override
@@ -56,6 +55,7 @@ final class DeleteAutoIngestCaseInputTask extends AutoIngestCaseDeletionTask {
 
     @Override
     void deleteAfterAllLocksReleased() {
+        deleteInputDirectoryLockNodes();
     }
 
 }
