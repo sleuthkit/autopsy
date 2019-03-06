@@ -69,8 +69,8 @@ import org.sleuthkit.datamodel.timeline.EventType;
  * the user for event data and then adds it to the case via an artifact.
  */
 @NbBundle.Messages({
-    "CreateManualEvent.text=Add Event",
-    "CreateManualEvent.longText=Manually add an event to the timeline."})
+    "AddManualEvent.text=Add Event",
+    "AddManualEvent.longText=Manually add an event to the timeline."})
 public class AddManualEvent extends Action {
 
     private final static Logger logger = Logger.getLogger(AddManualEvent.class.getName());
@@ -111,10 +111,10 @@ public class AddManualEvent extends Action {
      *                    user can ove ride this.
      */
     public AddManualEvent(TimeLineController controller, Long epochMillis) {
-        super(Bundle.CreateManualEvent_text());
+        super(Bundle.AddManualEvent_text());
         this.controller = controller;
         setGraphic(new ImageView(ADD_EVENT_IMAGE));
-        setLongText(Bundle.CreateManualEvent_longText());
+        setLongText(Bundle.AddManualEvent_longText());
 
         setEventHandler(actionEvent -> {
             //shoe the dialog and if it completed normally add the event.
