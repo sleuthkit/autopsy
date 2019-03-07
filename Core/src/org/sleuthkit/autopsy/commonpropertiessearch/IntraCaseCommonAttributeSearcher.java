@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -38,8 +37,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  *
  * Generates a <code>List<CommonFilesMetadata></code> when
- * <code>findMatchesByCount()</code> is called, which organizes files by md5 to prepare
- * to display in viewer.
+ * <code>findMatchesByCount()</code> is called, which organizes files by md5 to
+ * prepare to display in viewer.
  *
  * This entire thing runs on a background thread where exceptions are handled.
  */
@@ -138,7 +137,7 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
             }
         }
 
-        TreeMap<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
+        Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = collateMatchesByNumberOfInstances(commonFiles);
 
         return new CommonAttributeCountSearchResults(instanceCollatedCommonFiles, this.frequencyPercentageThreshold);
     }

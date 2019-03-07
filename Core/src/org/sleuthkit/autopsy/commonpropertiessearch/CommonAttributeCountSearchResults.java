@@ -42,7 +42,7 @@ final public class CommonAttributeCountSearchResults {
     private static final Logger LOGGER = Logger.getLogger(CommonAttributeCountSearchResults.class.getName());
 
     // maps instance count to list of attribute values. 
-    private final TreeMap<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
+    private final Map<Integer, CommonAttributeValueList> instanceCountToAttributeValues;
     private final int percentageThreshold;
     private final int resultTypeId;
 

@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,6 +47,11 @@ final public class CommonAttributeValue {
         return this.value;
     }
 
+    /**
+     * Get the file name of the first available instance of this value.
+     *
+     * @return the file name of an instance of this file
+     */
     String getTokenFileName() {
         return tokenFileName;
     }
@@ -60,6 +65,11 @@ final public class CommonAttributeValue {
         return this.fileInstances.stream().map(AbstractCommonAttributeInstance::getCaseName).collect(Collectors.joining(", "));
     }
 
+    /**
+     * Get the set of data sources names this value exists in
+     *
+     * @return a set of data source names
+     */
     public Set<String> getDataSources() {
         Set<String> sources = new HashSet<>();
         for (AbstractCommonAttributeInstance data : this.fileInstances) {
