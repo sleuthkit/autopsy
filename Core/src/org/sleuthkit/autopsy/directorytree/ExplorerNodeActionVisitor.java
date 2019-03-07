@@ -61,7 +61,8 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
          * (TskException ex) {
          * Log.get(ExplorerNodeActionVisitor.class).log(Level.WARNING, "Error
          * getting show detail actions.", ex); return actions; }
-         * actions.addAll(c.accept(instance)); }
+         * actions.addAll(c.accept(instance));
+         }
          */
         return actions;
     }
@@ -75,8 +76,8 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         //TODO lst.add(new ExtractAction("Extract Image", img));
         try {
             lst.add(new ExtractUnallocAction(
-                    NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFiles"), img));
-        } catch (NoCurrentCaseException ex) {
+                NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFiles"), img));
+        } catch (NoCurrentCaseException ex) { 
             Logger.getLogger(ExplorerNodeActionVisitor.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
         }
         return lst;
@@ -91,8 +92,8 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final Volume vol) {
         List<AbstractAction> lst = new ArrayList<>();
         lst.add(new ExtractUnallocAction(
-                NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFile"), vol));
-
+            NbBundle.getMessage(this.getClass(), "ExplorerNodeActionVisitor.action.extUnallocToSingleFile"), vol));
+         
         return lst;
     }
 
@@ -100,13 +101,13 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
     public List<? extends Action> visit(final Directory d) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(AddContentTagAction.getInstance());
-
-        final Collection<AbstractFile> selectedFilesList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if (selectedFilesList.size() == 1) {
+        
+        final Collection<AbstractFile> selectedFilesList =
+                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if(selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-
+        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -116,10 +117,10 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actionsList = new ArrayList<>();
         if (!d.isDataSource()) {
             actionsList.add(AddContentTagAction.getInstance());
-
-            final Collection<AbstractFile> selectedFilesList
-                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-            if (selectedFilesList.size() == 1) {
+            
+            final Collection<AbstractFile> selectedFilesList =
+                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+            if(selectedFilesList.size() == 1) {
                 actionsList.add(DeleteFileContentTagAction.getInstance());
             }
         }
@@ -127,15 +128,16 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
-
+    
     @Override
     public List<? extends Action> visit(final LocalDirectory d) {
         List<Action> actionsList = new ArrayList<>();
         if (!d.isDataSource()) {
             actionsList.add(AddContentTagAction.getInstance());
-            final Collection<AbstractFile> selectedFilesList
-                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-            if (selectedFilesList.size() == 1) {
+            
+            final Collection<AbstractFile> selectedFilesList =
+                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+            if(selectedFilesList.size() == 1) {
                 actionsList.add(DeleteFileContentTagAction.getInstance());
             }
         }
@@ -149,11 +151,13 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(AddContentTagAction.getInstance());
-        final Collection<AbstractFile> selectedFilesList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if (selectedFilesList.size() == 1) {
+        
+        final Collection<AbstractFile> selectedFilesList =
+                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if(selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
+        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -163,11 +167,13 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(AddContentTagAction.getInstance());
-        final Collection<AbstractFile> selectedFilesList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if (selectedFilesList.size() == 1) {
+        
+        final Collection<AbstractFile> selectedFilesList =
+                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if(selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
-        } 
+        }
+        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -177,11 +183,13 @@ public class ExplorerNodeActionVisitor extends ContentVisitor.Default<List<? ext
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(AddContentTagAction.getInstance());
-        final Collection<AbstractFile> selectedFilesList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if (selectedFilesList.size() == 1) {
+        
+        final Collection<AbstractFile> selectedFilesList =
+                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if(selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
-        } 
+        }
+        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }

@@ -19,21 +19,16 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.datasourcesummary.ViewSummaryInformationAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SpecialDirectory;
 
@@ -41,7 +36,7 @@ import org.sleuthkit.datamodel.SpecialDirectory;
  * Parent class for special directory types (Local and Virtual)
  */
 public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<SpecialDirectory> {
-
+    
     public SpecialDirectoryNode(SpecialDirectory sd) {
         super(sd);
     }

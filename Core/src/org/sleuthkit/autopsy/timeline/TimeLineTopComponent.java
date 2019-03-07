@@ -104,7 +104,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     private final TimeLineController controller;
 
-    /** Lookup that will be exposed through the (Global Actions Context) */
+    /**
+     * Lookup that will be exposed through the (Global Actions Context)
+     */
     private final ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup();
 
     private final PropertyChangeListener focusPropertyListener = new PropertyChangeListener() {

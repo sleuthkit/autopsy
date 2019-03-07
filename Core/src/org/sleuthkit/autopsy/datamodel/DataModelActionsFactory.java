@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -97,7 +97,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
@@ -108,7 +107,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -126,12 +124,11 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         final Collection<AbstractFile> selectedFilesList
                 = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
-        } 
+        }
         if (isArtifactSource) {
             final Collection<BlackboardArtifact> selectedArtifactsList
                     = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
@@ -139,7 +136,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -164,7 +160,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
@@ -175,7 +170,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -200,7 +194,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
@@ -211,7 +204,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -236,7 +228,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
@@ -247,7 +238,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -272,7 +262,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
@@ -283,7 +272,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -308,7 +296,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
@@ -319,7 +306,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -344,7 +330,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
@@ -355,7 +340,6 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -369,7 +353,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (isArtifactSource) {
             final Collection<BlackboardArtifact> selectedArtifactsList
                     = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
@@ -377,13 +360,11 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
 
     public static List<Action> getActions(ContentTag contentTag, boolean isArtifactSource) {
-
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), contentTag.getContent()));
         final ContentTagNode tagNode = new ContentTagNode(contentTag);
@@ -403,7 +384,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
@@ -414,10 +394,8 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.add(DeleteContentTagAction.getInstance());
         actionsList.add(ReplaceContentTagAction.getInstance());
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -442,7 +420,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
@@ -453,10 +430,8 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.add(DeleteBlackboardArtifactTagAction.getInstance());
         actionsList.add(ReplaceBlackboardArtifactTagAction.getInstance());
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
