@@ -217,7 +217,7 @@ public abstract class DrawableTileBase extends DrawableUIBase {
                 MenuItem externalViewer = new MenuItem("Open in External Viewer");
                 externalViewer.setOnAction(actionEvent
                         -> SwingUtilities.invokeLater(() -> {
-                            new ExternalViewerShortcutAction()
+                            ExternalViewerShortcutAction.getInstance()
                                     .actionPerformed(null);
                         }));
                 externalViewer.setAccelerator(OpenExternalViewerAction.EXTERNAL_VIEWER_SHORTCUT);

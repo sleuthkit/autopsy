@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -69,16 +70,20 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.getActions.viewInNewWin.text"), this));
-        actionsList.add(new ExternalViewerAction(
-                NbBundle.getMessage(this.getClass(), "LocalFileNode.getActions.openInExtViewer.text"), this));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(
+                    NbBundle.getMessage(this.getClass(), "LocalFileNode.getActions.openInExtViewer.text"), this));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
 
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
         actionsList.add(AddContentTagAction.getInstance());
 
-        final Collection<AbstractFile> selectedFilesList
-                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }

@@ -28,6 +28,7 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -97,8 +98,7 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         final Collection<AbstractFile> selectedFilesList = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
         if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
-        }
-
+        } 
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[actionsList.size()]);
     }

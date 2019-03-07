@@ -28,6 +28,7 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -87,13 +88,12 @@ public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator        
         actionsList.add(AddContentTagAction.getInstance());
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
-        }
-        
+        } 
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[actionsList.size()]);
     }
@@ -112,7 +112,7 @@ public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
     // file based off it's extension
     static String getIconForFileType(AbstractFile file) {
 
-            return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
+        return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
     }
 
     @Override
@@ -122,7 +122,7 @@ public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
         // not will check if it has children using the Content API
         return true;
     }
-    
+
     @Override
     public String getItemType() {
         return getClass().getName();

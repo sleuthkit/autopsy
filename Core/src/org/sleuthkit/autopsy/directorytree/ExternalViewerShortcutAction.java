@@ -39,8 +39,20 @@ public class ExternalViewerShortcutAction extends AbstractAction {
 
     public static final KeyStroke EXTERNAL_VIEWER_SHORTCUT = KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_MASK);
 
-    public ExternalViewerShortcutAction() {
+    private ExternalViewerShortcutAction() {
         super(Bundle.ExternalViewerShortcutAction_title_text());
+    }
+
+    // This class is a singleton to support multi-selection of nodes, since 
+    // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
+    // node in the array returns a reference to the same action object from Node.getActions(boolean).    
+    private static ExternalViewerShortcutAction instance;
+
+    public static synchronized ExternalViewerShortcutAction getInstance() {
+        if (null == instance) {
+            instance = new ExternalViewerShortcutAction();
+        }
+        return instance;
     }
 
     @Override
