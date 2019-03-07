@@ -18,15 +18,17 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
@@ -42,7 +44,9 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Extract the <i>:Zone.Indentifier<i> alternate data stream files.
+ * Extract the <i>:Zone.Indentifier<i> alternate data stream files.  A file with
+ * a <i>:Zone.Indentifier<i> extention contains information about the similarly 
+ * named (with out zone identifer extention) downloaded file.
  */
 final class ExtractZoneIdentifier extends Extract {
 
@@ -53,7 +57,7 @@ final class ExtractZoneIdentifier extends Extract {
 
     @Messages({
         "ExtractZone_process_errMsg_find=A failure occured while searching for :Zone.Indentifier files.",
-        "ExtractZone_process_errMsg=A error occured processing ':Zone.Indentifier' files.",
+        "ExtractZone_process_errMsg=An error occured processing ':Zone.Indentifier' files.",
         "ExtractZone_progress_Msg=Extracting :Zone.Identifer files"
     })
 
@@ -64,22 +68,23 @@ final class ExtractZoneIdentifier extends Extract {
 
         List<AbstractFile> zoneFiles = null;
         try {
-            zoneFiles = findZoneFiles(dataSource);
+            zoneFiles = currentCase.getServices().getFileManager().findFiles(dataSource, ZONE_IDENIFIER_FILE)
+                    ;
         } catch (TskCoreException ex) {
             addErrorMessage(Bundle.ExtractZone_process_errMsg_find());
-            LOG.log(Level.SEVERE, "Unable to find zone identifier files, exception thrown. ", ex);
+            LOG.log(Level.SEVERE, "Unable to find zone identifier files, exception thrown. ", ex); // NON-NLS
         }
 
         if (zoneFiles == null || zoneFiles.isEmpty()) {
             return;
         }
         
-        ArrayList<Long> knownPathIDs = null;
+        Set<Long> knownPathIDs = null;
         try {
             knownPathIDs = getPathIDsForType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
         } catch (TskCoreException ex) {
             addErrorMessage(Bundle.ExtractZone_process_errMsg());
-            LOG.log(Level.SEVERE, "Failed to build PathIDs List for TSK_WEB_DOWNLOAD", ex);
+            LOG.log(Level.SEVERE, "Failed to build PathIDs List for TSK_WEB_DOWNLOAD", ex); // NON-NLS
         }
 
         if (knownPathIDs == null) {
@@ -91,7 +96,7 @@ final class ExtractZoneIdentifier extends Extract {
 
         for (AbstractFile zoneFile : zoneFiles) {
             try {
-                processZoneFile(context, dataSource, zoneFile, sourceArtifacts, downloadArtifacts);
+                processZoneFile(context, dataSource, zoneFile, sourceArtifacts, downloadArtifacts, knownPathIDs);
             } catch (TskCoreException ex) {
                 addErrorMessage(Bundle.ExtractZone_process_errMsg());
                 String message = String.format("Failed to process zone identifier file  %s", zoneFile.getName()); //NON-NLS
@@ -125,7 +130,8 @@ final class ExtractZoneIdentifier extends Extract {
      */
     private void processZoneFile(IngestJobContext context, Content dataSource,
             AbstractFile zoneFile, Collection<BlackboardArtifact> sourceArtifacts,
-            Collection<BlackboardArtifact> downloadArtifacts) throws TskCoreException {
+            Collection<BlackboardArtifact> downloadArtifacts,
+            Set<Long> knownPathIDs) throws TskCoreException {
 
         ZoneIdentifierInfo zoneInfo = null;
 
@@ -141,16 +147,19 @@ final class ExtractZoneIdentifier extends Extract {
         }
 
         AbstractFile downloadFile = getDownloadFile(dataSource, zoneFile);
-        ArrayList<Long> knownPathIDs = getPathIDsForType(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD);
 
         if (downloadFile != null) {
+            // Only create a new TSK_WEB_DOWNLOAD artifact if one does not exist for downloadFile
             if (!knownPathIDs.contains(downloadFile.getDataSourceObjectId())) {
+                // The zone identifier file is the parent of this artifact 
+                // because it is the file we parsed to get the data
                 BlackboardArtifact downloadbba = createDownloadArtifact(zoneFile, zoneInfo);
                 if (downloadbba != null) {
                     downloadArtifacts.add(downloadbba);
                 }
             }
-
+            
+            // check if download has a child TSK_DOWNLOAD_SOURCE artifact, if not create one
             if (downloadFile.getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE) == 0) {
                 BlackboardArtifact sourcebba = createDownloadSourceArtifact(downloadFile, zoneInfo);
                 if (sourcebba != null) {
@@ -158,22 +167,6 @@ final class ExtractZoneIdentifier extends Extract {
                 }
             }
         }
-    }
-
-    /**
-     * Find a list of all the file that end in <i>:Zone.Identifier<i>.
-     *
-     * @param dataSource Content
-     *
-     * @return A list of zone identifier files
-     *
-     * @throws TskCoreException
-     */
-    private List<AbstractFile> findZoneFiles(Content dataSource) throws TskCoreException {
-        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
-                = currentCase.getServices().getFileManager();
-
-        return fileManager.findFiles(dataSource, ZONE_IDENIFIER_FILE);
     }
 
     /**
@@ -223,18 +216,19 @@ final class ExtractZoneIdentifier extends Extract {
     private BlackboardArtifact createDownloadSourceArtifact(AbstractFile downloadFile, ZoneIdentifierInfo zoneInfo) {
 
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
-
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+      
+        bbattributes.addAll(Arrays.asList(
+                new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (zoneInfo.getURL() != null) ? zoneInfo.getURL() : "")); //NON-NLS
-
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                StringUtils.defaultString(zoneInfo.getURL(), "")),
+                
+                new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (zoneInfo.getURL() != null) ? NetworkUtils.extractDomain(zoneInfo.getURL()) : "")); //NON-NLS
-
-        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION,
+                (zoneInfo.getURL() != null) ? NetworkUtils.extractDomain(zoneInfo.getURL()) : ""),
+                
+                new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_LOCATION,
                 RecentActivityExtracterModuleFactory.getModuleName(),
-                (zoneInfo.getZoneIdAsString() != null) ? zoneInfo.getZoneIdAsString() : "")); //NON-NLS
+                StringUtils.defaultString(zoneInfo.getZoneIdAsString(), "")))); //NON-NLS
 
         return addArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE, downloadFile, bbattributes);
     }
@@ -266,8 +260,8 @@ final class ExtractZoneIdentifier extends Extract {
      *
      * @throws TskCoreException
      */
-    private ArrayList<Long> getPathIDsForType(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
-        ArrayList<Long> idList = new ArrayList();
+    private Set<Long> getPathIDsForType(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
+        Set<Long> idList = new HashSet<>();
         for (BlackboardArtifact artifact : currentCase.getSleuthkitCase().getBlackboardArtifacts(type)) {
             BlackboardAttribute pathIDAttribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
 
@@ -297,14 +291,14 @@ final class ExtractZoneIdentifier extends Extract {
      * file, in fact most will only supply the ZoneId. Only Edge supplies the
      * LastWriterPackageFamilyName.
      */
-    private final class ZoneIdentifierInfo {
+    private final static class ZoneIdentifierInfo {
 
-        private static final String ZONE_ID = "zoneid"; //NON-NLS
-        private static final String REFERRER_URL = "referrerurl"; //NON-NLS
-        private static final String HOST_URL = "hosturl"; //NON-NLS
-        private static final String FAMILY_NAME = "lastwriterpackagefamilyname"; //NON-NLS
+        private static final String ZONE_ID = "ZoneId"; //NON-NLS
+        private static final String REFERRER_URL = "ReferrerUrl"; //NON-NLS
+        private static final String HOST_URL = "HostUrl"; //NON-NLS
+        private static final String FAMILY_NAME = "LastWriterPackageFamilyName"; //NON-NLS
 
-        private final HashMap<String, String> dataMap = new HashMap<>();
+        private final Properties properties = new Properties(null);
 
         /**
          * Opens the zone file, reading for the key\value pairs and puts them
@@ -315,19 +309,8 @@ final class ExtractZoneIdentifier extends Extract {
          * @throws FileNotFoundException
          * @throws IOException
          */
-        ZoneIdentifierInfo(AbstractFile zoneFile) throws FileNotFoundException, IOException {
-            String line;
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new ReadContentInputStream(zoneFile)))) {
-                while ((line = reader.readLine()) != null) {
-                    String[] tokens = line.split("=");
-
-                    if (tokens.length < 2) {
-                        continue; //Nothing interesting in this line
-                    }
-
-                    dataMap.put(tokens[0].trim().toLowerCase(), tokens[1].trim());
-                }
-            }
+        ZoneIdentifierInfo(AbstractFile zoneFile) throws IOException {
+            properties.load(new ReadContentInputStream(zoneFile));
         }
 
         /**
@@ -335,9 +318,9 @@ final class ExtractZoneIdentifier extends Extract {
          *
          * @return interger zone id or -1 if unknown
          */
-        int getZoneId() {
+        private int getZoneId() {
             int zoneValue = -1;
-            String value = dataMap.get(ZONE_ID);
+            String value = properties.getProperty(ZONE_ID);
             if (value != null) {
                 zoneValue = Integer.parseInt(value);
             }
@@ -350,7 +333,7 @@ final class ExtractZoneIdentifier extends Extract {
          *
          * @return String description or null if a zone id was not found
          */
-        String getZoneIdAsString() {
+        private String getZoneIdAsString() {
             switch (getZoneId()) {
                 case 0:
                     return Bundle.LOCAL_MACHINE_ZONE();
@@ -372,8 +355,8 @@ final class ExtractZoneIdentifier extends Extract {
          *
          * @return String url or null if a host url was not found
          */
-        String getURL() {
-            return dataMap.get(HOST_URL);
+        private String getURL() {
+            return properties.getProperty(HOST_URL);
         }
 
         /**
@@ -381,8 +364,8 @@ final class ExtractZoneIdentifier extends Extract {
          *
          * @return String url or null if a host url was not found
          */
-        String getReferrer() {
-            return dataMap.get(REFERRER_URL);
+        private String getReferrer() {
+            return properties.getProperty(REFERRER_URL);
         }
 
         /**
@@ -390,8 +373,8 @@ final class ExtractZoneIdentifier extends Extract {
          *
          * @return String value or null if the value was not found
          */
-        String getFamilyName() {
-            return dataMap.get(FAMILY_NAME);
+        private String getFamilyName() {
+            return properties.getProperty(FAMILY_NAME);
         }
     }
 
