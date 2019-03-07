@@ -148,7 +148,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     @NbBundle.Messages({
         "FileNode.getActions.viewFileInDir.text=View File in Directory",
         "FileNode.getActions.viewInNewWin.text=View in New Window",
-        "FileNode.getActions.openInExtViewer.text=Open in External Viewer",
+        "FileNode.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E",
         "FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
