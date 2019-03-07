@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Defines a value that was in the common file search results as well as
@@ -46,10 +47,10 @@ final public class CommonAttributeValue {
         return this.value;
     }
 
-    String getTokenFileName(){
+    String getTokenFileName() {
         return tokenFileName;
     }
-    
+
     /**
      * concatenate cases this value was seen into a single string
      *
@@ -68,8 +69,26 @@ final public class CommonAttributeValue {
         return sources;
     }
 
+    /**
+     * Get the number of unique data sources in the current case which the value
+     * appeared in.
+     *
+     * @return the number of unique data sources in the current case which
+     *         contained the value
+     */
+    int getNumberOfDataSourcesInCurrentCase() {
+        Set<Long> dataSourceIds = new HashSet<>();
+        for (AbstractCommonAttributeInstance data : this.fileInstances) {
+            AbstractFile file = data.getAbstractFile();
+            if (file != null) {
+                dataSourceIds.add(file.getDataSourceObjectId());
+            }
+        }
+        return dataSourceIds.size();
+    }
+
     void addInstance(AbstractCommonAttributeInstance metadata) {
-        if (tokenFileName==null && metadata.getAbstractFile() != null){
+        if (tokenFileName == null && metadata.getAbstractFile() != null) {
             tokenFileName = metadata.getAbstractFile().getName();
         }
         this.fileInstances.add(metadata);
