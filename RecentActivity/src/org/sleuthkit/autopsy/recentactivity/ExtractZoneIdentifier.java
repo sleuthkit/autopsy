@@ -74,8 +74,7 @@ final class ExtractZoneIdentifier extends Extract {
 
         List<AbstractFile> zoneFiles = null;
         try {
-            zoneFiles = currentCase.getServices().getFileManager().findFiles(dataSource, ZONE_IDENIFIER_FILE)
-                    ;
+            zoneFiles = currentCase.getServices().getFileManager().findFiles(dataSource, ZONE_IDENIFIER_FILE);
         } catch (TskCoreException ex) {
             addErrorMessage(Bundle.ExtractZone_process_errMsg_find());
             LOG.log(Level.SEVERE, "Unable to find zone identifier files, exception thrown. ", ex); // NON-NLS
