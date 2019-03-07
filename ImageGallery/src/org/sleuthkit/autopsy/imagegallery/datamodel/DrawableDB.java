@@ -1161,15 +1161,15 @@ public final class DrawableDB {
         }
         
         // query to find the group id from attribute/value
-        String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
-                + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )",
+        String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME  //NON-NLS
+                + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )", //NON-NLS
                 SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
                 SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
 
-        String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, 1);
+        String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, 1); //NON-NLS
         if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
-            insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", 1);
+            insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", 1); //NON-NLS
         }
 
         tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
@@ -1196,7 +1196,7 @@ public final class DrawableDB {
             return;
         }
         
-        String updateSQL = String.format(" SET seen = 0 WHERE group_id in ( " + getGroupIdQuery(groupKey) + ")" );
+        String updateSQL = String.format(" SET seen = 0 WHERE group_id in ( " + getGroupIdQuery(groupKey) + ")" ); //NON-NLS
         tskCase.getCaseDbAccessManager().update(GROUPS_SEEN_TABLENAME, updateSQL);
       
         groupSeenCache.put(groupKey, false);
