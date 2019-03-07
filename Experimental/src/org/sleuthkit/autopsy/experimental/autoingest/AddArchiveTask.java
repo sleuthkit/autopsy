@@ -43,6 +43,9 @@ import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /*
  * A runnable that adds an archive data source as well as data sources contained
@@ -59,6 +62,7 @@ class AddArchiveTask implements Runnable {
     private final Object archiveDspLock;
 
     private static final String ARCHIVE_EXTRACTOR_MODULE_OUTPUT_DIR = "Archive Extractor";
+    private static final String LOGICAL_FILE_VIRTUAL_DIR_NAME = "$AdditionalFiles";
 
     /**
      * Constructs a runnable task that adds an archive as well as data sources
@@ -115,11 +119,9 @@ class AddArchiveTask implements Runnable {
 
             // extract contents of ZIP archive into destination folder
             List<String> extractedFiles = new ArrayList<>();
-            int numExtractedFilesRemaining = 0;
             try {
                 progressMonitor.setProgressText(String.format("Extracting archive contents to: %s", destinationFolder.toString()));
                 extractedFiles = ArchiveUtil.unpackArchiveFile(archivePath, destinationFolder.toString());
-                numExtractedFilesRemaining = extractedFiles.size();
             } catch (ArchiveUtil.ArchiveExtractionException ex) {
                 // delete extracted contents
                 logger.log(Level.SEVERE, "Exception while extracting archive contents into " + destinationFolder.toString() + ". Deleteing the directory", ex);
@@ -134,12 +136,13 @@ class AddArchiveTask implements Runnable {
             List<AutoIngestDataSourceProcessor> processorCandidates = getListOfValidDataSourceProcessors();
             
             // do processing
+            int numValidDataSources = 0;
+            DataSource defaultDataSource = null;
             for (String file : extractedFiles) {
 
                 // we only care about files, skip directories
                 File fileObject = new File(file);
                 if (fileObject.isDirectory()) {
-                    numExtractedFilesRemaining--;
                     continue;
                 }
 
@@ -202,10 +205,11 @@ class AddArchiveTask implements Runnable {
                         // if we are here it means the data source was added successfully
                         success = true;
                         newDataSources.addAll(internalDataSource.getContent());
+                        numValidDataSources++;
                         
                         // this extracted file has been "claimed" by one of the DSPs,
                         // remove it from the list of Logical Files that will be added later
-                        unclaimedFiles.remove(file);
+                        removeClaimedFiles(file, unclaimedFiles, selectedProcessor);
                         
                         // update data source info
                         for (Content c:internalDataSource.getContent()) {
@@ -225,6 +229,8 @@ class AddArchiveTask implements Runnable {
                                 String newName = Paths.get(archivePath).getFileName() + "/" + ds.getName();
                                 ds.setDisplayName(newName);
                                 currentCase.notifyDataSourceNameChanged(c, newName);
+                                
+                                defaultDataSource = ds;
                             }
                         }
 
@@ -237,7 +243,7 @@ class AddArchiveTask implements Runnable {
                     // one of the DSPs successfully processed the data source. delete the 
                     // copy of the data source in the original extracted archive folder. 
                     // otherwise the data source is going to be added again as a logical file.
-                    numExtractedFilesRemaining--;
+                    numValidDataSources--;
                     FileUtils.deleteQuietly(fileObject);
                 } else {
                     // none of the DSPs were able to process the data source. delete the 
@@ -250,7 +256,17 @@ class AddArchiveTask implements Runnable {
             // after all archive contents have been examined (and moved to separate folders if necessary), 
             // add remaining extracted contents as one logical file set
             if (unclaimedFiles.size() > 0) {
-                progressMonitor.setProgressText(String.format("Adding: %s", destinationFolder.toString()));
+
+                // ELTODO investigate if i need to aquire datase lock?
+                SleuthkitCase caseDatabase = Case.getCurrentCaseThrows().getSleuthkitCase();
+                VirtualDirectory additionalFilesDir = caseDatabase.addVirtualDirectory(defaultDataSource.getId(), LOGICAL_FILE_VIRTUAL_DIR_NAME);                
+                
+                for (String file : unclaimedFiles) {
+                    File fileObject = new File(file);
+                    caseDatabase.addLocalFile(fileObject.getName(), fileObject.getAbsolutePath(), fileObject.length(), 0, 0, 0, 0, fileObject.isFile(), TskData.EncodingType.NONE, additionalFilesDir);
+                }
+
+                /*progressMonitor.setProgressText(String.format("Adding: %s", destinationFolder.toString()));
                 logger.log(Level.INFO, "Adding directory {0} as logical file set", destinationFolder.toString());
                 synchronized (archiveDspLock) {
                     UUID taskId = UUID.randomUUID();
@@ -281,7 +297,7 @@ class AddArchiveTask implements Runnable {
                             ds.setAcquisitionDetails(details);
                         }
                     }
-                }
+                }*/
             }
         } catch (Exception ex) {
             criticalErrorOccurred = true;
@@ -299,6 +315,13 @@ class AddArchiveTask implements Runnable {
             }
             callback.done(result, errorMessages, newDataSources);
         }
+    }
+    
+    private void removeClaimedFiles(String file, List<String> unclaimedFiles, AutoIngestDataSourceProcessor selectedProcessor) {
+        
+        //if (!(selectedProcessor instanceof ForensicToolReportProcessor)) {
+            unclaimedFiles.remove(file);
+        //}
     }
 
     /**
