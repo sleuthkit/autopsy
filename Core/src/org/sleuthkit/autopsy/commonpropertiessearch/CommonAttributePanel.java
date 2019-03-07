@@ -294,7 +294,7 @@ final class CommonAttributePanel extends javax.swing.JDialog implements Observer
                         DataResultTopComponent.createInstance(tabTitle, Bundle.CommonAttributePanel_search_results_pathText(), commonFilesNode, 1);
                     } else {
                         // -3969
-                        Node commonFilesNode = new CommonAttributeSearchResultRootNode(metadata);
+                        Node commonFilesNode = new CommonAttributeSearchResultRootNode(metadata, interCasePanel.getSelectedCorrelationType());
                         DataResultFilterNode dataResultFilterNode = new DataResultFilterNode(commonFilesNode, ExplorerManager.find(CommonAttributePanel.this));
                         TableFilterNode tableFilterWithDescendantsNode = new TableFilterNode(dataResultFilterNode, 3);
                         DataResultViewerTable table = new CommonAttributesSearchResultsViewerTable();

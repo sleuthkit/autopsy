@@ -75,7 +75,6 @@ final public class CommonAttributeValue {
         for (AbstractCommonAttributeInstance data : this.fileInstances) {
             sources.add(data.getDataSource());
         }
-
         return sources;
     }
 
