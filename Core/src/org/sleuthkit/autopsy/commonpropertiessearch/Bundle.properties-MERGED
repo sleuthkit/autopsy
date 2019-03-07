@@ -101,7 +101,7 @@ CommonAttributePanel.resultsDisplayLabel.text_2=Display results organized by:
 CommonAttributePanel.organizeByCaseRadio.text=Case
 CommonAttributePanel.organizeByCountRadio.text=Number of occurrences
 CommonAttributePanel.caseResultsRadioButton.text=Case
-CommonAttributePanel.countResultsRadioButton.text=Number of occurrences
+CommonAttributePanel.countResultsRadioButton.text=Number of data sources
 CommonAttributePanel.displayResultsLabel.text_2=Display results organized by:
 # {0} - case name
 # {1} - attr type
