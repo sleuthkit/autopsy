@@ -264,24 +264,23 @@ public class GroupManager {
     }
 
     /**
-     * 'Save' the given group as seen in the drawable db.
+     * Marks the given group as 'seen' by the current examiner, in drawable db.
      *
      * @param group The DrawableGroup to mark as seen.
-     * @param seen  The seen state to set for the given group.
      *
      * @return A ListenableFuture that encapsulates saving the seen state to the
      *         DB.
      *
      *
      */
-    public ListenableFuture<?> markGroupSeen(DrawableGroup group, boolean seen) {
+    public ListenableFuture<?> markGroupSeen(DrawableGroup group) {
         return exec.submit(() -> {
             try {
                 Examiner examiner = controller.getSleuthKitCase().getCurrentExaminer();
-                getDrawableDB().markGroupSeen(group.getGroupKey(), seen, examiner.getId());
+                getDrawableDB().markGroupSeen(group.getGroupKey(), examiner.getId());
                 // only update and reshuffle if its new results
-                if (group.isSeen() != seen) {
-                    group.setSeen(seen);
+                if (group.isSeen() != true) {
+                    group.setSeen(true);
                     updateUnSeenGroups(group);
                 }
             } catch (TskCoreException ex) {
@@ -290,6 +289,30 @@ public class GroupManager {
         });
     }
 
+    /**
+     * Marks the given group as unseen in the drawable db.
+     *
+     * @param group The DrawableGroup.
+     *
+     * @return A ListenableFuture that encapsulates saving the seen state to the
+     *         DB.
+     */
+    public ListenableFuture<?> markGroupUnseen(DrawableGroup group) {
+        return exec.submit(() -> {
+            try {
+                
+                getDrawableDB().markGroupUnseen(group.getGroupKey());
+                // only update and reshuffle if its new results
+                if (group.isSeen() != false) {
+                    group.setSeen(false);
+                    updateUnSeenGroups(group);
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error setting group: %s to unseen.", group.getGroupKey().getValue().toString()), ex); //NON-NLS
+            }
+        });
+    }
+    
     /**
      * Update unseenGroups list accordingly based on the current status of
      * 'group'. Removes it if it is seen or adds it if it is unseen.
@@ -325,7 +348,7 @@ public class GroupManager {
 
                 // If we're grouping by category, we don't want to remove empty groups.
                 if (group.getFileIDs().isEmpty()) {
-                    markGroupSeen(group, true);
+                    markGroupSeen(group);
                     if (groupKey.getAttribute() != DrawableAttribute.CATEGORY) {
                         if (analyzedGroups.contains(group)) {
                             analyzedGroups.remove(group);
@@ -570,7 +593,7 @@ public class GroupManager {
         
         // reset the seen status for the group (if it is currently considered analyzed)
         if (group != null) {
-            markGroupSeen(group, false);
+            markGroupUnseen(group);
         }
     }
 
