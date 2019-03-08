@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.time.ZoneId;
 import java.util.Collection;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -117,7 +119,8 @@ public class TimeLineController {
 
     private static final ReadOnlyObjectWrapper<TimeZone> timeZone = new ReadOnlyObjectWrapper<>(TimeZone.getDefault());
 
-    private final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+    private final ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder().setNameFormat("Timeline Controller BG thread").build()));
     private final ReadOnlyListWrapper<Task<?>> tasks = new ReadOnlyListWrapper<>(FXCollections.observableArrayList());
     private final ReadOnlyDoubleWrapper taskProgress = new ReadOnlyDoubleWrapper(-1);
     private final ReadOnlyStringWrapper taskMessage = new ReadOnlyStringWrapper();
@@ -135,11 +138,15 @@ public class TimeLineController {
     }
 
     public static DateTimeZone getJodaTimeZone() {
-        return DateTimeZone.forTimeZone(getTimeZone().get());
+        return DateTimeZone.forTimeZone(timeZoneProperty().get());
     }
 
-    public static ReadOnlyObjectProperty<TimeZone> getTimeZone() {
+    public static ReadOnlyObjectProperty<TimeZone> timeZoneProperty() {
         return timeZone.getReadOnlyProperty();
+    }
+
+    public static TimeZone getTimeZone() {
+        return timeZone.get();
     }
 
     /**

@@ -374,11 +374,11 @@ class ListTimeline extends BorderPane {
                 setGraphic(null);
                 setTooltip(null);
             } else {
-                if (item.getEventTypes().stream().allMatch(EventType.getFileSystemTypes()::contains)) {
+                if (item.getEventTypes().stream().allMatch(EventType.FILE_SYSTEM.getSubTypes()::contains)) {
                     String typeString = ""; //NON-NLS
                     VBox toolTipVbox = new VBox(5);
 
-                    for (EventType type : EventType.getFileSystemTypes()) {
+                    for (EventType type : EventType.FILE_SYSTEM.getSubTypes()) {
                         if (item.getEventTypes().contains(type)) {
                             if (type.equals(FILE_MODIFIED)) {
                                 typeString += "M"; //NON-NLS
