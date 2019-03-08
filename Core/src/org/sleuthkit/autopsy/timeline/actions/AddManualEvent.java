@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
@@ -131,6 +132,10 @@ public class AddManualEvent extends Action {
      *
      * @throws IllegalArgumentException
      */
+    @NbBundle.Messages({
+        "AddManualEvent.createArtifactFailed=Failed to create artifact for event.",
+        "AddManualEvent.postArtifactFailed=Failed to post artifact to blackboard."
+    })
     private void addEvent(ManualEventInfo eventInfo) throws IllegalArgumentException {
         SleuthkitCase sleuthkitCase = controller.getEventsModel().getSleuthkitCase();
 
@@ -154,9 +159,11 @@ public class AddManualEvent extends Action {
                 sleuthkitCase.getBlackboard().postArtifact(artifact, source);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Error posting artifact to the blackboard.", ex);
+                new Alert(Alert.AlertType.ERROR, Bundle.AddManualEvent_postArtifactFailed(), ButtonType.OK).showAndWait();
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Error creatig new artifact.", ex);
+            new Alert(Alert.AlertType.ERROR, Bundle.AddManualEvent_createArtifactFailed(), ButtonType.OK).showAndWait();
         }
     }
 
