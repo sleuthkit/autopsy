@@ -153,7 +153,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
      * Setup a connection pool for db connections.
      *
      */
-    private void setupConnectionPool() throws EamDbException {
+    private void setupConnectionPool(boolean foreignKeysEnabled) throws EamDbException {
 
         if (dbSettings.dbFileExists() == false) {
             throw new EamDbException("Central repository database missing");
@@ -169,27 +169,31 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         connectionPool.setMaxIdle(-1);
         connectionPool.setMaxWaitMillis(1000);
         connectionPool.setValidationQuery(dbSettings.getValidationQuery());
-        connectionPool.setConnectionInitSqls(Arrays.asList("PRAGMA foreign_keys = ON"));
+        if (foreignKeysEnabled) {
+            connectionPool.setConnectionInitSqls(Arrays.asList("PRAGMA foreign_keys = ON"));
+        } else {
+            connectionPool.setConnectionInitSqls(Arrays.asList("PRAGMA foreign_keys = OFF"));
+        }
     }
 
     /**
      * Lazily setup Singleton connection on first request.
+     *
+     * @param foreignKeys determines if foreign keys should be enforced during this connection for SQLite
      *
      * @return A connection from the connection pool.
      *
      * @throws EamDbException
      */
     @Override
-    protected Connection connect() throws EamDbException {
+    protected Connection connect(boolean foreignKeys) throws EamDbException {
         synchronized (this) {
             if (!EamDb.isEnabled()) {
                 throw new EamDbException("Central Repository module is not enabled"); // NON-NLS
             }
-
             if (connectionPool == null) {
-                setupConnectionPool();
+                setupConnectionPool(foreignKeys);
             }
-
             try {
                 return connectionPool.getConnection();
             } catch (SQLException ex) {
@@ -198,6 +202,18 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
 
+    /**
+     * Lazily setup Singleton connection on first request with foreign keys enforced.
+     *
+     * @return A connection from the connection pool.
+     *
+     * @throws EamDbException
+     */
+    @Override
+    protected Connection connect() throws EamDbException {
+        return connect(true);
+    }
+    
     @Override
     protected String getConflictClause() {
         // For sqlite, our conflict clause is part of the table schema
@@ -275,7 +291,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     @Override
-    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException{
+    public void addDataSourceObjectId(int rowId, long dataSourceObjectId) throws EamDbException {
         try {
             acquireExclusiveLock();
             super.addDataSourceObjectId(rowId, dataSourceObjectId);
@@ -433,14 +449,14 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseSharedLock();
         }
     }
-    
+
     /**
      * Changes the name of a data source in the DB
-     * 
-     * @param eamDataSource  The data source
-     * @param newName        The new name
-     * 
-     * @throws EamDbException 
+     *
+     * @param eamDataSource The data source
+     * @param newName       The new name
+     *
+     * @throws EamDbException
      */
     @Override
     public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
@@ -451,7 +467,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }
     }
-    
+
     /**
      * Updates the MD5 hash value in an existing data source in the database.
      *
@@ -466,7 +482,7 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }
     }
-    
+
     /**
      * Updates the SHA-1 hash value in an existing data source in the database.
      *
@@ -481,9 +497,10 @@ final class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }
     }
-    
+
     /**
-     * Updates the SHA-256 hash value in an existing data source in the database.
+     * Updates the SHA-256 hash value in an existing data source in the
+     * database.
      *
      * @param eamDataSource The data source to update
      */
@@ -513,20 +530,31 @@ final class SqliteEamDb extends AbstractSqlEamDb {
         }
     }
 
-    /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
-     *
-     * @param aType The type of the artifact
-     * @param value The correlation value
-     *
-     * @return List of artifact instances for a given type/value
-     */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
         try {
             acquireSharedLock();
             return super.getArtifactInstancesByTypeValue(aType, value);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
+        try {
+            acquireSharedLock();
+            return super.getArtifactInstancesByTypeValues(aType, values);
+        } finally {
+            releaseSharedLock();
+        }
+    }
+
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
+        try {
+            acquireSharedLock();
+            return super.getArtifactInstancesByTypeValuesAndCases(aType, values, caseIds);
         } finally {
             releaseSharedLock();
         }

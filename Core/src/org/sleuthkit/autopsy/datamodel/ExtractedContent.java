@@ -51,6 +51,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTER
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -238,6 +239,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(new BlackboardArtifact.Type(TSK_ACCOUNT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_TL_EVENT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE) );
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {

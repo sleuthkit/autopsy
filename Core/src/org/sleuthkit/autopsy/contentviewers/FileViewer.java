@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,8 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
     private final FileTypeViewer[] KNOWN_VIEWERS = new FileTypeViewer[]{
         new SQLiteViewer(),
         new PListViewer(),
-        new MediaFileViewer()
+        new MediaFileViewer(),
+        new HtmlViewer()
     };
 
     private FileTypeViewer lastViewer;

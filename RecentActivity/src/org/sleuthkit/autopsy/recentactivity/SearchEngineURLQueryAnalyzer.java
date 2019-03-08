@@ -33,6 +33,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -62,7 +63,8 @@ import org.xml.sax.SAXException;
     "cannotBuildXmlParser=Unable to build XML parser: ",
     "cannotLoadSEUQA=Unable to load Search Engine URL Query Analyzer settings file, SEUQAMappings.xml: ",
     "cannotParseXml=Unable to parse XML file: ",
-    "# {0} - file name", "SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}."
+    "# {0} - file name", "SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.",
+    "Progress_Message_Find_Search_Query=Find Search Queries"
 })
 class SearchEngineURLQueryAnalyzer extends Extract {
 
@@ -394,9 +396,11 @@ class SearchEngineURLQueryAnalyzer extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
+        
+        progressBar.progress(Bundle.Progress_Message_Find_Search_Query());
         this.findSearchQueries();
         logger.log(Level.INFO, "Search Engine stats: \n{0}", getTotals()); //NON-NLS
     }

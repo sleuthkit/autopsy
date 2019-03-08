@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,19 +43,19 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.AbstractSqlEamDb
 public final class SqliteEamDbSettings {
 
     private final static Logger LOGGER = Logger.getLogger(SqliteEamDbSettings.class.getName());
-    private final String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
-    private final String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
-    private final String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
-    private final String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
-    private final String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
-    private static final String PRAGMA_SYNC_OFF = "PRAGMA synchronous = OFF";
-    private static final String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous = NORMAL";
-    private static final String PRAGMA_JOURNAL_WAL = "PRAGMA journal_mode = WAL";
-    private static final String PRAGMA_READ_UNCOMMITTED_TRUE = "PRAGMA read_uncommitted = True";
-    private static final String PRAGMA_ENCODING_UTF8 = "PRAGMA encoding = 'UTF-8'";
-    private static final String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
-    private static final String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
-    private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*(\\.db)?";
+    private final static String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
+    private final static String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
+    private final static String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
+    private final static String JDBC_BASE_URI = "jdbc:sqlite:"; // NON-NLS
+    private final static String VALIDATION_QUERY = "SELECT count(*) from sqlite_master"; // NON-NLS
+    private final static String PRAGMA_SYNC_OFF = "PRAGMA synchronous = OFF";
+    private final static String PRAGMA_SYNC_NORMAL = "PRAGMA synchronous = NORMAL";
+    private final static String PRAGMA_JOURNAL_WAL = "PRAGMA journal_mode = WAL";
+    private final static String PRAGMA_READ_UNCOMMITTED_TRUE = "PRAGMA read_uncommitted = True";
+    private final static String PRAGMA_ENCODING_UTF8 = "PRAGMA encoding = 'UTF-8'";
+    private final static String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
+    private final static String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
+    private final static String DB_NAMES_REGEX = "[a-z][a-z0-9_]*(\\.db)?";
     private String dbName;
     private String dbDirectory;
     private int bulkThreshold;
@@ -282,23 +282,6 @@ public final class SqliteEamDbSettings {
         String casesIdx1 = "CREATE INDEX IF NOT EXISTS cases_org_id ON cases (org_id)";
         String casesIdx2 = "CREATE INDEX IF NOT EXISTS cases_case_uid ON cases (case_uid)";
 
-        StringBuilder createDataSourcesTable = new StringBuilder();
-        createDataSourcesTable.append("CREATE TABLE IF NOT EXISTS data_sources (");
-        createDataSourcesTable.append("id integer primary key autoincrement NOT NULL,");
-        createDataSourcesTable.append("case_id integer NOT NULL,");
-        createDataSourcesTable.append("device_id text NOT NULL,");
-        createDataSourcesTable.append("name text NOT NULL,");
-        createDataSourcesTable.append("datasource_obj_id integer,");
-        createDataSourcesTable.append("md5 text DEFAULT NULL,");
-        createDataSourcesTable.append("sha1 text DEFAULT NULL,");
-        createDataSourcesTable.append("sha256 text DEFAULT NULL,");
-        createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
-        createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
-        createDataSourcesTable.append(")");
-
-        String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
-        String dataSourceIdx2 = "CREATE INDEX IF NOT EXISTS data_sources_object_id ON data_sources (datasource_obj_id)";
-
         StringBuilder createReferenceSetsTable = new StringBuilder();
         createReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS reference_sets (");
         createReferenceSetsTable.append("id integer primary key autoincrement NOT NULL,");
@@ -371,9 +354,9 @@ public final class SqliteEamDbSettings {
             stmt.execute(casesIdx1);
             stmt.execute(casesIdx2);
 
-            stmt.execute(createDataSourcesTable.toString());
-            stmt.execute(dataSourceIdx1);
-            stmt.execute(dataSourceIdx2);
+            stmt.execute(getCreateDataSourcesTableStatement());
+            stmt.execute(getAddDataSourcesNameIndexStatement());
+            stmt.execute(getAddDataSourcesObjectIdIndexStatement());
 
             stmt.execute(createReferenceSetsTable.toString());
             stmt.execute(referenceSetsIdx1);
@@ -435,21 +418,49 @@ public final class SqliteEamDbSettings {
      */
     static String getCreateArtifactInstancesTableTemplate() {
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
-        StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
-        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
-        createArtifactInstancesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
-        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("value text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
-        createArtifactInstancesTableTemplate.append("comment text,");
-        createArtifactInstancesTableTemplate.append("file_obj_id integer,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path) ON CONFLICT IGNORE,");
-        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
-        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
-        createArtifactInstancesTableTemplate.append(")");
-        return createArtifactInstancesTableTemplate.toString();
+        return "CREATE TABLE IF NOT EXISTS %s (id integer primary key autoincrement NOT NULL,"
+                + "case_id integer NOT NULL,data_source_id integer NOT NULL,value text NOT NULL,"
+                + "file_path text NOT NULL,known_status integer NOT NULL,comment text,file_obj_id integer,"
+                + "CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path) ON CONFLICT IGNORE,"
+                + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
+                + "foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL)";
+    }
+
+    /**
+     * Get the statement String for creating a new data_sources table in a
+     * Sqlite central repository.
+     *
+     * @return a String which is a statement for cretating a new data_sources
+     *         table
+     */
+    static String getCreateDataSourcesTableStatement() {
+        return "CREATE TABLE IF NOT EXISTS data_sources (id integer primary key autoincrement NOT NULL,"
+                + "case_id integer NOT NULL,device_id text NOT NULL,name text NOT NULL,datasource_obj_id integer,"
+                + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
+                + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
+                + "CONSTRAINT datasource_unique UNIQUE (case_id, datasource_obj_id))";
+    }
+
+    /**
+     * Get the statement for creating an index on the name column of the
+     * data_sources table.
+     *
+     * @return a String which is a statement for adding an index on the name
+     *         column of the data_sources table.
+     */
+    static String getAddDataSourcesNameIndexStatement() {
+        return "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
+    }
+
+    /**
+     * Get the statement for creating an index on the data_sources_object_id
+     * column of the data_sources table.
+     *
+     * @return a String which is a statement for adding an index on the
+     *         data_sources_object_id column of the data_sources table.
+     */
+    static String getAddDataSourcesObjectIdIndexStatement() {
+        return "CREATE INDEX IF NOT EXISTS data_sources_object_id ON data_sources (datasource_obj_id)";
     }
 
     /**
