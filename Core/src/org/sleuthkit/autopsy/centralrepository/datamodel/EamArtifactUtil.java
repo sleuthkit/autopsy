@@ -365,6 +365,7 @@ public class EamArtifactUtil {
             case CARVED:
             case DERIVED:
             case LOCAL:
+            case LAYOUT_FILE:
                 return true;
             case FS:
                 return file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC);

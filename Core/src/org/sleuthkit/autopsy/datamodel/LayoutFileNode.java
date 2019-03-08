@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -64,6 +63,12 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
         if (lf.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED)) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/carved-file-icon-16.png"); //NON-NLS
+        } else if (lf.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.LAYOUT_FILE)) {
+            if (lf.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+                this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
+            } else {
+                this.setIconBaseWithExtension(FileNode.getIconForFileType(lf));
+            }
         } else {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
         }
