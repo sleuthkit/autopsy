@@ -1060,16 +1060,34 @@ abstract class AbstractSqlEamDb implements EamDb {
 
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+        if (value == null) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances for null value");
+        }
         return getArtifactInstancesByTypeValues(aType, Arrays.asList(value));
     }
 
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
+        if (aType == null) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances for null type");
+        }
+        if (values == null || values.isEmpty()) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified values");
+        }
         return getArtifactInstances(prepareGetInstancesSql(aType, values), aType);
     }
 
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
+        if (aType == null) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances for null type");
+        }
+        if (values == null || values.isEmpty()) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified values");
+        }
+        if (caseIds == null || caseIds.isEmpty()) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified cases");
+        }
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
                 = " and "
