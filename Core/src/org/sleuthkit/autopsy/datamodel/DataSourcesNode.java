@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.logging.Level;
@@ -123,6 +124,17 @@ public class DataSourcesNode extends DisplayableItemNode {
                     Content content = Case.getCurrentCaseThrows().getSleuthkitCase().getDataSource(datasourceObjId);
                     currentKeys = new ArrayList<>(Arrays.asList(content));
                 }
+                
+                Collections.sort(currentKeys, new Comparator<Content>() {
+                    @Override
+                    public int compare(Content content1, Content content2) {
+                        String content1Name = content1.getName().toLowerCase();
+                        String content2Name = content2.getName().toLowerCase();
+                        return content1Name.compareTo(content2Name);
+                    }
+
+                });
+                
                 setKeys(currentKeys);
             } catch (TskCoreException | NoCurrentCaseException | TskDataException ex) {
                 logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS

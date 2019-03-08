@@ -37,6 +37,7 @@
                 <package>com.apple.eawt</package>
                 <package>com.apple.eawt.event</package>
                 <package>com.apple.eio</package>
+                <package>com.dd.plist</package>
                 <package>com.github.lgooddatepicker.components</package>
                 <package>com.github.lgooddatepicker.optionalusertools</package>
                 <package>com.github.lgooddatepicker.zinternaltools</package>
@@ -743,16 +744,8 @@
                 <binary-origin>release/modules/ext/jna-3.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gson-2.8.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-2.8.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jfxtras-common-8.0-r4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jfxtras-common-8.0-r4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jsr305-1.3.9.jar</runtime-relative-path>
@@ -875,6 +868,14 @@
                 <binary-origin>release/modules/ext/commons-codec-1.10.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/gson-2.8.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gson-2.8.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
             </class-path-extension>
@@ -969,6 +970,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/gst1-java-core-0.9.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gst1-java-core-0.9.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/dd-plist-1.20.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/dd-plist-1.20.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>
