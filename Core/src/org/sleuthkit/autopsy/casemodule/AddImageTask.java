@@ -224,7 +224,7 @@ class AddImageTask implements Runnable {
                 try {
                     tskAddImageProcess.revert();
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error reverting adding image %s to the case database", imagePath), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Error reverting after adding image %s to the case database", imagePath), ex); //NON-NLS
                     errorMessages.add(ex.getMessage());
                     criticalErrorOccurred = true;
                 }
@@ -287,7 +287,7 @@ class AddImageTask implements Runnable {
                             }
                         }
                     } else {
-                        String errorMessage = String.format("Error commiting adding image %s to the case database, no object id returned", imagePath); //NON-NLS
+                        String errorMessage = String.format("Error commiting after adding image %s to the case database, no object id returned", imagePath); //NON-NLS
                         logger.log(Level.SEVERE, errorMessage);
                         errorMessages.add(errorMessage);
                         criticalErrorOccurred = true;

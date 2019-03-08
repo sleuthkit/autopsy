@@ -26,6 +26,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -46,12 +47,14 @@ class DataSourceUsageAnalyzer extends Extract {
 
     @Messages({
         "# {0} - OS name",
-        "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})"
+        "DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})",
+        "Progress_Message_Analyze_Usage=Data Sources Usage Analysis",
     })
     @Override
-    void process(Content dataSource, IngestJobContext context) {
+    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         try {
+            progressBar.progress(Bundle.Progress_Message_Analyze_Usage());
             createDataSourceUsageArtifacts();
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to check if datasource contained a volume with operating system specific files", ex);

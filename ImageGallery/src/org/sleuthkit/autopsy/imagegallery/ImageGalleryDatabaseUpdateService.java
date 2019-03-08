@@ -63,7 +63,7 @@ public class ImageGalleryDatabaseUpdateService implements AutopsyService {
             return;
         }
         ProgressIndicator progress = context.getProgressIndicator();
-        progress.start(Bundle.ImageGalleryDatabaseUpdateService_openCaseResources_progressMessage_start());
+        progress.progress(Bundle.ImageGalleryDatabaseUpdateService_openCaseResources_progressMessage_start());
         try {
             ImageGalleryModule.createController(context.getCase());
         } catch (TskCoreException ex) {
