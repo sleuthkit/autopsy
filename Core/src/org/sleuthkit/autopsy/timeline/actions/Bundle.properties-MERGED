@@ -1,5 +1,7 @@
+AddManualEvent.createArtifactFailed=Failed to create artifact for event.
 AddManualEvent.EventCreationDialogPane.initialize.dataSourcesError=Error getting datasources in case.
 AddManualEvent.longText=Manually add an event to the timeline.
+AddManualEvent.postArtifactFailed=Failed to post artifact to blackboard.
 AddManualEvent.text=Add Event
 # {0} - action accelerator keys 
 Back.longText=Back: {0}\nGo back to the last view settings.
