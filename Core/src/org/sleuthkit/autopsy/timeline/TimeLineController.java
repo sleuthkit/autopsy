@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
