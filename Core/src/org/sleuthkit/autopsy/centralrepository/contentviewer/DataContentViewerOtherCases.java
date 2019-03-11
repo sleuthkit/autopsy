@@ -774,10 +774,19 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             // get correlation and reference set instances from DB
             correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
             for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
-                try {
-                    caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
-                } catch (EamDbException ex) {
-                    System.out.println("can't get correlation case");
+                if (nodeData.isCentralRepoNode()) {
+                    try {
+                        caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
+                    } catch (EamDbException ex) {
+                        System.out.println("can't get correlation case");
+                    }
+                } else {
+                    try {
+                    caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
+                    } catch (NoCurrentCaseException ex){
+                        System.out.println("NO cURRENT CASE");
+                    }
+                    
                 }
             }
         }
@@ -852,7 +861,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         try {
                             if (((CorrelationCase) casesTableModel.getRow(caseTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
                                     && dataSourceModel.getValueAt(dataSourceTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
-                                System.out.println(((CorrelationCase) casesTableModel.getRow(caseTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID());
                                 tableModel.addNodeData(nodeData);
                             }
                         } catch (EamDbException ex) {
