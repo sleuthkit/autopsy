@@ -23,6 +23,7 @@ import java.awt.Cursor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -56,6 +57,9 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
      * 
      * @return The text content of the file.
      */
+    @NbBundle.Messages({
+       "HtmlViewer_file_error=This file is missing or unreadable.",
+    })
     private String getHtmlText(AbstractFile abstractFile) {
         try {
             int fileSize = (int) abstractFile.getSize();
@@ -65,9 +69,8 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Unable to read from file '%s' (id=%d).",
                     abstractFile.getName(), abstractFile.getId()), ex);
+            return String.format("<p>%s</p>", Bundle.HtmlViewer_file_error());
         }
-        
-        return null;
     }
 
     /**
@@ -109,10 +112,18 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
         return Arrays.asList(SUPPORTED_MIMETYPES);
     }
 
+    @NbBundle.Messages({
+       "HtmlViewer_error=This file is not properly formed HTML text that can be displayed.",
+    })
     @Override
     public void setFile(AbstractFile file) {
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        htmlPanel.setHtmlText(getHtmlText(file));
+        try {
+            htmlPanel.setHtmlText(getHtmlText(file));
+        }
+        catch (Exception ex) {
+            htmlPanel.setHtmlText(Bundle.HtmlViewer_error());
+        }
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
