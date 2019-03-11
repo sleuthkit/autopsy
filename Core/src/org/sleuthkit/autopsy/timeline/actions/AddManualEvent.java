@@ -21,13 +21,13 @@ package org.sleuthkit.autopsy.timeline.actions;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import static java.util.Arrays.asList;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
@@ -74,7 +74,7 @@ import org.sleuthkit.datamodel.timeline.EventType;
 public class AddManualEvent extends Action {
 
     private final static Logger logger = Logger.getLogger(AddManualEvent.class.getName());
-    private static final String MANUAL_CREATION = "Manual Creation";
+    private static final String MANUAL_CREATION = "Manual Creation"; //NON-NLS
     private static final Image ADD_EVENT_IMAGE = new Image("/org/sleuthkit/autopsy/timeline/images/add.png", 16, 16, true, true, true); // NON-NLS
 
     private final TimeLineController controller;
@@ -117,7 +117,7 @@ public class AddManualEvent extends Action {
         setLongText(Bundle.AddManualEvent_longText());
 
         setEventHandler(actionEvent -> {
-            //shoe the dialog and if it completed normally add the event.
+            //show the dialog and if it completed normally add the event.
             new EventCreationDialog(controller, epochMillis).showAndWait().ifPresent(this::addEvent);
         });
     }
@@ -131,6 +131,10 @@ public class AddManualEvent extends Action {
      *
      * @throws IllegalArgumentException
      */
+    @NbBundle.Messages({
+        "AddManualEvent.createArtifactFailed=Failed to create artifact for event.",
+        "AddManualEvent.postArtifactFailed=Failed to post artifact to blackboard."
+    })
     private void addEvent(ManualEventInfo eventInfo) throws IllegalArgumentException {
         SleuthkitCase sleuthkitCase = controller.getEventsModel().getSleuthkitCase();
 
@@ -153,10 +157,12 @@ public class AddManualEvent extends Action {
             try {
                 sleuthkitCase.getBlackboard().postArtifact(artifact, source);
             } catch (Blackboard.BlackboardException ex) {
-                logger.log(Level.SEVERE, "Error posting artifact to the blackboard.", ex);
+                logger.log(Level.SEVERE, "Error posting artifact to the blackboard.", ex); //NON-NLS
+                new Alert(Alert.AlertType.ERROR, Bundle.AddManualEvent_postArtifactFailed(), ButtonType.OK).showAndWait();
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creatig new artifact.", ex);
+            logger.log(Level.SEVERE, "Error creatig new artifact.", ex); //NON-NLS
+            new Alert(Alert.AlertType.ERROR, Bundle.AddManualEvent_createArtifactFailed(), ButtonType.OK).showAndWait();
         }
     }
 
@@ -168,7 +174,7 @@ public class AddManualEvent extends Action {
 
         EventCreationDialog(TimeLineController controller, Long epochMillis) {
             this.eventCreationDialogPane = new EventCreationDialogPane(controller, epochMillis);
-            setTitle("Add Event");
+            setTitle(Bundle.AddManualEvent_text());
             setDialogPane(eventCreationDialogPane);
 
             //We can't do these steps until after the dialog is shown or we get an error.
@@ -208,7 +214,7 @@ public class AddManualEvent extends Action {
 
             EventCreationDialogPane(TimeLineController controller, Long epochMillis) {
                 this.controller = controller;
-                FXMLConstructor.construct(this, "EventCreationDialog.fxml");
+                FXMLConstructor.construct(this, "EventCreationDialog.fxml"); //NON-NLS
                 if (epochMillis == null) {
                     timePicker.setLocalDateTime(LocalDateTime.now());
                 } else {
@@ -219,7 +225,7 @@ public class AddManualEvent extends Action {
             @FXML
             @NbBundle.Messages("AddManualEvent.EventCreationDialogPane.initialize.dataSourcesError=Error getting datasources in case.")
             void initialize() {
-                assert descriptionTextField != null : "fx:id=\"descriptionTextField\" was not injected: check your FXML file 'EventCreationDialog.fxml'.";
+                assert descriptionTextField != null : "fx:id=\"descriptionTextField\" was not injected: check your FXML file 'EventCreationDialog.fxml'.";//NON-NLS
 
                 timeZoneChooser.getItems().setAll(timeZoneList);
                 timeZoneChooser.getSelectionModel().select(TimeZoneUtils.createTimeZoneString(TimeLineController.getTimeZone()));
@@ -234,9 +240,12 @@ public class AddManualEvent extends Action {
                             return dataSource.getName() + "(ID: " + dataSource.getId() + ")";
                         }
 
+                        /**
+                         * This method should never get called.
+                         */
                         @Override
                         public DataSource fromString(String string) {
-                            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+                            throw new UnsupportedOperationException("Not supported yet."); //NON-NLS
                         }
                     });
                 } catch (TskCoreException ex) {
@@ -248,10 +257,17 @@ public class AddManualEvent extends Action {
             /**
              * Install/Configure the ValidationSupport.
              */
+            @NbBundle.Messages({
+                "AddManualEvent.validation.description=Description is required.",
+                "AddManualEvent.validation.datetime=Invalid datetime",
+                "AddManualEvent.validation.timezone=Invalid time zone",})
             void installValidation() {
-                validationSupport.registerValidator(descriptionTextField, false, Validator.createEmptyValidator("Description is required"));
-                validationSupport.registerValidator(timePicker, false, Validator.createPredicateValidator(Objects::nonNull, "Invalid datetime"));
-                validationSupport.registerValidator(timeZoneChooser, false, Validator.createPredicateValidator((String zone) -> timeZoneList.contains(zone.trim()), "Invalid time zone"));
+                validationSupport.registerValidator(descriptionTextField, false,
+                        Validator.createEmptyValidator(Bundle.AddManualEvent_validation_description()));
+                validationSupport.registerValidator(timePicker, false,
+                        Validator.createPredicateValidator(Objects::nonNull, Bundle.AddManualEvent_validation_description()));
+                validationSupport.registerValidator(timeZoneChooser, false,
+                        Validator.createPredicateValidator((String zone) -> timeZoneList.contains(zone.trim()), Bundle.AddManualEvent_validation_timezone()));
 
                 validationSupport.initInitialDecoration();
 

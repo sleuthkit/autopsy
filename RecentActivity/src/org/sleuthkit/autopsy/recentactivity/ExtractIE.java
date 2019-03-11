@@ -283,7 +283,7 @@ class ExtractIE extends Extract {
         try {
             blackboard.postArtifacts(bbartifacts, moduleName);
         } catch (Blackboard.BlackboardException ex) {
-            this.addErrorMessage(Bundle.ExtractIE_getCookie_errMsg_errPostinCookiess());
+            this.addErrorMessage(Bundle.ExtractIE_getCookie_errMsg_errPostingCookiess());
             logger.log(Level.SEVERE, "Exception thrown while posting IE cookie artifact.", ex); //NON-NLS
         }
     }

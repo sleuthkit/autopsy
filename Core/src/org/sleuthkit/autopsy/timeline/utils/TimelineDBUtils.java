@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,25 +27,41 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
+ * Utilities to help work with databases.
  */
 public class TimelineDBUtils {
 
     private final SleuthkitCase sleuthkitCase;
 
+    /**
+     * Create a TimelineDBUtils for the givecn SleuthlitCase.
+     *
+     * @param sleuthkitCase The case to make utilities for. The type of the
+     *                      underlying database is used in the implementation of
+     *                      these utilities.
+     */
     public TimelineDBUtils(SleuthkitCase sleuthkitCase) {
         this.sleuthkitCase = sleuthkitCase;
     }
 
-    public String csvAggFunction(String args) {
+    /**
+     * Wrap the given columnName in the appropiate sql function to get a comma
+     * seperated list in the result.
+     *
+     * @param columnName
+     *
+     * @return An sql expression that will produce a comma seperated list of
+     *         values from the given column in the result.
+     */
+    public String csvAggFunction(String columnName) {
         return (sleuthkitCase.getDatabaseType() == TskData.DbType.POSTGRESQL ? "string_agg" : "group_concat")
-               + "(Cast (" + args + " AS VARCHAR) , '" + "," + "')";
+               + "(Cast (" + columnName + " AS VARCHAR) , ',')"; //NON-NLS
     }
 
     /**
-     * take the result of a group_concat SQLite operation and split it into a
-     * set of X using the mapper to to convert from string to X If groupConcat
-     * is empty, null, or all whitespace, returns an empty list.
+     * Take the result of a group_concat / string_agg sql operation and split it
+     * into a set of X using the mapper to convert from string to X. If
+     * groupConcat is empty, null, or all whitespace, returns an empty list.
      *
      * @param <X>         the type of elements to return
      * @param groupConcat a string containing the group_concat result ( a comma
@@ -55,13 +71,14 @@ public class TimelineDBUtils {
      * @return a Set of X, each element mapped from one element of the original
      *         comma delimited string
      *
-     * @throws org.sleuthkit.datamodel.TskCoreException
+     * @throws org.sleuthkit.datamodel.TskCoreException If the mapper throws a
+     *                                                  TskCoreException
      */
     public static <X> List<X> unGroupConcat(String groupConcat, CheckedFunction<String, X, TskCoreException> mapper) throws TskCoreException {
 
         if (isBlank(groupConcat)) {
             return Collections.emptyList();
-        } 
+        }
 
         List<X> result = new ArrayList<>();
         for (String s : groupConcat.split(",")) {
