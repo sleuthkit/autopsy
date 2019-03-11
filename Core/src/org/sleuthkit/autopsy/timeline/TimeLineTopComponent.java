@@ -104,7 +104,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     private final TimeLineController controller;
 
-    /** Lookup that will be exposed through the (Global Actions Context) */
+    /**
+     * Lookup that will be exposed through the (Global Actions Context)
+     */
     private final ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup();
 
     private final PropertyChangeListener focusPropertyListener = new PropertyChangeListener() {
@@ -263,7 +265,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
         getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(ExternalViewerShortcutAction.EXTERNAL_VIEWER_SHORTCUT, "useExternalViewer"); //NON-NLS 
-        getActionMap().put("useExternalViewer", new ExternalViewerShortcutAction()); //NON-NLS
+        getActionMap().put("useExternalViewer", ExternalViewerShortcutAction.getInstance()); //NON-NLS
         this.controller = controller;
 
         //create linked result and content views

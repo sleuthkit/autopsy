@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2013-2018 Basis Technology Corp.
+ *
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.actions.ReplaceContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.datamodel.Reports.ReportNode;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -82,7 +83,13 @@ public class DataModelActionsFactory {
         final FileNode fileNode = new FileNode(file);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, fileNode));
-        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, fileNode));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, fileNode));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
@@ -90,24 +97,20 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
-    
+
     public static List<Action> getActions(SlackFile slackFile, boolean isArtifactSource) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), slackFile));
@@ -121,20 +124,18 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -145,7 +146,13 @@ public class DataModelActionsFactory {
         LayoutFileNode layoutFileNode = new LayoutFileNode(file);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, layoutFileNode));
-        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, layoutFileNode));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, layoutFileNode));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());//
         actionsList.add(null); // creates a menu separator
@@ -153,20 +160,16 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -177,7 +180,13 @@ public class DataModelActionsFactory {
         DirectoryNode directoryNode = new DirectoryNode(directory);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, directoryNode));
-        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, directoryNode));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, directoryNode));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
@@ -185,20 +194,16 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -209,7 +214,13 @@ public class DataModelActionsFactory {
         VirtualDirectoryNode directoryNode = new VirtualDirectoryNode(directory);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, directoryNode));
-        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, directoryNode));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, directoryNode));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
@@ -217,31 +228,33 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
-    
+
     public static List<Action> getActions(LocalDirectory directory, boolean isArtifactSource) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), directory));
         LocalDirectoryNode directoryNode = new LocalDirectoryNode(directory);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, directoryNode));
-        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, directoryNode));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, directoryNode));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
@@ -249,20 +262,16 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -273,7 +282,13 @@ public class DataModelActionsFactory {
         final LocalFileNode localFileNode = new LocalFileNode(file);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, localFileNode));
-        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, localFileNode));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, localFileNode));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
@@ -281,20 +296,16 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -305,7 +316,13 @@ public class DataModelActionsFactory {
         final LocalFileNode localFileNode = new LocalFileNode(file);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, localFileNode));
-        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, localFileNode));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, localFileNode));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
@@ -313,20 +330,16 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
@@ -340,7 +353,6 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-
         if (isArtifactSource) {
             final Collection<BlackboardArtifact> selectedArtifactsList
                     = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
@@ -348,19 +360,23 @@ public class DataModelActionsFactory {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
 
     public static List<Action> getActions(ContentTag contentTag, boolean isArtifactSource) {
-    
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), contentTag.getContent()));
         final ContentTagNode tagNode = new ContentTagNode(contentTag);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, tagNode));
-        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
@@ -368,35 +384,35 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.add(DeleteContentTagAction.getInstance());
         actionsList.add(ReplaceContentTagAction.getInstance());
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
-    
-    
+
     public static List<Action> getActions(BlackboardArtifactTag artifactTag, boolean isArtifactSource) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), artifactTag.getContent()));
         final BlackboardArtifactTagNode tagNode = new BlackboardArtifactTagNode(artifactTag);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, tagNode));
-        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, tagNode));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(null); // creates a menu separator
@@ -404,27 +420,22 @@ public class DataModelActionsFactory {
         if (isArtifactSource) {
             actionsList.add(AddBlackboardArtifactTagAction.getInstance());
         }
-        
-        final Collection<AbstractFile> selectedFilesList =
-                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-        if(selectedFilesList.size() == 1) {
+        if (selectedFilesList.size() == 1) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
-        if(isArtifactSource) {
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+        if (isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
         }
-        
         actionsList.add(DeleteBlackboardArtifactTagAction.getInstance());
         actionsList.add(ReplaceBlackboardArtifactTagAction.getInstance());
-        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList;
     }
-    
+
     public static List<Action> getActions(Content content, boolean isArtifactSource) {
         if (content instanceof File) {
             return getActions((File) content, isArtifactSource);
