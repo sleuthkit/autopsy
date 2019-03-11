@@ -55,7 +55,7 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
         multiUserCaseScrollPane.setViewportView(caseBrowserPanel);
         listeners = new ArrayList<>();
     }
-    
+
     /**
      * Refreshes the child component that displays the multi-user cases known to
      * the coordination service..
@@ -63,21 +63,22 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
     void refreshDisplay() {
         caseBrowserPanel.displayCases();
     }
-    
+
     /**
      * Subscribes to the selections when the user presses the OK button.
-     * 
-     * @param listener 
+     *
+     * @param listener
      */
     void subscribeToNewCaseSelections(ActionListener listener) {
         listeners.add(listener);
     }
-    
+
     /**
      * Sets the selections in the panel
-     * 
+     *
      * @param selections
-     * @throws PropertyVetoException 
+     *
+     * @throws PropertyVetoException
      */
     void setSelections(Node[] selections) throws PropertyVetoException {
         caseBrowserPanel.getExplorerManager().setSelectedNodes(selections);

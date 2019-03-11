@@ -25,7 +25,8 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrowserCustomizer;
 
 /**
- * Customizer for SelectMultiUserCasesPanel. Displays the 'Create date' and 'Directory' columns
+ * Customizer for SelectMultiUserCasesPanel. Displays the 'Create date' and
+ * 'Directory' columns
  */
 public class SelectMultiUserCaseDialogCustomizer implements MultiUserCaseBrowserCustomizer {
 
@@ -34,13 +35,15 @@ public class SelectMultiUserCaseDialogCustomizer implements MultiUserCaseBrowser
         List<Column> properties = new ArrayList<>();
         properties.add(Column.CREATE_DATE);
         properties.add(Column.DIRECTORY);
-        return properties;    }
+        return properties;
+    }
 
     @Override
     public List<SortColumn> getSortColumns() {
         List<SortColumn> sortColumns = new ArrayList<>();
         sortColumns.add(new SortColumn(Column.CREATE_DATE, false, 1));
-        return sortColumns;    }
+        return sortColumns;
+    }
 
     @Override
     public boolean allowMultiSelect() {
@@ -57,5 +60,4 @@ public class SelectMultiUserCaseDialogCustomizer implements MultiUserCaseBrowser
         return null;
     }
 
-    
 }

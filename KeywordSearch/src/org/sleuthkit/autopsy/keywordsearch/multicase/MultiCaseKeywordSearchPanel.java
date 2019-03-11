@@ -100,7 +100,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         caseSelectionDialog.subscribeToNewCaseSelections(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                populateCasesList((Node[])e.getSource());
+                populateCasesList((Node[]) e.getSource());
                 revalidate();
             }
         });
@@ -137,8 +137,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
 
     /**
      * If a string is received and it matches the
-     * MultiCaseSearcher.SEARCH_COMPLETE_STRING reset elements of this panel
-     * to reflect that the search is done.
+     * MultiCaseSearcher.SEARCH_COMPLETE_STRING reset elements of this panel to
+     * reflect that the search is done.
      *
      * @param stringRecived the String which was received
      */
@@ -228,7 +228,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         currentSelections = selectedNodes;
         int casePanelWidth = casesPanel.getPreferredSize().width;
         int heightOfAllRows = 0;
-        for(Node data : selectedNodes) {
+        for (Node data : selectedNodes) {
             //select all new cases and cases which were previously selected
             String multiUserCaseName = data.getName();
             boolean isSelected = true;
@@ -544,14 +544,12 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     }//GEN-LAST:event_searchButtonActionPerformed
 
     /**
-     * Get the cases which match the selected status specified by
-     * isSelected.
+     * Get the cases which match the selected status specified by isSelected.
      *
-     * @param isSelected true to get selected cases false to get
-     *                   unselected cases
+     * @param isSelected true to get selected cases false to get unselected
+     *                   cases
      *
-     * @return cases the cases that match the selected status of
-     *         isSelected
+     * @return cases the cases that match the selected status of isSelected
      */
     private Collection<String> getCases(boolean isSelected) {
         Collection<String> cases = new HashSet<>();
@@ -698,7 +696,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     }//GEN-LAST:event_viewErrorsButtonActionPerformed
 
     private void pickCasesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pickCasesButtonActionPerformed
-        if(currentSelections != null) {
+        if (currentSelections != null) {
             caseSelectionDialog.setNodeSelections(currentSelections);
         }
         caseSelectionDialog.setVisible(true);
@@ -852,7 +850,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     // End of variables declaration//GEN-END:variables
 
     /*
-     * A thread that performs a keyword search of cases 
+     * A thread that performs a keyword search of cases
      */
     private final class SearchThread extends Thread {
 
@@ -864,7 +862,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
          * Constructs a thread that performs a keyword search of cases
          *
          * @param caseNames The names of the cases to search.
-         * @param query           The keyword search query to perform.
+         * @param query     The keyword search query to perform.
          */
         private SearchThread(Collection<String> caseNames, SearchQuery searchQuery) {
             this.caseNames = caseNames;
@@ -882,8 +880,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         }
 
         /**
-         * Unregister an object with the MultiCaseSearcher so that the
-         * object's subscribe methods no longer receive results.
+         * Unregister an object with the MultiCaseSearcher so that the object's
+         * subscribe methods no longer receive results.
          *
          * @param object the object to unregister with the MultiCaseSearcher
          */

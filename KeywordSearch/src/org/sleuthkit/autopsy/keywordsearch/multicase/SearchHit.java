@@ -35,9 +35,11 @@ final class SearchHit {
 
     /**
      * Constructs a keyword search hit from a multi-case search.
-     * 
-     * @param caseDisplayName   The display name of the case where the hit occurred.
-     * @param caseDirectoryPath The path of the directory of the case where the hit occurred.
+     *
+     * @param caseDisplayName   The display name of the case where the hit
+     *                          occurred.
+     * @param caseDirectoryPath The path of the directory of the case where the
+     *                          hit occurred.
      * @param dataSourceName    The name of the data source within the case
      *                          where the hit occurred.
      * @param sourceType        The type of the source content object.
@@ -57,8 +59,7 @@ final class SearchHit {
     }
 
     /**
-     * Gets the display name of the case where the hit
-     * occurred.
+     * Gets the display name of the case where the hit occurred.
      *
      * @return The case display name.
      */
@@ -67,8 +68,7 @@ final class SearchHit {
     }
 
     /**
-     * Gets the path of the directory of the case where
-     * the hit occurred.
+     * Gets the path of the directory of the case where the hit occurred.
      *
      * @return The case directory path.
      */

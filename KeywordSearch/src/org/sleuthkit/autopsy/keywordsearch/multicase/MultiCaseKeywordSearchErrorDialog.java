@@ -23,7 +23,8 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 
 /**
- * Dialog to display the errors encounter while perfomring a multi-case keyword search.
+ * Dialog to display the errors encounter while perfomring a multi-case keyword
+ * search.
  */
 final class MultiCaseKeywordSearchErrorDialog extends JDialog {
 
@@ -100,7 +101,7 @@ final class MultiCaseKeywordSearchErrorDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-        dispose();        
+        dispose();
     }//GEN-LAST:event_closeButtonActionPerformed
 
 

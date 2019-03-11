@@ -111,7 +111,7 @@ final class MultiCaseSearcher {
      *
      * Performs keyword searches across multiple cases
      *
-     * @param caseNames   The names of the cases to search.
+     * @param caseNames         The names of the cases to search.
      * @param query             The keyword search query to perform.
      * @param progressIndicator A progrss indicator for the search.
      *
@@ -243,8 +243,7 @@ final class MultiCaseSearcher {
      *
      * @param caseNames The names of the cases.
      *
-     * @return A mapping of case directory paths to case names,
-     *         possibly empty.
+     * @return A mapping of case directory paths to case names, possibly empty.
      *
      * @throws MultiCaseSearcherException
      * @throws InterruptedException
@@ -264,9 +263,9 @@ final class MultiCaseSearcher {
         }
         for (String nodeName : caseNodeNames) {
             /*
-             * Find the case directory paths by
-             * selecting each coordination service case directory lock node path
-             * that has the case name in the path.
+             * Find the case directory paths by selecting each coordination
+             * service case directory lock node path that has the case name in
+             * the path.
              */
             checkForCancellation();
             final Path caseDirectoryPath = Paths.get(nodeName);
@@ -510,10 +509,10 @@ final class MultiCaseSearcher {
     /**
      * Executes a keyword search searchTerm in the text index of a case.
      *
-     * @param solrServer     The Solr server.
-     * @param solrQuery      The Solr searchTerm.
-     * @param caseDatabase   The case database.
-     * @param aCase The case metadata.
+     * @param solrServer   The Solr server.
+     * @param solrQuery    The Solr searchTerm.
+     * @param caseDatabase The case database.
+     * @param aCase        The case metadata.
      *
      * @return A list of search results, possibly empty.
      *
@@ -521,7 +520,7 @@ final class MultiCaseSearcher {
      * @throws InterruptedException
      */
     @NbBundle.Messages({
-        "# {0} - query", 
+        "# {0} - query",
         "# {1} - case_name",
         "MultiCaseSearcher.exceptionMessage.solrQueryError=Failed to execute query \"{0}\" on case {1}"
     })
@@ -587,10 +586,9 @@ final class MultiCaseSearcher {
      * Creates a keyword search hit object for a Content object identified by
      * its Solr object id.
      *
-     * @param solrObjectId       The Solr object id of a Content object.
-     * @param caseDatabase       The case database of the case that has the
-     *                           Content.
-     * @param caseInfo Metadata about the case that has the content.
+     * @param solrObjectId The Solr object id of a Content object.
+     * @param caseDatabase The case database of the case that has the Content.
+     * @param caseInfo     Metadata about the case that has the content.
      *
      * @return
      *

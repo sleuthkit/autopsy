@@ -75,6 +75,7 @@ class MultiCaseKeywordSearchNode extends AbstractNode {
      * A factory for creating children of the MultiCaseKeywordSearchNode.
      */
     static class MultiCaseKeywordSearchChildren extends Children.Keys<SearchHit> {
+
         private final Collection<SearchHit> resultList;
 
         /**
@@ -87,7 +88,7 @@ class MultiCaseKeywordSearchNode extends AbstractNode {
             this.resultList = resultList;
         }
 
-         @Override
+        @Override
         protected void addNotify() {
             super.addNotify();
             setKeys(resultList);
@@ -98,7 +99,7 @@ class MultiCaseKeywordSearchNode extends AbstractNode {
             super.removeNotify();
             setKeys(Collections.emptyList());
         }
-       
+
         @Override
         protected Node[] createNodes(SearchHit t) {
             return new Node[]{new SearchHitNode(t)};
@@ -199,7 +200,7 @@ class MultiCaseKeywordSearchNode extends AbstractNode {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            StringSelection resultSelection = new StringSelection(result.getCaseDisplayName()+ "\t"
+            StringSelection resultSelection = new StringSelection(result.getCaseDisplayName() + "\t"
                     + result.getCaseDirectoryPath() + "\t"
                     + result.getDataSourceName() + "\t"
                     + result.getSourceType().getDisplayName() + "\t"

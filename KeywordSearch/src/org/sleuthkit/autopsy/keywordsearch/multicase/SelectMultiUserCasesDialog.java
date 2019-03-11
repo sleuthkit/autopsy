@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 package org.sleuthkit.autopsy.keywordsearch.multicase;
+
 import java.awt.Dialog;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
@@ -27,6 +28,7 @@ import org.openide.windows.WindowManager;
  * Dialog that will display the SelectMultiUserCasesPanel
  */
 public class SelectMultiUserCasesDialog extends javax.swing.JDialog {
+
     private static final long serialVersionUID = 1L;
     private static SelectMultiUserCasesDialog instance;
     private static SelectMultiUserCasesPanel multiUserCasesPanel;
@@ -43,28 +45,28 @@ public class SelectMultiUserCasesDialog extends javax.swing.JDialog {
         }
         return instance;
     }
-    
+
     /**
      * Listen for new case selections from the user.
-     * 
+     *
      * @param l Listener on new case selection events
      */
     void subscribeToNewCaseSelections(ActionListener l) {
         multiUserCasesPanel.subscribeToNewCaseSelections(l);
     }
-    
+
     /**
      * Set the node selections for the window
-     * 
+     *
      * @param selections Nodes to be automatically selected in the explorer view
      */
     void setNodeSelections(Node[] selections) {
         try {
             multiUserCasesPanel.setSelections(selections);
         } catch (PropertyVetoException ex) {
-            
+
         }
-    } 
+    }
 
     /**
      * Constructs a singleton JDialog that allows a user to open a multi-user
@@ -73,8 +75,6 @@ public class SelectMultiUserCasesDialog extends javax.swing.JDialog {
     private SelectMultiUserCasesDialog() {
         super(WindowManager.getDefault().getMainWindow(), "Select Multi-User Cases", Dialog.ModalityType.APPLICATION_MODAL);
     }
-    
-    
 
     /**
      * Registers a keyboard action to hide the dialog when the escape key is
