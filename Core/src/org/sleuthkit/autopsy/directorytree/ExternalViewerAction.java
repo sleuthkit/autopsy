@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2018 Basis Technology Corp.
+ *
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
+import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Extracts a File object to a temporary file in the case directory, and then
@@ -44,24 +45,20 @@ import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 public class ExternalViewerAction extends AbstractAction {
 
     private final static Logger logger = Logger.getLogger(ExternalViewerAction.class.getName());
-    private final org.sleuthkit.datamodel.AbstractFile fileObject;
+    private final AbstractFile fileObject;
     private String fileObjectExt;
     final static String[] EXECUTABLE_EXT = {".exe", ".dll", ".com", ".bat", ".msi", ".reg", ".scr", ".cmd"}; //NON-NLS
+    private boolean isExecutable;
 
-    /**
-     * 
-     * @param title Name of the action
-     * @param fileNode File to display
-     */
-    public ExternalViewerAction(String title, Node fileNode) {
+    ExternalViewerAction(String title, AbstractFile file, boolean isSlackFile) {
         super(title);
-        this.fileObject = fileNode.getLookup().lookup(org.sleuthkit.datamodel.AbstractFile.class);
+        this.fileObject = file;
 
         long size = fileObject.getSize();
         String fileName = fileObject.getName();
         int extPos = fileName.lastIndexOf('.');
 
-        boolean isExecutable = false;
+        isExecutable = false;
         if (extPos != -1) {
             String extension = fileName.substring(extPos, fileName.length()).toLowerCase();
             fileObjectExt = extension;
@@ -79,13 +76,35 @@ public class ExternalViewerAction extends AbstractAction {
         // find an application for files without an extension
         // or if file is executable (for security reasons)
         // Also skip slack files since their extension is the original extension + "-slack"
-        if (!(size > 0) || extPos == -1 || isExecutable || (fileNode instanceof SlackFileNode)) {
+        if (!(size > 0) || extPos == -1 || isExecutable || isSlackFile) {
             this.setEnabled(false);
         }
     }
 
+    /**
+     *
+     * @param title    Name of the action
+     * @param fileNode File to display
+     */
+    public ExternalViewerAction(String title, Node fileNode) {
+        this(title, fileNode.getLookup().lookup(org.sleuthkit.datamodel.AbstractFile.class), fileNode instanceof SlackFileNode);
+    }
+
     @Override
+    @Messages({
+        "# {0} - file name",
+        "ExternalViewerAction.actionPerformed.failure.title=Open File Failure {0}",
+        "ExternalViewerAction.actionPerformed.failure.exe.message=The file is an executable and will not be opened."
+    })
     public void actionPerformed(ActionEvent e) {
+        if (isExecutable) {
+            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                    Bundle.ExternalViewerAction_actionPerformed_failure_exe_message(),
+                    Bundle.ExternalViewerAction_actionPerformed_failure_title(this.fileObject.getName()),
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         // Get the temp folder path of the case
         Case openCase;
         try {
@@ -124,7 +143,6 @@ public class ExternalViewerAction extends AbstractAction {
      * @param file     the file object
      */
     @Messages({
-        "ExternalViewerAction.actionPerformed.failure.title=Open File Failure",
         "ExternalViewerAction.actionPerformed.failure.IO.message=There is no associated editor for files of this type or the associated application failed to launch.",
         "ExternalViewerAction.actionPerformed.failure.support.message=This platform (operating system) does not support opening a file in an editor this way.",
         "ExternalViewerAction.actionPerformed.failure.missingFile.message=The file no longer exists.",
@@ -146,14 +164,14 @@ public class ExternalViewerAction extends AbstractAction {
                 runtime.exec(execArray);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not open the specified viewer for the given file: " + file.getName(), ex); //NON-NLS
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(file.getName()), JOptionPane.ERROR_MESSAGE);
             }
         } else {
             try {
                 String localpath = file.getPath();
                 if (localpath.toLowerCase().contains("http")) {
-                    String url_path = file.getPath().replaceAll("\\\\","/");   
-                    Desktop.getDesktop().browse(new URI(url_path.replaceFirst("/","//")));
+                    String url_path = file.getPath().replaceAll("\\\\", "/");
+                    Desktop.getDesktop().browse(new URI(url_path.replaceFirst("/", "//")));
                 } else {
                     Desktop.getDesktop().open(file);
                 }
@@ -162,75 +180,77 @@ public class ExternalViewerAction extends AbstractAction {
                 logger.log(Level.WARNING, "Could not find a viewer for the given file: " + file.getName(), ex); //NON-NLS
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(),
-                        Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                        Bundle.ExternalViewerAction_actionPerformed_failure_title(file.getName()),
                         JOptionPane.ERROR_MESSAGE);
             } catch (UnsupportedOperationException ex) {
                 logger.log(Level.WARNING, "Platform cannot open " + file.getName() + " in the defined editor.", ex); //NON-NLS
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_support_message(),
-                        Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                        Bundle.ExternalViewerAction_actionPerformed_failure_title(file.getName()),
                         JOptionPane.ERROR_MESSAGE);
             } catch (IllegalArgumentException ex) {
                 logger.log(Level.WARNING, "Could not find the given file: " + file.getName(), ex); //NON-NLS
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_missingFile_message(),
-                        Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                        Bundle.ExternalViewerAction_actionPerformed_failure_title(file.getName()),
                         JOptionPane.ERROR_MESSAGE);
             } catch (SecurityException ex) {
                 logger.log(Level.WARNING, "Could not get permission to open the given file: " + file.getName(), ex); //NON-NLS
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         Bundle.ExternalViewerAction_actionPerformed_failure_permission_message(),
-                        Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                        Bundle.ExternalViewerAction_actionPerformed_failure_title(file.getName()),
                         JOptionPane.ERROR_MESSAGE);
             } catch (URISyntaxException ex) {
-               logger.log(Level.WARNING, "Could not open URL provided: " + file.getPath(), ex);
-               JOptionPane.showMessageDialog(null,
-                       Bundle.ExternalViewerAction_actionPerformed_failure_open_url(),
-                       Bundle.ExternalViewerAction_actionPerformed_failure_title(),
-                       JOptionPane.ERROR_MESSAGE);
+                logger.log(Level.WARNING, "Could not open URL provided: " + file.getPath(), ex);
+                JOptionPane.showMessageDialog(null,
+                        Bundle.ExternalViewerAction_actionPerformed_failure_open_url(),
+                        Bundle.ExternalViewerAction_actionPerformed_failure_title(file.getName()),
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
     /**
      * Opens a URL using the default desktop browser
-     * 
-     * @param path URL to open 
+     *
+     * @param path URL to open
      */
+    @Messages({
+        "ExternalViewerAction.actionPerformed.urlFailure.title=Open URL Failure"})
     public static void openURL(String path) {
-        String url_path = path.replaceAll("\\\\","/");   
+        String url_path = path.replaceAll("\\\\", "/");
         try {
-            Desktop.getDesktop().browse(new URI(url_path.replaceFirst("/","//")));          
+            Desktop.getDesktop().browse(new URI(url_path.replaceFirst("/", "//")));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Could not find a viewer for the given URL: " + url_path, ex); //NON-NLS
             JOptionPane.showMessageDialog(null,
                     Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
                     JOptionPane.ERROR_MESSAGE);
         } catch (UnsupportedOperationException ex) {
             logger.log(Level.WARNING, "Platform cannot open " + url_path + " in the defined editor.", ex); //NON-NLS
             JOptionPane.showMessageDialog(null,
                     Bundle.ExternalViewerAction_actionPerformed_failure_support_message(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
                     JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException ex) {
             logger.log(Level.WARNING, "Could not find the given URL: " + url_path, ex); //NON-NLS
             JOptionPane.showMessageDialog(null,
                     Bundle.ExternalViewerAction_actionPerformed_failure_missingFile_message(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
                     JOptionPane.ERROR_MESSAGE);
         } catch (SecurityException ex) {
             logger.log(Level.WARNING, "Could not get permission to open the given URL: " + url_path, ex); //NON-NLS
             JOptionPane.showMessageDialog(null,
                     Bundle.ExternalViewerAction_actionPerformed_failure_permission_message(),
-                    Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
                     JOptionPane.ERROR_MESSAGE);
         } catch (URISyntaxException ex) {
-           logger.log(Level.WARNING, "Could not open URL provided: " + url_path, ex);
-           JOptionPane.showMessageDialog(null,
-                   Bundle.ExternalViewerAction_actionPerformed_failure_open_url(),
-                   Bundle.ExternalViewerAction_actionPerformed_failure_title(),
-                   JOptionPane.ERROR_MESSAGE);
+            logger.log(Level.WARNING, "Could not open URL provided: " + url_path, ex);
+            JOptionPane.showMessageDialog(null,
+                    Bundle.ExternalViewerAction_actionPerformed_failure_open_url(),
+                    Bundle.ExternalViewerAction_actionPerformed_urlFailure_title(),
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 }
