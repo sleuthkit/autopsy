@@ -47,7 +47,7 @@ public class DataContentViewerOtherCasesTableCellRenderer implements TableCellRe
         Color foreground, background;
         if (isSelected) {
             foreground = Color.WHITE;
-            background = Color.BLUE;
+            background = new Color(51,153,255);
         } else {
             String known_status = (String) table.getModel().getValueAt(table.convertRowIndexToModel(row), 
                     table.getColumn(DataContentViewerOtherCasesTableModel.TableColumns.KNOWN.columnName()).getModelIndex());

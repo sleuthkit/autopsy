@@ -1,3 +1,4 @@
+DataContentViewerCasesTableModel.case=Case
 DataContentViewerOtherCases.caseDetailsDialog.noCaseNameError=Error
 DataContentViewerOtherCases.caseDetailsDialog.noDetails=No details for this case.
 DataContentViewerOtherCases.caseDetailsDialog.noDetailsReference=No case details for Global reference properties.

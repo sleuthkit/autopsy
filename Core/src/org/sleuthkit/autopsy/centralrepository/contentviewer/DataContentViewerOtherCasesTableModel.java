@@ -42,14 +42,14 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
-        DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 100),
+//        CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
+//        DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 100),
         ATTRIBUTE(Bundle.DataContentViewerOtherCasesTableModel_attribute(), 125),
         VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 200),
         KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 50),
         FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 450),
-        COMMENT(Bundle.DataContentViewerOtherCasesTableModel_comment(), 200),
-        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 250);
+        COMMENT(Bundle.DataContentViewerOtherCasesTableModel_comment(), 200);
+//        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 250);
 
         private final String columnName;
         private final int columnWidth;
@@ -68,10 +68,10 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         }
     };
 
-    private final List<OtherOccurrenceNodeData> nodeDataList;
+    private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
 
     DataContentViewerOtherCasesTableModel() {
-        nodeDataList = new ArrayList<>();
+        
     }
 
     @Override
@@ -126,9 +126,9 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      * @return The value in the cell.
      */
     private Object mapNodeMessageData(OtherOccurrenceNodeMessageData nodeData, TableColumns columnId) {
-        if (columnId == TableColumns.CASE_NAME) {
-            return nodeData.getDisplayMessage();
-        }
+//        if (columnId == TableColumns.CASE_NAME) {
+//            return nodeData.getDisplayMessage();
+//        }
         return "";
     }
 
@@ -144,21 +144,21 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
 
         switch (columnId) {
-            case CASE_NAME:
-                if (null != nodeData.getCaseName()) {
-                    value = nodeData.getCaseName();
-                }
-                break;
-            case DEVICE:
-                if (null != nodeData.getDeviceID()) {
-                    value = nodeData.getDeviceID();
-                }
-                break;
-            case DATA_SOURCE:
-                if (null != nodeData.getDataSourceName()) {
-                    value = nodeData.getDataSourceName();
-                }
-                break;
+//            case CASE_NAME:
+//                if (null != nodeData.getCaseName()) {
+//                    value = nodeData.getCaseName();
+//                }
+//                break;
+//            case DEVICE:
+//                if (null != nodeData.getDeviceID()) {
+//                    value = nodeData.getDeviceID();
+//                }
+//                break;
+//            case DATA_SOURCE:
+//                if (null != nodeData.getDataSourceName()) {
+//                    value = nodeData.getDataSourceName();
+//                }
+//                break;
             case FILE_PATH:
                 value = nodeData.getFilePath();
                 break;
