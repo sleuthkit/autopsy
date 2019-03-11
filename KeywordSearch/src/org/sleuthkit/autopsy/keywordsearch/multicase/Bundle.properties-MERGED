@@ -29,24 +29,60 @@ MultiCaseKeywordSearchPanel.warningText.noCases=At least one case must be select
 MultiCaseKeywordSearchTopComponent.exceptionMessage.failedToCreatePanel=Failed to create Multi-case Keyword Search panel.
 MultiCaseKeywordSearchTopComponent.name.text=Multi-case Keyword Search
 MultiCaseSearcher.exceptionMessage.cancelledMessage=Search cancelled
+# {0} - connection info
+# {1} - case name
+# {2} - case directory
 MultiCaseSearcher.exceptionMessage.errorLoadingCore=Error connecting to Solr server and loading core (URL: {0}) for case {1} in {2}
+# {0} - PostgreSQL server host
+# {1} - PostgreSQL server port
+# {2} - case database name
+# {3} - case directory
 MultiCaseSearcher.exceptionMessage.errorOpeningCaseDatabase=Error connecting to PostgreSQL server (Host/Port: [{0}:{1}] and opening case database {2} for case at {3}
+# {0} - case directory
 MultiCaseSearcher.exceptionMessage.failedToFindCaseMetadata=Failed to find case metadata file in {0}
+# {0} - case_name
 MultiCaseSearcher.exceptionMessage.failedToGetCaseDatabaseConnectionInfo=Failed to get case database connection info for case {0}
+# {0} - case directory path
 MultiCaseSearcher.exceptionMessage.failedToGetCaseDirReadlock=Failed to obtain read lock for case directory at {0}
+# {0} - case directory
 MultiCaseSearcher.exceptionMessage.failedToParseCaseMetadata=Failed to parse case file metadata in {0}
+# {0} - host
+# {1} - port
 MultiCaseSearcher.exceptionMessage.failedToQueryCoordinationServer=Failed to obtain read lock for case directory at {0}:{1}
+# {0} - Solr document id
+# {1} - case database name
+# {2} - case directory
 MultiCaseSearcher.exceptionMessage.hitProcessingError=Failed to query case database for processing of Solr object id {0} of case {1} in {2}
+# {0} - file name
+# {1} - case directory
 MultiCaseSearcher.exceptionMessage.missingSolrPropertiesFile=Missing {0} file in {1}
+# {0} - list of cases
 MultiCaseSearcher.exceptionMessage.noCasesFound=No cases found for: {0}
+# {0} - file name
+# {1} - case directory
 MultiCaseSearcher.exceptionMessage.solrPropertiesFileParseError=Error parsing {0} file in {1}
+# {0} - query
+# {1} - case_name
 MultiCaseSearcher.exceptionMessage.solrQueryError=Failed to execute query "{0}" on case {1}
+# {0} - case name
+# {1} - case counter
+# {2} - total cases
 MultiCaseSearcher.progressMessage.acquiringSharedLockForCase=Acquiring shared lock for "{0}" ({1} of {2} case(s))
 MultiCaseSearcher.progressMessage.creatingSolrQuery=Creating search query for Solr server
+# {0} - case name
+# {1} - case counter
+# {2} - total cases
 MultiCaseSearcher.progressMessage.executingSolrQueryForCase=Getting keyword hits for "{0}" ({1} of {2} case(s))
 MultiCaseSearcher.progressMessage.findingCases=Finding selected cases
+# {0} - case name
+# {1} - case counter
+# {2} - total cases
 MultiCaseSearcher.progressMessage.loadingSolrCoreForCase=Loading Solr core for "{0}" ({1} of {2} case(s))
+# {0} - case name
+# {1} - case counter
+# {2} - total cases
 MultiCaseSearcher.progressMessage.openingCaseDbForCase=Opening case database for "{0}" ({1} of {2} case(s))
+# {0} - total cases
 MultiCaseSearcher.progressMessage.startingCaseSearches=Searching {0} case(s)
 SelectMultiUserCasesPanel.selectAllButton.text=Select All
 SelectMultiUserCasesPanel.deselectAllButton.text=Deselect All
@@ -70,4 +106,4 @@ MultiCaseKeywordSearchPanel.exportButton.text=Export Results
 MultiCaseKeywordSearchPanel.cancelButton.text=Cancel
 MultiCaseKeywordSearchPanel.resultsCountLabel.text=
 MultiCaseKeywordSearchPanel.pickCasesButton.text_1=Pick Cases
-SelectMultiUserCasesPanel.jButton1.text=Refresh
+SelectMultiUserCasesPanel.refreshButton.text=Refresh
