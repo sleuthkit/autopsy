@@ -96,7 +96,7 @@ public class EventNode extends DisplayableItemNode {
         properties.put(new NodeProperty<>("description", Bundle.NodeProperty_displayName_description(), "description", event.getFullDescription())); // NON-NLS
         properties.put(new NodeProperty<>("eventBaseType", Bundle.NodeProperty_displayName_baseType(), "base type", event.getEventType().getSuperType().getDisplayName())); // NON-NLS
         properties.put(new NodeProperty<>("eventSubType", Bundle.NodeProperty_displayName_subType(), "sub type", event.getEventType().getDisplayName())); // NON-NLS
-        
+
         return sheet;
     }
 
@@ -121,7 +121,7 @@ public class EventNode extends DisplayableItemNode {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(superActions));
 
-        final AbstractFile sourceFile = getLookup().lookup(AbstractFile.class);
+        final Content sourceFile = getLookup().lookup(Content.class);
 
         /*
          * if this event is derived from an artifact, add actions to view the
@@ -139,9 +139,11 @@ public class EventNode extends DisplayableItemNode {
                 MessageNotifyUtil.Notify.error(Bundle.EventNode_getAction_errorTitle(), Bundle.EventNode_getAction_linkedFileMessage());
             }
 
-            //if this event  has associated content, add the action to view the content in the timeline
+            //if this event has associated content, add the action to view the content in the timeline
             if (null != sourceFile) {
-                actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(sourceFile));
+                if (sourceFile instanceof AbstractFile) {
+                    actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction((AbstractFile) sourceFile));
+                }
             }
         }
 
@@ -225,7 +227,7 @@ public class EventNode extends DisplayableItemNode {
              * Look up the event by id and creata an EventNode with the
              * appropriate data in the lookup.
              */
-        final TimelineEvent eventById = eventsModel.getEventById(eventID);
+            final TimelineEvent eventById = eventsModel.getEventById(eventID);
 
             Content file = sleuthkitCase.getContentById(eventById.getFileObjID());
 
