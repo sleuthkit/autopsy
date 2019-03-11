@@ -52,14 +52,14 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Extract the <i>:Zone.Indentifier<i> alternate data stream files.  A file with
  * a <i>:Zone.Indentifier<i> extention contains information about the similarly 
- * named (with out zone identifer extention) downloaded file.
+ * named (with out zone identifer extension) downloaded file.
  */
 final class ExtractZoneIdentifier extends Extract {
 
     private static final Logger LOG = Logger.getLogger(ExtractEdge.class.getName());
 
-    private static final String ZONE_IDENIFIER_FILE = "%:Zone.Identifier"; //NON-NLS
-    private static final String ZONE_IDENIFIER = ":Zone.Identifier"; //NON-NLS
+    private static final String ZONE_IDENTIFIER_FILE = "%:Zone.Identifier"; //NON-NLS
+    private static final String ZONE_IDENTIFIER = ":Zone.Identifier"; //NON-NLS
 
     @Messages({
         "ExtractZone_process_errMsg_find=A failure occured while searching for :Zone.Indentifier files.",
@@ -74,7 +74,7 @@ final class ExtractZoneIdentifier extends Extract {
 
         List<AbstractFile> zoneFiles = null;
         try {
-            zoneFiles = currentCase.getServices().getFileManager().findFiles(dataSource, ZONE_IDENIFIER_FILE);
+            zoneFiles = currentCase.getServices().getFileManager().findFiles(dataSource, ZONE_IDENTIFIER_FILE);
         } catch (TskCoreException ex) {
             addErrorMessage(Bundle.ExtractZone_process_errMsg_find());
             LOG.log(Level.SEVERE, "Unable to find zone identifier files, exception thrown. ", ex); // NON-NLS
@@ -132,6 +132,8 @@ final class ExtractZoneIdentifier extends Extract {
      * @param zoneFile          Zone Indentifier file
      * @param sourceArtifacts   List for TSK_DOWNLOAD_SOURCE artifacts
      * @param downloadArtifacts List for TSK_WEB_DOWNLOAD aritfacts
+     * 
+     * @throws TskCoreException
      */
     private void processZoneFile(IngestJobContext context, Content dataSource,
             AbstractFile zoneFile, Collection<BlackboardArtifact> sourceArtifacts,
@@ -158,17 +160,17 @@ final class ExtractZoneIdentifier extends Extract {
             if (!knownPathIDs.contains(downloadFile.getDataSourceObjectId())) {
                 // The zone identifier file is the parent of this artifact 
                 // because it is the file we parsed to get the data
-                BlackboardArtifact downloadbba = createDownloadArtifact(zoneFile, zoneInfo);
-                if (downloadbba != null) {
-                    downloadArtifacts.add(downloadbba);
+                BlackboardArtifact downloadBba = createDownloadArtifact(zoneFile, zoneInfo);
+                if (downloadBba != null) {
+                    downloadArtifacts.add(downloadBba);
                 }
             }
             
             // check if download has a child TSK_DOWNLOAD_SOURCE artifact, if not create one
             if (downloadFile.getArtifactsCount(TSK_DOWNLOAD_SOURCE) == 0) {
-                BlackboardArtifact sourcebba = createDownloadSourceArtifact(downloadFile, zoneInfo);
-                if (sourcebba != null) {
-                    sourceArtifacts.add(sourcebba);
+                BlackboardArtifact sourceBba = createDownloadSourceArtifact(downloadFile, zoneInfo);
+                if (sourceBba != null) {
+                    sourceArtifacts.add(sourceBba);
                 }
             }
         }
@@ -190,7 +192,7 @@ final class ExtractZoneIdentifier extends Extract {
         org.sleuthkit.autopsy.casemodule.services.FileManager fileManager
                 = currentCase.getServices().getFileManager();
 
-        String downloadFileName = zoneFile.getName().replace(ZONE_IDENIFIER, ""); //NON-NLS
+        String downloadFileName = zoneFile.getName().replace(ZONE_IDENTIFIER, ""); //NON-NLS
 
         List<AbstractFile> fileList = fileManager.findFiles(dataSource, downloadFileName, zoneFile.getParentPath());
 
@@ -284,7 +286,7 @@ final class ExtractZoneIdentifier extends Extract {
         "LOCAL_MACHINE_ZONE=Local Machine Zone",
         "LOCAL_INTRANET_ZONE=Local Intranet Zone",
         "TRUSTED_ZONE=Trusted Sites Zone",
-        "INTENET_ZONE=Internet Zone",
+        "INTERNET_ZONE=Internet Zone",
         "RESTRICTED_ZONE=Restricted Sites Zone"
     })
 
