@@ -100,6 +100,7 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         confirmSelections = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
+        refreshButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(selectAllButton, org.openide.util.NbBundle.getMessage(SelectMultiUserCasesPanel.class, "SelectMultiUserCasesPanel.selectAllButton.text")); // NOI18N
         selectAllButton.addActionListener(new java.awt.event.ActionListener() {
@@ -131,6 +132,13 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(SelectMultiUserCasesPanel.class, "SelectMultiUserCasesPanel.refreshButton.text")); // NOI18N
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                refreshButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -145,7 +153,9 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
                         .addComponent(deselectAllButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 365, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 367, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 286, Short.MAX_VALUE)
+                        .addComponent(refreshButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(confirmSelections, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton)))
@@ -162,7 +172,8 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
                     .addComponent(selectAllButton)
                     .addComponent(deselectAllButton)
                     .addComponent(confirmSelections)
-                    .addComponent(cancelButton))
+                    .addComponent(cancelButton)
+                    .addComponent(refreshButton))
                 .addContainerGap(15, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -195,6 +206,10 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
         parentDialog.setVisible(false);
     }//GEN-LAST:event_cancelButtonActionPerformed
 
+    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
+        caseBrowserPanel.displayCases();
+    }//GEN-LAST:event_refreshButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
@@ -202,6 +217,7 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
     private javax.swing.JButton deselectAllButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane multiUserCaseScrollPane;
+    private javax.swing.JButton refreshButton;
     private javax.swing.JButton selectAllButton;
     // End of variables declaration//GEN-END:variables
 }

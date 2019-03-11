@@ -242,6 +242,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
             }
             heightOfAllRows += caseCheckBox.getPreferredSize().height;
             casesPanel.add(caseCheckBox);
+            casesPanel.revalidate();
         }
         casesPanel.setPreferredSize(new Dimension(casePanelWidth, heightOfAllRows));
     }
