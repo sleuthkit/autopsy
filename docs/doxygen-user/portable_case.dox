@@ -14,7 +14,7 @@ For example, Alice's original case could look like this:
 
 \image html portable_case_original_version.png
 
-The the portable version could like this:
+The portable version could like this:
 
 \image html portable_case_portable_version.png
 
@@ -27,7 +27,7 @@ You can see what tags you've added in the \ref tree_viewer_page.
 
 \image html portable_case_tags.png
 
-Portable cases are created through the \ref reporting_page feature. The dialog will display a list of all tags that are in use in the current case and you can choose which ones you would like to include. At the bottom you can select the output folder for the new case. By default it will be placed in the "Reports" folder in the current case.
+Portable cases are created through the \ref reporting_page feature. The Generate Report dialog will display a list of all tags that are in use in the current case and you can choose which ones you would like to include. At the bottom you can select the output folder for the new case. By default it will be placed in the "Reports" folder in the current case.
 
 \image html portable_case_report_panel.png
 
@@ -37,11 +37,11 @@ Here you can see the new portable case. It will be named with the original case 
 
 \section portable_case_usage Using a Portable Case
 
-Portable cases generally behave like any other Autopsy case. You can run ingest, do keyword searches, use the timeline viewer, etc. One point to note is that while the original image names appear in the case, they will no longer have any data associated with them. 
+Portable cases generally behave like any other Autopsy case. You can run ingest, do keyword searches, use the timeline viewer, etc. One point to note is that while the original data source names appear in the case, the data sources themselves were not copied into the portable case.
 
 \image html portable_case_empty_image.png
 
-This may cause warning or error messages when using ingest modules that run on the full image, such as the \ref data_source_integrity_page.
+This may cause warning or error messages when using ingest modules that run on the full image, such as the \ref data_source_integrity_page. You will also not be able to view the data sources in the content viewer.
 
 You can also add additonal data sources to the portable case if you wish. The case will no longer be portable, but if desired you could generate a new portable case that will include tagged files and results from the new data sources as well as the original case. 
 
