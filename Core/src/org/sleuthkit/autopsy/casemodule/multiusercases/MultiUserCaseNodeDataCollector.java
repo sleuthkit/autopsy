@@ -29,76 +29,60 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Queries the coordination service to collect the multi-user case node data
  * stored in the case directory lock ZooKeeper nodes.
  */
-final public class MultiUserCaseNodeDataCollector {
+final public class MultiUserCaseNodeDataCollector { // RJCTODO: Shorten name after multi-case keyword search code is in.
 
     private static final Logger logger = Logger.getLogger(MultiUserCaseNodeDataCollector.class.getName());
-    private static final String CASE_AUTO_INGEST_LOG_NAME = "AUTO_INGEST_LOG.TXT"; //NON-NLS
-    private static final String RESOURCES_LOCK_SUFFIX = "_RESOURCES"; //NON-NLS
 
     /**
      * Queries the coordination service to collect the multi-user case node data
      * stored in the case directory lock ZooKeeper nodes.
      *
-     * @return A list of CaseNodedata objects that convert data for a case
-     *         directory lock coordination service node to and from byte arrays.
+     * @return The node data for the multi-user cases known to the coordination
+     *         service.
      *
-     * @throws CoordinationServiceException If there is an error
+     * @throws CoordinationServiceException If there is an error interacting
+     *                                      with the coordination service.
+     * @throws InterruptedException         If the current thread is interrupted
+     *                                      while waiting for the coordination
+     *                                      service.
      */
-    public static List<CaseNodeData> getNodeData() throws CoordinationService.CoordinationServiceException {
+    public static List<CaseNodeData> getNodeData() throws CoordinationServiceException, InterruptedException {
         final List<CaseNodeData> cases = new ArrayList<>();
         final CoordinationService coordinationService = CoordinationService.getInstance();
         final List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
         for (String nodeName : nodeList) {
-            /*
-             * Ignore auto ingest case name lock nodes.
-             */
-            final Path nodeNameAsPath = Paths.get(nodeName);
-            if (!(nodeNameAsPath.toString().contains("\\") || nodeNameAsPath.toString().contains("//"))) {
-                continue;
-            }
-
-            /*
-             * Ignore case auto ingest log lock nodes and resource lock nodes.
-             */
-            final String lastNodeNameComponent = nodeNameAsPath.getFileName().toString();
-            if (lastNodeNameComponent.equals(CASE_AUTO_INGEST_LOG_NAME)) {
-                continue;
-            }
-
-            /*
-             * Ignore case resources lock nodes.
-             */
-            if (lastNodeNameComponent.endsWith(RESOURCES_LOCK_SUFFIX)) {
+            if (CaseCoordinationServiceUtils.isCaseLockName(nodeName)
+                    || CaseCoordinationServiceUtils.isCaseResourcesLockName(nodeName)
+                    || CaseCoordinationServiceUtils.isCaseAutoIngestLogLockName(nodeName)) {
                 continue;
             }
 
             /*
              * Get the data from the case directory lock node. This data may not
-             * exist for "legacy" nodes. If it is missing, create it.
+             * exist or may exist only in an older version. If it is missing or
+             * incomplete, create or update it.
              */
             try {
                 CaseNodeData nodeData;
-                byte[] nodeBytes = coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, nodeName);
+                final byte[] nodeBytes = coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, nodeName);
                 if (nodeBytes != null && nodeBytes.length > 0) {
                     nodeData = new CaseNodeData(nodeBytes);
-                    if (nodeData.getVersion() == 0) {
-                        /*
-                         * Version 0 case node data was only written if errors
-                         * occurred during an auto ingest job and consisted of
-                         * only the set errors flag.
-                         */
-                        nodeData = createNodeDataFromCaseMetadata(nodeName, true);
+                    if (nodeData.getVersion() < CaseNodeData.getCurrentVersion()) {
+                        nodeData = updateNodeData(nodeName, nodeData);
                     }
                 } else {
-                    nodeData = createNodeDataFromCaseMetadata(nodeName, false);
+                    nodeData = updateNodeData(nodeName, null);
                 }
-                cases.add(nodeData);
+                if (nodeData != null) {
+                    cases.add(nodeData);
+                }
 
             } catch (CoordinationService.CoordinationServiceException | InterruptedException | IOException | ParseException | CaseMetadata.CaseMetadataException ex) {
                 logger.log(Level.SEVERE, String.format("Error getting coordination service node data for %s", nodeName), ex);
@@ -109,15 +93,15 @@ final public class MultiUserCaseNodeDataCollector {
     }
 
     /**
-     * Creates and saves case directory lock coordination service node data from
-     * the metadata file for the case associated with the node.
+     * Updates the case directory lock coordination service node data for a
+     * case.
      *
-     * @param nodeName       The coordination service node name, i.e., the case
-     *                       directory path.
-     * @param errorsOccurred Whether or not errors occurred during an auto
-     *                       ingest job for the case.
+     * @param nodeName    The coordination service node name, i.e., the case
+     *                    directory path.
+     * @param oldNodeData .
      *
-     * @return A CaseNodedata object.
+     * @return A CaseNodedata object or null if the coordination service node is
+     *         an "orphan" with no corresponding case directry.
      *
      * @throws IOException                  If there is an error writing the
      *                                      node data to a byte array.
@@ -130,28 +114,67 @@ final public class MultiUserCaseNodeDataCollector {
      * @throws InterruptedException         If a coordination service operation
      *                                      is interrupted.
      */
-    private static CaseNodeData createNodeDataFromCaseMetadata(String nodeName, boolean errorsOccurred) throws IOException, CaseMetadata.CaseMetadataException, ParseException, CoordinationService.CoordinationServiceException, InterruptedException {
-        CaseNodeData nodeData = null;
+    private static CaseNodeData updateNodeData(String nodeName, CaseNodeData oldNodeData) throws IOException, CaseMetadata.CaseMetadataException, ParseException, CoordinationService.CoordinationServiceException, InterruptedException {
         Path caseDirectoryPath = Paths.get(nodeName).toRealPath(LinkOption.NOFOLLOW_LINKS);
         File caseDirectory = caseDirectoryPath.toFile();
-        if (caseDirectory.exists()) {
+        if (!caseDirectory.exists()) {
+            logger.log(Level.WARNING, String.format("Found orphan coordination service node %s, attempting clean up", caseDirectoryPath));
+            deleteLockNodes(CoordinationService.getInstance(), caseDirectoryPath);
+            return null;
+        }
+
+        CaseNodeData nodeData = null;
+        if (oldNodeData == null || oldNodeData.getVersion() == 0) {
             File[] files = caseDirectory.listFiles();
             for (File file : files) {
                 String name = file.getName().toLowerCase();
                 if (name.endsWith(CaseMetadata.getFileExtension())) {
                     CaseMetadata metadata = new CaseMetadata(Paths.get(file.getAbsolutePath()));
                     nodeData = new CaseNodeData(metadata);
-                    nodeData.setErrorsOccurred(errorsOccurred);
+                    if (oldNodeData != null) {
+                        /*
+                         * Version 0 case node data was only written if errors
+                         * occurred during an auto ingest job.
+                         */
+                        nodeData.setErrorsOccurred(true);
+                    }
                     break;
                 }
             }
         }
+
         if (nodeData != null) {
-            CoordinationService coordinationService = CoordinationService.getInstance();
-            coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodeName, nodeData.toArray());
-            return nodeData;
-        } else {
-            throw new IOException(String.format("Could not find case metadata file for %s", nodeName));
+            CoordinationService.getInstance().setNodeData(CoordinationService.CategoryNode.CASES, nodeName, nodeData.toArray());
+        } 
+        
+        return nodeData;
+    }
+
+    /**
+     * Attempts to delete the coordination service lock nodes for a case,
+     * logging any failures.
+     *
+     * @param coordinationService The coordination service.
+     * @param caseDirectoryPath   The case directory path.
+     */
+    private static void deleteLockNodes(CoordinationService coordinationService, Path caseDirectoryPath) {
+        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseResourcesLockName(caseDirectoryPath));
+        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseAutoIngestLogLockName(caseDirectoryPath));
+        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseDirectoryLockName(caseDirectoryPath));
+        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseLockName(caseDirectoryPath));
+    }
+
+    /**
+     * Attempts to delete a coordination service node, logging failure.
+     *
+     * @param coordinationService The coordination service.
+     * @param nodeName            A node name.
+     */
+    private static void deleteCoordinationServiceNode(CoordinationService coordinationService, String nodeName) {
+        try {
+            coordinationService.deleteNode(CoordinationService.CategoryNode.CASES, nodeName);
+        } catch (CoordinationService.CoordinationServiceException | InterruptedException ex) {
+            logger.log(Level.WARNING, String.format("Error deleting coordination service node %s", nodeName), ex);
         }
     }
 

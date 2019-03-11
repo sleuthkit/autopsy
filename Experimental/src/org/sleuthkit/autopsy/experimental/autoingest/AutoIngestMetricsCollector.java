@@ -96,7 +96,7 @@ final class AutoIngestMetricsCollector {
 
             return newMetricsSnapshot;
 
-        } catch (CoordinationService.CoordinationServiceException ex) {
+        } catch (CoordinationService.CoordinationServiceException | InterruptedException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get node list from coordination service", ex);
             return new MetricsSnapshot();
         }

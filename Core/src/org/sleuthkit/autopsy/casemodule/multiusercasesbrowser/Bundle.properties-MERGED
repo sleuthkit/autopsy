@@ -1,5 +1,10 @@
+MultiUserCaseBrowserCustomizer.column.caseDbDeleteStatus=Case Database Deleted
+MultiUserCaseBrowserCustomizer.column.caseDirDeleteStatus=Case Directory Deleted
 MultiUserCaseBrowserCustomizer.column.createTime=Create Time
+MultiUserCaseBrowserCustomizer.column.dataSourcesDeleteStatus=Data Sources Deleted
 MultiUserCaseBrowserCustomizer.column.directory=Directory
 MultiUserCaseBrowserCustomizer.column.displayName=Name
 MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time
+MultiUserCaseBrowserCustomizer.column.manifestCoordSvcNodesDeleteStatus=Manifest ZooKeeper Node Deleted
+MultiUserCaseBrowserCustomizer.column.textIndexDeleteStatus=Text Index Deleted
 MultiUserCasesBrowserPanel.waitNode.message=Please Wait...

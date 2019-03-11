@@ -18,12 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 

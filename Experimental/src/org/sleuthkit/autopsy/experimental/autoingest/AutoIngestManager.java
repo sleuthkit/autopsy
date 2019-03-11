@@ -2292,9 +2292,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             sysLogger.log(Level.INFO, "Opening case {0} for {1}", new Object[]{caseName, manifest.getFilePath()});
             currentJob.setProcessingStage(AutoIngestJob.Stage.OPENING_CASE, Date.from(Instant.now()));
             /*
-             * Acquire and hold a case name lock so that only one node at as
-             * time can scan the output directory at a time. This prevents
-             * making duplicate cases for the same auto ingest case.
+             * Acquire and hold a case name lock so that only one node at a time
+             * can search the output directory for an existing case. This
+             * prevents making duplicate cases for the same auto ingest case.
              */
             try (Lock caseLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseName, 30, TimeUnit.MINUTES)) {
                 if (null != caseLock) {

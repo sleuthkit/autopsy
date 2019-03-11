@@ -289,7 +289,7 @@ public final class CaseNodeData {
         CASE_DB(2),
         CASE_DIR(4),
         DATA_SOURCES(8),
-        JOB_MANIFEST_NODES(16);
+        MANIFEST_FILE_LOCK_NODES(16);
 
         private final short value;
 

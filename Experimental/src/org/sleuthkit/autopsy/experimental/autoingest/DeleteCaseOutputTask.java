@@ -45,17 +45,22 @@ final class DeleteCaseOutputTask extends DeleteCaseTask {
     }
 
     @Override
-    void deleteWhileHoldingAllLocks() {
+    void deleteWhileHoldingAllLocks() throws InterruptedException {
         deleteCaseOutput();
     }
 
     @Override
-    void deleteAfterCaseLocksReleased() {
+    void deleteAfterCaseDirectoryLockReleased() throws InterruptedException {
     }
 
     @Override
-    void deleteAfterAllLocksReleased() {
-        deleteInputDirectoryLockNodes();
+    void deleteAfterManifestLocksReleased() throws InterruptedException {
+        deleteManifestFileLockNodes();
+    }
+
+    @Override
+    void deleteAfterCaseNameLockReleased() throws InterruptedException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }

@@ -141,14 +141,23 @@ public interface MultiUserCaseBrowserCustomizer {
         "MultiUserCaseBrowserCustomizer.column.displayName=Name",
         "MultiUserCaseBrowserCustomizer.column.createTime=Create Time",
         "MultiUserCaseBrowserCustomizer.column.directory=Directory",
-        "MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time"
+        "MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time",
+        "MultiUserCaseBrowserCustomizer.column.textIndexDeleteStatus=Text Index Deleted",
+        "MultiUserCaseBrowserCustomizer.column.caseDbDeleteStatus=Case Database Deleted",
+        "MultiUserCaseBrowserCustomizer.column.caseDirDeleteStatus=Case Directory Deleted",
+        "MultiUserCaseBrowserCustomizer.column.dataSourcesDeleteStatus=Data Sources Deleted",
+        "MultiUserCaseBrowserCustomizer.column.manifestCoordSvcNodesDeleteStatus=Manifest ZooKeeper Node Deleted"
     })
     public enum Column {
         DISPLAY_NAME(Bundle.MultiUserCaseBrowserCustomizer_column_displayName()),
         CREATE_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_createTime()),
         DIRECTORY(Bundle.MultiUserCaseBrowserCustomizer_column_directory()),
-        LAST_ACCESS_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_lastAccessTime());
-        // RJCTODO: Add properties for deleted items flags
+        LAST_ACCESS_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_lastAccessTime()),
+        TEXT_INDEX_DELETION_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_textIndexDeleteStatus()),
+        CASE_DB_DELETION_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_caseDbDeleteStatus()),
+        CASE_DIR_DELETION_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_caseDirDeleteStatus()),
+        DATA_SOURCES_DELETION_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_dataSourcesDeleteStatus()),
+        MANIFEST_FILE_LOCK_NODES_DELETION_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_manifestCoordSvcNodesDeleteStatus());
 
         private final String displayName;
 

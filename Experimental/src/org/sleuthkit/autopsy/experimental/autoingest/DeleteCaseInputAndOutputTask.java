@@ -38,19 +38,24 @@ final class DeleteCaseInputAndOutputTask extends DeleteCaseTask {
     }
 
     @Override
-    void deleteWhileHoldingAllLocks() {
+    void deleteWhileHoldingAllLocks() throws InterruptedException {
         deleteInputDirectories();
         deleteCaseOutput();
     }
 
     @Override
-    void deleteAfterCaseLocksReleased() {
-        deleteCaseLockNodes();
+    void deleteAfterManifestLocksReleased() throws InterruptedException {
+        deleteManifestFileLockNodes();
+    }
+    
+    @Override
+    void deleteAfterCaseDirectoryLockReleased() throws InterruptedException {
+        this.deleteCaseDirectoryLockNode();
     }
 
     @Override
-    void deleteAfterAllLocksReleased() {
-        deleteInputDirectoryLockNodes();
+    void deleteAfterCaseNameLockReleased() throws InterruptedException {
+        this.deleteCaseNameLockNode();
     }
 
 }

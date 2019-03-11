@@ -378,7 +378,7 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
 
             return newJobsSnapshot;
 
-        } catch (CoordinationServiceException ex) {
+        } catch (CoordinationServiceException | InterruptedException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get node list from coordination service", ex);
             return new JobsSnapshot();
         }

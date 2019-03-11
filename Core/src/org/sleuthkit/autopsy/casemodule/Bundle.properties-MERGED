@@ -11,7 +11,7 @@ Case.deleteCaseFailureMessageBox.message=Error deleting case: {0}
 Case.deleteCaseFailureMessageBox.title=Failed to Delete Case
 Case.exceptionMessage.cancelledByUser=Cancelled by user.
 Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first.
-Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user.
+Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or host.
 Case.exceptionMessage.cannotLocateMainWindow=Cannot locate main application window
 Case.exceptionMessage.cannotOpenMultiUserCaseNoSettings=Multi-user settings are missing (see Tools, Options, Multi-user tab), cannot open a multi-user case.
 # {0} - exception message
@@ -34,7 +34,7 @@ Case.exceptionMessage.couldNotSaveDbNameToMetadataFile=Failed to save case datab
 Case.exceptionMessage.couldNotUpdateCaseNodeData=Failed to update coordination service node data:\n{0}.
 Case.exceptionMessage.emptyCaseDir=Must specify a case directory path.
 Case.exceptionMessage.emptyCaseName=Must specify a case name.
-Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details.
+Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the log for details.
 # {0} - exception message
 Case.exceptionMessage.execExceptionWrapperMessage={0}
 # {0} - exception message
@@ -58,36 +58,12 @@ Case.progressMessage.connectingToCoordSvc=Connecting to coordination service...
 Case.progressMessage.creatingCaseDatabase=Creating case database...
 Case.progressMessage.creatingCaseDirectory=Creating case directory...
 Case.progressMessage.creatingCaseNodeData=Creating coordination service node data...
-Case.progressMessage.deletingAutoIngestLogCoordSvcNode=Deleting case auto ingest log lock coordination service node...
 Case.progressMessage.deletingCaseDatabase=Deleting case database...
 Case.progressMessage.deletingCaseDirectory=Deleting case directory...
-Case.progressMessage.deletingDirectoryCoordinationServiceNode=Deleting case directory lock coordination service node...
-Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resourceslock coordination service node...
+Case.progressMessage.deletingCaseDirLockNode=Deleting case directory lock coordination service node...
+Case.progressMessage.deletingResourcesLockNode=Deleting case resources lock node...
 Case.progressMessage.deletingTextIndex=Deleting text index...
-# {0} - exception message
-Case.progressMessage.errorConnectingToCoordSvc=An error occurred connecting to the coordination service (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorDeletingCaseDb=An error occurred deleting the case database (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorDeletingCaseDir=An error occurred deleting the case directory (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorDeletingCaseDirLockNode=An error occurred deleting the case directory lock node (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorDeletingJobLogLockNode=An error occurred deleting the case auto ingest log lock node (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorDeletingResourcesLockNode=An error occurred deleting the case resources lock node (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorDeletingTextIndex=An error occurred deleting the text index for the case (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorGettingCoordSvcNodeData=Failed to get the coordination service case node data (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorLockingCase=An error occurred exclusively locking the case for deletion (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorLockingCaseName=An error occurred exclusively locking the case name for deletion (see log for details): {0}.
-# {0} - exception message
-Case.progressMessage.errorSavingDeletedItemsFlags=An error occurred saving the deleted items flags in the coordination service database (see log for details): {0}.
 Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case...
-Case.progressMessage.missingCoordSvcNodeData=Missing coordination service node data.
 Case.progressMessage.openingApplicationServiceResources=Opening application service case resources...
 Case.progressMessage.openingCaseDatabase=Opening case database...
 Case.progressMessage.openingCaseLevelServices=Opening case-level services...

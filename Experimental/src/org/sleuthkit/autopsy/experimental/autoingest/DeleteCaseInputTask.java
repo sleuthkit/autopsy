@@ -24,18 +24,18 @@ import org.sleuthkit.autopsy.progress.ProgressIndicator;
 /**
  * A task to delete the auto ingest job input directories for a case produced
  * via auto ingest, while leaving the auto ingest job coordination service nodes
- * and the rest of the case intact. The use case is freeing space while
- * retaining the option to restore the input directories, effectively restoring
- * the case.
+ * (manifest file lock nodes) and the rest of the case intact. The use case is
+ * freeing space while retaining the option to restore the input directories,
+ * effectively restoring the case.
  */
 final class DeleteCaseInputTask extends DeleteCaseTask {
 
     /**
-     * Constructs a task to delete the auto ingest job input directories for a
+     * Constructs task to delete the auto ingest job input directories for a
      * case produced via auto ingest, while leaving the auto ingest job
-     * coordination service nodes and the rest of the case intact. The use case
-     * is freeing space while retaining the option to restore the input
-     * directories, effectively restoring the case.
+     * coordination service nodes (manifest file lock nodes) and the rest of the
+     * case intact. The use case is freeing space while retaining the option to
+     * restore the input directories, effectively restoring the case.
      *
      * @param caseNodeData The case directory lock coordination service node
      *                     data for the case.
@@ -46,16 +46,20 @@ final class DeleteCaseInputTask extends DeleteCaseTask {
     }
 
     @Override
-    void deleteWhileHoldingAllLocks() {
+    void deleteWhileHoldingAllLocks() throws InterruptedException {
+    }
+
+    @Override
+    void deleteAfterCaseDirectoryLockReleased() throws InterruptedException {
+    }
+
+    @Override
+    void deleteAfterCaseNameLockReleased() throws InterruptedException {
         deleteInputDirectories();
     }
 
     @Override
-    void deleteAfterCaseLocksReleased() {
-    }
-
-    @Override
-    void deleteAfterAllLocksReleased() {
+    void deleteAfterManifestLocksReleased() throws InterruptedException {
     }
 
 }
