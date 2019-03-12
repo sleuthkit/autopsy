@@ -44,6 +44,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import static javax.swing.JOptionPane.DEFAULT_OPTION;
 import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
@@ -161,15 +163,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 updateDataSourceSelection();
             }
         });
-//        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
-
-//        int caseNameColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.CASE_NAME.ordinal();
-//        sortKeys.add(new RowSorter.SortKey(caseNameColumnIndex, SortOrder.ASCENDING));
-//
-//        int dataSourceColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.DATA_SOURCE.ordinal();
-//        sortKeys.add(new RowSorter.SortKey(dataSourceColumnIndex, SortOrder.ASCENDING));
-//        sorter.setSortKeys(sortKeys);
-        sorter.sort();
+        caseTable.getRowSorter().toggleSortOrder(0);
+        dataSourceTable.getRowSorter().toggleSortOrder(0);
     }
 
     @Messages({"DataContentViewerOtherCases.correlatedArtifacts.isEmpty=There are no files or artifacts to correlate.",
@@ -403,7 +398,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 //            devices.put(deviceId, caseName);
         }
 
-        foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), model.getRowCount(), cases.size(), devices.size()));
+        foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), model.getRowCount(), casesTableModel.getRowCount(), devices.size()));
     }
 
     /**
@@ -768,6 +763,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // get the attributes we can correlate on
         correlationAttributes.addAll(getCorrelationAttributesFromNode(node));
         Map<String, CorrelationCase> caseNames = new HashMap<>();
+        int totalCount = 0;
+        Set<String> dataSources = new HashSet<>();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
             Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
@@ -776,46 +773,47 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
                 if (nodeData.isCentralRepoNode()) {
                     try {
+                        dataSources.add(makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                         caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
                     } catch (EamDbException ex) {
                         System.out.println("can't get correlation case");
                     }
                 } else {
                     try {
-                    caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
-                    } catch (NoCurrentCaseException ex){
+                        dataSources.add(makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
+                        caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
+                    } catch (NoCurrentCaseException ex) {
                         System.out.println("NO cURRENT CASE");
                     }
-                    
+
                 }
+                totalCount++;
             }
         }
-//        if (caseNames.isEmpty()) {
-//            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noArtifacts());
-//        } else if (0 == casesTableModel.getRowCount()) {
-//            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noResultsFound());
-//        } else {
         for (CorrelationCase corCase : caseNames.values()) {
             casesTableModel.addNodeData(corCase);
         }
-//        }
 
-//        if (correlationAttributes.isEmpty()) {
-//            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noArtifacts()));
-//            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noArtifacts());
-//        } else if (0 == tableModel.getRowCount()) {
-//            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noResultsFound()));
-//            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noResultsFound());
-//        } else {
-//            setColumnWidths();
-//        }
+        if (correlationAttributes.isEmpty()) {
+            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noArtifacts()));
+            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noArtifacts());
+        } else if (0 == tableModel.getRowCount()) {
+            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noResultsFound()));
+            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noResultsFound());
+        } else {
+            setColumnWidths();
+        }
         setEarliestCaseDate();
 
-        setOccurrenceCounts();
+        foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), totalCount, casesTableModel.getRowCount(), dataSources.size()));
 
         if (caseTable.getRowCount() > 0) {
             caseTable.setRowSelectionInterval(0, 0);
         }
+    }
+    
+    private String makeDataSourceString(String caseUUID, String deviceId, String dataSourceName){
+      return caseUUID + deviceId + dataSourceName;        
     }
 
     private void updateCaseSelection() {
@@ -831,7 +829,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
                 for (int selectedRow : selectedCaseIndexes) {
                     try {
-                        if (((CorrelationCase) casesTableModel.getRow(caseTable.convertRowIndexToModel(selectedRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                        if (nodeData.isCentralRepoNode()) {
+                            if (((CorrelationCase) casesTableModel.getRow(caseTable.convertRowIndexToModel(selectedRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                                dataSourceModel.addRow(new Object[]{nodeData.getDataSourceName(), nodeData.getDeviceID()});
+                            }
+                        } else {
                             dataSourceModel.addRow(new Object[]{nodeData.getDataSourceName(), nodeData.getDeviceID()});
                         }
                     } catch (EamDbException ex) {
@@ -859,9 +861,15 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 for (int selectedCaseRow : selectedCaseIndexes) {
                     for (int selectedDataSourceRow : selectedDataSources) {
                         try {
-                            if (((CorrelationCase) casesTableModel.getRow(caseTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
-                                    && dataSourceModel.getValueAt(dataSourceTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
-                                tableModel.addNodeData(nodeData);
+                            if (nodeData.isCentralRepoNode()) {
+                                if (((CorrelationCase) casesTableModel.getRow(caseTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
+                                        && dataSourceModel.getValueAt(dataSourceTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
+                                    tableModel.addNodeData(nodeData);
+                                }
+                            } else {
+                                if (dataSourceModel.getValueAt(dataSourceTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
+                                    tableModel.addNodeData(nodeData);
+                                }
                             }
                         } catch (EamDbException ex) {
                             System.out.println("failure 2 to compare");

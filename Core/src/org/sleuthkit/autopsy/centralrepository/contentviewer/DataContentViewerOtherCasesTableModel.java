@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -126,9 +126,9 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      * @return The value in the cell.
      */
     private Object mapNodeMessageData(OtherOccurrenceNodeMessageData nodeData, TableColumns columnId) {
-//        if (columnId == TableColumns.CASE_NAME) {
-//            return nodeData.getDisplayMessage();
-//        }
+        if (columnId == TableColumns.ATTRIBUTE) {
+            return nodeData.getDisplayMessage();
+        }
         return "";
     }
 
@@ -144,21 +144,6 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
 
         switch (columnId) {
-//            case CASE_NAME:
-//                if (null != nodeData.getCaseName()) {
-//                    value = nodeData.getCaseName();
-//                }
-//                break;
-//            case DEVICE:
-//                if (null != nodeData.getDeviceID()) {
-//                    value = nodeData.getDeviceID();
-//                }
-//                break;
-//            case DATA_SOURCE:
-//                if (null != nodeData.getDataSourceName()) {
-//                    value = nodeData.getDataSourceName();
-//                }
-//                break;
             case FILE_PATH:
                 value = nodeData.getFilePath();
                 break;
