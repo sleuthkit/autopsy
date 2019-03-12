@@ -151,7 +151,7 @@ public final class CaseNodeData {
      * @return The case directory path.
      */
     public Path getDirectory() {
-        return this.directory; 
+        return this.directory;
     }
 
     /**
