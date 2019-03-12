@@ -23,10 +23,12 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.JDialog;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCasesBrowserPanel;
 
 /**
@@ -182,7 +184,6 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
         try {
             caseBrowserPanel.getExplorerManager().setSelectedNodes(caseBrowserPanel.getExplorerManager().getRootContext().getChildren().getNodes());
         } catch (PropertyVetoException ex) {
-            Exceptions.printStackTrace(ex);
         }
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
@@ -190,14 +191,17 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
         try {
             caseBrowserPanel.getExplorerManager().setSelectedNodes(new Node[0]);
         } catch (PropertyVetoException ex) {
-            Exceptions.printStackTrace(ex);
         }
     }//GEN-LAST:event_deselectAllButtonActionPerformed
 
     private void confirmSelectionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_confirmSelectionsActionPerformed
+        Node[] selections = caseBrowserPanel.getExplorerManager().getSelectedNodes();
+        List<CaseNodeData> caseNodeData = Stream.of(selections)
+                .map(n -> n.getLookup().lookup(CaseNodeData.class))
+                .collect(Collectors.toList());
         listeners.forEach((l) -> {
             //Pass along the selected nodes in the event.
-            l.actionPerformed(new ActionEvent(caseBrowserPanel.getExplorerManager().getSelectedNodes(), -1, ""));
+            l.actionPerformed(new ActionEvent(caseNodeData, -1, ""));
         });
         parentDialog.setVisible(false);
     }//GEN-LAST:event_confirmSelectionsActionPerformed

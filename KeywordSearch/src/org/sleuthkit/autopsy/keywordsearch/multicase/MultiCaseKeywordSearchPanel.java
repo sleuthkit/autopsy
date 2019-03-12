@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch.multicase;
 
+import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.eventbus.DeadEvent;
 import java.awt.Color;
@@ -33,8 +34,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.AbstractButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
@@ -52,6 +57,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.keywordsearch.multicase.MultiCaseSearcher.MultiCaseSearcherException;
@@ -75,8 +81,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     private static final MultiCaseKeywordSearchNode NO_RESULTS_NODE = new MultiCaseKeywordSearchNode(new ArrayList<>());
     private Collection<SearchHit> allSearchHits = new ArrayList<>();
     private Collection<MultiCaseSearcherException> searchExceptions = new ArrayList<>();
-    private SelectMultiUserCasesDialog caseSelectionDialog = SelectMultiUserCasesDialog.getInstance();
-    private Node[] currentSelections;
+    private final SelectMultiUserCasesDialog caseSelectionDialog = SelectMultiUserCasesDialog.getInstance();
+    private Map<String, CaseNodeData> caseNameToCaseDataMap;
 
     /**
      * Creates new form MultiCaseKeywordSearchPanel
@@ -100,7 +106,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         caseSelectionDialog.subscribeToNewCaseSelections(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                populateCasesList((Node[]) e.getSource());
+                populateCasesList((List<CaseNodeData>) e.getSource());
                 revalidate();
             }
         });
@@ -109,6 +115,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         searchProgressBar.setVisible(false);
         exportButton.setEnabled(false);
         outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        caseNameToCaseDataMap = new HashMap<>();
         setColumnWidths();
     }
 
@@ -222,15 +229,16 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     /**
      * Get the list of cases from the Multi user case browser
      */
-    private void populateCasesList(Node[] selectedNodes) {
+    private void populateCasesList(List<CaseNodeData> selectedNodes) {
         Collection<String> disabledCases = getCases(false);
         casesPanel.removeAll();
-        currentSelections = selectedNodes;
+        caseNameToCaseDataMap.clear();
         int casePanelWidth = casesPanel.getPreferredSize().width;
         int heightOfAllRows = 0;
-        for (Node data : selectedNodes) {
+        for (CaseNodeData data : selectedNodes) {
             //select all new cases and cases which were previously selected
             String multiUserCaseName = data.getName();
+            caseNameToCaseDataMap.put(multiUserCaseName, data);
             boolean isSelected = true;
             if (disabledCases.contains(multiUserCaseName)) {
                 isSelected = false;
@@ -422,9 +430,9 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
                                 .addComponent(substringRadioButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(regexRadioButton))
-                            .addComponent(keywordTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(toolDescriptionScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 84, Short.MAX_VALUE))
+                            .addComponent(keywordTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 679, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(toolDescriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 295, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(casesLabel)
@@ -448,8 +456,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(viewErrorsButton)
-                                    .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 695, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(warningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 695, Short.MAX_VALUE))
+                                .addGap(14, 14, 14)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(exportButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(cancelButton, javax.swing.GroupLayout.DEFAULT_SIZE, 87, Short.MAX_VALUE))))))
@@ -527,6 +535,11 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
             } else if (searchString.isEmpty()) {
                 warningLabel.setText(Bundle.MultiCaseKeywordSearchPanel_warningText_emptySearch());
             } else {
+                //Map case names to CaseNodeData objects
+                Collection<CaseNodeData> caseNodeData = cases.stream()
+                        .map(c -> caseNameToCaseDataMap.get(c))
+                        .collect(Collectors.toList());
+                
                 //perform the search
                 warningLabel.setText("");
                 allSearchHits = new ArrayList<>();
@@ -537,7 +550,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
                 SearchQuery kwsQuery = new SearchQuery(getQueryType(), searchString);
                 em.setRootContext(PLEASE_WAIT_NODE);
                 resultsCountLabel.setText("");
-                searchThread = new SearchThread(cases, kwsQuery);
+                searchThread = new SearchThread(caseNodeData, kwsQuery);
                 searchThread.registerWithSearcher(MultiCaseKeywordSearchPanel.this);
                 searchThread.start();
             }
@@ -697,10 +710,11 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     }//GEN-LAST:event_viewErrorsButtonActionPerformed
 
     private void pickCasesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pickCasesButtonActionPerformed
-        if (currentSelections != null) {
-            caseSelectionDialog.setNodeSelections(currentSelections);
-        }
+        //if (currentSelections != null) {
+        //    caseSelectionDialog.setNodeSelections(currentSelections);
+        //}
         caseSelectionDialog.setVisible(true);
+        
     }//GEN-LAST:event_pickCasesButtonActionPerformed
 
     private void substringRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_substringRadioButtonActionPerformed
@@ -855,7 +869,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
      */
     private final class SearchThread extends Thread {
 
-        private final Collection<String> caseNames;
+        private final Collection<CaseNodeData> caseNodes;
         private final SearchQuery searchQuery;
         private final MultiCaseSearcher multiCaseSearcher = new MultiCaseSearcher();
 
@@ -865,8 +879,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
          * @param caseNames The names of the cases to search.
          * @param query     The keyword search query to perform.
          */
-        private SearchThread(Collection<String> caseNames, SearchQuery searchQuery) {
-            this.caseNames = caseNames;
+        private SearchThread(Collection<CaseNodeData> caseNodes, SearchQuery searchQuery) {
+            this.caseNodes = caseNodes;
             this.searchQuery = searchQuery;
         }
 
@@ -899,7 +913,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
 
         @Override
         public void run() {
-            multiCaseSearcher.performKeywordSearch(caseNames, searchQuery, new MultiCaseKeywordSearchProgressIndicator(searchProgressBar));
+            multiCaseSearcher.performKeywordSearch(caseNodes, searchQuery, new MultiCaseKeywordSearchProgressIndicator(searchProgressBar));
         }
 
     }

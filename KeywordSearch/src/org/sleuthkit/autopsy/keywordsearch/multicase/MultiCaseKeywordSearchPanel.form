@@ -39,10 +39,10 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="regexRadioButton" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="keywordTextField" min="-2" pref="570" max="-2" attributes="0"/>
+                          <Component id="keywordTextField" pref="679" max="32767" attributes="0"/>
                       </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                      <Component id="toolDescriptionScrollPane" pref="84" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="toolDescriptionScrollPane" min="-2" pref="295" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -61,7 +61,7 @@
                               </Group>
                           </Group>
                       </Group>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <Component id="resultsLabel" min="-2" pref="154" max="-2" attributes="0"/>
@@ -72,9 +72,9 @@
                           <Group type="102" alignment="1" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="viewErrorsButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="warningLabel" alignment="0" min="-2" pref="695" max="-2" attributes="0"/>
+                                  <Component id="warningLabel" alignment="0" pref="695" max="32767" attributes="0"/>
                               </Group>
-                              <EmptySpace min="14" max="32767" attributes="0"/>
+                              <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Component id="exportButton" max="32767" attributes="0"/>
                                   <Component id="cancelButton" pref="87" max="32767" attributes="0"/>

@@ -54,7 +54,7 @@ public class SelectMultiUserCasesDialog extends javax.swing.JDialog {
     void subscribeToNewCaseSelections(ActionListener l) {
         multiUserCasesPanel.subscribeToNewCaseSelections(l);
     }
-
+    
     /**
      * Set the node selections for the window
      *

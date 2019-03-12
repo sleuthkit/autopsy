@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -55,8 +56,10 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.CursorMarkParams;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -145,11 +148,11 @@ final class MultiCaseSearcher {
         "MultiCaseSearcher.exceptionMessage.failedToGetCaseDirReadlock=Failed to obtain read lock for case directory at {0}",
         "MultiCaseSearcher.exceptionMessage.cancelledMessage=Search cancelled"
     })
-    void performKeywordSearch(final Collection<String> caseNames, final SearchQuery query, final ProgressIndicator progressIndicator) {
+    void performKeywordSearch(final Collection<CaseNodeData> caseNodes, final SearchQuery query, final ProgressIndicator progressIndicator) {
         progressIndicator.start(Bundle.MultiCaseSearcher_progressMessage_findingCases());
         try {
             searchStopped = false;  //mark the search as started
-            final List<MultiCaseMetadata> caseMetadata = getMultiCaseMetadata(caseNames);
+            final List<MultiCaseMetadata> caseMetadata = getMultiCaseMetadata(caseNodes);
             checkForCancellation();
             //eventBus.post("number of cases to search determined");
             progressIndicator.progress(Bundle.MultiCaseSearcher_progressMessage_creatingSolrQuery());
@@ -223,8 +226,9 @@ final class MultiCaseSearcher {
      * @throws MultiCaseSearcherException
      * @throws InterruptedException
      */
-    private List<MultiCaseMetadata> getMultiCaseMetadata(final Collection<String> caseNames) throws MultiCaseSearcherException, InterruptedException {
-        final Map<Path, String> casesToCasePaths = getCaseDirectories(caseNames);
+    private List<MultiCaseMetadata> getMultiCaseMetadata(final Collection<CaseNodeData> caseNodes) throws MultiCaseSearcherException, InterruptedException {
+        final Map<Path, String> casesToCasePaths = caseNodes.stream()
+                .collect(Collectors.toMap(CaseNodeData::getDirectory, CaseNodeData::getName));
         checkForCancellation();
         final List<MultiCaseMetadata> cases = new ArrayList<>();
         for (Map.Entry<Path, String> entry : casesToCasePaths.entrySet()) {
@@ -236,78 +240,6 @@ final class MultiCaseSearcher {
             cases.add(new MultiCaseMetadata(caseMetadata, textIndexMetadata));
         }
         return cases;
-    }
-
-    /**
-     * Uses coordination service data to find the case directories of the cases.
-     *
-     * @param caseNames The names of the cases.
-     *
-     * @return A mapping of case directory paths to case names, possibly empty.
-     *
-     * @throws MultiCaseSearcherException
-     * @throws InterruptedException
-     */
-    @NbBundle.Messages({
-        "# {0} - host", "# {1} - port", "MultiCaseSearcher.exceptionMessage.failedToQueryCoordinationServer=Failed to obtain read lock for case directory at {0}:{1}",
-        "# {0} - list of cases", "MultiCaseSearcher.exceptionMessage.noCasesFound=No cases found for: {0}"
-    })
-    private Map<Path, String> getCaseDirectories(final Collection<String> caseNames) throws MultiCaseSearcherException, InterruptedException {
-        final Map<Path, String> casePathToCaseMap = new HashMap<>();
-        final List<String> caseNodeNames;
-        try {
-            CoordinationService coordinationService = CoordinationService.getInstance();
-            caseNodeNames = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
-        } catch (CoordinationService.CoordinationServiceException ex) {
-            throw new MultiCaseSearcherException(Bundle.MultiCaseSearcher_exceptionMessage_failedToQueryCoordinationServer(UserPreferences.getIndexingServerHost(), UserPreferences.getIndexingServerPort()), ex);
-        }
-        for (String nodeName : caseNodeNames) {
-            /*
-             * Find the case directory paths by selecting each coordination
-             * service case directory lock node path that has the case name in
-             * the path.
-             */
-            checkForCancellation();
-            final Path caseDirectoryPath = Paths.get(nodeName);
-            boolean contansSlash = caseDirectoryPath.toString().contains("\\") || caseDirectoryPath.toString().contains("//");
-            if (!contansSlash) {
-                /*
-                 * Skip case name lock nodes.
-                 */
-                continue;
-            }
-            final String fileName = caseDirectoryPath.getFileName().toString();
-            if (fileName.equals(CASE_AUTO_INGEST_LOG_NAME) || fileName.endsWith(RESOURCES_LOCK_SUFFIX)) {
-                /*
-                 * Skip case auto ingest log and case resource lock nodes.
-                 */
-                continue;
-            }
-            for (String aCase : caseNames) {
-                checkForCancellation();
-                final String normalizedCaseName = aCase.toUpperCase();
-                if (fileName.contains(normalizedCaseName)) {
-                    logger.log(Level.INFO, "Match found: Case node name {0} contains case name {1}", new Object[]{nodeName, normalizedCaseName});
-                    try {
-                        Path realCaseDirectoryPath = caseDirectoryPath.toRealPath(LinkOption.NOFOLLOW_LINKS);
-                        logger.log(Level.INFO, "Case directory path {0} resolves to real path {1}", new Object[]{caseDirectoryPath, realCaseDirectoryPath});
-                        final File caseDirectory = realCaseDirectoryPath.toFile();
-                        if (caseDirectory.exists()) {
-                            casePathToCaseMap.put(realCaseDirectoryPath, aCase);
-                        } else {
-                            logger.log(Level.SEVERE, String.format("Case directory %s does NOT exist", caseDirectoryPath));
-                        }
-                    } catch (IOException ex) {
-                        logger.log(Level.SEVERE, String.format("Case directory path %s does NOT resolve to a real path", caseDirectoryPath), ex);
-                    }
-                    break;
-                }
-            }
-        }
-        if (casePathToCaseMap.isEmpty()) {
-            throw new MultiCaseSearcherException(Bundle.MultiCaseSearcher_exceptionMessage_noCasesFound(StringUtils.join(caseNames, ',')));
-        }
-        return casePathToCaseMap;
     }
 
     /**
@@ -326,22 +258,15 @@ final class MultiCaseSearcher {
     })
 
     private static CaseMetadata getCaseMetadata(Path caseDirectoryPath) throws MultiCaseSearcherException {
-        CaseMetadata caseMetadata = null;
-        final File[] caseFiles = caseDirectoryPath.toFile().listFiles();
-        for (File file : caseFiles) {
-            final String fileName = file.getName().toLowerCase();
-            if (fileName.endsWith(CaseMetadata.getFileExtension())) {
-                try {
-                    return new CaseMetadata(file.toPath());
-                } catch (CaseMetadata.CaseMetadataException ex) {
-                    throw new MultiCaseSearcherException(Bundle.MultiCaseSearcher_exceptionMessage_failedToParseCaseMetadata(caseDirectoryPath), ex);
-                }
+        Path metadataPath = CaseMetadata.getCaseMetadataFile(caseDirectoryPath);
+        if (metadataPath != null) {
+            try {
+                return new CaseMetadata(metadataPath);
+            } catch (CaseMetadata.CaseMetadataException ex) {
+                throw new MultiCaseSearcherException(Bundle.MultiCaseSearcher_exceptionMessage_failedToParseCaseMetadata(caseDirectoryPath), ex);
             }
         }
-        if (null == caseMetadata) {
-            throw new MultiCaseSearcherException(Bundle.MultiCaseSearcher_exceptionMessage_failedToFindCaseMetadata(caseDirectoryPath));
-        }
-        return caseMetadata;
+        throw new MultiCaseSearcherException(Bundle.MultiCaseSearcher_exceptionMessage_failedToFindCaseMetadata(caseDirectoryPath));
     }
 
     /**

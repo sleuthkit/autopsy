@@ -46,9 +46,6 @@ MultiCaseSearcher.exceptionMessage.failedToGetCaseDatabaseConnectionInfo=Failed 
 MultiCaseSearcher.exceptionMessage.failedToGetCaseDirReadlock=Failed to obtain read lock for case directory at {0}
 # {0} - case directory
 MultiCaseSearcher.exceptionMessage.failedToParseCaseMetadata=Failed to parse case file metadata in {0}
-# {0} - host
-# {1} - port
-MultiCaseSearcher.exceptionMessage.failedToQueryCoordinationServer=Failed to obtain read lock for case directory at {0}:{1}
 # {0} - Solr document id
 # {1} - case database name
 # {2} - case directory
@@ -56,8 +53,6 @@ MultiCaseSearcher.exceptionMessage.hitProcessingError=Failed to query case datab
 # {0} - file name
 # {1} - case directory
 MultiCaseSearcher.exceptionMessage.missingSolrPropertiesFile=Missing {0} file in {1}
-# {0} - list of cases
-MultiCaseSearcher.exceptionMessage.noCasesFound=No cases found for: {0}
 # {0} - file name
 # {1} - case directory
 MultiCaseSearcher.exceptionMessage.solrPropertiesFileParseError=Error parsing {0} file in {1}
