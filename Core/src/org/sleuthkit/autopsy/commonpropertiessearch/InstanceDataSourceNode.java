@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -110,8 +110,7 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
     }
 
     /**
-     * ChildFactory which builds DisplayableItem from the metadata data
-     * sources.
+     * ChildFactory which builds DisplayableItem from the metadata data sources.
      */
     static class FileInstanceNodeFactory extends ChildFactory<AbstractCommonAttributeInstance> {
 
@@ -123,7 +122,7 @@ public final class InstanceDataSourceNode extends DisplayableItemNode {
 
         @Override
         protected boolean createKeys(List<AbstractCommonAttributeInstance> list) {
-            for (CommonAttributeValue value : descendants.getDelayedMetadataList()) {
+            for (CommonAttributeValue value : descendants.getDelayedMetadataSet()) {
                 // This is a bit of a hack to ensure that the AbstractFile instance
                 // has been created before createNodesForKey() is called. Constructing
                 // the AbstractFile in createNodesForKey() was resulting in UI lockups.

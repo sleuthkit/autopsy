@@ -28,6 +28,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -39,7 +40,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Create OS INFO artifacts for the Operating Systems believed to be present on
  * the data source.
  */
-@Messages({"ExtractOs.parentModuleName=Recent Activity"})
+@Messages({"ExtractOs.parentModuleName=Recent Activity",
+            "ExtractOS_progressMessage=Checking for OS"})
 class ExtractOs extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractOs.class.getName());
@@ -64,9 +66,10 @@ class ExtractOs extends Extract {
     private Content dataSource;
 
     @Override
-    void process(Content dataSource, IngestJobContext context) {
+    void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         try {
+            progressBar.progress(Bundle.ExtractOS_progressMessage());
             for (OS_TYPE value : OS_TYPE.values()) {
                 checkForOSFiles(value);
             }
