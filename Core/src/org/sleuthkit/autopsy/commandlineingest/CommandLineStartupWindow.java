@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2019 Basis Technology Corp.
+ * Copyright 2019-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.commandline;
+package org.sleuthkit.autopsy.commandlineingest;
 
 import java.awt.Dimension;
 import javax.swing.JDialog;

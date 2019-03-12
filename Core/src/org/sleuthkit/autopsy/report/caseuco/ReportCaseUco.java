@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.case_uco;
+package org.sleuthkit.autopsy.report.caseuco;
 
 import java.util.logging.Level;
 import javax.swing.JPanel;
@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.*;
  * ReportCaseUco generates a report in the CASE-UCO format. It saves basic file
  * info like full caseDirPath, name, MIME type, times, and hash.
  */
-public class ReportCaseUco implements GeneralReportModule {
+public final class ReportCaseUco implements GeneralReportModule {
 
     private static final Logger logger = Logger.getLogger(ReportCaseUco.class.getName());
     private static ReportCaseUco instance = null;

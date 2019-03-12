@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2019 Basis Technology Corp.
+ * Copyright 2019-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.commandline;
+package org.sleuthkit.autopsy.commandlineingest;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -32,6 +32,7 @@ import java.util.concurrent.Future;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.LifecycleManager;
@@ -45,6 +46,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -54,8 +56,8 @@ import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
 import org.sleuthkit.autopsy.report.ReportProgressPanel;
-import org.sleuthkit.autopsy.modules.case_uco.CaseUcoFormatExporter;
-import org.sleuthkit.autopsy.modules.case_uco.ReportCaseUco;
+import org.sleuthkit.autopsy.report.caseuco.CaseUcoFormatExporter;
+import org.sleuthkit.autopsy.report.caseuco.ReportCaseUco;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -66,7 +68,7 @@ import org.sleuthkit.datamodel.Content;
 public class CommandLineIngestManager {
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineIngestManager.class.getName());
-    private static final String JOB_RUNNING_THREAD_NAME = "command-line-job-running-service-%d";
+    private static final String JOB_RUNNING_THREAD_NAME = "CIM-job-processing-%d";
     private final ExecutorService jobProcessingExecutor;
     private Future<?> jobProcessingTaskFuture;
     private Path rootOutputDirectory;
@@ -82,14 +84,13 @@ public class CommandLineIngestManager {
 
     public void stop() {
 
-        jobProcessingTaskFuture.cancel(true);
-        jobProcessingExecutor.shutdown();
+        ThreadUtils.shutDownTaskExecutor(jobProcessingExecutor);
 
         try {
             // close current case if there is one open
             Case.closeCurrentCase();
         } catch (CaseActionException ex) {
-            LOGGER.log(Level.WARNING, "Unable to close the case while shutting down ingest jb running service", ex); //NON-NLS
+            LOGGER.log(Level.WARNING, "Unable to close the case while shutting down command line ingest manager", ex); //NON-NLS
         }
 
         // shut down Autopsy
@@ -158,6 +159,15 @@ public class CommandLineIngestManager {
 
                 // read options panel configuration
                 String rootOutputDir = UserPreferences.getCommandLineModeResultsFolder();
+                LOGGER.log(Level.INFO, "Output directory = {0}", rootOutputDir); //NON-NLS
+                System.out.println("Output directoryh = " + rootOutputDir);
+
+                if (rootOutputDir.isEmpty()) {
+                    LOGGER.log(Level.SEVERE, "Output directory not specified, please configure Command Line Options Panel (in Tools -> Options)");
+                    System.out.println("Output directory not specified, please configure Command Line Options Panel (in Tools -> Options)");
+                    return;
+                }
+
                 if (!(new File(rootOutputDir).exists())) {
                     LOGGER.log(Level.SEVERE, "The output directory doesn't exist {0}", rootOutputDir);
                     System.out.println("The output directory doesn't exist " + rootOutputDir);
@@ -171,11 +181,13 @@ public class CommandLineIngestManager {
                     caseForJob = openCase(baseCaseName);
                 } catch (CaseActionException ex) {
                     LOGGER.log(Level.SEVERE, "Error creating or opening case " + baseCaseName, ex);
+                    System.out.println("Error creating or opening case " + baseCaseName);
                     return;
                 }
 
                 if (caseForJob == null) {
                     LOGGER.log(Level.SEVERE, "Error creating or opening case {0}", baseCaseName);
+                    System.out.println("Error creating or opening case " + baseCaseName);
                     return;
                 }
 
@@ -193,17 +205,30 @@ public class CommandLineIngestManager {
                     ReportProgressPanel progressPanel = new ReportProgressPanel("CASE_UCO", rootOutputDir); // dummy progress panel
                     CaseUcoFormatExporter.generateReport(selectedDataSourceId, reportFolderPath.toString(), progressPanel);
                 } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | AnalysisStartupException ex) {
-                    LOGGER.log(Level.SEVERE, "Unable to ingest data source " + baseCaseName + ". Exiting...", ex);
+                    LOGGER.log(Level.SEVERE, "Unable to ingest data source " + dataSourcePath + ". Exiting...", ex);
+                    System.out.println("Unable to ingest data source " + dataSourcePath + ". Exiting...");
+                } catch (Throwable ex) {
+                    /*
+                    * Unexpected runtime exceptions firewall. This task is designed to
+                    * be able to be run in an executor service thread pool without
+                    * calling get() on the task's Future<Void>, so this ensures that
+                    * such errors get logged.
+                     */
+                    LOGGER.log(Level.SEVERE, "Unexpected error while ingesting data source " + dataSourcePath, ex);
+                    System.out.println("Unexpected error while ingesting data source " + dataSourcePath + ". Exiting...");
+
                 } finally {
                     try {
                         Case.closeCurrentCase();
                     } catch (CaseActionException ex) {
                         LOGGER.log(Level.WARNING, "Exception while closing case", ex);
+                        System.out.println("Exception while closing case");
                     }
                 }
 
             } finally {
-                LOGGER.log(Level.INFO, "Job processing task stopped");
+                LOGGER.log(Level.INFO, "Job processing task finished");
+                System.out.println("Job processing task finished");
 
                 // shut down Autopsy
                 stop();

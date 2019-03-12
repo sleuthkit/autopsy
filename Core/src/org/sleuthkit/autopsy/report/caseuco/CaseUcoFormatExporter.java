@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.case_uco;
+package org.sleuthkit.autopsy.report.caseuco;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Generates CASE-UCO report file for a data source
  */
-public class CaseUcoFormatExporter {
+public final class CaseUcoFormatExporter {
 
     private static final Logger logger = Logger.getLogger(CaseUcoFormatExporter.class.getName());
 

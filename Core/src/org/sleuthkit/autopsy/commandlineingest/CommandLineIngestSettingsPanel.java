@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2019 Basis Technology Corp.
+ * Copyright 2019-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.commandline;
+package org.sleuthkit.autopsy.commandlineingest;
 
 import java.awt.BorderLayout;
 import java.awt.Cursor;
@@ -88,7 +88,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
      */
     final void load(boolean inStartup) {
 
-        String results = org.sleuthkit.autopsy.commandline.UserPreferences.getCommandLineModeResultsFolder();
+        String results = org.sleuthkit.autopsy.commandlineingest.UserPreferences.getCommandLineModeResultsFolder();
         if (results != null) {
             outputPathTextField.setText(results);
         } else {
@@ -103,7 +103,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
      */
     void store() {
         String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-        org.sleuthkit.autopsy.commandline.UserPreferences.setCommandLineModeResultsFolder(resultsFolderPath);
+        org.sleuthkit.autopsy.commandlineingest.UserPreferences.setCommandLineModeResultsFolder(resultsFolderPath);
     }
 
     /**
@@ -217,7 +217,7 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
     private void displayIngestJobSettingsPanel() {
         this.getParent().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(org.sleuthkit.autopsy.commandline.UserPreferences.getCommandLineModeIngestModuleContextString());
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(org.sleuthkit.autopsy.commandlineingest.UserPreferences.getCommandLineModeIngestModuleContextString());
         showWarnings(ingestJobSettings);
         IngestJobSettingsPanel ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
 

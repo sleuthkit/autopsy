@@ -23,9 +23,9 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.commandline.CommandLineIngestManager;
-import org.sleuthkit.autopsy.commandline.CommandLineOptionProcessor;
-import org.sleuthkit.autopsy.commandline.CommandLineStartupWindow;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineIngestManager;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineStartupWindow;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -64,6 +64,7 @@ public class StartupWindowProvider implements StartupWindowInterface {
                 logger.log(Level.INFO, "Running from command line"); //NON-NLS
                 System.out.println("Running from command line");
                 startupWindowToUse = new CommandLineStartupWindow();
+                // kick off command line processing
                 CommandLineIngestManager ingestManager = new CommandLineIngestManager();
                 ingestManager.start();
                 return;
@@ -112,26 +113,22 @@ public class StartupWindowProvider implements StartupWindowInterface {
      * Checks whether Autopsy is running from command line. There is an
      * OptionProcessor that is responsible for processing command line inputs.
      * If Autopsy is indeed running from command line, then use the command line
-     * startup window and kick off command line processing.
+     * startup window.
      *
      * @return True if running from command line, false otherwise
      */
     private boolean isRunningFromCommandLine() {
 
-        boolean runningFromCommandLine = false;
         // first look up all OptionProcessors and see if running from command line option is set
         Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
         Iterator<? extends OptionProcessor> optionsIterator = optionProcessors.iterator();
         while (optionsIterator.hasNext()) {
             // find CommandLineOptionProcessor
             OptionProcessor processor = optionsIterator.next();
-            if (!(processor instanceof CommandLineOptionProcessor)) {
-                continue;
+            if ((processor instanceof CommandLineOptionProcessor)) {
+                // check if we are running from command line            
+                return ((CommandLineOptionProcessor) processor).isRunFromCommandLine();
             }
-
-            // check if we are running from command line
-            runningFromCommandLine = ((CommandLineOptionProcessor) processor).isRunFromCommandLine();
-            return runningFromCommandLine;
         }
         return false;
     }
