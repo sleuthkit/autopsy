@@ -112,18 +112,10 @@ final class HtmlViewer extends javax.swing.JPanel implements FileTypeViewer {
         return Arrays.asList(SUPPORTED_MIMETYPES);
     }
 
-    @NbBundle.Messages({
-       "HtmlViewer_error=This file is not properly formed HTML text that can be displayed.",
-    })
     @Override
     public void setFile(AbstractFile file) {
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            htmlPanel.setHtmlText(getHtmlText(file));
-        }
-        catch (Exception ex) {
-            htmlPanel.setHtmlText(Bundle.HtmlViewer_error());
-        }
+        htmlPanel.setHtmlText(getHtmlText(file));
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
