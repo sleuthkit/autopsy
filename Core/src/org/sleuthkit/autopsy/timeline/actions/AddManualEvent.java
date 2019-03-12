@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
+import static java.awt.SystemColor.window;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -27,15 +28,19 @@ import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.Modality;
+import javafx.stage.Window;
 import javafx.util.StringConverter;
 import javax.swing.SwingUtilities;
 import jfxtras.scene.control.LocalDateTimeTextField;
@@ -48,6 +53,7 @@ import org.controlsfx.validation.Validator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.PromptDialogManager;
@@ -76,6 +82,9 @@ public class AddManualEvent extends Action {
     private final static Logger logger = Logger.getLogger(AddManualEvent.class.getName());
     private static final String MANUAL_CREATION = "Manual Creation"; //NON-NLS
     private static final Image ADD_EVENT_IMAGE = new Image("/org/sleuthkit/autopsy/timeline/images/add.png", 16, 16, true, true, true); // NON-NLS
+
+    @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+    private static EventCreationDialog dialog;
 
     private final TimeLineController controller;
 
@@ -117,8 +126,22 @@ public class AddManualEvent extends Action {
         setLongText(Bundle.AddManualEvent_longText());
 
         setEventHandler(actionEvent -> {
-            //show the dialog and if it completed normally add the event.
-            new EventCreationDialog(controller, epochMillis).showAndWait().ifPresent(this::addEvent);
+
+            if (dialog == null) {
+                Object source = actionEvent.getSource();
+                Window owner = null;
+                if (source instanceof Node) {
+                    owner = ((Node) source).getScene().getWindow();
+                } else if (source instanceof MenuItem) {
+                    owner = ((MenuItem) source).getParentPopup();
+                }
+
+                //show the dialog and if it completed normally add the event.
+                dialog = new EventCreationDialog(controller, epochMillis, owner);
+            }
+
+            dialog.showAndWait().ifPresent(this::addEvent);
+            dialog = null;
         });
     }
 
@@ -172,10 +195,12 @@ public class AddManualEvent extends Action {
         /** Custom DialogPane defined below. */
         private final EventCreationDialogPane eventCreationDialogPane;
 
-        EventCreationDialog(TimeLineController controller, Long epochMillis) {
+        EventCreationDialog(TimeLineController controller, Long epochMillis, Window owner) {
             this.eventCreationDialogPane = new EventCreationDialogPane(controller, epochMillis);
             setTitle(Bundle.AddManualEvent_text());
             setDialogPane(eventCreationDialogPane);
+            initOwner(owner);
+            initModality(Modality.WINDOW_MODAL);
 
             //We can't do these steps until after the dialog is shown or we get an error.
             setOnShown(dialogEvent -> {
