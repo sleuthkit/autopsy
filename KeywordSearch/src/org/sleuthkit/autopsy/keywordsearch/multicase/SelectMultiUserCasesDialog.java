@@ -19,15 +19,15 @@
 package org.sleuthkit.autopsy.keywordsearch.multicase;
 
 import java.awt.Dialog;
-import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import org.openide.nodes.Node;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.keywordsearch.multicase.MultiCaseKeywordSearchPanel.ChangeListener;
 
 /**
  * Dialog that will display the SelectMultiUserCasesPanel
  */
-public class SelectMultiUserCasesDialog extends javax.swing.JDialog {
+class SelectMultiUserCasesDialog extends javax.swing.JDialog {
 
     private static final long serialVersionUID = 1L;
     private static SelectMultiUserCasesDialog instance;
@@ -51,7 +51,7 @@ public class SelectMultiUserCasesDialog extends javax.swing.JDialog {
      *
      * @param l Listener on new case selection events
      */
-    void subscribeToNewCaseSelections(ActionListener l) {
+    void subscribeToNewCaseSelections(ChangeListener l) {
         multiUserCasesPanel.subscribeToNewCaseSelections(l);
     }
     

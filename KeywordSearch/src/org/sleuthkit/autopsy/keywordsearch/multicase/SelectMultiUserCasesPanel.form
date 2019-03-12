@@ -82,7 +82,8 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deselectAllButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="jLabel1"></Component>
+    <Component class="javax.swing.JLabel" name="jLabel1">
+    </Component>
     <Component class="javax.swing.JButton" name="confirmSelections">
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="confirmSelectionsActionPerformed"/>

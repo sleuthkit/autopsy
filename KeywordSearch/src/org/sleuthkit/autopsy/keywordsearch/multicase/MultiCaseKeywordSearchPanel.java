@@ -18,14 +18,11 @@
  */
 package org.sleuthkit.autopsy.keywordsearch.multicase;
 
-import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.eventbus.DeadEvent;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -82,8 +79,9 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     private Collection<SearchHit> allSearchHits = new ArrayList<>();
     private Collection<MultiCaseSearcherException> searchExceptions = new ArrayList<>();
     private final SelectMultiUserCasesDialog caseSelectionDialog = SelectMultiUserCasesDialog.getInstance();
-    private Map<String, CaseNodeData> caseNameToCaseDataMap;
-
+    private final Map<String, CaseNodeData> caseNameToCaseDataMap;
+    private Node[] currentConfirmedSelections;
+    
     /**
      * Creates new form MultiCaseKeywordSearchPanel
      */
@@ -103,11 +101,13 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         outline.setRootVisible(false);
         outlineView.setPreferredSize(resultsScrollPane.getPreferredSize());
         resultsScrollPane.setViewportView(outlineView);
-        caseSelectionDialog.subscribeToNewCaseSelections(new ActionListener() {
+        caseSelectionDialog.subscribeToNewCaseSelections(new ChangeListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                populateCasesList((List<CaseNodeData>) e.getSource());
+            public void nodeSelectionChanged(Node[] selections, List<CaseNodeData> selectionCaseData) {
+                populateCasesList(selectionCaseData);
+                currentConfirmedSelections = selections;
                 revalidate();
+                repaint();
             }
         });
         searchEnabled(true);
@@ -119,6 +119,13 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         setColumnWidths();
     }
 
+    /**
+     * Listener for new selections
+     */
+    public interface ChangeListener {
+        public void nodeSelectionChanged(Node[] selections, List<CaseNodeData> selectionCaseData);
+    }
+    
     /**
      * If a collection of SearchHits is received update the results shown on the
      * panel to include them.
@@ -232,6 +239,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     private void populateCasesList(List<CaseNodeData> selectedNodes) {
         Collection<String> disabledCases = getCases(false);
         casesPanel.removeAll();
+        casesPanel.revalidate();
+        casesPanel.repaint();
         caseNameToCaseDataMap.clear();
         int casePanelWidth = casesPanel.getPreferredSize().width;
         int heightOfAllRows = 0;
@@ -250,7 +259,6 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
             }
             heightOfAllRows += caseCheckBox.getPreferredSize().height;
             casesPanel.add(caseCheckBox);
-            casesPanel.revalidate();
         }
         casesPanel.setPreferredSize(new Dimension(casePanelWidth, heightOfAllRows));
     }
@@ -710,9 +718,9 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     }//GEN-LAST:event_viewErrorsButtonActionPerformed
 
     private void pickCasesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pickCasesButtonActionPerformed
-        //if (currentSelections != null) {
-        //    caseSelectionDialog.setNodeSelections(currentSelections);
-        //}
+        if (currentConfirmedSelections != null) {
+            caseSelectionDialog.setNodeSelections(currentConfirmedSelections);
+        }
         caseSelectionDialog.setVisible(true);
         
     }//GEN-LAST:event_pickCasesButtonActionPerformed

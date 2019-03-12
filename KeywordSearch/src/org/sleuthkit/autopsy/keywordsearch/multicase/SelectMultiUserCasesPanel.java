@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch.multicase;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,16 +28,17 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCasesBrowserPanel;
+import org.sleuthkit.autopsy.keywordsearch.multicase.MultiCaseKeywordSearchPanel.ChangeListener;
 
 /**
  * Panel for multi-user case selection
  */
-public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
+class SelectMultiUserCasesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private final JDialog parentDialog;
     private final MultiUserCasesBrowserPanel caseBrowserPanel;
-    private final List<ActionListener> listeners;
+    private final List<ChangeListener> listeners;
 
     /**
      * Constructs a JPanel that allows a user to open a multi-user case.
@@ -71,7 +70,7 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
      *
      * @param listener
      */
-    void subscribeToNewCaseSelections(ActionListener listener) {
+    void subscribeToNewCaseSelections(ChangeListener listener) {
         listeners.add(listener);
     }
 
@@ -184,6 +183,7 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
         try {
             caseBrowserPanel.getExplorerManager().setSelectedNodes(caseBrowserPanel.getExplorerManager().getRootContext().getChildren().getNodes());
         } catch (PropertyVetoException ex) {
+            //Ignore
         }
     }//GEN-LAST:event_selectAllButtonActionPerformed
 
@@ -191,17 +191,18 @@ public class SelectMultiUserCasesPanel extends javax.swing.JPanel {
         try {
             caseBrowserPanel.getExplorerManager().setSelectedNodes(new Node[0]);
         } catch (PropertyVetoException ex) {
+            //Ignore
         }
     }//GEN-LAST:event_deselectAllButtonActionPerformed
 
     private void confirmSelectionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_confirmSelectionsActionPerformed
+        //Pull out the CaseNodeData objects from the selections
         Node[] selections = caseBrowserPanel.getExplorerManager().getSelectedNodes();
         List<CaseNodeData> caseNodeData = Stream.of(selections)
                 .map(n -> n.getLookup().lookup(CaseNodeData.class))
                 .collect(Collectors.toList());
         listeners.forEach((l) -> {
-            //Pass along the selected nodes in the event.
-            l.actionPerformed(new ActionEvent(caseNodeData, -1, ""));
+            l.nodeSelectionChanged(selections, caseNodeData);
         });
         parentDialog.setVisible(false);
     }//GEN-LAST:event_confirmSelectionsActionPerformed
