@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,6 +38,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 
 /**
  * A DataResultTopComponent object is a NetBeans top component that provides
@@ -100,7 +101,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
         initInstance(description, node, childNodeCount, resultViewTopComponent);
         return resultViewTopComponent;
-    }    
+    }
 
     /**
      * Creates a result view top component that provides multiple views of the
@@ -147,7 +148,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         DataResultTopComponent resultViewTopComponent = new DataResultTopComponent(false, title, null, Collections.emptyList(), DataContentTopComponent.findInstance());
         return resultViewTopComponent;
     }
-    
+
     /**
      * Initializes a partially initialized result view top component.
      *
@@ -248,6 +249,8 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         setName(title);
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
         getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
+        getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(ExternalViewerShortcutAction.EXTERNAL_VIEWER_SHORTCUT, "useExternalViewer"); //NON-NLS 
+        getActionMap().put("useExternalViewer", ExternalViewerShortcutAction.getInstance()); //NON-NLS
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isMain);
         putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
         putClientProperty(TopComponent.PROP_DRAGGING_DISABLED, true);
