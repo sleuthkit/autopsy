@@ -283,11 +283,11 @@ final class ExtractZoneIdentifier extends Extract {
     }
 
     @Messages({
-        "LOCAL_MACHINE_ZONE=Local Machine Zone",
-        "LOCAL_INTRANET_ZONE=Local Intranet Zone",
-        "TRUSTED_ZONE=Trusted Sites Zone",
-        "INTERNET_ZONE=Internet Zone",
-        "RESTRICTED_ZONE=Restricted Sites Zone"
+        "ExtractZone_Local_Machine=Local Machine Zone",
+        "ExtractZone_Local_Intranet=Local Intranet Zone",
+        "ExtractZone_Trusted=Trusted Sites Zone",
+        "ExtractZone_Internet=Internet Zone",
+        "ExtractZone_Restricted=Restricted Sites Zone"
     })
 
     /**
@@ -343,15 +343,15 @@ final class ExtractZoneIdentifier extends Extract {
         private String getZoneIdAsString() {
             switch (getZoneId()) {
                 case 0:
-                    return Bundle.LOCAL_MACHINE_ZONE();
+                    return Bundle.ExtractZone_Local_Machine();
                 case 1:
-                    return Bundle.LOCAL_INTRANET_ZONE();
+                    return Bundle.ExtractZone_Local_Intranet();
                 case 2:
-                    return Bundle.TRUSTED_ZONE();
+                    return Bundle.ExtractZone_Trusted();
                 case 3:
-                    return Bundle.INTENET_ZONE();
+                    return Bundle.ExtractZone_Internet();
                 case 4:
-                    return Bundle.RESTRICTED_ZONE();
+                    return Bundle.ExtractZone_Restricted();
                 default:
                     return null;
             }
