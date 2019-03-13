@@ -65,8 +65,7 @@ public class StartupWindowProvider implements StartupWindowInterface {
                 System.out.println("Running from command line");
                 startupWindowToUse = new CommandLineStartupWindow();
                 // kick off command line processing
-                CommandLineIngestManager ingestManager = new CommandLineIngestManager();
-                ingestManager.start();
+                new CommandLineIngestManager().start();
                 return;
             }
 

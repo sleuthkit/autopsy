@@ -26,13 +26,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.LifecycleManager;
@@ -46,7 +41,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import static org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -68,24 +62,16 @@ import org.sleuthkit.datamodel.Content;
 public class CommandLineIngestManager {
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineIngestManager.class.getName());
-    private static final String JOB_RUNNING_THREAD_NAME = "CIM-job-processing-%d";
-    private final ExecutorService jobProcessingExecutor;
-    private Future<?> jobProcessingTaskFuture;
     private Path rootOutputDirectory;
 
     public CommandLineIngestManager() {
-        jobProcessingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(JOB_RUNNING_THREAD_NAME).build());
     }
 
     public void start() {
-        JobProcessingTask jobProcessingTask = new JobProcessingTask();
-        jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
+        new Thread(new JobProcessingTask()).start();
     }
 
     public void stop() {
-
-        ThreadUtils.shutDownTaskExecutor(jobProcessingExecutor);
-
         try {
             // close current case if there is one open
             Case.closeCurrentCase();
