@@ -24,7 +24,7 @@ import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
 
 /**
- * Model for cells in data content viewer table
+ * Model for cells in the files section of the other occurrences data content viewer
  */
 public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 

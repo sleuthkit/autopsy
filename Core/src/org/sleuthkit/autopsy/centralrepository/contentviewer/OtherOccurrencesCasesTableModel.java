@@ -23,6 +23,10 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
 
+/**
+ * Model for cells in the cases section of the other occurrences data content
+ * viewer
+ */
 public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
@@ -72,10 +76,10 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Map a column ID to the value in that cell for node instance data.
+     * Map a column ID to the value in that cell for correlation case wrapper.
      *
-     * @param correlationCaseWrapper The node instance data.
-     * @param columnId The ID of the cell column.
+     * @param correlationCaseWrapper The correlation case wrapper
+     * @param columnId               The ID of the cell column.
      *
      * @return The value in the cell.
      */
@@ -113,7 +117,7 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Clear the node data table.
+     * Clear the correlation case table.
      */
     void clearTable() {
         correlationCaseList.clear();

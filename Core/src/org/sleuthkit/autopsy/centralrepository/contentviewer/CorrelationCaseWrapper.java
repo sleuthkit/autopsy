@@ -38,10 +38,22 @@ class CorrelationCaseWrapper {
         message = msg;
     }
 
+    /**
+     * Get the correlation case this is wrapping or null if it only has a
+     * message.
+     *
+     * @return CorrelationCase or Null
+     */
     CorrelationCase getCorrelationCase() {
         return corCase;
     }
 
+    /**
+     * Get the message this is wrapping, if a correlation case is being wrapped
+     * this will be it's display name.
+     *
+     * @return the message or Correlation Case display name
+     */
     String getMessage() {
         return message;
     }

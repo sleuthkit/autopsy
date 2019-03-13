@@ -27,7 +27,7 @@ import javax.swing.table.TableCellRenderer;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Renderer for cells in data content viewer table
+ * Renderer for cells in the files section of the other occurrences data content viewer
  */
 public class OtherOccurrencesFilesTableCellRenderer implements TableCellRenderer {
 
