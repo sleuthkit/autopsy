@@ -32,7 +32,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Analyzes data sources using heuristics to determine which types of operating
@@ -43,6 +46,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
+    private static final int FAT_EXFAT_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_EXFAT.getValue();
+    private static final long HUNDRED_GB = 100*1024*1024*1024l;
+    private static final String ANDROID_MEDIACARD_PATHS[] = {"/.android_secure", "/android", "/audio", "/photos", "/dcim", "/music", "/pictures", "/videos"}; //NON-NLS
     private Content dataSource;
 
     @Messages({
@@ -62,13 +68,18 @@ class DataSourceUsageAnalyzer extends Extract {
 
     }
 
+    private void createDataSourceUsageArtifacts() throws TskCoreException {
+        
+         createOSInfoDataSourceUsageArtifacts();
+         createAndroidMediaCardArtifacts(); 
+     }
     /**
      * Create TSK_DATA_SOURCE_USAGE artifacts based on OS_INFO artifacts
      * existing as well as other criteria such as specific paths existing.
      *
      * @throws TskCoreException
      */
-    private void createDataSourceUsageArtifacts() throws TskCoreException {
+    private void createOSInfoDataSourceUsageArtifacts() throws TskCoreException {
         boolean windowsOsDetected = false;
         List<BlackboardArtifact> osInfoArtifacts = tskCase.getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_OS_INFO);
         for (BlackboardArtifact osInfoArt : osInfoArtifacts) {
@@ -141,6 +152,56 @@ class DataSourceUsageAnalyzer extends Extract {
                     return;
                 }
             }
+        }
+    }
+    
+    /**
+     * Checks to see if the data source might be an Android media card or a Flash drive.
+     * If so, creates TSK_DATA_SOURCE_USAGE artifact.
+     *
+     * @return true if any specified files exist false if none exist
+     * 
+     * @throws TskCoreException
+     */
+    @Messages({
+        "DataSourceUsage_AndroidMedia=Android Media Card",
+        "DataSourceUsage_FlashDrive=Flash Drive"
+    })
+    private void createAndroidMediaCardArtifacts() throws TskCoreException {
+         
+        if (dataSource instanceof Image) {
+           Image image = (Image) dataSource;
+           try {
+               if (image.getSize() > HUNDRED_GB) {
+                  return;  
+               }
+               
+               List<FileSystem> fileSystems = image.getFileSystems();
+               if (fileSystems.isEmpty() || fileSystems.size() > 1) {
+                   return;
+               }
+
+               FileSystem fileSystem = fileSystems.get(0);
+               if ( fileSystem == null || (fileSystem.getFsType().getValue() & FAT_EXFAT_FLAGS) == 0) {
+                   return ; 
+               }
+
+               FileManager fileManager = currentCase.getServices().getFileManager();
+               for (String path : ANDROID_MEDIACARD_PATHS ) {
+                    for (AbstractFile file : fileManager.findFiles(dataSource, FilenameUtils.getName(path), FilenameUtils.getPath(path))) {
+                        if ((file.getParentPath() + file.getName()).equalsIgnoreCase(path)) {
+                            createDataSourceUsageArtifact(Bundle.DataSourceUsage_AndroidMedia());
+                            return;
+                        }
+                    }
+               }
+               
+               // If none of the Android paths is found but it meets other criteria, it might be just a flash drive
+               createDataSourceUsageArtifact(Bundle.DataSourceUsage_FlashDrive());    
+               
+           } catch (TskCoreException ex) {
+               logger.log(Level.SEVERE, "Exception while checking image: {0} for Andriod media card", image.getName() + ex.getMessage()); //NON-NLS
+           }
         }
     }
 }

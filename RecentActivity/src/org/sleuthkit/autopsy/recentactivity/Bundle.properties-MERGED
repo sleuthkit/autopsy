@@ -2,6 +2,9 @@ cannotBuildXmlParser=Unable to build XML parser:
 cannotLoadSEUQA=Unable to load Search Engine URL Query Analyzer settings file, SEUQAMappings.xml: 
 cannotParseXml=Unable to parse XML file: 
 ChromeCacheExtractor.moduleName=ChromeCacheExtractor
+DataSourceUsage_AndroidMedia=Android Media Card
+DataSourceUsage_FlashDrive=Flash Drive
+# {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
 Extract.indexError.message=Failed to index artifact for keyword search.
@@ -180,6 +183,7 @@ RecentDocumentsByLnk.parentModuleName.noSpace=RecentActivity
 RecentDocumentsByLnk.parentModuleName=Recent Activity
 RegRipperFullNotFound=Full version RegRipper executable not found.
 RegRipperNotFound=Autopsy RegRipper executable not found.
+# {0} - file name
 SearchEngineURLQueryAnalyzer.init.exception.msg=Unable to find {0}.
 SearchEngineURLQueryAnalyzer.moduleName.text=Search Engine
 SearchEngineURLQueryAnalyzer.engineName.none=NONE
