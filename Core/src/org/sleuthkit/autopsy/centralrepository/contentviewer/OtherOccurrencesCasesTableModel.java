@@ -22,13 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
-
 
 public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
-    private final List<CorrelationCase> nodeDataList = new ArrayList<>();
+    private final List<CorrelationCaseWrapper> correlationCaseList = new ArrayList<>();
 
     OtherOccurrencesCasesTableModel() {
     }
@@ -54,7 +52,7 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return nodeDataList.size();
+        return correlationCaseList.size();
     }
 
     @Override
@@ -64,32 +62,30 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == nodeDataList.size()) {
-            return Bundle.DataContentViewerOtherCasesTableModel_noData();
+        if (0 == correlationCaseList.size()) {
+            return Bundle.OtherOccurrencesCasesTableModel_noData();
         }
 
-        CorrelationCase nodeData = nodeDataList.get(rowIdx);
+        CorrelationCaseWrapper caseWrapper = correlationCaseList.get(rowIdx);
         TableColumns columnId = TableColumns.values()[colIdx];
-        return mapNodeInstanceData(nodeData, columnId);
+        return mapCorrelationCase(caseWrapper, columnId);
     }
 
     /**
      * Map a column ID to the value in that cell for node instance data.
      *
-     * @param nodeData The node instance data.
+     * @param correlationCaseWrapper The node instance data.
      * @param columnId The ID of the cell column.
      *
      * @return The value in the cell.
      */
     @Messages({"OtherOccurrencesCasesTableModel.noData=No Data."})
-    private Object mapNodeInstanceData(CorrelationCase nodeData, TableColumns columnId) {
+    private Object mapCorrelationCase(CorrelationCaseWrapper correlationCaseWrapper, TableColumns columnId) {
         String value = Bundle.OtherOccurrencesCasesTableModel_noData();
 
         switch (columnId) {
             case CASE_NAME:
-                if (null != nodeData.getDisplayName()) {
-                    value = nodeData.getDisplayName();
-                }
+                value = correlationCaseWrapper.getMessage();
                 break;
             default: //Use default "No data" value.
                 break;
@@ -98,7 +94,7 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     }
 
     Object getRow(int rowIdx) {
-        return nodeDataList.get(rowIdx);
+        return correlationCaseList.get(rowIdx);
     }
 
     @Override
@@ -109,10 +105,10 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     /**
      * Add one correlated instance object to the table
      *
-     * @param newNodeData data to add to the table
+     * @param newCorrelationCaseWrapper data to add to the table
      */
-    void addNodeData(CorrelationCase newNodeData) {
-        nodeDataList.add(newNodeData);
+    void addCorrelationCase(CorrelationCaseWrapper newCorrelationCaseWrapper) {
+        correlationCaseList.add(newCorrelationCaseWrapper);
         fireTableDataChanged();
     }
 
@@ -120,7 +116,7 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
      * Clear the node data table.
      */
     void clearTable() {
-        nodeDataList.clear();
+        correlationCaseList.clear();
         fireTableDataChanged();
     }
 

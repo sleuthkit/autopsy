@@ -16,7 +16,6 @@ DataContentViewerOtherCases.noOpenCase.errMsg=No open case available.
 DataContentViewerOtherCases.selectAllMenuItem.text=Select All
 DataContentViewerOtherCases.showCaseDetailsMenuItem.text=Show Case Details
 DataContentViewerOtherCases.table.noArtifacts=Item has no attributes with which to search.
-DataContentViewerOtherCases.table.nodbconnection=Cannot connect to central repository database.
 DataContentViewerOtherCases.table.noResultsFound=No results found.
 DataContentViewerOtherCases.table.toolTip.text=Click column name to sort. Right-click on the table for more options.
 DataContentViewerOtherCases.exportToCSVMenuItem.text=Export Selected Rows to CSV

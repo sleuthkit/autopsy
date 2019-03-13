@@ -85,15 +85,17 @@ import org.sleuthkit.datamodel.TskData;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 @ServiceProvider(service = DataContentViewer.class, position = 9)
 @Messages({"DataContentViewerOtherCases.title=Other Occurrences",
-    "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
+    "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",
+    "DataContentViewerOtherCases.table.noArtifacts=Item has no attributes with which to search.",
+    "DataContentViewerOtherCases.table.noResultsFound=No results found."})
 public class DataContentViewerOtherCases extends JPanel implements DataContentViewer {
 
     private static final long serialVersionUID = -1L;
 
     private static final Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
-
+    private static final CorrelationCaseWrapper NO_ARTIFACTS_CASE = new CorrelationCaseWrapper(Bundle.DataContentViewerOtherCases_table_noArtifacts());
+    private static final CorrelationCaseWrapper NO_RESULTS_CASE = new CorrelationCaseWrapper(Bundle.DataContentViewerOtherCases_table_noArtifacts());
     private static final int DEFAULT_MIN_CELL_WIDTH = 15;
-    private static final int CELL_TEXT_WIDTH_PADDING = 5;
 
     private final OtherOccurrencesFilesTableModel tableModel;
     private final OtherOccurrencesCasesTableModel casesTableModel;
@@ -366,49 +368,18 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     /**
-     * Set the number of unique cases and data sources.
-     */
-    @Messages({
-        "DataContentViewerOtherCases.foundIn.text=Found %d instances in %d cases and %d data sources."
-    })
-    private void setOccurrenceCounts() {
-        OtherOccurrencesFilesTableModel model = (OtherOccurrencesFilesTableModel) filesTable.getModel();
-
-//        int caseColumnIndex = OtherOccurrencesFilesTableModel.TableColumns.CASE_NAME.ordinal();
-//        int deviceColumnIndex = OtherOccurrencesFilesTableModel.TableColumns.DEVICE.ordinal();
-
-        /*
-         * We need a unique set of data sources. We rely on device ID for this.
-         * To mitigate edge cases where a device ID could be duplicated in the
-         * same case (e.g. "report.xml"), we put the device ID and case name in
-         * a key-value pair.
-         *
-         * Note: Relying on the case name isn't a fool-proof way of determining
-         * a case to be unique. We should improve this in the future.
-         */
-        Set<String> cases = new HashSet<>();
-        Map<String, String> devices = new HashMap<>();
-
-        for (int i = 0; i < model.getRowCount(); i++) {
-//            String caseName = (String) model.getValueAt(i, caseColumnIndex);
-//            String deviceId = (String) model.getValueAt(i, deviceColumnIndex);
-//            cases.add(caseName);
-//            devices.put(deviceId, caseName);
-        }
-
-        foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), model.getRowCount(), casesTableModel.getRowCount(), devices.size()));
-    }
-
-    /**
      * Get the associated BlackboardArtifact from a node, if it exists.
      *
      * @param node The node
      *
      * @return The associated BlackboardArtifact, or null
      */
-    private BlackboardArtifact getBlackboardArtifactFromNode(Node node) {
-        BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
-        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class);
+    private BlackboardArtifact
+            getBlackboardArtifactFromNode(Node node) {
+        BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class
+        );
+        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class
+        );
 
         if (nodeBbArtifactTag != null) {
             return nodeBbArtifactTag.getArtifact();
@@ -417,6 +388,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         }
 
         return null;
+
     }
 
     /**
@@ -427,10 +399,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * @return The associated AbstractFile, or null
      */
     private AbstractFile getAbstractFileFromNode(Node node) {
-        BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class);
-        ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class);
-        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class);
-        AbstractFile nodeAbstractFile = node.getLookup().lookup(AbstractFile.class);
+        BlackboardArtifactTag nodeBbArtifactTag = node.getLookup().lookup(BlackboardArtifactTag.class
+        );
+        ContentTag nodeContentTag = node.getLookup().lookup(ContentTag.class
+        );
+        BlackboardArtifact nodeBbArtifact = node.getLookup().lookup(BlackboardArtifact.class
+        );
+        AbstractFile nodeAbstractFile = node.getLookup().lookup(AbstractFile.class
+        );
 
         if (nodeBbArtifactTag != null) {
             Content content = nodeBbArtifactTag.getContent();
@@ -723,7 +699,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     @Override
-    @Messages({"DataContentViewerOtherCases.table.nodbconnection=Cannot connect to central repository database."})
     public void setNode(Node node) {
 
         reset(); // reset the table to empty.
@@ -743,9 +718,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * @param node The node being viewed.
      */
     @Messages({
-        "DataContentViewerOtherCases.table.noArtifacts=Item has no attributes with which to search.",
-        "DataContentViewerOtherCases.table.noResultsFound=No results found.",
-        "DataContentViewerOtherCases.dataSources.header.text=Data Source Name"
+        "DataContentViewerOtherCases.dataSources.header.text=Data Source Name",
+        "DataContentViewerOtherCases.foundIn.text=Found %d instances in %d cases and %d data sources."
     })
     private void populateTable(Node node) {
         try {
@@ -789,20 +763,18 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             }
         }
         for (CorrelationCase corCase : caseNames.values()) {
-            casesTableModel.addNodeData(corCase);
+            casesTableModel.addCorrelationCase(new CorrelationCaseWrapper(corCase));
         }
-
+        int caseCount = casesTableModel.getRowCount();
         if (correlationAttributes.isEmpty()) {
-            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noArtifacts()));
-        } else if (0 == tableModel.getRowCount()) {
-            tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noResultsFound()));
-        }
+            casesTableModel.addCorrelationCase(NO_ARTIFACTS_CASE);
+        } else if (caseCount == 0) {
+            casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
+        } 
         setColumnWidths();
         setEarliestCaseDate();
-
-        foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), totalCount, casesTableModel.getRowCount(), dataSources.size()));
-
-        if (casesTable.getRowCount() > 0) {
+        foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), totalCount, caseCount, dataSources.size()));
+        if (caseCount > 0) {
             casesTable.setRowSelectionInterval(0, 0);
         }
     }
@@ -873,20 +845,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 }
             }
         }
-    }
-
-    /**
-     * Adjust a given column for the text provided.
-     *
-     * @param columnIndex The index of the column to adjust.
-     * @param text        The text whose length will be used to adjust the
-     *                    column width.
-     */
-    private void setColumnWidthToText(int columnIndex, String text) {
-        TableColumn column = filesTable.getColumnModel().getColumn(columnIndex);
-        FontMetrics fontMetrics = filesTable.getFontMetrics(filesTable.getFont());
-        int stringWidth = fontMetrics.stringWidth(text);
-        column.setMinWidth(stringWidth + CELL_TEXT_WIDTH_PADDING);
     }
 
     /**
