@@ -46,9 +46,14 @@ import org.sleuthkit.datamodel.TskData;
 class DataSourceUsageAnalyzer extends Extract {
 
     private static final Logger logger = Logger.getLogger(DataSourceUsageAnalyzer.class.getName());
-    private static final int FAT_EXFAT_FLAGS = TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_EXFAT.getValue();
+    private static final int FAT_EXFAT_FLAGS =  TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT16.getValue() | 
+                                                TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_FAT32.getValue() | 
+                                                TskData.TSK_FS_TYPE_ENUM.TSK_FS_TYPE_EXFAT.getValue();
     private static final long HUNDRED_GB = 100*1024*1024*1024l;
-    private static final String ANDROID_MEDIACARD_PATHS[] = {"/.android_secure", "/android", "/audio", "/photos", "/dcim", "/music", "/pictures", "/videos"}; //NON-NLS
+    
+    private static final String ANDROID_MEDIACARD_ROOT_FILENAMES[] =    // files expected in root folder of an Android media card
+                                {".android_secure", "android", "audio", 
+                                 "photos", "dcim", "music", "pictures", "videos"}; //NON-NLS
     private Content dataSource;
 
     @Messages({
@@ -187,9 +192,9 @@ class DataSourceUsageAnalyzer extends Extract {
                }
 
                FileManager fileManager = currentCase.getServices().getFileManager();
-               for (String path : ANDROID_MEDIACARD_PATHS ) {
-                    for (AbstractFile file : fileManager.findFiles(dataSource, FilenameUtils.getName(path), FilenameUtils.getPath(path))) {
-                        if ((file.getParentPath() + file.getName()).equalsIgnoreCase(path)) {
+               for (String fileName : ANDROID_MEDIACARD_ROOT_FILENAMES ) {
+                    for (AbstractFile file : fileManager.findFiles(dataSource, fileName, "/")) { // NON-NLS
+                        if (file.getParentPath().equals("/") &&  file.getName().equalsIgnoreCase(fileName)) { // NON-NLS
                             createDataSourceUsageArtifact(Bundle.DataSourceUsage_AndroidMedia());
                             return;
                         }
