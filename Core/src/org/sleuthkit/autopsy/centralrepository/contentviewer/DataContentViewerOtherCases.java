@@ -834,7 +834,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             dataSourceModel.addRow(new Object[]{nodeData.getDataSourceName(), nodeData.getDeviceID()});
                         }
                     } catch (EamDbException ex) {
-                         LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName()
+                         LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName());
                     }
                 }
             }
@@ -869,7 +869,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                 }
                             }
                         } catch (EamDbException ex) {
-                            LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName()
+                            LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName());
                         }
                     }
                 }
