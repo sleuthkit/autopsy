@@ -177,7 +177,7 @@
             </Component>
             <Container class="javax.swing.JSplitPane" name="jSplitPane2">
               <Properties>
-                <Property name="dividerLocation" type="int" value="500"/>
+                <Property name="dividerLocation" type="int" value="450"/>
               </Properties>
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.support.JSplitPaneSupportLayout"/>

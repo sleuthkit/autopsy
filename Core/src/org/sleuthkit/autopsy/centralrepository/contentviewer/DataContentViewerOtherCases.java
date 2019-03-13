@@ -44,8 +44,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.RowSorter;
-import javax.swing.SortOrder;
 import static javax.swing.JOptionPane.DEFAULT_OPTION;
 import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
@@ -97,8 +95,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private static final int DEFAULT_MIN_CELL_WIDTH = 15;
     private static final int CELL_TEXT_WIDTH_PADDING = 5;
 
-    private final DataContentViewerOtherCasesTableModel tableModel;
-    private final DataContentViewerCasesTableModel casesTableModel;
+    private final OtherOccurrencesFilesTableModel tableModel;
+    private final OtherOccurrencesCasesTableModel casesTableModel;
     private final Collection<CorrelationAttributeInstance> correlationAttributes;
     private String dataSourceName = "";
     private String deviceId = "";
@@ -111,8 +109,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * Creates new form DataContentViewerOtherCases
      */
     public DataContentViewerOtherCases() {
-        this.tableModel = new DataContentViewerOtherCasesTableModel();
-        this.casesTableModel = new DataContentViewerCasesTableModel();
+        this.tableModel = new OtherOccurrencesFilesTableModel();
+        this.casesTableModel = new OtherOccurrencesCasesTableModel();
         this.correlationAttributes = new ArrayList<>();
 
         initComponents();
@@ -147,7 +145,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         showCommonalityMenuItem.addActionListener(actList);
 
         // Set background of every nth row as light grey.
-        TableCellRenderer renderer = new DataContentViewerOtherCasesTableCellRenderer();
+        TableCellRenderer renderer = new OtherOccurrencesFilesTableCellRenderer();
         otherCasesTable.setDefaultRenderer(Object.class, renderer);
 
         // Configure column sorting.
@@ -374,10 +372,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         "DataContentViewerOtherCases.foundIn.text=Found %d instances in %d cases and %d data sources."
     })
     private void setOccurrenceCounts() {
-        DataContentViewerOtherCasesTableModel model = (DataContentViewerOtherCasesTableModel) otherCasesTable.getModel();
+        OtherOccurrencesFilesTableModel model = (OtherOccurrencesFilesTableModel) otherCasesTable.getModel();
 
-//        int caseColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.CASE_NAME.ordinal();
-//        int deviceColumnIndex = DataContentViewerOtherCasesTableModel.TableColumns.DEVICE.ordinal();
+//        int caseColumnIndex = OtherOccurrencesFilesTableModel.TableColumns.CASE_NAME.ordinal();
+//        int deviceColumnIndex = OtherOccurrencesFilesTableModel.TableColumns.DEVICE.ordinal();
 
         /*
          * We need a unique set of data sources. We rely on device ID for this.
@@ -776,16 +774,15 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         dataSources.add(makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                         caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
                     } catch (EamDbException ex) {
-                        System.out.println("can't get correlation case");
+                        LOGGER.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName());
                     }
                 } else {
                     try {
                         dataSources.add(makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                         caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
                     } catch (NoCurrentCaseException ex) {
-                        System.out.println("NO cURRENT CASE");
+                         LOGGER.log(Level.WARNING, "No current case open for other occurrences");
                     }
-
                 }
                 totalCount++;
             }
@@ -837,7 +834,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             dataSourceModel.addRow(new Object[]{nodeData.getDataSourceName(), nodeData.getDeviceID()});
                         }
                     } catch (EamDbException ex) {
-                        System.out.println("failure 1 to compare");
+                         LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName()
                     }
                 }
             }
@@ -872,7 +869,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                 }
                             }
                         } catch (EamDbException ex) {
-                            System.out.println("failure 2 to compare");
+                            LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName()
                         }
                     }
                 }
@@ -974,7 +971,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         org.openide.awt.Mnemonics.setLocalizedText(foundInLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.foundInLabel.text")); // NOI18N
 
-        jSplitPane2.setDividerLocation(500);
+        jSplitPane2.setDividerLocation(450);
 
         jSplitPane3.setDividerLocation(150);
 
@@ -1052,7 +1049,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             .addGap(0, 921, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 921, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
         otherCasesPanelLayout.setVerticalGroup(

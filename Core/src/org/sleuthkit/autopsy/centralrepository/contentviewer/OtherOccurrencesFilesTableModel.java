@@ -26,31 +26,27 @@ import org.openide.util.NbBundle.Messages;
 /**
  * Model for cells in data content viewer table
  */
-public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
+public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
 
-    @Messages({"DataContentViewerOtherCasesTableModel.case=Case",
-        "DataContentViewerOtherCasesTableModel.device=Device",
-        "DataContentViewerOtherCasesTableModel.dataSource=Data Source",
-        "DataContentViewerOtherCasesTableModel.path=Path",
-        "DataContentViewerOtherCasesTableModel.attribute=Matched Attribute",
-        "DataContentViewerOtherCasesTableModel.value=Attribute Value",
-        "DataContentViewerOtherCasesTableModel.known=Known",
-        "DataContentViewerOtherCasesTableModel.comment=Comment",
-        "DataContentViewerOtherCasesTableModel.noData=No Data.",})
+    @Messages({"OtherOccurrencesFilesTableModel.device=Device",
+        "OtherOccurrencesFilesTableModel.dataSource=Data Source",
+        "OtherOccurrencesFilesTableModel.path=Path",
+        "OtherOccurrencesFilesTableModel.attribute=Matched Attribute",
+        "OtherOccurrencesFilesTableModel.value=Attribute Value",
+        "OtherOccurrencesFilesTableModel.known=Known",
+        "OtherOccurrencesFilesTableModel.comment=Comment",
+        "OtherOccurrencesFilesTableModel.noData=No Data.",})
     enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-//        CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
-//        DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 100),
-        ATTRIBUTE(Bundle.DataContentViewerOtherCasesTableModel_attribute(), 125),
-        VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 200),
-        KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 50),
-        FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 450),
-        COMMENT(Bundle.DataContentViewerOtherCasesTableModel_comment(), 200);
-//        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 250);
-
+        ATTRIBUTE(Bundle.OtherOccurrencesFilesTableModel_attribute(), 40),
+        VALUE(Bundle.OtherOccurrencesFilesTableModel_value(), 200),
+        KNOWN(Bundle.OtherOccurrencesFilesTableModel_known(), 40),
+        FILE_PATH(Bundle.OtherOccurrencesFilesTableModel_path(), 450),
+        COMMENT(Bundle.OtherOccurrencesFilesTableModel_comment(), 200);
+        
         private final String columnName;
         private final int columnWidth;
 
@@ -70,7 +66,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
 
     private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
 
-    DataContentViewerOtherCasesTableModel() {
+    OtherOccurrencesFilesTableModel() {
         
     }
 
@@ -106,7 +102,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
         if (0 == nodeDataList.size()) {
-            return Bundle.DataContentViewerOtherCasesTableModel_noData();
+            return Bundle.OtherOccurrencesFilesTableModel_noData();
         }
 
         OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
@@ -141,7 +137,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      * @return The value in the cell.
      */
     private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
-        String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
+        String value = Bundle.OtherOccurrencesFilesTableModel_noData();
 
         switch (columnId) {
             case FILE_PATH:
@@ -159,7 +155,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
             case COMMENT:
                 value = nodeData.getComment();
                 break;
-            default: // This shouldn't occur! Use default "No data" value.
+            default: //Use default "No data" value.
                 break;
         }
         return value;

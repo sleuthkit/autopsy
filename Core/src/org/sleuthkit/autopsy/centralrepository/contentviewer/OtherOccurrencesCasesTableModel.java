@@ -21,16 +21,16 @@ package org.sleuthkit.autopsy.centralrepository.contentviewer;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 
 
-public class DataContentViewerCasesTableModel extends AbstractTableModel {
+public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
     private final List<CorrelationCase> nodeDataList = new ArrayList<>();
 
-    DataContentViewerCasesTableModel() {
+    OtherOccurrencesCasesTableModel() {
     }
 
     @Override
@@ -81,8 +81,9 @@ public class DataContentViewerCasesTableModel extends AbstractTableModel {
      *
      * @return The value in the cell.
      */
+    @Messages({"OtherOccurrencesCasesTableModel.noData=No Data."})
     private Object mapNodeInstanceData(CorrelationCase nodeData, TableColumns columnId) {
-        String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
+        String value = Bundle.OtherOccurrencesCasesTableModel_noData();
 
         switch (columnId) {
             case CASE_NAME:
@@ -123,11 +124,11 @@ public class DataContentViewerCasesTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    @NbBundle.Messages({"DataContentViewerCasesTableModel.case=Case",})
+    @Messages({"OtherOccurrencesCasesTableModel.case=Case",})
     enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100);
+        CASE_NAME(Bundle.OtherOccurrencesCasesTableModel_case(), 100);
 
         private final String columnName;
         private final int columnWidth;
