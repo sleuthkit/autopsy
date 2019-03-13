@@ -124,9 +124,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             public void actionPerformed(ActionEvent e) {
                 JMenuItem jmi = (JMenuItem) e.getSource();
                 if (jmi.equals(selectAllMenuItem)) {
-                    otherCasesTable.selectAll();
+                    filesTable.selectAll();
                 } else if (jmi.equals(showCaseDetailsMenuItem)) {
-                    showCaseDetails(otherCasesTable.getSelectedRow());
+                    showCaseDetails(filesTable.getSelectedRow());
                 } else if (jmi.equals(exportToCSVMenuItem)) {
                     try {
                         saveToCSV();
@@ -146,23 +146,23 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         // Set background of every nth row as light grey.
         TableCellRenderer renderer = new OtherOccurrencesFilesTableCellRenderer();
-        otherCasesTable.setDefaultRenderer(Object.class, renderer);
+        filesTable.setDefaultRenderer(Object.class, renderer);
 
         // Configure column sorting.
-        TableRowSorter<TableModel> sorter = new TableRowSorter<>(otherCasesTable.getModel());
-        otherCasesTable.setRowSorter(sorter);
-        caseTable.getSelectionModel().addListSelectionListener((e) -> {
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(filesTable.getModel());
+        filesTable.setRowSorter(sorter);
+        casesTable.getSelectionModel().addListSelectionListener((e) -> {
             if (Case.isCaseOpen()) {
                 updateCaseSelection();
             }
         });
-        dataSourceTable.getSelectionModel().addListSelectionListener((e) -> {
+        dataSourcesTable.getSelectionModel().addListSelectionListener((e) -> {
             if (Case.isCaseOpen()) {
                 updateDataSourceSelection();
             }
         });
-        caseTable.getRowSorter().toggleSortOrder(0);
-        dataSourceTable.getRowSorter().toggleSortOrder(0);
+        casesTable.getRowSorter().toggleSortOrder(0);
+        dataSourcesTable.getRowSorter().toggleSortOrder(0);
     }
 
     @Messages({"DataContentViewerOtherCases.correlatedArtifacts.isEmpty=There are no files or artifacts to correlate.",
@@ -222,7 +222,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         try {
             if (-1 != selectedRowViewIdx) {
                 EamDb dbManager = EamDb.getInstance();
-                int selectedRowModelIdx = otherCasesTable.convertRowIndexToModel(selectedRowViewIdx);
+                int selectedRowModelIdx = filesTable.convertRowIndexToModel(selectedRowViewIdx);
                 OtherOccurrenceNodeInstanceData nodeData = (OtherOccurrenceNodeInstanceData) tableModel.getRow(selectedRowModelIdx);
                 CorrelationCase eamCasePartial = nodeData.getCorrelationAttributeInstance().getCorrelationCase();
                 if (eamCasePartial == null) {
@@ -264,14 +264,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     private void saveToCSV() throws NoCurrentCaseException {
-        if (0 != otherCasesTable.getSelectedRowCount()) {
+        if (0 != filesTable.getSelectedRowCount()) {
             Calendar now = Calendar.getInstance();
             String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_data_sources.csv", now);
             CSVFileChooser.setCurrentDirectory(new File(Case.getCurrentCaseThrows().getExportDirectory()));
             CSVFileChooser.setSelectedFile(new File(fileName));
             CSVFileChooser.setFileFilter(new FileNameExtensionFilter("csv file", "csv"));
 
-            int returnVal = CSVFileChooser.showSaveDialog(otherCasesTable);
+            int returnVal = CSVFileChooser.showSaveDialog(filesTable);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
 
                 File selectedFile = CSVFileChooser.getSelectedFile();
@@ -286,7 +286,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
     private void writeSelectedRowsToFileAsCSV(File destFile) {
         StringBuilder content;
-        int[] selectedRowViewIndices = otherCasesTable.getSelectedRows();
+        int[] selectedRowViewIndices = filesTable.getSelectedRows();
         int colCount = tableModel.getColumnCount();
 
         try (BufferedWriter writer = Files.newBufferedWriter(destFile.toPath())) {
@@ -307,7 +307,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             for (int rowViewIdx : selectedRowViewIndices) {
                 content = new StringBuilder("");
                 for (int colIdx = 0; colIdx < colCount; colIdx++) {
-                    int rowModelIdx = otherCasesTable.convertRowIndexToModel(rowViewIdx);
+                    int rowModelIdx = filesTable.convertRowIndexToModel(rowViewIdx);
                     content.append('"').append(tableModel.getValueAt(rowModelIdx, colIdx)).append('"');
                     if (colIdx < (colCount - 1)) {
                         content.append(",");
@@ -328,7 +328,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void reset() {
         // start with empty table
         casesTableModel.clearTable();
-        ((DefaultTableModel) dataSourceTable.getModel()).setRowCount(0);
+        ((DefaultTableModel) dataSourcesTable.getModel()).setRowCount(0);
         tableModel.clearTable();
         correlationAttributes.clear();
         earliestCaseDate.setText(Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable());
@@ -372,7 +372,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         "DataContentViewerOtherCases.foundIn.text=Found %d instances in %d cases and %d data sources."
     })
     private void setOccurrenceCounts() {
-        OtherOccurrencesFilesTableModel model = (OtherOccurrencesFilesTableModel) otherCasesTable.getModel();
+        OtherOccurrencesFilesTableModel model = (OtherOccurrencesFilesTableModel) filesTable.getModel();
 
 //        int caseColumnIndex = OtherOccurrencesFilesTableModel.TableColumns.CASE_NAME.ordinal();
 //        int deviceColumnIndex = OtherOccurrencesFilesTableModel.TableColumns.DEVICE.ordinal();
@@ -744,7 +744,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      */
     @Messages({
         "DataContentViewerOtherCases.table.noArtifacts=Item has no attributes with which to search.",
-        "DataContentViewerOtherCases.table.noResultsFound=No results found."
+        "DataContentViewerOtherCases.table.noResultsFound=No results found.",
+        "DataContentViewerOtherCases.dataSources.header.text=Data Source Name"
     })
     private void populateTable(Node node) {
         try {
@@ -781,7 +782,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         dataSources.add(makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                         caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
                     } catch (NoCurrentCaseException ex) {
-                         LOGGER.log(Level.WARNING, "No current case open for other occurrences");
+                        LOGGER.log(Level.WARNING, "No current case open for other occurrences");
                     }
                 }
                 totalCount++;
@@ -793,29 +794,26 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         if (correlationAttributes.isEmpty()) {
             tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noArtifacts()));
-            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noArtifacts());
         } else if (0 == tableModel.getRowCount()) {
             tableModel.addNodeData(new OtherOccurrenceNodeMessageData(Bundle.DataContentViewerOtherCases_table_noResultsFound()));
-            setColumnWidthToText(0, Bundle.DataContentViewerOtherCases_table_noResultsFound());
-        } else {
-            setColumnWidths();
         }
+        setColumnWidths();
         setEarliestCaseDate();
 
         foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), totalCount, casesTableModel.getRowCount(), dataSources.size()));
 
-        if (caseTable.getRowCount() > 0) {
-            caseTable.setRowSelectionInterval(0, 0);
+        if (casesTable.getRowCount() > 0) {
+            casesTable.setRowSelectionInterval(0, 0);
         }
     }
-    
-    private String makeDataSourceString(String caseUUID, String deviceId, String dataSourceName){
-      return caseUUID + deviceId + dataSourceName;        
+
+    private String makeDataSourceString(String caseUUID, String deviceId, String dataSourceName) {
+        return caseUUID + deviceId + dataSourceName;
     }
 
     private void updateCaseSelection() {
-        int[] selectedCaseIndexes = caseTable.getSelectedRows();
-        DefaultTableModel dataSourceModel = (DefaultTableModel) dataSourceTable.getModel();
+        int[] selectedCaseIndexes = casesTable.getSelectedRows();
+        DefaultTableModel dataSourceModel = (DefaultTableModel) dataSourcesTable.getModel();
         dataSourceModel.setRowCount(0);
         tableModel.clearTable();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
@@ -827,27 +825,27 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 for (int selectedRow : selectedCaseIndexes) {
                     try {
                         if (nodeData.isCentralRepoNode()) {
-                            if (((CorrelationCase) casesTableModel.getRow(caseTable.convertRowIndexToModel(selectedRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                            if (((CorrelationCase) casesTableModel.getRow(casesTable.convertRowIndexToModel(selectedRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
                                 dataSourceModel.addRow(new Object[]{nodeData.getDataSourceName(), nodeData.getDeviceID()});
                             }
                         } else {
                             dataSourceModel.addRow(new Object[]{nodeData.getDataSourceName(), nodeData.getDeviceID()});
                         }
                     } catch (EamDbException ex) {
-                         LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName());
+                        LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName());
                     }
                 }
             }
         }
-        if (dataSourceTable.getRowCount() > 0) {
-            dataSourceTable.setRowSelectionInterval(0, 0);
+        if (dataSourcesTable.getRowCount() > 0) {
+            dataSourcesTable.setRowSelectionInterval(0, 0);
         }
     }
 
     private void updateDataSourceSelection() {
-        int[] selectedCaseIndexes = caseTable.getSelectedRows();
-        DefaultTableModel dataSourceModel = (DefaultTableModel) dataSourceTable.getModel();
-        int[] selectedDataSources = dataSourceTable.getSelectedRows();
+        int[] selectedCaseIndexes = casesTable.getSelectedRows();
+        DefaultTableModel dataSourceModel = (DefaultTableModel) dataSourcesTable.getModel();
+        int[] selectedDataSources = dataSourcesTable.getSelectedRows();
         tableModel.clearTable();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
             Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
@@ -859,12 +857,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     for (int selectedDataSourceRow : selectedDataSources) {
                         try {
                             if (nodeData.isCentralRepoNode()) {
-                                if (((CorrelationCase) casesTableModel.getRow(caseTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
-                                        && dataSourceModel.getValueAt(dataSourceTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
+                                if (((CorrelationCase) casesTableModel.getRow(casesTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
+                                        && dataSourceModel.getValueAt(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
                                     tableModel.addNodeData(nodeData);
                                 }
                             } else {
-                                if (dataSourceModel.getValueAt(dataSourceTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
+                                if (dataSourceModel.getValueAt(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
                                     tableModel.addNodeData(nodeData);
                                 }
                             }
@@ -885,8 +883,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      *                    column width.
      */
     private void setColumnWidthToText(int columnIndex, String text) {
-        TableColumn column = otherCasesTable.getColumnModel().getColumn(columnIndex);
-        FontMetrics fontMetrics = otherCasesTable.getFontMetrics(otherCasesTable.getFont());
+        TableColumn column = filesTable.getColumnModel().getColumn(columnIndex);
+        FontMetrics fontMetrics = filesTable.getFontMetrics(filesTable.getFont());
         int stringWidth = fontMetrics.stringWidth(text);
         column.setMinWidth(stringWidth + CELL_TEXT_WIDTH_PADDING);
     }
@@ -896,11 +894,18 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      */
     private void setColumnWidths() {
         for (int idx = 0; idx < tableModel.getColumnCount(); idx++) {
-            TableColumn column = otherCasesTable.getColumnModel().getColumn(idx);
+            TableColumn column = filesTable.getColumnModel().getColumn(idx);
             column.setMinWidth(DEFAULT_MIN_CELL_WIDTH);
             int columnWidth = tableModel.getColumnPreferredWidth(idx);
             if (columnWidth > 0) {
                 column.setPreferredWidth(columnWidth);
+            }
+        }
+        for (int idx = 0; idx < dataSourcesTable.getColumnCount(); idx++) {
+            if (dataSourcesTable.getColumnModel().getColumn(idx).getHeaderValue().toString().equals(Bundle.DataContentViewerOtherCases_dataSources_header_text())) {
+                dataSourcesTable.getColumnModel().getColumn(idx).setPreferredWidth(100);
+            } else {
+                dataSourcesTable.getColumnModel().getColumn(idx).setPreferredWidth(210);
             }
         }
     }
@@ -928,11 +933,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         jSplitPane2 = new javax.swing.JSplitPane();
         jSplitPane3 = new javax.swing.JSplitPane();
         caseScrollPane = new javax.swing.JScrollPane();
-        caseTable = new javax.swing.JTable();
+        casesTable = new javax.swing.JTable();
         dataSourceScrollPane = new javax.swing.JScrollPane();
-        dataSourceTable = new javax.swing.JTable();
+        dataSourcesTable = new javax.swing.JTable();
         propertiesTableScrollPane = new javax.swing.JScrollPane();
-        otherCasesTable = new javax.swing.JTable();
+        filesTable = new javax.swing.JTable();
 
         rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
             public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
@@ -971,18 +976,18 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         org.openide.awt.Mnemonics.setLocalizedText(foundInLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.foundInLabel.text")); // NOI18N
 
-        jSplitPane2.setDividerLocation(450);
+        jSplitPane2.setDividerLocation(470);
 
         jSplitPane3.setDividerLocation(150);
 
-        caseTable.setAutoCreateRowSorter(true);
-        caseTable.setModel(casesTableModel);
-        caseScrollPane.setViewportView(caseTable);
+        casesTable.setAutoCreateRowSorter(true);
+        casesTable.setModel(casesTableModel);
+        caseScrollPane.setViewportView(casesTable);
 
         jSplitPane3.setLeftComponent(caseScrollPane);
 
-        dataSourceTable.setAutoCreateRowSorter(true);
-        dataSourceTable.setModel(new javax.swing.table.DefaultTableModel(
+        dataSourcesTable.setAutoCreateRowSorter(true);
+        dataSourcesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -998,7 +1003,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 return canEdit [columnIndex];
             }
         });
-        dataSourceScrollPane.setViewportView(dataSourceTable);
+        dataSourceScrollPane.setViewportView(dataSourcesTable);
 
         jSplitPane3.setRightComponent(dataSourceScrollPane);
 
@@ -1006,12 +1011,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         propertiesTableScrollPane.setPreferredSize(new java.awt.Dimension(1000, 30));
 
-        otherCasesTable.setAutoCreateRowSorter(true);
-        otherCasesTable.setModel(tableModel);
-        otherCasesTable.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.table.toolTip.text")); // NOI18N
-        otherCasesTable.setComponentPopupMenu(rightClickPopupMenu);
-        otherCasesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        propertiesTableScrollPane.setViewportView(otherCasesTable);
+        filesTable.setAutoCreateRowSorter(true);
+        filesTable.setModel(tableModel);
+        filesTable.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.table.toolTip.text")); // NOI18N
+        filesTable.setComponentPopupMenu(rightClickPopupMenu);
+        filesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        propertiesTableScrollPane.setViewportView(filesTable);
 
         jSplitPane2.setRightComponent(propertiesTableScrollPane);
 
@@ -1076,8 +1081,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
         boolean enableCentralRepoActions = false;
 
-        if (EamDb.isEnabled() && otherCasesTable.getSelectedRowCount() == 1) {
-            int rowIndex = otherCasesTable.getSelectedRow();
+        if (EamDb.isEnabled() && filesTable.getSelectedRowCount() == 1) {
+            int rowIndex = filesTable.getSelectedRow();
             OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(rowIndex);
             if (selectedNode instanceof OtherOccurrenceNodeInstanceData) {
                 OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) selectedNode;
@@ -1091,17 +1096,17 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JFileChooser CSVFileChooser;
     private javax.swing.JScrollPane caseScrollPane;
-    private javax.swing.JTable caseTable;
+    private javax.swing.JTable casesTable;
     private javax.swing.JScrollPane dataSourceScrollPane;
-    private javax.swing.JTable dataSourceTable;
+    private javax.swing.JTable dataSourcesTable;
     private javax.swing.JLabel earliestCaseDate;
     private javax.swing.JLabel earliestCaseLabel;
     private javax.swing.JMenuItem exportToCSVMenuItem;
+    private javax.swing.JTable filesTable;
     private javax.swing.JLabel foundInLabel;
     private javax.swing.JSplitPane jSplitPane2;
     private javax.swing.JSplitPane jSplitPane3;
     private javax.swing.JPanel otherCasesPanel;
-    private javax.swing.JTable otherCasesTable;
     private javax.swing.JScrollPane propertiesTableScrollPane;
     private javax.swing.JPopupMenu rightClickPopupMenu;
     private javax.swing.JMenuItem selectAllMenuItem;

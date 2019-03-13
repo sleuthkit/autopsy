@@ -41,11 +41,11 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
     enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        ATTRIBUTE(Bundle.OtherOccurrencesFilesTableModel_attribute(), 40),
-        VALUE(Bundle.OtherOccurrencesFilesTableModel_value(), 200),
-        KNOWN(Bundle.OtherOccurrencesFilesTableModel_known(), 40),
-        FILE_PATH(Bundle.OtherOccurrencesFilesTableModel_path(), 450),
-        COMMENT(Bundle.OtherOccurrencesFilesTableModel_comment(), 200);
+        ATTRIBUTE(Bundle.OtherOccurrencesFilesTableModel_attribute(), 75),
+        VALUE(Bundle.OtherOccurrencesFilesTableModel_value(), 190),
+        KNOWN(Bundle.OtherOccurrencesFilesTableModel_known(), 25),
+        FILE_PATH(Bundle.OtherOccurrencesFilesTableModel_path(), 470),
+        COMMENT(Bundle.OtherOccurrencesFilesTableModel_comment(), 190);
         
         private final String columnName;
         private final int columnWidth;
