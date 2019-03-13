@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.awt.Component;
-import java.awt.FontMetrics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedWriter;
@@ -770,7 +769,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             casesTableModel.addCorrelationCase(NO_ARTIFACTS_CASE);
         } else if (caseCount == 0) {
             casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
-        } 
+        }
         setColumnWidths();
         setEarliestCaseDate();
         foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), totalCount, caseCount, dataSources.size()));
@@ -797,7 +796,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 for (int selectedRow : selectedCaseIndexes) {
                     try {
                         if (nodeData.isCentralRepoNode()) {
-                            if (((CorrelationCase) casesTableModel.getRow(casesTable.convertRowIndexToModel(selectedRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                            if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
+                                    && ((CorrelationCase) casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
                                 dataSourceModel.addRow(new Object[]{nodeData.getDataSourceName(), nodeData.getDeviceID()});
                             }
                         } else {
@@ -829,7 +829,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     for (int selectedDataSourceRow : selectedDataSources) {
                         try {
                             if (nodeData.isCentralRepoNode()) {
-                                if (((CorrelationCase) casesTableModel.getRow(casesTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
+                                if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow)) != null
+                                        && ((CorrelationCase) casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
                                         && dataSourceModel.getValueAt(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
                                     tableModel.addNodeData(nodeData);
                                 }

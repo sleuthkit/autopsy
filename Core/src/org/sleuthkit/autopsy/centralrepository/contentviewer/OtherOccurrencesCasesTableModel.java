@@ -93,8 +93,8 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
         return value;
     }
 
-    Object getRow(int rowIdx) {
-        return correlationCaseList.get(rowIdx);
+    Object getCorrelationCase(int rowIdx) {
+        return correlationCaseList.get(rowIdx).getCorrelationCase();
     }
 
     @Override
