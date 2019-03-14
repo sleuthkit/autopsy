@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
+import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptySet;
@@ -29,7 +30,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.joda.time.Interval;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SetUtils.union;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;

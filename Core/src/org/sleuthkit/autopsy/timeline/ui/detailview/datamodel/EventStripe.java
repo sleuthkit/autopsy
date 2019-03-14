@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
+import java.util.Collection;
 import static java.util.Collections.singleton;
 import java.util.Comparator;
 import static java.util.Comparator.comparing;
@@ -26,8 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SetUtils.copyAsSortedSet;
-import static org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SetUtils.union;
+import java.util.TreeSet;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 
@@ -115,14 +116,14 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     private EventStripe(EventStripe u, EventStripe v) { //NOPMD
-        clusters = copyAsSortedSet(union(u.getClusters(), v.getClusters()), Comparator.comparing(EventCluster::getStartMillis));
+        clusters = copyAsSortedSet(Sets.union(v.getClusters(), v.getClusters()), Comparator.comparing(EventCluster::getStartMillis));
 
         type = u.getEventType();
         description = u.getDescription();
         lod = u.getDescriptionLoD();
-        eventIDs = union(u.getEventIDs(), v.getEventIDs());
-        tagged = union(u.getEventIDsWithTags(), v.getEventIDsWithTags());
-        hashHits = union(u.getEventIDsWithHashHits(), v.getEventIDsWithHashHits());
+        eventIDs = Sets.union(v.getEventIDs(), v.getEventIDs());
+        tagged = Sets.union(v.getEventIDsWithTags(), v.getEventIDsWithTags());
+        hashHits = Sets.union(v.getEventIDsWithHashHits(), v.getEventIDsWithHashHits());
         parent = u.getParent().orElse(v.getParent().orElse(null));
     }
 
