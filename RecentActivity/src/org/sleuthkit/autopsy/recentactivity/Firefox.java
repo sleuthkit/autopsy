@@ -42,14 +42,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import org.apache.commons.io.FilenameUtils;
 
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -62,6 +65,15 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamException;
 import org.sleuthkit.datamodel.TskCoreException;
+
+@Messages({
+    "Progress_Message_Firefox_History=Firefox History",
+    "Progress_Message_Firefox_Bookmarks=Firefox Bookmarks",
+    "Progress_Message_Firefox_Cookies=Firefox Cookies",
+    "Progress_Message_Firefox_Downloads=Firefox Downloads",
+    "Progress_Message_Firefox_FormHistory=Firefox Form History",
+    "Progress_Message_Firefox_AutoFill=Firefox Auto Fill"
+})
 
 /**
  * Firefox recent activity extraction
@@ -95,15 +107,27 @@ class Firefox extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_History());
         this.getHistory();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_Bookmarks());
         this.getBookmark();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_Downloads());
         this.getDownload();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_Cookies());
         this.getCookie();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_FormHistory());
         this.getFormsHistory();
+        
+        progressBar.progress(Bundle.Progress_Message_Firefox_AutoFill());
         this.getAutofillProfiles();
     }
 
@@ -476,14 +500,14 @@ class Firefox extends Extract {
                         (Long.valueOf(result.get("startTime").toString())))); //NON-NLS
 
                 String target = result.get("target").toString(); //NON-NLS
-
+                String downloadedFilePath = "";
                 if (target != null) {
                     try {
-                        String decodedTarget = URLDecoder.decode(target.replaceAll("file:///", ""), "UTF-8"); //NON-NLS
+                        downloadedFilePath = URLDecoder.decode(target.replaceAll("file:///", ""), "UTF-8"); //NON-NLS
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                 RecentActivityExtracterModuleFactory.getModuleName(),
-                                decodedTarget));
-                        long pathID = Util.findID(dataSource, decodedTarget);
+                                downloadedFilePath));
+                        long pathID = Util.findID(dataSource, downloadedFilePath);
                         if (pathID != -1) {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID,
                                     RecentActivityExtracterModuleFactory.getModuleName(),
@@ -508,6 +532,19 @@ class Firefox extends Extract {
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
+                }
+                
+                // find the downloaded file and create a TSK_DOWNLOAD_SOURCE for it.
+                 try {
+                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
+                        BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
+                        downloadSourceArt.addAttributes(createDownloadSourceAttributes(source));
+                        bbartifacts.add(downloadSourceArt);
+                        break;
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Error creating download source artifact for file  '%s'",
+                        downloadedFilePath), ex); //NON-NLS
                 }
             }
             if (errors > 0) {
@@ -596,13 +633,14 @@ class Firefox extends Extract {
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_LAST_ACCESSED.getTypeID(), "RecentActivity", "Last Visited", (Long.valueOf(result.get("startTime").toString()))));
 
                 String target = result.get("target").toString(); //NON-NLS
+                String downloadedFilePath = "";
                 if (target != null) {
                     try {
-                        String decodedTarget = URLDecoder.decode(target.replaceAll("file:///", ""), "UTF-8"); //NON-NLS
+                        downloadedFilePath = URLDecoder.decode(target.replaceAll("file:///", ""), "UTF-8"); //NON-NLS
                         bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH,
                                 RecentActivityExtracterModuleFactory.getModuleName(),
-                                decodedTarget));
-                        long pathID = Util.findID(dataSource, decodedTarget);
+                                downloadedFilePath));
+                        long pathID = Util.findID(dataSource, downloadedFilePath);
                         if (pathID != -1) {
                             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH_ID,
                                     RecentActivityExtracterModuleFactory.getModuleName(),
@@ -628,6 +666,19 @@ class Firefox extends Extract {
                 BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
                 if (bbart != null) {
                     bbartifacts.add(bbart);
+                }
+                
+                // find the downloaded file and create a TSK_DOWNLOAD_SOURCE for it.
+                 try {
+                    for (AbstractFile downloadedFile : fileManager.findFiles(dataSource, FilenameUtils.getName(downloadedFilePath), FilenameUtils.getPath(downloadedFilePath))) {
+                        BlackboardArtifact downloadSourceArt =  downloadedFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
+                        downloadSourceArt.addAttributes(createDownloadSourceAttributes(url));
+                        bbartifacts.add(downloadSourceArt);
+                        break;
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Error creating download source artifact for file  '%s'",
+                        downloadedFilePath), ex); //NON-NLS
                 }
             }
             if (errors > 0) {

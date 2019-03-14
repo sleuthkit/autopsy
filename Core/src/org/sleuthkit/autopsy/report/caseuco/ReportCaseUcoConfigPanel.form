@@ -56,7 +56,7 @@
     <Component class="javax.swing.JLabel" name="jLabelSelectDataSource">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/modules/case_uco/Bundle.properties" key="ReportCaseUcoConfigPanel.jLabelSelectDataSource.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/report/caseuco/Bundle.properties" key="ReportCaseUcoConfigPanel.jLabelSelectDataSource.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <AuxValues>

@@ -380,7 +380,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
          * a case to be unique. We should improve this in the future.
          */
         Set<String> cases = new HashSet<>();
-        Map<String, String> devices = new HashMap();
+        Map<String, String> devices = new HashMap<>();
         
         for (int i=0; i < model.getRowCount(); i++) {
             String caseName = (String) model.getValueAt(i, caseColumnIndex);

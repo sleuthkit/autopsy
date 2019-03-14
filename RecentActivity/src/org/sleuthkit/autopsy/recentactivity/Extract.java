@@ -44,6 +44,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -85,7 +86,7 @@ abstract class Extract {
     void configExtractor() throws IngestModuleException  {        
     }
 
-    abstract void process(Content dataSource, IngestJobContext context);
+    abstract void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar);
 
     void complete() {
     }
@@ -378,7 +379,7 @@ abstract class Extract {
      * @param accessTime Time the download occurred
      * @param domain Domain of the URL
      * @param programName Name of the module creating the attribute
-     * @return A collection of attributed of a downloaded file
+     * @return A collection of attributes of a downloaded file
      */
     protected Collection<BlackboardAttribute> createDownloadAttributes(String path, Long pathID, String url, Long accessTime, String domain, String programName) {
         Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -409,6 +410,22 @@ abstract class Extract {
         bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
                 RecentActivityExtracterModuleFactory.getModuleName(),
                 (programName != null) ? programName : "")); //NON-NLS
+
+        return bbattributes;
+    }
+    
+    /**
+     * Creates a list of the attributes for source of a downloaded file
+     *
+     * @param url source URL of the downloaded file
+     * @return A collection of attributes for source of a downloaded file
+     */
+    protected Collection<BlackboardAttribute> createDownloadSourceAttributes(String url) {
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : "")); //NON-NLS
 
         return bbattributes;
     }
