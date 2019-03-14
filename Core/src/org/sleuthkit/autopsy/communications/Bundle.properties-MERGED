@@ -32,7 +32,17 @@ ResetAndPinAccountsAction.singularText=Visualize Only Selected Account
 UnpinAccountsAction.pluralText=Remove Selected Accounts
 UnpinAccountsAction.singularText=Remove Selected Account
 VisalizationPanel.paintingError=Problem painting visualization.
+VisualizationPane_DisplayName=Open Report
 VisualizationPane_fileName_prompt=Enter name for the Communications Snapshot Report:
+VisualizationPane_MessageBoxTitle=Open Report Failure
+VisualizationPane_MissingReportFileMessage=The report file no longer exists.
+VisualizationPane_NoAssociatedEditorMessage=There is no associated editor for reports of this type or the associated application failed to launch.
+VisualizationPane_NoOpenInEditorSupportMessage=This platform (operating system) does not support opening a file in an editor this way.
+VisualizationPane_Open_Report=Open Report
+VisualizationPane_Report_OK_Button=OK
+# {0} -  report path
+VisualizationPane_Report_Success=Report Successfully create at:\n{0}
+VisualizationPane_ReportFileOpenPermissionDeniedMessage=Permission to open the report file was denied.
 VisualizationPane_reportName=Communications Snapshot
 VisualizationPanel.cancelButton.text=Cancel
 VisualizationPanel.computingLayout=Computing Layout

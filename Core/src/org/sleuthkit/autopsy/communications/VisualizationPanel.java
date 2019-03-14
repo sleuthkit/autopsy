@@ -779,6 +779,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         "VisualizationPane_NoOpenInEditorSupportMessage=This platform (operating system) does not support opening a file in an editor this way.",
         "VisualizationPane_MissingReportFileMessage=The report file no longer exists.",
         "VisualizationPane_ReportFileOpenPermissionDeniedMessage=Permission to open the report file was denied.",
+        "# {0} -  report path",
         "VisualizationPane_Report_Success=Report Successfully create at:\n{0}",
         "VisualizationPane_Report_OK_Button=OK",
         "VisualizationPane_Open_Report=Open Report",})
