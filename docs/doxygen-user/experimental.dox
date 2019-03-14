@@ -12,7 +12,7 @@ To start, go to Tools->Plugins and select the "Installed" tab, then check the bo
 
 \section exp_features Current Experimental Features
 
-- Auto Ingest
+- \ref auto_ingest_page
 - \ref object_detection_page
 - \ref volatility_dsp_page
 
