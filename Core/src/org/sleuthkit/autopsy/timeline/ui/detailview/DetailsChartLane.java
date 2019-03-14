@@ -380,11 +380,9 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
      * @param maxXatY a map from y ranges to the max x within that range. NOTE:
      *                This map will be updated to include the node in question.
      * @param xLeft   the left x-cord of the node to position
-     * @param xRight  the left x-cord of the node to position
+     * @param xRight  the right x-cord of the node to position
      *
      * @return the y position for the node in question.
-     *
-     *
      */
     double computeYTop(double yMin, double h, TreeRangeMap<Double, Double> maxXatY, double xLeft, double xRight) {
         double yTop = yMin;

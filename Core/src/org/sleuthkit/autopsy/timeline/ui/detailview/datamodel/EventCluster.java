@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,18 +18,18 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSortedSet;
-import static com.google.common.collect.Sets.union;
 import java.util.Collection;
+import java.util.Collections;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import org.joda.time.Interval;
+import static org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SetUtils.union;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
@@ -67,19 +67,19 @@ public class EventCluster implements MultiEvent<EventStripe> {
     /**
      * the set of ids of the clustered events
      */
-    final private ImmutableSet<Long> eventIDs;
+    final private Set<Long> eventIDs;
 
     /**
      * the ids of the subset of clustered events that have at least one tag
      * applied to them
      */
-    private final ImmutableSet<Long> tagged;
+    private final Set<Long> tagged;
 
     /**
      * the ids of the subset of clustered events that have at least one hash set
      * hit
      */
-    private final ImmutableSet<Long> hashHits;
+    private final Set<Long> hashHits;
 
     /**
      * merge two event clusters into one new event cluster.
@@ -101,9 +101,9 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
         Interval spanningInterval = IntervalUtils.span(cluster1.span, cluster2.span);
 
-        Set<Long> idsUnion = union(cluster1.getEventIDs(), cluster2.getEventIDs());
-        Set<Long> hashHitsUnion = union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
-        Set<Long> taggedUnion = union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
+        Set<Long> idsUnion = Sets.union(cluster2.getEventIDs(), cluster2.getEventIDs());
+        Set<Long> hashHitsUnion = Sets.union(cluster2.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
+        Set<Long> taggedUnion = Sets.union(cluster2.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
 
         return new EventCluster(spanningInterval,
                 cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion,
@@ -116,10 +116,10 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
         this.span = spanningInterval;
         this.type = type;
-        this.hashHits = ImmutableSet.copyOf(hashHits);
-        this.tagged = ImmutableSet.copyOf(tagged);
+        this.hashHits = new HashSet<>(hashHits);
+        this.tagged = new HashSet<>(tagged);
         this.description = description;
-        this.eventIDs = ImmutableSet.copyOf(eventIDs);
+        this.eventIDs = new HashSet<>(eventIDs);
         this.lod = lod;
         this.parent = parent;
     }
@@ -177,17 +177,17 @@ public class EventCluster implements MultiEvent<EventStripe> {
     }
 
     @Override
-    public ImmutableSet<Long> getEventIDs() {
+    public Set<Long> getEventIDs() {
         return eventIDs;
     }
 
     @Override
-    public ImmutableSet<Long> getEventIDsWithHashHits() {
+    public Set<Long> getEventIDsWithHashHits() {
         return hashHits;
     }
 
     @Override
-    public ImmutableSet<Long> getEventIDsWithTags() {
+    public Set<Long> getEventIDsWithTags() {
         return tagged;
     }
 
@@ -221,7 +221,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
     @Override
     public SortedSet<EventCluster> getClusters() {
-        return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
+        return new TreeSet<>(Collections.singleton(this));
     }
 
     @Override
