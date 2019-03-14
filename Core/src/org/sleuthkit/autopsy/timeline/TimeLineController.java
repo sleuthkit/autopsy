@@ -487,6 +487,10 @@ public class TimeLineController {
          */
         topComponent.requestActive();
     }
+    
+    synchronized public TimeLineTopComponent  getTopComponent(){
+        return topComponent;
+    }
 
     synchronized public void pushEventTypeZoom(EventTypeZoomLevel typeZoomeLevel) {
         ZoomState currentZoom = filteredEvents.zoomStateProperty().get();
