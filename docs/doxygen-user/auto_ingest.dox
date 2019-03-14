@@ -34,7 +34,7 @@ The following is an example of an Autopsy manifest file. Line breaks/spaces are 
 
 The following is a description of each required field:
 <ul><li><b>CaseName</b>: Case name. Multiple data sources can belong to the same case.
-<li><b>DeviceId</b>: A globally unique ID representing device this data source came from. This can be an integer or a UUID.
+<li><b>DeviceId</b>: (Optional) A globally unique ID representing device this data source came from. This can be an integer or a UUID.
 <li><b>DataSource</b>: File name of the data source. Does not include the path.
 </ul>
 Any amount of additional data may be included in the XML file as long as the fields above are present.
@@ -63,6 +63,6 @@ The "Auto Ingest Metrics" button displays processing data for all of the auto in
 
 \section auto_ingest_administration_section Auto Ingest Node Administration
 
-See the \ref auto_ingest_admin_page for additional information.
+See the \ref auto_ingest_admin_page for information on how to enable administrator features.
 
 */

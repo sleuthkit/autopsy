@@ -54,6 +54,10 @@ The Automated Ingest Job Settings section contains the following options:
 <dd>The number of threads an auto ingest node dedicates to analyzing files from input data sources in parallel. Note that analysis of input data source files themselves is always single-threaded.</dd>
 </dl>
 
+\subsection auto_ingest_file_export File Export
+
+The "File Export" button will bring up the \ref file_export_page settings. This allows certain types of files to be automatically exported during auto ingest. Setting up this feature requires knowledge of internal Autopsy data structures and can be ignored for users.
+
 \subsection auto_ingest_shared_config Shared Configuration
 
 When using multiple auto ingest nodes, configuration can be centralized and shared with any auto ingest node that desires to use it. This is called Shared Configuration. The general idea is that you will set up one node (the "master") and upload that configuration to a central location. Then the other auto ingest nodes (the "secondary" nodes) will download that configuration whenever they start a new job. This saves time because you only need to configure one node, and ensures consistency across the auto ingest nodes.
