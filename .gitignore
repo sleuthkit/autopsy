@@ -49,6 +49,7 @@ genfiles.properties
 !/test/input/NSRL.txt-md5.idx
 /test/output/*
 !/test/output/gold
+/test/script/output_dir_link.txt
 /test/output/gold/tmp
 /test/script/ScriptLog.txt
 /test/script/__pycache__/

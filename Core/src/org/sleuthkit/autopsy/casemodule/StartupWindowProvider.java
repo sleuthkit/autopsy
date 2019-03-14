@@ -21,7 +21,11 @@ package org.sleuthkit.autopsy.casemodule;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.logging.Level;
+import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineIngestManager;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineOptionProcessor;
+import org.sleuthkit.autopsy.commandlineingest.CommandLineStartupWindow;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -54,6 +58,17 @@ public class StartupWindowProvider implements StartupWindowInterface {
 
     private void init() {
         if (startupWindowToUse == null) {
+            // first check whether we are running from command line
+            if (isRunningFromCommandLine()) {
+                // Autopsy is running from command line
+                logger.log(Level.INFO, "Running from command line"); //NON-NLS
+                System.out.println("Running from command line");
+                startupWindowToUse = new CommandLineStartupWindow();
+                // kick off command line processing
+                new CommandLineIngestManager().start();
+                return;
+            }
+
             //discover the registered windows
             Collection<? extends StartupWindowInterface> startupWindows
                     = Lookup.getDefault().lookupAll(StartupWindowInterface.class);
@@ -91,6 +106,30 @@ public class StartupWindowProvider implements StartupWindowInterface {
                 startupWindowToUse = new org.sleuthkit.autopsy.casemodule.StartupWindow();
             }
         }
+    }
+
+    /**
+     * Checks whether Autopsy is running from command line. There is an
+     * OptionProcessor that is responsible for processing command line inputs.
+     * If Autopsy is indeed running from command line, then use the command line
+     * startup window.
+     *
+     * @return True if running from command line, false otherwise
+     */
+    private boolean isRunningFromCommandLine() {
+
+        // first look up all OptionProcessors and see if running from command line option is set
+        Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
+        Iterator<? extends OptionProcessor> optionsIterator = optionProcessors.iterator();
+        while (optionsIterator.hasNext()) {
+            // find CommandLineOptionProcessor
+            OptionProcessor processor = optionsIterator.next();
+            if ((processor instanceof CommandLineOptionProcessor)) {
+                // check if we are running from command line            
+                return ((CommandLineOptionProcessor) processor).isRunFromCommandLine();
+            }
+        }
+        return false;
     }
 
     @Override
