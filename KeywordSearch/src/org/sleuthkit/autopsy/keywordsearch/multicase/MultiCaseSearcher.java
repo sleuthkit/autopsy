@@ -71,6 +71,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.w3c.dom.Document;
@@ -534,7 +535,7 @@ final class MultiCaseSearcher {
             final String caseDirectoryPath = caseMetadata.getCaseDirectory();
             final Content content = caseDatabase.getContentById(objectId);
             final Content dataSource = content.getDataSource();
-            final String dataSourceName = dataSource.getName();
+            final String dataSourceName = (dataSource == null) ? "" : dataSource.getName();
             SearchHit.SourceType sourceType = SearchHit.SourceType.FILE;
             String sourceName = "";
             String sourcePath = "";
@@ -564,7 +565,13 @@ final class MultiCaseSearcher {
                 } else {
                     sourcePath = source.getUniquePath();
                 }
+            } else if (content instanceof Report) {
+                Report report = (Report) content;
+                sourceType = SearchHit.SourceType.REPORT;
+                sourceName = report.getReportName();
+                sourcePath = report.getUniquePath();
             }
+            
             return new SearchHit(caseDisplayName, caseDirectoryPath, dataSourceName, sourceType, sourceName, sourcePath);
         } catch (SQLException | TskCoreException ex) {
             throw new MultiCaseSearcherException(Bundle.MultiCaseSearcher_exceptionMessage_hitProcessingError(solrObjectId, caseInfo.getCaseMetadata().getCaseName(), caseInfo.getCaseMetadata().getCaseDirectory()), ex);
