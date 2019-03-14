@@ -10,9 +10,12 @@ A multi-user installation requires several network-based services, such as a cen
 <li>The <b>case output folders</b> can also be put on this machine.</li></ul></td></tr>
 <tr><td>One</td><td><ul><li><b>ActiveMQ</b> - This service has minimal memory and disk requirements.</li>
 <li><b>PostgreSQL</b> - This service has minimal memory and disk requirements.</li></ul></td></tr>
+<tr><td>One</td><td><ul><li><b>Shared image folder</b> - This machine needs a large amount of disk space but doesn't need the fastest hardware.</li></ul></td></tr>
 <tr><td>One or more</td><td><ul><li><b>Automated Ingest Node(s)</b> - These machines don't need much disk space but benefit from additional memory and processing power.</li></ul></td></tr>
 <tr><td>One or more</td><td><ul><li><b>Examiner Node(s)</b> - See \ref installation_page for recommended system requirements.</li></ul></td></tr>
 </table>
+
+Solr is going to be a sizeable resource hog.  A big performance increase will be seen if you put solid state drives (SSD) in the machine running Solr, and have that machine also host the large network drive on the SSDs as a place to store case output. The source images to can be on SAS drives (slower than SSD) with very little impact on performance. This idea here is to have the most resource-intensive operations on the fastest hardware. Using this strategy, there are actually two large network stores, one for input images and one for output cases.
 
 \section auto_ingest_setup_services Installing Services and Configuring Autopsy
 Follow the instructions on the \ref install_multiuser_page page to set up the necessary services and configure your Autopsy clients to use them. After this is complete, you should be able to \ref multiuser_page "create and use multi-user cases".

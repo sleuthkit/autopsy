@@ -4,6 +4,30 @@
 
 Auto ingest allows one or many computers to process \ref ds_page "data sources" automatically with minimal support from a user. The resulting \ref multiuser_page "multi-user cases" can be opened and reviewed by analysts, using any of the normal functions in Autopsy.
 
+There are three types of computers in an Automated Processing Deployment:
+<ul>
+<li><b>Automated Ingest Node:</b>
+These computers are responsible for monitoring the Shared Images Folder and detecting when new images have been copied in. Each writes its results to the Shared Cases Folder.
+<li><b>Examiner Node:</b> These computers can open a case during processing or after it has been analyzed by the Automated Ingest Node.  They allow the examiner to review the results, tag files, and perform additional analysis as needed. 
+<li><b>Services/Storage Node:</b> These computers run the services needed for \ref multiuser_page "multi-user cases", hold the images to be processed and store the analyzed Autopsy cases.
+</ul>
+
+The general workflow is as follows:
+<ol>
+<li>Disk images or other types of data sources are added to the <b>shared images folder</b>. This folder will contain all the disk and phone images that are copied into the system. They must be copied into here before they can be analyzed. As more than one machine may need to access this folder across the network, use UNC paths (if possible) to refer to this folder. 
+<li>A \ref auto_ingest_manifest_creation "manifest file" is added for each data source that is to be processed.
+<li>An auto ingest node finds that manifest file and begins processing the data source. It will make a case in the <b>shared cases folder</b> if there is not one there already. This folder will contain all of the analysis results after automated analysis has been performed on the images.  This folder will not contain the images, those will stay in the Shared Images Folder. As more than one machine may need to access this folder across the network, use UNC paths (if possible) to refer to this folder. 	
+<li>An analyst on an examiner node opens the case and starts their analysis. This can happen while an auto ingest node is processing data or afterwards.
+</ol>
+
+An Automated Processing Deployment could have an architecture, such as this:
+
+\image html AutoIngest\overview_pic1.png
+
+Another illustration, including the network infrastructure, is shown below: 
+
+\image html AutoIngest\overview_pic2.png
+
 \section auto_ingest_setup_section Configuration
 
 Configuring a group of computers for auto ingest is described on the \ref auto_ingest_setup_page page.
