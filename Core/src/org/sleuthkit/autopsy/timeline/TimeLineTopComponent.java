@@ -59,7 +59,6 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
@@ -105,7 +104,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     private final TimeLineController controller;
 
-    /** Lookup that will be exposed through the (Global Actions Context) */
+    /**
+     * Lookup that will be exposed through the (Global Actions Context)
+     */
     private final ModifiableProxyLookup proxyLookup = new ModifiableProxyLookup();
 
     private final PropertyChangeListener focusPropertyListener = new PropertyChangeListener() {
@@ -166,7 +167,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             // make a copy because this list gets updated as the user navigates around
             // and causes concurrent access exceptions
             List<Long> selectedEventIDs = ImmutableList.copyOf(controller.getSelectedEventIDs());
-            
+
             //depending on the active view mode, we either update the dataResultPanel, or update the contentViewerPanel directly.
             switch (controller.getViewMode()) {
                 case LIST:
@@ -196,9 +197,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                                 contentViewerPanel.setNode(null);
                             }
                         });
-                    } catch (NoCurrentCaseException ex) {
-                        //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                        logger.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                         Platform.runLater(() -> {
@@ -266,7 +264,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
         getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(ExternalViewerShortcutAction.EXTERNAL_VIEWER_SHORTCUT, "useExternalViewer"); //NON-NLS 
-        getActionMap().put("useExternalViewer", new ExternalViewerShortcutAction()); //NON-NLS
+        getActionMap().put("useExternalViewer", ExternalViewerShortcutAction.getInstance()); //NON-NLS
         this.controller = controller;
 
         //create linked result and content views

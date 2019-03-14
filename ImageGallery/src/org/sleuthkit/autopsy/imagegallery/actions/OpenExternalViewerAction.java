@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
 public class OpenExternalViewerAction extends Action {
 
     private static final Image EXTERNAL = new Image(OpenExternalViewerAction.class.getResource("/org/sleuthkit/autopsy/imagegallery/images/external.png").toExternalForm()); //NON-NLS
-    private static final KeyCombination EXTERNAL_VIEWER_SHORTCUT = new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN);
+    public static final KeyCombination EXTERNAL_VIEWER_SHORTCUT = new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN);
     private static final ActionEvent ACTION_EVENT = new ActionEvent(OpenExternalViewerAction.class, ActionEvent.ACTION_PERFORMED, ""); //Swing ActionEvent //NOI18N
 
     public OpenExternalViewerAction(DrawableFile file) {
