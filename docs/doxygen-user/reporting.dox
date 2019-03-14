@@ -82,6 +82,10 @@ This report module generates a KML file from any GPS data in the case. This file
 
 \image html reports_kml.png
 
+\subsection report_portable_case Portable Case
+
+This report module generates a new Autopsy case from any tagged files and results. See the \ref portable_case_page page for additional information.
+
 \subsection report_stix STIX
 
 The STIX module allows you to generate a report and Interesting File artifacts by running a STIX file (or files) against the data sources in the case.
