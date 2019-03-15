@@ -136,7 +136,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                                 JOptionPane.showMessageDialog(
                                         WindowManager.getDefault().getMainWindow(),
                                         ex.getCause().getMessage(), //get the message of the wrapped exception
-                                        NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                        NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
                                         JOptionPane.ERROR_MESSAGE);
                             }
                             StartupWindowProvider.getInstance().open();
@@ -161,7 +161,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
             if (multiUserCaseWindow == null) {
-                multiUserCaseWindow = MultiUserCasesDialog.getInstance();
+                multiUserCaseWindow = OpenMultiUserCaseDialog.getInstance();
             }
             multiUserCaseWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
             multiUserCaseWindow.setVisible(true);

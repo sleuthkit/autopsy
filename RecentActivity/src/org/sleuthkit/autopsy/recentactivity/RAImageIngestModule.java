@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2019 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,6 +23,7 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -46,7 +47,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
 
     private static final Logger logger = Logger.getLogger(RAImageIngestModule.class.getName());
     private final List<Extract> extractors = new ArrayList<>();
-    private final List<Extract> browserExtracters = new ArrayList<>();
+    private final List<Extract> browserExtractors = new ArrayList<>();
     private IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
     private StringBuilder subCompleted = new StringBuilder();
@@ -59,8 +60,10 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         this.context = context;
 
         Extract iexplore;
+        Extract edge;
         try {
             iexplore = new ExtractIE();
+            edge = new ExtractEdge();
         } catch (NoCurrentCaseException ex) {
             throw new IngestModuleException(ex.getMessage(), ex);
         }
@@ -70,22 +73,31 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         Extract chrome = new Chrome();
         Extract firefox = new Firefox();
         Extract SEUQA = new SearchEngineURLQueryAnalyzer();
-        Extract dataSourceProfiler = new DataSourceUsageAnalyzer();
+        Extract osExtract = new ExtractOs();
+        Extract dataSourceAnalyzer = new DataSourceUsageAnalyzer();
+        Extract safari = new ExtractSafari();
+        Extract zoneInfo = new ExtractZoneIdentifier();
 
         extractors.add(chrome);
         extractors.add(firefox);
         extractors.add(iexplore);
+        extractors.add(edge);
+        extractors.add(safari);
         extractors.add(recentDocuments);
-        extractors.add(dataSourceProfiler);
         extractors.add(SEUQA); // this needs to run after the web browser modules
-        extractors.add(registry); // this runs last because it is slowest
+        extractors.add(registry); // this should run after quicker modules like the browser modules and needs to run before the DataSourceUsageAnalyzer
+        extractors.add(osExtract); // this needs to run before the DataSourceUsageAnalyzer
+        extractors.add(dataSourceAnalyzer); //this needs to run after ExtractRegistry and ExtractOs
+        extractors.add(zoneInfo); // this needs to run after the web browser modules
 
-        browserExtracters.add(chrome);
-        browserExtracters.add(firefox);
-        browserExtracters.add(iexplore);
+        browserExtractors.add(chrome);
+        browserExtractors.add(firefox);
+        browserExtractors.add(iexplore);
+        browserExtractors.add(edge);
+        browserExtractors.add(safari);
 
-        for (Extract extracter : extractors) {
-            extracter.init();
+        for (Extract extractor : extractors) {
+            extractor.init();
         }
     }
 
@@ -110,7 +122,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
             progressBar.progress(extracter.getName(), i);
 
             try {
-                extracter.process(dataSource, context);
+                extracter.process(dataSource, context, progressBar);
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Exception occurred in " + extracter.getName(), ex); //NON-NLS
                 subCompleted.append(NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.errModFailed",
@@ -155,7 +167,7 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
         StringBuilder historyMsg = new StringBuilder();
         historyMsg.append(
                 NbBundle.getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.title", dataSource.getName()));
-        for (Extract module : browserExtracters) {
+        for (Extract module : browserExtractors) {
             historyMsg.append("<li>").append(module.getName()); //NON-NLS
             historyMsg.append(": ").append((module.foundData()) ? NbBundle
                     .getMessage(this.getClass(), "RAImageIngestModule.process.histMsg.found") : NbBundle
@@ -224,5 +236,16 @@ public final class RAImageIngestModule implements DataSourceIngestModule {
             dir.mkdirs();
         }
         return tmpDir;
+    }
+    
+    /**
+     * Get relative path for module output folder.
+     *
+     * @throws NoCurrentCaseException if there is no open case.
+     * @return the relative path of the module output folder
+     */
+    static String getRelModuleOutputPath() throws NoCurrentCaseException {
+        return Paths.get(Case.getCurrentCaseThrows().getModuleOutputDirectoryRelativePath(), 
+                            "RecentActivity").normalize().toString() ;  //NON-NLS
     }
 }

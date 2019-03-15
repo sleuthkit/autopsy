@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.Component;
+import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Node;
@@ -29,6 +30,10 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.FsContent;
@@ -138,7 +143,9 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         "Metadata.tableRowTitle.timezone=Time Zone",
         "Metadata.tableRowTitle.deviceId=Device ID",
         "Metadata.tableRowTitle.acquisitionDetails=Acquisition Details",
-        "Metadata.nodeText.unknown=Unknown"})
+        "Metadata.tableRowTitle.downloadSource=Downloaded From",
+        "Metadata.nodeText.unknown=Unknown",
+        "Metadata.nodeText.none=None"})
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
@@ -181,6 +188,19 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
             addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.internalid"), Long.toString(file.getId()));
             if (file.getType().compareTo(TSK_DB_FILES_TYPE_ENUM.LOCAL) == 0) {
                 addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), file.getLocalAbsPath());
+            }
+            
+            try {
+                List<BlackboardArtifact> sourceArtifacts = file.getArtifacts(ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE);
+                if (!sourceArtifacts.isEmpty()) {
+                    BlackboardArtifact artifact = sourceArtifacts.get(0);
+                    BlackboardAttribute urlAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_URL));
+                    if (urlAttr != null) {
+                        addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.downloadSource"), urlAttr.getValueString());
+                    }
+                }
+            } catch (TskCoreException ex) {
+               sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.exceptionNotice.text")).append(ex.getLocalizedMessage());
             }
             
             endTable(sb);
@@ -251,15 +271,20 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
             // Add all the data source paths to the "Local Path" value cell.
             String[] imagePaths = image.getPaths();
-            StringBuilder pathValues = new StringBuilder("<div>");
-            pathValues.append(imagePaths[0]);
-            pathValues.append("</div>");
-            for (int i=1; i < imagePaths.length; i++) {
-                pathValues.append("<div>");
-                pathValues.append(imagePaths[i]);
+            if (imagePaths.length > 0) {
+                StringBuilder pathValues = new StringBuilder("<div>");
+                pathValues.append(imagePaths[0]);
                 pathValues.append("</div>");
+                for (int i=1; i < imagePaths.length; i++) {
+                    pathValues.append("<div>");
+                    pathValues.append(imagePaths[i]);
+                    pathValues.append("</div>");
+                }
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), pathValues.toString());
+            } else {
+                addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), 
+                        NbBundle.getMessage(this.getClass(), "Metadata.nodeText.none"));
             }
-            addRow(sb, NbBundle.getMessage(this.getClass(), "Metadata.tableRowTitle.localPath"), pathValues.toString());
         }
         
         setText(sb.toString());

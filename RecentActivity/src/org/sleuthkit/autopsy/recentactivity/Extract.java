@@ -22,10 +22,18 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -35,9 +43,18 @@ import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
+import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
-import org.sleuthkit.datamodel.*;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskException;
+
 
 abstract class Extract {
 
@@ -69,7 +86,7 @@ abstract class Extract {
     void configExtractor() throws IngestModuleException  {        
     }
 
-    abstract void process(Content dataSource, IngestJobContext context);
+    abstract void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar);
 
     void complete() {
     }
@@ -201,7 +218,238 @@ abstract class Extract {
         return moduleName;
     }
 
+    /**
+     * Returns the state of foundData
+     * @return 
+     */
     public boolean foundData() {
         return dataFound;
+    }
+    
+    /**
+     * Sets the value of foundData
+     * @param foundData 
+     */
+    protected void setFoundData(boolean foundData){
+        dataFound = foundData;
+    }
+    
+    /**
+     * Returns the current case instance
+     * @return Current case instance
+     */
+    protected Case getCurrentCase(){
+        return this.currentCase;
+    }
+    
+    /**
+     * Creates a list of attributes for a history artifact.
+     *
+     * @param url 
+     * @param accessTime Time url was accessed
+     * @param referrer referred url
+     * @param title title of the page
+     * @param programName module name
+     * @param domain domain of the url
+     * @param user user that accessed url
+     * @return List of BlackboardAttributes for giving attributes
+     * @throws TskCoreException
+     */
+    protected Collection<BlackboardAttribute> createHistoryAttribute(String url, Long accessTime,
+            String referrer, String title, String programName, String domain, String user) throws TskCoreException {
+
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : "")); //NON-NLS
+
+        if (accessTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), accessTime));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REFERRER,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (referrer != null) ? referrer : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (title != null) ? title : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_USER_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (user != null) ? user : "")); //NON-NLS
+
+        return bbattributes;
+    }
+    
+    /**
+     * Creates a list of attributes for a cookie.
+     *
+     * @param url cookie url
+     * @param creationTime cookie creation time 
+     * @param name cookie name
+     * @param value cookie value
+     * @param programName Name of the module creating the attribute
+     * @param domain Domain of the URL
+     * @return List of BlackboarAttributes for the passed in attributes
+     */
+    protected Collection<BlackboardAttribute> createCookieAttributes(String url,
+            Long creationTime, String name, String value, String programName, String domain) {
+
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : "")); //NON-NLS
+
+        if (creationTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME,
+                    RecentActivityExtracterModuleFactory.getModuleName(), creationTime));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (name != null) ? name : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_VALUE,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (value != null) ? value : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : "")); //NON-NLS
+
+        return bbattributes;
+    }
+
+    /**
+     * Creates a list of bookmark attributes from the passed in parameters.
+     *
+     * @param url Bookmark url
+     * @param title Title of the bookmarked page
+     * @param creationTime Date & time at which the bookmark was created
+     * @param programName Name of the module creating the attribute
+     * @param domain The domain of the bookmark's url
+     * @return A collection of bookmark attributes
+     */
+    protected Collection<BlackboardAttribute> createBookmarkAttributes(String url, String title, Long creationTime, String programName, String domain) {
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TITLE,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (title != null) ? title : "")); //NON-NLS
+
+        if (creationTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), creationTime));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : "")); //NON-NLS
+
+        return bbattributes;
+    }
+
+     /**
+     * Creates a list of the attributes of a downloaded file
+     *
+     * @param path
+     * @param url URL of the downloaded file
+     * @param accessTime Time the download occurred
+     * @param domain Domain of the URL
+     * @param programName Name of the module creating the attribute
+     * @return A collection of attributes of a downloaded file
+     */
+    protected Collection<BlackboardAttribute> createDownloadAttributes(String path, Long pathID, String url, Long accessTime, String domain, String programName) {
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (path != null) ? path : "")); //NON-NLS
+
+        if (pathID != null && pathID != -1) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                    RecentActivityExtracterModuleFactory.getModuleName(),
+                    pathID));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : "")); //NON-NLS
+
+        if (accessTime != null) {
+            bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
+                    RecentActivityExtracterModuleFactory.getModuleName(), accessTime));
+        }
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (domain != null) ? domain : "")); //NON-NLS
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (programName != null) ? programName : "")); //NON-NLS
+
+        return bbattributes;
+    }
+    
+    /**
+     * Creates a list of the attributes for source of a downloaded file
+     *
+     * @param url source URL of the downloaded file
+     * @return A collection of attributes for source of a downloaded file
+     */
+    protected Collection<BlackboardAttribute> createDownloadSourceAttributes(String url) {
+        Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
+
+        bbattributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                RecentActivityExtracterModuleFactory.getModuleName(),
+                (url != null) ? url : "")); //NON-NLS
+
+        return bbattributes;
+    }
+    
+    /**
+     * Create temporary file for the given AbstractFile.  The new file will be 
+     * created in the temp directory for the module with a unique file name.
+     * 
+     * @param context
+     * @param file
+     * @return Newly created copy of the AbstractFile
+     * @throws IOException 
+     */
+    protected File createTemporaryFile(IngestJobContext context, AbstractFile file) throws IOException{
+        Path tempFilePath = Paths.get(RAImageIngestModule.getRATempPath(
+                getCurrentCase(), getName()), file.getName() + file.getId() + file.getNameExtension());
+        java.io.File tempFile = tempFilePath.toFile();
+        
+        try {
+            ContentUtils.writeToFile(file, tempFile, context::dataSourceIngestIsCancelled);
+        } catch (IOException ex) {
+            throw new IOException("Error writingToFile: " + file, ex); //NON-NLS
+        }
+         
+        return tempFile;
     }
 }

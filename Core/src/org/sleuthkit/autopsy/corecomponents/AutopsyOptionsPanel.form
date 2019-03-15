@@ -81,7 +81,7 @@
                       <Component id="runtimePanel" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="logoPanel" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="191" max="32767" attributes="0"/>
+                      <EmptySpace pref="171" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -242,38 +242,43 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="totalMemoryLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="maxSolrMemoryLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="maxMemoryLabel" linkSize="1" min="-2" max="-2" attributes="0"/>
-                              <Component id="maxLogFileCount" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace min="12" pref="12" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="logFileCount" linkSize="3" alignment="1" min="-2" pref="37" max="-2" attributes="0"/>
-                              <Component id="solrMaxHeapSpinner" alignment="1" min="-2" max="-2" attributes="0"/>
-                              <Component id="memField" linkSize="3" alignment="1" min="-2" pref="37" max="-2" attributes="0"/>
-                              <Component id="systemMemoryTotal" alignment="1" min="-2" pref="37" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace type="separate" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="maxMemoryUnitsLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="maxMemoryUnitsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="maxMemoryUnitsLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="0" attributes="0">
-                                  <EmptySpace min="-2" pref="120" max="-2" attributes="0"/>
-                                  <Component id="logNumAlert" max="32767" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <EmptySpace min="-2" pref="23" max="-2" attributes="0"/>
+                              <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="restartNecessaryWarning" alignment="0" pref="718" max="32767" attributes="0"/>
-                                      <Component id="memFieldValidationLabel" alignment="0" min="-2" pref="478" max="-2" attributes="0"/>
+                                      <Component id="totalMemoryLabel" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="maxSolrMemoryLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="maxMemoryLabel" linkSize="1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="maxLogFileCount" linkSize="1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace min="12" pref="12" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="logFileCount" linkSize="3" alignment="1" min="-2" pref="37" max="-2" attributes="0"/>
+                                      <Component id="solrMaxHeapSpinner" alignment="1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="memField" linkSize="3" alignment="1" min="-2" pref="37" max="-2" attributes="0"/>
+                                      <Component id="systemMemoryTotal" alignment="1" min="-2" pref="37" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="maxMemoryUnitsLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="maxMemoryUnitsLabel" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="maxMemoryUnitsLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <EmptySpace min="-2" pref="23" max="-2" attributes="0"/>
+                                          <Component id="memFieldValidationLabel" min="-2" pref="478" max="-2" attributes="0"/>
+                                          <EmptySpace pref="246" max="32767" attributes="0"/>
+                                      </Group>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                                          <Component id="solrJVMHeapWarning" pref="717" max="32767" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="logNumAlert" max="32767" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                               </Group>
+                              <Component id="restartNecessaryWarning" alignment="0" pref="994" max="32767" attributes="0"/>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -283,18 +288,17 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
                               <Component id="totalMemoryLabel" min="-2" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="restartNecessaryWarning" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="maxMemoryUnitsLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
-                              </Group>
+                              <Component id="maxMemoryUnitsLabel1" min="-2" max="-2" attributes="0"/>
                               <Component id="systemMemoryTotal" alignment="0" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="maxMemoryLabel" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="memField" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="maxMemoryUnitsLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="memFieldValidationLabel" alignment="0" min="-2" pref="16" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="maxMemoryLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="memField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="maxMemoryUnitsLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
@@ -303,6 +307,7 @@
                                   <Component id="maxSolrMemoryLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="maxMemoryUnitsLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="solrMaxHeapSpinner" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="solrJVMHeapWarning" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -310,7 +315,9 @@
                               <Component id="maxLogFileCount" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="logFileCount" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="14" max="32767" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="restartNecessaryWarning" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -426,6 +433,13 @@
                   <Events>
                     <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="solrMaxHeapSpinnerStateChanged"/>
                   </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="solrJVMHeapWarning">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="AutopsyOptionsPanel.solrJVMHeapWarning.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </Properties>
                 </Component>
               </SubComponents>
             </Container>

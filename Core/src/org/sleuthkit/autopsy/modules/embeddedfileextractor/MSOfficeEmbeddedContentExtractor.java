@@ -302,8 +302,9 @@ class MSOfficeEmbeddedContentExtractor {
         }
         List<ExtractedFile> listOfExtractedImages = new ArrayList<>();
         byte[] data = null;
+        int pictureNumber = 0; //added to ensure uniqueness in cases where suggestFullFileName returns duplicates
         for (Picture picture : listOfAllPictures) {
-            String fileName = picture.suggestFullFileName();
+            String fileName =  UNKNOWN_IMAGE_NAME_PREFIX +pictureNumber +"."+ picture.suggestFileExtension();
             try {
                 data = picture.getContent();
             } catch (Exception ex) {
@@ -312,6 +313,7 @@ class MSOfficeEmbeddedContentExtractor {
             writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
             // TODO Extract more info from the Picture viz ctime, crtime, atime, mtime
             listOfExtractedImages.add(new ExtractedFile(fileName, getFileRelativePath(fileName), picture.getSize()));
+            pictureNumber++;
         }
 
         return listOfExtractedImages;
@@ -516,8 +518,7 @@ class MSOfficeEmbeddedContentExtractor {
      * @return
      */
     private String getFileRelativePath(String fileName) {
-        // Used explicit FWD slashes to maintain DB consistency across operating systems.
-        return "/" + moduleDirRelative + "/" + this.parentFileName + "/" + fileName; //NON-NLS
+        return Paths.get(moduleDirRelative, this.parentFileName, fileName).toString();
     }
 
     /**
