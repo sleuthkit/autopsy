@@ -681,11 +681,19 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         setCursor(Cursor.getDefaultCursor());
     }//GEN-LAST:event_clearVizButtonActionPerformed
 
+     @NbBundle.Messages({
+         "VisualizationPanel_snapshot_report_failure=Snapshot report not created. An error occurred during creation."
+     })
     private void snapshotButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_snapshotButtonActionPerformed
-        try{
+        try {
             handleSnapshotEvent();
         } catch (NoCurrentCaseException | IOException ex) {
-            // TODO something here
+            logger.log(Level.SEVERE, "Unable to create communications snapsot report", ex); //NON-NLS
+
+            Platform.runLater(()
+                    -> Notifications.create().owner(notificationsJFXPanel.getScene().getWindow())
+                            .text(Bundle.VisualizationPanel_snapshot_report_failure())
+                            .showWarning());
         }
     }//GEN-LAST:event_snapshotButtonActionPerformed
 
@@ -726,7 +734,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         "VisualizationPanel_action_dialogs_title=Communications",
         "VisualizationPanel_action_name_text=Snapshot Report",
         "VisualizationPane_fileName_prompt=Enter name for the Communications Snapshot Report:",
-        "VisualizationPane_reportName=Communications Snapshot",})
+        "VisualizationPane_reportName=Communications Snapshot",
+        "# {0} -  default name",
+        "VisualizationPane_accept_defaultName=Press OK to accept default report name: {0}",
+        "VisualizationPane_blank_report_title=Blank Report Name",
+        "# {0} -  report name",
+        "VisualizationPane_overrite_exiting=Overwrite existing report?\n{0}"
+    })
     private void handleSnapshotEvent() throws NoCurrentCaseException, IOException {
         Case currentCase = Case.getCurrentCaseThrows();
         Date generationDate = new Date();
@@ -743,23 +757,28 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         int result = JOptionPane.showConfirmDialog(graphComponent, panel,
                 Bundle.VisualizationPanel_action_dialogs_title(), JOptionPane.OK_CANCEL_OPTION);
 
-        List<CommunicationsFilter.SubFilter> filters = currentFilter.getAndFilters();
-
         if (result == JOptionPane.OK_OPTION) {
             String enteredReportName = text.getText();
+            
+            if(enteredReportName.isEmpty()){
+                result = JOptionPane.showConfirmDialog(graphComponent, Bundle.VisualizationPane_accept_defaultName(defaultReportName), Bundle.VisualizationPane_blank_report_title(), JOptionPane.OK_CANCEL_OPTION);
+                if(result != JOptionPane.OK_OPTION) {
+                    return;
+                }
+            }
+            
             String reportName = StringUtils.defaultIfBlank(enteredReportName, defaultReportName);
             Path reportPath = Paths.get(currentCase.getReportDirectory(), reportName);
-            if (!Files.exists(reportPath)) {
-                createReport(currentCase, reportName);
-            } else {
-                String message = String.format("Overwrite existing report?\n%s", reportName);
-                result = JOptionPane.showConfirmDialog(graphComponent, message,
+            if (Files.exists(reportPath)) {
+                result = JOptionPane.showConfirmDialog(graphComponent, Bundle.VisualizationPane_overrite_exiting(reportName),
                         Bundle.VisualizationPanel_action_dialogs_title(), JOptionPane.OK_CANCEL_OPTION);
 
                 if (result == JOptionPane.OK_OPTION) {
                     FileUtil.deleteFileDir(reportPath.toFile());
                     createReport(currentCase, reportName);
                 }
+            } else {
+                createReport(currentCase, reportName);
             }
         }
     }
@@ -788,18 +807,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         // Create the report.
         Path reportFolderPath = Paths.get(currentCase.getReportDirectory(), reportName, Bundle.VisualizationPane_reportName()); //NON_NLS
         BufferedImage image = mxCellRenderer.createBufferedImage(graph, null, graph.getView().getScale(), Color.WHITE, true, null);
-        Path reportPath = (new CommSnapShotReportWriter(currentCase, reportFolderPath, reportName, new Date(), image, currentFilter)).writeReport();
+        Path reportPath = new CommSnapShotReportWriter(currentCase, reportFolderPath, reportName, new Date(), image, currentFilter).writeReport();
         
         // Report success to the user and offer to open the report.
         String message = Bundle.VisualizationPane_Report_Success(reportPath.toAbsolutePath());
-        String[] buttons = {Bundle.VisualizationPane_Report_OK_Button(),
-            Bundle.VisualizationPane_Open_Report()};
+        String[] buttons = {Bundle.VisualizationPane_Open_Report(), Bundle.VisualizationPane_Report_OK_Button()};
 
         int result = JOptionPane.showOptionDialog(graphComponent, message,
                 Bundle.VisualizationPanel_action_dialogs_title(),
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
                 null, buttons, buttons[1]);
-        if (result == JOptionPane.NO_OPTION) {
+        if (result == JOptionPane.YES_NO_OPTION) {
             try {
                 Desktop.getDesktop().open(reportPath.toFile());
             } catch (IOException ex) {

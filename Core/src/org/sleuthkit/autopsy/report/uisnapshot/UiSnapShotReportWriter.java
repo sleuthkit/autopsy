@@ -38,7 +38,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.report.ReportBranding;
 
 /**
- * Generate and write the Timeline snapshot report to disk.
+ * Generate and write the snapshot report to disk.
  */
 public abstract class UiSnapShotReportWriter {
 
@@ -191,36 +191,32 @@ public abstract class UiSnapShotReportWriter {
         if (StringUtils.isNotBlank(agencyLogoPath)) {
             Files.copy(Files.newInputStream(Paths.get(agencyLogoPath)), reportFolderPath.resolve(Paths.get(reportBranding.getAgencyLogoPath()).getFileName())); //NON-NLS
         }
-
-        //copy navigation html
-        try (InputStream navStream = UiSnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/uisnapshot/navigation.html")) { //NON-NLS
-            Files.copy(navStream, reportFolderPath.resolve("nav.html")); //NON-NLS
-        }
+        
         //copy favicon
         if (StringUtils.isBlank(agencyLogoPath)) {
-            // use default Autopsy icon if custom icon is not set
-            try (InputStream faviconStream = UiSnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico")) { //NON-NLS
-                Files.copy(faviconStream, reportFolderPath.resolve("favicon.ico")); //NON-NLS
-            }
+            copyInternalResource("/org/sleuthkit/autopsy/report/images/favicon.ico", "favicon.ico");
         } else {
             Files.copy(Files.newInputStream(Paths.get(agencyLogoPath)), reportFolderPath.resolve("favicon.ico")); //NON-NLS           
         }
 
-        //copy report summary icon
-        try (InputStream summaryStream = UiSnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/summary.png")) { //NON-NLS
-            Files.copy(summaryStream, reportFolderPath.resolve("summary.png")); //NON-NLS
-        }
-        //copy snapshot icon
-        try (InputStream snapshotIconStream = UiSnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/images/image.png")) { //NON-NLS
-            Files.copy(snapshotIconStream, reportFolderPath.resolve("snapshot_icon.png")); //NON-NLS
-        }
-        //copy main report css
-        try (InputStream resource = UiSnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/uisnapshot/index.css")) { //NON-NLS
-            Files.copy(resource, reportFolderPath.resolve("index.css")); //NON-NLS
-        }
-        //copy summary css
-        try (InputStream resource = UiSnapShotReportWriter.class.getResourceAsStream("/org/sleuthkit/autopsy/report/uisnapshot/summary.css")) { //NON-NLS
-            Files.copy(resource, reportFolderPath.resolve("summary.css")); //NON-NLS
+        copyInternalResource("/org/sleuthkit/autopsy/report/uisnapshot/navigation.html", "nav.html");
+        copyInternalResource("/org/sleuthkit/autopsy/report/images/summary.png", "summary.png");
+        copyInternalResource("/org/sleuthkit/autopsy/report/images/image.png", "snapshot_icon.png");
+        copyInternalResource("/org/sleuthkit/autopsy/report/uisnapshot/index.css", "index.css");
+        copyInternalResource("/org/sleuthkit/autopsy/report/uisnapshot/summary.css", "summary.css");
+    }
+    
+    /**
+     * Copies internal resource to the report folder.
+     * 
+     * @param internalPath Location in jar of the image
+     * @param fileName Name to give resource in new location
+     * 
+     * @throws IOException 
+     */
+    private void copyInternalResource(String internalPath, String fileName) throws IOException{
+        try (InputStream resource = UiSnapShotReportWriter.class.getResourceAsStream(internalPath)) { //NON-NLS
+            Files.copy(resource, reportFolderPath.resolve(fileName)); //NON-NLS
         }
     }
 }
