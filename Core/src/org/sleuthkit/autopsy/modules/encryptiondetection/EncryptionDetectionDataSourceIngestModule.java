@@ -71,11 +71,14 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
 
     @Messages({
         "EncryptionDetectionDataSourceIngestModule.artifactComment.bitlocker=Bitlocker encryption detected.",
-        "EncryptionDetectionDataSourceIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f)."
+        "EncryptionDetectionDataSourceIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f).",
+        "EncryptionDetectionDataSourceIngestModule.processing.message=Checking image for encryption."
     })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
+        
+       
         try {
             if (dataSource instanceof Image) {
                 
@@ -83,8 +86,11 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
                     logger.log(Level.SEVERE, String.format("Unable to process data source '%s' - image has no paths", dataSource.getName()));
                     return IngestModule.ProcessResult.ERROR;
                 }
-                
+                 
                 List<VolumeSystem> volumeSystems = ((Image) dataSource).getVolumeSystems();
+                progressBar.switchToDeterminate(volumeSystems.size());
+                int numVolSystemsChecked = 0;
+                progressBar.progress(Bundle.EncryptionDetectionDataSourceIngestModule_processing_message(), 0);
                 for (VolumeSystem volumeSystem : volumeSystems) {
                     for (Volume volume : volumeSystem.getVolumes()) {
                         if (BitlockerDetection.isBitlockerVolume(volume)) {
@@ -94,6 +100,9 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
                             return flagVolume(volume, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED, String.format(Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_suspected(), calculatedEntropy));
                         }
                     }
+                    // Update progress bar
+                    numVolSystemsChecked++;
+                    progressBar.progress(Bundle.EncryptionDetectionDataSourceIngestModule_processing_message(), numVolSystemsChecked);
                 }
             }
         } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
