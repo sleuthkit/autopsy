@@ -19,11 +19,9 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
 import com.google.common.collect.Sets;
-import java.util.Collection;
 import java.util.Collections;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -110,22 +108,22 @@ public class EventCluster implements MultiEvent<EventStripe> {
                 cluster1.getDescription(), cluster1.lod);
     }
 
-    private EventCluster(Interval spanningInterval, EventType type, Collection<Long> eventIDs,
-                         Collection<Long> hashHits, Collection<Long> tagged, String description, DescriptionLoD lod,
+    private EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+                         Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod,
                          EventStripe parent) {
 
         this.span = spanningInterval;
         this.type = type;
-        this.hashHits = new HashSet<>(hashHits);
-        this.tagged = new HashSet<>(tagged);
+        this.hashHits = hashHits;
+        this.tagged = tagged;
         this.description = description;
-        this.eventIDs = new HashSet<>(eventIDs);
+        this.eventIDs = eventIDs;
         this.lod = lod;
         this.parent = parent;
     }
 
-    public EventCluster(Interval spanningInterval, EventType type, Collection<Long> eventIDs,
-                        Collection<Long> hashHits, Collection<Long> tagged, String description, DescriptionLoD lod) {
+    public EventCluster(Interval spanningInterval, EventType type, Set<Long> eventIDs,
+                        Set<Long> hashHits, Set<Long> tagged, String description, DescriptionLoD lod) {
         this(spanningInterval, type, eventIDs, hashHits, tagged, description, lod, null);
     }
 
