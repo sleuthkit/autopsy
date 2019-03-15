@@ -323,9 +323,9 @@ public class AddManualEvent extends Action {
      */
     private static class ManualEventInfo {
 
-        private DataSource datasource;
-        private String description;
-        private long time;
+        private final DataSource datasource;
+        private final String description;
+        private final long time;
 
         private ManualEventInfo(DataSource datasource, String description, long time) {
             this.datasource = datasource;
