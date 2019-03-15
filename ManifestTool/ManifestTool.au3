@@ -180,14 +180,12 @@ Func Redraw()
 	If  $selectedAlgName == $allAlgorithmNames[2] Then ;"One Data Source Per Folder"
 		ChangeToDefaultGUI()
 		GUICtrlSetData($descriptionArea, GetAlgorithmDescription(2))
-		GUICtrlSetTip($algorithmComboBox, "Creates multiple manifest files for one case")
 	ElseIf $selectedAlgName == $allAlgorithmNames[0] Then ;"Single Data Source"
 		ChangeToSingleDataSourceGUI()
 		GUICtrlSetData($descriptionArea, GetAlgorithmDescription(0))
 	ElseIf $selectedAlgName == $allAlgorithmNames[1] Then ;"Folder of Logical Files"
 		ChangeToFolderOfLogicalFilesGUI()
 		GUICtrlSetData($descriptionArea, GetAlgorithmDescription(1))
-		
 	EndIf
 EndFunc   ;==>AlgorithmComboBox
 
@@ -199,7 +197,7 @@ Func ChangeToSingleDataSourceGUI()
 	GUICtrlSetState($caseNameLabel, $GUI_SHOW)
 	GUICtrlSetOnEvent($browseButton, "BrowseForDataSourceFile")
 	GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
-	GUICtrlSetTip($algorithmComboBox, "Creates a single manifest file for a single case")
+
 EndFunc 
 
 ;Change the controls displayed in the GUI to the ones needed for the Folder of Logical Files algorithm
@@ -211,7 +209,6 @@ Func ChangeToFolderOfLogicalFilesGUI()
 	GUICtrlSetState($caseNameLabel, $GUI_SHOW)
 	GUICtrlSetOnEvent($browseButton, "Browse")
 	GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
-	GUICtrlSetTip($algorithmComboBox, "Creates a single manifest file for a single case")
 EndFunc 
 
 ;Change the controls displayed in the GUI to the ones needed for One Data Source Per Folder
@@ -226,7 +223,6 @@ Func ChangeToDefaultGUI()
 	;rename to RootDirectory to root directory
 	;hide case name field
 	GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
-	GUICtrlSetTip($algorithmComboBox, "Creates multiple manifest files for one case")
 EndFunc
 
 ;ensure that all fields for the selected algorithm are valid
