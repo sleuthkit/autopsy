@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -26,7 +27,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Hex view of file contents.
@@ -55,8 +55,8 @@ import org.sleuthkit.datamodel.TskException;
 @ServiceProvider(service = DataContentViewer.class, position = 1)
 public class DataContentViewerHex extends javax.swing.JPanel implements DataContentViewer {
 
-    private static final long pageLength = 16384;
-    private final byte[] data = new byte[(int) pageLength];
+    private static final long PAGE_LENGTH = 16384;
+    private final byte[] data = new byte[(int) PAGE_LENGTH];
     private static int currentPage = 1;
     private int totalPages;
     private Content dataSource;
@@ -291,8 +291,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
     private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
         String pageNumberStr = goToPageTextField.getText();
-        int pageNumber = 0;
-
+        int pageNumber;
         try {
             pageNumber = Integer.parseInt(pageNumberStr);
         } catch (NumberFormatException ex) {
@@ -330,7 +329,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                     Utilities.getRowEnd(outputTextArea, outputTextArea.getCaretPosition()))
                     .toString();
             // NOTE: This needs to change if the outputFormat of outputTextArea changes.
-            String hexForUserSelectedLine = userSelectedLine.substring(0, userSelectedLine.indexOf(":"));
+            String hexForUserSelectedLine = userSelectedLine.substring(0, userSelectedLine.indexOf(':'));
 
             return Long.decode(hexForUserSelectedLine) + userInput;
         } catch (BadLocationException | StringIndexOutOfBoundsException | NumberFormatException ex) {
@@ -361,19 +360,20 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
     }//GEN-LAST:event_goToOffsetTextFieldActionPerformed
 
     @NbBundle.Messages({"DataContentViewerHex.launchError=Unable to launch HxD Editor. "
-                        + "Please specify the HxD install location in Tools -> Options -> External Viewer",
-                        "DataContentViewerHex.copyingFile=Copying file to open in HxD..."})
+        + "Please specify the HxD install location in Tools -> Options -> External Viewer",
+        "DataContentViewerHex.copyingFile=Copying file to open in HxD..."})
     private void launchHxDButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_launchHxDButtonActionPerformed
         new BackgroundFileCopyTask().execute();
     }//GEN-LAST:event_launchHxDButtonActionPerformed
 
     /**
-     * Performs the file copying and process launching in a SwingWorker so that the 
-     * UI is not blocked when opening large files.
+     * Performs the file copying and process launching in a SwingWorker so that
+     * the UI is not blocked when opening large files.
      */
     private class BackgroundFileCopyTask extends SwingWorker<Void, Void> {
+
         private boolean wasCancelled = false;
-        
+
         @Override
         public Void doInBackground() throws InterruptedException {
             ProgressHandle progress = ProgressHandle.createHandle(DataContentViewerHex_copyingFile(), () -> {
@@ -382,31 +382,31 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 wasCancelled = true;
                 return true;
             });
-            
+
             try {
                 File HxDExecutable = new File(UserPreferences.getExternalHexEditorPath());
-                if(!HxDExecutable.exists() || !HxDExecutable.canExecute()) {
+                if (!HxDExecutable.exists() || !HxDExecutable.canExecute()) {
                     JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
                     return null;
                 }
-                
+
                 String tempDirectory = Case.getCurrentCaseThrows().getTempDirectory();
                 File tempFile = Paths.get(tempDirectory,
                         FileUtil.escapeFileName(dataSource.getId() + dataSource.getName())).toFile();
-                
+
                 progress.start(100);
                 ContentUtils.writeToFile(dataSource, tempFile, progress, this, true);
-                
-                if(wasCancelled) {
+
+                if (wasCancelled) {
                     tempFile.delete();
                     progress.finish();
                     return null;
                 }
-                
+
                 try {
                     ProcessBuilder launchHxDExecutable = new ProcessBuilder();
-                    launchHxDExecutable.command(String.format("\"%s\" \"%s\"", 
-                            HxDExecutable.getAbsolutePath(), 
+                    launchHxDExecutable.command(String.format("\"%s\" \"%s\"",
+                            HxDExecutable.getAbsolutePath(),
                             tempFile.getAbsolutePath()));
                     launchHxDExecutable.start();
                 } catch (IOException ex) {
@@ -418,14 +418,13 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
                 logger.log(Level.SEVERE, "Unable to copy file into temp directory", ex);
                 JOptionPane.showMessageDialog(null, DataContentViewerHex_launchError());
             }
-            
+
             progress.finish();
             return null;
         }
     }
-    
-    
-    
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
@@ -461,7 +460,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
             return;
         }
         currentPage = page;
-        long offset = (currentPage - 1) * pageLength;
+        long offset = (currentPage - 1) * PAGE_LENGTH;
         setDataView(offset);
         goToOffsetTextField.setText(Long.toString(offset));
     }
@@ -475,7 +474,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         if (this.dataSource == null) {
             return;
         }
-        currentPage = (int) (offset / pageLength) + 1;
+        currentPage = (int) (offset / PAGE_LENGTH) + 1;
         setDataView(offset);
         goToPageTextField.setText(Integer.toString(currentPage));
     }
@@ -489,10 +488,10 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         int bytesRead = 0;
         if (dataSource.getSize() > 0) {
             try {
-                bytesRead = dataSource.read(data, offset, pageLength); // read the data
-            } catch (TskException ex) {
+                bytesRead = dataSource.read(data, offset, PAGE_LENGTH); // read the data
+            } catch (TskCoreException ex) {
                 errorText = NbBundle.getMessage(this.getClass(), "DataContentViewerHex.setDataView.errorText", offset,
-                        offset + pageLength);
+                        offset + PAGE_LENGTH);
                 logger.log(Level.WARNING, "Error while trying to show the hex content.", ex); //NON-NLS
             }
         }
@@ -500,7 +499,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         // set the data on the bottom and show it
         if (bytesRead <= 0) {
             errorText = NbBundle.getMessage(this.getClass(), "DataContentViewerHex.setDataView.errorText", offset,
-                    offset + pageLength);
+                    offset + PAGE_LENGTH);
         }
 
         // disable or enable the next button
@@ -521,7 +520,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
 
         // set the output view
         if (errorText == null) {
-            int showLength = bytesRead < pageLength ? bytesRead : (int) pageLength;
+            int showLength = bytesRead < PAGE_LENGTH ? bytesRead : (int) PAGE_LENGTH;
             outputTextArea.setText(DataConversion.byteArrayToHex(data, showLength, offset));
         } else {
             outputTextArea.setText(errorText);
@@ -547,7 +546,7 @@ public class DataContentViewerHex extends javax.swing.JPanel implements DataCont
         dataSource = content;
         totalPages = 0;
         if (dataSource.getSize() > 0) {
-            totalPages = Math.round((dataSource.getSize() - 1) / pageLength) + 1;
+            totalPages = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
         }
         totalPageLabel.setText(Integer.toString(totalPages));
 
