@@ -181,7 +181,7 @@ public class AddManualEvent extends Action {
         @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
         private ManualEventInfo manualEventInfo;
 
-        JEventCreationDialog(TimeLineController controller, Long epochMillis, java.awt.Window owner) {
+        private JEventCreationDialog(TimeLineController controller, Long epochMillis, java.awt.Window owner) {
             super(owner, Bundle.AddManualEvent_text(), Dialog.ModalityType.DOCUMENT_MODAL);
             setIconImages(owner.getIconImages());
             setResizable(false);
@@ -217,7 +217,7 @@ public class AddManualEvent extends Action {
          *
          * @return The ManualEventInfo containing the user entered event info.
          */
-        ManualEventInfo getManualEventInfo() {
+        private ManualEventInfo getManualEventInfo() {
             return manualEventInfo;
         }
 
@@ -240,7 +240,7 @@ public class AddManualEvent extends Action {
             private final ValidationSupport validationSupport = new ValidationSupport();
             private final TimeLineController controller;
 
-            EventCreationDialogPane(TimeLineController controller, Long epochMillis) {
+          private  EventCreationDialogPane(TimeLineController controller, Long epochMillis) {
                 this.controller = controller;
                 FXMLConstructor.construct(this, "EventCreationDialog.fxml"); //NON-NLS
                 if (epochMillis == null) {
@@ -252,7 +252,7 @@ public class AddManualEvent extends Action {
 
             @FXML
             @NbBundle.Messages("AddManualEvent.EventCreationDialogPane.initialize.dataSourcesError=Error getting datasources in case.")
-            void initialize() {
+            private void initialize() {
                 assert descriptionTextField != null : "fx:id=\"descriptionTextField\" was not injected: check your FXML file 'EventCreationDialog.fxml'.";//NON-NLS
 
                 timeZoneChooser.getItems().setAll(timeZoneList);
@@ -289,7 +289,7 @@ public class AddManualEvent extends Action {
                 "AddManualEvent.validation.description=Description is required.",
                 "AddManualEvent.validation.datetime=Invalid datetime",
                 "AddManualEvent.validation.timezone=Invalid time zone",})
-            void installValidation() {
+            private void installValidation() {
                 validationSupport.registerValidator(descriptionTextField, false,
                         Validator.createEmptyValidator(Bundle.AddManualEvent_validation_description()));
                 validationSupport.registerValidator(timePicker, false,
@@ -309,7 +309,7 @@ public class AddManualEvent extends Action {
              * @return The ManualEventInfo containing the user entered event
              *         info.
              */
-            ManualEventInfo getManualEventInfo() {
+            private ManualEventInfo getManualEventInfo() {
                 //Trim off the offset part of the string from the chooser, to get something that ZoneId can parse.
                 String zone = StringUtils.substringAfter(timeZoneChooser.getValue(), ")").trim();
                 long toEpochSecond = timePicker.getLocalDateTime().atZone(ZoneId.of(zone)).toEpochSecond();
@@ -323,15 +323,14 @@ public class AddManualEvent extends Action {
      */
     private static class ManualEventInfo {
 
-        DataSource datasource;
-        String description;
-        long time;
+        private DataSource datasource;
+        private String description;
+        private long time;
 
-        ManualEventInfo(DataSource datasource, String description, long time) {
+        private ManualEventInfo(DataSource datasource, String description, long time) {
             this.datasource = datasource;
             this.description = description;
             this.time = time;
         }
     }
-
 }
