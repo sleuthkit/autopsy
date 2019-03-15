@@ -1,6 +1,6 @@
 MboxParser.handleAttch.noOpenCase.errMsg=Exception while getting open case.
 OpenIDE-Module-Display-Category=Ingest Module
-OpenIDE-Module-Long-Description=Email Parser ingest module.\n\nThe module extracts MBOX and PST e-mail files and posts the results to the blackboard.  \nIt knows about the Thunderbird folder structure for MBOX files.
+OpenIDE-Module-Long-Description=Email Parser ingest module.\n\nThe module extracts MBOX and PST e-mail files and posts the results to the blackboard.\nIt knows about the Thunderbird folder structure for MBOX files.
 OpenIDE-Module-Name=Email Parser
 OpenIDE-Module-Short-Description=Parses MBOX and PST files
 MboxParser.parse.errMsg.failedToReadFile=Failed to read mbox file from disk.
@@ -16,7 +16,6 @@ ThunderbirdMboxFileIngestModule.addArtifact.indexError.message=Failed to index e
 # {1} - file ID
 ThunderbirdMboxFileIngestModule.errorMessage.outOfDiskSpace=Out of disk space. Cannot copy '{0}' (id={1}) to parse.
 ThunderbirdMboxFileIngestModule.moduleName=Email Parser
-ThunderbirdMboxFileIngestModule.noCommsManager.errMsg=Exception while getting communications manager.
 ThunderbirdMboxFileIngestModule.noOpenCase.errMsg=Exception while getting open case.
 ThunderbirdMboxFileIngestModule.processPst.errMsg.outOfDiskSpace=Out of disk space. Cannot copy {0} to parse.
 ThunderbirdMboxFileIngestModule.encryptionFileLevel=File-level Encryption
