@@ -154,12 +154,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         filesTable.setRowSorter(sorter);
         casesTable.getSelectionModel().addListSelectionListener((e) -> {
             if (Case.isCaseOpen()) {
-                updateCaseSelection();
+                updateOnCaseSelection();
             }
         });
         dataSourcesTable.getSelectionModel().addListSelectionListener((e) -> {
             if (Case.isCaseOpen()) {
-                updateDataSourceSelection();
+                updateOnDataSourceSelection();
             }
         });
         casesTable.getRowSorter().toggleSortOrder(0);
@@ -778,11 +778,18 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         }
     }
 
+    /**
+     * Create a unique string to be used as a key for deduping data sources as
+     * best as possible
+     */
     private String makeDataSourceString(String caseUUID, String deviceId, String dataSourceName) {
         return caseUUID + deviceId + dataSourceName;
     }
 
-    private void updateCaseSelection() {
+    /**
+     * Updates diplayed information to be correct for the current case selection
+     */
+    private void updateOnCaseSelection() {
         int[] selectedCaseIndexes = casesTable.getSelectedRows();
         DefaultTableModel dataSourceModel = (DefaultTableModel) dataSourcesTable.getModel();
         dataSourceModel.setRowCount(0);
@@ -814,7 +821,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         }
     }
 
-    private void updateDataSourceSelection() {
+    /**
+     * Updates diplayed information to be correct for the current data source
+     * selection
+     */
+    private void updateOnDataSourceSelection() {
         int[] selectedCaseIndexes = casesTable.getSelectedRows();
         DefaultTableModel dataSourceModel = (DefaultTableModel) dataSourcesTable.getModel();
         int[] selectedDataSources = dataSourcesTable.getSelectedRows();
