@@ -18,12 +18,12 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.datamodel.StringContent;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Viewer displays strings extracted from contents.
@@ -264,7 +264,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
         //@@@ this is part of the code dealing with the data viewer. could be copied/removed to implement the scrollbar
         currentOffset -= PAGE_LENGTH;
-        currentPage = currentPage - 1;
+        currentPage -= 1;
         currentPageLabel.setText(Integer.toString(currentPage));
         setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_prevPageButtonActionPerformed
@@ -272,7 +272,7 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
         //@@@ this is part of the code dealing with the data viewer. could be copied/removed to implement the scrollbar
         currentOffset += PAGE_LENGTH;
-        currentPage = currentPage + 1;
+        currentPage += 1;
         currentPageLabel.setText(Integer.toString(currentPage));
         setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_nextPageButtonActionPerformed
@@ -348,18 +348,15 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
 
         int bytesRead = 0;
         // set the data on the bottom and show it
-        String text = "";
+   
         if (dataSource.getSize() > 0) {
             try {
                 bytesRead = dataSource.read(data, offset, PAGE_LENGTH); // read the data
-            } catch (TskException ex) {
-                text = NbBundle.getMessage(this.getClass(),
-                        "DataContentViewerString.setDataView.errorText", currentOffset,
-                        currentOffset + PAGE_LENGTH);
+            } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error while trying to show the String content.", ex); //NON-NLS
             }
         }
-
+        String text;
         if (bytesRead > 0) {
             //text = DataConversion.getString(data, bytesRead, 4);
             final SCRIPT selScript = (SCRIPT) languageCombo.getSelectedItem();
@@ -510,19 +507,5 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     @Override
     public Component getComponent() {
         return this;
-    }
-
-
-    /*
-     * Show the right click menu only if evt is the correct mouse event
-     */
-    private void maybeShowPopup(java.awt.event.MouseEvent evt) {
-        if (evt.isPopupTrigger()) {
-            rightClickMenu.setLocation(evt.getLocationOnScreen());
-            rightClickMenu.setVisible(true);
-            copyMenuItem.setEnabled(outputViewPane.getSelectedText() != null);
-        } else {
-            rightClickMenu.setVisible(false);
-        }
     }
 }
