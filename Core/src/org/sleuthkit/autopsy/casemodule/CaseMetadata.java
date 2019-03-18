@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -188,6 +189,27 @@ public final class CaseMetadata {
     public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
         this.metadataFilePath = metadataFilePath;
         readFromFile();
+    }
+    
+    /**
+     * Locate the case meta data file in the supplied directory. If the file does 
+     * not exist, null is returned.
+     * 
+     * @param directoryPath Directory path to search
+     * @return case meta data file path or null
+     */
+    public static Path getCaseMetadataFile(Path directoryPath) {
+        final File[] caseFiles = directoryPath.toFile().listFiles();
+        if(caseFiles != null) {
+            for (File file : caseFiles) {
+                final String fileName = file.getName().toLowerCase();
+                if (fileName.endsWith(CaseMetadata.getFileExtension())) {
+                    return file.toPath();
+                }
+            }
+        }
+        
+        return null;
     }
 
     /**
