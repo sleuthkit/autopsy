@@ -694,6 +694,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     -> Notifications.create().owner(notificationsJFXPanel.getScene().getWindow())
                             .text(Bundle.VisualizationPanel_snapshot_report_failure())
                             .showWarning());
+        } catch( TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to add report to currenct case", ex); //NON-NLS
         }
     }//GEN-LAST:event_snapshotButtonActionPerformed
 
@@ -732,6 +734,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
      */
     @NbBundle.Messages({
         "VisualizationPanel_action_dialogs_title=Communications",
+        "VisualizationPanel_module_name=Communications",
         "VisualizationPanel_action_name_text=Snapshot Report",
         "VisualizationPane_fileName_prompt=Enter name for the Communications Snapshot Report:",
         "VisualizationPane_reportName=Communications Snapshot",
@@ -741,7 +744,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         "# {0} -  report name",
         "VisualizationPane_overrite_exiting=Overwrite existing report?\n{0}"
     })
-    private void handleSnapshotEvent() throws NoCurrentCaseException, IOException {
+    private void handleSnapshotEvent() throws NoCurrentCaseException, IOException, TskCoreException {
         Case currentCase = Case.getCurrentCaseThrows();
         Date generationDate = new Date();
 
@@ -779,6 +782,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 }
             } else {
                 createReport(currentCase, reportName);
+                currentCase.addReport(reportPath.toString(), Bundle.VisualizationPanel_module_name(), reportName);
+
             }
         }
     }
