@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
@@ -34,7 +36,11 @@ import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.AccountTypeFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.DateRangeFilter;
+import org.sleuthkit.datamodel.CommunicationsFilter.DeviceFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.SubFilter;
+import org.sleuthkit.datamodel.DataSource;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Generate and write the Communication snapshot report to disk.
@@ -71,7 +77,7 @@ public class CommSnapShotReportWriter extends UiSnapShotReportWriter {
      */
     @Override
     protected void writeSnapShotHTMLFile() throws IOException {
-        SimpleDateFormat formatter = new SimpleDateFormat("MMMMM dd, yyyy");
+        SimpleDateFormat formatter = new SimpleDateFormat("MMMMM dd, yyyy"); //NON-NLS
 
         ImageIO.write(image, "png", getReportFolderPath().resolve("snapshot.png").toFile()); //NON-NLS
 
@@ -81,10 +87,10 @@ public class CommSnapShotReportWriter extends UiSnapShotReportWriter {
 
         List<SubFilter> filters = filter.getAndFilters();
 
-        for (SubFilter f : filters) {
-            if (f.getClass().getName().equals(DateRangeFilter.class.getName())) {
-                long startDate = ((DateRangeFilter) f).getStartDate();
-                long endDate = ((DateRangeFilter) f).getEndDate();
+        for (SubFilter filter : filters) {
+            if (filter.getClass().getName().equals(DateRangeFilter.class.getName())) {
+                long startDate = ((DateRangeFilter) filter).getStartDate();
+                long endDate = ((DateRangeFilter) filter).getEndDate();
 
                 if (startDate > 0) {
 
@@ -94,33 +100,76 @@ public class CommSnapShotReportWriter extends UiSnapShotReportWriter {
                 if (endDate > 0) {
                     snapShotContext.put("endTime", formatter.format(new Date((Instant.ofEpochSecond(endDate)).toEpochMilli()))); //NON-NLS
                 }
-            } else if (f.getClass().getName().equals(AccountTypeFilter.class.getName())) {
-                snapShotContext.put("emailSelected", "checked"); //NON-NLS
+            } else if (filter.getClass().getName().equals(AccountTypeFilter.class.getName())) {
 
-                Set<Account.Type> types = ((AccountTypeFilter) f).getAccountTypes();
-                for (Account.Type type : types) {
-                    if (type == Account.Type.DEVICE) {
-                        snapShotContext.put("deviceSelected", "checked"); //NON-NLS
-                    } else if (type == Account.Type.PHONE) {
-                        snapShotContext.put("phoneSelected", "checked"); //NON-NLS
-                    } else if (type == Account.Type.EMAIL) {
-                        snapShotContext.put("emailSelected", "checked"); //NON-NLS
-                    } else if (type == Account.Type.FACEBOOK) {
-                        snapShotContext.put("facebookSelected", "checked"); //NON-NLS
-                    } else if (type == Account.Type.TWITTER) {
-                        snapShotContext.put("twitterSelected", "checked"); //NON-NLS
-                    } else if (type == Account.Type.INSTAGRAM) {
-                        snapShotContext.put("instagramSelected", "checked"); //NON-NLS
-                    } else if (type == Account.Type.WHATSAPP) {
-                        snapShotContext.put("whatsAppSelected", "checked"); //NON-NLS
-                    } else if (type == Account.Type.WEBSITE) {
-                        snapShotContext.put("websiteSelected", "checked"); //NON-NLS
+                Set<Account.Type> selectedAccounts = ((AccountTypeFilter) filter).getAccountTypes();
+                ArrayList<ReportWriterHelper> fullAccountList = new ArrayList<>();
+                for (Account.Type type : Account.Type.PREDEFINED_ACCOUNT_TYPES) {
+                    if (type == Account.Type.CREDIT_CARD) {
+                        continue;
                     }
+
+                    fullAccountList.add(new ReportWriterHelper(type.getDisplayName(), selectedAccounts.contains(type)));
                 }
+
+                snapShotContext.put("accounts", fullAccountList);
+            } else if (filter.getClass().getName().equals(DeviceFilter.class.getName())) {
+                Collection<String> ids = ((DeviceFilter) filter).getDevices();
+                ArrayList<ReportWriterHelper> list = new ArrayList<>();
+                try {
+                    final SleuthkitCase sleuthkitCase = getCurrentCase().getSleuthkitCase();
+                    for (DataSource dataSource : sleuthkitCase.getDataSources()) {
+                        boolean selected = ids.contains(dataSource.getDeviceId());
+                        String dsName = sleuthkitCase.getContentById(dataSource.getId()).getName();
+                        list.add(new ReportWriterHelper(dsName, selected));
+                    }
+                } catch (TskCoreException ex) {
+
+                }
+
+                snapShotContext.put("devices", list);
             }
         }
 
         fillTemplateAndWrite("/org/sleuthkit/autopsy/communications/snapshot/comm_snapshot_template.html", "Snapshot", snapShotContext, getReportFolderPath().resolve("snapshot.html")); //NON-NLS
+    }
+
+    /**
+     * Helper class for use with the html template
+     */
+    private final class ReportWriterHelper {
+
+        private final String label;
+        private final boolean selected;
+
+        /**
+         * Helper class for use with the html template.
+         *
+         * @param label    Display label
+         * @param selected Boolean selected state
+         */
+        ReportWriterHelper(String label, boolean selected) {
+            this.label = label;
+            this.selected = selected;
+        }
+        
+        /**
+         * Returns the display label
+         * 
+         * @return The display label
+         */
+        public String getLabel(){
+            return label;
+        }
+        
+        /**
+         * Returns the selection state
+         * 
+         * @return The selection state
+         */
+        public boolean isSelected(){
+            return selected;
+        }
     }
 
 }

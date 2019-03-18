@@ -94,12 +94,31 @@ public abstract class UiSnapShotReportWriter {
         return writeIndexHTML();
     }
     
-    protected String getReportName(){
+    /**
+     * Get the name for the report.
+     * 
+     * @return Returns the reportName
+     */
+    protected String getReportName() {
         return reportName;
     }
     
-    protected Path getReportFolderPath(){
+    /**
+     * Get the folder path for the report.
+     * 
+     * @return Report folder path
+     */
+    protected Path getReportFolderPath() {
         return reportFolderPath;
+    }
+    
+    /**
+     * Get the case for this report.
+     * 
+     * @return Current case object 
+     */
+    protected Case getCurrentCase() {
+        return currentCase;
     }
 
     /**

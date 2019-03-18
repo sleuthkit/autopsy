@@ -11,16 +11,10 @@
                 <tr><td><b>Date Range</b></td><td></td></tr>
                 <tr><td>Start:</td><td>{{startTime}}</td></tr>
                 <tr><td>End:</td><td>{{endTime}}</td></tr>
+                <tr><td><b>Devices:</b></td><td></td></tr>
+                {{#devices}}<tr><td>{{label}}</td><td><input type="checkbox" {{#selected}}checked{{/selected}}{{^selected}} {{/selected}} disabled></td></tr>{{/devices}}
                 <tr><td><b>Account Types</b></td><td></td></tr>
-                <tr><td>Device:</td><td><input type="checkbox" {{deviceSelected}} disabled></td></tr>
-                <tr><td>Phone:</td><td><input type="checkbox" {{phoneSelected}} disabled></td</tr>
-                <tr><td>Email:</td><td><input type="checkbox" {{emailSelected}} disabled></td></tr>
-                <tr><td>Facebook:</td><td><input type="checkbox" {{facebookSelected}} disabled></td></tr>
-                <tr><td>Twitter</td><td><input type="checkbox" {{twitterSelected}} disabled></td></tr>
-                <tr><td>Instagram</td><td><input type="checkbox" {{instagramSelected}} disabled></td></tr>
-                <tr><td>WhatsApp</td><td><input type="checkbox" {{whatsAppSelected}} disabled></td></tr>
-                <tr><td>MessagingApp</td><td><input type="checkbox" {{emailSelected}} disabled></td></tr>
-                <tr><td>Website</td><td><input type="checkbox" {{websiteSelected}} disabled></td></tr>
+                {{#accounts}}<tr><td>{{label}}</td><td><input type="checkbox" {{#selected}}checked{{/selected}}{{^selected}} {{/selected}} disabled></td></tr>{{/accounts}}
             </table>
         </div>
     </body>
