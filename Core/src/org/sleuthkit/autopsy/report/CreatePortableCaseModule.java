@@ -66,6 +66,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     private static final Logger logger = Logger.getLogger(CreatePortableCaseModule.class.getName());
     private static final String FILE_FOLDER_NAME = "PortableCaseFiles";
     private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";
+    private static final String PORTABLE_CASE_TABLE_NAME = "portable_case_data";
     private CreatePortableCasePanel configPanel;
     
     // These are the types for the exported file subfolders
@@ -318,12 +319,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         // Store the highest IDs
         try {
-            currentCase.getSleuthkitCase().getCaseDbAccessManager()
-                    .select("max(obj_id) as max_id from tsk_objects", new StoreMaxIdCallback("tsk_objects"));
-            currentCase.getSleuthkitCase().getCaseDbAccessManager()
-                    .select("max(tag_id) as max_id from content_tags", new StoreMaxIdCallback("content_tags"));
-            currentCase.getSleuthkitCase().getCaseDbAccessManager()
-                    .select("max(tag_id) as max_id from blackboard_artifact_tags", new StoreMaxIdCallback("blackboard_artifact_tags"));
+            saveHighestIds();
         } catch (TskCoreException ex) {
             handleError("Error storing maximum database IDs",
                 Bundle.CreatePortableCaseModule_createCase_errorStoringMaxIds(), ex, progressPanel);  
@@ -354,6 +350,27 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             return;
         }
                 
+    }
+    
+    /**
+     * Save the current highest IDs to the portable case.
+     * 
+     * @throws TskCoreException 
+     */
+    private void saveHighestIds() throws TskCoreException {
+        
+        CaseDbAccessManager currentCaseDbManager = currentCase.getSleuthkitCase().getCaseDbAccessManager();
+        
+        String tableSchema = "( id INTEGER PRIMARY KEY, "
+                            + " name TEXT UNIQUE NOT NULL,"
+                            + " value TEXT NOT NULL )";
+        
+        portableSkCase.getCaseDbAccessManager().createTable(PORTABLE_CASE_TABLE_NAME, tableSchema);
+
+        currentCaseDbManager.select("max(obj_id) as max_id from tsk_objects", new StoreMaxIdCallback("tsk_objects"));
+        currentCaseDbManager.select("max(tag_id) as max_id from content_tags", new StoreMaxIdCallback("content_tags"));
+        currentCaseDbManager.select("max(tag_id) as max_id from blackboard_artifact_tags", new StoreMaxIdCallback("blackboard_artifact_tags")); 
+        currentCaseDbManager.select("max(examiner_id) as max_id from tsk_examiners", new StoreMaxIdCallback("tsk_examiners")); 
     }
     
     /**
@@ -694,8 +711,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         oldTagNameToNewTagName.clear();
         currentCase = null;
         if (portableSkCase != null) {
-            // We want to close the database connections here but it is currently not possible. JIRA-4736
-            portableSkCase = null;
+            portableSkCase.close();
         }
         caseFolder = null;
         copiedFilesFolder = null;
@@ -708,7 +724,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         return configPanel;
     }    
     
-    class StoreMaxIdCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+    private class StoreMaxIdCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
         private final String tableName;
         
@@ -723,10 +739,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 while (rs.next()) {
                     try {
                         Long maxId = rs.getLong("max_id");
-                        String nameStr = "PORTABLE_CASE_" + tableName + "_MAX_ID";
-                        nameStr = nameStr.toUpperCase();
-                        String query = "INSERT INTO tsk_db_info_extended (name, value) VALUES ('" + nameStr + "', '" + maxId + "')";
-                        currentCase.getSleuthkitCase().getCaseDbAccessManager().insert("tsk_db_info_extended", query);
+                        String query = " (name, value) VALUES ('" + tableName + "', '" + maxId + "')";
+                        portableSkCase.getCaseDbAccessManager().insert(PORTABLE_CASE_TABLE_NAME, query);
 
                     } catch (SQLException ex) {
                         logger.log(Level.WARNING, "Unable to get maximum ID from result set", ex);
