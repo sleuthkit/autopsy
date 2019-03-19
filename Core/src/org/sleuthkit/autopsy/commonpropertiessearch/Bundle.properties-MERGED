@@ -60,7 +60,7 @@ CommonFilesSearchResultsViewerTable.noDescText=\
 CommonFilesSearchResultsViewerTable.pathColLbl=Parent Path
 CommonFilesSearchResultsViewerTable.valueColLbl=Value
 InstanceCountNode.createSheet.noDescription=\ 
-InstanceCountNode.displayName=Files with %s instances (%s)
+InstanceCountNode.displayName=Exists in %s data sources (%s)
 IntraCasePanel.selectDataSourceComboBox.actionCommand=
 CommonAttributePanel.jCheckBox1.text=Hide files found in over
 CommonAttributePanel.jLabel1.text=%  of data sources in central repository.
@@ -101,7 +101,7 @@ CommonAttributePanel.resultsDisplayLabel.text_2=Display results organized by:
 CommonAttributePanel.organizeByCaseRadio.text=Case
 CommonAttributePanel.organizeByCountRadio.text=Number of occurrences
 CommonAttributePanel.caseResultsRadioButton.text=Case
-CommonAttributePanel.countResultsRadioButton.text=Number of occurrences
+CommonAttributePanel.countResultsRadioButton.text=Number of data sources
 CommonAttributePanel.displayResultsLabel.text_2=Display results organized by:
 # {0} - case name
 # {1} - attr type
