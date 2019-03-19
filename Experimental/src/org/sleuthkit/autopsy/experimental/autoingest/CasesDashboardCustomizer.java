@@ -59,6 +59,11 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         properties.add(Column.CREATE_DATE);
         properties.add(Column.LAST_ACCESS_DATE);
         properties.add(Column.DIRECTORY);
+        properties.add(Column.MANIFEST_FILE_ZNODES_DELETE_STATUS);
+        properties.add(Column.DATA_SOURCES_DELETE_STATUS);
+        properties.add(Column.TEXT_INDEX_DELETE_STATUS);
+        properties.add(Column.CASE_DB_DELETE_STATUS);
+        properties.add(Column.CASE_DIR_DELETE_STATUS);
         return properties;
     }
 

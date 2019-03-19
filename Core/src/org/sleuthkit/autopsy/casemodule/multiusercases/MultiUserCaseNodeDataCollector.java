@@ -161,7 +161,7 @@ final public class MultiUserCaseNodeDataCollector { // RJCTODO: Shorten name aft
         deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseResourcesLockName(caseDirectoryPath));
         deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseAutoIngestLogLockName(caseDirectoryPath));
         deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseDirectoryLockName(caseDirectoryPath));
-        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseLockName(caseDirectoryPath));
+        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseNameLockName(caseDirectoryPath));
     }
 
     /**

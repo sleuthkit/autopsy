@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.experimental.autoingest.DeleteCaseTask.DeleteOptions;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
@@ -51,7 +52,7 @@ final class DeleteCaseOutputAction extends DeleteCaseAction {
 
     @Override
     DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
-        return new DeleteCaseOutputTask(caseNodeData, progress);
+        return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_OUTPUT, progress);
     }
     
     @Override

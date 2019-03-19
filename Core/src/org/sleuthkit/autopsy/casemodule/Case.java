@@ -32,11 +32,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -60,7 +60,6 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -100,7 +99,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadUtils;
-import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
@@ -717,7 +715,8 @@ public class Case {
      *                             lower-level exception.
      */
     @Messages({
-        "Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first."
+        "Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first.",
+        "# {0} - case display name", "Case.exceptionMessage.deletionInterrupted=Deletion of the case {0} was cancelled."
     })
     public static void deleteCase(CaseMetadata metadata) throws CaseActionException {
         synchronized (caseActionSerializationLock) {
@@ -737,7 +736,16 @@ public class Case {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 deleteSingleUserCase(metadata, progressIndicator);
             } else {
-                deleteMultiUserCase(metadata, progressIndicator);
+                try {
+                    deleteMultiUserCase(metadata, progressIndicator);
+                } catch (InterruptedException ex) {
+                    /*
+                     * Task cancellation is not currently supported for this
+                     * code path, so this catch block is not expected to be
+                     * executed.
+                     */
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_deletionInterrupted(metadata.getCaseDisplayName()), ex);
+                }
             }
         } finally {
             progressIndicator.finish();
@@ -978,7 +986,7 @@ public class Case {
         "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or host.",
         "Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case..."
     })
-    private static void deleteMultiUserCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
+    private static void deleteMultiUserCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException, InterruptedException {
         progressIndicator.progress(Bundle.Case_progressMessage_connectingToCoordSvc());
         CoordinationService coordinationService;
         try {
@@ -1010,8 +1018,17 @@ public class Case {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
             }
 
-            errorsOccurred = deleteMultiUserCase(caseNodeData, metadata, progressIndicator);
+            errorsOccurred = deleteMultiUserCase(caseNodeData, metadata, progressIndicator, logger);
 
+            try {
+                deleteCaseResourcesLockNode(caseNodeData, progressIndicator);
+            } catch (CoordinationServiceException | InterruptedException ex) {
+                errorsOccurred = true;
+                logger.log(Level.WARNING, String.format("Error deleting the case resources lock coordination service node for the case at %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
+            } 
+
+            // RJCTODO: Is this behavior implemented correctly?
+            
         } catch (CoordinationServiceException ex) {
             logger.log(Level.SEVERE, String.format("Error exclusively locking the case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
             throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
@@ -1034,15 +1051,16 @@ public class Case {
     /**
      * IMPORTANT: This is a "beta" method and is subject to change or removal
      * without notice!
-     * 
+     *
      * Attempts to delete the case database, the text index, the case directory,
      * and the case resources coordination service lock code for a case and
-     * removes the case from the recent cases menu of the mian application
+     * removes the case from the recent cases menu of the main application
      * window.
      *
      * @param caseNodeData      The coordination service node data for the case.
      * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
+     * @param logger            A logger.
      *
      * @return True if one or more errors occurred (see log for details), false
      *         otherwise.
@@ -1053,10 +1071,10 @@ public class Case {
      *                              during a wait.
      */
     @Beta
-    public static boolean deleteMultiUserCase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator) throws InterruptedException {
+    public static boolean deleteMultiUserCase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws InterruptedException {
         boolean errorsOccurred = false;
         try {
-            deleteCaseDatabase(caseNodeData, metadata, progressIndicator);
+            deleteCaseDatabase(caseNodeData, metadata, progressIndicator, logger);
         } catch (UserPreferencesException | ClassNotFoundException | SQLException ex) {
             errorsOccurred = true;
             logger.log(Level.WARNING, String.format("Failed to delete the case database for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
@@ -1066,7 +1084,7 @@ public class Case {
         }
 
         try {
-            deleteTextIndex(caseNodeData, metadata, progressIndicator);
+            deleteTextIndex(caseNodeData, metadata, progressIndicator, logger);
         } catch (KeywordSearchServiceException ex) {
             errorsOccurred = true;
             logger.log(Level.WARNING, String.format("Failed to delete the text index for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
@@ -1076,27 +1094,10 @@ public class Case {
         }
 
         try {
-            deleteCaseDirectory(caseNodeData, metadata, progressIndicator);
+            deleteCaseDirectory(caseNodeData, metadata, progressIndicator, logger);
         } catch (CaseActionException ex) {
             errorsOccurred = true;
             logger.log(Level.WARNING, String.format("Failed to delete the case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            return errorsOccurred;
-        }
-
-        deleteFromRecentCases(metadata, progressIndicator);
-
-        if (Thread.currentThread().isInterrupted()) {
-            Thread.currentThread().interrupt();
-            return errorsOccurred;
-        }
-
-        try {
-            deleteCaseResourcesLockNode(caseNodeData, progressIndicator);
-        } catch (CoordinationServiceException ex) {
-            errorsOccurred = true;
-            logger.log(Level.WARNING, String.format("Error deleting the case resources lock coordination service node for the case at %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             return errorsOccurred;
@@ -1127,15 +1128,20 @@ public class Case {
     @Messages({
         "Case.progressMessage.deletingCaseDatabase=Deleting case database..."
     })
-    private static void deleteCaseDatabase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator) throws UserPreferencesException, ClassNotFoundException, SQLException, InterruptedException {
+    private static void deleteCaseDatabase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws UserPreferencesException, ClassNotFoundException, SQLException, InterruptedException {
         if (!caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.CASE_DB)) {
             progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDatabase());
+            logger.log(Level.INFO, String.format("Deleting case database for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
             CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
             String url = "jdbc:postgresql://" + info.getHost() + ":" + info.getPort() + "/postgres"; //NON-NLS
             Class.forName("org.postgresql.Driver"); //NON-NLS
             try (Connection connection = DriverManager.getConnection(url, info.getUserName(), info.getPassword()); Statement statement = connection.createStatement()) {
-                String deleteCommand = "DROP DATABASE \"" + metadata.getCaseDatabaseName() + "\""; //NON-NLS
-                statement.execute(deleteCommand);
+                String dbExistsQuery = "SELECT 1 from pg_database WHERE datname = '" + metadata.getCaseDatabaseName() + "'";
+                ResultSet queryResult = statement.executeQuery(dbExistsQuery);
+                if (queryResult.next()) {
+                    String deleteCommand = "DROP DATABASE \"" + metadata.getCaseDatabaseName() + "\""; //NON-NLS
+                    statement.execute(deleteCommand);
+                }
             }
             setDeletedItemFlag(caseNodeData, CaseNodeData.DeletedFlags.CASE_DB);
         }
@@ -1174,8 +1180,9 @@ public class Case {
      *                                       data to be written to the
      *                                       coordination service node database.
      */
-    private static void deleteTextIndex(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator) throws KeywordSearchServiceException, InterruptedException {
+    private static void deleteTextIndex(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws KeywordSearchServiceException, InterruptedException {
         if (!caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.TEXT_INDEX)) {
+            logger.log(Level.INFO, String.format("Deleting text index for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
             deleteTextIndex(metadata, progressIndicator);
             setDeletedItemFlag(caseNodeData, CaseNodeData.DeletedFlags.TEXT_INDEX);
         }
@@ -1198,6 +1205,7 @@ public class Case {
         // when the path is >= 255 chars. Actually, deprecate this method and 
         // replace it with one that throws instead of returning a boolean value.
         progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDirectory());
+        logger.log(Level.INFO, String.format("Deleting case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
         if (!FileUtil.deleteDir(new File(metadata.getCaseDirectory()))) {
             throw new CaseActionException(String.format("Failed to delete %s", metadata.getCaseDirectory()));
         }
@@ -1216,7 +1224,7 @@ public class Case {
      *                              coordination service data to be written to
      *                              the coordination service node database.
      */
-    private static void deleteCaseDirectory(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException, InterruptedException {
+    private static void deleteCaseDirectory(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws CaseActionException, InterruptedException {
         if (!caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.CASE_DIR)) {
             deleteCaseDirectory(metadata, progressIndicator);
             setDeletedItemFlag(caseNodeData, CaseNodeData.DeletedFlags.CASE_DIR);
@@ -1242,7 +1250,6 @@ public class Case {
         }
     }
 
-    // RJCTODO: Copy-paste instead
     /**
      * IMPORTANT: This is a "beta" method and is subject to change or removal
      * without notice!
@@ -1264,14 +1271,13 @@ public class Case {
         "Case.progressMessage.deletingResourcesLockNode=Deleting case resources lock node..."
     })
     @Beta
-    private static void deleteCaseResourcesLockNode(CaseNodeData caseNodeData, ProgressIndicator progressIndicator) throws CoordinationServiceException, InterruptedException {
+    public static void deleteCaseResourcesLockNode(CaseNodeData caseNodeData, ProgressIndicator progressIndicator) throws CoordinationServiceException, InterruptedException {
         progressIndicator.progress(Bundle.Case_progressMessage_deletingResourcesLockNode());
         String resourcesLockNodePath = caseNodeData.getDirectory().toString() + RESOURCES_LOCK_SUFFIX;//RJCTODO: Use utility
         CoordinationService coordinationService = CoordinationService.getInstance();
         coordinationService.deleteNode(CategoryNode.CASES, resourcesLockNodePath);
     }
 
-    // RJCTODO: Copy-paste instead
     /**
      * IMPORTANT: This is a "beta" method and is subject to change or removal
      * without notice!

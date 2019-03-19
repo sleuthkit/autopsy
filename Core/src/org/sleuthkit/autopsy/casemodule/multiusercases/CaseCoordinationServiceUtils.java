@@ -42,7 +42,7 @@ public class CaseCoordinationServiceUtils {
         return caseDirectoryPath.toString();
     }
 
-    public static String getCaseLockName(Path caseDirectoryPath) {
+    public static String getCaseNameLockName(Path caseDirectoryPath) {
         String caseName = caseDirectoryPath.getFileName().toString();
         if (TimeStampUtils.endsWithTimeStamp(caseName)) {
             caseName = TimeStampUtils.removeTimeStamp(caseName);
