@@ -739,7 +739,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         "VisualizationPane_fileName_prompt=Enter name for the Communications Snapshot Report:",
         "VisualizationPane_reportName=Communications Snapshot",
         "# {0} -  default name",
-        "VisualizationPane_accept_defaultName=Press OK to accept default report name: {0}",
+        "VisualizationPane_accept_defaultName=Report name was empty. Press OK to accept default report name: {0}",
         "VisualizationPane_blank_report_title=Blank Report Name",
         "# {0} -  report name",
         "VisualizationPane_overrite_exiting=Overwrite existing report?\n{0}"
@@ -763,7 +763,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         if (result == JOptionPane.OK_OPTION) {
             String enteredReportName = text.getText();
             
-            if(enteredReportName.isEmpty()){
+            if(enteredReportName.trim().isEmpty()){
                 result = JOptionPane.showConfirmDialog(graphComponent, Bundle.VisualizationPane_accept_defaultName(defaultReportName), Bundle.VisualizationPane_blank_report_title(), JOptionPane.OK_CANCEL_OPTION);
                 if(result != JOptionPane.OK_OPTION) {
                     return;

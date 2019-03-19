@@ -33,7 +33,7 @@ UnpinAccountsAction.pluralText=Remove Selected Accounts
 UnpinAccountsAction.singularText=Remove Selected Account
 VisalizationPanel.paintingError=Problem painting visualization.
 # {0} -  default name
-VisualizationPane_accept_defaultName=Press OK to accept default report name: {0}
+VisualizationPane_accept_defaultName=Report name was empty. Press OK to accept default report name: {0}
 VisualizationPane_blank_report_title=Blank Report Name
 VisualizationPane_DisplayName=Open Report
 VisualizationPane_fileName_prompt=Enter name for the Communications Snapshot Report:
