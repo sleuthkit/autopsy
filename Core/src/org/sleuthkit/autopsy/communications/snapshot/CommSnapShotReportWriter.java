@@ -88,7 +88,7 @@ public class CommSnapShotReportWriter extends UiSnapShotReportWriter {
         List<SubFilter> filters = filter.getAndFilters();
 
         for (SubFilter filter : filters) {
-            if (filter.getClass().getName().equals(DateRangeFilter.class.getName())) {
+            if (filter instanceof DateRangeFilter) {
                 long startDate = ((DateRangeFilter) filter).getStartDate();
                 long endDate = ((DateRangeFilter) filter).getEndDate();
 
@@ -100,7 +100,7 @@ public class CommSnapShotReportWriter extends UiSnapShotReportWriter {
                 if (endDate > 0) {
                     snapShotContext.put("endTime", formatter.format(new Date((Instant.ofEpochSecond(endDate)).toEpochMilli()))); //NON-NLS
                 }
-            } else if (filter.getClass().getName().equals(AccountTypeFilter.class.getName())) {
+            } else if (filter instanceof AccountTypeFilter) {
 
                 Set<Account.Type> selectedAccounts = ((AccountTypeFilter) filter).getAccountTypes();
                 ArrayList<ReportWriterHelper> fullAccountList = new ArrayList<>();
@@ -113,7 +113,7 @@ public class CommSnapShotReportWriter extends UiSnapShotReportWriter {
                 }
 
                 snapShotContext.put("accounts", fullAccountList);
-            } else if (filter.getClass().getName().equals(DeviceFilter.class.getName())) {
+            } else if (filter instanceof DeviceFilter) {
                 Collection<String> ids = ((DeviceFilter) filter).getDevices();
                 ArrayList<ReportWriterHelper> list = new ArrayList<>();
                 try {
