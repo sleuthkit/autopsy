@@ -24,6 +24,8 @@ import java.util.logging.Level;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +43,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.FileSystem;
@@ -290,6 +293,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         "CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case",
         "# {0} - folder",
         "CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}",
+        "CreatePortableCaseModule.createCase.errorStoringMaxIds=Error storing maximum database IDs",
     })
     private void createCase(File outputDir, ReportProgressPanel progressPanel) {
 
@@ -309,6 +313,20 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         } catch (TskCoreException ex) {
             handleError("Error creating case " + caseName + " in folder " + caseFolder.toString(),
                 Bundle.CreatePortableCaseModule_createCase_errorCreatingCase(), ex, progressPanel);  
+            return;
+        }
+        
+        // Store the highest IDs
+        try {
+            currentCase.getSleuthkitCase().getCaseDbAccessManager()
+                    .select("max(obj_id) as max_id from tsk_objects", new StoreMaxIdCallback("tsk_objects"));
+            currentCase.getSleuthkitCase().getCaseDbAccessManager()
+                    .select("max(tag_id) as max_id from content_tags", new StoreMaxIdCallback("content_tags"));
+            currentCase.getSleuthkitCase().getCaseDbAccessManager()
+                    .select("max(tag_id) as max_id from blackboard_artifact_tags", new StoreMaxIdCallback("blackboard_artifact_tags"));
+        } catch (TskCoreException ex) {
+            handleError("Error storing maximum database IDs",
+                Bundle.CreatePortableCaseModule_createCase_errorStoringMaxIds(), ex, progressPanel);  
             return;
         }
         
@@ -689,4 +707,37 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         configPanel = new CreatePortableCasePanel();
         return configPanel;
     }    
+    
+    class StoreMaxIdCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+        private final String tableName;
+        
+        StoreMaxIdCallback(String tableName) {
+            this.tableName = tableName;
+        }
+        
+        @Override
+        public void process(ResultSet rs) {
+
+            try {
+                while (rs.next()) {
+                    try {
+                        Long maxId = rs.getLong("max_id");
+                        String nameStr = "PORTABLE_CASE_" + tableName + "_MAX_ID";
+                        nameStr = nameStr.toUpperCase();
+                        String query = "INSERT INTO tsk_db_info_extended (name, value) VALUES ('" + nameStr + "', '" + maxId + "')";
+                        currentCase.getSleuthkitCase().getCaseDbAccessManager().insert("tsk_db_info_extended", query);
+
+                    } catch (SQLException ex) {
+                        logger.log(Level.WARNING, "Unable to get maximum ID from result set", ex);
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Unable to save maximum ID from result set", ex);
+                    }
+                    
+                }
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "Failed to get maximum ID from result set", ex);
+            }
+        }
+    }
 }
