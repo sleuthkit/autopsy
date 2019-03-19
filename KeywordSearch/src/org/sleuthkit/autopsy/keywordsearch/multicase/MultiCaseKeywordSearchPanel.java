@@ -542,9 +542,9 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
      */
     private Collection<String> getCases() {
         Collection<String> cases = new HashSet<>();
-        ListModel listModel = caseSelectionList.getModel();
+        ListModel<String> listModel = caseSelectionList.getModel();
         for(int i = 0; i < listModel.getSize(); i++) {
-            String caseName = (String) listModel.getElementAt(i);
+            String caseName = listModel.getElementAt(i);
             cases.add(caseName);
         }
         return cases;
@@ -665,10 +665,10 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     }//GEN-LAST:event_viewErrorsButtonActionPerformed
 
     private void pickCasesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pickCasesButtonActionPerformed
+        caseSelectionDialog.setVisible(true);
         if (currentConfirmedSelections != null) {
             caseSelectionDialog.setNodeSelections(currentConfirmedSelections);
         }
-        caseSelectionDialog.setVisible(true);
         
     }//GEN-LAST:event_pickCasesButtonActionPerformed
 
