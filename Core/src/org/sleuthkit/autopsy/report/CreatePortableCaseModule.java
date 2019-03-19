@@ -66,7 +66,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     private static final Logger logger = Logger.getLogger(CreatePortableCaseModule.class.getName());
     private static final String FILE_FOLDER_NAME = "PortableCaseFiles";
     private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";
-    private static final String PORTABLE_CASE_TABLE_NAME = "portable_case_data";
+    private static final String MAX_ID_TABLE_NAME = "portable_case_max_ids";
     private CreatePortableCasePanel configPanel;
     
     // These are the types for the exported file subfolders
@@ -361,11 +361,10 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         CaseDbAccessManager currentCaseDbManager = currentCase.getSleuthkitCase().getCaseDbAccessManager();
         
-        String tableSchema = "( id INTEGER PRIMARY KEY, "
-                            + " name TEXT UNIQUE NOT NULL,"
-                            + " value TEXT NOT NULL )";
+        String tableSchema = "( table_name TEXT PRIMARY KEY, "
+                            + " max_id TEXT)";
         
-        portableSkCase.getCaseDbAccessManager().createTable(PORTABLE_CASE_TABLE_NAME, tableSchema);
+        portableSkCase.getCaseDbAccessManager().createTable(MAX_ID_TABLE_NAME, tableSchema);
 
         currentCaseDbManager.select("max(obj_id) as max_id from tsk_objects", new StoreMaxIdCallback("tsk_objects"));
         currentCaseDbManager.select("max(tag_id) as max_id from content_tags", new StoreMaxIdCallback("content_tags"));
@@ -739,8 +738,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 while (rs.next()) {
                     try {
                         Long maxId = rs.getLong("max_id");
-                        String query = " (name, value) VALUES ('" + tableName + "', '" + maxId + "')";
-                        portableSkCase.getCaseDbAccessManager().insert(PORTABLE_CASE_TABLE_NAME, query);
+                        String query = " (table_name, max_id) VALUES ('" + tableName + "', '" + maxId + "')";
+                        portableSkCase.getCaseDbAccessManager().insert(MAX_ID_TABLE_NAME, query);
 
                     } catch (SQLException ex) {
                         logger.log(Level.WARNING, "Unable to get maximum ID from result set", ex);
