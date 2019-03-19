@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -394,7 +394,7 @@ final public class DetailViewPane extends AbstractTimelineChart<DateTime, EventS
             FilteredEventsModel eventsModel = getEventsModel();
             ZoomState newZoom = eventsModel.getZoomState();
 
-            //if the ZoomState haven't actually changed, just bail
+            //If the view doesn't need refreshing or if the ZoomState hasn't actually changed, just bail
             if (needsRefresh() == false && Objects.equals(currentZoom, newZoom)) {
                 return true;
             }

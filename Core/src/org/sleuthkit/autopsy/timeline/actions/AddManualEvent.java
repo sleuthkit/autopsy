@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.timeline.actions;
 
+import java.awt.Dialog;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -26,17 +27,20 @@ import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
 import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
 import javafx.fxml.FXML;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBase;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.StringConverter;
+import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 import jfxtras.scene.control.LocalDateTimeTextField;
 import org.apache.commons.lang3.StringUtils;
@@ -48,9 +52,9 @@ import org.controlsfx.validation.Validator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.PromptDialogManager;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -77,8 +81,7 @@ public class AddManualEvent extends Action {
     private static final String MANUAL_CREATION = "Manual Creation"; //NON-NLS
     private static final Image ADD_EVENT_IMAGE = new Image("/org/sleuthkit/autopsy/timeline/images/add.png", 16, 16, true, true, true); // NON-NLS
 
-    private final TimeLineController controller;
-
+//    private final Long epochMillis;
     /**
      * Initialize the custom value extractor used by the ValidationSupport for
      * the LocalDateTimeTextField in the EventCreationDialogPane.
@@ -112,14 +115,21 @@ public class AddManualEvent extends Action {
      */
     public AddManualEvent(TimeLineController controller, Long epochMillis) {
         super(Bundle.AddManualEvent_text());
-        this.controller = controller;
         setGraphic(new ImageView(ADD_EVENT_IMAGE));
         setLongText(Bundle.AddManualEvent_longText());
 
-        setEventHandler(actionEvent -> {
-            //show the dialog and if it completed normally add the event.
-            new EventCreationDialog(controller, epochMillis).showAndWait().ifPresent(this::addEvent);
-        });
+        setEventHandler(actionEvent -> SwingUtilities.invokeLater(() -> {
+
+            JEventCreationDialog dialog = new JEventCreationDialog(controller, epochMillis, SwingUtilities.windowForComponent(controller.getTopComponent()));
+            dialog.setVisible(true);
+
+            Platform.runLater(() -> {
+                ManualEventInfo eventInfo = dialog.getManualEventInfo();
+                if (eventInfo != null) {
+                    addEvent(controller, eventInfo);
+                }
+            });
+        }));
     }
 
     /**
@@ -135,7 +145,7 @@ public class AddManualEvent extends Action {
         "AddManualEvent.createArtifactFailed=Failed to create artifact for event.",
         "AddManualEvent.postArtifactFailed=Failed to post artifact to blackboard."
     })
-    private void addEvent(ManualEventInfo eventInfo) throws IllegalArgumentException {
+    private void addEvent(TimeLineController controller, ManualEventInfo eventInfo) throws IllegalArgumentException {
         SleuthkitCase sleuthkitCase = controller.getEventsModel().getSleuthkitCase();
 
         try {
@@ -166,31 +176,49 @@ public class AddManualEvent extends Action {
         }
     }
 
-    /** The dialog that allows the user to enter the event information. */
-    private static class EventCreationDialog extends Dialog<ManualEventInfo> {
+    static private final class JEventCreationDialog extends JDialog {
 
-        /** Custom DialogPane defined below. */
-        private final EventCreationDialogPane eventCreationDialogPane;
+        @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
+        private ManualEventInfo manualEventInfo;
 
-        EventCreationDialog(TimeLineController controller, Long epochMillis) {
-            this.eventCreationDialogPane = new EventCreationDialogPane(controller, epochMillis);
-            setTitle(Bundle.AddManualEvent_text());
-            setDialogPane(eventCreationDialogPane);
+        private JEventCreationDialog(TimeLineController controller, Long epochMillis, java.awt.Window owner) {
+            super(owner, Bundle.AddManualEvent_text(), Dialog.ModalityType.DOCUMENT_MODAL);
+            setIconImages(owner.getIconImages());
+            setResizable(false);
+            JFXPanel jfxPanel = new JFXPanel();
+            add(jfxPanel);
 
-            //We can't do these steps until after the dialog is shown or we get an error.
-            setOnShown(dialogEvent -> {
-                Platform.runLater(() -> {
-                    PromptDialogManager.setDialogIcons(this);
-                    eventCreationDialogPane.installValidation();
+            // make and configure the JavaFX components. 
+            Platform.runLater(() -> {
+                // Custom DialogPane defined below. 
+                EventCreationDialogPane customPane = new EventCreationDialogPane(controller, epochMillis);
+                //configure ok button to pull ManualEventInfo object.
+                ((ButtonBase) customPane.lookupButton(ButtonType.OK)).setOnAction(event -> {
+                    manualEventInfo = customPane.getManualEventInfo();
+                    dispose();
+                });
+                //cancel button just closes the dialog
+                ((ButtonBase) customPane.lookupButton(ButtonType.CANCEL)).setOnAction(event -> {
+                    dispose();
+                });
+
+                jfxPanel.setScene(new Scene(customPane));
+                customPane.installValidation();
+                SwingUtilities.invokeLater(() -> {
+                    //size and position dialog on EDT
+                    pack();
+                    setLocationRelativeTo(owner);
                 });
             });
+        }
 
-            // convert button presses to ManualEventInfo
-            setResultConverter(buttonType
-                    -> (buttonType == ButtonType.OK)
-                            ? eventCreationDialogPane.getManualEventInfo()
-                            : null
-            );
+        /**
+         * Get the MAnualEventInfo combining the user entered data.
+         *
+         * @return The ManualEventInfo containing the user entered event info.
+         */
+        private ManualEventInfo getManualEventInfo() {
+            return manualEventInfo;
         }
 
         /**
@@ -212,7 +240,7 @@ public class AddManualEvent extends Action {
             private final ValidationSupport validationSupport = new ValidationSupport();
             private final TimeLineController controller;
 
-            EventCreationDialogPane(TimeLineController controller, Long epochMillis) {
+          private  EventCreationDialogPane(TimeLineController controller, Long epochMillis) {
                 this.controller = controller;
                 FXMLConstructor.construct(this, "EventCreationDialog.fxml"); //NON-NLS
                 if (epochMillis == null) {
@@ -224,7 +252,7 @@ public class AddManualEvent extends Action {
 
             @FXML
             @NbBundle.Messages("AddManualEvent.EventCreationDialogPane.initialize.dataSourcesError=Error getting datasources in case.")
-            void initialize() {
+            private void initialize() {
                 assert descriptionTextField != null : "fx:id=\"descriptionTextField\" was not injected: check your FXML file 'EventCreationDialog.fxml'.";//NON-NLS
 
                 timeZoneChooser.getItems().setAll(timeZoneList);
@@ -261,7 +289,7 @@ public class AddManualEvent extends Action {
                 "AddManualEvent.validation.description=Description is required.",
                 "AddManualEvent.validation.datetime=Invalid datetime",
                 "AddManualEvent.validation.timezone=Invalid time zone",})
-            void installValidation() {
+            private void installValidation() {
                 validationSupport.registerValidator(descriptionTextField, false,
                         Validator.createEmptyValidator(Bundle.AddManualEvent_validation_description()));
                 validationSupport.registerValidator(timePicker, false,
@@ -281,7 +309,7 @@ public class AddManualEvent extends Action {
              * @return The ManualEventInfo containing the user entered event
              *         info.
              */
-            ManualEventInfo getManualEventInfo() {
+            private ManualEventInfo getManualEventInfo() {
                 //Trim off the offset part of the string from the chooser, to get something that ZoneId can parse.
                 String zone = StringUtils.substringAfter(timeZoneChooser.getValue(), ")").trim();
                 long toEpochSecond = timePicker.getLocalDateTime().atZone(ZoneId.of(zone)).toEpochSecond();
@@ -295,11 +323,11 @@ public class AddManualEvent extends Action {
      */
     private static class ManualEventInfo {
 
-        DataSource datasource;
-        String description;
-        long time;
+        private final DataSource datasource;
+        private final String description;
+        private final long time;
 
-        ManualEventInfo(DataSource datasource, String description, long time) {
+        private ManualEventInfo(DataSource datasource, String description, long time) {
             this.datasource = datasource;
             this.description = description;
             this.time = time;

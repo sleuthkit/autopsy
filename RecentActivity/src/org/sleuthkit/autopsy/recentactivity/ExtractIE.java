@@ -37,7 +37,6 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -50,12 +49,9 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.*;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import static org.sleuthkit.autopsy.recentactivity.Bundle.*;
 
 /**
  * Extracts activity from Internet Explorer browser, as well as recent documents
@@ -211,7 +207,7 @@ class ExtractIE extends Extract {
      * Finds files that store cookies and adds artifacts for them.
      */
     @Messages({
-        "ExtractIE.getCookie.errMsg.errPostingCookiess=Error posting Internet Explorer Cookie artifacts."
+        "ExtractIE.getCookie.errMsg.errPostingCookies=Error posting Internet Explorer Cookie artifacts."
     })
     private void getCookie() {
         List<AbstractFile> cookiesFiles;
@@ -283,7 +279,7 @@ class ExtractIE extends Extract {
         try {
             blackboard.postArtifacts(bbartifacts, moduleName);
         } catch (Blackboard.BlackboardException ex) {
-            this.addErrorMessage(Bundle.ExtractIE_getCookie_errMsg_errPostingCookiess());
+            this.addErrorMessage(Bundle.ExtractIE_getCookie_errMsg_errPostingCookies());
             logger.log(Level.SEVERE, "Exception thrown while posting IE cookie artifact.", ex); //NON-NLS
         }
     }

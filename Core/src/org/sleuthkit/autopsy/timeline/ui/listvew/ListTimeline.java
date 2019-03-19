@@ -78,7 +78,6 @@ import org.controlsfx.control.action.ActionUtils;
 import org.openide.awt.Actions;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
@@ -214,7 +213,7 @@ class ListTimeline extends BorderPane {
         assert dateTimeColumn != null : "fx:id=\"dateTimeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert descriptionColumn != null : "fx:id=\"descriptionColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
         assert typeColumn != null : "fx:id=\"typeColumn\" was not injected: check your FXML file 'ListViewPane.fxml'."; //NON-NLS
-       
+
         //configure scroll controls
         scrollInrementComboBox.setButtonCell(new ChronoFieldListCell());
         scrollInrementComboBox.setCellFactory(comboBox -> new ChronoFieldListCell());
@@ -676,14 +675,11 @@ class ListTimeline extends BorderPane {
                                     }
                                 }
                             }
-                        };
+                        }
 
                         //show new context menu.
                         new ContextMenu(menuItems.toArray(new MenuItem[menuItems.size()]))
                                 .show(this, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
-                    } catch (NoCurrentCaseException ex) {
-                        //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
-                        logger.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a TimelineEvent.", ex); //NON-NLS
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a TimelineEvent.", ex); //NON-NLS
                         Platform.runLater(() -> {
