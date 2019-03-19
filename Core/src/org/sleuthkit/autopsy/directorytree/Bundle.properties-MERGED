@@ -5,12 +5,15 @@ DirectoryTreeTopComponent.componentOpened.groupDataSources.text=This case contai
 DirectoryTreeTopComponent.componentOpened.groupDataSources.title=Group by data source?
 DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.
 DirectoryTreeTopComponent.resultsView.title=Listing
+ExternalViewerAction.actionPerformed.failure.exe.message=The file is an executable and will not be opened.
 ExternalViewerAction.actionPerformed.failure.IO.message=There is no associated editor for files of this type or the associated application failed to launch.
 ExternalViewerAction.actionPerformed.failure.missingFile.message=The file no longer exists.
 ExternalViewerAction.actionPerformed.failure.open.url=Cannot open URL
 ExternalViewerAction.actionPerformed.failure.permission.message=Permission to open the file was denied.
 ExternalViewerAction.actionPerformed.failure.support.message=This platform (operating system) does not support opening a file in an editor this way.
-ExternalViewerAction.actionPerformed.failure.title=Open File Failure
+# {0} - file name
+ExternalViewerAction.actionPerformed.failure.title=Open File Failure {0}
+ExternalViewerAction.actionPerformed.urlFailure.title=Open URL Failure
 ExternalViewerShortcutAction.title.text=Open in External Viewer  Ctrl+E
 ExtractAction.noOpenCase.errMsg=No open case available.
 ExtractUnallocAction.imageError=Error extracting unallocated space from image
