@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
 import com.google.common.collect.Sets;
-import java.util.Collections;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import java.util.Objects;
@@ -219,7 +218,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
     @Override
     public SortedSet<EventCluster> getClusters() {
-        return new TreeSet<>(Collections.singleton(this));
+        return new TreeSet<>(singleton(this));
     }
 
     @Override

@@ -115,16 +115,16 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         this.parent = null;
     }
 
-    private EventStripe(EventStripe u, EventStripe v) { //NOPMD
-        clusters = copyAsSortedSet(Sets.union(v.getClusters(), v.getClusters()), Comparator.comparing(EventCluster::getStartMillis));
+    private EventStripe(EventStripe stripeA, EventStripe stripeB) {
+        clusters = copyAsSortedSet(Sets.union(stripeB.getClusters(), stripeB.getClusters()), comparing(EventCluster::getStartMillis));
 
-        type = u.getEventType();
-        description = u.getDescription();
-        lod = u.getDescriptionLoD();
-        eventIDs = Sets.union(v.getEventIDs(), v.getEventIDs());
-        tagged = Sets.union(v.getEventIDsWithTags(), v.getEventIDsWithTags());
-        hashHits = Sets.union(v.getEventIDsWithHashHits(), v.getEventIDsWithHashHits());
-        parent = u.getParent().orElse(v.getParent().orElse(null));
+        type = stripeA.getEventType();
+        description = stripeA.getDescription();
+        lod = stripeA.getDescriptionLoD();
+        eventIDs = Sets.union(stripeB.getEventIDs(), stripeB.getEventIDs());
+        tagged = Sets.union(stripeB.getEventIDsWithTags(), stripeB.getEventIDsWithTags());
+        hashHits = Sets.union(stripeB.getEventIDsWithHashHits(), stripeB.getEventIDsWithHashHits());
+        parent = stripeA.getParent().orElse(stripeB.getParent().orElse(null));
     }
 
     @Override
@@ -229,7 +229,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         return Objects.equals(this.eventIDs, other.eventIDs);
     }
 
-    static <X> SortedSet<X> copyAsSortedSet(Collection<X> setA, Comparator<X> comparator) {
+    private static <X> SortedSet<X> copyAsSortedSet(Collection<X> setA, Comparator<X> comparator) {
 
         TreeSet<X> treeSet = new TreeSet<>(comparator);
         treeSet.addAll(setA);
