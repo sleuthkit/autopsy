@@ -255,7 +255,7 @@ public final class FilteredEventsModel {
         //because there is no way to remove a datasource we only add to this map.
         for (DataSource ds : eventManager.getSleuthkitCase().getDataSources()) {
             datasourcesMap.putIfAbsent(ds.getId(), ds.getName());
-        };
+        }
 
         //should this only be tags applied to files or event bearing artifacts?
         tagNames.setAll(skCase.getTagNamesInUse());
