@@ -620,7 +620,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 try {
                     TextFileExtractor textFileExtractor = new TextFileExtractor();
                     Reader textReader = textFileExtractor.getReader(aFile);
-                    if (Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
+                    if (textReader != null && Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
                         putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                         wasTextAdded = true;
                     }
