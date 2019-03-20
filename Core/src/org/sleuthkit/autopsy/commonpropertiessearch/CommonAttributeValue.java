@@ -22,8 +22,10 @@ package org.sleuthkit.autopsy.commonpropertiessearch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -36,7 +38,7 @@ final public class CommonAttributeValue {
 
     private final String value;
     private final List<AbstractCommonAttributeInstance> fileInstances;
-    private String tokenFileName = null;
+    private final Map<String, Integer> fileNames = new HashMap<>();
 
     CommonAttributeValue(String value) {
         this.value = value;
@@ -53,6 +55,14 @@ final public class CommonAttributeValue {
      * @return the file name of an instance of this file
      */
     String getTokenFileName() {
+        String tokenFileName = null;
+        int maxValue = 0;
+        for (String key : fileNames.keySet()){
+            if (fileNames.get(key) > maxValue){
+                maxValue = fileNames.get(key);
+                tokenFileName = key;
+            }
+        }
         return tokenFileName;
     }
 
@@ -97,8 +107,10 @@ final public class CommonAttributeValue {
     }
 
     void addInstance(AbstractCommonAttributeInstance metadata) {
-        if (tokenFileName == null && metadata.getAbstractFile() != null) {
-            tokenFileName = metadata.getAbstractFile().getName();
+        if (metadata.getAbstractFile() != null) {
+            Integer currentValue = fileNames.get(metadata.getAbstractFile().getName());
+            currentValue = currentValue == null ? 1 : currentValue+1;
+            fileNames.put(metadata.getAbstractFile().getName(), currentValue);
         }
         this.fileInstances.add(metadata);
     }
