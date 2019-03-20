@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -620,7 +619,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 try {
                     TextFileExtractor textFileExtractor = new TextFileExtractor();
                     Reader textReader = textFileExtractor.getReader(aFile);
-                    if (textReader != null && Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
+                    if (textReader == null) {
+                        logger.log(Level.INFO, "Unable to extract with TextFileExtractor, Reader was null for file: {0}", aFile.getName());
+                    } else if (Ingester.getDefault().indexText(textReader, aFile.getId(), aFile.getName(), aFile, context)) {
                         putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                         wasTextAdded = true;
                     }
