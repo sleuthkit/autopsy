@@ -14,6 +14,14 @@ The Hex Content Viewer is nearly always available and shows you the raw and exac
 
 \image html content_viewer_hex.png
 
+If desired, you can open the file in an external hex editor. This is configured through the "External Viewer" tab on the options panel. HxD has been tested to work, but alternate hex editors may also be compatible. 
+
+\image html content_viewer_hex_editor_setup.png
+
+Note that this process saves the file to disk before launching the hex editor. A progress indicator will be displayed in the lower right corner of the application. If you wish to cancel the file export, click the 'X' to the right of the progress bar.
+
+\image html content_viewer_hxd_progress.png
+
 \section cv_strings Strings
 
 The Strings tab shows all text strings found in the file. Different scripts can be chosen from the drop-down menu to display results for non-Latin alphabets. 
