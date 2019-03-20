@@ -144,7 +144,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         }
 
         String[] imgFile = image.getPaths();
-        ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(log2TimeLineExecutable, moduleOutputPath, imgFile[0], image.getTimeZone());
+        ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(moduleOutputPath, imgFile[0], image.getTimeZone());
         log2TimeLineCommand.redirectError(new File(moduleOutputPath + File.separator + "log2timeline_err.txt"));  //NON-NLS
 
         logger.log(Level.INFO, Bundle.PlasoIngestModule_startUp_message());
@@ -175,7 +175,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             }
 
             // sort the output
-            ProcessBuilder psortCommand = buildPsortCommand(psortExecutable, moduleOutputPath);
+            ProcessBuilder psortCommand = buildPsortCommand(moduleOutputPath);
             psortCommand.redirectError(new File(moduleOutputPath + File.separator + "psort_err.txt"));  //NON-NLS
             psortCommand.redirectOutput(new File(moduleOutputPath + File.separator + "psort_output.txt"));  //NON-NLS
 
@@ -219,7 +219,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         return processBuilder;
     }
 
-    private ProcessBuilder buildLog2TimeLineCommand(File log2TimeLineExecutable, String moduleOutputPath, String imageName, String timeZone) {
+    private ProcessBuilder buildLog2TimeLineCommand(String moduleOutputPath, String imageName, String timeZone) {
         return buildProcessWithRunAsInvoker(
                 "\"" + log2TimeLineExecutable + "\"", //NON-NLS
                 "--vss-stores", "all", //NON-NLS
@@ -233,7 +233,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         );
     }
 
-    private ProcessBuilder buildPsortCommand(File psortExecutable, String moduleOutputPath) {
+    private ProcessBuilder buildPsortCommand(String moduleOutputPath) {
         return buildProcessWithRunAsInvoker(
                 "\"" + psortExecutable + "\"", //NON-NLS
                 "-o", "4n6time_sqlite", //NON-NLS
@@ -406,6 +406,11 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         return EventType.OTHER.getTypeID();
     }
 
+    /**
+     * Runs in a thread and reads the output of log2timeline. It redirectes the
+     * output both to a log file, and to the status message of the Plaso ingest
+     * module progress bar.
+     */
     private static class L2TStatusProcessor implements Runnable, Cancellable {
 
         private final BufferedReader log2TimeLineOutpout;
