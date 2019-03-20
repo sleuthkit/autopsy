@@ -48,7 +48,9 @@ final class TextFileExtractor {
             throw new TextFileExtractorException("Unable to get string from detected text in TextFileExtractor", ex);
         }
         CharsetMatch match = detector.detect();
-        if (match.getConfidence() < MIN_MATCH_CONFIDENCE) {
+        if (match == null) {
+            throw new TextFileExtractorException("Unable to detect any matches using TextFileExtractor");
+        } else if (match.getConfidence() < MIN_MATCH_CONFIDENCE) {
             throw new TextFileExtractorException("Text does not match any character set with a high enough confidence for TextFileExtractor");
         }
 
