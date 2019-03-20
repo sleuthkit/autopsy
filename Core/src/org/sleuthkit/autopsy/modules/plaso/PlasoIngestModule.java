@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.logging.Level;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
@@ -55,7 +54,6 @@ import org.sleuthkit.datamodel.Blackboard.BlackboardException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DESCRIPTION;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE;
@@ -156,8 +154,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             Process log2TimeLine = log2TimeLineCommand.start();
 
             try (BufferedReader log2TimeLineOutpout = new BufferedReader(new InputStreamReader(log2TimeLine.getInputStream()))) {
-                StatusReader statusReader = new StatusReader(log2TimeLineOutpout, statusHelper, moduleOutputPath, "log2timeline_output.txt");
-                new Thread(statusReader).start();
+                L2TStatusProcessor statusReader = new L2TStatusProcessor(log2TimeLineOutpout, statusHelper, moduleOutputPath);
+                new Thread(statusReader, "log2timeline status reader thread").start();
 
                 ExecUtil.execute(log2TimeLine, new DataSourceIngestModuleProcessTerminator(context));
                 statusReader.cancel();
@@ -179,17 +177,10 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             // sort the output
             ProcessBuilder psortCommand = buildPsortCommand(psortExecutable, moduleOutputPath);
             psortCommand.redirectError(new File(moduleOutputPath + File.separator + "psort_err.txt"));  //NON-NLS
-            Process pSort = psortCommand.start();
+            psortCommand.redirectOutput(new File(moduleOutputPath + File.separator + "psort_output.txt"));  //NON-NLS
 
-            try (BufferedReader pSortOutpout = new BufferedReader(new InputStreamReader(pSort.getInputStream()))) {
-                StatusReader statusReader = new StatusReader(pSortOutpout, statusHelper, moduleOutputPath, "psort_output.txt");
-                new Thread(statusReader).start();
-
-                statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
-
-                ExecUtil.execute(pSort, new DataSourceIngestModuleProcessTerminator(context));
-                statusReader.cancel();
-            }
+            statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
+            ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
 
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, Bundle.PlasoIngestModule_psort_cancelled()); //NON-NLS
@@ -415,35 +406,32 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         return EventType.OTHER.getTypeID();
     }
 
-    static class StatusReader implements Runnable, Cancellable {
+    private static class L2TStatusProcessor implements Runnable, Cancellable {
 
         private final BufferedReader log2TimeLineOutpout;
         private final DataSourceIngestModuleProgress statusHelper;
         private boolean cancelled = false;
-        private final String moduleOutputPath;
-        private final String outputFileName;
+        private final String outputPath;
 
-        StatusReader(BufferedReader log2TimeLineOutpout, DataSourceIngestModuleProgress statusHelper, String moduleOutputPath, String outputFileName
-        ) throws IOException {
+        private L2TStatusProcessor(BufferedReader log2TimeLineOutpout, DataSourceIngestModuleProgress statusHelper, String outputPath) throws IOException {
             this.log2TimeLineOutpout = log2TimeLineOutpout;
             this.statusHelper = statusHelper;
-            this.moduleOutputPath = moduleOutputPath;
-            this.outputFileName = outputFileName;
+            this.outputPath = outputPath;
         }
 
         @Override
         public void run() {
-            String line;
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(moduleOutputPath + File.separator + outputFileName)));) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(Paths.get(outputPath, "log2timeline_output.txt").toFile()));) {
+                String line;
                 while (null != (line = log2TimeLineOutpout.readLine())
                        && cancelled == false) {
-                    statusHelper.progress(line); //is this threadsafe
+                    statusHelper.progress(line); //is this threadsafe?
                     writer.write(line);
                     writer.newLine();
                 }
                 writer.flush();
             } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Error reading log2timeline output stream.", ex);
             }
         }
 
