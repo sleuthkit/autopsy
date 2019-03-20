@@ -130,10 +130,21 @@ public final class FilteredEventsModel {
     private final LoadingCache<Long, TimelineEvent> idToEventCache;
     private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
     /** Map from datasource id to datasource name. */
-    private final ObservableMap<Long, DataSource> datasourcesMap = FXCollections.observableHashMap();
+    private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
     // end caches
+
+    /**
+     * Make a DataSourceFilter from an entry from the datasourcesMap.
+     *
+     * @param dataSourceEntry A map entry from datasource id to datasource name.
+     *
+     * @return A new DataSourceFilter for the given datsourcesMap entry.
+     */
+    private static DataSourceFilter newDataSourceFromMapEntry(Map.Entry<Long, String> dataSourceEntry) {
+        return new DataSourceFilter(dataSourceEntry.getValue(), dataSourceEntry.getKey());
+    }
 
     public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomState> currentStateProperty) throws TskCoreException {
         this.autoCase = autoCase;
@@ -240,18 +251,11 @@ public final class FilteredEventsModel {
     synchronized private void populateFilterData() throws TskCoreException {
         SleuthkitCase skCase = autoCase.getSleuthkitCase();
         hashSets.addAll(eventManager.getHashSetNames());
-        Set<Long> dataSourceIDs = eventManager.getDataSourceIDs();
 
         //because there is no way to remove a datasource we only add to this map.
-        for (Long id : dataSourceIDs) {
-            try {
-                if (datasourcesMap.get(id) == null) {
-                    datasourcesMap.put(id, skCase.getDataSource(id));
-                }
-            } catch (TskDataException ex) {
-                throw new TskCoreException("Error looking up datasource for id " + id, ex);
-            }
-        }
+        for (DataSource ds : eventManager.getSleuthkitCase().getDataSources()) {
+            datasourcesMap.putIfAbsent(ds.getId(), ds.getName());
+        };
 
         //should this only be tags applied to files or event bearing artifacts?
         tagNames.setAll(skCase.getTagNamesInUse());
@@ -276,9 +280,7 @@ public final class FilteredEventsModel {
         }
 
         DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
-        for (Map.Entry<Long, DataSource> entry : datasourcesMap.entrySet()) {
-            dataSourcesFilter.addSubFilter(new DataSourceFilter(entry.getValue().getName(), entry.getKey()));
-        }
+        datasourcesMap.entrySet().forEach(entry -> dataSourcesFilter.addSubFilter(newDataSourceFromMapEntry(entry)));
 
         HashHitsFilter hashSetsFilter = rootFilterState.getHashHitsFilterState().getFilter();
         for (String hashSet : hashSets) {
@@ -340,14 +342,14 @@ public final class FilteredEventsModel {
         return getZoomState().getTypeZoomLevel();
     }
 
-    /**
+    /** S
+     *
      * @return the default filter used at startup
      */
     public synchronized RootFilterState getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
         datasourcesMap.entrySet().forEach(dataSourceEntry
-                -> dataSourcesFilter.addSubFilter(new DataSourceFilter(dataSourceEntry.getValue().getName(), dataSourceEntry.getKey()))
-        );
+                -> dataSourcesFilter.addSubFilter(newDataSourceFromMapEntry(dataSourceEntry)));
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
         hashSets.stream().map(HashSetFilter::new).forEach(hashHitsFilter::addSubFilter);
