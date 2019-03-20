@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DataSource;
@@ -242,6 +243,17 @@ public class ViewContextAction extends AbstractAction {
              */
             DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) parentTreeViewNode).getOriginal();
             undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(content));
+            if (content instanceof BlackboardArtifact) {
+                BlackboardArtifact artifact = ((BlackboardArtifact) content);
+                long associatedId = artifact.getObjectID();
+                try {
+                    Content associatedFileContent = artifact.getSleuthkitCase().getContentById(associatedId);
+                    undecoratedParentNode.setChildNodeSelectionInfo(new ContentNodeSelectionInfo(associatedFileContent));
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Could not find associated content from artifact with id %d", artifact.getId());
+                }
+            }
+
             TreeView treeView = treeViewTopComponent.getTree();
             treeView.expandNode(parentTreeViewNode);
             if (treeViewTopComponent.getSelectedNode().equals(parentTreeViewNode)) {

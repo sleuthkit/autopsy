@@ -1,0 +1,31 @@
+BarClickHandler.selectTimeAndType.errorMessage=Error selecting time and type.
+BarClickHandler_zoomIn_errorMessage=Error zooming in.
+CountsViewPane.detailSwitchMessage=There is no temporal resolution smaller than Seconds.\nWould you like to switch to the Details view instead?
+CountsViewPane.detailSwitchTitle="Switch to Details View?
+CountsViewPane.linearRadio.text=Linear
+CountsViewPane.loggedTask.name=Updating Counts View
+CountsViewPane.loggedTask.updatingCounts=Populating view
+CountsViewPane.logRadio.text=Logarithmic
+# {0} - scale name
+CountsViewPane.numberOfEvents=Number of Events ({0})
+CountsViewPane.scaleHelp.label.text=Scales:   
+CountsViewPane.scaleHelpLinear=The linear scale is good for many use cases.  When this scale is selected, the height of the bars represents the counts in a linear, one-to-one fashion, and the y-axis is labeled with values. When the range of values is very large, time periods with low counts may have a bar that is too small to see.  To help the user detect this, the labels for date ranges with events are bold.  To see bars that are too small, there are three options:  adjust the window size so that the timeline has more vertical space, adjust the time range shown so that time periods with larger bars are excluded, or adjust the scale setting to logarithmic.
+CountsViewPane.scaleHelpLog=The logarithmic scale represents the number of events in a non-linear way that compresses the difference between large and small numbers. Note that even with the logarithmic scale, an extremely large difference in counts may still produce bars too small to see.  In this case the only option may be to filter events to reduce the difference in counts.  NOTE: Because the logarithmic scale is applied to each event type separately, the meaning of the height of the combined bar is not intuitive, and to emphasize this, no labels are shown on the y-axis with the logarithmic scale. The logarithmic scale should be used to quickly compare the counts 
+CountsViewPane.scaleHelpLog2=across time within a type, or across types for one time period, but not both.
+CountsViewPane.scaleHelpLog3=\ The actual counts (available in tooltips or the result viewer) should be used for absolute comparisons.  Use the logarithmic scale with care.
+CountsViewPane.scaleLabel.text=Scale:
+# {0} - count
+# {1} - event type displayname
+# {2} - start date time
+# {3} - end date time
+CountsViewPane.tooltip.text={0} {1} events\nbetween {2}\nand     {3}
+ScaleType.Linear=Linear
+ScaleType.Logarithmic=Logarithmic
+SelectIntervalAction.errorMessage=Error selecting interval.
+SelectIntervalAndTypeAction.errorMessage=Error selecting interval and type.
+SelectTypeAction.errorMessage=Error selecting type.
+Timeline.ui.countsview.menuItem.selectEventType=Select Event Type
+Timeline.ui.countsview.menuItem.selectTimeandType=Select Time and Type
+Timeline.ui.countsview.menuItem.selectTimeRange=Select Time Range
+Timeline.ui.countsview.menuItem.zoomIntoTimeRange=Zoom into Time Range
+ZoomToIntervalAction.errorMessage=Error zooming to interval.

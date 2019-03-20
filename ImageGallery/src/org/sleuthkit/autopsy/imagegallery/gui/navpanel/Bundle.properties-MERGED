@@ -1,0 +1,11 @@
+GroupComparators.groupName=Group Name
+GroupComparators.groupSize=Group Size
+GroupComparators.hitCount=Hit Count
+GroupComparators.hitDensity=Hit Density
+GroupComparators.uncategorizedCount=Uncategorized Count
+GroupTree.displayName.allGroups=All Groups
+HashHitGroupList.displayName.onlyHashHits=Only Hash Hits
+NavPanel.ascRadio.text=Ascending
+NavPanel.descRadio.text=Descending
+NavPanel.placeHolder.text=There are no groups.
+NavPanel.sortByBoxLabel.text=Sort By:

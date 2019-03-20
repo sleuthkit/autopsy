@@ -55,6 +55,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 
 /**
  * Extract windows registry data using regripper. Runs two versions of
@@ -64,7 +65,8 @@ import org.xml.sax.SAXException;
  */
 @NbBundle.Messages({
     "RegRipperNotFound=Autopsy RegRipper executable not found.",
-    "RegRipperFullNotFound=Full version RegRipper executable not found."
+    "RegRipperFullNotFound=Full version RegRipper executable not found.",
+    "Progress_Message_Analyze_Registry=Analyzing Registry Files"
 })
 class ExtractRegistry extends Extract {
 
@@ -412,7 +414,7 @@ class ExtractRegistry extends Extract {
 
                 Element artroot = (Element) artroots.item(0);
                 NodeList myartlist = artroot.getChildNodes();
-                String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
+                String parentModuleName = RecentActivityExtracterModuleFactory.getModuleName();
 
                 // If all artifact nodes should really go under one Blackboard artifact, need to process it differently
                 switch (dataType) {
@@ -825,7 +827,7 @@ class ExtractRegistry extends Extract {
      */
     private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile) {
         File regfile = new File(regFilePath);
-        String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
+        String parentModuleName = RecentActivityExtracterModuleFactory.getModuleName();
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(regfile))) {
@@ -959,9 +961,11 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
+        
+        progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
         analyzeRegistryFiles();
 
     }

@@ -22,6 +22,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
@@ -31,7 +33,6 @@ import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CasePreferences;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.DataSource;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -87,6 +88,16 @@ public final class AutopsyTreeChildFactory extends ChildFactory.Detachable<Objec
            
             if (Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)) {
                 List<DataSource> dataSources = tskCase.getDataSources();
+                
+                Collections.sort(dataSources, new Comparator<DataSource>() {
+                    @Override
+                    public int compare(DataSource dataS1, DataSource dataS2) {
+                        String dataS1Name = dataS1.getName().toLowerCase();
+                        String dataS2Name = dataS2.getName().toLowerCase();
+                        return dataS1Name.compareTo(dataS2Name);
+                    }
+                });
+                
                 List<DataSourceGrouping> keys = new ArrayList<>();
                 dataSources.forEach((datasource) -> {
                     keys.add(new DataSourceGrouping(datasource));

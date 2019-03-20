@@ -21,10 +21,10 @@
         <if>
             <isset property="jre.home.32" />
             <then>
-                <echo message="32-bit JRE found, 32 bit installer will be built."/>
+                <echo message="32-bit JRE found, 32-bit installer will be built."/>
             </then>
             <else>
-                <echo message="32-bit JRE not found. No 32 bit installer will be build. Set the JRE_HOME_32 environment variable to generate a 32-bit installer."/>
+                <echo message="32-bit JRE not found. No 32-bit installer will be built. Set the JRE_HOME_32 environment variable to generate a 32-bit installer."/>
             </else>
         </if>
         
@@ -34,10 +34,10 @@
         <if>
             <isset property="jre.home.64" />
             <then>
-                <echo message="64-bit JRE found, 64 bit installer will be built."/>
+                <echo message="64-bit JRE found, 64-bit installer will be built."/>
             </then>
             <else>
-                <echo message="64-bit JRE not found. No 64 bit installer will be build. Set the JRE_HOME_64 environment variable to generate a 64-bit installer."/>
+                <echo message="64-bit JRE not found. No 64-bit installer will be built. Set the JRE_HOME_64 environment variable to generate a 64-bit installer."/>
             </else>
         </if>    
     </target>
@@ -118,18 +118,14 @@
             <arg line="/edit ${aip-path-base} /SetAppdir -buildname DefaultBuild -path [ProgramFilesFolder][ProductName]-${app.version}"/>
         </exec>
         
-        <!-- gstreamer needs special path info to be set -->
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\bin -install_operation CreateUpdate -behavior Append -system_variable"/>
-        </exec>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]gstreamer\lib\gstreamer-0.10 -install_operation CreateUpdate -behavior Append -system_variable"/>
-        </exec>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name PATH -value %GSTREAMER_PATH% -install_operation CreateUpdate -behavior Append -system_variable"/>
-        </exec>
+        <var name="gstreamer-relative-path" value="gstreamer/1.0/x86"/>
+        <antcall target="install-gstreamer" inheritAll="true" />
         
         <antcall target="ai-build" inheritAll="true" />
+        
+        <delete includeEmptyDirs="true">
+            <fileset dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
+        </delete>
         
         <delete dir="${nbdist.dir}/installer_${app.name}_32-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-32bit.msi" />
@@ -158,10 +154,44 @@
             <arg line="/edit ${aip-path} /SetPackageType x64"/>
         </exec>
         
+        <var name="gstreamer-relative-path" value="gstreamer/1.0/x86_64"/>
+        <antcall target="install-gstreamer" inheritAll="true" />
+        
         <antcall target="ai-build" inheritAll="true" />
+        
+        <delete includeEmptyDirs="true">
+            <fileset dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
+        </delete>
         
         <delete dir="${nbdist.dir}/installer_${app.name}_64-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-64bit.msi" />
+    </target>
+    
+    
+    <target name="install-gstreamer" description="Install a copy of GStreamer.">
+        <!-- Make GStreamer available to the installer -->
+        <mkdir dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
+        <copy todir="${inst-path}/${app.name}/${gstreamer-relative-path}" >
+            <fileset dir="${thirdparty.dir}/${gstreamer-relative-path}"/>
+        </copy>
+        
+        <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
+             have it stored in a ZIP file. We'll extract it in place and remove
+             the ZIP file afterward. -->
+        <unzip src="${inst-path}/${app.name}/${gstreamer-relative-path}/lib/gstreamer-1.0/libgstlibav.zip"
+               dest="${inst-path}/${app.name}/${gstreamer-relative-path}/lib/gstreamer-1.0/"/>
+	<delete file="${inst-path}/${app.name}/${gstreamer-relative-path}/lib/gstreamer-1.0/libgstlibav.zip" />
+        
+        <!-- GStreamer needs special path info to be set -->
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]${app.name}\${gstreamer-relative-path}\bin -install_operation CreateUpdate -behavior Append -system_variable"/>
+        </exec>
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]${app.name}\${gstreamer-relative-path}\lib\gstreamer-1.0 -install_operation CreateUpdate -behavior Append -system_variable"/>
+        </exec>
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /NewEnvironment -name PATH -value %GSTREAMER_PATH% -install_operation CreateUpdate -behavior Append -system_variable"/>
+        </exec>
     </target>
    
    
@@ -194,7 +224,7 @@
             </path>
         </foreach>
         
-        <echo message="Removing extra executable..."/>
+        <echo message="Removing extra Autopsy executable..."/>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /DelFile APPDIR\bin\${aut-bin-name-todelete}"/>
         </exec>
