@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,11 +39,14 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.AbstractButton;
+import javax.swing.DefaultListModel;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.table.TableColumn;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.ListModel;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -117,6 +121,14 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         outline.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         caseNameToCaseDataMap = new HashMap<>();
         setColumnWidths();
+        
+        //Disable selection in JList
+        caseSelectionList.setSelectionModel(new DefaultListSelectionModel() {
+            @Override
+            public void setSelectionInterval(int index0, int index1) {
+                super.setSelectionInterval(-1, -1);
+            }
+        });
     }
 
     /**
@@ -237,30 +249,27 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
      * Get the list of cases from the Multi user case browser
      */
     private void populateCasesList(List<CaseNodeData> selectedNodes) {
-        Collection<String> disabledCases = getCases(false);
-        casesPanel.removeAll();
-        casesPanel.revalidate();
-        casesPanel.repaint();
+        caseSelectionList.removeAll();
+        caseSelectionList.revalidate();
+        caseSelectionList.repaint();
         caseNameToCaseDataMap.clear();
-        int casePanelWidth = casesPanel.getPreferredSize().width;
-        int heightOfAllRows = 0;
-        for (CaseNodeData data : selectedNodes) {
-            //select all new cases and cases which were previously selected
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        Collections.sort(selectedNodes, (CaseNodeData o1, CaseNodeData o2) -> {
+            return o1.getName().toLowerCase()
+                    .compareTo(o2.getName().toLowerCase()); 
+        });
+
+        for (int i = 0; i < selectedNodes.size(); i++) {
+            CaseNodeData data = selectedNodes.get(i);
             String multiUserCaseName = data.getName();
+            listModel.addElement(multiUserCaseName);
+            /**
+             * Map out the name to CaseNodeData so we can retrieve it later for
+             * search.
+             */
             caseNameToCaseDataMap.put(multiUserCaseName, data);
-            boolean isSelected = true;
-            if (disabledCases.contains(multiUserCaseName)) {
-                isSelected = false;
-            }
-            JCheckBox caseCheckBox = new JCheckBox(multiUserCaseName, isSelected);
-            caseCheckBox.setBackground(Color.white);
-            if (casePanelWidth < caseCheckBox.getPreferredSize().width) {
-                casePanelWidth = caseCheckBox.getPreferredSize().width;
-            }
-            heightOfAllRows += caseCheckBox.getPreferredSize().height;
-            casesPanel.add(caseCheckBox);
         }
-        casesPanel.setPreferredSize(new Dimension(casePanelWidth, heightOfAllRows));
+        caseSelectionList.setModel(listModel);
     }
 
     @Override
@@ -283,12 +292,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         keywordTextField = new javax.swing.JTextField();
         exactRadioButton = new javax.swing.JRadioButton();
         regexRadioButton = new javax.swing.JRadioButton();
-        casesScrollPane = new javax.swing.JScrollPane();
-        casesPanel = new javax.swing.JPanel();
         casesLabel = new javax.swing.JLabel();
         resultsLabel = new javax.swing.JLabel();
-        uncheckButton = new javax.swing.JButton();
-        checkButton = new javax.swing.JButton();
         toolDescriptionScrollPane = new javax.swing.JScrollPane();
         toolDescriptionTextArea = new javax.swing.JTextArea();
         resultsScrollPane = new javax.swing.JScrollPane();
@@ -299,6 +304,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         resultsCountLabel = new javax.swing.JLabel();
         viewErrorsButton = new javax.swing.JButton();
         pickCasesButton = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        caseSelectionList = new javax.swing.JList<>();
 
         setName(""); // NOI18N
         setOpaque(false);
@@ -335,37 +342,9 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         searchTypeGroup.add(regexRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(regexRadioButton, org.openide.util.NbBundle.getMessage(MultiCaseKeywordSearchPanel.class, "MultiCaseKeywordSearchPanel.regexRadioButton.text_1")); // NOI18N
 
-        casesScrollPane.setPreferredSize(new java.awt.Dimension(174, 281));
-
-        casesPanel.setBackground(new java.awt.Color(255, 255, 255));
-        casesPanel.setPreferredSize(new java.awt.Dimension(152, 197));
-        casesPanel.setLayout(new javax.swing.BoxLayout(casesPanel, javax.swing.BoxLayout.Y_AXIS));
-        casesScrollPane.setViewportView(casesPanel);
-
         org.openide.awt.Mnemonics.setLocalizedText(casesLabel, org.openide.util.NbBundle.getMessage(MultiCaseKeywordSearchPanel.class, "MultiCaseKeywordSearchPanel.casesLabel.text_1")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(resultsLabel, org.openide.util.NbBundle.getMessage(MultiCaseKeywordSearchPanel.class, "MultiCaseKeywordSearchPanel.resultsLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(uncheckButton, org.openide.util.NbBundle.getMessage(MultiCaseKeywordSearchPanel.class, "MultiCaseKeywordSearchPanel.uncheckButton.text")); // NOI18N
-        uncheckButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
-        uncheckButton.setMaximumSize(new java.awt.Dimension(84, 23));
-        uncheckButton.setMinimumSize(new java.awt.Dimension(84, 23));
-        uncheckButton.setPreferredSize(new java.awt.Dimension(84, 23));
-        uncheckButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                uncheckButtonActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(checkButton, org.openide.util.NbBundle.getMessage(MultiCaseKeywordSearchPanel.class, "MultiCaseKeywordSearchPanel.checkButton.text")); // NOI18N
-        checkButton.setMaximumSize(new java.awt.Dimension(84, 23));
-        checkButton.setMinimumSize(new java.awt.Dimension(84, 23));
-        checkButton.setPreferredSize(new java.awt.Dimension(84, 23));
-        checkButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkButtonActionPerformed(evt);
-            }
-        });
 
         toolDescriptionTextArea.setEditable(false);
         toolDescriptionTextArea.setBackground(new java.awt.Color(240, 240, 240));
@@ -423,6 +402,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
             }
         });
 
+        jScrollPane1.setViewportView(caseSelectionList);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -438,22 +419,17 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
                                 .addComponent(substringRadioButton)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(regexRadioButton))
-                            .addComponent(keywordTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 679, Short.MAX_VALUE))
+                            .addComponent(keywordTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 591, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(toolDescriptionScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 295, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(casesLabel)
-                            .addComponent(casesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(pickCasesButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                    .addComponent(uncheckButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(checkButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(pickCasesButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -464,7 +440,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(viewErrorsButton)
-                                    .addComponent(warningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 695, Short.MAX_VALUE))
+                                    .addComponent(warningLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 607, Short.MAX_VALUE))
                                 .addGap(14, 14, 14)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(exportButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -473,12 +449,9 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(layout.createSequentialGroup()
                     .addGap(196, 196, 196)
-                    .addComponent(searchProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 769, Short.MAX_VALUE)
+                    .addComponent(searchProgressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 608, Short.MAX_VALUE)
                     .addGap(108, 108, 108)))
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {checkButton, uncheckButton});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -501,21 +474,18 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
                         .addComponent(resultsCountLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(resultsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(casesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(resultsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(uncheckButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(checkButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(warningLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(pickCasesButton)
+                        .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(viewErrorsButton)
-                        .addComponent(pickCasesButton))
+                    .addComponent(viewErrorsButton)
                     .addComponent(cancelButton))
                 .addContainerGap())
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -536,7 +506,7 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
      */
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         if (null == searchThread) {
-            Collection<String> cases = getCases(true);
+            Collection<String> cases = getCases();
             String searchString = keywordTextField.getText();
             if (cases.isEmpty()) {
                 warningLabel.setText(Bundle.MultiCaseKeywordSearchPanel_warningText_noCases());
@@ -566,21 +536,16 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     }//GEN-LAST:event_searchButtonActionPerformed
 
     /**
-     * Get the cases which match the selected status specified by isSelected.
-     *
-     * @param isSelected true to get selected cases false to get unselected
-     *                   cases
+     * Get the case names from the Case List
      *
      * @return cases the cases that match the selected status of isSelected
      */
-    private Collection<String> getCases(boolean isSelected) {
+    private Collection<String> getCases() {
         Collection<String> cases = new HashSet<>();
-        for (Component comp : casesPanel.getComponents()) {
-            if (comp instanceof JCheckBox) {
-                if (((AbstractButton) comp).isSelected() == isSelected) {
-                    cases.add(((AbstractButton) comp).getText());
-                }
-            }
+        ListModel<String> listModel = caseSelectionList.getModel();
+        for(int i = 0; i < listModel.getSize(); i++) {
+            String caseName = listModel.getElementAt(i);
+            cases.add(caseName);
         }
         return cases;
     }
@@ -636,24 +601,6 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         }
         resultsScrollPane.setPreferredSize(new Dimension(outline.getPreferredSize().width, resultsScrollPane.getPreferredSize().height));
     }
-
-    /**
-     * Un-select all check boxes in the cases list
-     *
-     * @param evt ignored
-     */
-    private void uncheckButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_uncheckButtonActionPerformed
-        allCheckboxesSetSelected(false);
-    }//GEN-LAST:event_uncheckButtonActionPerformed
-
-    /**
-     * Select all check boxes in the cases list
-     *
-     * @param evt ignored
-     */
-    private void checkButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkButtonActionPerformed
-        allCheckboxesSetSelected(true);
-    }//GEN-LAST:event_checkButtonActionPerformed
 
     /**
      * Cancel the current multi-case search which is being performed.
@@ -718,10 +665,10 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     }//GEN-LAST:event_viewErrorsButtonActionPerformed
 
     private void pickCasesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pickCasesButtonActionPerformed
+        caseSelectionDialog.setVisible(true);
         if (currentConfirmedSelections != null) {
             caseSelectionDialog.setNodeSelections(currentConfirmedSelections);
         }
-        caseSelectionDialog.setVisible(true);
         
     }//GEN-LAST:event_pickCasesButtonActionPerformed
 
@@ -812,20 +759,6 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     }
 
     /**
-     * Set the selected status of all checkboxes.
-     *
-     * @param selected true if all checkboxes should be selected, false if no
-     *                 check boxes should be selected.
-     */
-    private void allCheckboxesSetSelected(boolean selected) {
-        for (Component comp : casesPanel.getComponents()) {
-            if (comp instanceof JCheckBox) {
-                ((AbstractButton) comp).setSelected(selected);
-            }
-        }
-    }
-
-    /**
      * Ask the user if they want to continue their search while this window is
      * closed. Cancels the current search if they select no.
      */
@@ -849,12 +782,11 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton;
+    private javax.swing.JList<String> caseSelectionList;
     private javax.swing.JLabel casesLabel;
-    private javax.swing.JPanel casesPanel;
-    private javax.swing.JScrollPane casesScrollPane;
-    private javax.swing.JButton checkButton;
     private javax.swing.JRadioButton exactRadioButton;
     private javax.swing.JButton exportButton;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTextField keywordTextField;
     private javax.swing.JButton pickCasesButton;
     private javax.swing.JRadioButton regexRadioButton;
@@ -867,7 +799,6 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
     private javax.swing.JRadioButton substringRadioButton;
     private javax.swing.JScrollPane toolDescriptionScrollPane;
     private javax.swing.JTextArea toolDescriptionTextArea;
-    private javax.swing.JButton uncheckButton;
     private javax.swing.JButton viewErrorsButton;
     private javax.swing.JLabel warningLabel;
     // End of variables declaration//GEN-END:variables
