@@ -24,6 +24,8 @@ import java.util.logging.Level;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +43,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.FileSystem;
@@ -63,6 +66,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     private static final Logger logger = Logger.getLogger(CreatePortableCaseModule.class.getName());
     private static final String FILE_FOLDER_NAME = "PortableCaseFiles";
     private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";
+    private static final String MAX_ID_TABLE_NAME = "portable_case_max_ids";
     private CreatePortableCasePanel configPanel;
     
     // These are the types for the exported file subfolders
@@ -290,6 +294,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         "CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case",
         "# {0} - folder",
         "CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}",
+        "CreatePortableCaseModule.createCase.errorStoringMaxIds=Error storing maximum database IDs",
     })
     private void createCase(File outputDir, ReportProgressPanel progressPanel) {
 
@@ -309,6 +314,15 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         } catch (TskCoreException ex) {
             handleError("Error creating case " + caseName + " in folder " + caseFolder.toString(),
                 Bundle.CreatePortableCaseModule_createCase_errorCreatingCase(), ex, progressPanel);  
+            return;
+        }
+        
+        // Store the highest IDs
+        try {
+            saveHighestIds();
+        } catch (TskCoreException ex) {
+            handleError("Error storing maximum database IDs",
+                Bundle.CreatePortableCaseModule_createCase_errorStoringMaxIds(), ex, progressPanel);  
             return;
         }
         
@@ -336,6 +350,26 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             return;
         }
                 
+    }
+    
+    /**
+     * Save the current highest IDs to the portable case.
+     * 
+     * @throws TskCoreException 
+     */
+    private void saveHighestIds() throws TskCoreException {
+        
+        CaseDbAccessManager currentCaseDbManager = currentCase.getSleuthkitCase().getCaseDbAccessManager();
+        
+        String tableSchema = "( table_name TEXT PRIMARY KEY, "
+                            + " max_id TEXT)";
+        
+        portableSkCase.getCaseDbAccessManager().createTable(MAX_ID_TABLE_NAME, tableSchema);
+
+        currentCaseDbManager.select("max(obj_id) as max_id from tsk_objects", new StoreMaxIdCallback("tsk_objects"));
+        currentCaseDbManager.select("max(tag_id) as max_id from content_tags", new StoreMaxIdCallback("content_tags"));
+        currentCaseDbManager.select("max(tag_id) as max_id from blackboard_artifact_tags", new StoreMaxIdCallback("blackboard_artifact_tags")); 
+        currentCaseDbManager.select("max(examiner_id) as max_id from tsk_examiners", new StoreMaxIdCallback("tsk_examiners")); 
     }
     
     /**
@@ -676,8 +710,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         oldTagNameToNewTagName.clear();
         currentCase = null;
         if (portableSkCase != null) {
-            // We want to close the database connections here but it is currently not possible. JIRA-4736
-            portableSkCase = null;
+            portableSkCase.close();
         }
         caseFolder = null;
         copiedFilesFolder = null;
@@ -689,4 +722,35 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         configPanel = new CreatePortableCasePanel();
         return configPanel;
     }    
+    
+    private class StoreMaxIdCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+
+        private final String tableName;
+        
+        StoreMaxIdCallback(String tableName) {
+            this.tableName = tableName;
+        }
+        
+        @Override
+        public void process(ResultSet rs) {
+
+            try {
+                while (rs.next()) {
+                    try {
+                        Long maxId = rs.getLong("max_id");
+                        String query = " (table_name, max_id) VALUES ('" + tableName + "', '" + maxId + "')";
+                        portableSkCase.getCaseDbAccessManager().insert(MAX_ID_TABLE_NAME, query);
+
+                    } catch (SQLException ex) {
+                        logger.log(Level.WARNING, "Unable to get maximum ID from result set", ex);
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.WARNING, "Unable to save maximum ID from result set", ex);
+                    }
+                    
+                }
+            } catch (SQLException ex) {
+                logger.log(Level.WARNING, "Failed to get maximum ID from result set", ex);
+            }
+        }
+    }
 }
