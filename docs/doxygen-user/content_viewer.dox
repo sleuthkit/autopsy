@@ -10,7 +10,7 @@ When a Result type is selected in the Result Viewer (as opposed to a file), most
 
 \section cv_hex Hex
 
-The Hex tab is nearly always available and shows the contents of the file.
+The Hex Content Viewer is nearly always available and shows you the raw and exact contents of a file.  In this content viewer, the data of the file is represented as hexadecimal values grouped in 2 groups of 8 bytes, followed by one group of 16 ASCII characters which are derived from each pair of hex values (each byte). Non-printable ASCII characters and characters that would take more than one character space are typically represented by a dot (".") in the following ASCII field.
 
 \image html content_viewer_hex.png
 
