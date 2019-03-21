@@ -44,7 +44,6 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -56,6 +55,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -93,16 +93,11 @@ final class ChromeCacheExtractor {
      
     private final Content dataSource;
     private final IngestJobContext context;
-    private final DataSourceIngestModuleProgress progressBar;
     private final IngestServices services = IngestServices.getInstance();
     private Case currentCase;
     private FileManager fileManager;
 
-    // A file table to cache copies of index and data_n files.
     private final Map<String, CacheFileCopy> filesTable = new HashMap<>();
-    
-    // A file table to cache the f_* files.
-    private final Map<String, AbstractFile> externalFilesTable = new HashMap<>();
     
     /**
      * Encapsulates  abstract file for a cache file as well as a temp file copy
@@ -132,14 +127,12 @@ final class ChromeCacheExtractor {
     }
 
     @NbBundle.Messages({
-        "ChromeCacheExtractor.moduleName=ChromeCacheExtractor",
-        "ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}"
+        "ChromeCacheExtractor.moduleName=ChromeCacheExtractor"
     })
-    ChromeCacheExtractor(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar ) { 
+    ChromeCacheExtractor(Content dataSource, IngestJobContext context ) { 
         moduleName = Bundle.ChromeCacheExtractor_moduleName();
         this.dataSource = dataSource;
         this.context = context;
-        this.progressBar = progressBar;
     }
     
     
@@ -178,7 +171,6 @@ final class ChromeCacheExtractor {
     void subInit(String cachePath) throws IngestModuleException {
         
         filesTable.clear();
-        externalFilesTable.clear();
         
         String cacheAbsOutputFolderName = this.getAbsOutputFolderName() + cachePath;
         File outDir = new File(cacheAbsOutputFolderName);
@@ -292,9 +284,6 @@ final class ChromeCacheExtractor {
                     return;
                 }
             }
-            
-            // find all f_* files in a single query.
-            findExternalFiles(cachePath);
 
         } catch (TskCoreException | IngestModuleException ex) {
             String msg = "Failed to find cache files in path " + cachePath; //NON-NLS
@@ -317,10 +306,8 @@ final class ChromeCacheExtractor {
         // Process each address in the table
         for (int i = 0; i <  indexHdr.getTableLen(); i++) {
             CacheAddress addr = new CacheAddress(indexFileROBuffer.getInt() & UINT32_MASK, cachePath);
+            
             if (addr.isInitialized()) {
-                progressBar.progress( NbBundle.getMessage(this.getClass(),
-                                        "ChromeCacheExtractor.progressMsg",
-                                        moduleName, i, indexHdr.getTableLen(), cachePath)  );
                 try {
                     List<DerivedFile> addedFiles = this.getCacheEntry(addr, sourceArtifacts, webCacheArtifacts);
                     derivedFiles.addAll(addedFiles);
@@ -425,10 +412,13 @@ final class ChromeCacheExtractor {
                                 moduleName, 
                                 dataFile.get().getUniquePath()));
                             
-                            webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
-                                        moduleName, dataFile.get().getId()));
+                            long pathID = Util.findID(dataSource, dataFile.get().getUniquePath());
+                            if (pathID != -1) {
+                                webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                                        moduleName, pathID));
+                            }
                             
-                            webCacheArtifacts.add(webCacheArtifact);
+                             webCacheArtifacts.add(webCacheArtifact);
                         }
                         
                         if (isBrotliCompressed) {
@@ -469,10 +459,12 @@ final class ChromeCacheExtractor {
                             webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH,
                                 moduleName, 
                                 derivedFile.getUniquePath()));
-                    
-                            webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
-                                    moduleName, derivedFile.getId()));
-                            
+                            long pathID = Util.findID(dataSource, derivedFile.getUniquePath());
+                            if (pathID != -1) {
+                                webCacheArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID,
+                                        moduleName, pathID));
+                            }
+                
                             webCacheArtifacts.add(webCacheArtifact);
                         }
                         
@@ -493,37 +485,13 @@ final class ChromeCacheExtractor {
      }
     
     /**
-     * Finds all the f_* files in the specified path, and fills them in the 
-     * effFilesTable, so that subsequent searches are fast.
-     * 
-     * @param cachePath path under which to look for.
-     * 
-     * @throws TskCoreException 
-     */
-    private void findExternalFiles(String cachePath) throws TskCoreException {
-        
-        List<AbstractFile> effFiles = fileManager.findFiles(dataSource, "f_%", cachePath); //NON-NLS 
-        for (AbstractFile abstractFile : effFiles ) {
-            this.externalFilesTable.put(cachePath + abstractFile.getName(), abstractFile);
-        }
-    }
-    /**
-     * Finds abstract file for cache file with a specified name.
-     * First checks in the file tables.
+     * Finds abstract file for cache file with a specified name
      * 
      * @param cacheFileName
-     * @return Optional abstract file 
+     * @return Opt
      * @throws TskCoreException 
      */
     Optional<AbstractFile> findCacheFile(String cacheFileName, String cachePath) throws TskCoreException {
-       
-        String fileTableKey = cachePath + cacheFileName;
-        if (cacheFileName.startsWith("f_") && externalFilesTable.containsKey(fileTableKey)) {
-            return Optional.of(externalFilesTable.get(fileTableKey));
-        }
-        if (filesTable.containsKey(fileTableKey)) {
-            return Optional.of(filesTable.get(fileTableKey).getAbstractFile());
-        }
         
         List<AbstractFile> cacheFiles = fileManager.findFiles(dataSource, cacheFileName, cachePath); //NON-NLS
         if (!cacheFiles.isEmpty()) {
@@ -946,11 +914,9 @@ final class ChromeCacheExtractor {
                 return;
             }
             
-            // Don't extract data from external files.
+            cacheFileCopy = getCacheFileCopy(address.getFilename(), address.getCachePath()).get();
             if (!address.isInExternalFile() ) {
                 
-                cacheFileCopy = getCacheFileCopy(address.getFilename(), address.getCachePath()).get();
-
                 this.data = new byte [length];
                 ByteBuffer buf = cacheFileCopy.getByteBuffer();
                 int dataOffset = DATAFILE_HDR_SIZE + address.getStartBlock() * address.getBlockSize();
@@ -986,8 +952,8 @@ final class ChromeCacheExtractor {
                                 i++;
                             }
                         
-                            // http headers are terminated by 0x00 0x00 
-                            if (i == data.length || data[i+1] == 0) {
+                            // hhtp headers are terminated by 0x00 0x00 
+                            if (data[i+1] == 0) {
                                 done = true;
                             }
                         
@@ -999,11 +965,10 @@ final class ChromeCacheExtractor {
                                 httpResponse = headerLine;
                             } else {
                                 int nPos = headerLine.indexOf(':');
-                                if (nPos > 0 ) {
-                                    String key = headerLine.substring(0, nPos);
-                                    String val= headerLine.substring(nPos+1);
-                                    httpHeaders.put(key.toLowerCase(), val);
-                                }
+                                String key = headerLine.substring(0, nPos);
+                                String val= headerLine.substring(nPos+1);
+                
+                                httpHeaders.put(key.toLowerCase(), val);
                             }
                             
                             i++;
