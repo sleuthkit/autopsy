@@ -116,12 +116,7 @@ public final class ExecUtil {
      * @throws IOException       if an I/O error occurs.
      */
     public static int execute(ProcessBuilder processBuilder) throws SecurityException, IOException {
-        return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, new ProcessTerminator() {
-            @Override
-            public boolean shouldTerminateProcess() {
-                return false;
-            }
-        });
+        return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, () -> false);
     }
 
     /**
@@ -231,18 +226,29 @@ public final class ExecUtil {
                 process.destroyForcibly();
             }
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error occurred when attempting to kill process: {0}", ex.getMessage()); // NON-NLS
+            Logger.getLogger(ExecUtil.class.getName()).log(Level.WARNING, "Error occurred when attempting to kill process: {0}", ex.getMessage()); // NON-NLS
         }
     }
 
     /**
      * EVERYTHING FOLLOWING THIS LINE IS DEPRECATED AND SLATED FOR REMOVAL
      */
+    @Deprecated
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
+
+    @Deprecated
     private Process proc = null;
+
+    @Deprecated
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;
+
+    @Deprecated
     private ExecUtil.StreamToStringRedirect outputStringRedirect = null;
+
+    @Deprecated
     private ExecUtil.StreamToWriterRedirect outputWriterRedirect = null;
+
+    @Deprecated
     private int exitValue = -100;
 
     /**
