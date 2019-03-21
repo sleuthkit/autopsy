@@ -240,4 +240,15 @@ public interface IngestModuleFactory {
      * @return A file ingest module instance.
      */
     FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings);
+
+    /**
+     * Should the module created by this facroty be enabled by default. Very
+     * specialized modules or modules that take a very long time should consider
+     * not being enabled by default.
+     *
+     * @return True if this module should be enabled by default.
+     */
+    default boolean isEnabledByDefault() {
+        return true;
+    }
 }
