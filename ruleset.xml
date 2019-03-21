@@ -225,7 +225,7 @@
   <!--<rule ref="rulesets/java/naming.xml/GenericsNaming"/>-->
   <rule ref="rulesets/java/naming.xml/NoPackage"/>
   <rule ref="rulesets/java/naming.xml/MethodWithSameNameAsEnclosingClass"/>
-  <rule ref="rulesets/java/naming.xml/ShortVariable"/>
+  <!--<rule ref="rulesets/java/naming.xml/ShortVariable"/>-->
   <!-- Commented out because clarity trumps brevity, developers can use their own judgement
   <rule ref="rulesets/java/naming.xml/LongVariable"/>  -->
   <rule ref="rulesets/java/naming.xml/ShortMethodName"/>
