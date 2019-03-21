@@ -78,15 +78,14 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private static final String LOG2TIMELINE_EXECUTABLE = "Log2timeline.exe";
     private static final String PSORT_EXECUTABLE = "psort.exe";
 
-    private final Case currentCase = Case.getCurrentCase();
-    private final FileManager fileManager = currentCase.getServices().getFileManager();
-
     private IngestJobContext context;
 
     private File log2TimeLineExecutable;
     private File psortExecutable;
     private Image image;
     private AbstractFile previousFile = null; // cache used when looking up files in Autopsy DB
+    private Case currentCase;
+    private FileManager fileManager;
 
     PlasoIngestModule() {
     }
@@ -98,6 +97,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
+
         log2TimeLineExecutable = locateExecutable(LOG2TIMELINE_EXECUTABLE);
         if (this.log2TimeLineExecutable == null) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_log2timeline_executable_not_found());
@@ -127,6 +127,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
         statusHelper.switchToDeterminate(100);
+        currentCase = Case.getCurrentCase();
+        fileManager = currentCase.getServices().getFileManager();
 
         if (!(dataSource instanceof Image)) {
             logger.log(Level.SEVERE, Bundle.PlasoIngestModule_dataSource_not_an_image());
@@ -268,9 +270,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule_error_posting_artifact=Error Posting Artifact  ",
         "PlasoIngestModule_create_artifacts_cancelled=Cancelled Plaso Artifact Creation "})
     private void createPlasoArtifacts(String plasoDb, DataSourceIngestModuleProgress statusHelper) {
-
-        SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-        Blackboard blackboard = sleuthkitCase.getBlackboard();
+        Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
         String connectionString = "jdbc:sqlite:" + plasoDb; //NON-NLS
         String sqlStatement = "SELECT substr(filename,1) AS  filename, "
                               + "   strftime('%s', datetime) AS 'epoch_date',"
@@ -291,7 +291,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     return;
                 }
 
-                //TODO: Why don't we filter these in the sql?
+                //TODO: Why don't we filter these in the sql? can we disable the parsers/plugins for these events?
                 // lots of bad dates
                 String sourceType = resultSet.getString("sourcetype");
                 if (sourceType.equals("PE Import Time")) {
@@ -338,11 +338,10 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                          */
                         blackboard.postArtifact(bbart, MODULE_NAME);
                     } catch (BlackboardException ex) {
-                        logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
+                        logger.log(Level.SEVERE, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
                     }
-
                 } catch (TskCoreException ex) {
-                    logger.log(Level.INFO, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
+                    logger.log(Level.SEVERE, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
                 }
             }
         } catch (SQLException ex) {
