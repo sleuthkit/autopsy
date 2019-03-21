@@ -159,7 +159,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 L2TStatusProcessor statusReader = new L2TStatusProcessor(log2TimeLineOutpout, statusHelper, moduleOutputPath);
                 new Thread(statusReader, "log2timeline status reader thread").start();
 
-                ExecUtil.execute(log2TimeLine, new DataSourceIngestModuleProcessTerminator(context));
+                ExecUtil.waitForTermination(log2TimeLine, new DataSourceIngestModuleProcessTerminator(context));
                 statusReader.cancel();
             }
 

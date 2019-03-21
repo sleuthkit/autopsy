@@ -158,14 +158,27 @@ public final class ExecUtil {
      */
     public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         Process process = processBuilder.start();
-        return execute(process, timeOut, units, terminator);
+        return waitForTermination(process, timeOut, units, terminator);
     }
 
-    public static int execute(Process process, ProcessTerminator terminator) throws SecurityException, IOException {
-        return ExecUtil.execute(process, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
+    /**
+     * Wait for the given process to finish, using the given ProcessTerminator.
+     *
+     * @param process    The process to wait for.
+     * @param terminator The ProcessTerminator used to determine if the process
+     *                   should be killed.
+     *
+     * @returnthe exit value of the process
+     *
+     * @throws SecurityException if a security manager exists and vetoes any
+     *                           aspect of running the process.
+     * @throws IOException       if an I/o error occurs.
+     */
+    public static int waitForTermination(Process process, ProcessTerminator terminator) throws SecurityException, IOException {
+        return ExecUtil.waitForTermination(process, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
     }
 
-    public static int execute(Process process, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
+    private static int waitForTermination(Process process, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         try {
             do {
                 process.waitFor(timeOut, units);
