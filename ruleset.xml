@@ -94,7 +94,7 @@
   <rule ref="rulesets/java/controversial.xml/UnnecessaryConstructor"/>
   -->
   <rule ref="rulesets/java/coupling.xml/CouplingBetweenObjects"/>
-  <rule ref="rulesets/java/coupling.xml/ExcessiveImports"/>
+  <!--<rule ref="rulesets/java/coupling.xml/ExcessiveImports"/>-->
   <rule ref="rulesets/java/coupling.xml/LooseCoupling"/>
   <rule ref="rulesets/java/coupling.xml/LoosePackageCoupling"/>
   <!-- Commented out because we have not enforced this in the past
