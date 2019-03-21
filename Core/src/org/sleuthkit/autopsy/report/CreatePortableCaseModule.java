@@ -708,14 +708,18 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         oldIdToNewContent.clear();
         newIdToContent.clear();
         oldTagNameToNewTagName.clear();
+        oldArtTypeIdToNewArtTypeId.clear();
+        oldAttrTypeIdToNewAttrType.clear();
+        oldArtifactIdToNewArtifact.clear();
+        
         currentCase = null;
         if (portableSkCase != null) {
             portableSkCase.close();
+            portableSkCase = null;
         }
         caseFolder = null;
         copiedFilesFolder = null;
     }
-    
 
     @Override
     public JPanel getConfigurationPanel() {
