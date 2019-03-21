@@ -158,12 +158,14 @@ public final class ExecUtil {
      */
     public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         Process process = processBuilder.start();
-        return waitForTermination(process, timeOut, units, terminator);
+        return waitForTermination(processBuilder.command().get(0), process, timeOut, units, terminator);
     }
 
     /**
      * Wait for the given process to finish, using the given ProcessTerminator.
      *
+     * @param command    The command that was used to start the process. Used
+     *                   only for logging purposes.
      * @param process    The process to wait for.
      * @param terminator The ProcessTerminator used to determine if the process
      *                   should be killed.
@@ -174,11 +176,11 @@ public final class ExecUtil {
      *                           aspect of running the process.
      * @throws IOException       if an I/o error occurs.
      */
-    public static int waitForTermination(Process process, ProcessTerminator terminator) throws SecurityException, IOException {
-        return ExecUtil.waitForTermination(process, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
+    public static int waitForTermination(String command, Process process, ProcessTerminator terminator) throws SecurityException, IOException {
+        return ExecUtil.waitForTermination(command, process, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
     }
 
-    private static int waitForTermination(Process process, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
+    private static int waitForTermination(String command, Process process, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         try {
             do {
                 process.waitFor(timeOut, units);
@@ -187,7 +189,7 @@ public final class ExecUtil {
                     try {
                         process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
                     } catch (InterruptedException exx) {
-                        Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", process.toString()));
+                        Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", command));
                     }
                 }
             } while (process.isAlive());
@@ -198,9 +200,9 @@ public final class ExecUtil {
             try {
                 process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
             } catch (InterruptedException exx) {
-                Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", process.toString()));
+                Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", command));
             }
-            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", process.toString()); // NON-NLS
+            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", command); // NON-NLS
             Thread.currentThread().interrupt();
         }
         return process.exitValue();
