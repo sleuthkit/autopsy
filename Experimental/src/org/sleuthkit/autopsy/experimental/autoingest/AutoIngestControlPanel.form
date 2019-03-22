@@ -57,13 +57,15 @@
                                   <Component id="runningScrollPane" min="-2" pref="1021" max="-2" attributes="0"/>
                                   <Component id="completedScrollPane" min="-2" pref="1021" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Component id="bnCancelJob" linkSize="1" max="32767" attributes="0"/>
-                                  <Component id="bnShowProgress" linkSize="1" max="32767" attributes="0"/>
-                                  <Component id="bnCancelModule" linkSize="1" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="bnShowCaseLog" max="32767" attributes="0"/>
-                                  <Component id="bnReprocessJob" alignment="0" max="32767" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                      <Component id="bnCancelJob" linkSize="1" max="32767" attributes="0"/>
+                                      <Component id="bnShowProgress" linkSize="1" max="32767" attributes="0"/>
+                                      <Component id="bnCancelModule" linkSize="1" alignment="0" max="32767" attributes="0"/>
+                                      <Component id="bnReprocessJob" alignment="0" max="32767" attributes="0"/>
+                                  </Group>
+                                  <Component id="bnShowCaseLog" alignment="1" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
@@ -133,7 +135,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="68" max="-2" attributes="0"/>
                       <Component id="bnReprocessJob" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="35" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="bnShowCaseLog" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">

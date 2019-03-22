@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 @TopComponent.Description(
         preferredID = "CasesDashboardTopComponent",
-        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+        persistenceType = TopComponent.PERSISTENCE_NEVER
 )
 @TopComponent.Registration(
         mode = "dashboard",

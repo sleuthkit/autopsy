@@ -83,7 +83,6 @@ abstract class DeleteCaseAction extends AbstractAction {
             Future<?> future = executor.submit(getTask(nodeData, progress));
             taskCanceller.setFuture(future);
         }
-        // RJCTODO: FIre events, remove case deletion from jobs dashboard
     }
 
     /**

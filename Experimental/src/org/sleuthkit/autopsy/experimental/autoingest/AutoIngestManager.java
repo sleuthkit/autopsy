@@ -3129,12 +3129,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
     }
 
-    enum CaseDeletionResult {
-        FAILED,
-        PARTIALLY_DELETED,
-        FULLY_DELETED
-    }
-
     static final class AutoIngestManagerException extends Exception {
 
         private static final long serialVersionUID = 1L;

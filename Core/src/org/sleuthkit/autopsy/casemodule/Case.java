@@ -1074,11 +1074,10 @@ public class Case {
      *                              during a wait.
      */
     @Beta
-    public static boolean deleteMultiUserCase(CaseNodeData caseNodeData, CaseMetadata metadata,
-            ProgressIndicator progressIndicator, Logger logger) throws InterruptedException {
+    public static boolean deleteMultiUserCase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws InterruptedException {
         boolean errorsOccurred = false;
         try {
-            deleteCaseDatabase(caseNodeData, metadata, progressIndicator, logger);
+            deleteCaseDatabase(caseNodeData, metadata, progressIndicator);
         } catch (UserPreferencesException | ClassNotFoundException | SQLException ex) {
             errorsOccurred = true;
             logger.log(Level.WARNING, String.format("Failed to delete the case database for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
@@ -1132,7 +1131,7 @@ public class Case {
     @Messages({
         "Case.progressMessage.deletingCaseDatabase=Deleting case database..."
     })
-    private static void deleteCaseDatabase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws UserPreferencesException, ClassNotFoundException, SQLException, InterruptedException {
+    private static void deleteCaseDatabase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator) throws UserPreferencesException, ClassNotFoundException, SQLException, InterruptedException {
         if (!caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.CASE_DB)) {
             progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDatabase());
             logger.log(Level.INFO, String.format("Deleting case database for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()));
