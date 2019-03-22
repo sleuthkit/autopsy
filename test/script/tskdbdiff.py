@@ -74,16 +74,16 @@ class TskDbDiff(object):
         """
 
         self._init_diff()
-
+        id_obj_path_table = -1
         # generate the gold database dumps if necessary     
         if self._generate_gold_dump:       
-            TskDbDiff._dump_output_db_nonbb(self.gold_db_file, self.gold_dump, self.isMultiUser, self.pgSettings)     
+            id_obj_path_table = TskDbDiff._dump_output_db_nonbb(self.gold_db_file, self.gold_dump, self.isMultiUser, self.pgSettings)     
         if self._generate_gold_bb_dump:        
-            TskDbDiff._dump_output_db_bb(self.gold_db_file, self.gold_bb_dump, self.isMultiUser, self.pgSettings)
+            TskDbDiff._dump_output_db_bb(self.gold_db_file, self.gold_bb_dump, self.isMultiUser, self.pgSettings, id_obj_path_table)
 
         # generate the output database dumps (both DB and BB)
-        TskDbDiff._dump_output_db_nonbb(self.output_db_file, self._dump, self.isMultiUser, self.pgSettings)
-        TskDbDiff._dump_output_db_bb(self.output_db_file, self._bb_dump, self.isMultiUser, self.pgSettings)
+        id_obj_path_table = TskDbDiff._dump_output_db_nonbb(self.output_db_file, self._dump, self.isMultiUser, self.pgSettings)
+        TskDbDiff._dump_output_db_bb(self.output_db_file, self._bb_dump, self.isMultiUser, self.pgSettings, id_obj_path_table)
 
         # Compare non-BB
         dump_diff_pass = self._diff(self._dump, self.gold_dump, self._dump_diff)
@@ -172,7 +172,7 @@ class TskDbDiff(object):
         return False
 
 
-    def _dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings):
+    def _dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings, id_obj_path_table):
         """Dumps sorted text results to the given output location.
 
         Smart method that deals with a blackboard comparison to avoid issues
@@ -224,9 +224,9 @@ class TskDbDiff(object):
                   
                     # Get attributes for this artifact
                     if isMultiUser:
-                        attribute_cursor.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id = %s ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", [art_id])
+                        attribute_cursor.execute("SELECT blackboard_attributes.source, blackboard_attributes.attribute_type_id, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id = %s ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", [art_id])
                     else:
-                        attribute_cursor.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", [art_id])
+                        attribute_cursor.execute("SELECT blackboard_attributes.source, blackboard_attributes.attribute_type_id, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", [art_id])
                     
                     attributes = attribute_cursor.fetchall()
                 
@@ -255,7 +255,9 @@ class TskDbDiff(object):
                             elif attr["value_type"] == 1:
                                 attr_value_as_string = str(attr["value_int32"])                        
                             elif attr["value_type"] == 2:
-                                attr_value_as_string = str(attr["value_int64"])                        
+                                attr_value_as_string = str(attr["value_int64"])
+                                if attr["attribute_type_id"]  == 36 && id_obj_path_table != -1): #normalize TSK_PATH_IDs from being object id to a path if the obj_id_path_table was generated
+                                    attr_value_as_string = id_obj_path_table[int(attr_value_as_string)]
                             elif attr["value_type"] == 3:
                                 attr_value_as_string = "%20.10f" % float((attr["value_double"])) #use exact format from db schema to avoid python auto format double value to (0E-10) scientific style                       
                             elif attr["value_type"] == 4:
@@ -368,6 +370,7 @@ class TskDbDiff(object):
         # cleanup the backup
         if backup_db_file:
             os.remove(backup_db_file)
+        return id_obj_path_table
 
 
     def dump_output_db(db_file, dump_file, bb_dump_file, isMultiUser, pgSettings):
