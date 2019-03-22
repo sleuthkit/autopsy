@@ -133,6 +133,10 @@ final class ChromeCacheExtractor {
 
     @NbBundle.Messages({
         "ChromeCacheExtractor.moduleName=ChromeCacheExtractor",
+        "# {0} - module name",
+        "# {1} - row number",
+        "# {2} - table length",
+        "# {3} - cache path",
         "ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}"
     })
     ChromeCacheExtractor(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar ) { 
