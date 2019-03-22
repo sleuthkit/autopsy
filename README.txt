@@ -28,7 +28,7 @@ Refer to the KNOWN_ISSUES.txt file for known bugs that could cause investigation
 
 SUPPORT
 
-Built-in help system exist once Autopsy gets started. An QuickStart Quide also comes with the installer.
+Built-in help system exist once Autopsy starts and an QuickStart Quide comes with the installer.
 
 Send any bug reports or feature requests to the sleuthkit-users e-mail list.
     http://www.sleuthkit.org/support.php
