@@ -5,12 +5,12 @@ March 15, 2016
 
 OVERVIEW
 
-Autopsy is a graphical interface to The Sleuth Kit and other open source digital forensics tools. 
-Autopsy 3 was a complete rewrite from Autopsy 2 to make it Java-based.
+Autopsy is a graphical interface to Sleuth Kit and other open source digital forensics tools. 
+Autopsy 3 was a Java-based complete rewrite from Autopsy 2.
 Autopsy 4 improves on Autopsy 3 by supporting collaboration on a single case by multiple users.     
 
-Although Autopsy is designed to be cross-platform (Windows, Linux, MacOSX), the current version is fully functional and fully tested only on Windows. 
-We have run it on XP, Vista, and Windows 7 with no problems. 
+Although Autopsy is designed to be cross-platform (Windows, Linux, MacOSX), the current version is functional and tested only on Windows. 
+We have tested it on XP, Vista, and Windows 7. 
 
 Autopsy 4 is released under the Apache 2.0 license.
 Some libraries Autopsy uses may have different, but similar, open source licenses. 
@@ -19,16 +19,16 @@ Some libraries Autopsy uses may have different, but similar, open source license
 INSTALLATION
 
 For a Windows installation, all Autopsy dependencies are bundled with the installer provided.
-There is no need for manual installation of additional dependencies if the Windows installer is used.
+Manual installation of additional dependencies are not required if the Windows installer is used.
 
-If you want the Japanese localized version, you must have the Japanese language pack (http://support.microsoft.com/kb/972813) installed and the default locale set to JA. (http://windows.microsoft.com/en-us/windows/change-system-locale#1TC=windows-7).
+If the Japanese localized version is required, the [Japanese language pack](http://support.microsoft.com/kb/972813) must be installed and the default locale must be [set to JA](http://windows.microsoft.com/en-us/windows/change-system-locale#1TC=windows-7).
 
 Refer to the KNOWN_ISSUES.txt file for known bugs that could cause investigation problems. 
 
 
 SUPPORT
 
-There is a built-in help system in Autopsy once you get it started.  There is also a QuickStart Guide that comes with the installer.
+Built-in help system exist once Autopsy gets started. An QuickStart Quide also comes with the installer.
 
 Send any bug reports or feature requests to the sleuthkit-users e-mail list.
     http://www.sleuthkit.org/support.php
