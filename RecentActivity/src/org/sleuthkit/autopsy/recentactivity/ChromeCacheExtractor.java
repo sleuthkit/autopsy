@@ -377,40 +377,40 @@ final class ChromeCacheExtractor {
         
         // Get the cache entry and its data segments
         CacheEntry cacheEntry = new CacheEntry(cacheEntryAddress, cacheEntryFile.get() );
+        
         List<CacheData> dataEntries = cacheEntry.getData();
-
-        BlackboardAttribute urlAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
-                                                    moduleName,
-                                                    ((cacheEntry.getKey() != null) ? cacheEntry.getKey() : ""));
-        
-        BlackboardAttribute createTimeAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                                                    moduleName,
-                                                    cacheEntry.getCreationTime());
-        
-        BlackboardAttribute hhtpHeaderAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS,
-                                                    moduleName,
-                                                    cacheEntry.getHTTPHeaders());
-         
-        
         // Only process the first payload data segment in each entry
         //  first data segement has the HTTP headers, 2nd is the payload
+        if (dataEntries.size() < 2) {
+            return derivedFiles;
+        }
         CacheData dataSegment = dataEntries.get(1);
-        
+
+
         // name of the file that was downloaded and cached (or data_X if it was saved into there)
         String cachedFileName = dataSegment.getAddress().getFilename();
         Optional<AbstractFile> cachedFileAbstractFile = this.findCacheFile(cachedFileName, cachePath);
         if (!cachedFileAbstractFile.isPresent()) {
             logger.log(Level.SEVERE, "Error finding file: " + cachePath + "/" + cachedFileName); //NON-NLS
             return derivedFiles;
-        }
-
-        
+        }        
         
         boolean isBrotliCompressed = false;
         if (dataSegment.getType() != CacheDataTypeEnum.HTTP_HEADER && cacheEntry.isBrotliCompressed() ) {
             isBrotliCompressed = true;
         }
 
+        // setup some attributes for later use
+        BlackboardAttribute urlAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL,
+                                                    moduleName,
+                                                    ((cacheEntry.getKey() != null) ? cacheEntry.getKey() : ""));
+        BlackboardAttribute createTimeAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
+                                                    moduleName,
+                                                    cacheEntry.getCreationTime());
+        BlackboardAttribute httpHeaderAttr = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_HEADERS,
+                                                    moduleName,
+                                                    cacheEntry.getHTTPHeaders());
+        
         Collection<BlackboardAttribute> sourceArtifactAttributes = new ArrayList<>();
         sourceArtifactAttributes.add(urlAttr);
         sourceArtifactAttributes.add(createTimeAttr);
@@ -418,9 +418,8 @@ final class ChromeCacheExtractor {
         Collection<BlackboardAttribute> webCacheAttributes = new ArrayList<>();
         webCacheAttributes.add(urlAttr);
         webCacheAttributes.add(createTimeAttr);
-        webCacheAttributes.add(hhtpHeaderAttr);
+        webCacheAttributes.add(httpHeaderAttr);
 
-        
         
         // add artifacts to the f_XXX file
         if (dataSegment.isInExternalFile() )  {
