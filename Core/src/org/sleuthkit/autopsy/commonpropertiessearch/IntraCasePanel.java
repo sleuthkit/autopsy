@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,6 +154,7 @@ public final class IntraCasePanel extends javax.swing.JPanel {
         categoriesLabel.setName(""); // NOI18N
 
         buttonGroup.add(selectedFileCategoriesButton);
+        selectedFileCategoriesButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(selectedFileCategoriesButton, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.selectedFileCategoriesButton.text")); // NOI18N
         selectedFileCategoriesButton.setToolTipText(org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.selectedFileCategoriesButton.toolTipText")); // NOI18N
         selectedFileCategoriesButton.addActionListener(new java.awt.event.ActionListener() {
@@ -164,7 +165,6 @@ public final class IntraCasePanel extends javax.swing.JPanel {
 
         pictureVideoCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(pictureVideoCheckbox, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.pictureVideoCheckbox.text")); // NOI18N
-        pictureVideoCheckbox.setEnabled(false);
         pictureVideoCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pictureVideoCheckboxActionPerformed(evt);
@@ -173,7 +173,6 @@ public final class IntraCasePanel extends javax.swing.JPanel {
 
         documentsCheckbox.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(documentsCheckbox, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.documentsCheckbox.text")); // NOI18N
-        documentsCheckbox.setEnabled(false);
         documentsCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 documentsCheckboxActionPerformed(evt);
@@ -181,7 +180,6 @@ public final class IntraCasePanel extends javax.swing.JPanel {
         });
 
         buttonGroup.add(allFileCategoriesRadioButton);
-        allFileCategoriesRadioButton.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(allFileCategoriesRadioButton, org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.allFileCategoriesRadioButton.text")); // NOI18N
         allFileCategoriesRadioButton.setToolTipText(org.openide.util.NbBundle.getMessage(IntraCasePanel.class, "IntraCasePanel.allFileCategoriesRadioButton.toolTipText")); // NOI18N
         allFileCategoriesRadioButton.addActionListener(new java.awt.event.ActionListener() {

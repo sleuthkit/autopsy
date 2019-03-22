@@ -25,6 +25,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 
@@ -35,8 +36,8 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
  */
 final public class CommonAttributeSearchResultRootNode extends DisplayableItemNode {
 
-    CommonAttributeSearchResultRootNode(CommonAttributeCountSearchResults metadataList) {
-        super(Children.create(new InstanceCountNodeFactory(metadataList), true));
+    CommonAttributeSearchResultRootNode(CommonAttributeCountSearchResults metadataList, CorrelationAttributeInstance.Type type) {
+        super(Children.create(new InstanceCountNodeFactory(metadataList, type), true));
     }
 
     CommonAttributeSearchResultRootNode(CommonAttributeCaseSearchResults metadataList) {
@@ -73,6 +74,7 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
         private static final Logger LOGGER = Logger.getLogger(InstanceCountNodeFactory.class.getName());
 
         private final CommonAttributeCountSearchResults searchResults;
+        private final CorrelationAttributeInstance.Type type;
 
         /**
          * Build a factory which converts a
@@ -81,8 +83,9 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
          *
          * @param searchResults
          */
-        InstanceCountNodeFactory(CommonAttributeCountSearchResults searchResults) {
+        InstanceCountNodeFactory(CommonAttributeCountSearchResults searchResults, CorrelationAttributeInstance.Type type) {
             this.searchResults = searchResults;
+            this.type = type;
         }
 
         @Override
@@ -94,7 +97,7 @@ final public class CommonAttributeSearchResultRootNode extends DisplayableItemNo
         @Override
         protected Node createNodeForKey(Integer instanceCount) {
             CommonAttributeValueList attributeValues = this.searchResults.getAttributeValuesForInstanceCount(instanceCount);
-            return new InstanceCountNode(instanceCount, attributeValues);
+            return new InstanceCountNode(instanceCount, attributeValues, type);
         }
     }
 

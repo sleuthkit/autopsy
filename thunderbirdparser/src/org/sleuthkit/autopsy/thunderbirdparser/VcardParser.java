@@ -164,8 +164,35 @@ final class VcardParser {
         List<AccountFileInstance> accountInstances = new ArrayList<>();
 
         extractPhotos(vcard, abstractFile);
-
-        ThunderbirdMboxFileIngestModule.addArtifactAttribute(vcard.getFormattedName().getValue(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON, attributes);
+       
+        String name = "";
+        if (vcard.getFormattedName() != null) {
+            name = vcard.getFormattedName().getValue();
+        } else {
+            if (vcard.getStructuredName() != null) {
+                // Attempt to put the name together if there was no formatted version
+                for (String prefix:vcard.getStructuredName().getPrefixes()) {
+                    name += prefix + " ";
+                }
+                if (vcard.getStructuredName().getGiven() != null) {
+                    name += vcard.getStructuredName().getGiven() + " ";
+                }
+                if (vcard.getStructuredName().getFamily() != null) {
+                    name += vcard.getStructuredName().getFamily() + " ";
+                }
+                for (String suffix:vcard.getStructuredName().getSuffixes()) {
+                    name += suffix + " ";
+                }
+                if (! vcard.getStructuredName().getAdditionalNames().isEmpty()) {
+                    name += "(";
+                    for (String addName:vcard.getStructuredName().getAdditionalNames()) {
+                        name += addName + " ";
+                    }
+                    name += ")";
+                }
+            }
+        }
+        ThunderbirdMboxFileIngestModule.addArtifactAttribute(name, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON, attributes);
 
         for (Telephone telephone : vcard.getTelephoneNumbers()) {
             addPhoneAttributes(telephone, abstractFile, attributes);
