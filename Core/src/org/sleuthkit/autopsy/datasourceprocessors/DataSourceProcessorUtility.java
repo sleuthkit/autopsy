@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.datasourceprocessors;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -25,13 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.openide.util.Lookup;
-import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 
 /**
  * A utility class to find Data Source Processors
  */
-class DataSourceProcessorUtility {
+public class DataSourceProcessorUtility {
 
     private DataSourceProcessorUtility() {
     }
@@ -47,7 +46,7 @@ class DataSourceProcessorUtility {
      * @throws
      * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
      */
-    static Map<AutoIngestDataSourceProcessor, Integer> getDataSourceProcessorForFile(Path dataSourcePath, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
+    public static Map<AutoIngestDataSourceProcessor, Integer> getDataSourceProcessorForFile(Path dataSourcePath, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
         Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = new HashMap<>();
         for (AutoIngestDataSourceProcessor processor : processorCandidates) {
             int confidence = processor.canProcess(dataSourcePath);
@@ -74,7 +73,7 @@ class DataSourceProcessorUtility {
      * @throws
      * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
      */
-    static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+    public static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
         // lookup all AutomatedIngestDataSourceProcessors 
         Collection<? extends AutoIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutoIngestDataSourceProcessor.class);
         return getOrderedListOfDataSourceProcessors(dataSourcePath, processorCandidates);
@@ -96,7 +95,7 @@ class DataSourceProcessorUtility {
      * @throws
      * org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException
      */
-    static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
+    public static List<AutoIngestDataSourceProcessor> getOrderedListOfDataSourceProcessors(Path dataSourcePath, Collection<? extends AutoIngestDataSourceProcessor> processorCandidates) throws AutoIngestDataSourceProcessorException {
         Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = getDataSourceProcessorForFile(dataSourcePath, processorCandidates);
         return orderDataSourceProcessorsByConfidence(validDataSourceProcessorsMap);
     }   
@@ -110,7 +109,7 @@ class DataSourceProcessorUtility {
      * the data source along with their confidence score
      * @return Ordered list of data source processors
      */
-    static List<AutoIngestDataSourceProcessor> orderDataSourceProcessorsByConfidence(Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap) {
+    public static List<AutoIngestDataSourceProcessor> orderDataSourceProcessorsByConfidence(Map<AutoIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap) {
         List<AutoIngestDataSourceProcessor> validDataSourceProcessors = validDataSourceProcessorsMap.entrySet().stream()
                 .sorted(Map.Entry.<AutoIngestDataSourceProcessor, Integer>comparingByValue().reversed())
                 .map(Map.Entry::getKey)
