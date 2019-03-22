@@ -78,7 +78,7 @@ final class MultiUserCaseNode extends AbstractNode {
                     sheetSet.put(new NodeProperty<>(propName, propName, propName, caseNodeData.getLastAccessDate()));
                     break;
                 case MANIFEST_FILE_ZNODES_DELETE_STATUS:
-                    sheetSet.put(new NodeProperty<>(propName, propName, propName, isDeleted(DeletedFlags.MANIFEST_FILE_LOCK_NODES)));
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, isDeleted(DeletedFlags.MANIFEST_FILE_NODES)));
                     break;
                 case DATA_SOURCES_DELETE_STATUS:
                     sheetSet.put(new NodeProperty<>(propName, propName, propName, isDeleted(DeletedFlags.DATA_SOURCES)));

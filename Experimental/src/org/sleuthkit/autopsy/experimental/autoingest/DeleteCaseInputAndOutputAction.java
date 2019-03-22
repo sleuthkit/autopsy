@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.event.ActionEvent;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.DeleteCaseTask.DeleteOptions;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
@@ -46,9 +49,19 @@ final class DeleteCaseInputAndOutputAction extends DeleteCaseAction {
         super(Bundle.DeleteCaseInputAndOutputAction_menuItemText(), Bundle.DeleteCaseInputAndOutputAction_progressDisplayName(), Bundle.DeleteCaseInputAndOutputAction_taskName());
     }
 
+    @NbBundle.Messages({
+        "DeleteCaseInputAndOutputAction.confirmationText=Are you sure you want to delete the following for the case(s):\n-Manifest files\n-Data sources\n-Input directories (if empty)\n-Manifest file znodes\n-Case database\n-Core.properties file\n-Case directory\n-Case znodes"
+    })
+    @Override
+    public void actionPerformed(ActionEvent event) {
+        if (MessageNotifyUtil.Message.confirm(Bundle.DeleteCaseInputAndOutputAction_confirmationText())) {
+            super.actionPerformed(event);
+        }
+    }     
+    
     @Override
     DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
-        return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_OUTPUT, progress);
+        return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_ALL, progress);
     }
 
     @Override

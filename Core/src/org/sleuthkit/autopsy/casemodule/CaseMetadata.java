@@ -95,13 +95,13 @@ public final class CaseMetadata {
     private final static String EXAMINER_ELEMENT_PHONE = "ExaminerPhone"; //NON-NLS  
     private final static String EXAMINER_ELEMENT_EMAIL = "ExaminerEmail"; //NON-NLS
     private final static String CASE_ELEMENT_NOTES = "CaseNotes"; //NON-NLS
-    
+
     /*
      * Fields from schema version 5
      */
     private static final String SCHEMA_VERSION_FIVE = "5.0";
     private final static String ORIGINAL_CASE_ELEMENT_NAME = "OriginalCase"; //NON-NLS  
-    
+
     /*
      * Unread fields, regenerated on save.
      */
@@ -138,16 +138,39 @@ public final class CaseMetadata {
     public static DateFormat getDateFormat() {
         return new SimpleDateFormat(DATE_FORMAT_STRING, Locale.US);
     }
+
+    /**
+     * Locate the case meta data file in the supplied directory. If the file
+     * does not exist, null is returned.
+     *
+     * @param directoryPath Directory path to search
+     *
+     * @return case meta data file path or null
+     */
+    // RJCTODO: Perhaps this should return a CaseMetadata object
+    // RJCTODO: It should say get...path
+    public static Path getCaseMetadataFile(Path directoryPath) {
+        final File[] files = directoryPath.toFile().listFiles();
+        if (files != null) {
+            for (File file : files) {
+                final String fileName = file.getName().toLowerCase();
+                if (fileName.endsWith(CaseMetadata.getFileExtension()) && file.isFile()) {
+                    return file.toPath();
+                }
+            }
+        }
+        return null;
+    }    
     
     /**
      * Constructs a CaseMetadata object for a new case. The metadata is not
      * persisted to the case metadata file until writeFile or a setX method is
      * called.
      *
-     * @param caseType        The type of case.
-     * @param caseDirectory   The case directory.
-     * @param caseName        The immutable name of the case.
-     * @param caseDetails     The details for the case
+     * @param caseType      The type of case.
+     * @param caseDirectory The case directory.
+     * @param caseName      The immutable name of the case.
+     * @param caseDetails   The details for the case
      */
     CaseMetadata(Case.CaseType caseType, String caseDirectory, String caseName, CaseDetails caseDetails) {
         this(caseType, caseDirectory, caseName, caseDetails, null);
@@ -158,11 +181,11 @@ public final class CaseMetadata {
      * persisted to the case metadata file until writeFile or a setX method is
      * called.
      *
-     * @param caseType        The type of case.
-     * @param caseDirectory   The case directory.
-     * @param caseName        The immutable name of the case.
-     * @param caseDetails     The details for the case
-     * @param originalMetadata  The metadata object from the original case
+     * @param caseType         The type of case.
+     * @param caseDirectory    The case directory.
+     * @param caseName         The immutable name of the case.
+     * @param caseDetails      The details for the case
+     * @param originalMetadata The metadata object from the original case
      */
     CaseMetadata(Case.CaseType caseType, String caseDirectory, String caseName, CaseDetails caseDetails, CaseMetadata originalMetadata) {
         metadataFilePath = Paths.get(caseDirectory, caseDetails.getCaseDisplayName() + FILE_EXTENSION);
@@ -189,27 +212,6 @@ public final class CaseMetadata {
     public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
         this.metadataFilePath = metadataFilePath;
         readFromFile();
-    }
-    
-    /**
-     * Locate the case meta data file in the supplied directory. If the file does 
-     * not exist, null is returned.
-     * 
-     * @param directoryPath Directory path to search
-     * @return case meta data file path or null
-     */
-    public static Path getCaseMetadataFile(Path directoryPath) {
-        final File[] caseFiles = directoryPath.toFile().listFiles();
-        if(caseFiles != null) {
-            for (File file : caseFiles) {
-                final String fileName = file.getName().toLowerCase();
-                if (fileName.endsWith(CaseMetadata.getFileExtension())) {
-                    return file.toPath();
-                }
-            }
-        }
-        
-        return null;
     }
 
     /**
@@ -460,7 +462,7 @@ public final class CaseMetadata {
          * Create the children of the case element.
          */
         createCaseElements(doc, caseElement, this);
-        
+
         /*
          * Add original case element
          */
@@ -472,15 +474,15 @@ public final class CaseMetadata {
             originalCaseElement.appendChild(originalCaseDetailsElement);
             createCaseElements(doc, originalCaseDetailsElement, originalMetadata);
         }
-        
+
     }
-    
+
     /**
      * Write the case element children for the given metadata object
-     * 
-     * @param doc              The document.
-     * @param caseElement      The case element parent
-     * @param metadataToWrite  The CaseMetadata object to read from
+     *
+     * @param doc             The document.
+     * @param caseElement     The case element parent
+     * @param metadataToWrite The CaseMetadata object to read from
      */
     private void createCaseElements(Document doc, Element caseElement, CaseMetadata metadataToWrite) {
         CaseDetails caseDetailsToWrite = metadataToWrite.caseDetails;
@@ -572,8 +574,8 @@ public final class CaseMetadata {
                 examinerEmail = getElementTextContent(caseElement, EXAMINER_ELEMENT_EMAIL, false);
                 caseNotes = getElementTextContent(caseElement, CASE_ELEMENT_NOTES, false);
             }
-            
-            this.caseDetails = new CaseDetails(caseDisplayName, caseNumber, examinerName, examinerPhone, examinerEmail, 
+
+            this.caseDetails = new CaseDetails(caseDisplayName, caseNumber, examinerName, examinerPhone, examinerEmail,
                     caseNotes);
             this.caseType = Case.CaseType.fromString(getElementTextContent(caseElement, CASE_TYPE_ELEMENT_NAME, true));
             if (null == this.caseType) {

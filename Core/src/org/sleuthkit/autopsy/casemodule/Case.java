@@ -81,6 +81,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseCoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
@@ -140,8 +141,7 @@ public class Case {
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
-    private static final String RESOURCES_LOCK_SUFFIX = "_resources"; //NON-NLS
-    private static final String AUTO_INGEST_LOG_FILE_NAME = "auto_ingest_log.txt";
+    private static final String NO_NODE_ERROR_MSG_FRAGMENT = "KeeperErrorCode = NoNode";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
@@ -1022,13 +1022,16 @@ public class Case {
 
             try {
                 deleteCaseResourcesLockNode(caseNodeData, progressIndicator);
-            } catch (CoordinationServiceException | InterruptedException ex) {
-                errorsOccurred = true;
+            } catch (CoordinationServiceException ex) {
+                if (!isNoNodeException(ex)) {
+                    errorsOccurred = true;
+                    logger.log(Level.WARNING, String.format("Error deleting the case resources lock coordination service node for the case at %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
+                }
+            } catch (InterruptedException ex) {
                 logger.log(Level.WARNING, String.format("Error deleting the case resources lock coordination service node for the case at %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
-            } 
+            }
 
             // RJCTODO: Is this behavior implemented correctly?
-            
         } catch (CoordinationServiceException ex) {
             logger.log(Level.SEVERE, String.format("Error exclusively locking the case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
             throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
@@ -1071,7 +1074,8 @@ public class Case {
      *                              during a wait.
      */
     @Beta
-    public static boolean deleteMultiUserCase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws InterruptedException {
+    public static boolean deleteMultiUserCase(CaseNodeData caseNodeData, CaseMetadata metadata,
+            ProgressIndicator progressIndicator, Logger logger) throws InterruptedException {
         boolean errorsOccurred = false;
         try {
             deleteCaseDatabase(caseNodeData, metadata, progressIndicator, logger);
@@ -1201,9 +1205,6 @@ public class Case {
         "Case.progressMessage.deletingCaseDirectory=Deleting case directory..."
     })
     private static void deleteCaseDirectory(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
-        // RJCTODO: Update FileUtil.deleteDir to use robocopy on Windows
-        // when the path is >= 255 chars. Actually, deprecate this method and 
-        // replace it with one that throws instead of returning a boolean value.
         progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDirectory());
         logger.log(Level.INFO, String.format("Deleting case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
         if (!FileUtil.deleteDir(new File(metadata.getCaseDirectory()))) {
@@ -1273,7 +1274,7 @@ public class Case {
     @Beta
     public static void deleteCaseResourcesLockNode(CaseNodeData caseNodeData, ProgressIndicator progressIndicator) throws CoordinationServiceException, InterruptedException {
         progressIndicator.progress(Bundle.Case_progressMessage_deletingResourcesLockNode());
-        String resourcesLockNodePath = caseNodeData.getDirectory().toString() + RESOURCES_LOCK_SUFFIX;//RJCTODO: Use utility
+        String resourcesLockNodePath = CaseCoordinationServiceUtils.getCaseResourcesLockName(caseNodeData.getDirectory());
         CoordinationService coordinationService = CoordinationService.getInstance();
         coordinationService.deleteNode(CategoryNode.CASES, resourcesLockNodePath);
     }
@@ -1304,6 +1305,24 @@ public class Case {
         String caseDirectoryLockNodePath = caseNodeData.getDirectory().toString();
         CoordinationService coordinationService = CoordinationService.getInstance();
         coordinationService.deleteNode(CategoryNode.CASES, caseDirectoryLockNodePath);
+    }
+
+    /**
+     * Examines a coordination service exception to try to determine if it is a
+     * no node exception.
+     *
+     * @param ex A coordination service exception.
+     *
+     * @return True or false.
+     */
+    private static boolean isNoNodeException(CoordinationServiceException ex) {
+        boolean isNodeNodeEx = false;
+        Throwable cause = ex.getCause();
+        if (cause != null) {
+            String causeMessage = cause.getMessage();
+            isNodeNodeEx = causeMessage.contains(NO_NODE_ERROR_MSG_FRAGMENT);
+        }
+        return isNodeNodeEx;
     }
 
     /**
@@ -1342,7 +1361,8 @@ public class Case {
     })
     private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseDir) throws CaseActionException {
         try {
-            String resourcesNodeName = caseDir + RESOURCES_LOCK_SUFFIX;
+            Path caseDirPath = Paths.get(caseDir);
+            String resourcesNodeName = CaseCoordinationServiceUtils.getCaseResourcesLockName(caseDirPath);
             Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, RESOURCES_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             return lock;
         } catch (InterruptedException ex) {

@@ -32,6 +32,8 @@ Case.exceptionMessage.couldNotSaveCaseMetadata=Failed to save case metadata:\n{0
 Case.exceptionMessage.couldNotSaveDbNameToMetadataFile=Failed to save case database name to case metadata file:\n{0}.
 # {0} - exception message
 Case.exceptionMessage.couldNotUpdateCaseNodeData=Failed to update coordination service node data:\n{0}.
+# {0} - case display name
+Case.exceptionMessage.deletionInterrupted=Deletion of the case {0} was cancelled.
 Case.exceptionMessage.emptyCaseDir=Must specify a case directory path.
 Case.exceptionMessage.emptyCaseName=Must specify a case name.
 Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the log for details.

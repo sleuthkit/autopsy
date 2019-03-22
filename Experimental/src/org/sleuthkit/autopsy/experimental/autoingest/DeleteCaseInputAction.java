@@ -18,9 +18,11 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.event.ActionEvent;
 import java.util.concurrent.ExecutorService;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.DeleteCaseTask.DeleteOptions;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
@@ -46,17 +48,27 @@ final class DeleteCaseInputAction extends DeleteCaseAction {
     @NbBundle.Messages({
         "DeleteCaseInputAction.menuItemText=Delete Input",
         "DeleteCaseInputAction.progressDisplayName=Delete Input",
-        "DeleteCaseInputAction.taskName=input"        
+        "DeleteCaseInputAction.taskName=input"
     })
     DeleteCaseInputAction() {
         super(Bundle.DeleteCaseInputAction_menuItemText(), Bundle.DeleteCaseInputAction_progressDisplayName(), Bundle.DeleteCaseInputAction_taskName());
+    }
+
+    @NbBundle.Messages({
+        "DeleteCaseInputAction.confirmationText=Are you sure you want to delete the following for the case(s):\n-Manifest files\n-Data sources\n-Input directories (if empty)"
+    })
+    @Override
+    public void actionPerformed(ActionEvent event) {
+        if (MessageNotifyUtil.Message.confirm(Bundle.DeleteCaseInputAction_confirmationText())) {
+            super.actionPerformed(event);
+        }
     }
 
     @Override
     DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
         return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_INPUT, progress);
     }
-    
+
     @Override
     public DeleteCaseInputAction clone() throws CloneNotSupportedException {
         super.clone();

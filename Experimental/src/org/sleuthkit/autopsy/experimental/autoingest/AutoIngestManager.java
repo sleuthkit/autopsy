@@ -1211,6 +1211,18 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                  */
                 try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString(), INPUT_SCAN_LOCKING_TIMEOUT_MINS, TimeUnit.MINUTES)) {
                     if (null != manifestLock) {
+
+                        /*
+                         * Now that the lock has been acquired, make sure the
+                         * manifest is still here. This is a way to resolve the
+                         * race condition between this task and case deletion
+                         * tasks without resorting to a protocol using locking
+                         * of the input directory.
+                         */
+                        if (!filePath.toFile().exists()) {
+                            return CONTINUE;
+                        }
+
                         byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString());
                         if (null != rawData && rawData.length > 0) {
                             AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(rawData);
