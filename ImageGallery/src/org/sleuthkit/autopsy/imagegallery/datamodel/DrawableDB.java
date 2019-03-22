@@ -1141,44 +1141,67 @@ public final class DrawableDB {
     }
 
     /**
-     * Record in the DB that the group with the given key has the given seen
-     * state for the given examiner id.
+     * Record in the DB that the group with the given key is seen
+     * by given examiner id.
      *
-     * @param groupKey
-     * @param seen
-     * @param examinerID
+     * @param groupKey key identifying the group.
+     * @param examinerID examiner id.
      *
      * @throws TskCoreException
      */
-    public void markGroupSeen(GroupKey<?> groupKey, boolean seen, long examinerID) throws TskCoreException {
+    public void markGroupSeen(GroupKey<?> groupKey, long examinerID) throws TskCoreException {
 
         /*
          * Check the groupSeenCache to see if the seen status for this group was set recently.
-         * If recently set to the same value, there's no need to update it
+         * If recently set to seen, there's no need to update it
          */
         Boolean cachedValue = groupSeenCache.getIfPresent(groupKey);
-        if (cachedValue != null && cachedValue == seen) {
+        if (cachedValue != null && cachedValue == true) {
             return;
         }
         
         // query to find the group id from attribute/value
-        String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME
-                + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )",
+        String innerQuery = String.format("( SELECT group_id FROM " + GROUPS_TABLENAME  //NON-NLS
+                + " WHERE attribute = \'%s\' AND value = \'%s\' and data_source_obj_id = %d )", //NON-NLS
                 SleuthkitCase.escapeSingleQuotes(groupKey.getAttribute().attrName.toString()),
                 SleuthkitCase.escapeSingleQuotes(groupKey.getValueDisplayName()),
                 groupKey.getAttribute() == DrawableAttribute.PATH ? groupKey.getDataSourceObjId() : 0);
 
-        String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, seen ? 1 : 0);
+        String insertSQL = String.format(" (group_id, examiner_id, seen) VALUES (%s, %d, %d)", innerQuery, examinerID, 1); //NON-NLS
         if (DbType.POSTGRESQL == tskCase.getDatabaseType()) {
-            insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", seen ? 1 : 0);
+            insertSQL += String.format(" ON CONFLICT (group_id, examiner_id) DO UPDATE SET seen = %d", 1); //NON-NLS
         }
 
         tskCase.getCaseDbAccessManager().insertOrUpdate(GROUPS_SEEN_TABLENAME, insertSQL);
 
-        groupSeenCache.put(groupKey, seen);
-        
+        groupSeenCache.put(groupKey, true);
     }
 
+    /**
+     * Record in the DB that given group is unseen.
+     * The group is marked unseen for ALL examiners that have seen the group.
+     *
+     * @param groupKey key identifying the group.
+     *
+     * @throws TskCoreException
+     */
+    public void markGroupUnseen(GroupKey<?> groupKey) throws TskCoreException {
+
+        /*
+         * Check the groupSeenCache to see if the seen status for this group was set recently.
+         * If recently set to unseen, there's no need to update it
+         */
+        Boolean cachedValue = groupSeenCache.getIfPresent(groupKey);
+        if (cachedValue != null && cachedValue == false) {
+            return;
+        }
+        
+        String updateSQL = String.format(" SET seen = 0 WHERE group_id in ( " + getGroupIdQuery(groupKey) + ")" ); //NON-NLS
+        tskCase.getCaseDbAccessManager().update(GROUPS_SEEN_TABLENAME, updateSQL);
+      
+        groupSeenCache.put(groupKey, false);
+    }
+    
     /**
      * Sets the isAnalysed flag in the groups table for the given group to true.
      *
