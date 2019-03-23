@@ -230,6 +230,20 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             return;
         }
                 
+        // Set up tracking to support any custom artifact or attribute types
+        for (BlackboardArtifact.ARTIFACT_TYPE type:BlackboardArtifact.ARTIFACT_TYPE.values()) {
+            oldArtTypeIdToNewArtTypeId.put(type.getTypeID(), type.getTypeID());
+        }
+        for (BlackboardAttribute.ATTRIBUTE_TYPE type:BlackboardAttribute.ATTRIBUTE_TYPE.values()) {
+            try {
+                oldAttrTypeIdToNewAttrType.put(type.getTypeID(), portableSkCase.getAttributeType(type.getLabel()));
+            } catch (TskCoreException ex) {
+                handleError("Error looking up attribute name " + type.getLabel(),
+                        Bundle.CreatePortableCaseModule_generateReport_errorLookingUpAttrType(type.getLabel()),
+                        ex, progressPanel);
+            }
+        }        
+        
         // Copy the tagged files
         try {
             for(TagName tagName:tagNames) {
@@ -244,20 +258,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             handleError("Error copying tagged files", Bundle.CreatePortableCaseModule_generateReport_errorCopyingFiles(), ex, progressPanel);
             return;
         } 
-        
-        // Set up tracking to support any custom artifact or attribute types
-        for (BlackboardArtifact.ARTIFACT_TYPE type:BlackboardArtifact.ARTIFACT_TYPE.values()) {
-            oldArtTypeIdToNewArtTypeId.put(type.getTypeID(), type.getTypeID());
-        }
-        for (BlackboardAttribute.ATTRIBUTE_TYPE type:BlackboardAttribute.ATTRIBUTE_TYPE.values()) {
-            try {
-                oldAttrTypeIdToNewAttrType.put(type.getTypeID(), portableSkCase.getAttributeType(type.getLabel()));
-            } catch (TskCoreException ex) {
-                handleError("Error looking up attribute name " + type.getLabel(),
-                        Bundle.CreatePortableCaseModule_generateReport_errorLookingUpAttrType(type.getLabel()),
-                        ex, progressPanel);
-            }
-        }
         
         // Copy the tagged artifacts and associated files
         try {
@@ -577,17 +577,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     })    
     private long copyContentToPortableCase(Content content, ReportProgressPanel progressPanel) throws TskCoreException {
         progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_copyContentToPortableCase_copyingFile(content.getUniquePath()));
-
-        long newFileId;
-        CaseDbTransaction trans = portableSkCase.beginTransaction();
-        try {
-            newFileId = copyContent(content, trans);
-            trans.commit();
-            return newFileId;
-        } catch (TskCoreException ex) {
-            trans.rollback();
-            throw(ex);
-        }
+        return copyContent(content);
     }
     
     /**
@@ -600,7 +590,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
      * 
      * @throws TskCoreException 
      */
-    private long copyContent(Content content, CaseDbTransaction trans) throws TskCoreException {
+    private long copyContent(Content content) throws TskCoreException {
                 
         // Check if we've already copied this content
         if (oldIdToNewContent.containsKey(content.getId())) {
@@ -612,67 +602,82 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         // - Copy this content
         long parentId = 0;
         if (content.getParent() != null) {
-            parentId = copyContent(content.getParent(), trans);
+            parentId = copyContent(content.getParent());
         }
         
         Content newContent;
-        if (content instanceof Image) {
-            Image image = (Image)content;
-            newContent = portableSkCase.addImage(image.getType(), image.getSsize(), image.getSize(), image.getName(), 
-                    new ArrayList<>(), image.getTimeZone(), image.getMd5(), image.getSha1(), image.getSha256(), image.getDeviceId(), trans);
-        } else if (content instanceof VolumeSystem) {
-            VolumeSystem vs = (VolumeSystem)content;
-            newContent = portableSkCase.addVolumeSystem(parentId, vs.getType(), vs.getOffset(), vs.getBlockSize(), trans);
-        } else if (content instanceof Volume) {
-            Volume vs = (Volume)content;
-            newContent = portableSkCase.addVolume(parentId, vs.getAddr(), vs.getStart(), vs.getLength(), 
-                    vs.getDescription(), vs.getFlags(), trans);
-        } else if (content instanceof FileSystem) {
-            FileSystem fs = (FileSystem)content;
-            newContent = portableSkCase.addFileSystem(parentId, fs.getImageOffset(), fs.getFsType(), fs.getBlock_size(), 
-                    fs.getBlock_count(), fs.getRoot_inum(), fs.getFirst_inum(), fs.getLastInum(), 
-                    fs.getName(), trans);
-        } else if (content instanceof AbstractFile) {
-            AbstractFile abstractFile = (AbstractFile)content;
-            
-            if (abstractFile instanceof LocalFilesDataSource) {
-                LocalFilesDataSource localFilesDS = (LocalFilesDataSource)abstractFile;
-                newContent = portableSkCase.addLocalFilesDataSource(localFilesDS.getDeviceId(), localFilesDS.getName(), localFilesDS.getTimeZone(), trans);    
-            } else {
-                if (abstractFile.isDir()) {
-                    newContent = portableSkCase.addLocalDirectory(parentId, abstractFile.getName(), trans);
-                } else {
-                    try {
-                        // Copy the file
-                        String fileName = abstractFile.getId() + "-" + FileUtil.escapeFileName(abstractFile.getName());
-                        String exportSubFolder = getExportSubfolder(abstractFile);
-                        File exportFolder = Paths.get(copiedFilesFolder.toString(), exportSubFolder).toFile();
-                        File localFile = new File(exportFolder, fileName);
-                        ContentUtils.writeToFile(abstractFile, localFile);
-                        
-                        // Get the new parent object in the portable case database
-                        Content oldParent = abstractFile.getParent();
-                        if (! oldIdToNewContent.containsKey(oldParent.getId())) {
-                            throw new TskCoreException("Parent of file with ID " + abstractFile.getId() + " has not been created");
-                        }
-                        Content newParent = oldIdToNewContent.get(oldParent.getId());
-                        
-                        // Construct the relative path to the copied file
-                        String relativePath = FILE_FOLDER_NAME + File.separator +  exportSubFolder + File.separator + fileName;
-
-                        newContent = portableSkCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
-                                abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),
-                                abstractFile.getMd5Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
-                                true, TskData.EncodingType.NONE, 
-                                newParent, trans);
-                    } catch (IOException ex) {
-                        throw new TskCoreException("Error copying file " + abstractFile.getName() + " with original obj ID " 
-                                + abstractFile.getId(), ex);
-                    }
-                }
-            }
+        if (content instanceof BlackboardArtifact) {
+            BlackboardArtifact artifactToCopy = (BlackboardArtifact)content;
+            newContent = copyArtifact(parentId, artifactToCopy);
         } else {
-            throw new TskCoreException("Trying to copy unexpected Content type " + content.getClass().getName());
+            CaseDbTransaction trans = portableSkCase.beginTransaction();
+            try {
+                if (content instanceof Image) {
+                    Image image = (Image)content;
+                    newContent = portableSkCase.addImage(image.getType(), image.getSsize(), image.getSize(), image.getName(), 
+                            new ArrayList<>(), image.getTimeZone(), image.getMd5(), image.getSha1(), image.getSha256(), image.getDeviceId(), trans);
+                } else if (content instanceof VolumeSystem) {
+                    VolumeSystem vs = (VolumeSystem)content;
+                    newContent = portableSkCase.addVolumeSystem(parentId, vs.getType(), vs.getOffset(), vs.getBlockSize(), trans);
+                } else if (content instanceof Volume) {
+                    Volume vs = (Volume)content;
+                    newContent = portableSkCase.addVolume(parentId, vs.getAddr(), vs.getStart(), vs.getLength(), 
+                            vs.getDescription(), vs.getFlags(), trans);
+                } else if (content instanceof FileSystem) {
+                    FileSystem fs = (FileSystem)content;
+                    newContent = portableSkCase.addFileSystem(parentId, fs.getImageOffset(), fs.getFsType(), fs.getBlock_size(), 
+                            fs.getBlock_count(), fs.getRoot_inum(), fs.getFirst_inum(), fs.getLastInum(), 
+                            fs.getName(), trans);
+                } else if (content instanceof BlackboardArtifact) {
+                    BlackboardArtifact artifactToCopy = (BlackboardArtifact)content;
+                    newContent = copyArtifact(parentId, artifactToCopy);
+                } else if (content instanceof AbstractFile) {
+                    AbstractFile abstractFile = (AbstractFile)content;
+            
+                    if (abstractFile instanceof LocalFilesDataSource) {
+                        LocalFilesDataSource localFilesDS = (LocalFilesDataSource)abstractFile;
+                        newContent = portableSkCase.addLocalFilesDataSource(localFilesDS.getDeviceId(), localFilesDS.getName(), localFilesDS.getTimeZone(), trans);    
+                    } else {
+                        if (abstractFile.isDir()) {
+                            newContent = portableSkCase.addLocalDirectory(parentId, abstractFile.getName(), trans);
+                        } else {
+                            try {
+                                // Copy the file
+                                String fileName = abstractFile.getId() + "-" + FileUtil.escapeFileName(abstractFile.getName());
+                                String exportSubFolder = getExportSubfolder(abstractFile);
+                                File exportFolder = Paths.get(copiedFilesFolder.toString(), exportSubFolder).toFile();
+                                File localFile = new File(exportFolder, fileName);
+                                ContentUtils.writeToFile(abstractFile, localFile);
+
+                                // Get the new parent object in the portable case database
+                                Content oldParent = abstractFile.getParent();
+                                if (! oldIdToNewContent.containsKey(oldParent.getId())) {
+                                    throw new TskCoreException("Parent of file with ID " + abstractFile.getId() + " has not been created");
+                                }
+                                Content newParent = oldIdToNewContent.get(oldParent.getId());
+
+                                // Construct the relative path to the copied file
+                                String relativePath = FILE_FOLDER_NAME + File.separator +  exportSubFolder + File.separator + fileName;
+
+                                newContent = portableSkCase.addLocalFile(abstractFile.getName(), relativePath, abstractFile.getSize(),
+                                        abstractFile.getCtime(), abstractFile.getCrtime(), abstractFile.getAtime(), abstractFile.getMtime(),
+                                        abstractFile.getMd5Hash(), abstractFile.getKnown(), abstractFile.getMIMEType(),
+                                        true, TskData.EncodingType.NONE, 
+                                        newParent, trans);
+                            } catch (IOException ex) {
+                                throw new TskCoreException("Error copying file " + abstractFile.getName() + " with original obj ID " 
+                                        + abstractFile.getId(), ex);
+                            }
+                        }
+                    }
+                } else {
+                    throw new TskCoreException("Trying to copy unexpected Content type " + content.getClass().getName());
+                }
+                trans.commit();
+            }  catch (TskCoreException ex) {
+                trans.rollback();
+                throw(ex);
+            }
         }
         
         // Save the new object
