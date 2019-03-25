@@ -2557,8 +2557,7 @@ public class Case {
          * one starts by awaiting termination of the executor service.
          */
 
-        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class
-        )) {
+        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
             /*
              * Create a progress indicator for the task and start the task. If
              * running with a GUI, the progress indicator will be a dialog box
@@ -2817,8 +2816,7 @@ public class Case {
          * Each service gets its own independently cancellable task, and thus
          * its own task progress indicator.
          */
-        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class
-        )) {
+        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
             ProgressIndicator progressIndicator;
             if (RuntimeProperties.runningWithGUI()) {
                 progressIndicator = new ModalDialogProgressIndicator(
