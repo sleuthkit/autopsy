@@ -140,27 +140,6 @@ public final class CaseMetadata {
     }
 
     /**
-     * Locate the case meta data file in the supplied directory. If the file
-     * does not exist, null is returned.
-     *
-     * @param directoryPath Directory path to search.
-     *
-     * @return Case metadata file path or null.
-     */
-    public static Path getCaseMetadataFilePath(Path directoryPath) {
-        final File[] files = directoryPath.toFile().listFiles();
-        if (files != null) {
-            for (File file : files) {
-                final String fileName = file.getName().toLowerCase();
-                if (fileName.endsWith(CaseMetadata.getFileExtension()) && file.isFile()) {
-                    return file.toPath();
-                }
-            }
-        }
-        return null;
-    }    
-    
-    /**
      * Constructs a CaseMetadata object for a new case. The metadata is not
      * persisted to the case metadata file until writeFile or a setX method is
      * called.
@@ -210,6 +189,27 @@ public final class CaseMetadata {
     public CaseMetadata(Path metadataFilePath) throws CaseMetadataException {
         this.metadataFilePath = metadataFilePath;
         readFromFile();
+    }
+
+    /**
+     * Locate the case meta data file in the supplied directory. If the file
+     * does not exist, null is returned.
+     *
+     * @param directoryPath Directory path to search.
+     *
+     * @return Case metadata file path or null.
+     */
+    public static Path getCaseMetadataFilePath(Path directoryPath) {
+        final File[] files = directoryPath.toFile().listFiles();
+        if (files != null) {
+            for (File file : files) {
+                final String fileName = file.getName().toLowerCase();
+                if (fileName.endsWith(CaseMetadata.getFileExtension()) && file.isFile()) {
+                    return file.toPath();
+                }
+            }
+        }
+        return null;
     }
 
     /**
