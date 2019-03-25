@@ -573,8 +573,7 @@ public final class CaseMetadata {
                 caseNotes = getElementTextContent(caseElement, CASE_ELEMENT_NOTES, false);
             }
 
-            this.caseDetails = new CaseDetails(caseDisplayName, caseNumber, examinerName, examinerPhone, examinerEmail,
-                    caseNotes);
+            this.caseDetails = new CaseDetails(caseDisplayName, caseNumber, examinerName, examinerPhone, examinerEmail, caseNotes);
             this.caseType = Case.CaseType.fromString(getElementTextContent(caseElement, CASE_TYPE_ELEMENT_NAME, true));
             if (null == this.caseType) {
                 throw new CaseMetadataException("Case metadata file corrupted");
