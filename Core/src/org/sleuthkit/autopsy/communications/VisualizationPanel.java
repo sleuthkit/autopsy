@@ -29,6 +29,7 @@ import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.swing.handler.mxRubberband;
 import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource;
@@ -41,20 +42,30 @@ import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphView;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,14 +87,17 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.Notifications;
 import org.jdesktop.layout.GroupLayout;
 import org.jdesktop.layout.LayoutStyle;
@@ -93,8 +107,11 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ProxyLookup;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.communications.snapshot.CommSnapShotReportWriter;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
@@ -104,7 +121,6 @@ import org.sleuthkit.datamodel.Content;
 import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
 import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 import org.sleuthkit.datamodel.TskCoreException;
-
 /**
  * A panel that goes in the Visualize tab of the Communications Visualization
  * Tool. Hosts an JGraphX mxGraphComponent that implements the communications
@@ -392,6 +408,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         jSeparator2 = new JToolBar.Separator();
         backButton = new JButton();
         forwardButton = new JButton();
+        snapshotButton = new JButton();
+        jSeparator3 = new JToolBar.Separator();
         notificationsJFXPanel = new JFXPanel();
 
         setLayout(new BorderLayout());
@@ -411,9 +429,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         placeHolderPanel.setLayout(placeHolderPanelLayout);
         placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(280, Short.MAX_VALUE)
+                .addContainerGap(143, Short.MAX_VALUE)
                 .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(455, Short.MAX_VALUE))
+                .addContainerGap(317, Short.MAX_VALUE))
         );
         placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
@@ -505,6 +523,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         });
 
+        snapshotButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/report/images/image.png"))); // NOI18N
+        snapshotButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.snapshotButton.text_1")); // NOI18N
+        snapshotButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                snapshotButtonActionPerformed(evt);
+            }
+        });
+
+        jSeparator3.setOrientation(SwingConstants.VERTICAL);
+
         GroupLayout toolbarLayout = new GroupLayout(toolbar);
         toolbar.setLayout(toolbarLayout);
         toolbarLayout.setHorizontalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
@@ -531,7 +559,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .add(zoomActualButton, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(fitZoomButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(157, Short.MAX_VALUE))
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(jSeparator3, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(snapshotButton)
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         toolbarLayout.setVerticalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
@@ -547,7 +579,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     .add(clearVizButton)
                     .add(jSeparator2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(backButton)
-                    .add(forwardButton))
+                    .add(forwardButton)
+                    .add(snapshotButton)
+                    .add(jSeparator3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .add(3, 3, 3))
         );
 
@@ -652,8 +686,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         if(newState == null) {
             return;
         }
-        
-        // If the zoom was changed, only change the zoom. 
+
+        // If the zoom was changed, only change the zoom.
         if(newState.isZoomChange()) {
             graph.getView().setScale(newState.getZoomValue());
             return;
@@ -678,19 +712,37 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         newState.getCommunicationsFilters().forEach(filter -> {
             currentFilter.addAndFilter(filter);
         });
-        
+
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
-        
-        fitGraph();  
-        
+
+        fitGraph();
+
     }
 
     private void setStateButtonsEnabled() {
         backButton.setEnabled(stateManager.canRetreat());
         forwardButton.setEnabled(stateManager.canAdvance());
     }
+
+     @NbBundle.Messages({
+         "VisualizationPanel_snapshot_report_failure=Snapshot report not created. An error occurred during creation."
+     })
+    private void snapshotButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_snapshotButtonActionPerformed
+        try {
+            handleSnapshotEvent();
+        } catch (NoCurrentCaseException | IOException ex) {
+            logger.log(Level.SEVERE, "Unable to create communications snapsot report", ex); //NON-NLS
+
+            Platform.runLater(()
+                    -> Notifications.create().owner(notificationsJFXPanel.getScene().getWindow())
+                            .text(Bundle.VisualizationPanel_snapshot_report_failure())
+                            .showWarning());
+        } catch( TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to add report to currenct case", ex); //NON-NLS
+        }
+    }//GEN-LAST:event_snapshotButtonActionPerformed
 
     private void fitGraph() {
         graphComponent.zoomTo(1, true);
@@ -719,6 +771,128 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graphComponent.zoom((heightFactor + widthFactor) / 2.0);
     }
 
+    /**
+     * Handle the ActionPerformed event from the Snapshot button.
+     *
+     * @throws NoCurrentCaseException
+     * @throws IOException
+     */
+    @NbBundle.Messages({
+        "VisualizationPanel_action_dialogs_title=Communications",
+        "VisualizationPanel_module_name=Communications",
+        "VisualizationPanel_action_name_text=Snapshot Report",
+        "VisualizationPane_fileName_prompt=Enter name for the Communications Snapshot Report:",
+        "VisualizationPane_reportName=Communications Snapshot",
+        "# {0} -  default name",
+        "VisualizationPane_accept_defaultName=Report name was empty. Press OK to accept default report name: {0}",
+        "VisualizationPane_blank_report_title=Blank Report Name",
+        "# {0} -  report name",
+        "VisualizationPane_overrite_exiting=Overwrite existing report?\n{0}"
+    })
+    private void handleSnapshotEvent() throws NoCurrentCaseException, IOException, TskCoreException {
+        Case currentCase = Case.getCurrentCaseThrows();
+        Date generationDate = new Date();
+
+        final String defaultReportName = FileUtil.escapeFileName(currentCase.getDisplayName() + " " + new SimpleDateFormat("MMddyyyyHHmmss").format(generationDate)); //NON_NLS
+
+        final JTextField text = new JTextField(50);
+        final JPanel panel = new JPanel(new GridLayout(2, 1));
+        panel.add(new JLabel(Bundle.VisualizationPane_fileName_prompt()));
+        panel.add(text);
+
+        text.setText(defaultReportName);
+
+        int result = JOptionPane.showConfirmDialog(graphComponent, panel,
+                Bundle.VisualizationPanel_action_dialogs_title(), JOptionPane.OK_CANCEL_OPTION);
+
+        if (result == JOptionPane.OK_OPTION) {
+            String enteredReportName = text.getText();
+
+            if(enteredReportName.trim().isEmpty()){
+                result = JOptionPane.showConfirmDialog(graphComponent, Bundle.VisualizationPane_accept_defaultName(defaultReportName), Bundle.VisualizationPane_blank_report_title(), JOptionPane.OK_CANCEL_OPTION);
+                if(result != JOptionPane.OK_OPTION) {
+                    return;
+                }
+            }
+
+            String reportName = StringUtils.defaultIfBlank(enteredReportName, defaultReportName);
+            Path reportPath = Paths.get(currentCase.getReportDirectory(), reportName);
+            if (Files.exists(reportPath)) {
+                result = JOptionPane.showConfirmDialog(graphComponent, Bundle.VisualizationPane_overrite_exiting(reportName),
+                        Bundle.VisualizationPanel_action_dialogs_title(), JOptionPane.OK_CANCEL_OPTION);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    FileUtil.deleteFileDir(reportPath.toFile());
+                    createReport(currentCase, reportName);
+                }
+            } else {
+                createReport(currentCase, reportName);
+                currentCase.addReport(reportPath.toString(), Bundle.VisualizationPanel_module_name(), reportName);
+
+            }
+        }
+    }
+
+    /**
+     * Create the Snapshot Report.
+     *
+     * @param currentCase The current case
+     * @param reportName User selected name for the report
+     *
+     * @throws IOException
+     */
+    @NbBundle.Messages({
+        "VisualizationPane_DisplayName=Open Report",
+        "VisualizationPane_NoAssociatedEditorMessage=There is no associated editor for reports of this type or the associated application failed to launch.",
+        "VisualizationPane_MessageBoxTitle=Open Report Failure",
+        "VisualizationPane_NoOpenInEditorSupportMessage=This platform (operating system) does not support opening a file in an editor this way.",
+        "VisualizationPane_MissingReportFileMessage=The report file no longer exists.",
+        "VisualizationPane_ReportFileOpenPermissionDeniedMessage=Permission to open the report file was denied.",
+        "# {0} -  report path",
+        "VisualizationPane_Report_Success=Report Successfully create at:\n{0}",
+        "VisualizationPane_Report_OK_Button=OK",
+        "VisualizationPane_Open_Report=Open Report",})
+    private void createReport(Case currentCase, String reportName) throws IOException {
+
+        // Create the report.
+        Path reportFolderPath = Paths.get(currentCase.getReportDirectory(), reportName, Bundle.VisualizationPane_reportName()); //NON_NLS
+        BufferedImage image = mxCellRenderer.createBufferedImage(graph, null, graph.getView().getScale(), Color.WHITE, true, null);
+        Path reportPath = new CommSnapShotReportWriter(currentCase, reportFolderPath, reportName, new Date(), image, currentFilter).writeReport();
+
+        // Report success to the user and offer to open the report.
+        String message = Bundle.VisualizationPane_Report_Success(reportPath.toAbsolutePath());
+        String[] buttons = {Bundle.VisualizationPane_Open_Report(), Bundle.VisualizationPane_Report_OK_Button()};
+
+        int result = JOptionPane.showOptionDialog(graphComponent, message,
+                Bundle.VisualizationPanel_action_dialogs_title(),
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE,
+                null, buttons, buttons[1]);
+        if (result == JOptionPane.YES_NO_OPTION) {
+            try {
+                Desktop.getDesktop().open(reportPath.toFile());
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                        Bundle.VisualizationPane_NoAssociatedEditorMessage(),
+                        Bundle.VisualizationPane_MessageBoxTitle(),
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (UnsupportedOperationException ex) {
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                        Bundle.VisualizationPane_NoOpenInEditorSupportMessage(),
+                        Bundle.VisualizationPane_MessageBoxTitle(),
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                        Bundle.VisualizationPane_MissingReportFileMessage(),
+                        Bundle.VisualizationPane_MessageBoxTitle(),
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (SecurityException ex) {
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                        Bundle.VisualizationPane_ReportFileOpenPermissionDeniedMessage(),
+                        Bundle.VisualizationPane_MessageBoxTitle(),
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private JButton backButton;
@@ -729,9 +903,11 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JButton forwardButton;
     private JLabel jLabel2;
     private JToolBar.Separator jSeparator2;
+    private JToolBar.Separator jSeparator3;
     private JTextArea jTextArea1;
     private JFXPanel notificationsJFXPanel;
     private JPanel placeHolderPanel;
+    private JButton snapshotButton;
     private JSplitPane splitPane;
     private JPanel toolbar;
     private JButton zoomActualButton;

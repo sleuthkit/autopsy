@@ -32,6 +32,23 @@ ResetAndPinAccountsAction.singularText=Visualize Only Selected Account
 UnpinAccountsAction.pluralText=Remove Selected Accounts
 UnpinAccountsAction.singularText=Remove Selected Account
 VisalizationPanel.paintingError=Problem painting visualization.
+# {0} -  default name
+VisualizationPane_accept_defaultName=Report name was empty. Press OK to accept default report name: {0}
+VisualizationPane_blank_report_title=Blank Report Name
+VisualizationPane_DisplayName=Open Report
+VisualizationPane_fileName_prompt=Enter name for the Communications Snapshot Report:
+VisualizationPane_MessageBoxTitle=Open Report Failure
+VisualizationPane_MissingReportFileMessage=The report file no longer exists.
+VisualizationPane_NoAssociatedEditorMessage=There is no associated editor for reports of this type or the associated application failed to launch.
+VisualizationPane_NoOpenInEditorSupportMessage=This platform (operating system) does not support opening a file in an editor this way.
+VisualizationPane_Open_Report=Open Report
+# {0} -  report name
+VisualizationPane_overrite_exiting=Overwrite existing report?\n{0}
+VisualizationPane_Report_OK_Button=OK
+# {0} -  report path
+VisualizationPane_Report_Success=Report Successfully create at:\n{0}
+VisualizationPane_ReportFileOpenPermissionDeniedMessage=Permission to open the report file was denied.
+VisualizationPane_reportName=Communications Snapshot
 VisualizationPanel.cancelButton.text=Cancel
 VisualizationPanel.computingLayout=Computing Layout
 VisualizationPanel.jButton1.text=Fast Organic 
@@ -59,7 +76,20 @@ VisualizationPanel.zoomInButton.toolTipText=Zoom in
 VisualizationPanel.zoomInButton.text=
 VisualizationPanel.zoomOutButton.toolTipText=Zoom out
 VisualizationPanel.zoomOutButton.text=
+<<<<<<< HEAD
 VisualizationPanel.fastOrganicLayoutButton.text=Redraw
 VisualizationPanel.clearVizButton.text_1=Clear
 VisualizationPanel.backButton.text_1=Undo
 VisualizationPanel.forwardButton.text=Redo
+=======
+VisualizationPanel.circleLayoutButton.text=Circle
+VisualizationPanel.organicLayoutButton.text=Organic
+VisualizationPanel.fastOrganicLayoutButton.text=Redraw
+VisualizationPanel.hierarchyLayoutButton.text=Hierarchical
+VisualizationPanel.clearVizButton.text_1=Clear Viz.
+VisualizationPanel.snapshotButton.text_1=Snapshot Report
+>>>>>>> develop
+VisualizationPanel_action_dialogs_title=Communications
+VisualizationPanel_action_name_text=Snapshot Report
+VisualizationPanel_module_name=Communications
+VisualizationPanel_snapshot_report_failure=Snapshot report not created. An error occurred during creation.

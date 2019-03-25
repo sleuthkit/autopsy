@@ -2,6 +2,11 @@ cannotBuildXmlParser=Unable to build XML parser:
 cannotLoadSEUQA=Unable to load Search Engine URL Query Analyzer settings file, SEUQAMappings.xml: 
 cannotParseXml=Unable to parse XML file: 
 ChromeCacheExtractor.moduleName=ChromeCacheExtractor
+# {0} - module name
+# {1} - row number
+# {2} - table length
+# {3} - cache path
+ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
 DataSourceUsage_AndroidMedia=Android Media Card
 DataSourceUsage_FlashDrive=Flash Drive
 # {0} - OS name
@@ -134,6 +139,7 @@ Progress_Message_Analyze_Registry=Analyzing Registry Files
 Progress_Message_Analyze_Usage=Data Sources Usage Analysis
 Progress_Message_Chrome_AutoFill=Chrome Auto Fill
 Progress_Message_Chrome_Bookmarks=Chrome Bookmarks
+Progress_Message_Chrome_Cache=Chrome Cache
 Progress_Message_Chrome_Cookies=Chrome Cookies
 Progress_Message_Chrome_Downloads=Chrome Downloads
 Progress_Message_Chrome_FormHistory=Chrome Form History

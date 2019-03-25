@@ -64,7 +64,7 @@ class SelectMultiUserCasesDialog extends javax.swing.JDialog {
         try {
             multiUserCasesPanel.setSelections(selections);
         } catch (PropertyVetoException ex) {
-
+            //Do-nothing
         }
     }
 
