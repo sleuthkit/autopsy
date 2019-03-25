@@ -5,6 +5,7 @@ CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists
 CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case
 # {0} - folder
 CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}
+CreatePortableCaseModule.createCase.errorStoringMaxIds=Error storing maximum database IDs
 CreatePortableCaseModule.generateReport.caseClosed=Current case has been closed
 # {0} - tag name
 CreatePortableCaseModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...

@@ -92,20 +92,24 @@ final class HtmlPanel extends javax.swing.JPanel {
      */
     @Messages({
         "HtmlPanel_showImagesToggleButton_show=Show Images",
-        "HtmlPanel_showImagesToggleButton_hide=Hide Images"
+        "HtmlPanel_showImagesToggleButton_hide=Hide Images",
+        "Html_text_display_error=The HTML text cannot be displayed, it may not be correctly formed HTML.",
     })
     private void refresh() {
         if (false == htmlText.isEmpty()) {
-            if (showImagesToggleButton.isSelected()) {
-                showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_hide());
-                this.htmlbodyTextPane.setText(wrapInHtmlBody(htmlText));
-            } else {
-                showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_show());
-                this.htmlbodyTextPane.setText(wrapInHtmlBody(cleanseHTML(htmlText)));
+            try {
+                if (showImagesToggleButton.isSelected()) {
+                    showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_hide());
+                    this.htmlbodyTextPane.setText(wrapInHtmlBody(htmlText));
+                } else {
+                    showImagesToggleButton.setText(Bundle.HtmlPanel_showImagesToggleButton_show());
+                    this.htmlbodyTextPane.setText(wrapInHtmlBody(cleanseHTML(htmlText)));
+                }
+                showImagesToggleButton.setEnabled(true);
+                htmlbodyTextPane.setCaretPosition(0); 
+            } catch(Exception ex) {
+                this.htmlbodyTextPane.setText(wrapInHtmlBody(Bundle.Html_text_display_error()));
             }
-
-            htmlbodyTextPane.setCaretPosition(0);
-            showImagesToggleButton.setEnabled(true);
         }
     }
 

@@ -37,7 +37,6 @@ DataSourceIntegrityIngestModule.process.errProcImg=Error processing {0}
 DataSourceIntegrityIngestModule.process.skipNonEwf=Skipping non-disk image data source {0}
 DataSourceIntegrityIngestModule.process.noStoredHash=Image {0} does not have stored hash.
 DataSourceIntegrityIngestModule.process.startingImg=Starting {0}
-DataSourceIntegrityIngestModule.process.errGetSizeOfImg=Error getting size of {0}. Image will not be processed.
 DataSourceIntegrityIngestModule.process.errReadImgAtChunk=Error reading {0} at chunk {1}
 DataSourceIntegrityIngestModule.shutDown.verified=\ verified 
 DataSourceIntegrityIngestModule.shutDown.notVerified=\ not verified 

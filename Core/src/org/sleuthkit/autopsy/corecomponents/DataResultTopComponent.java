@@ -250,8 +250,7 @@ public final class DataResultTopComponent extends TopComponent implements DataRe
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
         getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(ExternalViewerShortcutAction.EXTERNAL_VIEWER_SHORTCUT, "useExternalViewer"); //NON-NLS 
-
-        getActionMap().put("useExternalViewer", new ExternalViewerShortcutAction()); //NON-NLS
+        getActionMap().put("useExternalViewer", ExternalViewerShortcutAction.getInstance()); //NON-NLS
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, isMain);
         putClientProperty(TopComponent.PROP_MAXIMIZATION_DISABLED, true);
         putClientProperty(TopComponent.PROP_DRAGGING_DISABLED, true);

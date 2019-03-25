@@ -241,7 +241,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         setName(Bundle.CTL_ImageGalleryTopComponent());
         initComponents();
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(ExternalViewerShortcutAction.EXTERNAL_VIEWER_SHORTCUT, "useExternalViewer"); //NON-NLS 
-        getActionMap().put("useExternalViewer", new ExternalViewerShortcutAction()); //NON-NLS
+        getActionMap().put("useExternalViewer", ExternalViewerShortcutAction.getInstance()); //NON-NLS
     }
 
     /**

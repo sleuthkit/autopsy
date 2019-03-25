@@ -2,6 +2,13 @@ cannotBuildXmlParser=Unable to build XML parser:
 cannotLoadSEUQA=Unable to load Search Engine URL Query Analyzer settings file, SEUQAMappings.xml: 
 cannotParseXml=Unable to parse XML file: 
 ChromeCacheExtractor.moduleName=ChromeCacheExtractor
+# {0} - module name
+# {1} - row number
+# {2} - table length
+# {3} - cache path
+ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
+DataSourceUsage_AndroidMedia=Android Media Card
+DataSourceUsage_FlashDrive=Flash Drive
 # {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
@@ -48,6 +55,14 @@ ExtractSafari_Error_Getting_History=An error occurred while processing Safari hi
 ExtractSafari_Error_Parsing_Bookmark=An error occured while processing Safari Bookmark files
 ExtractSafari_Error_Parsing_Cookies=An error occured while processing Safari Cookies files
 ExtractSafari_Module_Name=Safari
+ExtractZone_Internet=Internet Zone
+ExtractZone_Local_Intranet=Local Intranet Zone
+ExtractZone_Local_Machine=Local Machine Zone
+ExtractZone_process_errMsg=An error occured processing ':Zone.Indentifier' files.
+ExtractZone_process_errMsg_find=A failure occured while searching for :Zone.Indentifier files.
+ExtractZone_progress_Msg=Extracting :Zone.Identifer files
+ExtractZone_Restricted=Restricted Sites Zone
+ExtractZone_Trusted=Trusted Sites Zone
 OpenIDE-Module-Display-Category=Ingest Module
 OpenIDE-Module-Long-Description=Recent Activity ingest module.\n\n\The module extracts useful information about the recent user activity on the disk image being ingested, such as:\n\n- Recently open documents,\n- Web acitivity (sites visited, stored cookies, bookmarked sites, search engine queries, file downloads),\n- Recently attached devices,\n- Installed programs.\n\n\The module currently supports Windows only disk images.\n\The plugin is also fully functional when deployed on Windows version of Autopsy.
 OpenIDE-Module-Name=RecentActivity
@@ -124,6 +139,7 @@ Progress_Message_Analyze_Registry=Analyzing Registry Files
 Progress_Message_Analyze_Usage=Data Sources Usage Analysis
 Progress_Message_Chrome_AutoFill=Chrome Auto Fill
 Progress_Message_Chrome_Bookmarks=Chrome Bookmarks
+Progress_Message_Chrome_Cache=Chrome Cache
 Progress_Message_Chrome_Cookies=Chrome Cookies
 Progress_Message_Chrome_Downloads=Chrome Downloads
 Progress_Message_Chrome_FormHistory=Chrome Form History

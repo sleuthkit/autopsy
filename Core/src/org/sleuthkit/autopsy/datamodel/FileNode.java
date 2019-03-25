@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerShortcutAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -49,9 +50,9 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * children.
  */
 public class FileNode extends AbstractFsContentNode<AbstractFile> {
-    
+
     private static final Logger logger = Logger.getLogger(FileNode.class.getName());
-    
+
     /**
      * Gets the path to the icon file that should be used to visually represent
      * an AbstractFile, using the file name extension to select the icon.
@@ -148,7 +149,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     @NbBundle.Messages({
         "FileNode.getActions.viewFileInDir.text=View File in Directory",
         "FileNode.getActions.viewInNewWin.text=View in New Window",
-        "FileNode.getActions.openInExtViewer.text=Open in External Viewer (Ctrl+E)",
+        "FileNode.getActions.openInExtViewer.text=Open in External Viewer  Ctrl+E",
         "FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
@@ -160,7 +161,14 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         }
 
         actionsList.add(new NewWindowViewAction(Bundle.FileNode_getActions_viewInNewWin_text(), this));
-        actionsList.add(new ExternalViewerAction(Bundle.FileNode_getActions_openInExtViewer_text(), this));
+        final Collection<AbstractFile> selectedFilesList
+                = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if (selectedFilesList.size() == 1) {
+            actionsList.add(new ExternalViewerAction(
+                    Bundle.FileNode_getActions_openInExtViewer_text(), this));
+        } else {
+            actionsList.add(ExternalViewerShortcutAction.getInstance());
+        }
         actionsList.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
         actionsList.add(null); // Creates an item separator
 
@@ -168,12 +176,11 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(null); // Creates an item separator
 
         actionsList.add(AddContentTagAction.getInstance());
-        final Collection<AbstractFile> selectedFilesList = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
         if (1 == selectedFilesList.size()) {
             actionsList.add(DeleteFileContentTagAction.getInstance());
         }
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        if (FileTypeExtensions.getArchiveExtensions().contains("." + this.content.getNameExtension().toLowerCase())) { 
+        if (FileTypeExtensions.getArchiveExtensions().contains("." + this.content.getNameExtension().toLowerCase())) {
             try {
                 if (this.content.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED).size() > 0) {
                     actionsList.add(new ExtractArchiveWithPasswordAction(this.getContent()));
