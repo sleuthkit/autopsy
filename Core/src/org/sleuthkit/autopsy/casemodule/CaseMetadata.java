@@ -143,13 +143,11 @@ public final class CaseMetadata {
      * Locate the case meta data file in the supplied directory. If the file
      * does not exist, null is returned.
      *
-     * @param directoryPath Directory path to search
+     * @param directoryPath Directory path to search.
      *
-     * @return case meta data file path or null
+     * @return Case metadata file path or null.
      */
-    // RJCTODO: Perhaps this should return a CaseMetadata object
-    // RJCTODO: It should say get...path
-    public static Path getCaseMetadataFile(Path directoryPath) {
+    public static Path getCaseMetadataFilePath(Path directoryPath) {
         final File[] files = directoryPath.toFile().listFiles();
         if (files != null) {
             for (File file : files) {

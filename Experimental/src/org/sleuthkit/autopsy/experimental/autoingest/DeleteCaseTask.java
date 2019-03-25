@@ -275,7 +275,7 @@ final class DeleteCaseTask implements Runnable {
                 if (caseDirectory.exists()) {
                     progress.progress(Bundle.DeleteCaseTask_progress_openingCaseMetadataFile());
                     logger.log(Level.INFO, String.format("Opening case metadata file for %s", caseNodeData.getDisplayName()));
-                    Path caseMetadataPath = CaseMetadata.getCaseMetadataFile(caseNodeData.getDirectory());
+                    Path caseMetadataPath = CaseMetadata.getCaseMetadataFilePath(caseNodeData.getDirectory());
                     if (caseMetadataPath != null) {
                         try {
                             caseMetadata = new CaseMetadata(caseMetadataPath);

@@ -259,7 +259,7 @@ final class MultiCaseSearcher {
     })
 
     private static CaseMetadata getCaseMetadata(Path caseDirectoryPath) throws MultiCaseSearcherException {
-        Path metadataPath = CaseMetadata.getCaseMetadataFile(caseDirectoryPath);
+        Path metadataPath = CaseMetadata.getCaseMetadataFilePath(caseDirectoryPath);
         if (metadataPath != null) {
             try {
                 return new CaseMetadata(metadataPath);
