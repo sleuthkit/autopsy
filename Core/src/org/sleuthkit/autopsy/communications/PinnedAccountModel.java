@@ -57,7 +57,7 @@ class PinnedAccountModel {
      *
      * @param accountDeviceInstances The accounts to unpin.
      */
-    void unpinAccount(ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances) {
+    void unpinAccount(Set<AccountDeviceInstanceKey> accountDeviceInstances) {
         pinnedAccountDevices.removeAll(accountDeviceInstances);
     }
 
@@ -68,7 +68,7 @@ class PinnedAccountModel {
      *
      * @param accountDeviceInstances The accounts to pin.
      */
-    void pinAccount(ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances) {
+    void pinAccount(Set<AccountDeviceInstanceKey> accountDeviceInstances) {
         pinnedAccountDevices.addAll(accountDeviceInstances);
     }
 
@@ -86,7 +86,7 @@ class PinnedAccountModel {
         pinnedAccountDevices.clear();
     }
 
-    Iterable<AccountDeviceInstanceKey> getPinnedAccounts() {
+    ImmutableSet<AccountDeviceInstanceKey> getPinnedAccounts() {
         return ImmutableSet.copyOf(pinnedAccountDevices);
     }
 

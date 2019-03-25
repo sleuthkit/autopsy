@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
 import org.sleuthkit.datamodel.CommunicationsFilter;
+import org.sleuthkit.autopsy.communications.StateManager.CommunicationsState;
 
 /**
  * Provide the singleton EventBus.
@@ -80,6 +81,30 @@ final class CVTEvents {
 
          UnpinAccountsEvent(Collection<? extends AccountDeviceInstanceKey> accountDeviceInstances) {
             this.accountDeviceInstances = ImmutableSet.copyOf(accountDeviceInstances);
+        }
+    }
+    
+    static final class StateEvent {
+        private final CommunicationsState newState;
+        
+        StateEvent(CommunicationsState newState) {
+            this.newState = newState;
+        }
+        
+        public CommunicationsState getCommunicationsState(){
+            return newState;
+        }
+    }
+    
+    static final class ZoomEvent {
+        private final double zoomValue;
+        
+        ZoomEvent(double zoomValue) {
+            this.zoomValue = zoomValue;
+        }
+        
+        public double getZoomValue(){
+            return zoomValue;
         }
     }
 }

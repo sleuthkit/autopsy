@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxCircleLayout;
@@ -40,7 +41,6 @@ import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphView;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Frame;
@@ -51,6 +51,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
@@ -100,6 +101,8 @@ import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
+import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
+import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -148,6 +151,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private final Map<NamedGraphLayout, JButton> layoutButtons = new HashMap<>();
     private NamedGraphLayout currentLayout;
 
+    private final StateManager stateManager;
+
     @NbBundle.Messages("VisalizationPanel.paintingError=Problem painting visualization.")
     public VisualizationPanel() {
         initComponents();
@@ -172,7 +177,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     public void paint(Graphics graphics) {
                         try {
                             super.paint(graphics);
-                        } catch (NullPointerException ex) { //NOPMD  
+                        } catch (NullPointerException ex) { //NOPMD
                             /* We can't find the underlying cause of the NPE in
                              * jgraphx, but it doesn't seem to cause any
                              * noticeable problems, so we are just logging it
@@ -226,10 +231,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         graph.getView().addListener(mxEvent.UNDO, undoListener);
 
         FastOrganicLayoutImpl fastOrganicLayout = new FastOrganicLayoutImpl(graph);
-        CircleLayoutImpl circleLayout = new CircleLayoutImpl(graph);
-        OrganicLayoutImpl organicLayout = new OrganicLayoutImpl(graph);
-        organicLayout.setMaxIterations(10);
-        HierarchicalLayoutImpl hierarchyLayout = new HierarchicalLayoutImpl(graph);
 
         //local method to configure layout buttons
         BiConsumer<JButton, NamedGraphLayout> configure = (layoutButton, layout) -> {
@@ -237,12 +238,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             layoutButton.addActionListener(event -> applyLayout(layout));
         };
         //configure layout buttons.
-        configure.accept(circleLayoutButton, circleLayout);
-        configure.accept(organicLayoutButton, organicLayout);
         configure.accept(fastOrganicLayoutButton, fastOrganicLayout);
-        configure.accept(hierarchyLayoutButton, hierarchyLayout);
 
         applyLayout(fastOrganicLayout);
+
+        stateManager = new StateManager(pinnedAccountModel);
+
+        setStateButtonsEnabled();
     }
 
     @Override
@@ -271,6 +273,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
+
+        setStateButtonsEnabled();
     }
 
     @Subscribe
@@ -283,6 +287,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
+
+        setStateButtonsEnabled();
     }
 
     @Subscribe
@@ -293,6 +299,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
+
+        setStateButtonsEnabled();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
@@ -334,9 +342,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         try {
             commsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
+            logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex); //NON-NLS
         } catch (NoCurrentCaseException ex) {
-            logger.log(Level.SEVERE, "Can't get CommunicationsManager when there is no case open.", ex);
+            logger.log(Level.SEVERE, "Can't get CommunicationsManager when there is no case open.", ex); //NON-NLS
         }
 
         Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), evt -> {
@@ -353,7 +361,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 try {
                     commsManager = currentCase.getSleuthkitCase().getCommunicationsManager();
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex);
+                    logger.log(Level.SEVERE, "Error getting CommunicationsManager for the current case.", ex); //NON-NLS
                 }
             }
         });
@@ -373,12 +381,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         placeHolderPanel = new JPanel();
         jTextArea1 = new JTextArea();
         toolbar = new JPanel();
-        jLabel1 = new JLabel();
-        hierarchyLayoutButton = new JButton();
         fastOrganicLayoutButton = new JButton();
-        organicLayoutButton = new JButton();
-        circleLayoutButton = new JButton();
-        jSeparator1 = new JToolBar.Separator();
         zoomOutButton = new JButton();
         zoomInButton = new JButton();
         zoomActualButton = new JButton();
@@ -387,6 +390,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         zoomLabel = new JLabel();
         clearVizButton = new JButton();
         jSeparator2 = new JToolBar.Separator();
+        backButton = new JButton();
+        forwardButton = new JButton();
         notificationsJFXPanel = new JFXPanel();
 
         setLayout(new BorderLayout());
@@ -406,9 +411,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         placeHolderPanel.setLayout(placeHolderPanelLayout);
         placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(71, Short.MAX_VALUE)
+                .addContainerGap(280, Short.MAX_VALUE)
                 .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(248, Short.MAX_VALUE))
+                .addContainerGap(455, Short.MAX_VALUE))
         );
         placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
@@ -419,29 +424,10 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
 
-        jLabel1.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.jLabel1.text")); // NOI18N
-
-        hierarchyLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.hierarchyLayoutButton.text")); // NOI18N
-        hierarchyLayoutButton.setFocusable(false);
-        hierarchyLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        hierarchyLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-
         fastOrganicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fastOrganicLayoutButton.text")); // NOI18N
         fastOrganicLayoutButton.setFocusable(false);
         fastOrganicLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
         fastOrganicLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-
-        organicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.organicLayoutButton.text")); // NOI18N
-        organicLayoutButton.setFocusable(false);
-        organicLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        organicLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-
-        circleLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.circleLayoutButton.text")); // NOI18N
-        circleLayoutButton.setFocusable(false);
-        circleLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
-        circleLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-
-        jSeparator1.setOrientation(SwingConstants.VERTICAL);
 
         zoomOutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-out-red.png"))); // NOI18N
         zoomOutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.zoomOutButton.text")); // NOI18N
@@ -505,24 +491,32 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         jSeparator2.setOrientation(SwingConstants.VERTICAL);
 
+        backButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.backButton.text_1")); // NOI18N
+        backButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                backButtonActionPerformed(evt);
+            }
+        });
+
+        forwardButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.forwardButton.text")); // NOI18N
+        forwardButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent evt) {
+                forwardButtonActionPerformed(evt);
+            }
+        });
+
         GroupLayout toolbarLayout = new GroupLayout(toolbar);
         toolbar.setLayout(toolbarLayout);
         toolbarLayout.setHorizontalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(clearVizButton)
-                .add(3, 3, 3)
-                .add(jSeparator1, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
-                .add(5, 5, 5)
-                .add(jLabel1)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(backButton)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(forwardButton)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(fastOrganicLayoutButton)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(organicLayoutButton)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(hierarchyLayoutButton)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(circleLayoutButton)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(jSeparator2, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
@@ -537,18 +531,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 .add(zoomActualButton, GroupLayout.PREFERRED_SIZE, 33, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(fitZoomButton, GroupLayout.PREFERRED_SIZE, 32, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(157, Short.MAX_VALUE))
         );
         toolbarLayout.setVerticalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
                 .add(3, 3, 3)
                 .add(toolbarLayout.createParallelGroup(GroupLayout.CENTER)
-                    .add(jLabel1, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
-                    .add(hierarchyLayoutButton)
                     .add(fastOrganicLayoutButton)
-                    .add(organicLayoutButton)
-                    .add(circleLayoutButton)
-                    .add(jSeparator1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(zoomOutButton)
                     .add(zoomInButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(zoomActualButton, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -556,7 +545,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     .add(jLabel2)
                     .add(zoomLabel)
                     .add(clearVizButton)
-                    .add(jSeparator2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jSeparator2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(backButton)
+                    .add(forwardButton))
                 .add(3, 3, 3))
         );
 
@@ -574,14 +565,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private void zoomActualButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomActualButtonActionPerformed
         graphComponent.zoomActual();
+        CVTEvents.getCVTEventBus().post(new CVTEvents.ZoomEvent(graph.getView().getScale()));
     }//GEN-LAST:event_zoomActualButtonActionPerformed
 
     private void zoomInButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
         graphComponent.zoomIn();
+        CVTEvents.getCVTEventBus().post(new CVTEvents.ZoomEvent(graph.getView().getScale()));
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomOutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
         graphComponent.zoomOut();
+        CVTEvents.getCVTEventBus().post(new CVTEvents.ZoomEvent(graph.getView().getScale()));
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     /**
@@ -638,15 +632,65 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     }
 
     private void clearVizButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_clearVizButtonActionPerformed
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        CVTEvents.getCVTEventBus().post(new CVTEvents.UnpinAccountsEvent(pinnedAccountModel.getPinnedAccounts()));
+    }//GEN-LAST:event_clearVizButtonActionPerformed
+
+    private void forwardButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_forwardButtonActionPerformed
+        handleStateChange(stateManager.advance());
+    }//GEN-LAST:event_forwardButtonActionPerformed
+
+    private void backButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_backButtonActionPerformed
+        handleStateChange(stateManager.retreat());
+    }//GEN-LAST:event_backButtonActionPerformed
+
+    /**
+     * Manages the redo and undo actions.
+     *
+     * @param newState a CommunicationsState
+     */
+    private void handleStateChange(StateManager.CommunicationsState newState ){
+        if(newState == null) {
+            return;
+        }
+        
+        // If the zoom was changed, only change the zoom. 
+        if(newState.isZoomChange()) {
+            graph.getView().setScale(newState.getZoomValue());
+            return;
+        }
+
+        // This will cause the FilterPane to update its controls
+        CVTEvents.getCVTEventBus().post(new CVTEvents.StateEvent(newState));
+        setStateButtonsEnabled();
+
         graph.getModel().beginUpdate();
-        pinnedAccountModel.clear();
-        graph.clear();
+        graph.resetGraph();
+
+        if(newState.getPinnedList() != null) {
+            pinnedAccountModel.pinAccount(newState.getPinnedList());
+        } else {
+            pinnedAccountModel.clear();
+        }
+
+        currentFilter = new CommunicationsFilter();
+        currentFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
+                ImmutableSet.of(CALL_LOG, MESSAGE)));
+        newState.getCommunicationsFilters().forEach(filter -> {
+            currentFilter.addAndFilter(filter);
+        });
+        
         rebuildGraph();
         // Updates the display
         graph.getModel().endUpdate();
-        setCursor(Cursor.getDefaultCursor());
-    }//GEN-LAST:event_clearVizButtonActionPerformed
+        
+        fitGraph();  
+        
+    }
+
+    private void setStateButtonsEnabled() {
+        backButton.setEnabled(stateManager.canRetreat());
+        forwardButton.setEnabled(stateManager.canAdvance());
+    }
 
     private void fitGraph() {
         graphComponent.zoomTo(1, true);
@@ -677,19 +721,16 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private JButton backButton;
     private JPanel borderLayoutPanel;
-    private JButton circleLayoutButton;
     private JButton clearVizButton;
     private JButton fastOrganicLayoutButton;
     private JButton fitZoomButton;
-    private JButton hierarchyLayoutButton;
-    private JLabel jLabel1;
+    private JButton forwardButton;
     private JLabel jLabel2;
-    private JToolBar.Separator jSeparator1;
     private JToolBar.Separator jSeparator2;
     private JTextArea jTextArea1;
     private JFXPanel notificationsJFXPanel;
-    private JButton organicLayoutButton;
     private JPanel placeHolderPanel;
     private JSplitPane splitPane;
     private JPanel toolbar;
