@@ -994,7 +994,6 @@ public class Case {
                     long obj_id = entry.getKey();
                     String path = entry.getValue();
                     boolean fileExists = (new File(path).isFile() || DriveUtils.driveExists(path));
-
                     if (!fileExists) {
                         int response = JOptionPane.showConfirmDialog(
                                 mainFrame,
