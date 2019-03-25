@@ -114,7 +114,16 @@ public final class CoordinationService {
             }
             try {
                 instance = new CoordinationService(rootNode);
-            } catch (IOException | InterruptedException | KeeperException | CoordinationServiceException ex) {
+            } catch (IOException | KeeperException | CoordinationServiceException ex) {
+                throw new CoordinationServiceException("Failed to create coordination service", ex);
+            } catch (InterruptedException ex) {
+                /*
+                 * The interrupted exception should be propagated to support
+                 * task cancellation. To avoid a public API change here, restore
+                 * the interrupted flag and then throw the InterruptedException
+                 * in its wrapper.
+                 */
+                Thread.currentThread().interrupt();
                 throw new CoordinationServiceException("Failed to create coordination service", ex);
             }
         }

@@ -122,9 +122,9 @@ final class DeleteCaseTask implements Runnable {
     public void run() {
         try {
             progress.start(Bundle.DeleteCaseTask_progress_startMessage());
-            logger.log(Level.INFO, String.format("Starting deleting %s (%s)", caseNodeData.getDisplayName(), deleteOption));
+            logger.log(Level.INFO, String.format("Starting deletion of %s (%s)", caseNodeData.getDisplayName(), deleteOption));
             deleteCase();
-            logger.log(Level.INFO, String.format("Finished deleting %s (%s)", caseNodeData.getDisplayName(), deleteOption));
+            logger.log(Level.INFO, String.format("Finished deletion of %s (%s)", caseNodeData.getDisplayName(), deleteOption));
 
         } catch (Throwable ex) {
             /*
@@ -230,7 +230,7 @@ final class DeleteCaseTask implements Runnable {
                     logger.log(Level.WARNING, String.format("Deletion of %s cancelled while incomplete", caseNodeData.getDisplayName()), ex);
                     return;
                 }
-                logger.log(Level.INFO, String.format("Found %d manifest file paths for %s", manifestFilePaths.size(), caseNodeData.getDisplayName()));
+                logger.log(Level.INFO, String.format("Found %d manifest file path(s) for %s", manifestFilePaths.size(), caseNodeData.getDisplayName()));
 
                 if (Thread.currentThread().isInterrupted()) {
                     logger.log(Level.WARNING, String.format("Deletion of %s cancelled while incomplete", caseNodeData.getDisplayName()));
@@ -305,7 +305,6 @@ final class DeleteCaseTask implements Runnable {
 
                             if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_ALL) {
                                 try {
-                                    logger.log(Level.INFO, String.format("Deleting output for %s", caseNodeData.getDisplayName()));
                                     Case.deleteMultiUserCase(caseNodeData, caseMetadata, progress, logger);
                                 } catch (InterruptedException ex) {
                                     logger.log(Level.WARNING, String.format("Deletion of %s cancelled while incomplete", caseNodeData.getDisplayName()), ex);
@@ -373,7 +372,6 @@ final class DeleteCaseTask implements Runnable {
 
                 if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_ALL) {
                     try {
-                        logger.log(Level.INFO, String.format("Deleting manifest file znodes for %s", caseNodeData.getDisplayName()));
                         deleteManifestFileNodes();
                     } catch (InterruptedException ex) {
                         logger.log(Level.WARNING, String.format("Deletion of %s cancelled while incomplete", caseNodeData.getDisplayName()), ex);
@@ -711,7 +709,14 @@ final class DeleteCaseTask implements Runnable {
      * @return True if all of the data source files werre deleted, false
      *         otherwise.
      */
+    @NbBundle.Messages({
+        "# {0} - data source name", "# {1} - device id", "DeleteCaseTask.progress.deletingDataSource=Deleting data source {0} with device id {1}...",})
     private boolean deleteDataSources(Manifest manifest, List<DataSource> dataSources) {
+        final String dataSourceFileName = manifest.getDataSourceFileName();
+        final String dataSourceDeviceId = manifest.getDeviceId();
+        progress.progress(Bundle.DeleteCaseTask_progress_deletingDataSource(dataSourceFileName, dataSourceDeviceId));
+        logger.log(Level.INFO, String.format("Deleting data source %s with device id %s from %s", dataSourceFileName, dataSourceDeviceId, caseNodeData.getDisplayName()));
+
         /*
          * There are two possibilities here. The data source may be an image,
          * and if so, it may be split into multiple files. In this case, all of
@@ -720,10 +725,8 @@ final class DeleteCaseTask implements Runnable {
          * set, report file, archive file, etc.). In this case, just the file
          * referenced by the manifest will be deleted.
          */
-        boolean allFilesDeleted = true; // RJCTODO: add progress messages
+        boolean allFilesDeleted = true;
         Set<Path> filesToDelete = new HashSet<>();
-        final String dataSourceFileName = manifest.getDataSourceFileName();
-        final String dataSourceDeviceId = manifest.getDeviceId();
         for (DataSource dataSource : dataSources) {
             if (dataSource instanceof Image) {
                 Image image = (Image) dataSource;
