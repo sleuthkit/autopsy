@@ -98,7 +98,7 @@ final public class CaseNodeDataCollector {
      *
      * @param nodeName    The coordination service node name, i.e., the case
      *                    directory path.
-     * @param oldNodeData .
+     * @param oldNodeData The node data to be updated.
      *
      * @return A CaseNodedata object or null if the coordination service node is
      *         an "orphan" with no corresponding case directry.
@@ -145,8 +145,8 @@ final public class CaseNodeDataCollector {
 
         if (nodeData != null) {
             CoordinationService.getInstance().setNodeData(CoordinationService.CategoryNode.CASES, nodeName, nodeData.toArray());
-        } 
-        
+        }
+
         return nodeData;
     }
 
