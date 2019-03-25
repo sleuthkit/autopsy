@@ -81,7 +81,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
-import org.sleuthkit.autopsy.casemodule.multiusercases.CaseCoordinationServiceUtils;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
@@ -944,7 +944,7 @@ public class Case {
     private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseDir) throws CaseActionException {
         try {
             Path caseDirPath = Paths.get(caseDir);
-            String resourcesNodeName = CaseCoordinationServiceUtils.getCaseResourcesLockName(caseDirPath);
+            String resourcesNodeName = CoordinationServiceUtils.getCaseResourcesNodePath(caseDirPath);
             Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, RESOURCES_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             return lock;
         } catch (InterruptedException ex) {
@@ -2625,7 +2625,7 @@ public class Case {
 
             progressIndicator.progress(Bundle.Case_progressMessage_deletingResourcesCoordSvcNode());
             try {
-                String resourcesLockNodePath = CaseCoordinationServiceUtils.getCaseResourcesLockName(caseNodeData.getDirectory());
+                String resourcesLockNodePath = CoordinationServiceUtils.getCaseResourcesNodePath(caseNodeData.getDirectory());
                 coordinationService.deleteNode(CategoryNode.CASES, resourcesLockNodePath);
             } catch (CoordinationServiceException ex) {
                 if (!isNoNodeException(ex)) {
@@ -2644,7 +2644,7 @@ public class Case {
         if (!errorsOccurred) {
             progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDirCoordSvcNode());
             try {
-                String casDirNodePath = CaseCoordinationServiceUtils.getCaseDirectoryLockName(caseNodeData.getDirectory());
+                String casDirNodePath = CoordinationServiceUtils.getCaseDirectoryNodePath(caseNodeData.getDirectory());
                 coordinationService.deleteNode(CategoryNode.CASES, casDirNodePath);
             } catch (CoordinationServiceException | InterruptedException ex) {
                 logger.log(Level.SEVERE, String.format("Error deleting the case directory lock node for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS

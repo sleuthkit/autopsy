@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
-import org.sleuthkit.autopsy.casemodule.multiusercases.CaseCoordinationServiceUtils;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
@@ -184,7 +184,7 @@ final class DeleteCaseTask implements Runnable {
          */
         progress.progress(Bundle.DeleteCaseTask_progress_acquiringCaseNameLock());
         logger.log(Level.INFO, String.format("Acquiring an exclusive case name lock for %s", caseNodeData.getDisplayName()));
-        String caseNameLockName = CaseCoordinationServiceUtils.getCaseNameLockName(caseNodeData.getDirectory());
+        String caseNameLockName = CoordinationServiceUtils.getCaseNameNodePath(caseNodeData.getDirectory());
         try (CoordinationService.Lock nameLock = coordinationService.tryGetExclusiveLock(CategoryNode.CASES, caseNameLockName)) {
             if (nameLock == null) {
                 logger.log(Level.INFO, String.format("Could not delete %s because a case name lock was already held by another host", caseNodeData.getDisplayName()));
@@ -207,7 +207,7 @@ final class DeleteCaseTask implements Runnable {
              */
             progress.progress(Bundle.DeleteCaseTask_progress_acquiringCaseDirLock());
             logger.log(Level.INFO, String.format("Acquiring an exclusive case directory lock for %s", caseNodeData.getDisplayName()));
-            String caseDirLockName = CaseCoordinationServiceUtils.getCaseDirectoryLockName(caseNodeData.getDirectory());
+            String caseDirLockName = CoordinationServiceUtils.getCaseDirectoryNodePath(caseNodeData.getDirectory());
             try (CoordinationService.Lock caseDirLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseDirLockName)) {
                 if (caseDirLock == null) {
                     logger.log(Level.INFO, String.format("Could not delete %s because a case directory lock was already held by another host", caseNodeData.getDisplayName()));
@@ -330,7 +330,7 @@ final class DeleteCaseTask implements Runnable {
                 if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_ALL) {
                     progress.progress(Bundle.DeleteCaseTask_progress_deletingResourcesLockNode());
                     logger.log(Level.INFO, String.format("Deleting case resources log znode for %s", caseNodeData.getDisplayName()));
-                    String resourcesNodePath = CaseCoordinationServiceUtils.getCaseResourcesLockName(caseNodeData.getDirectory());
+                    String resourcesNodePath = CoordinationServiceUtils.getCaseResourcesNodePath(caseNodeData.getDirectory());
                     try {
                         coordinationService.deleteNode(CategoryNode.CASES, resourcesNodePath);
                     } catch (CoordinationServiceException ex) {
@@ -351,7 +351,7 @@ final class DeleteCaseTask implements Runnable {
 
                     progress.progress(Bundle.DeleteCaseTask_progress_deletingJobLogLockNode());
                     logger.log(Level.INFO, String.format("Deleting case auto ingest job log znode for %s", caseNodeData.getDisplayName()));
-                    String logFilePath = CaseCoordinationServiceUtils.getCaseAutoIngestLogLockName(caseNodeData.getDirectory());
+                    String logFilePath = CoordinationServiceUtils.getCaseAutoIngestLogNodePath(caseNodeData.getDirectory());
                     try {
                         coordinationService.deleteNode(CategoryNode.CASES, logFilePath);
                     } catch (CoordinationServiceException ex) {
@@ -407,7 +407,7 @@ final class DeleteCaseTask implements Runnable {
                     && caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.MANIFEST_FILE_NODES)) {
                 progress.progress(Bundle.DeleteCaseTask_progress_deletingCaseDirCoordSvcNode());
                 logger.log(Level.INFO, String.format("Deleting case directory znode for %s", caseNodeData.getDisplayName()));
-                String caseDirNodePath = CaseCoordinationServiceUtils.getCaseDirectoryLockName(caseNodeData.getDirectory());
+                String caseDirNodePath = CoordinationServiceUtils.getCaseDirectoryNodePath(caseNodeData.getDirectory());
                 try {
                     coordinationService.deleteNode(CategoryNode.CASES, caseDirNodePath);
                 } catch (CoordinationServiceException ex) {
@@ -436,7 +436,7 @@ final class DeleteCaseTask implements Runnable {
             progress.progress(Bundle.DeleteCaseTask_progress_deletingCaseNameCoordSvcNode());
             logger.log(Level.INFO, String.format("Deleting case name znode for %s", caseNodeData.getDisplayName()));
             try {
-                String caseNameLockNodeName = CaseCoordinationServiceUtils.getCaseNameLockName(caseNodeData.getDirectory());
+                String caseNameLockNodeName = CoordinationServiceUtils.getCaseNameNodePath(caseNodeData.getDirectory());
                 coordinationService.deleteNode(CategoryNode.CASES, caseNameLockNodeName);
             } catch (CoordinationServiceException ex) {
                 logger.log(Level.SEVERE, String.format("Error deleting case name lock node for %s", caseNodeData.getDisplayName()), ex);
@@ -518,7 +518,7 @@ final class DeleteCaseTask implements Runnable {
          * be to strip off any time stamp from the case name in the case node
          * data.
          */
-        String caseName = CaseCoordinationServiceUtils.getCaseNameLockName(caseNodeData.getDirectory());
+        String caseName = CoordinationServiceUtils.getCaseNameNodePath(caseNodeData.getDirectory());
         final List<String> nodeNames = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
         for (String manifestNodeName : nodeNames) {
             if (Thread.currentThread().isInterrupted()) {

@@ -58,9 +58,9 @@ final public class MultiUserCaseNodeDataCollector { // RJCTODO: Shorten name aft
         final CoordinationService coordinationService = CoordinationService.getInstance();
         final List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
         for (String nodeName : nodeList) {
-            if (CaseCoordinationServiceUtils.isCaseLockName(nodeName)
-                    || CaseCoordinationServiceUtils.isCaseResourcesLockName(nodeName)
-                    || CaseCoordinationServiceUtils.isCaseAutoIngestLogLockName(nodeName)) {
+            if (CoordinationServiceUtils.isCaseNameNodePath(nodeName)
+                    || CoordinationServiceUtils.isCaseResourcesNodePath(nodeName)
+                    || CoordinationServiceUtils.isCaseAutoIngestLogNodePath(nodeName)) {
                 continue;
             }
 
@@ -158,10 +158,10 @@ final public class MultiUserCaseNodeDataCollector { // RJCTODO: Shorten name aft
      * @param caseDirectoryPath   The case directory path.
      */
     private static void deleteLockNodes(CoordinationService coordinationService, Path caseDirectoryPath) {
-        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseResourcesLockName(caseDirectoryPath));
-        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseAutoIngestLogLockName(caseDirectoryPath));
-        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseDirectoryLockName(caseDirectoryPath));
-        deleteCoordinationServiceNode(coordinationService, CaseCoordinationServiceUtils.getCaseNameLockName(caseDirectoryPath));
+        deleteCoordinationServiceNode(coordinationService, CoordinationServiceUtils.getCaseResourcesNodePath(caseDirectoryPath));
+        deleteCoordinationServiceNode(coordinationService, CoordinationServiceUtils.getCaseAutoIngestLogNodePath(caseDirectoryPath));
+        deleteCoordinationServiceNode(coordinationService, CoordinationServiceUtils.getCaseDirectoryNodePath(caseDirectoryPath));
+        deleteCoordinationServiceNode(coordinationService, CoordinationServiceUtils.getCaseNameNodePath(caseDirectoryPath));
     }
 
     /**
