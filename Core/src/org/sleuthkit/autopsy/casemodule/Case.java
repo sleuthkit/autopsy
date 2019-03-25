@@ -703,7 +703,7 @@ public class Case {
 
     /**
      * Deletes a case. The case to be deleted must not be the "current case."
-     * deleting the current case must be done by calling Case.deleteCurrentCase.
+     * Deleting the current case must be done by calling Case.deleteCurrentCase.
      *
      * @param metadata The case metadata.
      *
@@ -940,7 +940,7 @@ public class Case {
      *                             lower-level exception.
      */
     @Messages({
-        "Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the log for details."
+        "Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details."
     })
     private static void deleteSingleUserCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
         boolean errorsOccurred = false;
@@ -988,8 +988,8 @@ public class Case {
         "Case.progressMessage.connectingToCoordSvc=Connecting to coordination service...",
         "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or host.",
         "Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case...",
-        "Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resources lock node...",
-        "Case.progressMessage.deletingCaseDirCoordSvcNode=Deleting case directory lock coordination service node..."
+        "Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resources coordination service node...",
+        "Case.progressMessage.deletingCaseDirCoordSvcNode=Deleting case directory coordination service node..."
     })
     private static void deleteMultiUserCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException, InterruptedException {
         progressIndicator.progress(Bundle.Case_progressMessage_connectingToCoordSvc());
@@ -1373,10 +1373,8 @@ public class Case {
                     if (!fileExists) {
                         int response = JOptionPane.showConfirmDialog(
                                 mainFrame,
-                                NbBundle.getMessage(Case.class,
-                                        "Case.checkImgExist.confDlg.doesntExist.msg", path),
-                                NbBundle.getMessage(Case.class,
-                                        "Case.checkImgExist.confDlg.doesntExist.title"),
+                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.msg", path),
+                                NbBundle.getMessage(Case.class, "Case.checkImgExist.confDlg.doesntExist.title"),
                                 JOptionPane.YES_NO_OPTION);
                         if (response == JOptionPane.YES_OPTION) {
                             MissingImageDialog.makeDialog(obj_id, caseDb);
@@ -1390,32 +1388,15 @@ public class Case {
                 /*
                  * Enable the case-specific actions.
                  */
-                CallableSystemAction.get(AddImageAction.class
-                ).setEnabled(true);
-                CallableSystemAction
-                        .get(CaseCloseAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(CaseDetailsAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(DataSourceSummaryAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(CaseDeleteAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(OpenTimelineAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(OpenCommVisualizationToolAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(CommonAttributeSearchAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(OpenOutputFolderAction.class
-                        ).setEnabled(false);
+                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseDetailsAction.class).setEnabled(true);
+                CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
+                CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(true);
+                CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(true);
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
                  * Add the case to the recent cases tracker that supplies a list
@@ -1461,33 +1442,15 @@ public class Case {
                 /*
                  * Disable the case-specific menu items.
                  */
-                CallableSystemAction
-                        .get(AddImageAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CaseCloseAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CaseDetailsAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(DataSourceSummaryAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CaseDeleteAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(OpenTimelineAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(OpenCommVisualizationToolAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(OpenOutputFolderAction.class
-                        ).setEnabled(false);
-                CallableSystemAction
-                        .get(CommonAttributeSearchAction.class
-                        ).setEnabled(false);
+                CallableSystemAction.get(AddImageAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseDetailsAction.class).setEnabled(false);
+                CallableSystemAction.get(DataSourceSummaryAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenCommVisualizationToolAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+                CallableSystemAction.get(CommonAttributeSearchAction.class).setEnabled(false);
 
                 /*
                  * Clear the notifications in the notfier component in the lower
