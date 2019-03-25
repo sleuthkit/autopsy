@@ -283,6 +283,9 @@ public final class CaseNodeData {
         return byteStream.toByteArray();
     }
 
+    /**
+     * Flags for the various components of a case that can be deleted.
+     */
     public enum DeletedFlags {
 
         TEXT_INDEX(1),
@@ -290,9 +293,14 @@ public final class CaseNodeData {
         CASE_DIR(4),
         DATA_SOURCES(8),
         MANIFEST_FILE_NODES(16);
-        
+
         private final short value;
 
+        /**
+         * Constructs a flag for a case component that can be deleted.
+         *
+         * @param value
+         */
         private DeletedFlags(int value) {
             this.value = (short) value;
         }
@@ -307,18 +315,5 @@ public final class CaseNodeData {
         }
 
     }
-    
-    public final static class InvalidDataException extends Exception {
 
-        private static final long serialVersionUID = 1L;
-
-        private InvalidDataException(String message) {
-            super(message);
-        }
-
-        private InvalidDataException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
-    
 }
