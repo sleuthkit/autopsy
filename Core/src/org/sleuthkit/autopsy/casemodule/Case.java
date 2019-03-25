@@ -2173,7 +2173,6 @@ public class Case {
         "# {0} - service name", "Case.servicesException.notificationTitle={0} Error"
     })
     private void openAppServiceCaseResources(ProgressIndicator progressIndicator) throws CaseActionException {
-        progressIndicator.progress(Bundle.Case_progressMessage_openingApplicationServiceResources());
         /*
          * Each service gets its own independently cancellable/interruptible
          * task, running in a named thread managed by an executor service, with
@@ -2182,7 +2181,7 @@ public class Case {
          * possible to ensure that each service task completes before the next
          * one starts by awaiting termination of the executor service.
          */
-
+        progressIndicator.progress(Bundle.Case_progressMessage_openingApplicationServiceResources());
         for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
             /*
              * Create a progress indicator for the task and start the task. If
@@ -2567,8 +2566,8 @@ public class Case {
         if (errorsOccurred) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
         }
-    }    
-    
+    }
+
     /**
      * Deletes a multi-user case. This method does so after acquiring the case
      * directory coordination service lock and is intended to be used for
@@ -2904,7 +2903,7 @@ public class Case {
             logger.log(Level.SEVERE, String.format("Error updating deleted item flag %s for %s (%s) in %s", flag.name(), caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()), ex);
         }
     }
-    
+
     /**
      * A case operation Cancel button listener for use with a
      * ModalDialogProgressIndicator when running with a GUI.
