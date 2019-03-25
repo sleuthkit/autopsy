@@ -330,8 +330,9 @@ final class DeleteCaseTask implements Runnable {
                 if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_ALL) {
                     progress.progress(Bundle.DeleteCaseTask_progress_deletingResourcesLockNode());
                     logger.log(Level.INFO, String.format("Deleting case resources log znode for %s", caseNodeData.getDisplayName()));
+                    String resourcesNodePath = CaseCoordinationServiceUtils.getCaseResourcesLockName(caseNodeData.getDirectory());
                     try {
-                        Case.deleteCaseResourcesLockNode(caseNodeData, progress);
+                        coordinationService.deleteNode(CategoryNode.CASES, resourcesNodePath);
                     } catch (CoordinationServiceException ex) {
                         if (!isNoNodeException(ex)) {
                             logger.log(Level.SEVERE, String.format("Error deleting case resources znode for %s", caseNodeData.getDisplayName()), ex);
@@ -406,8 +407,9 @@ final class DeleteCaseTask implements Runnable {
                     && caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.MANIFEST_FILE_NODES)) {
                 progress.progress(Bundle.DeleteCaseTask_progress_deletingCaseDirCoordSvcNode());
                 logger.log(Level.INFO, String.format("Deleting case directory znode for %s", caseNodeData.getDisplayName()));
+                String caseDirNodePath = CaseCoordinationServiceUtils.getCaseDirectoryLockName(caseNodeData.getDirectory());
                 try {
-                    Case.deleteCaseDirectoryLockNode(caseNodeData, progress);
+                    coordinationService.deleteNode(CategoryNode.CASES, caseDirNodePath);
                 } catch (CoordinationServiceException ex) {
                     logger.log(Level.SEVERE, String.format("Error deleting case directory lock node for %s", caseNodeData.getDisplayName()), ex);
                 } catch (InterruptedException ex) {

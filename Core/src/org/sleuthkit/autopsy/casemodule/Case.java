@@ -1352,10 +1352,8 @@ public class Case {
                 if (null != backupDbPath) {
                     JOptionPane.showMessageDialog(
                             mainFrame,
-                            NbBundle.getMessage(Case.class,
-                                    "Case.open.msgDlg.updated.msg", backupDbPath),
-                            NbBundle.getMessage(Case.class,
-                                    "Case.open.msgDlg.updated.title"),
+                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.msg", backupDbPath),
+                            NbBundle.getMessage(Case.class, "Case.open.msgDlg.updated.title"),
                             JOptionPane.INFORMATION_MESSAGE);
                 }
 
