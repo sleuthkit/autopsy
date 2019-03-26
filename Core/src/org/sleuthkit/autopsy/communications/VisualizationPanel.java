@@ -429,9 +429,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         placeHolderPanel.setLayout(placeHolderPanelLayout);
         placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(128, Short.MAX_VALUE)
+                .addContainerGap(158, Short.MAX_VALUE)
                 .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(302, Short.MAX_VALUE))
+                .addContainerGap(332, Short.MAX_VALUE))
         );
         placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
@@ -442,9 +442,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         borderLayoutPanel.add(placeHolderPanel, BorderLayout.CENTER);
 
+        fastOrganicLayoutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-circle-double-135.png"))); // NOI18N
         fastOrganicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fastOrganicLayoutButton.text")); // NOI18N
         fastOrganicLayoutButton.setFocusable(false);
-        fastOrganicLayoutButton.setHorizontalTextPosition(SwingConstants.CENTER);
         fastOrganicLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
 
         zoomOutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/magnifier-zoom-out-red.png"))); // NOI18N
@@ -510,6 +510,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         jSeparator2.setOrientation(SwingConstants.VERTICAL);
 
+        backButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/resultset_previous.png"))); // NOI18N
         backButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.backButton.text_1")); // NOI18N
         backButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -517,7 +518,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             }
         });
 
+        forwardButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/resultset_next.png"))); // NOI18N
         forwardButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.forwardButton.text")); // NOI18N
+        forwardButton.setHorizontalTextPosition(SwingConstants.LEADING);
         forwardButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 forwardButtonActionPerformed(evt);
