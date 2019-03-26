@@ -56,22 +56,22 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     @Override
     protected void process(Env env, Map<Option, String[]> values) throws CommandException {
         logger.log(Level.INFO, "Processing Autopsy command line options"); //NON-NLS
-        System.out.println("Processing Autopsy command line options using CommandLineOptionProcessor");
+        System.out.println("Processing Autopsy command line options");
         if (values.containsKey(pathToDataSourceOption) && values.containsKey(caseNameOption) && values.containsKey(runFromCommandLineOption)) {
             // parse input parameters
             String inputPath;
             String inputCaseName;
             String modeString;
             if (values.size() < 3) {
-                logger.log(Level.SEVERE, "Insufficient number of input arguments. Exiting");
-                System.out.println("Insufficient number of input arguments. Exiting");
+                logger.log(Level.SEVERE, "Insufficient number of input arguments to run command line ingest");
+                System.out.println("Insufficient number of input arguments to run command line ingest");
                 this.runFromCommandLine = false;
                 return;
             } else {
                 String[] argDirs = values.get(pathToDataSourceOption);
                 if (argDirs.length < 1) {
-                    logger.log(Level.SEVERE, "Missing argument 'inputPath'. Exiting");
-                    System.out.println("Missing argument 'inputPath'. Exiting");
+                    logger.log(Level.SEVERE, "Missing argument 'inputPath'");
+                    System.out.println("Missing argument 'inputPath'");
                     this.runFromCommandLine = false;
                     return;
                 }
@@ -79,8 +79,8 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
                 argDirs = values.get(caseNameOption);
                 if (argDirs.length < 1) {
-                    logger.log(Level.SEVERE, "Missing argument 'caseName'. Exiting");
-                    System.out.println("Missing argument 'caseName'. Exiting");
+                    logger.log(Level.SEVERE, "Missing argument 'caseName'");
+                    System.out.println("Missing argument 'caseName'");
                     this.runFromCommandLine = false;
                     return;
                 }
@@ -88,8 +88,8 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                 
                 argDirs = values.get(runFromCommandLineOption);
                 if (argDirs.length < 1) {
-                    logger.log(Level.SEVERE, "Missing argument 'runFromCommandLine'. Exiting");
-                    System.out.println("Missing argument 'runFromCommandLine'. Exiting");
+                    logger.log(Level.SEVERE, "Missing argument 'runFromCommandLine'");
+                    System.out.println("Missing argument 'runFromCommandLine'");
                     this.runFromCommandLine = false;
                     return;
                 }
@@ -111,15 +111,15 @@ public class CommandLineOptionProcessor extends OptionProcessor {
 
             // verify inputs
             if (inputPath == null || inputPath.isEmpty() || !(new File(inputPath).exists())) {
-                logger.log(Level.SEVERE, "Input file {0} doesn''t exist. Exiting", inputPath);
-                System.out.println("Input file " + inputPath + " doesn't exist. Exiting");
+                logger.log(Level.SEVERE, "Input file {0} doesn''t exist", inputPath);
+                System.out.println("Input file " + inputPath + " doesn't exist");
                 this.runFromCommandLine = false;
                 return;
             }
 
             if (inputCaseName == null || inputCaseName.isEmpty()) {
-                logger.log(Level.SEVERE, "Case name argument is empty. Exiting");
-                System.out.println("Case name argument is empty. Exiting");
+                logger.log(Level.SEVERE, "Case name argument is empty");
+                System.out.println("Case name argument is empty");
                 this.runFromCommandLine = false;
                 return;
             }
@@ -134,8 +134,8 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             System.out.println("Case name = " + this.baseCaseName);
             System.out.println("runFromCommandLine = " + this.runFromCommandLine);
         } else {
-            System.out.println("Missing input arguments for CommandLineOptionProcessor. Exiting");
-            logger.log(Level.SEVERE, "Missing input arguments. Exiting");
+            System.out.println("Missing input arguments to run command line ingest");
+            logger.log(Level.SEVERE, "Missing input arguments to run command line ingest");
         }
     }
 

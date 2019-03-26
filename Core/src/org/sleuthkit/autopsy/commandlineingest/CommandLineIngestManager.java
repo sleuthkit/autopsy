@@ -149,7 +149,7 @@ public class CommandLineIngestManager {
                 // read options panel configuration
                 String rootOutputDir = UserPreferences.getCommandLineModeResultsFolder();
                 LOGGER.log(Level.INFO, "Output directory = {0}", rootOutputDir); //NON-NLS
-                System.out.println("Output directoryh = " + rootOutputDir);
+                System.out.println("Output directory = " + rootOutputDir);
 
                 if (rootOutputDir.isEmpty()) {
                     LOGGER.log(Level.SEVERE, "Output directory not specified, please configure Command Line Options Panel (in Tools -> Options)");
