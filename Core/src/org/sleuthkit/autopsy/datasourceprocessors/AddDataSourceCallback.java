@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.datasourceprocessors;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.Content;
  * processor finishes running in its own thread.
  */
 @Immutable
-class AddDataSourceCallback extends DataSourceProcessorCallback {
+public class AddDataSourceCallback extends DataSourceProcessorCallback {
 
     private final Case caseForJob;
     private final AutoIngestDataSource dataSourceInfo;
@@ -48,7 +48,7 @@ class AddDataSourceCallback extends DataSourceProcessorCallback {
      * @param dataSourceInfo The data source
      * @param taskId The task id to associate with ingest job events.
      */
-    AddDataSourceCallback(Case caseForJob, AutoIngestDataSource dataSourceInfo, UUID taskId, Object lock) {
+    public AddDataSourceCallback(Case caseForJob, AutoIngestDataSource dataSourceInfo, UUID taskId, Object lock) {
         this.caseForJob = caseForJob;
         this.dataSourceInfo = dataSourceInfo;
         this.taskId = taskId;
@@ -87,7 +87,7 @@ class AddDataSourceCallback extends DataSourceProcessorCallback {
      * @param result The result code for the processing of the data source.
      * @param errorMessages Any error messages generated during the processing
      * of the data source.
-     * @param dataSourceContent The content produced by processing the data
+     * @param dataSources The content produced by processing the data
      * source.
      */
     @Override
