@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.contentviewers;
 
 import com.google.common.io.Files;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -33,14 +32,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.freedesktop.gstreamer.ClockTime;
 import org.freedesktop.gstreamer.Gst;
 import org.freedesktop.gstreamer.GstException;
@@ -168,13 +163,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     ); //NON-NLS
 
     private static final Logger logger = Logger.getLogger(MediaPlayerPanel.class.getName());
-    private boolean gstInited;
     private static final String MEDIA_PLAYER_ERROR_STRING = NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.cannotProcFile.err");
 
-    private volatile PlayBin gstPlayBin;
+    private PlayBin gstPlayBin;
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlayBin player
+    private boolean gstInited;
 
-    private Timer timer;
+    private final Timer timer = new Timer(PLAYER_STATUS_UPDATE_INTERVAL_MS, new VideoPanelUpdater());
     private volatile ExtractMedia extractMediaWorker;
 
     private static final long END_TIME_MARGIN_NS = 50000000;
@@ -188,26 +183,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         customizeComponents();
     }
 
-    public JButton getPauseButton() {
-        return pauseButton;
-    }
-
-    public JLabel getProgressLabel() {
-        return progressLabel;
-    }
-
-    public JSlider getProgressSlider() {
-        return progressSlider;
-    }
-
-    public JPanel getVideoPanel() {
-        return videoPanel;
-    }
-
     /**
      * Has this MediaPlayerPanel been initialized correctly?
      *
-     * @return
+     * @return if GST was successfully initialized
      */
     public boolean isInited() {
         return gstInited;
@@ -224,38 +203,26 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setValue(0);
 
         //Manage the gstreamer video position when a user is dragging the slider in the panel.
-        progressSlider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent event) {
-                if (gstPlayBin == null) {
-                    return;
-                }
-                if (progressSlider.getValueIsAdjusting()) {
-                    synchronized (playbinLock) {
-                        long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
-                        long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-                        if (duration > 0) {
-                            double relativePosition = progressSlider.getValue() / 2000.0;
-                            gstPlayBin.seek((long) (relativePosition * duration), TimeUnit.NANOSECONDS);
-                        } else if (position > 0 || progressSlider.getValue() > 0) {
-                            gstPlayBin.seek(ClockTime.ZERO);
-                            progressSlider.setValue(0);
-                        }
+        progressSlider.addChangeListener((ChangeEvent event) -> {
+            if (progressSlider.getValueIsAdjusting()) {
+                synchronized (playbinLock) {
+                    long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+                    long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+                    if (duration > 0) {
+                        double relativePosition = progressSlider.getValue() / 2000.0;
+                        gstPlayBin.seek((long) (relativePosition * duration), TimeUnit.NANOSECONDS);
                     }
                 }
             }
         });
     }
 
-    /**
-     *
-     * @return
-     */
     private boolean initGst() {
         try {
             logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing"); //NON-NLS
             Gst.init();
             gstInited = true;
+            gstPlayBin = new PlayBin("VideoPlayer");
         } catch (GstException | UnsatisfiedLinkError ex) {
             gstInited = false;
             logger.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", ex); //NON-NLS
@@ -269,77 +236,63 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     }
 
     /**
-     * Initialize all the necessary variables to play an audio/video file.
+     * Loads the file by spawning off a background task to handle file copying
+     * and video component initializations.
      *
      * @param file Media file to play.
-     * @param dims Dimension of the parent window.
      */
     @NbBundle.Messages({"GstVideoPanel.noOpenCase.errMsg=No open case available."})
-    void loadFile(final AbstractFile file, final Dimension dims) {
+    void loadFile(final AbstractFile file) {
         //Ensure everything is back in the inital state
         reset();
-        
+
         if (file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.setupVideo.infoLabel.text"));
             return;
         }
 
         try {
-            String path = file.getUniquePath();        
+            String path = file.getUniquePath();
             infoLabel.setText(path);
             infoLabel.setToolTipText(path);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Cannot get unique path of video file.", ex); //NON-NLS
         }
 
-        synchronized (playbinLock) {
-            try {
-                extractMediaWorker = new ExtractMedia(file, VideoUtils.getVideoFileInTempDir(file));
-                extractMediaWorker.execute();
-            } catch (NoCurrentCaseException ex) {
-                logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
-                infoLabel.setText(Bundle.GstVideoPanel_noOpenCase_errMsg());
-                pauseButton.setEnabled(false);
-                progressSlider.setEnabled(false);
-            }
+        try {
+            extractMediaWorker = new ExtractMedia(file, VideoUtils.getVideoFileInTempDir(file));
+            extractMediaWorker.execute();
+        } catch (NoCurrentCaseException ex) {
+            logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
+            infoLabel.setText(Bundle.GstVideoPanel_noOpenCase_errMsg());
+            pauseButton.setEnabled(false);
+            progressSlider.setEnabled(false);
         }
     }
 
     /**
-     * Prepare this MediaViewVideoPanel to accept a different media file.
+     * Return this panel to its initial state.
      */
     void reset() {
         if (!isInited()) {
             return;
         }
-        
-        if (timer != null) {
-            timer.stop();
+
+        timer.stop();
+        synchronized (playbinLock) {
+            gstPlayBin.dispose();
         }
+
+        if (extractMediaWorker != null) {
+            extractMediaWorker.cancel(true);
+        }
+        
+        videoPanel.removeAll();
 
         pauseButton.setEnabled(false);
         progressSlider.setEnabled(false);
         progressLabel.setText("00:00:00/00:00:00");
         infoLabel.setText("");
-
-        synchronized (playbinLock) {
-            if (gstPlayBin != null) {
-                if (gstPlayBin.isPlaying() && gstPlayBin.stop() == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin.stop() failed."); //NON-NLS
-                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                    return;
-                }
-                gstPlayBin.dispose();
-                gstPlayBin = null;
-            }
-        }
-        
-        if (extractMediaWorker != null) {
-            extractMediaWorker.cancel(true);
-            extractMediaWorker = null;
-        }
-        
-        videoPanel.removeAll();
         progressSlider.setValue(0);
         pauseButton.setText("►");
     }
@@ -432,14 +385,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
     private void pauseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButtonActionPerformed
         synchronized (playbinLock) {
-            if (gstPlayBin == null) {
-                return;
-            }
             switch (gstPlayBin.getState()) {
                 case PLAYING:
                     pauseButton.setText("►");
                     if (gstPlayBin.pause() == StateChangeReturn.FAILURE) {
-                        logger.log(Level.WARNING, "Attempt to call PlayBin.pause() failed."); //NON-NLS
                         infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     }
                     break;
@@ -448,7 +397,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 case NULL:
                     pauseButton.setText("||");
                     if (gstPlayBin.play() == StateChangeReturn.FAILURE) {
-                        logger.log(Level.WARNING, "Attempt to call PlayBin.play() failed."); //NON-NLS
                         infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
                     }
                     break;
@@ -512,9 +460,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     }
 
     /**
-     * Thread that extracts and plays a file
+     * Thread that extracts a file and initializes all of the playback
+     * components.
      */
-    private class ExtractMedia extends SwingWorker<Long, Void> {
+    private class ExtractMedia extends SwingWorker<Void, Void> {
 
         private ProgressHandle progress;
         private final AbstractFile sourceFile;
@@ -526,70 +475,66 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
 
         @Override
-        protected Long doInBackground() throws Exception {
+        protected Void doInBackground() throws Exception {
             if (tempFile.exists() == false || tempFile.length() < sourceFile.getSize()) {
                 progress = ProgressHandle.createHandle(NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> this.cancel(true));
                 progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
                 progress.start(100);
                 try {
                     Files.createParentDirs(tempFile);
-                    return ContentUtils.writeToFile(sourceFile, tempFile, progress, this, true);
+                    ContentUtils.writeToFile(sourceFile, tempFile, progress, this, true);
                 } catch (IOException ex) {
                     logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
-                    return 0L;
                 }
+                progress.finish();
             }
-            return 0L;
+            return null;
         }
 
         /*
-         * clean up or start the worker threads
+         * Initialize the playback components if the extraction was successful.
          */
         @Override
         protected void done() {
             try {
-                super.get(); //block and get all exceptions thrown while doInBackground()
+                super.get();
+                //PlayBin file is ready for playback, initialize all components.
+                synchronized (playbinLock) {
+                    gstPlayBin = new PlayBin("VideoPlayer"); //NON-NLS
+                    gstPlayBin.setInputFile(tempFile);
+                    GstVideoRendererPanel gstVideoRenderer = new GstVideoRendererPanel();
+                    gstPlayBin.setVideoSink(gstVideoRenderer.getVideoSink());
+                    videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+                    videoPanel.add(gstVideoRenderer);//add jfx ui to JPanel
+                    
+                    /*
+                     * It seems like PlayBin cannot be queried for duration
+                     * until the video is actually being played. This call
+                     * to pause below is used to 'initialize' the PlayBin to
+                     * display the duration in the content viewer before the
+                     * play button is pressed. This is a suggested solution
+                     * in the gstreamer google groups page as this use case 
+                     * doesn't seem to be supported out of the box.
+                     */
+                    gstPlayBin.pause();
+                    timer.start();
+
+                    videoPanel.setVisible(true);
+                    pauseButton.setEnabled(true);
+                    progressSlider.setEnabled(true);
+                }
             } catch (CancellationException ex) {
                 logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
             } catch (InterruptedException ex) {
                 logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
             } catch (ExecutionException ex) {
                 logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
-            } finally {
-                if (progress != null) {
-                    progress.finish();
-                }
-                if (!this.isCancelled()) {
-                    //PlayBin file is ready for playback, initialize all components.
-                    synchronized (playbinLock) {
-                        gstPlayBin = new PlayBin("VideoPlayer"); //NON-NLS
-                        gstPlayBin.setInputFile(tempFile);
-                        GstVideoRendererPanel gstVideoRenderer = new GstVideoRendererPanel();
-                        gstPlayBin.setVideoSink(gstVideoRenderer.getVideoSink());
-                        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
-                        videoPanel.add(gstVideoRenderer);//add jfx ui to JPanel
-                        /*
-                         * It seems like PlayBin cannot be queried for duration
-                         * until the video is actually being played. This call
-                         * to pause below is used to 'initialize' the PlayBin to
-                         * display the duration in the content viewer before the
-                         * play button is pressed. This is a suggested solution
-                         * in the gstreamer google groups page.
-                         */
-                        gstPlayBin.pause();
-                        timer = new Timer(PLAYER_STATUS_UPDATE_INTERVAL_MS, new VideoPanelUpdater());
-                        timer.start();
-                        videoPanel.setVisible(true);
-                        pauseButton.setEnabled(true);
-                        progressSlider.setEnabled(true);
-                    }
-                }
             }
         }
     }
 
     /**
-     *
+     * Updates the video time bar and the time label when a video is playing.
      */
     private class VideoPanelUpdater implements ActionListener {
 
@@ -599,11 +544,12 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 synchronized (playbinLock) {
                     long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
                     long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-                    //Duration is -1 when the PlayBin is in the inital READY or
-                    //NULL states, do nothing in these cases.
-                    //if (duration <= 0) {
-                    //    return;
-                    //}
+
+                    //Duration is -1 when the PlayBin is not playing or paused. Do
+                    //nothing in this case.
+                    if (duration <= 0) {
+                        return;
+                    }
 
                     long positionDelta = duration - position;
                     //NOTE: This conditional is problematic and is responsible for JIRA-4863

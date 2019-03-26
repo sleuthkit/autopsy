@@ -120,14 +120,11 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
             }
 
             lastFile = file;
-
-            final Dimension dims = MediaFileViewer.this.getSize();
-            //logger.info("setting node on media viewer"); //NON-NLS
             if (mediaPlayerPanelInited && mediaPlayerPanel.isSupported(file)) {
-                mediaPlayerPanel.loadFile(file, dims);
+                mediaPlayerPanel.loadFile(file);
                 this.showVideoPanel();
             } else if (imagePanelInited && imagePanel.isSupported(file)) {
-                imagePanel.showImageFx(file, dims);
+                imagePanel.showImageFx(file);
                 this.showImagePanel();
             }
         } catch (Exception e) {

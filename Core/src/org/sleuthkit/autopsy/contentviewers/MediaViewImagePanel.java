@@ -172,9 +172,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * Show the contents of the given AbstractFile as a visual image.
      *
      * @param file image file to show
-     * @param dims dimension of the parent window (ignored)
      */
-    void showImageFx(final AbstractFile file, final Dimension dims) {
+    void showImageFx(final AbstractFile file) {
         if (!fxInited) {
             return;
         }
