@@ -1,0 +1,30 @@
+/*! \page multi_case_keyword_search_page Multi-case Keyword Search
+
+\section multi_case_kw_overview Overview
+
+The Multi-case Keyword Search features allows you to perform an \ref ad_hoc_keyword_search_page across multiple \ref multiuser_page "multi-user cases". 
+
+\section multi_case_kw_usage Usage
+
+To use the Multi-case Keyword Search feature you must have \ref multiuser_page "multi-user cases" enabled and you need to have run the \ref keyword_search_page "Keyword Search Ingest Module" on every data source you want to search. 
+
+Go to the Tools menu and then select "Multi-case Keyword Search". The following window will be displayed.
+
+\image html multicase_kw_empty.png
+
+First you'll need to enter your search term on the top line, selecting the appropriate button for your desired search type (exact, substring, or regex). Information on how each keyword type works can be found on the \ref ad_hoc_keyword_search_page page.
+
+Next you need to select which cases you want to search. The "Add Cases" button will bring up a list of all the multi-user cases. You can select a single case, hold down <b>Shift</b> or <b>Ctrl</b> to select multiple cases, and use the "Select All" and "Deselect All" buttons to select everything or reset the window. 
+
+\image html multicase_kw_case_select.png
+
+Once you've selected your search term and the cases to run on, use the "Search" button to start the search. A progress bar will appear showing what case is currently being searched and giving the overall progress. Once that is done your results will be displayed.
+
+\image html multicase_kw_results.png
+
+You can use the "Export Results" button to save the contents of the Results table to a file. You can also save the data from a single row to the clipboard by right-clicking and selecting "Copy to clipboard".
+
+If you want to open one of the cases that your keyword was found in, either double-click it or right-click and select "Open case". You can either browse to the file with the keyword hit manually or find it again using the \ref ad_hoc_keyword_search_page. Note that the results in the Multi-case Keyword Search dialog will persist until you close Autopsy, so you can go back and view the file path or open a different case if desired.
+
+
+*/
