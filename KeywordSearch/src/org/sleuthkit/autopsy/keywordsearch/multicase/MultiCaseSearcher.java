@@ -21,14 +21,12 @@ package org.sleuthkit.autopsy.keywordsearch.multicase;
 import com.google.common.eventbus.EventBus;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +42,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -56,7 +53,6 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CoreAdminParams;
 import org.apache.solr.common.params.CursorMarkParams;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
@@ -155,7 +151,6 @@ final class MultiCaseSearcher {
             searchStopped = false;  //mark the search as started
             final List<MultiCaseMetadata> caseMetadata = getMultiCaseMetadata(caseNodes);
             checkForCancellation();
-            //eventBus.post("number of cases to search determined");
             progressIndicator.progress(Bundle.MultiCaseSearcher_progressMessage_creatingSolrQuery());
             final SolrQuery solrQuery = createSolrQuery(query);
             checkForCancellation();
@@ -227,18 +222,23 @@ final class MultiCaseSearcher {
      * @throws MultiCaseSearcherException
      * @throws InterruptedException
      */
-    private List<MultiCaseMetadata> getMultiCaseMetadata(final Collection<CaseNodeData> caseNodes) throws MultiCaseSearcherException, InterruptedException {
+    private List<MultiCaseMetadata> getMultiCaseMetadata(final Collection<CaseNodeData> caseNodes) throws InterruptedException {
         final Map<Path, String> casesToCasePaths = caseNodes.stream()
                 .collect(Collectors.toMap(CaseNodeData::getDirectory, CaseNodeData::getName));
         checkForCancellation();
         final List<MultiCaseMetadata> cases = new ArrayList<>();
         for (Map.Entry<Path, String> entry : casesToCasePaths.entrySet()) {
-            final Path caseDirectoryPath = entry.getKey();
-            final CaseMetadata caseMetadata = getCaseMetadata(caseDirectoryPath);
-            checkForCancellation();
-            final TextIndexMetadata textIndexMetadata = getTextIndexMetadata(caseDirectoryPath);
-            checkForCancellation();
-            cases.add(new MultiCaseMetadata(caseMetadata, textIndexMetadata));
+            try {
+                final Path caseDirectoryPath = entry.getKey();
+                final CaseMetadata caseMetadata = getCaseMetadata(caseDirectoryPath);
+                checkForCancellation();
+                final TextIndexMetadata textIndexMetadata = getTextIndexMetadata(caseDirectoryPath);
+                checkForCancellation();
+                cases.add(new MultiCaseMetadata(caseMetadata, textIndexMetadata));
+            } catch (MultiCaseSearcherException exception) {
+                logger.log(Level.INFO, exception.getMessage());
+                eventBus.post(exception);
+            }
         }
         return cases;
     }
@@ -571,7 +571,7 @@ final class MultiCaseSearcher {
                 sourceName = report.getReportName();
                 sourcePath = report.getUniquePath();
             }
-            
+
             return new SearchHit(caseDisplayName, caseDirectoryPath, dataSourceName, sourceType, sourceName, sourcePath);
         } catch (SQLException | TskCoreException ex) {
             throw new MultiCaseSearcherException(Bundle.MultiCaseSearcher_exceptionMessage_hitProcessingError(solrObjectId, caseInfo.getCaseMetadata().getCaseName(), caseInfo.getCaseMetadata().getCaseDirectory()), ex);
