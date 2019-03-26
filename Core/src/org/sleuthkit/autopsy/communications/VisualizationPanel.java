@@ -429,9 +429,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         placeHolderPanel.setLayout(placeHolderPanelLayout);
         placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(143, Short.MAX_VALUE)
+                .addContainerGap(128, Short.MAX_VALUE)
                 .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(317, Short.MAX_VALUE))
+                .addContainerGap(302, Short.MAX_VALUE))
         );
         placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
@@ -501,6 +501,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         clearVizButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/broom.png"))); // NOI18N
         clearVizButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.text_1")); // NOI18N
+        clearVizButton.setActionCommand(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.actionCommand")); // NOI18N
         clearVizButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 clearVizButtonActionPerformed(evt);
@@ -538,13 +539,13 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         toolbarLayout.setHorizontalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
                 .addContainerGap()
+                .add(fastOrganicLayoutButton)
+                .addPreferredGap(LayoutStyle.RELATED)
                 .add(clearVizButton)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(backButton)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(forwardButton)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(fastOrganicLayoutButton)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(jSeparator2, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
