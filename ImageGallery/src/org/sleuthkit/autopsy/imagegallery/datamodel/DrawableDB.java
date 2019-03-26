@@ -514,7 +514,7 @@ public final class DrawableDB {
     private boolean initializeDBSchema() {
         dbWriteLock();
         try {
-            boolean existingDB = true;
+            boolean drawableDbTablesExist = true;
                                   
             if (isClosed()) {
                 logger.log(Level.SEVERE, "The drawables database is closed"); //NON-NLS
@@ -534,10 +534,10 @@ public final class DrawableDB {
             try (Statement stmt = con.createStatement()) {
                 
                 // Check if the database is new or an existing database
-                existingDB = doesTableExist("drawable_files");
+                drawableDbTablesExist = doesTableExist("drawable_files");
                 if (false == doesTableExist(IG_DB_INFO_TABLE)) {
                     try {
-                         VersionNumber ig_creation_schema_version = existingDB 
+                         VersionNumber ig_creation_schema_version = drawableDbTablesExist 
                                                     ? IG_STARTING_SCHEMA_VERSION
                                                     : IG_SCHEMA_VERSION;
                          
@@ -651,7 +651,8 @@ public final class DrawableDB {
             String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "BIGSERIAL" : "INTEGER";
             
             try {
-                    VersionNumber ig_creation_schema_version = existingDB 
+                    boolean caseDbTablesExist = tskCase.getCaseDbAccessManager().tableExists(GROUPS_TABLENAME);
+                    VersionNumber ig_creation_schema_version = caseDbTablesExist 
                             ? IG_STARTING_SCHEMA_VERSION
                             : IG_SCHEMA_VERSION;
                                                     
@@ -942,7 +943,7 @@ public final class DrawableDB {
             return currVersion;
         }
                 
-        // Add a 'isAnalyzed' column to groups table in CaseDB
+        // Add a 'is_analyzed' column to groups table in CaseDB
         String alterSQL = " ADD COLUMN is_analyzed integer DEFAULT 1 "; //NON-NLS
         if (false == tskCase.getCaseDbAccessManager().columnExists(GROUPS_TABLENAME, "is_analyzed", caseDbTransaction )) {
             tskCase.getCaseDbAccessManager().alterTable(GROUPS_TABLENAME, alterSQL, caseDbTransaction);
