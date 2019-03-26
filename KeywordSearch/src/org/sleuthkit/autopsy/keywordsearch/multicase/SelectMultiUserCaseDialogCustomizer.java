@@ -41,7 +41,7 @@ public class SelectMultiUserCaseDialogCustomizer implements MultiUserCaseBrowser
     @Override
     public List<SortColumn> getSortColumns() {
         List<SortColumn> sortColumns = new ArrayList<>();
-        sortColumns.add(new SortColumn(Column.CREATE_DATE, false, 1));
+        sortColumns.add(new SortColumn(Column.DISPLAY_NAME, true, 1));
         return sortColumns;
     }
 
