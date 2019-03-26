@@ -42,7 +42,6 @@ import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxGraphView;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -56,7 +55,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -410,6 +408,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         forwardButton = new JButton();
         snapshotButton = new JButton();
         jSeparator3 = new JToolBar.Separator();
+        jSeparator4 = new JToolBar.Separator();
         notificationsJFXPanel = new JFXPanel();
 
         setLayout(new BorderLayout());
@@ -429,9 +428,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         placeHolderPanel.setLayout(placeHolderPanelLayout);
         placeHolderPanelLayout.setHorizontalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
-                .addContainerGap(158, Short.MAX_VALUE)
+                .addContainerGap(250, Short.MAX_VALUE)
                 .add(jTextArea1, GroupLayout.PREFERRED_SIZE, 424, GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(332, Short.MAX_VALUE))
+                .addContainerGap(423, Short.MAX_VALUE))
         );
         placeHolderPanelLayout.setVerticalGroup(placeHolderPanelLayout.createParallelGroup(GroupLayout.LEADING)
             .add(placeHolderPanelLayout.createSequentialGroup()
@@ -444,6 +443,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         fastOrganicLayoutButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/arrow-circle-double-135.png"))); // NOI18N
         fastOrganicLayoutButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fastOrganicLayoutButton.text")); // NOI18N
+        fastOrganicLayoutButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.fastOrganicLayoutButton.toolTipText")); // NOI18N
         fastOrganicLayoutButton.setFocusable(false);
         fastOrganicLayoutButton.setVerticalTextPosition(SwingConstants.BOTTOM);
 
@@ -501,6 +501,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         clearVizButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/communications/images/broom.png"))); // NOI18N
         clearVizButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.text_1")); // NOI18N
+        clearVizButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.toolTipText")); // NOI18N
         clearVizButton.setActionCommand(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.clearVizButton.actionCommand")); // NOI18N
         clearVizButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -512,6 +513,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         backButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/resultset_previous.png"))); // NOI18N
         backButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.backButton.text_1")); // NOI18N
+        backButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.backButton.toolTipText")); // NOI18N
         backButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
                 backButtonActionPerformed(evt);
@@ -520,6 +522,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         forwardButton.setIcon(new ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/resultset_next.png"))); // NOI18N
         forwardButton.setText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.forwardButton.text")); // NOI18N
+        forwardButton.setToolTipText(NbBundle.getMessage(VisualizationPanel.class, "VisualizationPanel.forwardButton.toolTipText")); // NOI18N
         forwardButton.setHorizontalTextPosition(SwingConstants.LEADING);
         forwardButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent evt) {
@@ -537,18 +540,22 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         jSeparator3.setOrientation(SwingConstants.VERTICAL);
 
+        jSeparator4.setOrientation(SwingConstants.VERTICAL);
+
         GroupLayout toolbarLayout = new GroupLayout(toolbar);
         toolbar.setLayout(toolbarLayout);
         toolbarLayout.setHorizontalGroup(toolbarLayout.createParallelGroup(GroupLayout.LEADING)
             .add(toolbarLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(fastOrganicLayoutButton)
-                .addPreferredGap(LayoutStyle.RELATED)
-                .add(clearVizButton)
-                .addPreferredGap(LayoutStyle.RELATED)
                 .add(backButton)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(forwardButton)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(jSeparator4, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(fastOrganicLayoutButton)
+                .addPreferredGap(LayoutStyle.RELATED)
+                .add(clearVizButton)
                 .addPreferredGap(LayoutStyle.RELATED)
                 .add(jSeparator2, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(LayoutStyle.RELATED)
@@ -585,7 +592,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     .add(backButton)
                     .add(forwardButton)
                     .add(snapshotButton)
-                    .add(jSeparator3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jSeparator3, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jSeparator4, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .add(3, 3, 3))
         );
 
@@ -908,6 +916,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     private JLabel jLabel2;
     private JToolBar.Separator jSeparator2;
     private JToolBar.Separator jSeparator3;
+    private JToolBar.Separator jSeparator4;
     private JTextArea jTextArea1;
     private JFXPanel notificationsJFXPanel;
     private JPanel placeHolderPanel;
