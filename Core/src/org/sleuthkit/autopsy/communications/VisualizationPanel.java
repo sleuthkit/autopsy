@@ -1148,6 +1148,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             } else if (event.getPreciseWheelRotation() > 0) {
                 graphComponent.zoomOut();
             }
+            
+            CVTEvents.getCVTEventBus().post(new CVTEvents.ZoomEvent(graph.getView().getScale()));
         }
 
         /**

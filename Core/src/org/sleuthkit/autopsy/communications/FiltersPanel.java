@@ -22,8 +22,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -301,14 +303,15 @@ final public class FiltersPanel extends JPanel {
      * @param dateFilter 
      */
     private void setDateRangeFilter(DateRangeFilter dateFilter) {
-
+        ZonedDateTime zoneDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(dateFilter.getStartDate()), Utils.getUserPreferredZoneId());
         startDatePicker.setEnabled(dateFilter.isStartDateEnabled());
         startCheckBox.setEnabled(dateFilter.isStartDateEnabled());
-        startDatePicker.setDate(LocalDate.ofEpochDay(dateFilter.getStartDate()));
+        startDatePicker.setDate(zoneDate.toLocalDate());
 
+        zoneDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(dateFilter.getEndDate()), Utils.getUserPreferredZoneId());
         endDatePicker.setEnabled(dateFilter.isEndDateEnabled());
         endCheckBox.setEnabled(dateFilter.isEndDateEnabled());
-        endDatePicker.setDate(LocalDate.ofEpochDay(dateFilter.getEndDate()));
+        endDatePicker.setDate(zoneDate.toLocalDate());
     }
     
      /**
@@ -631,7 +634,6 @@ final public class FiltersPanel extends JPanel {
     private DateRangeFilter getDateRangeFilter() {
         ZoneId zone = Utils.getUserPreferredZoneId();
         
-        long value = startDatePicker.getDate().atStartOfDay(zone).toEpochSecond();
         return new DateRangeFilter(startDatePicker.isEnabled(), 
                                     startDatePicker.getDate().atStartOfDay(zone).toEpochSecond(), 
                                     endDatePicker.isEnabled(), 
