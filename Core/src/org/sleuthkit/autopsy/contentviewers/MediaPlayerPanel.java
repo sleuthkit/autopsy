@@ -20,7 +20,8 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import com.google.common.io.Files;
 import java.awt.Dimension;
-import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -36,7 +37,6 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
@@ -44,7 +44,6 @@ import javax.swing.event.ChangeListener;
 import org.freedesktop.gstreamer.ClockTime;
 import org.freedesktop.gstreamer.Gst;
 import org.freedesktop.gstreamer.GstException;
-import org.freedesktop.gstreamer.State;
 import org.freedesktop.gstreamer.StateChangeReturn;
 import org.freedesktop.gstreamer.elements.PlayBin;
 import org.netbeans.api.progress.ProgressHandle;
@@ -66,7 +65,7 @@ import org.sleuthkit.datamodel.TskData;
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaViewPanel {
 
-    private static final String[] FILE_EXTENSIONS = new String[] {
+    private static final String[] FILE_EXTENSIONS = new String[]{
         ".3g2",
         ".3gp",
         ".3gpp",
@@ -94,95 +93,90 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         ".wav",
         ".webm",
         ".wma",
-        ".wmv",
-    }; //NON-NLS
+        ".wmv",}; //NON-NLS
     private static final List<String> MIME_TYPES = Arrays.asList(
-        "video/3gpp",
-        "video/3gpp2",
-        "audio/aiff",
-        "audio/amr-wb",
-        "audio/basic",
-        "audio/mp4",
-        "video/mp4",
-        "audio/mpeg",
-        "video/mpeg",
-        "audio/mpeg3",
-        "application/mxf",
-        "application/ogg",
-        "video/quicktime",
-        "audio/vorbis",
-        "audio/vnd.wave",
-        "video/webm",
-        "video/x-3ivx",
-        "audio/x-aac",
-        "audio/x-adpcm",
-        "audio/x-alaw",
-        "audio/x-cinepak",
-        "video/x-divx",
-        "audio/x-dv",
-        "video/x-dv",
-        "video/x-ffv",
-        "audio/x-flac",
-        "video/x-flv",
-        "audio/x-gsm",
-        "video/x-h263",
-        "video/x-h264",
-        "video/x-huffyuv",
-        "video/x-indeo",
-        "video/x-intel-h263",
-        "audio/x-ircam",
-        "video/x-jpeg",
-        "audio/x-m4a",
-        "video/x-m4v",
-        "audio/x-mace",
-        "audio/x-matroska",
-        "video/x-matroska",
-        "audio/x-mpeg",
-        "video/x-mpeg",
-        "audio/x-mpeg-3",
-        "video/x-ms-asf",
-        "audio/x-ms-wma",
-        "video/x-ms-wmv",
-        "video/x-msmpeg",
-        "video/x-msvideo",
-        "video/x-msvideocodec",
-        "audio/x-mulaw",
-        "audio/x-nist",
-        "audio/x-oggflac",
-        "audio/x-paris",
-        "audio/x-qdm2",
-        "audio/x-raw",
-        "video/x-raw",
-        "video/x-rle",
-        "audio/x-speex",
-        "video/x-svq",
-        "audio/x-svx",
-        "video/x-tarkin",
-        "video/x-theora",
-        "audio/x-voc",
-        "audio/x-vorbis",
-        "video/x-vp3",
-        "audio/x-w64",
-        "audio/x-wav",
-        "audio/x-wma",
-        "video/x-wmv",
-        "video/x-xvid"
+            "video/3gpp",
+            "video/3gpp2",
+            "audio/aiff",
+            "audio/amr-wb",
+            "audio/basic",
+            "audio/mp4",
+            "video/mp4",
+            "audio/mpeg",
+            "video/mpeg",
+            "audio/mpeg3",
+            "application/mxf",
+            "application/ogg",
+            "video/quicktime",
+            "audio/vorbis",
+            "audio/vnd.wave",
+            "video/webm",
+            "video/x-3ivx",
+            "audio/x-aac",
+            "audio/x-adpcm",
+            "audio/x-alaw",
+            "audio/x-cinepak",
+            "video/x-divx",
+            "audio/x-dv",
+            "video/x-dv",
+            "video/x-ffv",
+            "audio/x-flac",
+            "video/x-flv",
+            "audio/x-gsm",
+            "video/x-h263",
+            "video/x-h264",
+            "video/x-huffyuv",
+            "video/x-indeo",
+            "video/x-intel-h263",
+            "audio/x-ircam",
+            "video/x-jpeg",
+            "audio/x-m4a",
+            "video/x-m4v",
+            "audio/x-mace",
+            "audio/x-matroska",
+            "video/x-matroska",
+            "audio/x-mpeg",
+            "video/x-mpeg",
+            "audio/x-mpeg-3",
+            "video/x-ms-asf",
+            "audio/x-ms-wma",
+            "video/x-ms-wmv",
+            "video/x-msmpeg",
+            "video/x-msvideo",
+            "video/x-msvideocodec",
+            "audio/x-mulaw",
+            "audio/x-nist",
+            "audio/x-oggflac",
+            "audio/x-paris",
+            "audio/x-qdm2",
+            "audio/x-raw",
+            "video/x-raw",
+            "video/x-rle",
+            "audio/x-speex",
+            "video/x-svq",
+            "audio/x-svx",
+            "video/x-tarkin",
+            "video/x-theora",
+            "audio/x-voc",
+            "audio/x-vorbis",
+            "video/x-vp3",
+            "audio/x-w64",
+            "audio/x-wav",
+            "audio/x-wma",
+            "video/x-wmv",
+            "video/x-xvid"
     ); //NON-NLS
 
     private static final Logger logger = Logger.getLogger(MediaPlayerPanel.class.getName());
     private boolean gstInited;
     private static final String MEDIA_PLAYER_ERROR_STRING = NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.cannotProcFile.err");
-    //playback
-    private long durationMillis = 0;
-    private int totalHours, totalMinutes, totalSeconds;
+
     private volatile PlayBin gstPlayBin;
-    private GstVideoRendererPanel gstVideoRenderer;
     private final Object playbinLock = new Object(); // lock for synchronization of gstPlayBin player
-    private AbstractFile currentFile;
-    
+
     private Timer timer;
-    private ExtractMedia extractMediaWorker;
-    
+    private volatile ExtractMedia extractMediaWorker;
+
     private static final long END_TIME_MARGIN_NS = 50000000;
     private static final int PLAYER_STATUS_UPDATE_INTERVAL_MS = 50;
 
@@ -228,6 +222,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         progressSlider.setMinimum(0);
         progressSlider.setMaximum(2000);
         progressSlider.setValue(0);
+
+        //Manage the gstreamer video position when a user is dragging the slider in the panel.
         progressSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent event) {
@@ -251,6 +247,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         });
     }
 
+    /**
+     *
+     * @return
+     */
     private boolean initGst() {
         try {
             logger.log(Level.INFO, "Initializing gstreamer for video/audio viewing"); //NON-NLS
@@ -274,132 +274,53 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      * @param file Media file to play.
      * @param dims Dimension of the parent window.
      */
-    @NbBundle.Messages ({"GstVideoPanel.noOpenCase.errMsg=No open case available."})
+    @NbBundle.Messages({"GstVideoPanel.noOpenCase.errMsg=No open case available."})
     void loadFile(final AbstractFile file, final Dimension dims) {
-        EventQueue.invokeLater(() -> {
-            reset();
-            infoLabel.setText("");
-            currentFile = file;
-            final boolean deleted = file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC);
-            if (deleted) {
-                infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.setupVideo.infoLabel.text"));
-                videoPanel.removeAll();
-                pauseButton.setEnabled(false);
-                progressSlider.setEnabled(false);
-                return;
-            }
+        //Ensure everything is back in the inital state
+        reset();
+        
+        if (file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
+            infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.setupVideo.infoLabel.text"));
+            return;
+        }
 
-            java.io.File ioFile;
+        try {
+            String path = file.getUniquePath();        
+            infoLabel.setText(path);
+            infoLabel.setToolTipText(path);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Cannot get unique path of video file.", ex); //NON-NLS
+        }
+
+        synchronized (playbinLock) {
             try {
-                ioFile = VideoUtils.getVideoFileInTempDir(file);
+                extractMediaWorker = new ExtractMedia(file, VideoUtils.getVideoFileInTempDir(file));
+                extractMediaWorker.execute();
             } catch (NoCurrentCaseException ex) {
                 logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
                 infoLabel.setText(Bundle.GstVideoPanel_noOpenCase_errMsg());
                 pauseButton.setEnabled(false);
                 progressSlider.setEnabled(false);
-
-                return;
             }
-
-            String path = "";
-            try {
-                path = file.getUniquePath();
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Cannot get unique path of video file.", ex); //NON-NLS
-            }
-            infoLabel.setText(path);
-            infoLabel.setToolTipText(path);
-            pauseButton.setEnabled(true);
-            progressSlider.setEnabled(true);
-            timer = new Timer(PLAYER_STATUS_UPDATE_INTERVAL_MS, event -> {
-                if (!progressSlider.getValueIsAdjusting()) {
-                    long duration;
-                    long position;
-                    synchronized (playbinLock) {
-                        duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
-                        position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-                        if (duration > 0) {
-                            long positionDelta = duration - position;
-                            if (positionDelta <= END_TIME_MARGIN_NS && gstPlayBin.isPlaying()) {
-                                gstPlayBin.pause();
-                                if (gstPlayBin.seek(ClockTime.ZERO) == false) {
-                                    logger.log(Level.WARNING, "Attempt to call PlayBin.seek() failed."); //NON-NLS
-                                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                                    return;
-                                }
-                                progressSlider.setValue(0);
-                                pauseButton.setText("►");
-                            } else {
-                                double relativePosition = (double) position / duration;
-                                progressSlider.setValue((int) (relativePosition * 2000));
-                            }
-                        }
-                    }
-
-                    durationMillis = duration / 1000000;
-                    // pick out the total hours, minutes, seconds
-                    long durationSeconds = (int) durationMillis / 1000;
-                    totalHours = (int) durationSeconds / 3600;
-                    durationSeconds -= totalHours * 3600;
-                    totalMinutes = (int) durationSeconds / 60;
-                    durationSeconds -= totalMinutes * 60;
-                    totalSeconds = (int) durationSeconds;
-
-                    long millisElapsed = position / 1000000;
-                    // pick out the elapsed hours, minutes, seconds
-                    long secondsElapsed = millisElapsed / 1000;
-                    int elapsedHours = (int) secondsElapsed / 3600;
-                    secondsElapsed -= elapsedHours * 3600;
-                    int elapsedMinutes = (int) secondsElapsed / 60;
-                    secondsElapsed -= elapsedMinutes * 60;
-                    int elapsedSeconds = (int) secondsElapsed;
-
-                    String durationFormat = "%02d:%02d:%02d/%02d:%02d:%02d  "; //NON-NLS
-                    String durationStr = String.format(durationFormat,
-                            elapsedHours, elapsedMinutes, elapsedSeconds,
-                            totalHours, totalMinutes, totalSeconds);
-                    progressLabel.setText(durationStr);
-                }
-            });
-            timer.start();
-
-            gstVideoRenderer = new GstVideoRendererPanel();
-            synchronized (playbinLock) {
-                if (gstPlayBin != null) {
-                    gstPlayBin.dispose();
-                }
-                gstPlayBin = new PlayBin("VideoPlayer"); //NON-NLS
-                gstPlayBin.setVideoSink(gstVideoRenderer.getVideoSink());
-
-                videoPanel.removeAll();
-
-                videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
-
-                videoPanel.add(gstVideoRenderer);//add jfx ui to JPanel
-
-                videoPanel.setVisible(true);
-
-                gstPlayBin.setInputFile(ioFile);
-            }
-        });
+        }
     }
 
     /**
      * Prepare this MediaViewVideoPanel to accept a different media file.
      */
     void reset() {
-        if (timer != null) {
-            timer.stop();
-        }
-        
-        // reset the progress label text on the event dispatch thread
-        SwingUtilities.invokeLater(() -> {
-            progressLabel.setText("");
-        });
-
         if (!isInited()) {
             return;
         }
+        
+        if (timer != null) {
+            timer.stop();
+        }
+
+        pauseButton.setEnabled(false);
+        progressSlider.setEnabled(false);
+        progressLabel.setText("00:00:00/00:00:00");
+        infoLabel.setText("");
 
         synchronized (playbinLock) {
             if (gstPlayBin != null) {
@@ -411,13 +332,16 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 gstPlayBin.dispose();
                 gstPlayBin = null;
             }
-            gstVideoRenderer = null;
         }
-
+        
+        if (extractMediaWorker != null) {
+            extractMediaWorker.cancel(true);
+            extractMediaWorker = null;
+        }
+        
+        videoPanel.removeAll();
         progressSlider.setValue(0);
         pauseButton.setText("►");
-
-        currentFile = null;
     }
 
     /**
@@ -440,11 +364,11 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         videoPanel.setLayout(videoPanelLayout);
         videoPanelLayout.setHorizontalGroup(
                 videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGap(0, 0, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
         );
         videoPanelLayout.setVerticalGroup(
                 videoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGap(0, 231, Short.MAX_VALUE)
+                        .addGap(0, 231, Short.MAX_VALUE)
         );
 
         org.openide.awt.Mnemonics.setLocalizedText(pauseButton, org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaViewVideoPanel.pauseButton.text")); // NOI18N
@@ -462,47 +386,47 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         controlPanel.setLayout(controlPanelLayout);
         controlPanelLayout.setHorizontalGroup(
                 controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addGroup(controlPanelLayout.createSequentialGroup()
-                                        .addGap(6, 6, 6)
-                                        .addComponent(infoLabel)
-                                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGroup(controlPanelLayout.createSequentialGroup()
-                                        .addComponent(pauseButton)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(progressLabel)
-                                        .addContainerGap())))
+                        .addGroup(controlPanelLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(controlPanelLayout.createSequentialGroup()
+                                                .addGap(6, 6, 6)
+                                                .addComponent(infoLabel)
+                                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .addGroup(controlPanelLayout.createSequentialGroup()
+                                                .addComponent(pauseButton)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(progressSlider, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(progressLabel)
+                                                .addContainerGap())))
         );
         controlPanelLayout.setVerticalGroup(
                 controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(controlPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(progressSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(pauseButton)
-                                .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(infoLabel)
-                        .addContainerGap())
+                        .addGroup(controlPanelLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(progressSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(pauseButton)
+                                        .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(infoLabel)
+                                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(layout.createSequentialGroup()
-                        .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                                .addComponent(videoPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(controlPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>
 
@@ -511,38 +435,23 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             if (gstPlayBin == null) {
                 return;
             }
-            State state = gstPlayBin.getState();
-            if (state.equals(State.PLAYING)) {
-                if (gstPlayBin.pause() == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin.pause() failed."); //NON-NLS
-                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                    return;
-                }
-                pauseButton.setText("►");
-            } else if (state.equals(State.PAUSED)) {
-                if (gstPlayBin.play() == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin.play() failed."); //NON-NLS
-                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                    return;
-                }
-                pauseButton.setText("||");
-            } else if (state.equals(State.READY) || state.equals(State.NULL)) {
-                final File tempVideoFile;
-                try {
-                    tempVideoFile = VideoUtils.getVideoFileInTempDir(currentFile);
-                } catch (NoCurrentCaseException ex) {
-                    logger.log(Level.WARNING, "Exception while getting open case."); //NON-NLS
-                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                    return;
-                }
-
-                if (extractMediaWorker != null) {
-                    extractMediaWorker.cancel(true);
-                    extractMediaWorker = null;
-                }
-                extractMediaWorker = new ExtractMedia(currentFile, tempVideoFile);
-                extractMediaWorker.execute();
-
+            switch (gstPlayBin.getState()) {
+                case PLAYING:
+                    pauseButton.setText("►");
+                    if (gstPlayBin.pause() == StateChangeReturn.FAILURE) {
+                        logger.log(Level.WARNING, "Attempt to call PlayBin.pause() failed."); //NON-NLS
+                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    }
+                    break;
+                case PAUSED:
+                case READY:
+                case NULL:
+                    pauseButton.setText("||");
+                    if (gstPlayBin.play() == StateChangeReturn.FAILURE) {
+                        logger.log(Level.WARNING, "Attempt to call PlayBin.play() failed."); //NON-NLS
+                        infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                    }
+                    break;
             }
         }
     }//GEN-LAST:event_pauseButtonActionPerformed
@@ -555,78 +464,6 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private javax.swing.JSlider progressSlider;
     private javax.swing.JPanel videoPanel;
     // End of variables declaration//GEN-END:variables
-
-    /**
-     * Thread that extracts and plays a file
-     */
-    private class ExtractMedia extends SwingWorker<Long, Void> {
-
-        private ProgressHandle progress;
-        private final AbstractFile sourceFile;
-        private final java.io.File tempFile;
-
-        ExtractMedia(AbstractFile sFile, java.io.File jFile) {
-            this.sourceFile = sFile;
-            this.tempFile = jFile;
-        }
-
-        @Override
-        protected Long doInBackground() throws Exception {
-            if (tempFile.exists() == false || tempFile.length() < sourceFile.getSize()) {
-                progress = ProgressHandle.createHandle(NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> this.cancel(true));
-                progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
-                progress.start(100);
-                try {
-                    Files.createParentDirs(tempFile);
-                    return ContentUtils.writeToFile(sourceFile, tempFile, progress, this, true);
-                } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
-                    return 0L;
-                }
-            }
-            return 0L;
-        }
-
-        /*
-         * clean up or start the worker threads
-         */
-        @Override
-        protected void done() {
-            try {
-                super.get(); //block and get all exceptions thrown while doInBackground()
-            } catch (CancellationException ex) {
-                logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
-            } catch (InterruptedException ex) {
-                logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
-            } catch (ExecutionException ex) {
-                logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
-            } finally {
-                if (progress != null) {
-                    progress.finish();
-                }
-                if (!this.isCancelled()) {
-                    playMedia();
-                }
-            }
-        }
-
-        void playMedia() {
-            if (tempFile == null || !tempFile.exists()) {
-                progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progressLabel.bufferingErr"));
-                return;
-            }
-            synchronized (playbinLock) {
-                gstPlayBin.seek(ClockTime.ZERO);
-                // must play, then pause and get state to get duration.
-                if (gstPlayBin.play() == StateChangeReturn.FAILURE) {
-                    logger.log(Level.WARNING, "Attempt to call PlayBin.play() failed."); //NON-NLS
-                    infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
-                    return;
-                }
-                pauseButton.setText("||");
-            }
-        }
-    }
 
     @Override
     public List<String> getSupportedExtensions() {
@@ -674,4 +511,134 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         return false;
     }
 
+    /**
+     * Thread that extracts and plays a file
+     */
+    private class ExtractMedia extends SwingWorker<Long, Void> {
+
+        private ProgressHandle progress;
+        private final AbstractFile sourceFile;
+        private final java.io.File tempFile;
+
+        ExtractMedia(AbstractFile sFile, File jFile) {
+            this.sourceFile = sFile;
+            this.tempFile = jFile;
+        }
+
+        @Override
+        protected Long doInBackground() throws Exception {
+            if (tempFile.exists() == false || tempFile.length() < sourceFile.getSize()) {
+                progress = ProgressHandle.createHandle(NbBundle.getMessage(MediaPlayerPanel.class, "GstVideoPanel.ExtractMedia.progress.buffering", sourceFile.getName()), () -> this.cancel(true));
+                progressLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.progress.buffering"));
+                progress.start(100);
+                try {
+                    Files.createParentDirs(tempFile);
+                    return ContentUtils.writeToFile(sourceFile, tempFile, progress, this, true);
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Error buffering file", ex); //NON-NLS
+                    return 0L;
+                }
+            }
+            return 0L;
+        }
+
+        /*
+         * clean up or start the worker threads
+         */
+        @Override
+        protected void done() {
+            try {
+                super.get(); //block and get all exceptions thrown while doInBackground()
+            } catch (CancellationException ex) {
+                logger.log(Level.INFO, "Media buffering was canceled."); //NON-NLS
+            } catch (InterruptedException ex) {
+                logger.log(Level.INFO, "Media buffering was interrupted."); //NON-NLS
+            } catch (ExecutionException ex) {
+                logger.log(Level.SEVERE, "Fatal error during media buffering.", ex); //NON-NLS
+            } finally {
+                if (progress != null) {
+                    progress.finish();
+                }
+                if (!this.isCancelled()) {
+                    //PlayBin file is ready for playback, initialize all components.
+                    synchronized (playbinLock) {
+                        gstPlayBin = new PlayBin("VideoPlayer"); //NON-NLS
+                        gstPlayBin.setInputFile(tempFile);
+                        GstVideoRendererPanel gstVideoRenderer = new GstVideoRendererPanel();
+                        gstPlayBin.setVideoSink(gstVideoRenderer.getVideoSink());
+                        videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+                        videoPanel.add(gstVideoRenderer);//add jfx ui to JPanel
+                        /*
+                         * It seems like PlayBin cannot be queried for duration
+                         * until the video is actually being played. This call
+                         * to pause below is used to 'initialize' the PlayBin to
+                         * display the duration in the content viewer before the
+                         * play button is pressed. This is a suggested solution
+                         * in the gstreamer google groups page.
+                         */
+                        gstPlayBin.pause();
+                        timer = new Timer(PLAYER_STATUS_UPDATE_INTERVAL_MS, new VideoPanelUpdater());
+                        timer.start();
+                        videoPanel.setVisible(true);
+                        pauseButton.setEnabled(true);
+                        progressSlider.setEnabled(true);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     */
+    private class VideoPanelUpdater implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (!progressSlider.getValueIsAdjusting()) {
+                synchronized (playbinLock) {
+                    long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+                    long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+                    //Duration is -1 when the PlayBin is in the inital READY or
+                    //NULL states, do nothing in these cases.
+                    //if (duration <= 0) {
+                    //    return;
+                    //}
+
+                    long positionDelta = duration - position;
+                    //NOTE: This conditional is problematic and is responsible for JIRA-4863
+                    if (positionDelta <= END_TIME_MARGIN_NS && gstPlayBin.isPlaying()) {
+                        gstPlayBin.pause();
+                        if (gstPlayBin.seek(ClockTime.ZERO) == false) {
+                            logger.log(Level.WARNING, "Attempt to call PlayBin.seek() failed."); //NON-NLS
+                            infoLabel.setText(MEDIA_PLAYER_ERROR_STRING);
+                            return;
+                        }
+                        progressSlider.setValue(0);
+                        pauseButton.setText("►");
+                    } else {
+                        double relativePosition = (double) position / duration;
+                        progressSlider.setValue((int) (relativePosition * 2000));
+                    }
+
+                    String durationStr = String.format("%s/%s", formatTime(position), formatTime(duration));
+                    progressLabel.setText(durationStr);
+                }
+            }
+        }
+
+        /**
+         * Convert nanoseconds into an HH:MM:SS format.
+         */
+        private String formatTime(long ns) {
+            long millis = ns / 1000000;
+            long seconds = (int) millis / 1000;
+            long hours = (int) seconds / 3600;
+            seconds -= hours * 3600;
+            long minutes = (int) seconds / 60;
+            seconds -= minutes * 60;
+            seconds = (int) seconds;
+            return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        }
+    }
 }
