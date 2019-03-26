@@ -518,7 +518,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
      * Get the artifact type ID in the portable case and create new artifact type if needed.
      * For built-in artifacts this will be the same as the original.
      * 
-     * @param oldArtifact The artifact in the current case
+     * @param oldArtifactTypeId The artifact type ID in the current case
      * 
      * @return The corresponding artifact type ID in the portable case
      */
@@ -541,7 +541,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
      * Get the attribute type ID in the portable case and create new attribute type if needed.
      * For built-in attributes this will be the same as the original.
      * 
-     * @param oldAttribute The attribute in the current case
+     * @param oldAttributeTypeId The attribute type ID in the current case
      * 
      * @return The corresponding attribute type in the portable case
      */
