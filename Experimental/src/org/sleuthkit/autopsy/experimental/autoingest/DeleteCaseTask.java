@@ -287,7 +287,6 @@ final class DeleteCaseTask implements Runnable {
                             }
 
                             if (!manifestFilePaths.isEmpty() && (deleteOption == DeleteOptions.DELETE_INPUT || deleteOption == DeleteOptions.DELETE_ALL)) {
-                                logger.log(Level.INFO, String.format("Starting deletion of case output for %s", caseNodeData.getDisplayName()));
                                 try {
                                     deleteAutoIngestInput();
                                 } catch (InterruptedException ex) {
