@@ -66,11 +66,5 @@ final class DeleteCaseOutputAction extends DeleteCaseAction {
     DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
         return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_OUTPUT, progress);
     }
-    
-    @Override
-    public DeleteCaseOutputAction clone() throws CloneNotSupportedException {
-        super.clone();
-        throw new CloneNotSupportedException();
-    }
 
 }

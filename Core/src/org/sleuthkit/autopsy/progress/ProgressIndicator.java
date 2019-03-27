@@ -98,6 +98,10 @@ public interface ProgressIndicator {
      * @param cancellingMessage The cancelling messages.
      */
     default void setCancelling(String cancellingMessage) {
+        /*
+         * The default implementation assumes that cancelling the underlying
+         * task is not supported.
+         */
     }
 
     /**

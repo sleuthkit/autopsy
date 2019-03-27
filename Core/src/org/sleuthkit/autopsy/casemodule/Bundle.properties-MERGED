@@ -40,6 +40,12 @@ Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case.
 # {0} - exception message
 Case.exceptionMessage.execExceptionWrapperMessage={0}
 # {0} - exception message
+Case.exceptionMessage.failedToConnectToCoordSvc=Failed to connect to coordination service:\n{0}.
+# {0} - exception message
+Case.exceptionMessage.failedToFetchCoordSvcNodeData=Failed to fetch coordination service node data:\n{0}.
+# {0} - exception message
+Case.exceptionMessage.failedToLockCaseForDeletion=Failed to exclusively lock case for deletion:\n{0}.
+# {0} - exception message
 Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata:\n{0}.
 Case.exceptionMessage.metadataUpdateError=Failed to update case metadata
 # {0} - exception message

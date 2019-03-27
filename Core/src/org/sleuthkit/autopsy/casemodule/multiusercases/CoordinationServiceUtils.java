@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 /**
  * Utility methods for using the coordination service for multi-user cases.
  */
-public class CoordinationServiceUtils {
+public final class CoordinationServiceUtils {
 
     private static final String CASE_AUTO_INGEST_LOG_NAME = "AUTO_INGEST_LOG.TXT"; //NON-NLS
     private static final String RESOURCES_LOCK_SUFFIX = "_RESOURCES"; //NON-NLS

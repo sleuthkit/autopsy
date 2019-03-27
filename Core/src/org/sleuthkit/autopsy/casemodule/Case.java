@@ -2589,8 +2589,11 @@ public class Case {
      */
     @Messages({
         "Case.progressMessage.connectingToCoordSvc=Connecting to coordination service...",
+        "# {0} - exception message", "Case.exceptionMessage.failedToConnectToCoordSvc=Failed to connect to coordination service:\n{0}.",
         "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or host.",
+        "# {0} - exception message", "Case.exceptionMessage.failedToLockCaseForDeletion=Failed to exclusively lock case for deletion:\n{0}.",
         "Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case...",
+        "# {0} - exception message", "Case.exceptionMessage.failedToFetchCoordSvcNodeData=Failed to fetch coordination service node data:\n{0}.",
         "Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resources coordination service node...",
         "Case.progressMessage.deletingCaseDirCoordSvcNode=Deleting case directory coordination service node..."
     })
@@ -2601,7 +2604,7 @@ public class Case {
             coordinationService = CoordinationService.getInstance();
         } catch (CoordinationServiceException ex) {
             logger.log(Level.SEVERE, String.format("Failed to connect to coordination service when attempting to delete %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
-            throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
+            throw new CaseActionException(Bundle.Case_exceptionMessage_failedToConnectToCoordSvc(ex.getLocalizedMessage()));
         }
 
         CaseNodeData caseNodeData;
@@ -2618,7 +2621,7 @@ public class Case {
                 caseNodeData = new CaseNodeData(nodeBytes);
             } catch (CoordinationServiceException | InterruptedException | IOException ex) {
                 logger.log(Level.SEVERE, String.format("Failed to get coordination service node data %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
-                throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
+                throw new CaseActionException(Bundle.Case_exceptionMessage_failedToFetchCoordSvcNodeData(ex.getLocalizedMessage()));
             }
 
             errorsOccurred = deleteMultiUserCase(caseNodeData, metadata, progressIndicator, logger);
@@ -2638,7 +2641,7 @@ public class Case {
 
         } catch (CoordinationServiceException ex) {
             logger.log(Level.SEVERE, String.format("Error exclusively locking the case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
-            throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
+            throw new CaseActionException(Bundle.Case_exceptionMessage_failedToLockCaseForDeletion(ex.getLocalizedMessage()));
         }
 
         if (!errorsOccurred) {
@@ -2686,39 +2689,19 @@ public class Case {
         boolean errorsOccurred = false;
         try {
             deleteMultiUserCaseDatabase(caseNodeData, metadata, progressIndicator, logger);
+            deleteMultiUserCaseTextIndex(caseNodeData, metadata, progressIndicator, logger);
+            deleteMultiUserCaseDirectory(caseNodeData, metadata, progressIndicator, logger);
+            deleteFromRecentCases(metadata, progressIndicator);
         } catch (UserPreferencesException | ClassNotFoundException | SQLException ex) {
             errorsOccurred = true;
             logger.log(Level.WARNING, String.format("Failed to delete the case database for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
-        } catch (InterruptedException ex) {
-            logger.log(Level.WARNING, String.format("Deletion of %s (%s) in %s cancelled while incomplete", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()), ex); //NON-NLS
-            Thread.currentThread().interrupt();
-            return errorsOccurred;
-        }
-
-        try {
-            deleteMultiUserCaseTextIndex(caseNodeData, metadata, progressIndicator, logger);
         } catch (KeywordSearchServiceException ex) {
             errorsOccurred = true;
             logger.log(Level.WARNING, String.format("Failed to delete the text index for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
-        } catch (InterruptedException ex) {
-            logger.log(Level.WARNING, String.format("Deletion of %s (%s) in %s cancelled while incomplete", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()), ex); //NON-NLS
-            Thread.currentThread().interrupt();
-            return errorsOccurred;
-        }
-
-        try {
-            deleteMultiUserCaseDirectory(caseNodeData, metadata, progressIndicator, logger);
         } catch (CaseActionException ex) {
             errorsOccurred = true;
             logger.log(Level.WARNING, String.format("Failed to delete the case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
-        } catch (InterruptedException ex) {
-            logger.log(Level.WARNING, String.format("Deletion of %s (%s) in %s cancelled while incomplete", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()), ex); //NON-NLS
-            Thread.currentThread().interrupt();
-            return errorsOccurred;
         }
-
-        deleteFromRecentCases(metadata, progressIndicator);
-                
         return errorsOccurred;
     }
 
@@ -2752,12 +2735,13 @@ public class Case {
             CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
             String url = "jdbc:postgresql://" + info.getHost() + ":" + info.getPort() + "/postgres"; //NON-NLS
             Class.forName("org.postgresql.Driver"); //NON-NLS
-            try (Connection connection = DriverManager.getConnection(url, info.getUserName(), info.getPassword()); Statement statement = connection.createStatement()) { //NON-NLS
+            try (Connection connection = DriverManager.getConnection(url, info.getUserName(), info.getPassword()); Statement statement = connection.createStatement()) {
                 String dbExistsQuery = "SELECT 1 from pg_database WHERE datname = '" + metadata.getCaseDatabaseName() + "'"; //NON-NLS
-                ResultSet queryResult = statement.executeQuery(dbExistsQuery);
-                if (queryResult.next()) {
-                    String deleteCommand = "DROP DATABASE \"" + metadata.getCaseDatabaseName() + "\""; //NON-NLS
-                    statement.execute(deleteCommand);
+                try (ResultSet queryResult = statement.executeQuery(dbExistsQuery)) {
+                    if (queryResult.next()) {
+                        String deleteCommand = "DROP DATABASE \"" + metadata.getCaseDatabaseName() + "\""; //NON-NLS
+                        statement.execute(deleteCommand);
+                    }
                 }
             }
             setDeletedItemFlag(caseNodeData, CaseNodeData.DeletedFlags.CASE_DB);

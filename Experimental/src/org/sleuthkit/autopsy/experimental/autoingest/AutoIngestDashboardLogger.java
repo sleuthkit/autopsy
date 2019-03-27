@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
@@ -34,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 final class AutoIngestDashboardLogger {
 
-    private static final int LOG_SIZE = 50000000; // In bytes, zero is unlimited, set to roughly 10mb currently
+    private static final int LOG_SIZE = 50000000; // In bytes, zero is unlimited.
     private static final int LOG_FILE_COUNT = 10;
     private static final Logger logger = Logger.getLogger("AutoIngestDashboardLogger"); //NON-NLS
     private static final String NEWLINE = System.lineSeparator();
@@ -74,8 +75,8 @@ final class AutoIngestDashboardLogger {
                 });
                 logger.addHandler(fileHandler);
                 logger.setUseParentHandlers(false);
-            } catch (SecurityException | IOException ex) {
-                throw new RuntimeException(String.format("Error initializing file handler for %s", logFilePath), ex); //NON-NLS
+            } catch (IOException ex) {
+                throw new UncheckedIOException(String.format("Error initializing file handler for %s", logFilePath), ex); //NON-NLS
             }
             configured = true;
         }
