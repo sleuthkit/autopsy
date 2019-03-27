@@ -14,7 +14,7 @@ Go to the Tools menu and then select "Multi-case Keyword Search". The following 
 
 First you'll need to enter your search term on the top line, selecting the appropriate button for your desired search type (exact, substring, or regex). Information on how each keyword type works can be found on the \ref ad_hoc_keyword_search_page page.
 
-Next you need to select which cases you want to search. The "Add Cases" button will bring up a list of all the multi-user cases. You can select a single case, hold down <b>Shift</b> or <b>Ctrl</b> to select multiple cases, and use the "Select All" and "Deselect All" buttons to select everything or reset the window. 
+Next you need to select which cases you want to search. The "Add Cases" button will bring up a list of all the multi-user cases. You can select a single case, hold down <b>Shift</b> or <b>Ctrl</b> to select multiple cases, and use the "Select All" and "Deselect All" buttons to select everything or reset the window. If a new case isn't in the list you can use the "Refresh" button to reload all cases. This will remove any existing case selection.
 
 \image html multicase_kw_case_select.png
 
