@@ -2,6 +2,9 @@ cannotBuildXmlParser=Unable to build XML parser:
 cannotLoadSEUQA=Unable to load Search Engine URL Query Analyzer settings file, SEUQAMappings.xml: 
 cannotParseXml=Unable to parse XML file: 
 ChromeCacheExtractor.moduleName=ChromeCacheExtractor
+ChromeCacheExtractor.progressMsg={0}: Extracting cache entry {1} of {2} entries from {3}
+DataSourceUsage_AndroidMedia=Android Media Card
+DataSourceUsage_FlashDrive=Flash Drive
 # {0} - OS name
 DataSourceUsageAnalyzer.customVolume.label=OS Drive ({0})
 DataSourceUsageAnalyzer.parentModuleName=Recent Activity
@@ -18,7 +21,6 @@ ExtractIE.getBookmark.errMsg.errPostingBookmarks=Error posting Internet Explorer
 ExtractIE.getCookie.errMsg.errPostingCookies=Error posting Internet Explorer Cookie artifacts.
 ExtractIE.getCookie.errMsg.errPostingCookiess=Error posting Internet Explorer Cookie artifacts.
 ExtractIE.getHistory.errMsg.errPostingHistory=Error posting Internet Explorer History artifacts.
-ExtractIE.parentModuleName.noSpace=RecentActivity
 #{0} - the module name
 Extractor.errPostingArtifacts=Error posting {0} artifacts to the blackboard.
 ExtractOs.androidOs.label=Android
@@ -139,6 +141,7 @@ Progress_Message_Analyze_Registry=Analyzing Registry Files
 Progress_Message_Analyze_Usage=Data Sources Usage Analysis
 Progress_Message_Chrome_AutoFill=Chrome Auto Fill
 Progress_Message_Chrome_Bookmarks=Chrome Bookmarks
+Progress_Message_Chrome_Cache=Chrome Cache
 Progress_Message_Chrome_Cookies=Chrome Cookies
 Progress_Message_Chrome_Downloads=Chrome Downloads
 Progress_Message_Chrome_FormHistory=Chrome Form History

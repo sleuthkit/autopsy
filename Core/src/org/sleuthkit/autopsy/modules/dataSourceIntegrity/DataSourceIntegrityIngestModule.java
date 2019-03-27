@@ -137,14 +137,10 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
         }
         Image img = (Image) dataSource;
 
-        // Make sure the image size we have is not zero
+        // Get the image size. Log a warning if it is zero.
         long size = img.getSize();
         if (size == 0) {
             logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName); //NON-NLS
-            services.postMessage(IngestMessage.createMessage(MessageType.ERROR, DataSourceIntegrityModuleFactory.getModuleName(),
-                    NbBundle.getMessage(this.getClass(),
-                            "DataSourceIntegrityIngestModule.process.errGetSizeOfImg",
-                            imgName)));
         }
 
         // Determine which mode we're in. 

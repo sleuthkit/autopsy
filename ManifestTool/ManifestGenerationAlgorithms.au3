@@ -27,9 +27,14 @@
 
 ;Get the list of names of algorithms 
 Global $algorithms[3] ;increase size of array when adding new algorithms
-$algorithms[0] = "Single Data Source"
-$algorithms[1] = "Folder of Logical Files"
-$algorithms[2] = "One Data Source Per Folder"
+$algorithms[0] = "Single data source"
+$algorithms[1] = "Folder of logical files"
+$algorithms[2] = "One data source per folder"
+
+Global $algorithmDescriptions[3] ;increase size of array when adding new algorithms
+$algorithmDescriptions[0] = "Create a single auto ingest manifest file for a single disk image or VM file."
+$algorithmDescriptions[1] = "Create a single auto ingest manifest file for a single folder of logical files."
+$algorithmDescriptions[2] = "Create a manifest file for the first supported image of each subfolder of a case folder. If no supported images exist in the folder a manifest will be generated for the folders contents as a logical file set. Supported disk image or VM files: .e01, .l01, .001, .ad1"
 
 ; $algorithms[2] = "All Files In One Folder"
 Global $progressArea = Null
@@ -41,6 +46,11 @@ Global $manifestExtension = ".xml"
 Func GetAlgorithmNames()
 	Return $algorithms
 EndFunc   
+
+;Return the description for the specified algorithm index
+Func GetAlgorithmDescription($index)
+	Return $algorithmDescriptions[$index]
+EndFunc
 
 ;Return the name of the first algorithm as a default algorithm
 Func GetDefaultAlgorithmName()

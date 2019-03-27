@@ -10,6 +10,7 @@
         <dependency conf="autopsy_core->*" org="org.reflections" name="reflections" rev="0.9.8"/>
         
         <dependency org="com.google.code.gson" name="gson" rev="2.8.1"/>      
+        <dependency org="com.apple" name="AppleJavaExtensions" rev="1.4"/>
         
         <!-- for viewers -->
         <dependency conf="autopsy_core->*" org="org.freedesktop.gstreamer" name="gst1-java-core" rev="0.9.3"/>
