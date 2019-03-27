@@ -193,7 +193,12 @@ public class CommandLineIngestSettingsPanel extends javax.swing.JPanel {
         if (outputPath.isEmpty()) {
             jLabelInvalidResultsFolder.setVisible(true);
             jLabelInvalidResultsFolder.setText(NbBundle.getMessage(CommandLineIngestSettingsPanel.class, "CommandLineIngestSettingsPanel.ResultsDirectoryUnspecified"));
-            return false;
+            /*
+            NOTE: JIRA-4850: Returning false disables OK and Apply buttons for the entire
+            Tools->Options bar until the path is set. It was decided to only validate 
+            the path if the path is set.
+            */
+            return true;
         }
 
         if (!isFolderPathValid(outputPath)) {

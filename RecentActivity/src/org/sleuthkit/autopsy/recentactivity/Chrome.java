@@ -88,6 +88,7 @@ class Chrome extends Extract {
         "Progress_Message_Chrome_FormHistory=Chrome Form History",
         "Progress_Message_Chrome_AutoFill=Chrome Auto Fill",
         "Progress_Message_Chrome_Logins=Chrome Logins",
+        "Progress_Message_Chrome_Cache=Chrome Cache",
     })
  
 
@@ -121,7 +122,8 @@ class Chrome extends Extract {
         progressBar.progress(Bundle.Progress_Message_Chrome_Downloads());
         this.getDownload();
         
-        ChromeCacheExtractor chromeCacheExtractor = new ChromeCacheExtractor(dataSource, context);
+        progressBar.progress(Bundle.Progress_Message_Chrome_Cache());
+        ChromeCacheExtractor chromeCacheExtractor = new ChromeCacheExtractor(dataSource, context, progressBar);
         chromeCacheExtractor.getCaches();
     }
 

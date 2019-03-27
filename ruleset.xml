@@ -94,7 +94,7 @@
   <rule ref="rulesets/java/controversial.xml/UnnecessaryConstructor"/>
   -->
   <rule ref="rulesets/java/coupling.xml/CouplingBetweenObjects"/>
-  <rule ref="rulesets/java/coupling.xml/ExcessiveImports"/>
+  <!--<rule ref="rulesets/java/coupling.xml/ExcessiveImports"/>-->
   <rule ref="rulesets/java/coupling.xml/LooseCoupling"/>
   <rule ref="rulesets/java/coupling.xml/LoosePackageCoupling"/>
   <!-- Commented out because we have not enforced this in the past
@@ -225,7 +225,7 @@
   <!--<rule ref="rulesets/java/naming.xml/GenericsNaming"/>-->
   <rule ref="rulesets/java/naming.xml/NoPackage"/>
   <rule ref="rulesets/java/naming.xml/MethodWithSameNameAsEnclosingClass"/>
-  <rule ref="rulesets/java/naming.xml/ShortVariable"/>
+  <!--<rule ref="rulesets/java/naming.xml/ShortVariable"/>-->
   <!-- Commented out because clarity trumps brevity, developers can use their own judgement
   <rule ref="rulesets/java/naming.xml/LongVariable"/>  -->
   <rule ref="rulesets/java/naming.xml/ShortMethodName"/>
@@ -258,8 +258,8 @@
   <rule ref="rulesets/java/strictexception.xml/AvoidCatchingGenericException"/>
   <rule ref="rulesets/java/strictexception.xml/AvoidThrowingRawExceptionTypes"/>
   <rule ref="rulesets/java/strictexception.xml/AvoidThrowingNullPointerException"/>
-  <rule ref="rulesets/java/strings.xml/AvoidDuplicateLiterals"/>
-  <rule ref="rulesets/java/strings.xml/InefficientStringBuffering"/>
+  <!--<rule ref="rulesets/java/strings.xml/AvoidDuplicateLiterals"/>-->
+  <!--<rule ref="rulesets/java/strings.xml/InefficientStringBuffering"/>-->
   <rule ref="rulesets/java/strings.xml/AppendCharacterWithChar"/>
   <rule ref="rulesets/java/strings.xml/ConsecutiveAppendsShouldReuse"/>
   <rule ref="rulesets/java/strings.xml/ConsecutiveLiteralAppends"/>
@@ -289,7 +289,7 @@
   <rule ref="rulesets/java/unnecessary.xml/UselessQualifiedThis"/>
   <rule ref="rulesets/java/unnecessary.xml/UselessOperationOnImmutable"/>
   <rule ref="rulesets/java/unnecessary.xml/UnnecessaryReturn"/>
-  <rule ref="rulesets/java/unusedcode.xml/UnusedModifier"/>
+  <!--<rule ref="rulesets/java/unusedcode.xml/UnusedModifier"/>-->
   <rule ref="rulesets/java/unusedcode.xml/UnusedLocalVariable"/>
   <!-- Commented out because it flagged many event listeners and other interfaces.
   <rule ref="rulesets/java/unusedcode.xml/UnusedFormalParameter"/> -->
