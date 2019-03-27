@@ -52,8 +52,9 @@ public final class InstanceCountNode extends DisplayableItemNode {
      * Create a node with the given number of instances, and the given selection
      * of metadata.
      *
-     * @param instanceCount
-     * @param attributeValues
+     * @param instanceCount   the number of instances
+     * @param attributeValues the attribute list
+     * @param type            the data type
      */
     @NbBundle.Messages({
         "InstanceCountNode.displayName=Exists in %s data sources (%s)"
