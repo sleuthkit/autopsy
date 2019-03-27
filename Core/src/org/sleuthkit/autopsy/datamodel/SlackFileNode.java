@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,7 +78,7 @@ public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
             actionsList.add(a);
         }
         if (!this.getDirectoryBrowseMode()) {
-            actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "SlackFileNode.viewFileInDir.text"), this.content));
+            actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "SlackFileNode.getActions.viewFileInDir.text"), this.content));
             actionsList.add(null); // creates a menu separator
         }
         actionsList.add(new NewWindowViewAction(

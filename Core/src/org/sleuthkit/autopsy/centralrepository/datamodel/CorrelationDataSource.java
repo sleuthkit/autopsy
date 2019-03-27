@@ -168,7 +168,7 @@ public class CorrelationDataSource implements Serializable {
      *
      * @return the ID or -1 if unknown
      */
-    int getID() {
+    public int getID() {
         return dataSourceID;
     }
 
