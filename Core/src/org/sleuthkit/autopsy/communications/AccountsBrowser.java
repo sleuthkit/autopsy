@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.util.logging.Level;
@@ -36,7 +37,10 @@ import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
+import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
+import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -129,6 +133,19 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
         } catch (NoCurrentCaseException ex) { //NOPMD empty catch clause
             //Case is closed, do nothig.
         }
+    }
+    
+    @Subscribe
+    void historyChange(CVTEvents.StateEvent event) {
+        try {
+            final CommunicationsManager commsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
+            accountsTableEM.setRootContext(new AbstractNode(Children.create(new AccountDeviceInstanceNodeFactory(commsManager, event.getCommunicationsState().getCommunicationsFilter()), true)));
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
+        } catch (NoCurrentCaseException ex) { //NOPMD empty catch clause
+            //Case is closed, do nothig.
+        }
+
     }
 
     /**

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.util.HashSet;
 import java.util.List;
@@ -25,6 +26,8 @@ import java.util.Set;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsFilter.SubFilter;
+import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
+import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 
 /**
  * Manages the state history for the Communications window. History is currently
@@ -133,7 +136,7 @@ final class StateManager {
     final class CommunicationsState{
         private final List<SubFilter> communcationFilters;
         private final Set<AccountDeviceInstanceKey> pinnedList;
-        private double zoomValue = -1;
+        private final double zoomValue;
         
         /**
          * Stores all the properties of the current state of the Communications 
@@ -174,6 +177,22 @@ final class StateManager {
          */
         public List<SubFilter> getCommunicationsFilters(){
             return communcationFilters;
+        }
+        
+        /**
+         * Return a new CommunicationsFilter object based on the list of
+         * SubFilters
+         *
+         * @return CommunicationsFilter
+         */
+        public CommunicationsFilter getCommunicationsFilter() {
+            CommunicationsFilter newFilters = new CommunicationsFilter();
+            newFilters.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(ImmutableSet.of(CALL_LOG, MESSAGE)));
+            communcationFilters.forEach(filter -> {
+                newFilters.addAndFilter(filter);
+            });
+
+            return newFilters;
         }
         
         /**

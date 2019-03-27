@@ -663,15 +663,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
                     logger.log(Level.WARNING, "CVT graph layout failed.", ex);
-                    String message = (lockedVertexModel.isEmpty())
-                            ? Bundle.VisualizationPanel_layoutFail_text(layout.getDisplayName())
-                            : Bundle.VisualizationPanel_layoutFailWithLockedVertices_text(layout.getDisplayName());
-
-                    Platform.runLater(()
-                            -> Notifications.create().owner(notificationsJFXPanel.getScene().getWindow())
-                                    .text(message)
-                                    .showWarning()
-                    );
                 }
             }
         }.execute();
@@ -718,12 +709,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
             pinnedAccountModel.clear();
         }
 
-        currentFilter = new CommunicationsFilter();
-        currentFilter.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(
-                ImmutableSet.of(CALL_LOG, MESSAGE)));
-        newState.getCommunicationsFilters().forEach(filter -> {
-            currentFilter.addAndFilter(filter);
-        });
+        currentFilter = newState.getCommunicationsFilter();
 
         rebuildGraph();
         // Updates the display

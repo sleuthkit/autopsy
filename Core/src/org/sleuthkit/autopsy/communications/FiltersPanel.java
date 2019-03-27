@@ -305,12 +305,12 @@ final public class FiltersPanel extends JPanel {
     private void setDateRangeFilter(DateRangeFilter dateFilter) {
         ZonedDateTime zoneDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(dateFilter.getStartDate()), Utils.getUserPreferredZoneId());
         startDatePicker.setEnabled(dateFilter.isStartDateEnabled());
-        startCheckBox.setEnabled(dateFilter.isStartDateEnabled());
+        startCheckBox.setSelected(dateFilter.isStartDateEnabled());
         startDatePicker.setDate(zoneDate.toLocalDate());
 
         zoneDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(dateFilter.getEndDate()), Utils.getUserPreferredZoneId());
         endDatePicker.setEnabled(dateFilter.isEndDateEnabled());
-        endCheckBox.setEnabled(dateFilter.isEndDateEnabled());
+        endCheckBox.setSelected(dateFilter.isEndDateEnabled());
         endDatePicker.setDate(zoneDate.toLocalDate());
     }
     
@@ -320,8 +320,7 @@ final public class FiltersPanel extends JPanel {
      * @param typeFilter Account Types to be selected
      */
     private void setAccountTypeFilter(AccountTypeFilter typeFilter){
-        
-        Collection<Account.Type> typeSet = typeFilter.getAccountTypes();
+       
         accountTypeMap.forEach((type, cb) -> {
             cb.setSelected(typeFilter.getAccountTypes().contains(type));
         });
