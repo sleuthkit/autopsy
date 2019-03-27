@@ -144,8 +144,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             directory.mkdirs();
         }
 
-        String[] imgFile = image.getPaths();
-        ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(moduleOutputPath, imgFile[0], image.getTimeZone());
+       
+        ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(moduleOutputPath, image);
         log2TimeLineCommand.redirectError(new File(moduleOutputPath + File.separator + "log2timeline_err.txt"));  //NON-NLS
 
         logger.log(Level.INFO, Bundle.PlasoIngestModule_startUp_message());
@@ -220,17 +220,16 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         return processBuilder;
     }
 
-    private ProcessBuilder buildLog2TimeLineCommand(String moduleOutputPath, String imageName, String timeZone) {
-        return buildProcessWithRunAsInvoker(
-                "\"" + log2TimeLineExecutable + "\"", //NON-NLS
+    private ProcessBuilder buildLog2TimeLineCommand(String moduleOutputPath, Image image ) {
+        return buildProcessWithRunAsInvoker("\"" + log2TimeLineExecutable + "\"", //NON-NLS
                 "--vss-stores", "all", //NON-NLS
-                "-z", timeZone, //NON-NLS
+                "-z", image.getTimeZone(), //NON-NLS
                 "--partitions", "all", //NON-NLS
                 "--hasher_file_size_limit", "1", //NON-NLS
                 "--hashers", "none", //NON-NLS
                 "--no_dependencies_check", //NON-NLS
                 moduleOutputPath + File.separator + PLASO,
-                imageName
+                image.getPaths()[0]
         );
     }
 
