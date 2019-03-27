@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import javax.swing.Action;
@@ -36,13 +35,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJob.Stage;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestAdminActions;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboard;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents;
-import org.sleuthkit.autopsy.experimental.autoingest.Bundle;
-import org.sleuthkit.autopsy.experimental.autoingest.Manifest;
-import org.sleuthkit.autopsy.experimental.autoingest.PrioritizationAction;
 import org.sleuthkit.autopsy.guiutils.DurationCellRenderer;
 import org.sleuthkit.autopsy.guiutils.StatusIconCellRenderer;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestJob;

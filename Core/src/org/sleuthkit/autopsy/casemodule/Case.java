@@ -2584,7 +2584,7 @@ public class Case {
      *                              for a lower-level exception.
      * @throws InterruptedException If the thread this code is running in is
      *                              interrupted while blocked, i.e., if
-     *                              cancellation of the opersation is detected
+     *                              cancellation of the operation is detected
      *                              during a wait.
      */
     @Messages({
@@ -2678,7 +2678,7 @@ public class Case {
      *
      * @throws InterruptedException If the thread this code is running in is
      *                              interrupted while blocked, i.e., if
-     *                              cancellation of the opersation is detected
+     *                              cancellation of the operation is detected
      *                              during a wait.
      */
     @Beta
@@ -2717,6 +2717,8 @@ public class Case {
             return errorsOccurred;
         }
 
+        deleteFromRecentCases(metadata, progressIndicator);
+                
         return errorsOccurred;
     }
 
@@ -2766,7 +2768,7 @@ public class Case {
      * Attempts to delete the text index for a multi-user case.
      *
      * @param caseNodeData      The coordination service node data for the case.
-     * @param metadata          The case mnetadata.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
      * @param logger            A logger.
      *
@@ -2788,7 +2790,7 @@ public class Case {
     /**
      * Attempts to delete the text index for a case.
      *
-     * @param metadata          The case mnetadata.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
      *
      * @throws KeywordSearchServiceException If there is an error deleting the
@@ -2808,7 +2810,7 @@ public class Case {
      * Attempts to delete the case directory for a multi-user case.
      *
      * @param caseNodeData      The coordination service node data for the case.
-     * @param metadata          The case mnetadata.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
      * @param logger            A logger.
      *
@@ -2829,7 +2831,7 @@ public class Case {
     /**
      * Attempts to delete the case directory for a case.
      *
-     * @param metadata          The case mnetadata.
+     * @param metadata          The case metadata.
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException If there is an error deleting the case
