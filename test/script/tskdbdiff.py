@@ -381,8 +381,8 @@ class TskDbDiff(object):
             dump_file: a pathto_File, the location to dump the non-blackboard database items
             bb_dump_file: a pathto_File, the location to dump the blackboard database items
         """
-        TskDbDiff._dump_output_db_nonbb(db_file, dump_file, isMultiUser, pgSettings)
-        TskDbDiff._dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings)
+        id_obj_path_table = TskDbDiff._dump_output_db_nonbb(db_file, dump_file, isMultiUser, pgSettings)
+        TskDbDiff._dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings, id_obj_path_table)
 
 
     def _get_tmp_file(base, ext):
