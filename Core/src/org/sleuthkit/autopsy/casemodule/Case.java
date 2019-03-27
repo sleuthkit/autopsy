@@ -2175,6 +2175,8 @@ public class Case {
      * Updates the node data for the case directory lock coordination service
      * node.
      *
+     * @param progressIndicator A progress indicator.
+     *
      * @throws CaseActionException If there is a problem completing the
      *                             operation. The exception will have a
      *                             user-friendly message and may be a wrapper
