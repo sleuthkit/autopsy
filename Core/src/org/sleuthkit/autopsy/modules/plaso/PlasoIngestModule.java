@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import javax.swing.JOptionPane;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -79,8 +81,10 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private File psortExecutable;
     private Image image;
     private AbstractFile previousFile = null; // cache used when looking up files in Autopsy DB
+    private final PlasoModuleSettings settings;
 
-    PlasoIngestModule() {
+    PlasoIngestModule(PlasoModuleSettings settings) {
+        this.settings = settings;
     }
 
     @NbBundle.Messages({
@@ -156,7 +160,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_log2timeline());
                 return ProcessResult.OK;
             }
-            
+
             // sort the output
             statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
             ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
@@ -171,7 +175,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_psort());
                 return ProcessResult.OK;
             }
-            
+
             // parse the output and make artifacts
             createPlasoArtifacts(plasoFile.getAbsolutePath(), statusHelper);
 
@@ -188,23 +192,26 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
     private ProcessBuilder buildLog2TimeLineCommand(File log2TimeLineExecutable, String moduleOutputPath, String imageName, String timeZone) {
 
+        String parsersString = settings.getParsers().entrySet().stream()
+                .filter(entry -> entry.getValue() == false)
+                .map(entry -> "!" + entry.getKey())
+                .collect(Collectors.joining(",", "\"", "\""));
+        new JOptionPane(parsersString).setVisible(true);
         List<String> commandLine = Arrays.asList(
                 "\"" + log2TimeLineExecutable + "\"", //NON-NLS 
-                "--vss-stores", //NON-NLS
-                "all", //NON-NLS
-                "-z",
-                timeZone,
-                "--partitions",
-                "all",
-                "--hasher_file_size_limit",
-                "1",
-                "--hashers",
-                "none",
+                "--vss-stores", "all", //NON-NLS
+                "-d",
+                "-z", timeZone,
+                "--partitions", "all",
+                "--hasher_file_size_limit", "1",
+                "--hashers", "none",
+                "--parsers", parsersString,
                 "--no_dependencies_check",
                 moduleOutputPath + File.separator + PLASO,
                 imageName
         );
 
+        System.out.println(commandLine);
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
          * Add an environment variable to force log2timeline to run with the
@@ -280,7 +287,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
-            
+
             while (resultSet.next()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, Bundle.PlasoIngestModule_create_artifacts_cancelled()); //NON-NLS
@@ -305,7 +312,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", resultSet.getString("filename"));
                     resolvedFile = image;
                 }
-                
+
                 long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(

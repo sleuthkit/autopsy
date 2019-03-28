@@ -29,11 +29,11 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
- * An factory that creates data source ingest modules that runs plaso against an
+ * A factory that creates data source ingest modules that run Plaso against an
  * image and saves the storage file to module output.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-
+@NbBundle.Messages({"PlasoModuleFactory.ingestJobSettings.exception.msg=Expected settings argument to be instanceof PlasoModuleSettings"})
 public class PlasoModuleFactory implements IngestModuleFactory {
 
     @NbBundle.Messages({"PlasoModuleFactory_moduleName=Plaso"})
@@ -63,8 +63,12 @@ public class PlasoModuleFactory implements IngestModuleFactory {
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new PlasoIngestModule();
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
+        assert settings instanceof PlasoModuleSettings;
+        if (settings instanceof PlasoModuleSettings) {
+            return new PlasoIngestModule((PlasoModuleSettings) settings);
+        }
+        throw new IllegalArgumentException(Bundle.PlasoModuleFactory_ingestJobSettings_exception_msg());
     }
 
     @Override
@@ -87,17 +91,13 @@ public class PlasoModuleFactory implements IngestModuleFactory {
         return true;
     }
 
-    @NbBundle.Messages({"PlasoModuleFactory.getIngestJobSettingsPanel.exception.msg=Expected settings argument to be instanceof PlasoModuleSettings"})
     @Override
     public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         assert settings instanceof PlasoModuleSettings;
         if (settings instanceof PlasoModuleSettings) {
             return new PlasoModuleSettingsPanel((PlasoModuleSettings) settings);
-        } else {
-            throw new IllegalArgumentException(NbBundle.getMessage(PlasoModuleFactory.class,
-                    "PlasoModuleFactory.getIngestJobSettingsPanel.exception.msg"));
         }
-
+        throw new IllegalArgumentException(Bundle.PlasoModuleFactory_ingestJobSettings_exception_msg());
     }
 
     @Override
