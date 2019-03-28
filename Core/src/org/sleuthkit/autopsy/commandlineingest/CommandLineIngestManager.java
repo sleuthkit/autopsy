@@ -149,7 +149,7 @@ public class CommandLineIngestManager {
                 // read options panel configuration
                 String rootOutputDir = UserPreferences.getCommandLineModeResultsFolder();
                 LOGGER.log(Level.INFO, "Output directory = {0}", rootOutputDir); //NON-NLS
-                System.out.println("Output directoryh = " + rootOutputDir);
+                System.out.println("Output directory = " + rootOutputDir);
 
                 if (rootOutputDir.isEmpty()) {
                     LOGGER.log(Level.SEVERE, "Output directory not specified, please configure Command Line Options Panel (in Tools -> Options)");
@@ -264,6 +264,7 @@ public class CommandLineIngestManager {
          * Passes the data source for the current job through a data source
          * processor that adds it to the case database.
          *
+         * @param caseForJob The case
          * @param dataSource The data source.
          *
          * @throws

@@ -59,6 +59,7 @@ public class CommSnapShotReportWriter extends UiSnapShotReportWriter {
      * @param reportName       The name of the report.
      * @param generationDate   The generation Date of the report.
      * @param snapshot         A snapshot of the view to include in the report.
+     * @param filter           The communications filter
      */
     public CommSnapShotReportWriter(Case currentCase, Path reportFolderPath, String reportName, Date generationDate, BufferedImage snapshot, CommunicationsFilter filter) {
 

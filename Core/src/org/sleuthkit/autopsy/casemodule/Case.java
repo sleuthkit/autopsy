@@ -2018,6 +2018,8 @@ public class Case {
      * Updates the node data for the case directory lock coordination service
      * node.
      *
+     * @param progressIndicator A progress indicator.
+     *
      * @throws CaseActionException If there is a problem completing the
      *                             operation. The exception will have a
      *                             user-friendly message and may be a wrapper
@@ -2030,15 +2032,29 @@ public class Case {
     private void updateCaseNodeData(ProgressIndicator progressIndicator) throws CaseActionException {
         if (getCaseType() == CaseType.MULTI_USER_CASE) {
             progressIndicator.progress(Bundle.Case_progressMessage_updatingCaseNodeData());
-            if (getCaseType() == CaseType.MULTI_USER_CASE) {
-                try {
-                    CoordinationService coordinationService = CoordinationService.getInstance();
-                    CaseNodeData nodeData = new CaseNodeData(coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory()));
+            try {
+                CaseNodeData nodeData;
+                CoordinationService coordinationService = CoordinationService.getInstance();
+                byte[] nodeBytes = coordinationService.getNodeData(CategoryNode.CASES, metadata.getCaseDirectory());
+                if (nodeBytes != null && nodeBytes.length > 0) {
+                    /*
+                     * Update the last access date in the coordination service
+                     * node data for the case.
+                     */
+                    nodeData = new CaseNodeData(nodeBytes);
                     nodeData.setLastAccessDate(new Date());
-                    coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
-                } catch (CoordinationServiceException | InterruptedException | IOException ex) {
-                    throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
+                } else {
+                    /*
+                     * This is a "legacy" case with no data stored in its case
+                     * directory coordination service node yet, or the node is
+                     * empty due to some error, so create the coordination
+                     * service node data from the case metadata.
+                     */
+                    nodeData = new CaseNodeData(metadata);
                 }
+                coordinationService.setNodeData(CategoryNode.CASES, metadata.getCaseDirectory(), nodeData.toArray());
+            } catch (CoordinationServiceException | InterruptedException | ParseException | IOException ex) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotUpdateCaseNodeData(ex.getLocalizedMessage()), ex);
             }
         }
     }

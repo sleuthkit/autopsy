@@ -815,8 +815,8 @@ final class MultiCaseKeywordSearchPanel extends javax.swing.JPanel implements Ex
         /**
          * Constructs a thread that performs a keyword search of cases
          *
-         * @param caseNames The names of the cases to search.
-         * @param query     The keyword search query to perform.
+         * @param caseNodes    The cases to search.
+         * @param searchQuery  The keyword search query to perform.
          */
         private SearchThread(Collection<CaseNodeData> caseNodes, SearchQuery searchQuery) {
             this.caseNodes = caseNodes;
