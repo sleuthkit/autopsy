@@ -256,7 +256,7 @@ class TskDbDiff(object):
                                 attr_value_as_string = str(attr["value_int32"])                        
                             elif attr["value_type"] == 2:
                                 attr_value_as_string = str(attr["value_int64"])
-                                if attr["attribute_type_id"]  == 36 and id_obj_path_table != -1: #normalize TSK_PATH_IDs from being object id to a path if the obj_id_path_table was generated
+                                if attr["attribute_type_id"]  == 36 and id_obj_path_table != -1 and int(attr_value_as_string) > 0: #normalize positive TSK_PATH_IDs from being object id to a path if the obj_id_path_table was generated
                                     attr_value_as_string = id_obj_path_table[int(attr_value_as_string)]
                             elif attr["value_type"] == 3:
                                 attr_value_as_string = "%20.10f" % float((attr["value_double"])) #use exact format from db schema to avoid python auto format double value to (0E-10) scientific style                       
