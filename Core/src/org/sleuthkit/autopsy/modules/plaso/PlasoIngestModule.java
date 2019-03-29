@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
@@ -69,6 +70,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private static final String PLASO32 = "plaso//plaso-20180818-win32";
     private static final String LOG2TIMELINE_EXECUTABLE = "Log2timeline.exe";
     private static final String PSORT_EXECUTABLE = "psort.exe";
+
+    private static final int LOG2TIMELINE_WORKERS = 2;
 
     private final Case currentCase = Case.getCurrentCase();
     private final FileManager fileManager = currentCase.getServices().getFileManager();
@@ -156,7 +159,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_log2timeline());
                 return ProcessResult.OK;
             }
-            
+
             // sort the output
             statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
             ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
@@ -171,7 +174,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_psort());
                 return ProcessResult.OK;
             }
-            
+
             // parse the output and make artifacts
             createPlasoArtifacts(plasoFile.getAbsolutePath(), statusHelper);
 
@@ -188,24 +191,18 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
     private ProcessBuilder buildLog2TimeLineCommand(File log2TimeLineExecutable, String moduleOutputPath, String imageName, String timeZone) {
 
-        List<String> commandLine = Arrays.asList(
-                "\"" + log2TimeLineExecutable + "\"", //NON-NLS 
-                "--vss-stores", //NON-NLS
-                "all", //NON-NLS
-                "-z",
-                timeZone,
-                "--partitions",
-                "all",
-                "--hasher_file_size_limit",
-                "1",
-                "--hashers",
-                "none",
-                "--no_dependencies_check",
+        ProcessBuilder processBuilder = new ProcessBuilder(asList(
+                "\"" + log2TimeLineExecutable + "\"", //NON-NLS
+                "--vss-stores", "all", //NON-NLS
+                "-z", timeZone,//NON-NLS
+                "--partitions", "all",//NON-NLS
+                "--hasher_file_size_limit", "1",//NON-NLS
+                "--hashers", "none",//NON-NLS
+                "--no_dependencies_check",//NON-NLS
+                "--workers", String.valueOf(LOG2TIMELINE_WORKERS),//NON-NLS
                 moduleOutputPath + File.separator + PLASO,
                 imageName
-        );
-
-        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+        ));
         /*
          * Add an environment variable to force log2timeline to run with the
          * same permissions Autopsy uses.
@@ -219,15 +216,11 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
     private ProcessBuilder buildPsortCommand(File psortExecutable, String moduleOutputPath) {
 
-        List<String> commandLine = Arrays.asList(
+        ProcessBuilder processBuilder = new ProcessBuilder(asList(
                 "\"" + psortExecutable + "\"", //NON-NLS
-                "-o", //NON-NLS
-                "4n6time_sqlite", //NON-NLS
-                "-w",
-                moduleOutputPath + File.separator + "plasodb.db3",
-                moduleOutputPath + File.separator + PLASO);
-
-        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+                "-o", "4n6time_sqlite", //NON-NLS
+                "-w", moduleOutputPath + File.separator + "plasodb.db3", //NON-NLS
+                moduleOutputPath + File.separator + PLASO));
         /*
          * Add an environment variable to force psort to run with the same
          * permissions Autopsy uses.
@@ -280,7 +273,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
-            
+
             while (resultSet.next()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, Bundle.PlasoIngestModule_create_artifacts_cancelled()); //NON-NLS
@@ -305,7 +298,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", resultSet.getString("filename"));
                     resolvedFile = image;
                 }
-                
+
                 long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
