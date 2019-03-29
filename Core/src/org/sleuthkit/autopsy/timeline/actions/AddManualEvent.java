@@ -81,7 +81,6 @@ public class AddManualEvent extends Action {
     private static final String MANUAL_CREATION = "Manual Creation"; //NON-NLS
     private static final Image ADD_EVENT_IMAGE = new Image("/org/sleuthkit/autopsy/timeline/images/add.png", 16, 16, true, true, true); // NON-NLS
 
-//    private final Long epochMillis;
     /**
      * Initialize the custom value extractor used by the ValidationSupport for
      * the LocalDateTimeTextField in the EventCreationDialogPane.
@@ -143,8 +142,7 @@ public class AddManualEvent extends Action {
      */
     @NbBundle.Messages({
         "AddManualEvent.createArtifactFailed=Failed to create artifact for event.",
-        "AddManualEvent.postArtifactFailed=Failed to post artifact to blackboard."
-    })
+        "AddManualEvent.postArtifactFailed=Failed to post artifact to blackboard."})
     private void addEvent(TimeLineController controller, ManualEventInfo eventInfo) throws IllegalArgumentException {
         SleuthkitCase sleuthkitCase = controller.getEventsModel().getSleuthkitCase();
 
@@ -176,6 +174,10 @@ public class AddManualEvent extends Action {
         }
     }
 
+    /**
+     * Subclass of JDialog used to dislpay the JFXPanel with the event creation
+     * widgets.
+     */
     static private final class JEventCreationDialog extends JDialog {
 
         @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
@@ -213,7 +215,7 @@ public class AddManualEvent extends Action {
         }
 
         /**
-         * Get the MAnualEventInfo combining the user entered data.
+         * Get the ManualEventInfo combining the user entered data.
          *
          * @return The ManualEventInfo containing the user entered event info.
          */
@@ -240,7 +242,7 @@ public class AddManualEvent extends Action {
             private final ValidationSupport validationSupport = new ValidationSupport();
             private final TimeLineController controller;
 
-          private  EventCreationDialogPane(TimeLineController controller, Long epochMillis) {
+            private EventCreationDialogPane(TimeLineController controller, Long epochMillis) {
                 this.controller = controller;
                 FXMLConstructor.construct(this, "EventCreationDialog.fxml"); //NON-NLS
                 if (epochMillis == null) {
@@ -251,7 +253,9 @@ public class AddManualEvent extends Action {
             }
 
             @FXML
-            @NbBundle.Messages("AddManualEvent.EventCreationDialogPane.initialize.dataSourcesError=Error getting datasources in case.")
+            @NbBundle.Messages({"# {0} - datasource name", "# {1} - datasource id",
+                "AddManualEvent.EventCreationDialogPane.dataSourceStringConverter.template={0} (ID: {1})",
+                "AddManualEvent.EventCreationDialogPane.initialize.dataSourcesError=Error getting datasources in case."})
             private void initialize() {
                 assert descriptionTextField != null : "fx:id=\"descriptionTextField\" was not injected: check your FXML file 'EventCreationDialog.fxml'.";//NON-NLS
 
@@ -263,9 +267,10 @@ public class AddManualEvent extends Action {
                     dataSourceChooser.getItems().setAll(controller.getAutopsyCase().getSleuthkitCase().getDataSources());
                     dataSourceChooser.getSelectionModel().select(0);
                     dataSourceChooser.setConverter(new StringConverter<DataSource>() {
+
                         @Override
                         public String toString(DataSource dataSource) {
-                            return dataSource.getName() + "(ID: " + dataSource.getId() + ")";
+                            return Bundle.AddManualEvent_EventCreationDialogPane_dataSourceStringConverter_template(dataSource.getName(), dataSource.getId());
                         }
 
                         /**
@@ -273,11 +278,11 @@ public class AddManualEvent extends Action {
                          */
                         @Override
                         public DataSource fromString(String string) {
-                            throw new UnsupportedOperationException("Not supported yet."); //NON-NLS
+                            throw new UnsupportedOperationException();
                         }
                     });
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting datasources in case.", ex);
+                    logger.log(Level.SEVERE, "Error getting datasources in case.", ex);//NON-NLS
                     SwingUtilities.invokeLater(() -> MessageNotifyUtil.Message.error(Bundle.AddManualEvent_EventCreationDialogPane_initialize_dataSourcesError()));
                 }
             }
@@ -311,7 +316,7 @@ public class AddManualEvent extends Action {
              */
             private ManualEventInfo getManualEventInfo() {
                 //Trim off the offset part of the string from the chooser, to get something that ZoneId can parse.
-                String zone = StringUtils.substringAfter(timeZoneChooser.getValue(), ")").trim();
+                String zone = StringUtils.substringAfter(timeZoneChooser.getValue(), ")").trim(); //NON-NLS
                 long toEpochSecond = timePicker.getLocalDateTime().atZone(ZoneId.of(zone)).toEpochSecond();
                 return new ManualEventInfo(dataSourceChooser.getValue(), descriptionTextField.getText(), toEpochSecond);
             }
