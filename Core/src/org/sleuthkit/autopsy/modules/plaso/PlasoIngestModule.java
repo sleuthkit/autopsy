@@ -25,10 +25,12 @@ import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+import static java.util.Arrays.asList;
 import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -65,11 +67,13 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private static final Logger logger = Logger.getLogger(PlasoIngestModule.class.getName());
     private static final String MODULE_NAME = PlasoModuleFactory.getModuleName();
 
-    private static final String PLASO = "plaso";
-    private static final String PLASO64 = "plaso//plaso-20180818-amd64";
-    private static final String PLASO32 = "plaso//plaso-20180818-win32";
-    private static final String LOG2TIMELINE_EXECUTABLE = "Log2timeline.exe";
-    private static final String PSORT_EXECUTABLE = "psort.exe";
+    private static final String PLASO = "plaso"; //NON-NLS
+    private static final String PLASO64 = "plaso//plaso-20180818-amd64";//NON-NLS
+    private static final String PLASO32 = "plaso//plaso-20180818-win32";//NON-NLS
+    private static final String LOG2TIMELINE_EXECUTABLE = "Log2timeline.exe";//NON-NLS
+    private static final String PSORT_EXECUTABLE = "psort.exe";//NON-NLS
+
+    private static final String COOKIE = "cookie";
 
     private final Case currentCase = Case.getCurrentCase();
     private final FileManager fileManager = currentCase.getServices().getFileManager();
@@ -130,7 +134,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         }
         image = (Image) dataSource;
 
-        String currentTime = TimeUtilities.epochToTime(System.currentTimeMillis() / 1000) .replaceAll(":", "-");
+        String currentTime = TimeUtilities.epochToTime(System.currentTimeMillis() / 1000).replaceAll(":", "-");//NON-NLS
         String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime).toString();
         File directory = new File(String.valueOf(moduleOutputPath));
         if (!directory.exists()) {
@@ -167,9 +171,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_psort_cancelled());
                 return ProcessResult.OK;
             }
-            plasoFile = new File(moduleOutputPath + File.separator + "plasodb.db3");
+            plasoFile = new File(moduleOutputPath + File.separator + "plasodb.db3");//NON-NLS
             if (!plasoFile.exists()) {
-                logger.log(Level.INFO, Bundle.PlasoIngestModule_error_running_psort()); //NON-NLS
+                logger.log(Level.INFO, Bundle.PlasoIngestModule_error_running_psort());  //NON-NLS
                 MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_psort());
                 return ProcessResult.OK;
             }
@@ -178,7 +182,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             createPlasoArtifacts(plasoFile.getAbsolutePath(), statusHelper);
 
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, Bundle.PlasoIngestModule_error_running(), ex);
+            logger.log(Level.SEVERE, Bundle.PlasoIngestModule_error_running(), ex);//NON-NLS
             MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
             return ProcessResult.ERROR;
         }
@@ -192,31 +196,27 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
         String parsersString = settings.getParsers().entrySet().stream()
                 .filter(entry -> entry.getValue() == false)
-                .map(entry -> "!" + entry.getKey())
-                .collect(Collectors.joining(",", "\"", "\""));
+                .map(entry -> "!" + entry.getKey())//NON-NLS
+                .collect(Collectors.joining(","));//NON-NLS
 
-        List<String> commandLine = Arrays.asList(
-                "\"" + log2TimeLineExecutable + "\"", //NON-NLS 
+        ProcessBuilder processBuilder = new ProcessBuilder(asList(
+                "\"" + log2TimeLineExecutable + "\"", //NON-NLS
                 "--vss-stores", "all", //NON-NLS
-                "-d", //TODO: remove after debugging
-                "-z", timeZone,
-                "--partitions", "all",
-                "--hasher_file_size_limit", "1",
-                "--hashers", "none",
-                "--parsers", parsersString,
-                "--no_dependencies_check",
+                "-z", timeZone,//NON-NLS
+                "--partitions", "all",//NON-NLS
+                "--hasher_file_size_limit", "1",//NON-NLS
+                "--hashers", "none",//NON-NLS
+                "--parsers", "\"" + parsersString + "\"",//NON-NLS
+                "--no_dependencies_check",//NON-NLS
                 moduleOutputPath + File.separator + PLASO,
                 imageName
-        );
-
-        System.out.println(commandLine);  //TODO: remove when done debugging
-        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+        ));
         /*
          * Add an environment variable to force log2timeline to run with the
          * same permissions Autopsy uses.
          */
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
-        processBuilder.redirectOutput(new File(moduleOutputPath + File.separator + "log2timeline_output.txt"));
+        processBuilder.redirectOutput(new File(moduleOutputPath + File.separator + "log2timeline_output.txt"));//NON-NLS
         processBuilder.redirectError(new File(moduleOutputPath + File.separator + "log2timeline_err.txt"));  //NON-NLS
 
         return processBuilder;
@@ -224,15 +224,13 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
     private ProcessBuilder buildPsortCommand(File psortExecutable, String moduleOutputPath) {
 
-        List<String> commandLine = Arrays.asList(
+        //NON-NLS
+        ProcessBuilder processBuilder = new ProcessBuilder(asList(
                 "\"" + psortExecutable + "\"", //NON-NLS
-                "-o", //NON-NLS
-                "4n6time_sqlite", //NON-NLS
-                "-w",
-                moduleOutputPath + File.separator + "plasodb.db3",
-                moduleOutputPath + File.separator + PLASO);
-
-        ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+                "-o", "4n6time_sqlite", //NON-NLS
+                "-w", moduleOutputPath + File.separator + "plasodb.db3",//NON-NLS
+                moduleOutputPath + File.separator + PLASO
+        ));
         /*
          * Add an environment variable to force psort to run with the same
          * permissions Autopsy uses.
@@ -280,8 +278,13 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         SleuthkitCase sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
         blackboard = sleuthkitCase.getBlackboard();
         String connectionString = "jdbc:sqlite:" + plasoDb; //NON-NLS
-        String sqlStatement = "select substr(filename,1) filename, strftime('%s', datetime) 'epoch_date', description, source, type, sourcetype \n"
-                              + "  from log2timeline where source not in ('FILE') and sourcetype not in ('UNKNOWN');";
+        String sqlStatement = "SELECT substr(filename,1) AS filename, "
+                              + "   strftime('%s', datetime) AS epoch_date, "
+                              + "   description, "
+                              + "   source, "
+                              + "   sourcetype, "
+                              + "   type "
+                              + " FROM log2timeline WHERE source NOT IN ('FILE') AND sourcetype NOT IN ('UNKNOWN');";//NON-NLS
 
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
@@ -293,30 +296,26 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     return;
                 }
 
-                if ( // lots of bad dates
-                        "PE Import Time".equalsIgnoreCase(resultSet.getString("sourcetype"))
-                        // bad dates and duplicates with what we have.   // TODO: merge results somehow
-                        || "WEBHIST".equalsIgnoreCase(resultSet.getString("source"))) {
-                    continue;
-                }
+                String currentFileName = resultSet.getString("filename"); //NON-NLS
+                statusHelper.progress("Adding events to case: " + currentFileName, 66);
 
-                String currentFile = resultSet.getString("filename");
-                statusHelper.progress("Adding events to case: " + currentFile, 66);
-
-                Content resolvedFile = getAbstractFile(currentFile);
+                Content resolvedFile = getAbstractFile(currentFileName);
                 if (resolvedFile == null) {
-                    logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", resultSet.getString("filename"));
+                    logger.log(Level.INFO, "File from Plaso output not found.  Associating with data source instead: {0}", currentFileName);//NON-NLS
                     resolvedFile = image;
                 }
 
-                long eventType = findEventSubtype(resultSet.getString("source"), resultSet.getString("filename"), resultSet.getString("type"), resultSet.getString("description"), resultSet.getString("sourcetype"));
+                long eventType = findEventSubtype(resultSet.getString("source"),
+                        currentFileName, resultSet.getString("type"),
+                        resultSet.getString("sourcetype"));//NON-NLS
+
                 Collection<BlackboardAttribute> bbattributes = Arrays.asList(
                         new BlackboardAttribute(
                                 ATTRIBUTE_TYPE.TSK_DATETIME, MODULE_NAME,
-                                resultSet.getLong("epoch_date")),
+                                resultSet.getLong("epoch_date")),//NON-NLS
                         new BlackboardAttribute(
                                 ATTRIBUTE_TYPE.TSK_DESCRIPTION, MODULE_NAME,
-                                resultSet.getString("description")),
+                                resultSet.getString("description")),//NON-NLS
                         new BlackboardAttribute(
                                 ATTRIBUTE_TYPE.TSK_TL_EVENT_TYPE, MODULE_NAME,
                                 eventType));
@@ -349,9 +348,9 @@ public class PlasoIngestModule implements DataSourceIngestModule {
 
         Path path = Paths.get(file);
         String fileName = path.getFileName().toString();
-        String filePath = path.getParent().toString().replaceAll("\\\\", "/");
-        if (filePath.endsWith("/") == false) {
-            filePath += "/";
+        String filePath = path.getParent().toString().replaceAll("\\\\", "/");//NON-NLS
+        if (filePath.endsWith("/") == false) {//NON-NLS
+            filePath += "/";//NON-NLS
         }
 
         // check the cached file
@@ -380,19 +379,22 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         return null;
     }
 
-    private long findEventSubtype(String plasoSource, String fileName, String plasoType, String plasoDescription, String sourceType) {
+    private long findEventSubtype(String plasoSource, String plasoFileName, String plasoType, String plasoSourceType) {
 
-        if (plasoSource.matches("WEBHIST")) {
-            if (fileName.toLowerCase().contains("cookie") || plasoType.toLowerCase().contains("cookie") || plasoDescription.toLowerCase().contains("cookie")) {
+        if (plasoSource.matches("WEBHIST")) {//NON-NLS
+            if (plasoFileName.toLowerCase().contains(COOKIE)
+                || plasoType.toLowerCase().contains(COOKIE)) {
                 return EventType.WEB_COOKIE.getTypeID();
             }
             return EventType.WEB_HISTORY.getTypeID();
         }
-        if (plasoSource.matches("EVT") || plasoSource.matches("LOG")) {
+        if (plasoSource.matches("EVT") || plasoSource.matches("LOG")) {//NON-NLS
             return EventType.LOG_ENTRY.getTypeID();
         }
         if (plasoSource.matches("REG")) {
-            if (sourceType.toLowerCase().matches("unknown : usb entries") || sourceType.toLowerCase().matches("unknown : usbstor entries")) {
+            String plasoSourceTypeLower = plasoSourceType.toLowerCase();
+            if (plasoSourceTypeLower.matches("unknown : usb entries")//NON-NLS
+                || plasoSourceTypeLower.matches("unknown : usbstor entries")) {//NON-NLS
                 return EventType.DEVICES_ATTACHED.getTypeID();
             }
             return EventType.REGISTRY.getTypeID();
