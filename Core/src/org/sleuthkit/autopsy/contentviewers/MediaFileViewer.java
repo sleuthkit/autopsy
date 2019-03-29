@@ -20,11 +20,12 @@ package org.sleuthkit.autopsy.contentviewers;
 
 import java.awt.CardLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -36,8 +37,7 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
     private static final Logger LOGGER = Logger.getLogger(MediaFileViewer.class.getName());
     private AbstractFile lastFile;
     //UI
-    private final MediaPlayerPanel mediaPlayerPanel;
-    private final boolean mediaPlayerPanelInited;
+    private MediaPlayerPanel mediaPlayerPanel;
     private final MediaViewImagePanel imagePanel;
     private final boolean imagePanelInited;
 
@@ -51,10 +51,14 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
         initComponents();
 
-        // get the right panel for our platform
-        mediaPlayerPanel = new MediaPlayerPanel();
-        mediaPlayerPanelInited = mediaPlayerPanel.isInited();
-
+        try {
+            mediaPlayerPanel = new MediaPlayerPanel();
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(
+                    NbBundle.getMessage(this.getClass(), "MediaFileViewer.initGst.gstException.msg"),
+                    ex.getMessage());
+        }
         imagePanel = new MediaViewImagePanel();
         imagePanelInited = imagePanel.isInited();
 
@@ -86,30 +90,29 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     /**
      * Returns a list of mimetypes supported by this viewer
-     * 
+     *
      * @return list of supported mimetypes
      */
     @Override
     public List<String> getSupportedMIMETypes() {
-        
+
         List<String> mimeTypes = new ArrayList<>();
-        
+
         mimeTypes.addAll(this.imagePanel.getSupportedMimeTypes());
         mimeTypes.addAll(this.mediaPlayerPanel.getSupportedMimeTypes());
-        
+
         return mimeTypes;
     }
-    
-    
+
     /**
      * Set up the view to display the given file.
-     * 
+     *
      * @param file file to display
      */
     @Override
     public void setFile(AbstractFile file) {
         try {
-          
+
             if (file == null) {
                 resetComponent();
                 return;
@@ -120,7 +123,7 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
             }
 
             lastFile = file;
-            if (mediaPlayerPanelInited && mediaPlayerPanel.isSupported(file)) {
+            if (mediaPlayerPanel != null && mediaPlayerPanel.isSupported(file)) {
                 mediaPlayerPanel.loadFile(file);
                 this.showVideoPanel();
             } else if (imagePanelInited && imagePanel.isSupported(file)) {
@@ -139,7 +142,7 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
         CardLayout layout = (CardLayout) this.getLayout();
         layout.show(this, MEDIA_PLAYER_LAYER);
     }
-    
+
     /**
      * Show the image panel.
      */
@@ -155,7 +158,9 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     @Override
     public void resetComponent() {
-        mediaPlayerPanel.reset();
+        if (mediaPlayerPanel != null) {
+            mediaPlayerPanel.reset();
+        }
         imagePanel.reset();
         lastFile = null;
     }
