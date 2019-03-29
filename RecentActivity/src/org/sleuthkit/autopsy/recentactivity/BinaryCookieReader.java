@@ -70,7 +70,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
      * the file is a binarycookie file. This function does not keep the file
      * open.
      *
-     * @param file binarycookie file
+     * @param cookieFile binarycookie file
      * @return An instance of the reader
      * @throws FileNotFoundException
      * @throws IOException

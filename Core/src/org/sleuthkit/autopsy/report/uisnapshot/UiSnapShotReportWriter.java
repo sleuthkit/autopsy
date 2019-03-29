@@ -62,8 +62,6 @@ public abstract class UiSnapShotReportWriter {
      *                         report.
      * @param reportName       The name of the report.
      * @param generationDate   The generation Date of the report.
-     * @param snapshot         A snapshot of the view to include in the
-     *                         report.
      */
     protected UiSnapShotReportWriter(Case currentCase, Path reportFolderPath, String reportName, Date generationDate) {
         this.currentCase = currentCase;
