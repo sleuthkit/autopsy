@@ -890,9 +890,6 @@ public class GroupPane extends BorderPane {
                     t.consume();
                     break;
                 case SECONDARY:
-                    if (t.getClickCount() == 1) {
-                        selectAllFiles();
-                    }
                     if (isNotEmpty(selectionModel.getSelected())) {
                         if (contextMenu == null) {
                             contextMenu = buildContextMenu();

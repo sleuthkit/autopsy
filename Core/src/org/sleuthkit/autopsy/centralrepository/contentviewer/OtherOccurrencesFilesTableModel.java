@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,33 +24,29 @@ import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
 
 /**
- * Model for cells in data content viewer table
+ * Model for cells in the files section of the other occurrences data content viewer
  */
-public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
+public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
 
-    @Messages({"DataContentViewerOtherCasesTableModel.case=Case",
-        "DataContentViewerOtherCasesTableModel.device=Device",
-        "DataContentViewerOtherCasesTableModel.dataSource=Data Source",
-        "DataContentViewerOtherCasesTableModel.path=Path",
-        "DataContentViewerOtherCasesTableModel.attribute=Matched Attribute",
-        "DataContentViewerOtherCasesTableModel.value=Attribute Value",
-        "DataContentViewerOtherCasesTableModel.known=Known",
-        "DataContentViewerOtherCasesTableModel.comment=Comment",
-        "DataContentViewerOtherCasesTableModel.noData=No Data.",})
+    @Messages({"OtherOccurrencesFilesTableModel.device=Device",
+        "OtherOccurrencesFilesTableModel.dataSource=Data Source",
+        "OtherOccurrencesFilesTableModel.path=Path",
+        "OtherOccurrencesFilesTableModel.attribute=Matched Attribute",
+        "OtherOccurrencesFilesTableModel.value=Attribute Value",
+        "OtherOccurrencesFilesTableModel.known=Known",
+        "OtherOccurrencesFilesTableModel.comment=Comment",
+        "OtherOccurrencesFilesTableModel.noData=No Data.",})
     enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
-        DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 100),
-        ATTRIBUTE(Bundle.DataContentViewerOtherCasesTableModel_attribute(), 125),
-        VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 200),
-        KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 50),
-        FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 450),
-        COMMENT(Bundle.DataContentViewerOtherCasesTableModel_comment(), 200),
-        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 250);
-
+        ATTRIBUTE(Bundle.OtherOccurrencesFilesTableModel_attribute(), 75),
+        VALUE(Bundle.OtherOccurrencesFilesTableModel_value(), 190),
+        KNOWN(Bundle.OtherOccurrencesFilesTableModel_known(), 25),
+        FILE_PATH(Bundle.OtherOccurrencesFilesTableModel_path(), 470),
+        COMMENT(Bundle.OtherOccurrencesFilesTableModel_comment(), 190);
+        
         private final String columnName;
         private final int columnWidth;
 
@@ -68,10 +64,10 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         }
     };
 
-    private final List<OtherOccurrenceNodeData> nodeDataList;
+    private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
 
-    DataContentViewerOtherCasesTableModel() {
-        nodeDataList = new ArrayList<>();
+    OtherOccurrencesFilesTableModel() {
+        
     }
 
     @Override
@@ -106,7 +102,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
         if (0 == nodeDataList.size()) {
-            return Bundle.DataContentViewerOtherCasesTableModel_noData();
+            return Bundle.OtherOccurrencesFilesTableModel_noData();
         }
 
         OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
@@ -126,7 +122,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      * @return The value in the cell.
      */
     private Object mapNodeMessageData(OtherOccurrenceNodeMessageData nodeData, TableColumns columnId) {
-        if (columnId == TableColumns.CASE_NAME) {
+        if (columnId == TableColumns.ATTRIBUTE) {
             return nodeData.getDisplayMessage();
         }
         return "";
@@ -141,24 +137,9 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      * @return The value in the cell.
      */
     private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
-        String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
+        String value = Bundle.OtherOccurrencesFilesTableModel_noData();
 
         switch (columnId) {
-            case CASE_NAME:
-                if (null != nodeData.getCaseName()) {
-                    value = nodeData.getCaseName();
-                }
-                break;
-            case DEVICE:
-                if (null != nodeData.getDeviceID()) {
-                    value = nodeData.getDeviceID();
-                }
-                break;
-            case DATA_SOURCE:
-                if (null != nodeData.getDataSourceName()) {
-                    value = nodeData.getDataSourceName();
-                }
-                break;
             case FILE_PATH:
                 value = nodeData.getFilePath();
                 break;
@@ -174,7 +155,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
             case COMMENT:
                 value = nodeData.getComment();
                 break;
-            default: // This shouldn't occur! Use default "No data" value.
+            default: //Use default "No data" value.
                 break;
         }
         return value;

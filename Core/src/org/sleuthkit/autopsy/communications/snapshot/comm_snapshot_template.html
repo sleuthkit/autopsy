@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <title>Communications Snapshot: {{reportTitle}}</title>
+        <link rel="stylesheet" type="text/css" href="index.css" />
+        <link rel="icon" type="image/ico" href="favicon.ico" />
+    </head>
+    <body><div id="header">Communications Snapshot</div>
+        <div id="content">
+            <img id="snapshot" src="snapshot.png" alt="Snapshot" >
+            <table>
+                <tr><td><b>Date Range</b></td><td></td></tr>
+                <tr><td>Start:</td><td>{{startTime}}</td></tr>
+                <tr><td>End:</td><td>{{endTime}}</td></tr>
+                <tr><td><b>Devices:</b></td><td></td></tr>
+                {{#devices}}<tr><td>{{label}}</td><td><input type="checkbox" {{#selected}}checked{{/selected}}{{^selected}} {{/selected}} disabled></td></tr>{{/devices}}
+                <tr><td><b>Account Types</b></td><td></td></tr>
+                {{#accounts}}<tr><td>{{label}}</td><td><input type="checkbox" {{#selected}}checked{{/selected}}{{^selected}} {{/selected}} disabled></td></tr>{{/accounts}}
+            </table>
+        </div>
+    </body>
+</html>
