@@ -116,8 +116,6 @@ import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
-import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
-import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 import org.sleuthkit.datamodel.TskCoreException;
 /**
  * A panel that goes in the Visualize tab of the Communications Visualization

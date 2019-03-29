@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.util.logging.Level;
@@ -37,10 +36,7 @@ import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
-import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
-import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
