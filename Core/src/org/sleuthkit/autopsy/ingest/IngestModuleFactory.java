@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -242,11 +242,12 @@ public interface IngestModuleFactory {
     FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings);
 
     /**
-     * Should the module created by this facroty be enabled by default. Very
-     * specialized modules or modules that take a very long time should consider
-     * not being enabled by default.
+     * Queries if the module this factory creates is enabled to run during
+     * ingest by default. A module might be disabled by default if is very
+     * specialized or takes a very long time to run during ingest.
      *
-     * @return True if this module should be enabled by default.
+     * @return True if the module created by this factory is be enabled, by
+     *         default, to run during ingest.
      */
     default boolean isEnabledByDefault() {
         return true;
