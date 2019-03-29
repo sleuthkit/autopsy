@@ -30,9 +30,9 @@ Opt("GUIOnEventMode", 1) ; Change to OnEvent mode
 ;Draw GUI and declare variables
 ;
 ;==============================================
-local $windowHeight = 500
-local $windowWidth = 400
-local $windowTitle = "Autopsy AutoIngest Manifest File Generator"
+local $windowHeight = 560
+local $windowWidth = 460
+local $windowTitle = "Autopsy Auto Ingest Manifest File Generator"
 Global $hMainGUI = GUICreate($windowTitle, $windowWidth, $windowHeight) ;To make GUI resize add following args -1, -1, $WS_OVERLAPPEDWINDOW)
 ;GUICtrlSetResizing ($hMainGUI, $GUI_DOCKBORDERS)
 GUISetOnEvent($GUI_EVENT_CLOSE, "CLOSEButton")
@@ -48,16 +48,17 @@ local $progressAreaInset = 8
 local $distanceFromTop = $topMargin
 local $distanceFromLeft = $leftMargin
 Global $defaultDirectory = @MyDocumentsDir & "\"
-local $labelWidth = 58
-local $fieldWidth = 235
-local $buttonWidth = 60
+local $labelWidth = 63
+local $fieldWidth = 255
+local $buttonWidth = 95
 local $fieldHeight = 20
+local $descriptionHeight = 50
 local $progressAreaWidth = $windowWidth - 2*($progressAreaInset+$leftMargin)
 local $gapBetweenWidth = 10
 local $gapBetweenHeight = 10
 
 ;Draw the GUI Code
-GUICtrlCreateLabel("Algorithm", $distanceFromLeft, $distanceFromTop+$labelOffset)
+GUICtrlCreateLabel("Input", $distanceFromLeft, $distanceFromTop+$labelOffset)
 $distanceFromLeft = $distanceFromLeft+$labelWidth+$gapBetweenWidth
 
 Global $algorithmComboBox = GUICtrlCreateCombo(GetDefaultAlgorithmName(), $distanceFromLeft, $distanceFromTop, $fieldWidth, $fieldHeight, $CBS_DROPDOWNLIST)
@@ -67,12 +68,19 @@ for $algorithmName IN $allAlgorithmNames
 ; Add additional items to the combobox.
 	GUICtrlSetData($algorithmComboBox, $algorithmName)
 Next
-	
 
 $distanceFromLeft = $leftMargin
 $distanceFromTop = $distanceFromTop + $fieldHeight + $gapBetweenHeight
 
-Global $rootFolderLabel = GUICtrlCreateLabel("Root Folder", $distanceFromLeft, $distanceFromTop+$labelOffset)
+GUICtrlCreateLabel("Description", $distanceFromLeft, $distanceFromTop+$labelOffset)
+$distanceFromLeft = $distanceFromLeft+$labelWidth+$gapBetweenWidth
+;calculate height of progress area to use remaining space minus space for exit button
+Global $descriptionArea = GUICtrlCreateEdit("", $distanceFromLeft, $distanceFromTop, $fieldWidth, $descriptionHeight, BitOr($ES_READONLY,$WS_VSCROLL, $ES_MULTILINE))
+
+$distanceFromLeft = $leftMargin
+$distanceFromTop = $distanceFromTop + $descriptionHeight + $gapBetweenHeight
+
+Global $caseDirectoryLabel = GUICtrlCreateLabel("Case Directory", $distanceFromLeft, $distanceFromTop+$labelOffset)
 $distanceFromLeft = $distanceFromLeft+$labelWidth+$gapBetweenWidth
 Global $rootFolderField = GUICtrlCreateInput("", $distanceFromLeft, $distanceFromTop, $fieldWidth, $fieldHeight)
 $distanceFromLeft = $distanceFromLeft +$fieldWidth+$gapBetweenWidth
@@ -83,13 +91,14 @@ $distanceFromTop = $distanceFromTop + $fieldHeight + $gapBetweenHeight
 Global $caseNameLabel = GUICtrlCreateLabel("Case Name", $distanceFromLeft, $distanceFromTop+$labelOffset)
 $distanceFromLeft = $distanceFromLeft+$labelWidth+$gapBetweenWidth 
 Global $caseNameField = GUICtrlCreateInput("", $distanceFromLeft, $distanceFromTop, $fieldWidth, $fieldHeight)
-$distanceFromLeft = $leftMargin
+$distanceFromLeft = $distanceFromLeft +$fieldWidth+$gapBetweenWidth
 $distanceFromTop = $distanceFromTop + $fieldHeight + $gapBetweenHeight
 
-$distanceFromTop = $distanceFromTop + $gapBetweenHeight ;add an extra gap before run button
-Global $runButton = GUICtrlCreateButton("Run", $distanceFromLeft, $distanceFromTop+$buttonOffset, $buttonWidth)
-GUICtrlSetOnEvent($runButton, "AlgorithmRunAction")
+$distanceFromTop = $distanceFromTop + $gapBetweenHeight ;add an extra gap before Generate Manifest button
+Global $generateManifestButton = GUICtrlCreateButton("Generate Manifest", $distanceFromLeft, $distanceFromTop+$buttonOffset, $buttonWidth)
+GUICtrlSetOnEvent($generateManifestButton, "AlgorithmGenerateManifestAction")
 $distanceFromTop = $distanceFromTop + $fieldHeight + $gapBetweenHeight
+$distanceFromLeft = $leftMargin
 
 $distanceFromTop = $distanceFromTop + $fieldHeight + $gapBetweenHeight ;add extra gap before progress area
 local $ProgressLabel = GUICtrlCreateLabel("Progress", $distanceFromLeft, $distanceFromTop+$labelOffset)
@@ -170,46 +179,50 @@ Func Redraw()
 	;Move controls based on what is hidden or shown using ControlGetPos() and GUICtrlSetPos()
 	If  $selectedAlgName == $allAlgorithmNames[2] Then ;"One Data Source Per Folder"
 		ChangeToDefaultGUI()
+		GUICtrlSetData($descriptionArea, GetAlgorithmDescription(2))
 	ElseIf $selectedAlgName == $allAlgorithmNames[0] Then ;"Single Data Source"
 		ChangeToSingleDataSourceGUI()
+		GUICtrlSetData($descriptionArea, GetAlgorithmDescription(0))
 	ElseIf $selectedAlgName == $allAlgorithmNames[1] Then ;"Folder of Logical Files"
 		ChangeToFolderOfLogicalFilesGUI()
+		GUICtrlSetData($descriptionArea, GetAlgorithmDescription(1))
 	EndIf
 EndFunc   ;==>AlgorithmComboBox
 
 ;Change the controls displayed in the GUI to the ones needed for the Single Data Source algorithm
 Func ChangeToSingleDataSourceGUI()
 	ClearFields()
-	GUICtrlSetData($rootFolderLabel, "Data Source")
+	GUICtrlSetData($caseDirectoryLabel, "Data Source")
 	GUICtrlSetState($caseNameField, $GUI_SHOW)
 	GUICtrlSetState($caseNameLabel, $GUI_SHOW)
 	GUICtrlSetOnEvent($browseButton, "BrowseForDataSourceFile")
-	GUICtrlSetState($runButton, $GUI_DISABLE)
+	GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
+
 EndFunc 
 
 ;Change the controls displayed in the GUI to the ones needed for the Folder of Logical Files algorithm
 Func ChangeToFolderOfLogicalFilesGUI()
 	ClearFields()
-	GUICtrlSetData($rootFolderLabel, "Data Source")
-	GUICtrlSetData($rootFolderLabel, "Data Source")
+	GUICtrlSetData($caseDirectoryLabel, "Data Source")
+	GUICtrlSetData($caseDirectoryLabel, "Data Source")
 	GUICtrlSetState($caseNameField, $GUI_SHOW)
 	GUICtrlSetState($caseNameLabel, $GUI_SHOW)
 	GUICtrlSetOnEvent($browseButton, "Browse")
-	GUICtrlSetState($runButton, $GUI_DISABLE)
+	GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
 EndFunc 
 
-;Change the controls displayed in the GUI to the ones needed for One 
+;Change the controls displayed in the GUI to the ones needed for One Data Source Per Folder
 Func ChangeToDefaultGUI()
 	ClearFields()
-	GUICtrlSetData($rootFolderLabel, "Root Folder")
+	GUICtrlSetData($caseDirectoryLabel, "Case Directory")
 	GUICtrlSetState($rootFolderField, $GUI_SHOW)
-	GUICtrlSetState($rootFolderLabel, $GUI_SHOW)
+	GUICtrlSetState($caseDirectoryLabel, $GUI_SHOW)
 	GUICtrlSetState($caseNameField, $GUI_HIDE)
 	GUICtrlSetState($caseNameLabel, $GUI_HIDE)
 	GUICtrlSetOnEvent($browseButton, "Browse")
 	;rename to RootDirectory to root directory
 	;hide case name field
-	GUICtrlSetState($runButton, $GUI_DISABLE)
+	GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
 EndFunc
 
 ;ensure that all fields for the selected algorithm are valid
@@ -231,18 +244,18 @@ EndFunc
 ;ensure that the settings for the default algorithm are valid before enabling it 
 Func ValidateDefaultFields($rootFolderPath)
 	if ($rootFolderPath <> "" And FileExists($rootFolderPath)) Then
-		GUICtrlSetState($runButton, $GUI_ENABLE)			
+		GUICtrlSetState($generateManifestButton, $GUI_ENABLE)			
 	Else
-		GUICtrlSetState($runButton, $GUI_DISABLE)	
+		GUICtrlSetState($generateManifestButton, $GUI_DISABLE)	
 	EndIf
 EndFunc
 
 ;ensure that the settings for the Single Data Source and Folder of Logical Files algorithms are valid 
 Func ValidateSingleDataSourceFields($dataSourcePath, $caseName)
 	if ($dataSourcePath <> "" And FileExists($dataSourcePath) And $caseName <> "") Then
-		GUICtrlSetState($runButton, $GUI_ENABLE)
+		GUICtrlSetState($generateManifestButton, $GUI_ENABLE)
 	Else		
-		GUICtrlSetState($runButton, $GUI_DISABLE)	
+		GUICtrlSetState($generateManifestButton, $GUI_DISABLE)	
 	EndIf	
 EndFunc
 
@@ -264,6 +277,12 @@ Func Browse()
 		$defaultDirectory  = $caseDrive & $caseDir 
 		GUICtrlSetData($rootFolderField, $selectedDirectory)
 	EndIf
+	If  GUICtrlRead($algorithmComboBox) == $allAlgorithmNames[2] Then ;"One Data Source Per Folder"
+		If ($selectedDirectory == $defaultDirectory) Then ;Don't allow root drives as selected directory for this algorithm
+			MsgBox(0, "Invalid Case Directory", "The directory is used to determine the case name and can not be the root directory of a disk.")
+			GUICtrlSetData($rootFolderField, "")
+		EndIf
+	EndIf
 	GUICtrlSetState($caseNameField, $GUI_FOCUS)
 	GUICtrlSetState($browseButton, $GUI_ENABLE)
 EndFunc   ;==>BrowseButton
@@ -284,13 +303,13 @@ Func BrowseForDataSourceFile()
 	GUICtrlSetState($browseButton, $GUI_ENABLE)
 EndFunc
 
-;Perform the action associated with the run button which should be defined in ManifestGenerationAlgorithms.au3
-Func AlgorithmRunAction()
-    ; Note: At this point @GUI_CtrlId would equal $runButton
-	GUICtrlSetState($runButton, $GUI_DISABLE)
+;Perform the action associated with the generate manifest button which should be defined in ManifestGenerationAlgorithms.au3
+Func AlgorithmGenerateManifestAction()
+    ; Note: At this point @GUI_CtrlId would equal $generateManifestButton
+	GUICtrlSetState($generateManifestButton, $GUI_DISABLE)
 	RunAlgorithm(GUICtrlRead($algorithmComboBox), GetSettings(), $progressField)
-	GUICtrlSetState($runButton, $GUI_ENABLE)
-EndFunc   ;==>RunButton
+	GUICtrlSetState($generateManifestButton, $GUI_ENABLE)
+EndFunc   ;==>GenerateManifestButton
 
 ;Get an array of settings as they are set on this panel
 Func GetSettings()
@@ -306,11 +325,8 @@ Func CLOSEButton()
     ; @GUI_WinHandle will be either $hMainGUI or $hDummyGUI
 	GUICtrlSetState($exitButton, $GUI_DISABLE)
     If @GUI_WinHandle = $hMainGUI Then
-       Local $msgBoxAnswer = MsgBox(1, "Close Tool Confirmation", "Press OK to confirm closing the tool")
-		if $msgBoxAnswer == 1 Then
-			WritePropertiesFile()
-			Exit
-		EndIf
+		WritePropertiesFile()
+		Exit
     EndIf
 	GUICtrlSetState($exitButton, $GUI_ENABLE)
 EndFunc   ;==>CLOSEButton 

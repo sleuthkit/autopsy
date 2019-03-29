@@ -43,6 +43,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSource;
+import org.sleuthkit.autopsy.datasourceprocessors.AddDataSourceCallback;
+import org.sleuthkit.autopsy.datasourceprocessors.DataSourceProcessorUtility;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -177,7 +180,7 @@ public class CommandLineIngestManager {
                     return;
                 }
 
-                DataSource dataSource = new DataSource("", Paths.get(dataSourcePath));
+                AutoIngestDataSource dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
                 try {
                     // run data source processor
                     runDataSourceProcessor(caseForJob, dataSource);
@@ -228,7 +231,7 @@ public class CommandLineIngestManager {
          * @param dataSource DataSource object
          * @return object ID
          */
-        private Long getDataSourceId(DataSource dataSource) {
+        private Long getDataSourceId(AutoIngestDataSource dataSource) {
             Content content = dataSource.getContent().get(0);
             return content.getId();
         }
@@ -271,7 +274,7 @@ public class CommandLineIngestManager {
          * task is interrupted while blocked, i.e., if auto ingest is shutting
          * down.
          */
-        private void runDataSourceProcessor(Case caseForJob, DataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
+        private void runDataSourceProcessor(Case caseForJob, AutoIngestDataSource dataSource) throws InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException {
 
             LOGGER.log(Level.INFO, "Adding data source {0} ", dataSource.getPath().toString());
 
@@ -329,7 +332,7 @@ public class CommandLineIngestManager {
          *
          * @param dataSource The data source.
          */
-        private void logDataSourceProcessorResult(DataSource dataSource) {
+        private void logDataSourceProcessorResult(AutoIngestDataSource dataSource) {
 
             DataSourceProcessorCallback.DataSourceProcessorResult resultCode = dataSource.getResultDataSourceProcessorResultCode();
             if (null != resultCode) {
@@ -376,7 +379,7 @@ public class CommandLineIngestManager {
          * task is interrupted while blocked, i.e., if auto ingest is shutting
          * down.
          */
-        private void analyze(DataSource dataSource) throws AnalysisStartupException, InterruptedException {
+        private void analyze(AutoIngestDataSource dataSource) throws AnalysisStartupException, InterruptedException {
 
             LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", dataSource.getPath());
             IngestJobEventListener ingestJobEventListener = new IngestJobEventListener();

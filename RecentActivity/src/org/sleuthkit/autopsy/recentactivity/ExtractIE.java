@@ -211,7 +211,7 @@ class ExtractIE extends Extract {
      * Finds files that store cookies and adds artifacts for them.
      */
     @Messages({
-        "ExtractIE.getCookie.errMsg.errPostingCookiess=Error posting Internet Explorer Cookie artifacts."
+        "ExtractIE.getCookie.errMsg.errPostingCookies=Error posting Internet Explorer Cookie artifacts."
     })
     private void getCookie() {
         List<AbstractFile> cookiesFiles;
@@ -283,7 +283,7 @@ class ExtractIE extends Extract {
         try {
             blackboard.postArtifacts(bbartifacts, moduleName);
         } catch (Blackboard.BlackboardException ex) {
-            this.addErrorMessage(Bundle.ExtractIE_getCookie_errMsg_errPostinCookiess());
+            this.addErrorMessage(Bundle.ExtractIE_getCookie_errMsg_errPostingCookies());
             logger.log(Level.SEVERE, "Exception thrown while posting IE cookie artifact.", ex); //NON-NLS
         }
     }

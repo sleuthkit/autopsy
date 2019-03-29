@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2019-2019 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.commandlineingest;
+package org.sleuthkit.autopsy.datasourceprocessors;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
 import org.sleuthkit.datamodel.Content;
 
-class DataSource {
+@ThreadSafe
+public class AutoIngestDataSource {
 
     private final String deviceId;
     private final Path path;
@@ -32,34 +34,34 @@ class DataSource {
     private List<String> errorMessages;
     private List<Content> content;
 
-    DataSource(String deviceId, Path path) {
+    public AutoIngestDataSource(String deviceId, Path path) {
         this.deviceId = deviceId;
         this.path = path;
     }
 
-    String getDeviceId() {
+    public String getDeviceId() {
         return deviceId;
     }
 
-    Path getPath() {
+    public Path getPath() {
         return this.path;
     }
 
-    synchronized void setDataSourceProcessorOutput(DataSourceProcessorResult result, List<String> errorMessages, List<Content> content) {
+    public synchronized void setDataSourceProcessorOutput(DataSourceProcessorResult result, List<String> errorMessages, List<Content> content) {
         this.resultCode = result;
         this.errorMessages = new ArrayList<>(errorMessages);
         this.content = new ArrayList<>(content);
     }
 
-    synchronized DataSourceProcessorResult getResultDataSourceProcessorResultCode() {
+    public synchronized DataSourceProcessorResult getResultDataSourceProcessorResultCode() {
         return resultCode;
     }
 
-    synchronized List<String> getDataSourceProcessorErrorMessages() {
+    public synchronized List<String> getDataSourceProcessorErrorMessages() {
         return new ArrayList<>(errorMessages);
     }
 
-    synchronized List<Content> getContent() {
+    public synchronized List<Content> getContent() {
         return new ArrayList<>(content);
     }
 
