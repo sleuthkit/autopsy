@@ -30,34 +30,34 @@ public class PlasoModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
 
-    /** Map from parser name (or match pattern) to its enabled state.
-     *
+    /**
+     * Map from parser name (or match pattern) to its enabled state.
      */
-    Map<String, Boolean> parsers = new HashMap<>();
+    final Map<String, Boolean> parsers = new HashMap<>();
 
     Map<String, Boolean> getParsers() {
         return ImmutableMap.copyOf(parsers);
     }
 
     public PlasoModuleSettings() {
-        parsers.put("winreg", Boolean.FALSE);
-        parsers.put("pe", Boolean.FALSE);
+        parsers.put("winreg", false);
+        parsers.put("pe", false);
 
-        parsers.put("chrome_preferences", Boolean.FALSE);
-        parsers.put("chrome_cache", Boolean.FALSE);
-        parsers.put("chrome_27_history", Boolean.FALSE);
-        parsers.put("chrome_8_history", Boolean.FALSE);
-        parsers.put("chrome_cookies", Boolean.FALSE);
-        parsers.put("chrome_extension_activity", Boolean.FALSE);
+        parsers.put("chrome_preferences", false);
+        parsers.put("chrome_cache", false);
+        parsers.put("chrome_27_history", false);
+        parsers.put("chrome_8_history", false);
+        parsers.put("chrome_cookies", false);
+        parsers.put("chrome_extension_activity", false);
 
-        parsers.put("firefox_cache", Boolean.FALSE);
-        parsers.put("firefox_cache2", Boolean.FALSE);
-        parsers.put("firefox_cookies", Boolean.FALSE);
-        parsers.put("firefox_downloads", Boolean.FALSE);
-        parsers.put("firefox_history", Boolean.FALSE);
+        parsers.put("firefox_cache", false);
+        parsers.put("firefox_cache2", false);
+        parsers.put("firefox_cookies", false);
+        parsers.put("firefox_downloads", false);
+        parsers.put("firefox_history", false);
 
-        parsers.put("msiecf", Boolean.FALSE);
-        parsers.put("msie_webcache", Boolean.FALSE);
+        parsers.put("msiecf", false);
+        parsers.put("msie_webcache", false);
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import javax.swing.JOptionPane;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -131,8 +130,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         }
         image = (Image) dataSource;
 
-        String currentTime = TimeUtilities.epochToTime(System.currentTimeMillis() / 1000);
-        currentTime = currentTime.replaceAll(":", "-");
+        String currentTime = TimeUtilities.epochToTime(System.currentTimeMillis() / 1000) .replaceAll(":", "-");
         String moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime).toString();
         File directory = new File(String.valueOf(moduleOutputPath));
         if (!directory.exists()) {
@@ -196,11 +194,11 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 .filter(entry -> entry.getValue() == false)
                 .map(entry -> "!" + entry.getKey())
                 .collect(Collectors.joining(",", "\"", "\""));
-        new JOptionPane(parsersString).setVisible(true);
+
         List<String> commandLine = Arrays.asList(
                 "\"" + log2TimeLineExecutable + "\"", //NON-NLS 
                 "--vss-stores", "all", //NON-NLS
-                "-d",
+                "-d", //TODO: remove after debugging
                 "-z", timeZone,
                 "--partitions", "all",
                 "--hasher_file_size_limit", "1",
@@ -211,7 +209,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 imageName
         );
 
-        System.out.println(commandLine);
+        System.out.println(commandLine);  //TODO: remove when done debugging
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         /*
          * Add an environment variable to force log2timeline to run with the
@@ -295,12 +293,10 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                     return;
                 }
 
-                // lots of bad dates
-                if (resultSet.getString("sourcetype").equals("PE Import Time")) {
-                    continue;
-                } // bad dates and duplicates with what we have.
-                // TODO: merge results somehow
-                else if (resultSet.getString("source").equals("WEBHIST")) {
+                if ( // lots of bad dates
+                        "PE Import Time".equalsIgnoreCase(resultSet.getString("sourcetype"))
+                        // bad dates and duplicates with what we have.   // TODO: merge results somehow
+                        || "WEBHIST".equalsIgnoreCase(resultSet.getString("source"))) {
                     continue;
                 }
 
