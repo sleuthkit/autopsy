@@ -109,6 +109,8 @@
         <var name="aut-bin-name-todelete" value="${app.name}64.exe"/>
         <var name="aut-bin-name" value="${app.name}.exe"/>
 
+        <var name="gstreamer-path-todelete" value="${app.name}\gstreamer\1.0\x86_64"/>
+
         <var name="jvm.max.mem" value="512m" />
         
         <var name="jre-path" value="${env.JRE_HOME_32}"/>
@@ -117,12 +119,6 @@
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path-base} /SetAppdir -buildname DefaultBuild -path [ProgramFilesFolder][ProductName]-${app.version}"/>
         </exec>
-
-        <!-- Delete the 64 bit version of gstreamer since its not needed by the 32 bit installer -->
-        <var name="gstreamer-relative-path" value="gstreamer/1.0/x86_64"/>
-        <delete includeEmptyDirs="true">
-            <fileset dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
-        </delete>
 
         <antcall target="ai-build" inheritAll="true" />
 
@@ -138,7 +134,9 @@
         
         <var name="aut-bin-name" value="${app.name}64.exe"/>
         <var name="aut-bin-name-todelete" value="${app.name}.exe"/>
-        
+
+        <var name="gstreamer-path-todelete" value="${app.name}\gstreamer\1.0\x86"/>
+
         <var name="jvm.max.mem" value="4G"/>
         
         <var name="jre-path" value="${env.JRE_HOME_64}"/>
@@ -152,12 +150,6 @@
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /SetPackageType x64"/>
         </exec>
-
-        <!-- Delete the 32 bit version of gstreamer since its not needed by the 64 bit installer -->
-        <var name="gstreamer-relative-path" value="gstreamer/1.0/x86"/>
-        <delete includeEmptyDirs="true">
-            <fileset dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
-        </delete>
 
         <antcall target="ai-build" inheritAll="true" />
 
@@ -197,6 +189,11 @@
         <echo message="Removing extra Autopsy executable..."/>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /DelFile APPDIR\bin\${aut-bin-name-todelete}"/>
+        </exec>
+
+        <echo message="Removing extra Gstreamer binaries..."/>
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /DelFolder APPDIR\${gstreamer-path-todelete}"/>
         </exec>
     </target>
 
