@@ -121,7 +121,7 @@
         <!-- Delete the 64 bit version of gstreamer since its not needed by the 32 bit installer -->
         <var name="gstreamer-relative-path" value="gstreamer/1.0/x86_64"/>
         <delete includeEmptyDirs="true">
-            <fileset dir="${inst-path}/autopsy/${gstreamer-relative-path}"/>
+            <fileset dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
         </delete>
 
         <antcall target="ai-build" inheritAll="true" />
@@ -156,7 +156,7 @@
         <!-- Delete the 32 bit version of gstreamer since its not needed by the 64 bit installer -->
         <var name="gstreamer-relative-path" value="gstreamer/1.0/x86"/>
         <delete includeEmptyDirs="true">
-            <fileset dir="${inst-path}/autopsy/${gstreamer-relative-path}"/>
+            <fileset dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
         </delete>
 
         <antcall target="ai-build" inheritAll="true" />
