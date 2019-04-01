@@ -54,7 +54,7 @@ final class DeleteCaseInputAction extends DeleteCaseAction {
     }
 
     @NbBundle.Messages({
-        "DeleteCaseInputAction.confirmationText=Are you sure you want to delete the following for the case(s):\n -Manifest files\n -Data sources\n -Input directories (if empty)"
+        "DeleteCaseInputAction.confirmationText=Are you sure you want to delete the following for the case(s):\n\tManifest files\n\tData sources\n"
     })
     @Override
     public void actionPerformed(ActionEvent event) {

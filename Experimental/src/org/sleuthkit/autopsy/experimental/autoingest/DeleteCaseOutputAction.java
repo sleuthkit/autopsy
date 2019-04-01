@@ -53,7 +53,7 @@ final class DeleteCaseOutputAction extends DeleteCaseAction {
     }
 
     @NbBundle.Messages({
-        "DeleteCaseOutputAction.confirmationText=Are you sure you want to delete the following for the case(s):\n -Manifest file znodes\n -Case database\n -Core.properties file\n -Case directory\n -Case znodes"
+        "DeleteCaseOutputAction.confirmationText=Are you sure you want to delete the following for the case(s):\n\tManifest file znodes\n\tCase database\n\tCore.properties file\n\tCase directory\n\tCase znodes"
     })
     @Override
     public void actionPerformed(ActionEvent event) {

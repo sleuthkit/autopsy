@@ -450,13 +450,13 @@ final class DeleteCaseTask implements Runnable {
             progress.progress(Bundle.DeleteCaseTask_progress_openingCaseDatabase());
             logger.log(Level.INFO, String.format("Opening the case database for %s", caseNodeData.getDisplayName()));
             caseDb = SleuthkitCase.openCase(caseMetadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), caseMetadata.getCaseDirectory());
+            List<DataSource> dataSources = caseDb.getDataSources();
             checkForCancellation();
 
             /*
              * For every manifest file associated with the case, attempt to
-             * delete the data source referenced by the manifest, the manifest,
-             * and if the input directory that contains the manifest is empty
-             * after the data source and manifest are deleted, delete that, too.
+             * delete both the data source referenced by the manifest and the
+             * manifest.
              */
             boolean allInputDeleted = true;
             for (Path manifestFilePath : manifestFilePaths) {
@@ -465,15 +465,18 @@ final class DeleteCaseTask implements Runnable {
                 if (manifestFile.exists()) {
                     Manifest manifest = parseManifestFile(manifestFilePath);
                     if (manifest != null) {
-                        List<DataSource> dataSources = caseDb.getDataSources();
-                        if (deleteDataSources(manifest, dataSources) && deleteManifestFile(manifestFile)) {
-                            deleteInputDirectoryIfEmpty(manifestFilePath);
+                        if (deleteDataSources(manifest, dataSources)) {
+                            if (!deleteManifestFile(manifestFile)) {
+                                logger.log(Level.WARNING, String.format("Failed to delete manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
+                                allInputDeleted = false;
+                            }
                         } else {
                             logger.log(Level.WARNING, String.format("Failed to delete manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
                             allInputDeleted = false;
                         }
                     } else {
                         logger.log(Level.WARNING, String.format("Failed to parse manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
+                        allInputDeleted = false;
                     }
                 } else {
                     logger.log(Level.WARNING, String.format("Did not find manifest file %s for %s", manifestFilePath, caseNodeData.getDisplayName()));
@@ -484,7 +487,7 @@ final class DeleteCaseTask implements Runnable {
             }
 
         } catch (TskCoreException | UserPreferencesException ex) {
-            logger.log(Level.INFO, String.format("Failed to open the case database for %s", caseNodeData.getDisplayName()), ex);
+            logger.log(Level.INFO, String.format("Failed to open or query the case database for %s", caseNodeData.getDisplayName()), ex);
 
         } finally {
             if (caseDb != null) {
@@ -606,21 +609,6 @@ final class DeleteCaseTask implements Runnable {
         }
 
         return allFilesDeleted;
-    }
-
-    /**
-     * Deletes the input directory for a manifest, if the directory is empty.
-     *
-     * @param manifestFilePath The manifest fiell path.
-     */
-    void deleteInputDirectoryIfEmpty(Path manifestFilePath) {
-        final Path inputDirectoryPath = manifestFilePath.getParent();
-        final File inputDirectory = inputDirectoryPath.toFile();
-        File[] files = inputDirectory.listFiles();
-        logger.log(Level.INFO, String.format("Deleting empty input directory %s for %s", inputDirectoryPath, caseNodeData.getDisplayName()));
-        if ((files == null || files.length == 0) && !inputDirectory.delete()) {
-            logger.log(Level.WARNING, String.format("Failed to delete empty input directory %s for %s", inputDirectoryPath, caseNodeData.getDisplayName()));
-        }
     }
 
     /**
