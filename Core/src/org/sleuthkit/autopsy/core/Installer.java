@@ -34,6 +34,7 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
@@ -300,7 +301,7 @@ public class Installer extends ModuleInstall {
             // lib and bin paths.
             Kernel32 k32 = Kernel32.INSTANCE;
             String path = System.getenv("PATH");
-            if (path == null || path.trim().isEmpty()) {
+            if (StringUtils.isBlank(path)) {
                 k32.SetEnvironmentVariable("PATH", gstreamerLibPath.toString());
             } else {
                 /*
