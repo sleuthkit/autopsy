@@ -69,6 +69,8 @@ final class JavaFxAppSink extends AppSink {
      * Clear the current frame in the JFXPanel
      */
     public void clear() {
+        disconnect((AppSink.NEW_SAMPLE) updater);
+        disconnect((AppSink.NEW_PREROLL) updater);
         updater.clear();
     }
     
@@ -80,6 +82,8 @@ final class JavaFxAppSink extends AppSink {
         private final ImageView fxImageView;
 
         public JavaFxFrameUpdater(JFXPanel target) {
+            //We should probably pass an ImageView instead of a JFXPanel to make
+            //it more reuseable
             fxImageView = new ImageView();  // Will hold the current video frame.
             BorderPane borderpane = new BorderPane(fxImageView); // Center and size ImageView.
             Scene scene = new Scene(borderpane); // Root of the JavaFX tree.
@@ -95,7 +99,6 @@ final class JavaFxAppSink extends AppSink {
 
         /**
          * Updates the ImageView when a brand new frame is in the pipeline.
-         * Note here we retrieve that new frame with pullSample(). 
          * 
          * @param appSink Pipeline containing the new frame
          * @return Result of update

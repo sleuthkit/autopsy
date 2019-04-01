@@ -23,6 +23,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.freedesktop.gstreamer.GstException;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -53,7 +54,7 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
         try {
             mediaPlayerPanel = new MediaPlayerPanel();
-        } catch (Exception ex) {
+        } catch (GstException | UnsatisfiedLinkError ex) {
             LOGGER.log(Level.SEVERE, "Error initializing gstreamer for audio/video viewing and frame extraction capabilities", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(
                     NbBundle.getMessage(this.getClass(), "MediaFileViewer.initGst.gstException.msg"),
@@ -68,7 +69,10 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
 
     private void customizeComponents() {
         add(imagePanel, IMAGE_VIEWER_LAYER);
-        add(mediaPlayerPanel, MEDIA_PLAYER_LAYER);
+        
+        if(mediaPlayerPanel != null) {
+            add(mediaPlayerPanel, MEDIA_PLAYER_LAYER);
+        }
 
         showImagePanel();
     }
@@ -99,8 +103,10 @@ class MediaFileViewer extends javax.swing.JPanel implements FileTypeViewer {
         List<String> mimeTypes = new ArrayList<>();
 
         mimeTypes.addAll(this.imagePanel.getSupportedMimeTypes());
-        mimeTypes.addAll(this.mediaPlayerPanel.getSupportedMimeTypes());
-
+        if(mediaPlayerPanel != null) {
+            mimeTypes.addAll(this.mediaPlayerPanel.getSupportedMimeTypes());
+        }
+        
         return mimeTypes;
     }
 

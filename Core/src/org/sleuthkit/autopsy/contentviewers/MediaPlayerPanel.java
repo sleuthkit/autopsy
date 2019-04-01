@@ -53,6 +53,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 import javafx.embed.swing.JFXPanel;
 import javax.swing.event.ChangeListener;
+import org.freedesktop.gstreamer.GstException;
 
 /**
  * This is a video player that is part of the Media View layered pane. It uses
@@ -172,26 +173,20 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     private PlayBin gstPlayBin;
     private JavaFxAppSink fxAppSink;
     private JFXPanel fxPanel;
-    private volatile boolean livePlayBin = false;
+    private volatile boolean livePlayBin;
+    private volatile boolean hasError;
 
     //When a video is playing, update the UI every 75 ms
     private final Timer timer = new Timer(75, new VideoPanelUpdater());
     private static final int PROGRESS_SLIDER_SIZE = 2000;
 
-    /**
-     * Perform media extraction off the EDT to not block the UI. Necessary for
-     * larger media files
-     */
     private ExtractMedia extractMediaWorker;
 
     /**
      * Creates new form MediaViewVideoPanel
-     *
-     * @throws java.lang.Exception
      */
-    public MediaPlayerPanel() throws Exception {
+    public MediaPlayerPanel() throws GstException, UnsatisfiedLinkError {
         initComponents();
-        //This could fail with any number of exceptions
         initGst();
         customizeComponents();
     }
@@ -226,17 +221,13 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
             }
         });
 
-        //Set the slider to the current volume location
-        audioSlider.setValue(gstPlayBin.getVolumePercent() / 2);
-
         videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
         fxPanel = new JFXPanel();
         videoPanel.add(fxPanel);//add jfx ui to JPanel
     }
 
-    private void initGst() throws Exception {
+    private void initGst() throws GstException, UnsatisfiedLinkError {
         logger.log(Level.INFO, "Attempting initializing of gstreamer for video/audio viewing"); //NON-NLS
-        //This call may fail with any # of exception types
         Gst.init();
         gstPlayBin = new PlayBin("VideoPlayer");
     }
@@ -252,6 +243,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         //Ensure everything is back in the initial state
         reset();
 
+        infoLabel.setText("");
         if (file.isDirNameFlagSet(TskData.TSK_FS_NAME_FLAG_ENUM.UNALLOC)) {
             infoLabel.setText(NbBundle.getMessage(this.getClass(), "GstVideoPanel.setupVideo.infoLabel.text"));
             return;
@@ -268,9 +260,17 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         }
     }
 
+    /**
+     * Assume no support on a fresh reset until we begin loading the file
+     * for play.
+     */
+    @NbBundle.Messages({
+        "MediaPlayerPanel.noSupport=File not supported."
+    })
     void resetComponents() {
-        progressLabel.setText("00:00:00/00:00:00");
-        infoLabel.setText("");
+        progressLabel.setText(String.format("%s/%s", Bundle.MediaPlayerPanel_unknownTime(), 
+                Bundle.MediaPlayerPanel_unknownTime()));
+        infoLabel.setText(Bundle.MediaPlayerPanel_noSupport());
         progressSlider.setValue(0);
     }
 
@@ -278,14 +278,21 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      * Return this panel to its initial state.
      */
     void reset() {
-        livePlayBin = false;
         timer.stop();
-        gstPlayBin.stop();
+        if(livePlayBin && !hasError) {
+            gstPlayBin.stop();
+        }
+        
+        hasError = false;
+        livePlayBin = false;        
+        gstPlayBin.dispose();
 
         if (fxAppSink != null) {
             fxAppSink.clear();
         }
 
+        videoPanel.removeAll();
+        
         if (extractMediaWorker != null) {
             extractMediaWorker.cancel(true);
         }
@@ -372,7 +379,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      * Convert nanoseconds into an HH:MM:SS format.
      */
     @NbBundle.Messages({
-        "MediaPlayerPanel.unknownTime=UNKNOWN",
+        "MediaPlayerPanel.unknownTime=Unknown",
         "MediaPlayerPanel.timeFormat=%02d:%02d:%02d"
     })
     private String formatTime(long ns, boolean ceiling) {
@@ -437,12 +444,14 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                 super.get();
 
                 //Video is ready for playback. Clean up previous components and create new ones
-                gstPlayBin.dispose();
                 gstPlayBin = new PlayBin("VideoPlayer", tempFile.toURI());
-                livePlayBin = true;
                 //Create a custom AppSink that hooks into JavaFx panels for video display
+                fxPanel = new JFXPanel();
                 fxAppSink = new JavaFxAppSink("JavaFxAppSink", fxPanel);
                 gstPlayBin.setVideoSink(fxAppSink);
+                
+                videoPanel.setLayout(new BoxLayout(videoPanel, BoxLayout.Y_AXIS));
+                videoPanel.add(fxPanel);//add jfx ui to JPanel
 
                 //Configure event handling
                 attachEOSListener(gstPlayBin); //Handle end of video events
@@ -456,6 +465,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                  * Prepare the PlayBin for playback.
                  */
                 gstPlayBin.ready();
+                livePlayBin = true;
                 //Customize components
                 enableComponents(true);
             } catch (CancellationException ex) {
@@ -487,15 +497,16 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
 
         /**
          * Listen for state changes and update the play/pause button
-         * accordingly.
+         * accordingly. In addition, handle the state transition from 
+         * READY -> PAUSED.
          */
         private void attachStateListener(PlayBin gstPlayBin) {
             gstPlayBin.getBus().connect(new Bus.STATE_CHANGED() {
                 @Override
                 public void stateChanged(GstObject go, State oldState, State currentState, State pendingState) {
                     /**
-                     * If we are ready, it is safe to transition to pause state
-                     * to initiate data-flow for preRoll frame and duration
+                     * If we are ready, it is safe to transition to the pause state
+                     * to initiate data-flow for pre-roll frame and duration
                      * information.
                      */
                     if (State.READY.equals(currentState)) {
@@ -523,6 +534,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
                     enableComponents(false);
                     setLabelText(String.format("<html><font color='red'>%s</font></html>",
                             MEDIA_PLAYER_ERROR_STRING));
+                    timer.stop();
+                    hasError = true;
                 }
             });
         }
@@ -536,19 +549,21 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         @Override
         public void actionPerformed(ActionEvent e) {
             if (!progressSlider.getValueIsAdjusting()) {
-                long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
-                long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
-                /**
-                 * Duration may not be known until there is video data in the
-                 * pipeline. We start this updater when data-flow has just been 
-                 * initiated so buffering may still be in progress.
-                 */
-                if (duration != -1) {
-                    double relativePosition = (double) position / duration;
-                    progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
-                }
+                if(livePlayBin) {
+                    long position = gstPlayBin.queryPosition(TimeUnit.NANOSECONDS);
+                    long duration = gstPlayBin.queryDuration(TimeUnit.NANOSECONDS);
+                    /**
+                     * Duration may not be known until there is video data in the
+                     * pipeline. We start this updater when data-flow has just been 
+                     * initiated so buffering may still be in progress.
+                     */
+                    if (duration != -1) {
+                        double relativePosition = (double) position / duration;
+                        progressSlider.setValue((int) (relativePosition * PROGRESS_SLIDER_SIZE));
+                    }
 
-                updateTimeLabel(position, duration);
+                    updateTimeLabel(position, duration);
+                }
             }
         }
     }
@@ -607,7 +622,7 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
         audioSlider.setMinorTickSpacing(5);
         audioSlider.setPaintTicks(true);
         audioSlider.setToolTipText(org.openide.util.NbBundle.getMessage(MediaPlayerPanel.class, "MediaPlayerPanel.audioSlider.toolTipText")); // NOI18N
-        audioSlider.setValue(0);
+        audioSlider.setValue(25);
         audioSlider.setMinimumSize(new java.awt.Dimension(200, 21));
         audioSlider.setPreferredSize(new java.awt.Dimension(200, 21));
 
@@ -666,13 +681,10 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
     }// </editor-fold>//GEN-END:initComponents
 
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
-        switch (gstPlayBin.getState()) {
-            case PLAYING:
-                gstPlayBin.pause();
-                break;
-            default:
-                gstPlayBin.play();
-                break;
+        if(gstPlayBin.isPlaying()) {
+            gstPlayBin.pause();
+        } else {
+            gstPlayBin.play();
         }
     }//GEN-LAST:event_playButtonActionPerformed
 
