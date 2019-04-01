@@ -83,6 +83,7 @@
                 </HBox>
                 <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" />
                 <Separator halignment="LEFT" maxWidth="1.7976931348623157E308" orientation="VERTICAL" HBox.hgrow="ALWAYS" />
+            <Button fx:id="addEventButton" mnemonicParsing="false" text="Add Event" />
                 <Button fx:id="snapShotButton" mnemonicParsing="false" text="Snapshot Report">
                     <graphic>
                         <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">

@@ -39,6 +39,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -260,7 +261,7 @@ public final class FilteredEventsModel {
     /**
      * "sync" the given root filter with the state of the casee: Disable filters
      * for tags that are not in use in the case, and add new filters for tags,
-     * hashsets, and datasources. that don't have them. New filters are selected
+     * hashsets, and datasources, that don't have them. New filters are selected
      * by default.
      *
      * @param rootFilterState the filter state to modify so it is consistent
@@ -272,6 +273,7 @@ public final class FilteredEventsModel {
             tagsFilterState.getFilter().addSubFilter(new TagNameFilter(tagName));
         }
         for (FilterState<? extends TagNameFilter> tagFilterState : rootFilterState.getTagsFilterState().getSubFilterStates()) {
+            // disable states for tag names that don't exist in case.
             tagFilterState.setDisabled(tagNames.contains(tagFilterState.getFilter().getTagName()) == false);
         }
 
@@ -526,7 +528,7 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * Get a List of event IDs for the events that are derived from the given
+     * Get a Set of event IDs for the events that are derived from the given
      * file.
      *
      * @param file                    The AbstractFile to get derived event IDs
@@ -537,12 +539,12 @@ public final class FilteredEventsModel {
      *                                directly from this file (file system
      *                                timestamps).
      *
-     * @return A List of event IDs for the events that are derived from the
-     *         given file.
+     * @return A Set of event IDs for the events that are derived from the given
+     *         file.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
+    public Set<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
         return eventManager.getEventIDsForFile(file, includeDerivedArtifacts);
     }
 
@@ -637,7 +639,7 @@ public final class FilteredEventsModel {
 
     synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) throws TskCoreException {
         Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, true);
-        if (!updatedEventIDs.isEmpty()) {
+        if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
@@ -645,7 +647,7 @@ public final class FilteredEventsModel {
 
     synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) throws TskCoreException {
         Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, tagged);
-        if (!updatedEventIDs.isEmpty()) {
+        if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
@@ -656,7 +658,7 @@ public final class FilteredEventsModel {
         for (BlackboardArtifact artifact : artifacts) {
             updatedEventIDs.addAll(eventManager.setEventsHashed(artifact.getObjectID(), hasHashHit));
         }
-        if (!updatedEventIDs.isEmpty()) {
+        if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;

@@ -22,8 +22,8 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.TimeLineController;
 
 /**
  * Action that resets the filters to their initial/default state.

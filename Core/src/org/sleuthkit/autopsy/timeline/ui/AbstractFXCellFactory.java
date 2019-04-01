@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,9 @@ import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeTableColumn;
 
 /**
- * an abstract base class for Cell factories. This class provides the basic
+ * An abstract base class for Cell factories. This class provides the basic
  * infrustructure for implementations to be able to create similar cells for
- * listview, tableviews or treetableviews via the appropriate method call.
+ * ListView, TableViews or TreeTableViews via the appropriate method call.
  * Implementations need only implement the abstract configureCell method in the
  * same spirit as IndexedCell.updateItem
  */
