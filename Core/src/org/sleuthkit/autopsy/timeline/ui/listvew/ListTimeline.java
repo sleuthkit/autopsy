@@ -160,7 +160,7 @@ class ListTimeline extends BorderPane {
 
     /**
      * Since TableView does not expose what cells/items are visible, we track
-     * them in this set. It is sorted by index in the TableView's model.
+     * them in this set. Sorted by time.
      */
     private final SortedSet<CombinedEvent> visibleEvents;
 
@@ -199,7 +199,7 @@ class ListTimeline extends BorderPane {
         sleuthkitCase = controller.getAutopsyCase().getSleuthkitCase();
         tagsManager = controller.getAutopsyCase().getServices().getTagsManager();
         FXMLConstructor.construct(this, ListTimeline.class, "ListTimeline.fxml"); //NON-NLS
-        this.visibleEvents = new ConcurrentSkipListSet<>(Comparator.comparing(table.getItems()::indexOf));
+        this.visibleEvents = new ConcurrentSkipListSet<>(Comparator.comparing(CombinedEvent::getStartMillis));
     }
 
     @FXML
@@ -350,6 +350,43 @@ class ListTimeline extends BorderPane {
     private void scrollTo(Integer index) {
         if (visibleEvents.contains(table.getItems().get(index)) == false) {
             table.scrollTo(DoubleMath.roundToInt(index - ((table.getHeight() / DEFAULT_ROW_HEIGHT)) / 2, RoundingMode.HALF_EVEN));
+        }
+    }
+
+    /**
+     * Base class for TableCells that represent a CombinedEvent by way of a
+     * representative TimeLineEvent.
+     */
+    private abstract class EventTableCell extends TableCell<CombinedEvent, CombinedEvent> {
+
+        private TimelineEvent event;
+
+        /**
+         * Get the representative TimeLineEvent for this cell.
+         *
+         * @return The representative TimeLineEvent for this cell.
+         */
+        TimelineEvent getEvent() {
+            return event;
+        }
+
+        @NbBundle.Messages({"EventTableCell.updateItem.errorMessage=Error getting event by id."})
+        @Override
+        protected void updateItem(CombinedEvent item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null) {
+                event = null;
+            } else {
+                try {
+                    //stash the event in the cell for derived classed to use.
+                    event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
+                } catch (TskCoreException ex) {
+                    Notifications.create().owner(getScene().getWindow())
+                            .text(Bundle.EventTableCell_updateItem_errorMessage()).showError();
+                    logger.log(Level.SEVERE, "Error getting event by id.", ex);
+                }
+            }
         }
     }
 
@@ -571,57 +608,9 @@ class ListTimeline extends BorderPane {
     }
 
     /**
-     * Base class for TableCells that represent a CombinedEvent by way of a
-     * representative TimeLineEvent.
-     */
-    private abstract class EventTableCell extends TableCell<CombinedEvent, CombinedEvent> {
-
-        private TimelineEvent event;
-
-        /**
-         * Get the representative TimeLineEvent for this cell.
-         *
-         * @return The representative TimeLineEvent for this cell.
-         */
-        TimelineEvent getEvent() {
-            return event;
-        }
-
-        @NbBundle.Messages({"EventTableCell.updateItem.errorMessage=Error getting event by id."})
-        @Override
-        protected void updateItem(CombinedEvent item, boolean empty) {
-            super.updateItem(item, empty);
-
-            if (empty || item == null) {
-                event = null;
-            } else {
-                try {
-                    //stash the event in the cell for derived classed to use.
-                    event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
-                } catch (TskCoreException ex) {
-                    Notifications.create().owner(getScene().getWindow())
-                            .text(Bundle.EventTableCell_updateItem_errorMessage()).showError();
-                    logger.log(Level.SEVERE, "Error getting event by id.", ex);
-                }
-            }
-        }
-    }
-
-    /**
      * TableRow that adds a right-click context menu.
      */
     private class EventRow extends TableRow<CombinedEvent> {
-
-        private TimelineEvent event;
-
-        /**
-         * Get the representative TimeLineEvent for this row .
-         *
-         * @return The representative TimeLineEvent for this row .
-         */
-        TimelineEvent getEvent() {
-            return event;
-        }
 
         @NbBundle.Messages({
             "ListChart.errorMsg=There was a problem getting the content for the selected event.",
@@ -634,18 +623,8 @@ class ListTimeline extends BorderPane {
             }
             super.updateItem(item, empty);
 
-            if (empty || item == null) {
-                event = null;
-            } else {
+            if (!empty && item != null) {
                 visibleEvents.add(item);
-                try {
-                    event = controller.getEventsModel().getEventById(item.getRepresentativeEventID());
-                } catch (TskCoreException ex) {
-                    Notifications.create().owner(getScene().getWindow())
-                            .text(Bundle.EventRow_updateItem_errorMessage()).showError();
-                    logger.log(Level.SEVERE, "Error getting event by id.", ex);
-                }
-
                 setOnContextMenuRequested(contextMenuEvent -> {
                     //make a new context menu on each request in order to include uptodate tag names and hash sets
                     try {
@@ -690,7 +669,7 @@ class ListTimeline extends BorderPane {
                         });
                     }
                 });
-
+            } else {
             }
         }
     }

@@ -90,7 +90,7 @@ public class ListViewModel {
         ArrayList<CombinedEvent> combinedEvents = new ArrayList<>();
 
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
-        final String querySql = "SELECT full_description, time, file_obj_id, "
+        final String querySql = "SELECT time, "
                                 + dbUtils.csvAggFunction("CAST(tsk_events.event_id AS VARCHAR)") + " AS eventIDs, "
                                 + dbUtils.csvAggFunction("CAST(event_type_id AS VARCHAR)") + " AS eventTypes"
                                 + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(filterState.getActiveFilter())
@@ -110,7 +110,7 @@ public class ListViewModel {
                 for (int i = 0; i < eventIDs.size(); i++) {
                     eventMap.put(eventTypes.get(i), eventIDs.get(i));
                 }
-                combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000, resultSet.getString("full_description"), resultSet.getLong("file_obj_id"), eventMap));
+                combinedEvents.add(new CombinedEvent(resultSet.getLong("time") * 1000,   eventMap));
             }
 
         } catch (SQLException sqlEx) {
