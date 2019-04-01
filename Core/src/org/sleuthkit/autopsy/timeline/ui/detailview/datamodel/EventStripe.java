@@ -19,9 +19,11 @@
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
+import java.util.Collection;
+import static java.util.Collections.singleton;
 import java.util.Comparator;
+import static java.util.Comparator.comparing;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -103,10 +105,8 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     public EventStripe(EventCluster cluster) {
-        this.clusters = ImmutableSortedSet
-                .orderedBy(Comparator.comparing(EventCluster::getStartMillis))
-                .add(cluster.withParent(this))
-                .build();
+        this.clusters = copyAsSortedSet(singleton(cluster.withParent(this)),
+                comparing(EventCluster::getStartMillis));
 
         type = cluster.getEventType();
         description = cluster.getDescription();
@@ -117,17 +117,16 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         this.parent = null;
     }
 
-    private EventStripe(EventStripe u, EventStripe v) {
-        clusters = Sets.union(u.getClusters(), v.getClusters())
-                .copyInto(new TreeSet<>(Comparator.comparing(EventCluster::getStartMillis)));
+    private EventStripe(EventStripe stripeA, EventStripe stripeB) {
+        clusters = copyAsSortedSet(Sets.union(stripeB.getClusters(), stripeB.getClusters()), comparing(EventCluster::getStartMillis));
 
-        type = u.getEventType();
-        description = u.getDescription();
-        lod = u.getDescriptionLoD();
-        eventIDs = Sets.union(u.getEventIDs(), v.getEventIDs());
-        tagged = Sets.union(u.getEventIDsWithTags(), v.getEventIDsWithTags());
-        hashHits = Sets.union(u.getEventIDsWithHashHits(), v.getEventIDsWithHashHits());
-        parent = u.getParent().orElse(v.getParent().orElse(null));
+        type = stripeA.getEventType();
+        description = stripeA.getDescription();
+        lod = stripeA.getDescriptionLoD();
+        eventIDs = Sets.union(stripeB.getEventIDs(), stripeB.getEventIDs());
+        tagged = Sets.union(stripeB.getEventIDsWithTags(), stripeB.getEventIDsWithTags());
+        hashHits = Sets.union(stripeB.getEventIDsWithHashHits(), stripeB.getEventIDsWithHashHits());
+        parent = stripeA.getParent().orElse(stripeB.getParent().orElse(null));
     }
 
     @Override
@@ -230,5 +229,12 @@ public final class EventStripe implements MultiEvent<EventCluster> {
             return false;
         }
         return Objects.equals(this.eventIDs, other.eventIDs);
+    }
+
+    private static <X> SortedSet<X> copyAsSortedSet(Collection<X> setA, Comparator<X> comparator) {
+
+        TreeSet<X> treeSet = new TreeSet<>(comparator);
+        treeSet.addAll(setA);
+        return treeSet;
     }
 }
