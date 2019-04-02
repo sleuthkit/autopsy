@@ -935,13 +935,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         org.openide.awt.Mnemonics.setLocalizedText(showCommonalityMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCommonalityMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(showCommonalityMenuItem);
 
-        setMinimumSize(new java.awt.Dimension(1000, 10));
+        setMinimumSize(new java.awt.Dimension(1500, 10));
         setOpaque(false);
-        setPreferredSize(new java.awt.Dimension(1000, 44));
+        setPreferredSize(new java.awt.Dimension(1500, 44));
 
         otherCasesPanel.setPreferredSize(new java.awt.Dimension(921, 62));
 
-        tableContainerPanel.setPreferredSize(new java.awt.Dimension(1000, 63));
+        tableContainerPanel.setPreferredSize(new java.awt.Dimension(1500, 63));
         tableContainerPanel.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(earliestCaseLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.earliestCaseLabel.text")); // NOI18N
@@ -1040,7 +1040,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 .addContainerGap())
             .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(tableContainerPanelLayout.createSequentialGroup()
-                    .addGap(javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGap(0, 0, Short.MAX_VALUE)
                     .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGap(0, 0, Short.MAX_VALUE)))
         );
@@ -1049,30 +1049,30 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         otherCasesPanel.setLayout(otherCasesPanelLayout);
         otherCasesPanelLayout.setHorizontalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 7164, Short.MAX_VALUE)
+            .addGap(0, 1500, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 7164, Short.MAX_VALUE))
+                .addGroup(otherCasesPanelLayout.createSequentialGroup()
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGap(0, 0, 0)))
         );
         otherCasesPanelLayout.setVerticalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 433, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 320, Short.MAX_VALUE)))
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)
+                    .addGap(0, 0, 0)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 7164, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 1500, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(otherCasesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
