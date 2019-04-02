@@ -114,9 +114,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         this.tableModel = new OtherOccurrencesFilesTableModel();
         this.casesTableModel = new OtherOccurrencesCasesTableModel();
         this.correlationAttributes = new ArrayList<>();
-        this.viewerPanel.add(occurrencePanel);
+
         initComponents();
         customizeComponents();
+        this.viewerPanel.add(occurrencePanel);
         reset();
     }
 
@@ -1039,7 +1040,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 .addContainerGap())
             .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(tableContainerPanelLayout.createSequentialGroup()
-                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addGap(javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGap(0, 0, Short.MAX_VALUE)))
         );
@@ -1050,17 +1051,15 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 7164, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 7164, Short.MAX_VALUE)
-                    .addGap(0, 0, 0)))
+                .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 7164, Short.MAX_VALUE))
         );
         otherCasesPanelLayout.setVerticalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 0, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)
-                    .addGap(0, 0, 0)))
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGap(0, 320, Short.MAX_VALUE)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
