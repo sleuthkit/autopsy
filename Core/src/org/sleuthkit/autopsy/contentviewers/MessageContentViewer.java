@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017-2018 Basis Technology Corp.
+ * Copyright 2017-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -106,9 +106,12 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         attachmentsScrollPane.setViewportView(drp);
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, true);
 
-        textAreas = Arrays.asList(headersTextArea, textbodyTextArea, htmlbodyTextPane, rtfbodyTextPane);
+        /*
+         * HTML tab uses the HtmlPanel instead of an internal text pane, so we
+         * use 'null' for that index.
+         */
+        textAreas = Arrays.asList(headersTextArea, textbodyTextArea, null, rtfbodyTextPane);
 
-        Utilities.configureTextPaneAsHtml(htmlbodyTextPane);
         Utilities.configureTextPaneAsRtf(rtfbodyTextPane);
         resetComponent();
 
@@ -150,9 +153,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         textbodyScrollPane = new javax.swing.JScrollPane();
         textbodyTextArea = new javax.swing.JTextArea();
         htmlPane = new javax.swing.JPanel();
-        htmlScrollPane = new javax.swing.JScrollPane();
-        htmlbodyTextPane = new javax.swing.JTextPane();
-        showImagesToggleButton = new javax.swing.JToggleButton();
+        htmlPanel = new org.sleuthkit.autopsy.contentviewers.HtmlPanel();
         rtfbodyScrollPane = new javax.swing.JScrollPane();
         rtfbodyTextPane = new javax.swing.JTextPane();
         attachmentsPanel = new javax.swing.JPanel();
@@ -265,35 +266,15 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.textbodyScrollPane.TabConstraints.tabTitle"), textbodyScrollPane); // NOI18N
 
-        htmlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-        htmlbodyTextPane.setEditable(false);
-        htmlScrollPane.setViewportView(htmlbodyTextPane);
-
-        org.openide.awt.Mnemonics.setLocalizedText(showImagesToggleButton, "Show Images");
-        showImagesToggleButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                showImagesToggleButtonActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout htmlPaneLayout = new javax.swing.GroupLayout(htmlPane);
         htmlPane.setLayout(htmlPaneLayout);
         htmlPaneLayout.setHorizontalGroup(
             htmlPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(htmlScrollPane)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, htmlPaneLayout.createSequentialGroup()
-                .addContainerGap(533, Short.MAX_VALUE)
-                .addComponent(showImagesToggleButton)
-                .addGap(3, 3, 3))
+            .addComponent(htmlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 647, Short.MAX_VALUE)
         );
         htmlPaneLayout.setVerticalGroup(
             htmlPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(htmlPaneLayout.createSequentialGroup()
-                .addComponent(showImagesToggleButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(htmlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+            .addComponent(htmlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
         );
 
         msgbodyTabbedPane.addTab(org.openide.util.NbBundle.getMessage(MessageContentViewer.class, "MessageContentViewer.htmlPane.TabConstraints.tabTitle"), htmlPane); // NOI18N
@@ -358,26 +339,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    @NbBundle.Messages({
-        "MessageContentViewer.showImagesToggleButton.hide.text=Hide Images",
-        "MessageContentViewer.showImagesToggleButton.text=Show Images"})
-    private void showImagesToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showImagesToggleButtonActionPerformed
-        try {
-            String htmlText = getAttributeValueSafe(artifact, TSK_EMAIL_CONTENT_HTML);
-            if (false == htmlText.isEmpty()) {
-                if (showImagesToggleButton.isSelected()) {
-                    showImagesToggleButton.setText(Bundle.MessageContentViewer_showImagesToggleButton_hide_text());
-                    this.htmlbodyTextPane.setText(wrapInHtmlBody(htmlText));
-                } else {
-                    showImagesToggleButton.setText(Bundle.MessageContentViewer_showImagesToggleButton_text());
-                    this.htmlbodyTextPane.setText(wrapInHtmlBody(cleanseHTML(htmlText)));
-                }
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to get attributes for email message.", ex); //NON-NLS
-        }
-    }//GEN-LAST:event_showImagesToggleButtonActionPerformed
-
     private void viewInNewWindowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewInNewWindowButtonActionPerformed
         new NewWindowViewAction("View in new window", drpExplorerManager.getSelectedNodes()[0]).actionPerformed(evt);
     }//GEN-LAST:event_viewInNewWindowButtonActionPerformed
@@ -396,12 +357,10 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
     private javax.swing.JScrollPane headersScrollPane;
     private javax.swing.JTextArea headersTextArea;
     private javax.swing.JPanel htmlPane;
-    private javax.swing.JScrollPane htmlScrollPane;
-    private javax.swing.JTextPane htmlbodyTextPane;
+    private org.sleuthkit.autopsy.contentviewers.HtmlPanel htmlPanel;
     private javax.swing.JTabbedPane msgbodyTabbedPane;
     private javax.swing.JScrollPane rtfbodyScrollPane;
     private javax.swing.JTextPane rtfbodyTextPane;
-    private javax.swing.JToggleButton showImagesToggleButton;
     private javax.swing.JLabel subjectLabel;
     private javax.swing.JLabel subjectText;
     private javax.swing.JScrollPane textbodyScrollPane;
@@ -505,9 +464,8 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         headersTextArea.setText("");
         rtfbodyTextPane.setText("");
-        htmlbodyTextPane.setText("");
+        htmlPanel.reset();
         textbodyTextArea.setText("");
-        showImagesToggleButton.setEnabled(false);
         msgbodyTabbedPane.setEnabled(false);
     }
 
@@ -567,12 +525,15 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         String attributeText = getAttributeValueSafe(artifact, type);
 
         if (index == HTML_TAB_INDEX && StringUtils.isNotBlank(attributeText)) {
-            //special case for HTML, we need to 'cleanse' it
-            attributeText = wrapInHtmlBody(cleanseHTML(attributeText));
+            htmlPanel.setHtmlText(attributeText);
+        } else {
+            JTextComponent textComponent = textAreas.get(index);
+            if (textComponent != null) {
+                textComponent.setText(attributeText);
+                textComponent.setCaretPosition(0); //make sure we start at the top
+            }
         }
-        JTextComponent textComponent = textAreas.get(index);
-        textComponent.setText(attributeText);
-        textComponent.setCaretPosition(0); //make sure we start at the top
+        
         final boolean hasText = attributeText.length() > 0;
 
         msgbodyTabbedPane.setEnabledAt(index, hasText);
@@ -612,10 +573,6 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
 
         directionText.setEnabled(false);
         ccLabel.setEnabled(true);
-
-        showImagesToggleButton.setEnabled(true);
-        showImagesToggleButton.setText("Show Images");
-        showImagesToggleButton.setSelected(false);
 
         try {
             this.fromText.setText(getAttributeValueSafe(artifact, TSK_EMAIL_FROM));

@@ -313,6 +313,8 @@
                 <package>org.sleuthkit.autopsy.appservices</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
                 <package>org.sleuthkit.autopsy.casemodule.events</package>
+                <package>org.sleuthkit.autopsy.casemodule.multiusercases</package>
+                <package>org.sleuthkit.autopsy.casemodule.multiusercasesbrowser</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
                 <package>org.sleuthkit.autopsy.contentviewers</package>
                 <package>org.sleuthkit.autopsy.coordinationservice</package>
@@ -378,10 +380,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sis-utility-0.8.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\sis-utility-0.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/gson-2.8.5.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\gson-2.8.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jna-5.1.0.jar</runtime-relative-path>
@@ -479,9 +477,12 @@
                 <runtime-relative-path>ext/apache-mime4j-core-0.8.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\apache-mime4j-core-0.8.2.jar</binary-origin>
             </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/jmatio-1.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jmatio-1.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-parsers-1.20.jar</runtime-relative-path>
@@ -490,10 +491,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/asm-7.0.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\asm-7.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sleuthkit-postgresql-4.6.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sleuthkit-postgresql-4.6.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>

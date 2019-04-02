@@ -1,0 +1,10 @@
+# To change this license header, choose License Headers in Project Properties.
+# To change this template file, choose Tools | Templates
+# and open the template in the editor.
+
+# {0} - data source name
+ImageWriter.progressBar.message=Finishing acquisition of {0} (unplug device to cancel)
+ImageWriterService.serviceName=Image Writer
+ImageWriterService.waitingForVHDs=Waiting for VHD(s) to complete
+ImageWriterService.shouldWait=Wait for VHD(s) in progress to complete?
+ImageWriterService.localDisk=Local disk image copy

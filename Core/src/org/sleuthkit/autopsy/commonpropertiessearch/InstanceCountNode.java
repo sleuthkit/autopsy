@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -45,20 +46,22 @@ public final class InstanceCountNode extends DisplayableItemNode {
 
     final private int instanceCount;
     final private CommonAttributeValueList attributeValues;
+    final private CorrelationAttributeInstance.Type type;
 
     /**
      * Create a node with the given number of instances, and the given selection
      * of metadata.
      *
-     * @param instanceCount
-     * @param attributeValues
+     * @param instanceCount   the number of instances
+     * @param attributeValues the attribute list
+     * @param type            the data type
      */
     @NbBundle.Messages({
-        "InstanceCountNode.displayName=Files with %s instances (%s)"
+        "InstanceCountNode.displayName=Exists in %s data sources (%s)"
     })
-    public InstanceCountNode(int instanceCount, CommonAttributeValueList attributeValues) {
-        super(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), false));
-
+    public InstanceCountNode(int instanceCount, CommonAttributeValueList attributeValues, CorrelationAttributeInstance.Type type) {
+        super(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList(), type), false));
+        this.type = type;
         this.instanceCount = instanceCount;
         this.attributeValues = attributeValues;
 
@@ -81,7 +84,7 @@ public final class InstanceCountNode extends DisplayableItemNode {
      */
     void createChildren() {
         attributeValues.displayDelayedMetadata();
-        setChildren(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList()), false));
+        setChildren(Children.create(new CommonAttributeValueNodeFactory(attributeValues.getMetadataList(), type), false));
     }
 
     /**
@@ -146,10 +149,11 @@ public final class InstanceCountNode extends DisplayableItemNode {
          */
         // maps sting version of value to value Object (??)
         private final Map<String, CommonAttributeValue> metadata;
+        private final CorrelationAttributeInstance.Type type;
 
-        CommonAttributeValueNodeFactory(List<CommonAttributeValue> attributeValues) {
+        CommonAttributeValueNodeFactory(List<CommonAttributeValue> attributeValues, CorrelationAttributeInstance.Type type) {
             this.metadata = new HashMap<>();
-
+            this.type = type;
             Iterator<CommonAttributeValue> iterator = attributeValues.iterator();
             while (iterator.hasNext()) {
                 CommonAttributeValue attributeValue = iterator.next();
@@ -167,7 +171,7 @@ public final class InstanceCountNode extends DisplayableItemNode {
         @Override
         protected Node createNodeForKey(String attributeValue) {
             CommonAttributeValue md5Metadata = this.metadata.get(attributeValue);
-            return new CommonAttributeValueNode(md5Metadata);
+            return new CommonAttributeValueNode(md5Metadata, type);
         }
     }
 }
