@@ -477,6 +477,7 @@
                 <runtime-relative-path>ext/apache-mime4j-core-0.8.2.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\apache-mime4j-core-0.8.2.jar</binary-origin>
             </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jmatio-1.5.jar</runtime-relative-path>
                 <binary-origin>release\modules\ext\jmatio-1.5.jar</binary-origin>
             </class-path-extension>
