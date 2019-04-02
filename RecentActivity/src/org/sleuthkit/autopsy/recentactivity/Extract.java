@@ -57,11 +57,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 @Messages({"Extract.indexError.message=Failed to index artifact for keyword search.",
     "Extract.noOpenCase.errMsg=No open case available.",
-    "#{0} - the module name",
+    "# {0} - the module name",
     "Extractor.errPostingArtifacts=Error posting {0} artifacts to the blackboard."})
 abstract class Extract {
 
-    private static final Logger logger = Logger.getLogger(Extract.class.getName());
+    protected static final Logger logger = Logger.getLogger(Extract.class.getName());
 
     protected Case currentCase;
     protected SleuthkitCase tskCase;
@@ -192,21 +192,22 @@ abstract class Extract {
     /**
      * Returns a List of AbstractFile objects from TSK based on sql query.
      *
-     * @param rs is the resultset that needs to be converted to an arraylist
+     * @param results is the resultset that needs to be converted to an
+     *                arraylist
      *
      * @return list returns the arraylist built from the converted resultset
      */
-    private List<HashMap<String, Object>> resultSetToArrayList(ResultSet rs) throws SQLException {
-        ResultSetMetaData md = rs.getMetaData();
-        int columns = md.getColumnCount();
+    private List<HashMap<String, Object>> resultSetToArrayList(ResultSet results) throws SQLException {
+        ResultSetMetaData metaData = results.getMetaData();
+        int columns = metaData.getColumnCount();
         List<HashMap<String, Object>> list = new ArrayList<>(50);
-        while (rs.next()) {
+        while (results.next()) {
             HashMap<String, Object> row = new HashMap<>(columns);
             for (int i = 1; i <= columns; ++i) {
-                if (rs.getObject(i) == null) {
-                    row.put(md.getColumnName(i), "");
+                if (results.getObject(i) == null) {
+                    row.put(metaData.getColumnName(i), "");
                 } else {
-                    row.put(md.getColumnName(i), rs.getObject(i));
+                    row.put(metaData.getColumnName(i), results.getObject(i));
                 }
             }
             list.add(row);

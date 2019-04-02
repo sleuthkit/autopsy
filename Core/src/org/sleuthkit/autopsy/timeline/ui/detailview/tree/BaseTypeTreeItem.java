@@ -49,12 +49,12 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
     BaseTypeTreeItem(DetailViewEvent event, Comparator<TreeItem<DetailViewEvent>> comparator) {
         super(event.getEventType().getBaseType(), comparator);
     }
-    
+
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     @Override
     public void insert(List<DetailViewEvent> path) {
         DetailViewEvent head = path.get(0);
-        
+
         Supplier< EventsTreeItem> treeItemConstructor;
         String descriptionKey;
         /*
@@ -69,7 +69,7 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
             DetailViewEvent stripe = path.remove(0); //remove head of list if we are going straight to description
             treeItemConstructor = () -> configureNewTreeItem(new DescriptionTreeItem(stripe, getComparator()));
         }
-        
+
         EventsTreeItem treeItem = childMap.computeIfAbsent(descriptionKey, key -> treeItemConstructor.get());
 
         //insert (rest of) path in to new treeItem
@@ -77,11 +77,11 @@ class BaseTypeTreeItem extends EventTypeTreeItem {
             treeItem.insert(path);
         }
     }
-    
+
     @Override
     void remove(List<DetailViewEvent> path) {
         DetailViewEvent head = path.get(0);
-        
+
         EventsTreeItem descTreeItem;
         /*
          * if the stripe and this tree item have the same type, get the child

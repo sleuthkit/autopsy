@@ -2,7 +2,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016-18 Basis Technology Corp.
+ * Copyright 2016-19 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -173,6 +173,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
             showHoverControls(true);
             toFront();
         });
+
         setOnMouseExited(mouseExited -> {
             showHoverControls(false);
             if (parentNode != null) {

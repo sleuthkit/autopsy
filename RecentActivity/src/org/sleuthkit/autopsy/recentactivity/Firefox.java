@@ -101,7 +101,6 @@ class Firefox extends Extract {
     private final IngestServices services = IngestServices.getInstance();
     private Content dataSource;
     private IngestJobContext context;
-    private final String moduleName;
 
     Firefox() {
         moduleName = NbBundle.getMessage(Firefox.class, "Firefox.moduleName");
