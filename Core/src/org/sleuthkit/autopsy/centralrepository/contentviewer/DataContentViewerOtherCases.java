@@ -117,7 +117,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         initComponents();
         customizeComponents();
-        this.viewerPanel.add(occurrencePanel);
+        tablesViewerSplitPane.setRightComponent(occurrencePanel);
         reset();
     }
 
@@ -911,7 +911,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         dataSourcesTable = new javax.swing.JTable();
         propertiesTableScrollPane = new javax.swing.JScrollPane();
         filesTable = new javax.swing.JTable();
-        viewerPanel = new javax.swing.JPanel();
 
         rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
             public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
@@ -999,19 +998,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         tablesViewerSplitPane.setLeftComponent(caseDatasourceFileSplitPane);
 
-        javax.swing.GroupLayout viewerPanelLayout = new javax.swing.GroupLayout(viewerPanel);
-        viewerPanel.setLayout(viewerPanelLayout);
-        viewerPanelLayout.setHorizontalGroup(
-            viewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 5239, Short.MAX_VALUE)
-        );
-        viewerPanelLayout.setVerticalGroup(
-            viewerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 431, Short.MAX_VALUE)
-        );
-
-        tablesViewerSplitPane.setRightComponent(viewerPanel);
-
         javax.swing.GroupLayout tableContainerPanelLayout = new javax.swing.GroupLayout(tableContainerPanel);
         tableContainerPanel.setLayout(tableContainerPanelLayout);
         tableContainerPanelLayout.setHorizontalGroup(
@@ -1049,10 +1035,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         otherCasesPanel.setLayout(otherCasesPanelLayout);
         otherCasesPanelLayout.setHorizontalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1500, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 2014, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
         otherCasesPanelLayout.setVerticalGroup(
@@ -1112,7 +1098,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private javax.swing.JMenuItem showCommonalityMenuItem;
     private javax.swing.JPanel tableContainerPanel;
     private javax.swing.JSplitPane tablesViewerSplitPane;
-    private javax.swing.JPanel viewerPanel;
     // End of variables declaration//GEN-END:variables
 
     /**
