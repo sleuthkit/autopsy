@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -207,6 +207,36 @@ public class GroupManager {
     }
 
     /**
+     * Find and return groupkeys for all the groups the given file is a part of
+     *
+     * @param file file for which to get the groups
+     *
+     * @return A a set of GroupKeys representing the group(s) the given file is
+     *         a part of.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    synchronized public Set<GroupKey<?>> getAllGroupKeysForFile(DrawableFile file) throws TskCoreException, TskDataException {
+        Set<GroupKey<?>> resultSet = new HashSet<>();
+        
+        for (DrawableAttribute<?> attr: DrawableAttribute.getGroupableAttrs()) {
+            for (Comparable<?> val : attr.getValue(file)) {
+
+                if (attr == DrawableAttribute.PATH) {
+                    resultSet.add(new GroupKey(attr, val, file.getDataSource()));
+                } else if (attr == DrawableAttribute.TAGS) {
+                    //don't show groups for the categories when grouped by tags.
+                    if (CategoryManager.isNotCategoryTagName((TagName) val)) {
+                        resultSet.add(new GroupKey(attr, val, null));
+                    }
+                } else {
+                    resultSet.add(new GroupKey(attr, val, null));
+                }
+            }
+        }
+        return resultSet;
+    }
+    
+    /**
      * Using the current grouping paramaters set for this manager, find
      * GroupKeys for all the Groups the given file is a part of.
      *
@@ -226,6 +256,26 @@ public class GroupManager {
         return Collections.emptySet();
     }
 
+     /**
+     *
+     * Returns GroupKeys for all the Groups the given file is a part of.
+     *
+     * @param fileID The Id of the file to get group keys for.
+     *
+     * @return A set of GroupKeys representing the group(s) the given file is a
+     *         part of
+     */
+    synchronized public Set<GroupKey<?>> getAllGroupKeysForFile(Long fileID) {
+        try {
+            DrawableFile file = getDrawableDB().getFileFromID(fileID);
+            return getAllGroupKeysForFile(file);
+
+        } catch (TskCoreException | TskDataException ex) {
+            logger.log(Level.SEVERE, "Failed to get group keys for file with ID " + fileID, ex); //NON-NLS
+        }
+        return Collections.emptySet();
+    }
+            
     /**
      * @param groupKey
      *
@@ -622,7 +672,7 @@ public class GroupManager {
 
         for (final long fileId : removedFileIDs) {
             //get grouping(s) this file would be in
-            Set<GroupKey<?>> groupsForFile = getGroupKeysForCurrentGroupBy(fileId);
+            Set<GroupKey<?>> groupsForFile = getAllGroupKeysForFile(fileId);
 
             for (GroupKey<?> gk : groupsForFile) {
                 removeFromGroup(gk, fileId);
@@ -646,13 +696,23 @@ public class GroupManager {
             // reset the hash cache
             controller.getHashSetManager().invalidateHashSetsCacheForFile(fileId);
 
+            // first of all, update the current path group, regardless of what grouping is in view
+            try {
+                DrawableFile file = getDrawableDB().getFileFromID(fileId);
+                String pathVal = file.getDrawablePath();
+                GroupKey<?> pathGroupKey = new GroupKey(DrawableAttribute.PATH,pathVal, file.getDataSource());
+                
+                updateCurrentPathGroup(pathGroupKey);
+            } catch (TskCoreException | TskDataException ex) {
+                Exceptions.printStackTrace(ex);
+            }   
+                    
             // Update the current groups (if it is visible)
-            Set<GroupKey<?>> groupsForFile = getGroupKeysForCurrentGroupBy(fileId);
+            Set<GroupKey<?>> groupsForFile = getAllGroupKeysForFile(fileId);
             for (GroupKey<?> gk : groupsForFile) {
                 // see if a group has been created yet for the key
                 DrawableGroup g = getGroupForKey(gk);
-               
-                updateCurrentPathGroup(gk);
+ 
                 addFileToGroup(g, gk, fileId);
             }
         }
@@ -758,8 +818,11 @@ public class GroupManager {
                     }
 
                     if (analyzedGroups.contains(group) == false) {
-                        analyzedGroups.add(group);
-                        sortAnalyzedGroups();
+                        // Add to analyzedGroups only if this is the grouping being viewed.
+                        if (getGroupBy() == group.getGroupKey().getAttribute()) {
+                            analyzedGroups.add(group);
+                            sortAnalyzedGroups();
+                        }
                     }
                     updateUnSeenGroups(group);
 
