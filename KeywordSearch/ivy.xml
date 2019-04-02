@@ -41,9 +41,9 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
         
-        <!-- Tika 1.14 seems to declare a (transitive?) dependency on cleartk-util 3.2.2, but the most recent
-        version available is 2.0.0  Overriding the version worked-->
-        <override  org="org.cleartk" module="cleartk-util" rev="2.0.0"/>
+        <!-- Travis is trying to pull down cleartk-ml-4.0.0 which doesn't exist. 
+        Overriding to 2.0.0 (latest version) works.-->
+        <override  org="org.cleartk" module="cleartk-ml" rev="2.0.0"/>
         <override org="commons-io" module="commons-io" rev="2.3"/>
         <override org="org.apache.httpcomponents" module="httpclient" rev="4.3.1"/>
         <override org="org.apache.httpcomponents" module="httpcore" rev="4.3"/>
