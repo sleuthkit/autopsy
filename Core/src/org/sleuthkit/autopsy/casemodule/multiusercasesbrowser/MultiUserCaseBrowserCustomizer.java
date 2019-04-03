@@ -141,13 +141,23 @@ public interface MultiUserCaseBrowserCustomizer {
         "MultiUserCaseBrowserCustomizer.column.displayName=Name",
         "MultiUserCaseBrowserCustomizer.column.createTime=Create Time",
         "MultiUserCaseBrowserCustomizer.column.directory=Directory",
-        "MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time"
+        "MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time",
+        "MultiUserCaseBrowserCustomizer.column.manifestFileZNodesDeleteStatus=Manifest Znodes Deleted",
+        "MultiUserCaseBrowserCustomizer.column.dataSourcesDeleteStatus=Data Sources Deleted",
+        "MultiUserCaseBrowserCustomizer.column.textIndexDeleteStatus=Text Index Deleted",
+        "MultiUserCaseBrowserCustomizer.column.caseDbDeleteStatus=Case Database Deleted",
+        "MultiUserCaseBrowserCustomizer.column.caseDirDeleteStatus=Case Directory Deleted"
     })
     public enum Column {
         DISPLAY_NAME(Bundle.MultiUserCaseBrowserCustomizer_column_displayName()),
         CREATE_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_createTime()),
         DIRECTORY(Bundle.MultiUserCaseBrowserCustomizer_column_directory()),
-        LAST_ACCESS_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_lastAccessTime());
+        LAST_ACCESS_DATE(Bundle.MultiUserCaseBrowserCustomizer_column_lastAccessTime()),
+        MANIFEST_FILE_ZNODES_DELETE_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_manifestFileZNodesDeleteStatus()),
+        DATA_SOURCES_DELETE_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_dataSourcesDeleteStatus()),
+        TEXT_INDEX_DELETE_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_textIndexDeleteStatus()),
+        CASE_DB_DELETE_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_caseDbDeleteStatus()),
+        CASE_DIR_DELETE_STATUS(Bundle.MultiUserCaseBrowserCustomizer_column_caseDirDeleteStatus());
 
         private final String displayName;
 
