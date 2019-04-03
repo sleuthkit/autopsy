@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016-18 Basis Technology Corp.
+ * Copyright 2016-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,8 +58,8 @@ import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * One "lane" of a the details view, contains all the core logic and layout
