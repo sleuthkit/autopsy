@@ -20,15 +20,12 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
-import java.util.Collection;
 import static java.util.Collections.singleton;
-import java.util.Comparator;
 import static java.util.Comparator.comparing;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.timeline.EventType;
 
@@ -105,7 +102,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     public EventStripe(EventCluster cluster) {
-        this.clusters = copyAsSortedSet(singleton(cluster.withParent(this)),
+        this.clusters = DetailsViewModel.copyAsSortedSet(singleton(cluster.withParent(this)),
                 comparing(EventCluster::getStartMillis));
 
         type = cluster.getEventType();
@@ -118,7 +115,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     private EventStripe(EventStripe stripeA, EventStripe stripeB) {
-        clusters = copyAsSortedSet(Sets.union(stripeA.getClusters(), stripeB.getClusters()), comparing(EventCluster::getStartMillis));
+        clusters = DetailsViewModel.copyAsSortedSet(Sets.union(stripeA.getClusters(), stripeB.getClusters()), comparing(EventCluster::getStartMillis));
 
         type = stripeA.getEventType();
         description = stripeA.getDescription();
@@ -231,10 +228,4 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         return Objects.equals(this.eventIDs, other.eventIDs);
     }
 
-    private static <X> SortedSet<X> copyAsSortedSet(Collection<X> setA, Comparator<X> comparator) {
-
-        TreeSet<X> treeSet = new TreeSet<>(comparator);
-        treeSet.addAll(setA);
-        return treeSet;
-    }
 }
