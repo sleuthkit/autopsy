@@ -90,7 +90,7 @@ public final class EventStripe implements MultiEvent<EventCluster> {
         return new EventStripe(parent, this.type, this.description, this.lod, clusters, eventIDs, tagged, hashHits);
     }
 
-    private EventStripe(EventCluster parent, EventType type, String description,  
+    private EventStripe(EventCluster parent, EventType type, String description,
                         DescriptionLoD lod, SortedSet<EventCluster> clusters,
                         Set<Long> eventIDs, Set<Long> tagged, Set<Long> hashHits) {
         this.parent = parent;
@@ -107,7 +107,6 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     public EventStripe(EventCluster cluster) {
         this.clusters = copyAsSortedSet(singleton(cluster.withParent(this)),
                 comparing(EventCluster::getStartMillis));
-              
 
         type = cluster.getEventType();
         description = cluster.getDescription();
@@ -119,14 +118,14 @@ public final class EventStripe implements MultiEvent<EventCluster> {
     }
 
     private EventStripe(EventStripe stripeA, EventStripe stripeB) {
-        clusters = copyAsSortedSet(Sets.union(stripeB.getClusters(), stripeB.getClusters()), comparing(EventCluster::getStartMillis));
+        clusters = copyAsSortedSet(Sets.union(stripeA.getClusters(), stripeB.getClusters()), comparing(EventCluster::getStartMillis));
 
         type = stripeA.getEventType();
         description = stripeA.getDescription();
         lod = stripeA.getDescriptionLoD();
-        eventIDs = Sets.union(stripeB.getEventIDs(), stripeB.getEventIDs());
-        tagged = Sets.union(stripeB.getEventIDsWithTags(), stripeB.getEventIDsWithTags());
-        hashHits = Sets.union(stripeB.getEventIDsWithHashHits(), stripeB.getEventIDsWithHashHits());
+        eventIDs = Sets.union(stripeA.getEventIDs(), stripeB.getEventIDs());
+        tagged = Sets.union(stripeA.getEventIDsWithTags(), stripeB.getEventIDsWithTags());
+        hashHits = Sets.union(stripeA.getEventIDsWithHashHits(), stripeB.getEventIDsWithHashHits());
         parent = stripeA.getParent().orElse(stripeB.getParent().orElse(null));
     }
 
