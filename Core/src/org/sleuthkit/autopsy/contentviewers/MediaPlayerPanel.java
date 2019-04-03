@@ -368,8 +368,8 @@ public class MediaPlayerPanel extends JPanel implements MediaFileViewer.MediaVie
      * Formats current time and total time as the following ratio: HH:MM:SS /
      * HH:MM:SS
      *
-     * @param posNs
-     * @param totalNs
+     * @param start
+     * @param total
      */
     private void updateTimeLabel(long start, long total) {
         progressLabel.setText(formatTime(start, false) + "/" + formatTime(total, true));
