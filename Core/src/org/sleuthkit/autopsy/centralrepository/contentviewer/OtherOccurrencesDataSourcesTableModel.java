@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,21 +21,16 @@ package org.sleuthkit.autopsy.centralrepository.contentviewer;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
-import org.openide.util.NbBundle.Messages;
-import org.apache.commons.io.FilenameUtils;
-import org.sleuthkit.datamodel.TskData;
+import org.openide.util.NbBundle;
 
-/**
- * Model for cells in the files section of the other occurrences data content viewer
- */
-public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
+final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
 
-    @Messages({"OtherOccurrencesFilesTableModel.fileName=File Name",
-        "OtherOccurrencesFilesTableModel.noData=No Data.",})
+    @NbBundle.Messages({"OtherOccurrencesDataSourcesTableModel.dataSourceName=Data Source Name",
+        "OtherOccurrencesDataSourcesTableModel.noData=No Data.",})
     enum TableColumns {
-        FILE_NAME(Bundle.OtherOccurrencesFilesTableModel_fileName(), 190);
+        DATASOURCE_NAME(Bundle.OtherOccurrencesDataSourcesTableModel_dataSourceName(), 190);
 
         private final String columnName;
         private final int columnWidth;
@@ -56,8 +51,8 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
 
-    OtherOccurrencesFilesTableModel() {
-        
+    OtherOccurrencesDataSourcesTableModel() {
+
     }
 
     @Override
@@ -92,7 +87,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
         if (0 == nodeDataList.size()) {
-            return Bundle.OtherOccurrencesFilesTableModel_noData();
+            return Bundle.OtherOccurrencesDataSourcesTableModel_noData();
         }
 
         OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
@@ -100,15 +95,10 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
         return mapNodeInstanceData((OtherOccurrenceNodeInstanceData) nodeData, columnId);
     }
 
-    public TskData.FileKnown getKnownStatusForRow(int rowIdx){
-          if (rowIdx >= nodeDataList.size()) {
-              return TskData.FileKnown.UNKNOWN;
-          }
-          else {
-              return ((OtherOccurrenceNodeInstanceData)nodeDataList.get(rowIdx)).getKnown();
-          }
+    public String getDeviceIdForRow(int rowIdx) {
+        return ((OtherOccurrenceNodeInstanceData) nodeDataList.get(rowIdx)).getDeviceID();
     }
-    
+
     /**
      * Map a column ID to the value in that cell for node instance data.
      *
@@ -118,11 +108,11 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
      * @return The value in the cell.
      */
     private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
-        String value = Bundle.OtherOccurrencesFilesTableModel_noData();
+        String value = Bundle.OtherOccurrencesDataSourcesTableModel_noData();
 
         switch (columnId) {
-            case FILE_NAME:
-                value = FilenameUtils.getName(nodeData.getFilePath());
+            case DATASOURCE_NAME:
+                value = nodeData.getDataSourceName();
                 break;
             default: //Use default "No data" value.
                 break;

@@ -49,12 +49,11 @@ public class OtherOccurrencesFilesTableCellRenderer implements TableCellRenderer
             foreground = Color.WHITE;
             background = new Color(51,153,255);
         } else {
-            String known_status = (String) table.getModel().getValueAt(table.convertRowIndexToModel(row), 
-                    table.getColumn(OtherOccurrencesFilesTableModel.TableColumns.KNOWN.columnName()).getModelIndex());
-            if (known_status.equals(TskData.FileKnown.BAD.getName())) {
+            TskData.FileKnown knownStatus = ((OtherOccurrencesFilesTableModel)table.getModel()).getKnownStatusForRow(table.convertRowIndexToModel(row));
+            if (knownStatus.equals(TskData.FileKnown.BAD)) {
                     foreground = Color.WHITE;
                     background = Color.RED;
-            } else if (known_status.equals(TskData.FileKnown.UNKNOWN.getName())) {
+            } else if (knownStatus.equals(TskData.FileKnown.UNKNOWN)) {
                     foreground = Color.BLACK;
                     background = Color.WHITE;
             } else {

@@ -48,7 +48,6 @@ import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
@@ -98,6 +97,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
     private final OtherOccurrencesFilesTableModel tableModel;
     private final OtherOccurrencesCasesTableModel casesTableModel;
+    private final OtherOccurrencesDataSourcesTableModel dataSourcesTableModel;
     private OccurrencePanel occurrencePanel = new OccurrencePanel();
     private final Collection<CorrelationAttributeInstance> correlationAttributes;
     private String dataSourceName = "";
@@ -113,6 +113,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     public DataContentViewerOtherCases() {
         this.tableModel = new OtherOccurrencesFilesTableModel();
         this.casesTableModel = new OtherOccurrencesCasesTableModel();
+        this.dataSourcesTableModel = new OtherOccurrencesDataSourcesTableModel();
         this.correlationAttributes = new ArrayList<>();
 
         initComponents();
@@ -331,7 +332,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void reset() {
         // start with empty table
         casesTableModel.clearTable();
-        ((DefaultTableModel) dataSourcesTable.getModel()).setRowCount(0);
+        dataSourcesTableModel.clearTable();
         tableModel.clearTable();
         correlationAttributes.clear();
         earliestCaseDate.setText(Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable());
@@ -793,8 +794,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      */
     private void updateOnCaseSelection() {
         int[] selectedCaseIndexes = casesTable.getSelectedRows();
-        DefaultTableModel dataSourceModel = (DefaultTableModel) dataSourcesTable.getModel();
-        dataSourceModel.setRowCount(0);
+        dataSourcesTableModel.clearTable();
         tableModel.clearTable();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
             Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
@@ -807,10 +807,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         if (nodeData.isCentralRepoNode()) {
                             if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
                                     && ((CorrelationCase) casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
-                                dataSourceModel.addRow(new Object[]{nodeData.getDataSourceName(), nodeData.getDeviceID()});
+                                dataSourcesTableModel.addNodeData(nodeData);
                             }
                         } else {
-                            dataSourceModel.addRow(new Object[]{nodeData.getDataSourceName(), nodeData.getDeviceID()});
+                            dataSourcesTableModel.addNodeData(nodeData);
                         }
                     } catch (EamDbException ex) {
                         LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName());
@@ -829,7 +829,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      */
     private void updateOnDataSourceSelection() {
         int[] selectedCaseIndexes = casesTable.getSelectedRows();
-        DefaultTableModel dataSourceModel = (DefaultTableModel) dataSourcesTable.getModel();
         int[] selectedDataSources = dataSourcesTable.getSelectedRows();
         tableModel.clearTable();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
@@ -844,11 +843,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             if (nodeData.isCentralRepoNode()) {
                                 if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow)) != null
                                         && ((CorrelationCase) casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
-                                        && dataSourceModel.getValueAt(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
+                                        && dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
                                     tableModel.addNodeData(nodeData);
                                 }
                             } else {
-                                if (dataSourceModel.getValueAt(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow), 1).toString().equals(nodeData.getDeviceID())) {
+                                if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
                                     tableModel.addNodeData(nodeData);
                                 }
                             }
@@ -963,22 +962,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         caseDatasourceSplitPane.setLeftComponent(caseScrollPane);
 
         dataSourcesTable.setAutoCreateRowSorter(true);
-        dataSourcesTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Data Source Name", "Device ID"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
+        dataSourcesTable.setModel(dataSourcesTableModel);
         dataSourceScrollPane.setViewportView(dataSourcesTable);
 
         caseDatasourceSplitPane.setRightComponent(dataSourceScrollPane);
@@ -1043,10 +1027,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         otherCasesPanelLayout.setVerticalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 433, Short.MAX_VALUE)
+            .addGap(0, 408, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -1058,7 +1042,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

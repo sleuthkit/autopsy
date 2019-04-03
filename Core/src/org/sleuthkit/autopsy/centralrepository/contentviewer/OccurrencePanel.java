@@ -1,21 +1,193 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Central Repository
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
-/**
- *
- * @author wschaefer
- */
-public class OccurrencePanel extends javax.swing.JPanel {
+import java.awt.Font;
+import org.openide.util.NbBundle.Messages;
+
+final class OccurrencePanel extends javax.swing.JPanel {
+
+    private static final int LEFT_INSET = 10;
+    private static final int RIGHT_INSET = 10;
+    private static final int TOP_INSET = 10;
+    private static final int BOTTOM_INSET = 10;
+    private static final int VERTICAL_GAP = 6;
+    private static final int HORIZONTAL_GAP = 4;
+    private static final long serialVersionUID = 1L;
+
+    private int gridY = 0;
 
     /**
-     * Creates new form OccurrencePanel
+     * Creates new form OccurrencePanel2
      */
-    public OccurrencePanel() {
+    OccurrencePanel() {
         initComponents();
+        addInstanceDetails();
+        addFileDetails();
+        addDataSourceDetails();
+        addCaseDetails();
+    }
+
+    @Messages({
+        "OccurrencePanel.commonProperties.text=Common Properties",
+        "OccurrencePanel.commonPropertyTypeLabel.text=Type:",
+        "OccurrencePanel.commonPropertyValueLabel.text=Value:",
+        "OccurrencePanel.commonPropertyKnownStatusLabel.text=Known Status:",
+        "OccurrencePanel.commonPropertyCommentLabel.text=Comment:"
+    })
+    private void addInstanceDetails() {
+        javax.swing.JLabel commonPropertiesLabel = new javax.swing.JLabel();
+        org.openide.awt.Mnemonics.setLocalizedText(commonPropertiesLabel, Bundle.OccurrencePanel_commonProperties_text());
+        commonPropertiesLabel.setFont(commonPropertiesLabel.getFont().deriveFont(Font.BOLD, commonPropertiesLabel.getFont().getSize()));
+        addItemToBag(gridY, 0, TOP_INSET, 0, commonPropertiesLabel);
+        gridY++;
+        //for each other occurrence
+        for (int i = 1; i < 3; i++) {
+            javax.swing.JLabel typeLabel = new javax.swing.JLabel();
+            org.openide.awt.Mnemonics.setLocalizedText(typeLabel, Bundle.OccurrencePanel_commonPropertyTypeLabel_text());
+            addItemToBag(gridY, 0, VERTICAL_GAP, 0, typeLabel);
+            javax.swing.JLabel typeFieldValue = new javax.swing.JLabel();
+            typeFieldValue.setText("FAKETYPE" + i);
+            addItemToBag(gridY, 1, VERTICAL_GAP, 0, typeFieldValue);
+            gridY++;
+            javax.swing.JLabel valueLabel = new javax.swing.JLabel();
+            org.openide.awt.Mnemonics.setLocalizedText(valueLabel, Bundle.OccurrencePanel_commonPropertyValueLabel_text());
+            addItemToBag(gridY, 0, 0, 0, valueLabel);
+            javax.swing.JLabel valueFieldValue = new javax.swing.JLabel();
+            valueFieldValue.setText("FAKEVALUE" + i);
+            addItemToBag(gridY, 1, 0, 0, valueFieldValue);
+            gridY++;
+            javax.swing.JLabel knownStatusLabel = new javax.swing.JLabel();
+            org.openide.awt.Mnemonics.setLocalizedText(knownStatusLabel, Bundle.OccurrencePanel_commonPropertyKnownStatusLabel_text());
+            addItemToBag(gridY, 0, 0, 0, knownStatusLabel);
+            javax.swing.JLabel knownStatusValue = new javax.swing.JLabel();
+            knownStatusValue.setText("FAKESTATUS" + i);
+            addItemToBag(gridY, 1, 0, 0, knownStatusValue);
+            gridY++;
+            javax.swing.JLabel commentLabel = new javax.swing.JLabel();
+            org.openide.awt.Mnemonics.setLocalizedText(commentLabel, Bundle.OccurrencePanel_commonPropertyCommentLabel_text());
+            addItemToBag(gridY, 0, 0, VERTICAL_GAP, commentLabel);
+            javax.swing.JTextArea commentValue = new javax.swing.JTextArea();
+            commentValue.setText("FAKECOMMENT" + i);
+            commentValue.setEditable(false);
+            commentValue.setColumns(20);
+            commentValue.setLineWrap(true);
+            commentValue.setRows(3);
+            commentValue.setTabSize(4);
+            commentValue.setWrapStyleWord(true);
+            commentValue.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
+            addItemToBag(gridY, 1, 0, VERTICAL_GAP, commentValue);
+            gridY++;
+        }
+        //end for each
+    }
+
+    @Messages({
+        "OccurrencePanel.fileDetails.text=File Details",
+        "OccurrencePanel.filePathLabel.text=File Path:"
+    })
+    private void addFileDetails() {
+        javax.swing.JLabel fileDetailsLabel = new javax.swing.JLabel();
+        org.openide.awt.Mnemonics.setLocalizedText(fileDetailsLabel, Bundle.OccurrencePanel_fileDetails_text());
+        fileDetailsLabel.setFont(fileDetailsLabel.getFont().deriveFont(Font.BOLD, fileDetailsLabel.getFont().getSize()));
+        addItemToBag(gridY, 0, TOP_INSET, 0, fileDetailsLabel);
+        gridY++;
+        javax.swing.JLabel filePathLabel = new javax.swing.JLabel();
+        org.openide.awt.Mnemonics.setLocalizedText(filePathLabel, Bundle.OccurrencePanel_filePathLabel_text());
+        addItemToBag(gridY, 0, VERTICAL_GAP, VERTICAL_GAP, filePathLabel);
+        javax.swing.JTextArea filePathValue = new javax.swing.JTextArea();
+        filePathValue.setText("fakedataSourceName");
+        filePathValue.setEditable(false);
+        filePathValue.setColumns(20);
+        filePathValue.setLineWrap(true);
+        filePathValue.setRows(3);
+        filePathValue.setTabSize(4);
+        filePathValue.setWrapStyleWord(true);
+        filePathValue.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
+        addItemToBag(gridY, 1, VERTICAL_GAP, VERTICAL_GAP, filePathValue);
+        gridY++;
+    }
+
+    @Messages({
+        "OccurrencePanel.dataSourceDetails.text=Data Source Details",
+        "OccurrencePanel.dataSourceNameLabel.text=Name:"
+    })
+    private void addDataSourceDetails() {
+        javax.swing.JLabel dataSourceDetailsLabel = new javax.swing.JLabel();
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourceDetailsLabel, Bundle.OccurrencePanel_dataSourceDetails_text());
+        dataSourceDetailsLabel.setFont(dataSourceDetailsLabel.getFont().deriveFont(Font.BOLD, dataSourceDetailsLabel.getFont().getSize()));
+        addItemToBag(gridY, 0, TOP_INSET, 0, dataSourceDetailsLabel);
+        gridY++;
+        javax.swing.JLabel dataSourceNameLabel = new javax.swing.JLabel();
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourceNameLabel, Bundle.OccurrencePanel_dataSourceNameLabel_text());
+        addItemToBag(gridY, 0, VERTICAL_GAP, VERTICAL_GAP, dataSourceNameLabel);
+        javax.swing.JLabel dataSourceNameValue = new javax.swing.JLabel();
+        dataSourceNameValue.setText("fakedataSourceName");
+        addItemToBag(gridY, 1, VERTICAL_GAP, VERTICAL_GAP, dataSourceNameValue);
+        gridY++;
+    }
+
+    @Messages({
+        "OccurrencePanel.caseDetails.text=Case Details",
+        "OccurrencePanel.caseNameLabel.text=Name:",
+        "OccurrencePanel.caseCreatedDateLabel.text=Created Date:"
+    })
+    private void addCaseDetails() {
+        javax.swing.JLabel caseDetailsLabel = new javax.swing.JLabel();
+        org.openide.awt.Mnemonics.setLocalizedText(caseDetailsLabel, Bundle.OccurrencePanel_caseDetails_text());
+        caseDetailsLabel.setFont(caseDetailsLabel.getFont().deriveFont(Font.BOLD, caseDetailsLabel.getFont().getSize()));
+        addItemToBag(gridY, 0, TOP_INSET, 0, caseDetailsLabel);
+        gridY++;
+        javax.swing.JLabel caseNameLabel = new javax.swing.JLabel();
+        org.openide.awt.Mnemonics.setLocalizedText(caseNameLabel, Bundle.OccurrencePanel_caseNameLabel_text());
+        addItemToBag(gridY, 0, VERTICAL_GAP, 0, caseNameLabel);
+        javax.swing.JLabel caseNameValue = new javax.swing.JLabel();
+        caseNameValue.setText("fakecaseName");
+        addItemToBag(gridY, 1, VERTICAL_GAP, 0, caseNameValue);
+        gridY++;
+        javax.swing.JLabel caseCreatedLabel = new javax.swing.JLabel();
+        org.openide.awt.Mnemonics.setLocalizedText(caseCreatedLabel, Bundle.OccurrencePanel_caseCreatedDateLabel_text());
+        addItemToBag(gridY, 0, 0, BOTTOM_INSET, caseCreatedLabel);
+        javax.swing.JLabel caseCreatedValue = new javax.swing.JLabel();
+        caseCreatedValue.setText("fakecreateddate");
+        addItemToBag(gridY, 1, 0, BOTTOM_INSET, caseCreatedValue);
+        gridY++;
+    }
+
+    private void addItemToBag(int gridYLocation, int gridXLocation, int topInset, int bottomInset, javax.swing.JComponent item) {
+        java.awt.GridBagConstraints gridBagConstraints;
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = gridXLocation;
+        gridBagConstraints.gridy = gridYLocation;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
+        int leftInset = LEFT_INSET;
+        int rightInset = HORIZONTAL_GAP;
+        //change formating a bit if it is the value instead of the label
+        if (gridXLocation == 1) {
+            leftInset = 0;
+            rightInset = RIGHT_INSET;
+            gridBagConstraints.weightx = 0.1;
+            gridBagConstraints.gridwidth = 2;
+        }
+        gridBagConstraints.insets = new java.awt.Insets(topInset, leftInset, bottomInset, rightInset);
+        jPanel1.add(item, gridBagConstraints);
     }
 
     /**
@@ -26,256 +198,26 @@ public class OccurrencePanel extends javax.swing.JPanel {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        java.awt.GridBagConstraints gridBagConstraints;
 
         jScrollPane1 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
-        caseNameLabel = new javax.swing.JLabel();
-        caseCreatedDateLabel = new javax.swing.JLabel();
-        dataSourceNameLabel = new javax.swing.JLabel();
-        deviceIdLabel = new javax.swing.JLabel();
-        typeLabel = new javax.swing.JLabel();
-        valueFieldLabel = new javax.swing.JLabel();
-        filePathLabel = new javax.swing.JLabel();
-        knownStatusLabel = new javax.swing.JLabel();
-        commentLabel = new javax.swing.JLabel();
-        caseNameValue = new javax.swing.JLabel();
-        caseCreatedDateValue = new javax.swing.JLabel();
-        dataSourceNameValue = new javax.swing.JLabel();
-        deviceIdValue = new javax.swing.JLabel();
-        typeValue = new javax.swing.JLabel();
-        valueFieldValue = new javax.swing.JLabel();
-        knownStatusValue = new javax.swing.JLabel();
-        commentScrollPane = new javax.swing.JScrollPane();
-        commentTextArea = new javax.swing.JTextArea();
-        filePathScrollPane = new javax.swing.JScrollPane();
-        filePathTextArea = new javax.swing.JTextArea();
 
+        setPreferredSize(new java.awt.Dimension(400, 278));
+        setLayout(new java.awt.BorderLayout());
+
+        jScrollPane1.setPreferredSize(new java.awt.Dimension(285, 278));
+
+        jPanel1.setMinimumSize(new java.awt.Dimension(140, 202));
+        jPanel1.setPreferredSize(new java.awt.Dimension(283, 276));
         jPanel1.setLayout(new java.awt.GridBagLayout());
-
-        org.openide.awt.Mnemonics.setLocalizedText(caseNameLabel, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.caseNameLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(10, 10, 0, 4);
-        jPanel1.add(caseNameLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(caseCreatedDateLabel, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.caseCreatedDateLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 6, 4);
-        jPanel1.add(caseCreatedDateLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(dataSourceNameLabel, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.dataSourceNameLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(6, 10, 0, 4);
-        jPanel1.add(dataSourceNameLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(deviceIdLabel, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.deviceIdLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 6, 4);
-        jPanel1.add(deviceIdLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(typeLabel, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.typeLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(6, 10, 0, 4);
-        jPanel1.add(typeLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(valueFieldLabel, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.valueFieldLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 5;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
-        jPanel1.add(valueFieldLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(filePathLabel, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.filePathLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 7;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
-        jPanel1.add(filePathLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(knownStatusLabel, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.knownStatusLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 0, 4);
-        jPanel1.add(knownStatusLabel, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(commentLabel, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.commentLabel.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 8;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.insets = new java.awt.Insets(0, 10, 10, 4);
-        jPanel1.add(commentLabel, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(10, 0, 0, 10);
-        jPanel1.add(caseNameValue, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 6, 10);
-        jPanel1.add(caseCreatedDateValue, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(dataSourceNameValue, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.dataSourceNameValue.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(7, 0, 0, 10);
-        jPanel1.add(dataSourceNameValue, gridBagConstraints);
-
-        org.openide.awt.Mnemonics.setLocalizedText(deviceIdValue, org.openide.util.NbBundle.getMessage(OccurrencePanel.class, "OccurrencePanel.deviceIdValue.text")); // NOI18N
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 3;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 7, 10);
-        jPanel1.add(deviceIdValue, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 4;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(6, 0, 0, 10);
-        jPanel1.add(typeValue, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 5;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
-        jPanel1.add(valueFieldValue, gridBagConstraints);
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 6;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
-        jPanel1.add(knownStatusValue, gridBagConstraints);
-
-        commentTextArea.setEditable(false);
-        commentTextArea.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
-        commentTextArea.setColumns(20);
-        commentTextArea.setLineWrap(true);
-        commentTextArea.setRows(3);
-        commentTextArea.setTabSize(4);
-        commentTextArea.setWrapStyleWord(true);
-        commentScrollPane.setViewportView(commentTextArea);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 8;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 10, 10);
-        jPanel1.add(commentScrollPane, gridBagConstraints);
-
-        filePathTextArea.setEditable(false);
-        filePathTextArea.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
-        filePathTextArea.setColumns(20);
-        filePathTextArea.setLineWrap(true);
-        filePathTextArea.setRows(3);
-        filePathTextArea.setTabSize(4);
-        filePathTextArea.setWrapStyleWord(true);
-        filePathScrollPane.setViewportView(filePathTextArea);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridx = 1;
-        gridBagConstraints.gridy = 7;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.FIRST_LINE_START;
-        gridBagConstraints.weightx = 0.1;
-        gridBagConstraints.insets = new java.awt.Insets(0, 0, 0, 10);
-        jPanel1.add(filePathScrollPane, gridBagConstraints);
-
         jScrollPane1.setViewportView(jPanel1);
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1)
-        );
+        add(jScrollPane1, java.awt.BorderLayout.CENTER);
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel caseCreatedDateLabel;
-    private javax.swing.JLabel caseCreatedDateValue;
-    private javax.swing.JLabel caseNameLabel;
-    private javax.swing.JLabel caseNameValue;
-    private javax.swing.JLabel commentLabel;
-    private javax.swing.JScrollPane commentScrollPane;
-    private javax.swing.JTextArea commentTextArea;
-    private javax.swing.JLabel dataSourceNameLabel;
-    private javax.swing.JLabel dataSourceNameValue;
-    private javax.swing.JLabel deviceIdLabel;
-    private javax.swing.JLabel deviceIdValue;
-    private javax.swing.JLabel filePathLabel;
-    private javax.swing.JScrollPane filePathScrollPane;
-    private javax.swing.JTextArea filePathTextArea;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel knownStatusLabel;
-    private javax.swing.JLabel knownStatusValue;
-    private javax.swing.JLabel typeLabel;
-    private javax.swing.JLabel typeValue;
-    private javax.swing.JLabel valueFieldLabel;
-    private javax.swing.JLabel valueFieldValue;
     // End of variables declaration//GEN-END:variables
 }
