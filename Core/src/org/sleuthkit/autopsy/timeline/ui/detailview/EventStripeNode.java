@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
 import java.util.Set;

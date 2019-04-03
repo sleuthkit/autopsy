@@ -18,15 +18,14 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 
-import com.google.common.collect.ImmutableSortedSet;
-import static com.google.common.collect.Sets.union;
+import com.google.common.collect.Sets;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
-import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.DescriptionLoD;
@@ -100,9 +99,9 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
         Interval spanningInterval = IntervalUtils.span(cluster1.span, cluster2.span);
 
-        Set<Long> idsUnion = union(cluster1.getEventIDs(), cluster2.getEventIDs()).immutableCopy();
-        Set<Long> hashHitsUnion = union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits()).immutableCopy();
-        Set<Long> taggedUnion = union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags()).immutableCopy();
+        Set<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
+        Set<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
+        Set<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
 
         return new EventCluster(spanningInterval,
                 cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion,
@@ -116,7 +115,6 @@ public class EventCluster implements MultiEvent<EventStripe> {
         this.span = spanningInterval;
 
         this.type = type;
-
         this.hashHits = hashHits;
         this.tagged = tagged;
         this.description = description;
@@ -224,7 +222,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
     @Override
     public SortedSet<EventCluster> getClusters() {
-        return ImmutableSortedSet.orderedBy(Comparator.comparing(EventCluster::getStartMillis)).add(this).build();
+        return new TreeSet<>(singleton(this));
     }
 
     @Override
