@@ -118,7 +118,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         initComponents();
         customizeComponents();
-        tablesViewerSplitPane.setRightComponent(occurrencePanel);
+        detailsPanelScrollPane.setViewportView(occurrencePanel);
         reset();
     }
 
@@ -910,6 +910,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         dataSourcesTable = new javax.swing.JTable();
         propertiesTableScrollPane = new javax.swing.JScrollPane();
         filesTable = new javax.swing.JTable();
+        detailsPanelScrollPane = new javax.swing.JScrollPane();
 
         rightClickPopupMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
             public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
@@ -981,6 +982,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         caseDatasourceFileSplitPane.setRightComponent(propertiesTableScrollPane);
 
         tablesViewerSplitPane.setLeftComponent(caseDatasourceFileSplitPane);
+        tablesViewerSplitPane.setRightComponent(detailsPanelScrollPane);
 
         javax.swing.GroupLayout tableContainerPanelLayout = new javax.swing.GroupLayout(tableContainerPanel);
         tableContainerPanel.setLayout(tableContainerPanelLayout);
@@ -1022,7 +1024,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             .addGap(0, 0, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 2014, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1927, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
         otherCasesPanelLayout.setVerticalGroup(
@@ -1069,6 +1071,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private javax.swing.JTable casesTable;
     private javax.swing.JScrollPane dataSourceScrollPane;
     private javax.swing.JTable dataSourcesTable;
+    private javax.swing.JScrollPane detailsPanelScrollPane;
     private javax.swing.JLabel earliestCaseDate;
     private javax.swing.JLabel earliestCaseLabel;
     private javax.swing.JMenuItem exportToCSVMenuItem;

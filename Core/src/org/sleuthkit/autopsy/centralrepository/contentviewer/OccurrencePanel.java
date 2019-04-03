@@ -91,6 +91,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
             commentValue.setRows(3);
             commentValue.setTabSize(4);
             commentValue.setWrapStyleWord(true);
+            commentValue.setBorder(javax.swing.BorderFactory.createEtchedBorder());
             commentValue.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
             addItemToBag(gridY, 1, 0, VERTICAL_GAP, commentValue);
             gridY++;
@@ -119,6 +120,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
         filePathValue.setRows(3);
         filePathValue.setTabSize(4);
         filePathValue.setWrapStyleWord(true);
+        filePathValue.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         filePathValue.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
         addItemToBag(gridY, 1, VERTICAL_GAP, VERTICAL_GAP, filePathValue);
         gridY++;
@@ -187,7 +189,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
             gridBagConstraints.gridwidth = 2;
         }
         gridBagConstraints.insets = new java.awt.Insets(topInset, leftInset, bottomInset, rightInset);
-        jPanel1.add(item, gridBagConstraints);
+        add(item, gridBagConstraints);
     }
 
     /**
@@ -199,25 +201,11 @@ final class OccurrencePanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jPanel1 = new javax.swing.JPanel();
-
-        setPreferredSize(new java.awt.Dimension(400, 278));
-        setLayout(new java.awt.BorderLayout());
-
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(285, 278));
-
-        jPanel1.setMinimumSize(new java.awt.Dimension(140, 202));
-        jPanel1.setPreferredSize(new java.awt.Dimension(283, 276));
-        jPanel1.setLayout(new java.awt.GridBagLayout());
-        jScrollPane1.setViewportView(jPanel1);
-
-        add(jScrollPane1, java.awt.BorderLayout.CENTER);
+        setPreferredSize(new java.awt.Dimension(50, 30));
+        setLayout(new java.awt.GridBagLayout());
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
 }
