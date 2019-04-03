@@ -109,6 +109,8 @@
         <var name="aut-bin-name-todelete" value="${app.name}64.exe"/>
         <var name="aut-bin-name" value="${app.name}.exe"/>
 
+        <var name="gstreamer-path-todelete" value="${app.name}\gstreamer\1.0\x86_64"/>
+
         <var name="jvm.max.mem" value="512m" />
         
         <var name="jre-path" value="${env.JRE_HOME_32}"/>
@@ -117,16 +119,9 @@
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path-base} /SetAppdir -buildname DefaultBuild -path [ProgramFilesFolder][ProductName]-${app.version}"/>
         </exec>
-        
-        <var name="gstreamer-relative-path" value="gstreamer/1.0/x86"/>
-        <antcall target="install-gstreamer" inheritAll="true" />
-        
+
         <antcall target="ai-build" inheritAll="true" />
-        
-        <delete includeEmptyDirs="true">
-            <fileset dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
-        </delete>
-        
+
         <delete dir="${nbdist.dir}/installer_${app.name}_32-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_32-SetupFiles/installer_${app.name}_32.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-32bit.msi" />
     </target>
@@ -139,7 +134,9 @@
         
         <var name="aut-bin-name" value="${app.name}64.exe"/>
         <var name="aut-bin-name-todelete" value="${app.name}.exe"/>
-        
+
+        <var name="gstreamer-path-todelete" value="${app.name}\gstreamer\1.0\x86"/>
+
         <var name="jvm.max.mem" value="4G"/>
         
         <var name="jre-path" value="${env.JRE_HOME_64}"/>
@@ -153,48 +150,13 @@
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /SetPackageType x64"/>
         </exec>
-        
-        <var name="gstreamer-relative-path" value="gstreamer/1.0/x86_64"/>
-        <antcall target="install-gstreamer" inheritAll="true" />
-        
+
         <antcall target="ai-build" inheritAll="true" />
-        
-        <delete includeEmptyDirs="true">
-            <fileset dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
-        </delete>
-        
+
         <delete dir="${nbdist.dir}/installer_${app.name}_64-cache"/>
         <move file="${nbdist.dir}/installer_${app.name}_64-SetupFiles/installer_${app.name}_64.msi" tofile="${nbdist.dir}/${app.name}-${app.version}-64bit.msi" />
     </target>
-    
-    
-    <target name="install-gstreamer" description="Install a copy of GStreamer.">
-        <!-- Make GStreamer available to the installer -->
-        <mkdir dir="${inst-path}/${app.name}/${gstreamer-relative-path}"/>
-        <copy todir="${inst-path}/${app.name}/${gstreamer-relative-path}" >
-            <fileset dir="${thirdparty.dir}/${gstreamer-relative-path}"/>
-        </copy>
-        
-        <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
-             have it stored in a ZIP file. We'll extract it in place and remove
-             the ZIP file afterward. -->
-        <unzip src="${inst-path}/${app.name}/${gstreamer-relative-path}/lib/gstreamer-1.0/libgstlibav.zip"
-               dest="${inst-path}/${app.name}/${gstreamer-relative-path}/lib/gstreamer-1.0/"/>
-	<delete file="${inst-path}/${app.name}/${gstreamer-relative-path}/lib/gstreamer-1.0/libgstlibav.zip" />
-        
-        <!-- GStreamer needs special path info to be set -->
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]${app.name}\${gstreamer-relative-path}\bin -install_operation CreateUpdate -behavior Append -system_variable"/>
-        </exec>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name GSTREAMER_PATH -value [APPDIR]${app.name}\${gstreamer-relative-path}\lib\gstreamer-1.0 -install_operation CreateUpdate -behavior Append -system_variable"/>
-        </exec>
-        <exec executable="${ai-exe-path}">
-            <arg line="/edit ${aip-path} /NewEnvironment -name PATH -value %GSTREAMER_PATH% -install_operation CreateUpdate -behavior Append -system_variable"/>
-        </exec>
-    </target>
-   
-   
+
     <!-- 32/64 specific since config settings are different -->
     <target name="update-config" description="Updates configuration file with correct JVM args.">
         <!-- Update configuration file to include jre -->
@@ -227,6 +189,11 @@
         <echo message="Removing extra Autopsy executable..."/>
         <exec executable="${ai-exe-path}">
             <arg line="/edit ${aip-path} /DelFile APPDIR\bin\${aut-bin-name-todelete}"/>
+        </exec>
+
+        <echo message="Removing extra Gstreamer binaries..."/>
+        <exec executable="${ai-exe-path}">
+            <arg line="/edit ${aip-path} /DelFolder APPDIR\${gstreamer-path-todelete}"/>
         </exec>
     </target>
 
