@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
 import org.sleuthkit.datamodel.CommunicationsFilter;
+import org.sleuthkit.autopsy.communications.StateManager.CommunicationsState;
 
 /**
  * Provide the singleton EventBus.
@@ -37,6 +38,9 @@ final class CVTEvents {
     private CVTEvents() {
     }
 
+    /**
+     * Invoked when a ComminucationsFilter change occures.
+     */
     static final class FilterChangeEvent {
 
         private final CommunicationsFilter newFilter;
@@ -51,6 +55,9 @@ final class CVTEvents {
 
     }
 
+    /**
+     * Invoked when a change in the pinned accounts occures.
+     */
     static final class PinAccountsEvent {
 
         private final ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances;
@@ -70,6 +77,9 @@ final class CVTEvents {
         }
     }
 
+    /**
+     * Invoked when a change in the unpinned accounts occures.
+     */
     static final class UnpinAccountsEvent {
 
         private final ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances;
@@ -80,6 +90,36 @@ final class CVTEvents {
 
          UnpinAccountsEvent(Collection<? extends AccountDeviceInstanceKey> accountDeviceInstances) {
             this.accountDeviceInstances = ImmutableSet.copyOf(accountDeviceInstances);
+        }
+    }
+    
+    /**
+    * Invoked when there is a change in the state of the window.
+    */
+    static final class StateEvent {
+        private final CommunicationsState newState;
+        
+        StateEvent(CommunicationsState newState) {
+            this.newState = newState;
+        }
+        
+        public CommunicationsState getCommunicationsState(){
+            return newState;
+        }
+    }
+    
+    /**
+    * Invoked when change in the link analysis graph scale occures.
+    */
+    static final class ZoomEvent {
+        private final double zoomValue;
+        
+        ZoomEvent(double zoomValue) {
+            this.zoomValue = zoomValue;
+        }
+        
+        public double getZoomValue(){
+            return zoomValue;
         }
     }
 }

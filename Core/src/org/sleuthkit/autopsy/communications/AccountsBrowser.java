@@ -130,6 +130,19 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
             //Case is closed, do nothig.
         }
     }
+    
+    @Subscribe
+    void historyChange(CVTEvents.StateEvent event) {
+        try {
+            final CommunicationsManager commsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
+            accountsTableEM.setRootContext(new AbstractNode(Children.create(new AccountDeviceInstanceNodeFactory(commsManager, event.getCommunicationsState().getCommunicationsFilter()), true)));
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
+        } catch (NoCurrentCaseException ex) { //NOPMD empty catch clause
+            //Case is closed, do nothig.
+        }
+
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.

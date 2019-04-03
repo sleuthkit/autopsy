@@ -65,8 +65,8 @@ public final class CVTTopComponent extends TopComponent {
             proxyLookup.setNewLookups(selectedComponent.getLookup());
             filtersPane.setDeviceAccountTypeEnabled(browseVisualizeTabPane.getSelectedIndex() != 0);
         });
-
-
+        
+        
         /*
          * Connect the filtersPane to the accountsBrowser and visualizaionPanel
          * via an Eventbus
@@ -74,6 +74,7 @@ public final class CVTTopComponent extends TopComponent {
         CVTEvents.getCVTEventBus().register(this);
         CVTEvents.getCVTEventBus().register(vizPanel);
         CVTEvents.getCVTEventBus().register(accountsBrowser);
+        CVTEvents.getCVTEventBus().register(filtersPane);
     }
 
     @Subscribe
