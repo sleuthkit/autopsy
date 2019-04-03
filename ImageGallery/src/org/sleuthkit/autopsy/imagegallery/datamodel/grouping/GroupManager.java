@@ -646,13 +646,22 @@ public class GroupManager {
             // reset the hash cache
             controller.getHashSetManager().invalidateHashSetsCacheForFile(fileId);
 
+            // update the current path group, regardless of what grouping is in view
+            try {
+                DrawableFile file = getDrawableDB().getFileFromID(fileId);
+                String pathVal = file.getDrawablePath();
+                GroupKey<?> pathGroupKey = new GroupKey(DrawableAttribute.PATH,pathVal, file.getDataSource());
+                
+                updateCurrentPathGroup(pathGroupKey);
+            } catch (TskCoreException | TskDataException ex) {
+                Exceptions.printStackTrace(ex);
+            }   
+                    
             // Update the current groups (if it is visible)
             Set<GroupKey<?>> groupsForFile = getGroupKeysForCurrentGroupBy(fileId);
             for (GroupKey<?> gk : groupsForFile) {
                 // see if a group has been created yet for the key
                 DrawableGroup g = getGroupForKey(gk);
-               
-                updateCurrentPathGroup(gk);
                 addFileToGroup(g, gk, fileId);
             }
         }
@@ -758,8 +767,11 @@ public class GroupManager {
                     }
 
                     if (analyzedGroups.contains(group) == false) {
-                        analyzedGroups.add(group);
-                        sortAnalyzedGroups();
+                         // Add to analyzedGroups only if this is the grouping being viewed.
+                        if (getGroupBy() == group.getGroupKey().getAttribute()) {
+                            analyzedGroups.add(group);
+                            sortAnalyzedGroups();
+                        }
                     }
                     updateUnSeenGroups(group);
 
