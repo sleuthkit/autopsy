@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
@@ -26,7 +27,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Model for cells in the files section of the other occurrences data content viewer
+ * Model for cells in the files section of the other occurrences data content
+ * viewer
  */
 public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
@@ -57,7 +59,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
     private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
 
     OtherOccurrencesFilesTableModel() {
-        
+
     }
 
     @Override
@@ -100,15 +102,14 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
         return mapNodeInstanceData((OtherOccurrenceNodeInstanceData) nodeData, columnId);
     }
 
-    public TskData.FileKnown getKnownStatusForRow(int rowIdx){
-          if (rowIdx >= nodeDataList.size()) {
-              return TskData.FileKnown.UNKNOWN;
-          }
-          else {
-              return ((OtherOccurrenceNodeInstanceData)nodeDataList.get(rowIdx)).getKnown();
-          }
+    public TskData.FileKnown getKnownStatusForRow(int rowIdx) {
+        if (rowIdx >= nodeDataList.size()) {
+            return TskData.FileKnown.UNKNOWN;
+        } else {
+            return ((OtherOccurrenceNodeInstanceData) nodeDataList.get(rowIdx)).getKnown();
+        }
     }
-    
+
     /**
      * Map a column ID to the value in that cell for node instance data.
      *
@@ -147,6 +148,10 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
     void addNodeData(OtherOccurrenceNodeData newNodeData) {
         nodeDataList.add(newNodeData);
         fireTableDataChanged();
+    }
+
+    List<OtherOccurrenceNodeData> getNodeDataList() {
+        return Collections.unmodifiableList(nodeDataList);
     }
 
     /**

@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -95,10 +96,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private static final CorrelationCaseWrapper NO_RESULTS_CASE = new CorrelationCaseWrapper(Bundle.DataContentViewerOtherCases_table_noResultsFound());
     private static final int DEFAULT_MIN_CELL_WIDTH = 15;
 
-    private final OtherOccurrencesFilesTableModel tableModel;
+    private final OtherOccurrencesFilesTableModel filesTableModel;
     private final OtherOccurrencesCasesTableModel casesTableModel;
     private final OtherOccurrencesDataSourcesTableModel dataSourcesTableModel;
-    private OccurrencePanel occurrencePanel = new OccurrencePanel();
+    private final OccurrencePanel emptyOccurrencePanel = new OccurrencePanel(new ArrayList<>());
     private final Collection<CorrelationAttributeInstance> correlationAttributes;
     private String dataSourceName = "";
     private String deviceId = "";
@@ -111,14 +112,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
      * Creates new form DataContentViewerOtherCases
      */
     public DataContentViewerOtherCases() {
-        this.tableModel = new OtherOccurrencesFilesTableModel();
+        this.filesTableModel = new OtherOccurrencesFilesTableModel();
         this.casesTableModel = new OtherOccurrencesCasesTableModel();
         this.dataSourcesTableModel = new OtherOccurrencesDataSourcesTableModel();
         this.correlationAttributes = new ArrayList<>();
-
         initComponents();
         customizeComponents();
-        detailsPanelScrollPane.setViewportView(occurrencePanel);
         reset();
     }
 
@@ -163,6 +162,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         dataSourcesTable.getSelectionModel().addListSelectionListener((e) -> {
             if (Case.isCaseOpen()) {
                 updateOnDataSourceSelection();
+            }
+        });
+        filesTable.getSelectionModel().addListSelectionListener((e) -> {
+            if (Case.isCaseOpen()) {
+                updateOnFileSelection();
             }
         });
         casesTable.getRowSorter().toggleSortOrder(0);
@@ -227,7 +231,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             if (-1 != selectedRowViewIdx) {
                 EamDb dbManager = EamDb.getInstance();
                 int selectedRowModelIdx = filesTable.convertRowIndexToModel(selectedRowViewIdx);
-                OtherOccurrenceNodeInstanceData nodeData = (OtherOccurrenceNodeInstanceData) tableModel.getRow(selectedRowModelIdx);
+                OtherOccurrenceNodeInstanceData nodeData = (OtherOccurrenceNodeInstanceData) filesTableModel.getRow(selectedRowModelIdx);
                 CorrelationCase eamCasePartial = nodeData.getCorrelationAttributeInstance().getCorrelationCase();
                 if (eamCasePartial == null) {
                     JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
@@ -291,14 +295,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void writeSelectedRowsToFileAsCSV(File destFile) {
         StringBuilder content;
         int[] selectedRowViewIndices = filesTable.getSelectedRows();
-        int colCount = tableModel.getColumnCount();
+        int colCount = filesTableModel.getColumnCount();
 
         try (BufferedWriter writer = Files.newBufferedWriter(destFile.toPath())) {
 
             // write column names
             content = new StringBuilder("");
             for (int colIdx = 0; colIdx < colCount; colIdx++) {
-                content.append('"').append(tableModel.getColumnName(colIdx)).append('"');
+                content.append('"').append(filesTableModel.getColumnName(colIdx)).append('"');
                 if (colIdx < (colCount - 1)) {
                     content.append(",");
                 }
@@ -312,7 +316,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 content = new StringBuilder("");
                 for (int colIdx = 0; colIdx < colCount; colIdx++) {
                     int rowModelIdx = filesTable.convertRowIndexToModel(rowViewIdx);
-                    content.append('"').append(tableModel.getValueAt(rowModelIdx, colIdx)).append('"');
+                    content.append('"').append(filesTableModel.getValueAt(rowModelIdx, colIdx)).append('"');
                     if (colIdx < (colCount - 1)) {
                         content.append(",");
                     }
@@ -333,10 +337,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         // start with empty table
         casesTableModel.clearTable();
         dataSourcesTableModel.clearTable();
-        tableModel.clearTable();
+        filesTableModel.clearTable();
         correlationAttributes.clear();
         earliestCaseDate.setText(Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable());
         foundInLabel.setText("");
+        //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
+        emptyOccurrencePanel.getPreferredSize();
+        detailsPanelScrollPane.setViewportView(emptyOccurrencePanel);
     }
 
     @Override
@@ -795,7 +802,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void updateOnCaseSelection() {
         int[] selectedCaseIndexes = casesTable.getSelectedRows();
         dataSourcesTableModel.clearTable();
-        tableModel.clearTable();
+        filesTableModel.clearTable();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
             Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
@@ -830,7 +837,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void updateOnDataSourceSelection() {
         int[] selectedCaseIndexes = casesTable.getSelectedRows();
         int[] selectedDataSources = dataSourcesTable.getSelectedRows();
-        tableModel.clearTable();
+        filesTableModel.clearTable();
         for (CorrelationAttributeInstance corAttr : correlationAttributes) {
             Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
@@ -844,11 +851,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                 if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow)) != null
                                         && ((CorrelationCase) casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
                                         && dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                    tableModel.addNodeData(nodeData);
+                                    filesTableModel.addNodeData(nodeData);
                                 }
                             } else {
                                 if (dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
-                                    tableModel.addNodeData(nodeData);
+                                    filesTableModel.addNodeData(nodeData);
                                 }
                             }
                         } catch (EamDbException ex) {
@@ -858,16 +865,37 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 }
             }
         }
+        if (filesTable.getRowCount() > 0) {
+            filesTable.setRowSelectionInterval(0, 0);
+        }
+    }
+
+    private void updateOnFileSelection() {
+        //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
+        if (filesTable.getSelectedRowCount() == 1) {
+            OccurrencePanel selectedOccurrences = new OccurrencePanel(filesTableModel.getNodeDataList());
+            selectedOccurrences.getPreferredSize();
+            detailsPanelScrollPane.setViewportView(selectedOccurrences);
+        } else if (dataSourcesTable.getSelectedRowCount() == 1) {
+
+        } else if (casesTable.getSelectedRowCount() == 1) {
+
+        } else {
+            //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
+            emptyOccurrencePanel.getPreferredSize();
+            detailsPanelScrollPane.setViewportView(emptyOccurrencePanel);
+        }
+
     }
 
     /**
      * Adjust column widths to their preferred values.
      */
     private void setColumnWidths() {
-        for (int idx = 0; idx < tableModel.getColumnCount(); idx++) {
+        for (int idx = 0; idx < filesTableModel.getColumnCount(); idx++) {
             TableColumn column = filesTable.getColumnModel().getColumn(idx);
             column.setMinWidth(DEFAULT_MIN_CELL_WIDTH);
-            int columnWidth = tableModel.getColumnPreferredWidth(idx);
+            int columnWidth = filesTableModel.getColumnPreferredWidth(idx);
             if (columnWidth > 0) {
                 column.setPreferredWidth(columnWidth);
             }
@@ -951,7 +979,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         tablesViewerSplitPane.setResizeWeight(0.5);
 
         caseDatasourceFileSplitPane.setDividerLocation(300);
-        caseDatasourceFileSplitPane.setResizeWeight(0.67);
+        caseDatasourceFileSplitPane.setResizeWeight(0.6);
         caseDatasourceFileSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.caseDatasourceFileSplitPane.toolTipText")); // NOI18N
 
         caseDatasourceSplitPane.setDividerLocation(150);
@@ -978,7 +1006,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         filesTableScrollPane.setPreferredSize(new java.awt.Dimension(140, 30));
 
         filesTable.setAutoCreateRowSorter(true);
-        filesTable.setModel(tableModel);
+        filesTable.setModel(filesTableModel);
         filesTable.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.table.toolTip.text")); // NOI18N
         filesTable.setComponentPopupMenu(rightClickPopupMenu);
         filesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -1001,7 +1029,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         .addComponent(earliestCaseLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(earliestCaseDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(30, 30, 30)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(foundInLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 590, Short.MAX_VALUE))
                 .addContainerGap())
@@ -1010,7 +1038,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(tableContainerPanelLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
+                .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -1024,14 +1052,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(0, 0, 0))
+            .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 65, Short.MAX_VALUE)
+                .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 64, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1041,7 +1067,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         if (EamDb.isEnabled() && filesTable.getSelectedRowCount() == 1) {
             int rowIndex = filesTable.getSelectedRow();
-            OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) tableModel.getRow(rowIndex);
+            OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) filesTableModel.getRow(rowIndex);
             if (selectedNode instanceof OtherOccurrenceNodeInstanceData) {
                 OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) selectedNode;
                 enableCentralRepoActions = instanceData.isCentralRepoNode();

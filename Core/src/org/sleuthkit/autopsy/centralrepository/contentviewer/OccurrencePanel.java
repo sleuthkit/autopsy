@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.awt.Font;
+import java.util.List;
 import org.openide.util.NbBundle.Messages;
 
 final class OccurrencePanel extends javax.swing.JPanel {
@@ -32,16 +33,22 @@ final class OccurrencePanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
 
     private int gridY = 0;
+    List<OtherOccurrenceNodeData> nodeData;
 
     /**
      * Creates new form OccurrencePanel2
      */
-    OccurrencePanel() {
-        initComponents();
-        addInstanceDetails();
-        addFileDetails();
-        addDataSourceDetails();
-        addCaseDetails();
+    OccurrencePanel(List<OtherOccurrenceNodeData> nodeDataList) {
+        nodeData = nodeDataList;
+//        if (nodeData != null && !nodeData.isEmpty()) {
+            initComponents();
+            addInstanceDetails();
+            addFileDetails();
+            addDataSourceDetails();
+            addCaseDetails();
+//        }
+        //add filler to keep everything else at the top
+        addItemToBag(gridY, 0, 0, 0, new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767)));
     }
 
     @Messages({
@@ -189,6 +196,10 @@ final class OccurrencePanel extends javax.swing.JPanel {
             gridBagConstraints.gridwidth = 2;
         }
         gridBagConstraints.insets = new java.awt.Insets(topInset, leftInset, bottomInset, rightInset);
+        //if the item is a filler item ensure it will resize vertically
+        if (item instanceof javax.swing.Box.Filler) {
+            gridBagConstraints.weighty = 0.1;
+        }
         add(item, gridBagConstraints);
     }
 
@@ -201,7 +212,8 @@ final class OccurrencePanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setPreferredSize(new java.awt.Dimension(50, 30));
+        setMinimumSize(new java.awt.Dimension(50, 30));
+        setPreferredSize(null);
         setLayout(new java.awt.GridBagLayout());
     }// </editor-fold>//GEN-END:initComponents
 
