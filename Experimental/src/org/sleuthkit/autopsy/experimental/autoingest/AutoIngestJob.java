@@ -193,6 +193,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
             this.ingestThreadsSnapshot = Collections.emptyList();
             this.ingestJobsSnapshot = Collections.emptyList();
             this.moduleRunTimesSnapshot = Collections.emptyMap();
+            
         } catch (Exception ex) {
             throw new AutoIngestJobException(String.format("Error creating automated ingest job"), ex);
         }
@@ -651,7 +652,7 @@ final class AutoIngestJob implements Comparable<AutoIngestJob>, IngestProgressSn
         PENDING,
         PROCESSING,
         COMPLETED,
-        DELETED
+        DELETED // No longer used, retained for legacy jobs only.
     }
 
     /**

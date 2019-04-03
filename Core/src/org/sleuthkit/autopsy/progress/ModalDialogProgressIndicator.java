@@ -128,6 +128,7 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      *
      * @param cancellingMessage
      */
+    @Override
     public synchronized void setCancelling(String cancellingMessage) {
         cancelling = true;
         SwingUtilities.invokeLater(() -> {

@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 @TopComponent.Description(
         preferredID = "CasesDashboardTopComponent",
-        persistenceType = TopComponent.PERSISTENCE_ALWAYS
+        persistenceType = TopComponent.PERSISTENCE_NEVER
 )
 @TopComponent.Registration(
         mode = "dashboard",
@@ -62,8 +62,6 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
      * for multi-user cases. The top component is docked into the "dashboard
      * mode" defined by the auto ingest jobs top component.
      */
-    // RJCTODO: Consider moving all of the dashboard code into its own 
-    // admindashboards or dashboards package.
     public static void openTopComponent() {
         CasesDashboardTopComponent topComponent = (CasesDashboardTopComponent) WindowManager.getDefault().findTopComponent("CasesDashboardTopComponent"); // NON-NLS
         if (topComponent == null) {
