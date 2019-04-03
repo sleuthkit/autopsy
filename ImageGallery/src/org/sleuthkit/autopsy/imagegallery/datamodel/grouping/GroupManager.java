@@ -766,15 +766,12 @@ public class GroupManager {
                         groupMap.put(groupKey, group);
                     }
 
-                    if (analyzedGroups.contains(group) == false) {
-                         // Add to analyzedGroups only if this is the grouping being viewed.
-                        if (getGroupBy() == group.getGroupKey().getAttribute()) {
+                    if ((analyzedGroups.contains(group) == false) && 
+                        (getGroupBy() == group.getGroupKey().getAttribute())) { // Add to analyzedGroups only if this is the grouping being viewed.
                             analyzedGroups.add(group);
                             sortAnalyzedGroups();
-                        }
                     }
                     updateUnSeenGroups(group);
-
                     return group;
                 }
             }
