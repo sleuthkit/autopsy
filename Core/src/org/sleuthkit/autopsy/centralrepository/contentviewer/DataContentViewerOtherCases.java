@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -896,7 +896,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         showCaseDetailsMenuItem = new javax.swing.JMenuItem();
         showCommonalityMenuItem = new javax.swing.JMenuItem();
         CSVFileChooser = new javax.swing.JFileChooser();
-        otherCasesPanel = new javax.swing.JPanel();
         tableContainerPanel = new javax.swing.JPanel();
         earliestCaseLabel = new javax.swing.JLabel();
         earliestCaseDate = new javax.swing.JLabel();
@@ -934,13 +933,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         org.openide.awt.Mnemonics.setLocalizedText(showCommonalityMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCommonalityMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(showCommonalityMenuItem);
 
-        setMinimumSize(new java.awt.Dimension(1500, 10));
+        setMinimumSize(new java.awt.Dimension(600, 10));
         setOpaque(false);
-        setPreferredSize(new java.awt.Dimension(1500, 44));
+        setPreferredSize(new java.awt.Dimension(600, 63));
 
-        otherCasesPanel.setPreferredSize(new java.awt.Dimension(921, 62));
-
-        tableContainerPanel.setPreferredSize(new java.awt.Dimension(1500, 63));
+        tableContainerPanel.setPreferredSize(new java.awt.Dimension(600, 63));
         tableContainerPanel.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(earliestCaseLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.earliestCaseLabel.text")); // NOI18N
@@ -951,12 +948,16 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         org.openide.awt.Mnemonics.setLocalizedText(foundInLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.foundInLabel.text")); // NOI18N
 
         tablesViewerSplitPane.setDividerLocation(450);
+        tablesViewerSplitPane.setResizeWeight(0.5);
 
         caseDatasourceFileSplitPane.setDividerLocation(300);
+        caseDatasourceFileSplitPane.setResizeWeight(0.67);
+        caseDatasourceFileSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.caseDatasourceFileSplitPane.toolTipText")); // NOI18N
 
         caseDatasourceSplitPane.setDividerLocation(150);
+        caseDatasourceSplitPane.setResizeWeight(0.5);
 
-        caseScrollPane.setPreferredSize(new java.awt.Dimension(75, 30));
+        caseScrollPane.setPreferredSize(new java.awt.Dimension(140, 30));
 
         casesTable.setAutoCreateRowSorter(true);
         casesTable.setModel(casesTableModel);
@@ -964,7 +965,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         caseDatasourceSplitPane.setLeftComponent(caseScrollPane);
 
-        dataSourceScrollPane.setPreferredSize(new java.awt.Dimension(75, 30));
+        dataSourceScrollPane.setPreferredSize(new java.awt.Dimension(140, 30));
 
         dataSourcesTable.setAutoCreateRowSorter(true);
         dataSourcesTable.setModel(dataSourcesTableModel);
@@ -974,7 +975,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         caseDatasourceFileSplitPane.setLeftComponent(caseDatasourceSplitPane);
 
-        filesTableScrollPane.setPreferredSize(new java.awt.Dimension(75, 30));
+        filesTableScrollPane.setPreferredSize(new java.awt.Dimension(140, 30));
 
         filesTable.setAutoCreateRowSorter(true);
         filesTable.setModel(tableModel);
@@ -987,7 +988,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         tablesViewerSplitPane.setLeftComponent(caseDatasourceFileSplitPane);
 
-        detailsPanelScrollPane.setPreferredSize(new java.awt.Dimension(75, 30));
+        detailsPanelScrollPane.setPreferredSize(new java.awt.Dimension(200, 100));
         tablesViewerSplitPane.setRightComponent(detailsPanelScrollPane);
 
         javax.swing.GroupLayout tableContainerPanelLayout = new javax.swing.GroupLayout(tableContainerPanel);
@@ -997,54 +998,41 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             .addGroup(tableContainerPanelLayout.createSequentialGroup()
                 .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(tableContainerPanelLayout.createSequentialGroup()
-                        .addGap(321, 321, 321)
-                        .addComponent(foundInLabel))
-                    .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(tableContainerPanelLayout.createSequentialGroup()
-                        .addComponent(earliestCaseLabel)
+                        .addComponent(earliestCaseLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(earliestCaseDate)))
-                .addGap(0, 0, 0))
+                        .addComponent(earliestCaseDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(30, 30, 30)
+                        .addComponent(foundInLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 590, Short.MAX_VALUE))
+                .addContainerGap())
         );
         tableContainerPanelLayout.setVerticalGroup(
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, tableContainerPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(tableContainerPanelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(earliestCaseLabel)
-                    .addComponent(earliestCaseDate))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(foundInLabel)
+                .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(earliestCaseLabel)
+                        .addComponent(earliestCaseDate))
+                    .addComponent(foundInLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
-        );
-
-        javax.swing.GroupLayout otherCasesPanelLayout = new javax.swing.GroupLayout(otherCasesPanel);
-        otherCasesPanel.setLayout(otherCasesPanelLayout);
-        otherCasesPanelLayout.setHorizontalGroup(
-            otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(tableContainerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 578, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0))
-        );
-        otherCasesPanelLayout.setVerticalGroup(
-            otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                .addComponent(tableContainerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1500, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 84, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 65, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1078,7 +1066,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private javax.swing.JTable filesTable;
     private javax.swing.JScrollPane filesTableScrollPane;
     private javax.swing.JLabel foundInLabel;
-    private javax.swing.JPanel otherCasesPanel;
     private javax.swing.JPopupMenu rightClickPopupMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JMenuItem showCaseDetailsMenuItem;

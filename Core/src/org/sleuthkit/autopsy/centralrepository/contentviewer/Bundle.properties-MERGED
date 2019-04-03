@@ -50,6 +50,7 @@ OccurrencePanelOld.dataSourceNameValue.text=
 OccurrencePanelOld.jLabel1.text=jLabel1
 OccurrencePanelOld.commentLabel.text=Comment:
 OccurrencePanelOld.knownStatusLabel.text=Known Status:
+DataContentViewerOtherCases.caseDatasourceFileSplitPane.toolTipText=
 OtherOccurrencesCasesTableModel.case=Case
 OtherOccurrencesCasesTableModel.noData=No Data.
 OtherOccurrencesDataSourcesTableModel.dataSourceName=Data Source Name
