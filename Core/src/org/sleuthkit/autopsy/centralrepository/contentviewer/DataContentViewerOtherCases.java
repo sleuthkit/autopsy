@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.centralrepository.contentviewer;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -99,7 +101,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private final OtherOccurrencesFilesTableModel filesTableModel;
     private final OtherOccurrencesCasesTableModel casesTableModel;
     private final OtherOccurrencesDataSourcesTableModel dataSourcesTableModel;
-    private final OccurrencePanel emptyOccurrencePanel = new OccurrencePanel(new ArrayList<>());
+    private OccurrencePanel occurrencePanel;
     private final Collection<CorrelationAttributeInstance> correlationAttributes;
     private String dataSourceName = "";
     private String deviceId = "";
@@ -116,8 +118,18 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         this.casesTableModel = new OtherOccurrencesCasesTableModel();
         this.dataSourcesTableModel = new OtherOccurrencesDataSourcesTableModel();
         this.correlationAttributes = new ArrayList<>();
+        occurrencePanel = new OccurrencePanel(new ArrayList<>());
         initComponents();
         customizeComponents();
+
+        detailsPanelScrollPane.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent componentEvent) {
+                //when its resized make sure the width of the panel resizes to match the scroll pane width to avoid a horizontal scroll bar
+                occurrencePanel.setPreferredSize(new java.awt.Dimension(detailsPanelScrollPane.getPreferredSize().width, occurrencePanel.getPreferredSize().height));
+                detailsPanelScrollPane.setViewportView(occurrencePanel);
+            }
+        });
         reset();
     }
 
@@ -342,8 +354,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         earliestCaseDate.setText(Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable());
         foundInLabel.setText("");
         //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
-        emptyOccurrencePanel.getPreferredSize();
-        detailsPanelScrollPane.setViewportView(emptyOccurrencePanel);
+        occurrencePanel = new OccurrencePanel(new ArrayList<>());
+        occurrencePanel.getPreferredSize();
+        detailsPanelScrollPane.setViewportView(occurrencePanel);
     }
 
     @Override
@@ -873,19 +886,17 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void updateOnFileSelection() {
         //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
         if (filesTable.getSelectedRowCount() == 1) {
-            OccurrencePanel selectedOccurrences = new OccurrencePanel(filesTableModel.getNodeDataList());
-            selectedOccurrences.getPreferredSize();
-            detailsPanelScrollPane.setViewportView(selectedOccurrences);
+            occurrencePanel = new OccurrencePanel(filesTableModel.getNodeDataList());
         } else if (dataSourcesTable.getSelectedRowCount() == 1) {
-
+            
         } else if (casesTable.getSelectedRowCount() == 1) {
 
         } else {
             //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
-            emptyOccurrencePanel.getPreferredSize();
-            detailsPanelScrollPane.setViewportView(emptyOccurrencePanel);
+            occurrencePanel = new OccurrencePanel(new ArrayList<>());
         }
-
+        occurrencePanel.getPreferredSize();
+        detailsPanelScrollPane.setViewportView(occurrencePanel);
     }
 
     /**
@@ -1016,6 +1027,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         tablesViewerSplitPane.setLeftComponent(caseDatasourceFileSplitPane);
 
+        detailsPanelScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         detailsPanelScrollPane.setPreferredSize(new java.awt.Dimension(200, 100));
         tablesViewerSplitPane.setRightComponent(detailsPanelScrollPane);
 
