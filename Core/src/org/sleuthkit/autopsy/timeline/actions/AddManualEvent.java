@@ -52,7 +52,6 @@ import org.controlsfx.validation.Validator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.coreutils.TimeZoneUtils;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
@@ -118,16 +117,9 @@ public class AddManualEvent extends Action {
         setLongText(Bundle.AddManualEvent_longText());
 
         setEventHandler(actionEvent -> SwingUtilities.invokeLater(() -> {
-
             JEventCreationDialog dialog = new JEventCreationDialog(controller, epochMillis, SwingUtilities.windowForComponent(controller.getTopComponent()));
             dialog.setVisible(true);
-
-            Platform.runLater(() -> {
-                ManualEventInfo eventInfo = dialog.getManualEventInfo();
-                if (eventInfo != null) {
-                    addEvent(controller, eventInfo);
-                }
-            });
+            //actual event creation happens in the ok button listener.
         }));
     }
 
@@ -178,30 +170,29 @@ public class AddManualEvent extends Action {
      * Subclass of JDialog used to dislpay the JFXPanel with the event creation
      * widgets.
      */
-    static private final class JEventCreationDialog extends JDialog {
+    private final class JEventCreationDialog extends JDialog {
 
-        @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-        private ManualEventInfo manualEventInfo;
+        private final JFXPanel jfxPanel = new JFXPanel();
 
         private JEventCreationDialog(TimeLineController controller, Long epochMillis, java.awt.Window owner) {
             super(owner, Bundle.AddManualEvent_text(), Dialog.ModalityType.DOCUMENT_MODAL);
             setIconImages(owner.getIconImages());
             setResizable(false);
-            JFXPanel jfxPanel = new JFXPanel();
             add(jfxPanel);
 
             // make and configure the JavaFX components. 
             Platform.runLater(() -> {
                 // Custom DialogPane defined below. 
                 EventCreationDialogPane customPane = new EventCreationDialogPane(controller, epochMillis);
-                //configure ok button to pull ManualEventInfo object.
-                ((ButtonBase) customPane.lookupButton(ButtonType.OK)).setOnAction(event -> {
-                    manualEventInfo = customPane.getManualEventInfo();
-                    dispose();
-                });
                 //cancel button just closes the dialog
-                ((ButtonBase) customPane.lookupButton(ButtonType.CANCEL)).setOnAction(event -> {
-                    dispose();
+                ((ButtonBase) customPane.lookupButton(ButtonType.CANCEL)).setOnAction(event -> dispose());
+                //configure ok button to pull ManualEventInfo object and add it to case.
+                ((ButtonBase) customPane.lookupButton(ButtonType.OK)).setOnAction(event -> {
+                    ManualEventInfo manualEventInfo = customPane.getManualEventInfo();
+                    if (manualEventInfo != null) {
+                        addEvent(controller, manualEventInfo);
+                    }
+                    dispose(); //close and dispose the dialog.
                 });
 
                 jfxPanel.setScene(new Scene(customPane));
@@ -215,19 +206,10 @@ public class AddManualEvent extends Action {
         }
 
         /**
-         * Get the ManualEventInfo combining the user entered data.
-         *
-         * @return The ManualEventInfo containing the user entered event info.
+         * The DialogPane that hosts the controls/widgets that allows the user
+         * to enter the event information.
          */
-        private ManualEventInfo getManualEventInfo() {
-            return manualEventInfo;
-        }
-
-        /**
-         * The DialogPane that hosts the controls that allows the user to enter
-         * the event information.
-         */
-        static private class EventCreationDialogPane extends DialogPane {
+        private class EventCreationDialogPane extends DialogPane {
 
             @FXML
             private ChoiceBox<DataSource> dataSourceChooser;
@@ -263,24 +245,20 @@ public class AddManualEvent extends Action {
                 timeZoneChooser.getSelectionModel().select(TimeZoneUtils.createTimeZoneString(TimeLineController.getTimeZone()));
                 TextFields.bindAutoCompletion(timeZoneChooser.getEditor(), timeZoneList);
 
+                dataSourceChooser.setConverter(new StringConverter<DataSource>() {
+                    @Override
+                    public String toString(DataSource dataSource) {
+                        return Bundle.AddManualEvent_EventCreationDialogPane_dataSourceStringConverter_template(dataSource.getName(), dataSource.getId());
+                    }
+
+                    @Override
+                    public DataSource fromString(String string) {
+                        throw new UnsupportedOperationException(); // This method should never get called.
+                    }
+                });
                 try {
                     dataSourceChooser.getItems().setAll(controller.getAutopsyCase().getSleuthkitCase().getDataSources());
                     dataSourceChooser.getSelectionModel().select(0);
-                    dataSourceChooser.setConverter(new StringConverter<DataSource>() {
-
-                        @Override
-                        public String toString(DataSource dataSource) {
-                            return Bundle.AddManualEvent_EventCreationDialogPane_dataSourceStringConverter_template(dataSource.getName(), dataSource.getId());
-                        }
-
-                        /**
-                         * This method should never get called.
-                         */
-                        @Override
-                        public DataSource fromString(String string) {
-                            throw new UnsupportedOperationException();
-                        }
-                    });
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting datasources in case.", ex);//NON-NLS
                     SwingUtilities.invokeLater(() -> MessageNotifyUtil.Message.error(Bundle.AddManualEvent_EventCreationDialogPane_initialize_dataSourcesError()));
@@ -328,9 +306,9 @@ public class AddManualEvent extends Action {
      */
     private static class ManualEventInfo {
 
-        private DataSource datasource;
-        private String description;
-        private long time;
+        private final DataSource datasource;
+        private final String description;
+        private final long time;
 
         private ManualEventInfo(DataSource datasource, String description, long time) {
             this.datasource = datasource;
