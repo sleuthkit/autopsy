@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,8 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
 
     private final long eventID;
     /**
-     * The TSK object ID of the file (could be data source) this event is derived from.
+     * The TSK object ID of the file (could be data source) this event is
+     * derived from.
      */
     private final long fileObjId;
 
@@ -85,10 +86,11 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     private MultiEvent<?> parent = null;
 
     /**
-     * 
+     *
      * @param eventID
      * @param dataSourceObjId
-     * @param fileObjId Object Id of file (could be a data source) that event is associated with
+     * @param fileObjId        Object Id of file (could be a data source) that
+     *                         event is associated with
      * @param artifactID
      * @param time
      * @param type
@@ -96,7 +98,7 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
      * @param medDescription
      * @param shortDescription
      * @param hashHit
-     * @param tagged 
+     * @param tagged
      */
     public SingleDetailsViewEvent(long eventID, long dataSourceObjId, long fileObjId, Long artifactID, long time, EventType type, String fullDescription, String medDescription, String shortDescription, boolean hashHit, boolean tagged) {
         this.eventID = eventID;
@@ -182,7 +184,8 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     }
 
     /**
-     * Get the obj id of the file (which could be a data source) this event is derived from.
+     * Get the obj id of the file (which could be a data source) this event is
+     * derived from.
      *
      * @return the object id.
      */
@@ -230,8 +233,6 @@ public class SingleDetailsViewEvent implements DetailViewEvent {
     public String getShortDescription() {
         return getDescription(DescriptionLoD.SHORT);
     }
-
-    
 
     /**
      * Get the description of this event at the give level of detail(LoD).

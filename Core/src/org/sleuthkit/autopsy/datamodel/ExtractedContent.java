@@ -237,8 +237,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_ACCOUNT));
-            doNotShow.add(new BlackboardArtifact.Type(TSK_TL_EVENT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_TL_EVENT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE) );
         }
 

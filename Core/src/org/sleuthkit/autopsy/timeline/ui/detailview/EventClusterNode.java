@@ -259,7 +259,7 @@ final class EventClusterNode extends MultiEventNodeBase<EventCluster, EventStrip
 
     @Override
     EventNodeBase<?> createChildNode(EventStripe stripe) throws TskCoreException {
-        Set<Long> eventIDs = stripe.getEventIDs();
+         Set<Long> eventIDs = stripe.getEventIDs();
         if (eventIDs.size() == 1) {
             //If the stripe is a single event, make a single event node rather than a stripe node.
             TimelineEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));

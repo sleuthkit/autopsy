@@ -87,6 +87,7 @@ import org.sleuthkit.autopsy.timeline.zooming.TimeUnits;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomState;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT;
 import org.sleuthkit.datamodel.DescriptionLoD;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
@@ -734,7 +735,7 @@ public class TimeLineController {
                 break;
             case DATA_ADDED:
                 ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
-                if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
+                if (null != eventData && eventData.getBlackboardArtifactType().getTypeID() == TSK_HASHSET_HIT.getTypeID()) {
                     logFutureException(executor.submit(() -> filteredEvents.setHashHit(eventData.getArtifacts(), true)),
                             "Error executing task in response to DATA_ADDED event.",
                             "Error executing response to new data.");
