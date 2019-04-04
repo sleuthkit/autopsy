@@ -26,11 +26,15 @@ import com.google.common.eventbus.Subscribe;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -254,7 +258,7 @@ final public class DetailsViewModel {
                         .sorted(new DetailViewEvent.StartComparator())
                         .iterator();
                 EventCluster current = iterator.next();
-                
+
                 //JM Todo: maybe we can collect all clusters to merge in one go, rather than piece by piece for performance.
                 while (iterator.hasNext()) {
                     EventCluster next = iterator.next();
@@ -286,5 +290,20 @@ final public class DetailsViewModel {
         return stripeDescMap.values().stream()
                 .sorted(new DetailViewEvent.StartComparator())
                 .collect(Collectors.toList());
+    }
+
+    /** Make a sorted copy of the given set using the given comparator to sort
+     * it.
+     *
+     * @param <X>        The type of elements in the set.
+     * @param setA       The set of elements to copy into the new sorted set.
+     * @param comparator The comparator to sort the new set by.
+     *
+     * @return A sorted copy of the given set.
+     */
+    static <X> SortedSet<X> copyAsSortedSet(Collection<X> setA, Comparator<X> comparator) {
+        TreeSet<X> treeSet = new TreeSet<>(comparator);
+        treeSet.addAll(setA);
+        return treeSet;
     }
 }
