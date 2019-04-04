@@ -28,7 +28,7 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
     private static final long serialVersionUID = 1L;
 
     @NbBundle.Messages({"OtherOccurrencesDataSourcesTableModel.dataSourceName=Data Source Name",
-        "OtherOccurrencesDataSourcesTableModel.noData=No Data.",})
+        "OtherOccurrencesDataSourcesTableModel.noData=No Data."})
     enum TableColumns {
         DATASOURCE_NAME(Bundle.OtherOccurrencesDataSourcesTableModel_dataSourceName(), 190);
 

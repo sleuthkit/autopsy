@@ -36,7 +36,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
     private static final long serialVersionUID = 1L;
 
     @Messages({"OtherOccurrencesFilesTableModel.fileName=File Name",
-        "OtherOccurrencesFilesTableModel.noData=No Data.",})
+        "OtherOccurrencesFilesTableModel.noData=No Data."})
     enum TableColumns {
         FILE_NAME(Bundle.OtherOccurrencesFilesTableModel_fileName(), 190);
 
@@ -98,46 +98,9 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
     public Object getValueAt(int rowIdx, int colIdx) {
         if (0 == nodeKeys.size()) {
             return Bundle.OtherOccurrencesFilesTableModel_noData();
-        }System.out.println("Getting file path");
-        String nodeKey = nodeKeys.get(rowIdx);
-        System.out.println("KEY: " + nodeKey);
-        List<OtherOccurrenceNodeData> dataList = nodeMap.get(nodeKey);
-        OtherOccurrenceNodeInstanceData data = (OtherOccurrenceNodeInstanceData)dataList.get(0);
-        String filePath = data.getFilePath();
-        System.out.println("PATH: " + filePath);
-        String fileName = FilenameUtils.getName(filePath);
-        System.out.println("NAME: " + fileName);
-        return fileName;
-//        return nodeMap.get(FilenameUtils.getName(((OtherOccurrenceNodeInstanceData)nodeMap.get(nodeKeys.get(rowIdx)).get(0)).getFilePath()));
+        }
+        return FilenameUtils.getName(((OtherOccurrenceNodeInstanceData) nodeMap.get(nodeKeys.get(rowIdx)).get(0)).getFilePath());
     }
-
-//    public TskData.FileKnown getKnownStatusForRow(int rowIdx) {
-//        if (rowIdx >= nodeDataList.size()) {
-//            return TskData.FileKnown.UNKNOWN;
-//        } else {
-//            return ((OtherOccurrenceNodeInstanceData) nodeDataList.get(rowIdx)).getKnown();
-//        }
-//    }
-//    /**
-//     * Map a column ID to the value in that cell for node instance data.
-//     *
-//     * @param nodeData The node instance data.
-//     * @param columnId The ID of the cell column.
-//     *
-//     * @return The value in the cell.
-//     */
-//    private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
-//        String value = Bundle.OtherOccurrencesFilesTableModel_noData();
-//
-//        switch (columnId) {
-//            case FILE_NAME:
-//                value = FilenameUtils.getName(nodeData.getFilePath());
-//                break;
-//            default: //Use default "No data" value.
-//                break;
-//        }
-//        return value;
-//    }
 
     List<OtherOccurrenceNodeData> getRow(int rowIdx) {
         return nodeMap.get(nodeKeys.get(rowIdx));

@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.datamodel.TskData;
 
 final class OccurrencePanel extends javax.swing.JPanel {
 
@@ -36,7 +38,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
 
     private int gridY = 0;
     private final List<OtherOccurrenceNodeData> nodeData;
-    private final Set<String> caseNames = new HashSet<>();
+    private final Set<String> caseNaWmes = new HashSet<>();
     private final Set<String> dataSourceNames = new HashSet<>();
     private final Set<String> filePaths = new HashSet<>();
 
@@ -98,16 +100,18 @@ final class OccurrencePanel extends javax.swing.JPanel {
                     addItemToBag(gridY, 1, 0, 0, valueFieldValue);
                     gridY++;
                 }
-                String known = ((OtherOccurrenceNodeInstanceData) occurrence).getKnown().toString();
-                if (!known.isEmpty()) {
-                    javax.swing.JLabel knownStatusLabel = new javax.swing.JLabel();
-                    org.openide.awt.Mnemonics.setLocalizedText(knownStatusLabel, Bundle.OccurrencePanel_commonPropertyKnownStatusLabel_text());
-                    addItemToBag(gridY, 0, 0, 0, knownStatusLabel);
-                    javax.swing.JLabel knownStatusValue = new javax.swing.JLabel();
-                    knownStatusValue.setText(known);
-                    addItemToBag(gridY, 1, 0, 0, knownStatusValue);
-                    gridY++;
+                TskData.FileKnown knownStatus = ((OtherOccurrenceNodeInstanceData) occurrence).getKnown();
+                javax.swing.JLabel knownStatusLabel = new javax.swing.JLabel();
+                org.openide.awt.Mnemonics.setLocalizedText(knownStatusLabel, Bundle.OccurrencePanel_commonPropertyKnownStatusLabel_text());
+                addItemToBag(gridY, 0, 0, 0, knownStatusLabel);
+                javax.swing.JLabel knownStatusValue = new javax.swing.JLabel();
+                knownStatusValue.setText(knownStatus.toString());
+                if (knownStatus == TskData.FileKnown.BAD) {
+                    knownStatusValue.setForeground(Color.RED);
                 }
+                addItemToBag(gridY, 1, 0, 0, knownStatusValue);
+                gridY++;
+
                 String comment = ((OtherOccurrenceNodeInstanceData) occurrence).getComment();
                 if (!comment.isEmpty()) {
                     javax.swing.JLabel commentLabel = new javax.swing.JLabel();
@@ -202,6 +206,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
         caseNameValue.setText(caseName);
         addItemToBag(gridY, 1, VERTICAL_GAP, 0, caseNameValue);
         gridY++;
+        String caseCreatedDate = caseNames.size() > 1 ? "too many cases" : caseNames.iterator().next();
         javax.swing.JLabel caseCreatedLabel = new javax.swing.JLabel();
         org.openide.awt.Mnemonics.setLocalizedText(caseCreatedLabel, Bundle.OccurrencePanel_caseCreatedDateLabel_text());
         addItemToBag(gridY, 0, 0, BOTTOM_INSET, caseCreatedLabel);

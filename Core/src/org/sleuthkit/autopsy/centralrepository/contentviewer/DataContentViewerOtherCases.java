@@ -158,10 +158,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         showCaseDetailsMenuItem.addActionListener(actList);
         showCommonalityMenuItem.addActionListener(actList);
 
-        // Set background of every nth row as light grey.
-        TableCellRenderer renderer = new OtherOccurrencesFilesTableCellRenderer();
-        filesTable.setDefaultRenderer(Object.class, renderer);
-
         // Configure column sorting.
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(filesTable.getModel());
         filesTable.setRowSorter(sorter);
@@ -1008,7 +1004,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         filesTable.setModel(filesTableModel);
         filesTable.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.table.toolTip.text")); // NOI18N
         filesTable.setComponentPopupMenu(rightClickPopupMenu);
-        filesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        filesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         filesTableScrollPane.setViewportView(filesTable);
 
         caseDatasourceFileSplitPane.setRightComponent(filesTableScrollPane);
