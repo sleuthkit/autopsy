@@ -92,6 +92,11 @@ public final class CaseNodeData {
      * @param nodePath The case directory coordination service node path.
      *
      * @return The case node data.
+     *
+     * @throws CaseNodeDataException If there is an error writing the case node
+     *                               data.
+     * @throws InterruptedException  If the current thread is interrupted while
+     *                               waiting for the coordination service.
      */
     public static CaseNodeData readCaseNodeData(String nodePath) throws CaseNodeDataException, InterruptedException {
         try {
@@ -102,17 +107,17 @@ public final class CaseNodeData {
                 try {
                     nodeData = new CaseNodeData(nodeBytes);
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, String.format("Error reading coordination service node data for %s, will attempt to replace it", nodePath), ex); //NON-NLS
+                    logger.log(Level.WARNING, String.format("Error reading coordination service node data for %s, will attempt to replace it", nodePath.toUpperCase()), ex); //NON-NLS
                     CaseMetadata metadata = getCaseMetadata(nodePath);
                     nodeData = createCaseNodeData(metadata);
                 }
             } else {
-                logger.log(Level.INFO, String.format("Missing coordination service node data for %s, will attempt to create it", nodePath)); //NON-NLS
+                logger.log(Level.INFO, String.format("Missing coordination service node data for %s, will attempt to create it", nodePath.toUpperCase())); //NON-NLS
                 CaseMetadata metadata = getCaseMetadata(nodePath);
                 nodeData = createCaseNodeData(metadata);
             }
             if (nodeData.getVersion() < CaseNodeData.CURRENT_VERSION) {
-                nodeData = upgradeNodeData(nodePath, nodeData);
+                nodeData = upgradeCaseNodeData(nodePath, nodeData);
             }
             return nodeData;
 
@@ -155,7 +160,7 @@ public final class CaseNodeData {
      *                               directory do not exist.
      * @throws CaseMetadataException If the case metadata cannot be read.
      */
-    private static CaseNodeData upgradeNodeData(String nodePath, CaseNodeData oldNodeData) throws CaseNodeDataException, CaseMetadataException, ParseException, IOException, CoordinationServiceException, InterruptedException {
+    private static CaseNodeData upgradeCaseNodeData(String nodePath, CaseNodeData oldNodeData) throws CaseNodeDataException, CaseMetadataException, ParseException, IOException, CoordinationServiceException, InterruptedException {
         CaseMetadata metadata = getCaseMetadata(nodePath);
         CaseNodeData nodeData = oldNodeData;
         if (oldNodeData.getVersion() == 0) {
