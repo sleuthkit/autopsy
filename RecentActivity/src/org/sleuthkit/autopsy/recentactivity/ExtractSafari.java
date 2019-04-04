@@ -28,6 +28,7 @@ import com.dd.plist.PropertyListParser;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FilenameUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -49,7 +51,6 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
@@ -121,7 +122,7 @@ final class ExtractSafari extends Extract {
 
         } catch (IOException | TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Getting_History());
-            LOG.log(Level.SEVERE, "Exception thrown while processing history file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while processing history file.", ex); //NON-NLS
         }
 
         progressBar.progress(Bundle.Progress_Message_Safari_Bookmarks());
@@ -129,7 +130,7 @@ final class ExtractSafari extends Extract {
             processBookmarkPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
-            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file.", ex); //NON-NLS
         }
         
         progressBar.progress(Bundle.Progress_Message_Safari_Downloads());
@@ -137,15 +138,15 @@ final class ExtractSafari extends Extract {
             processDownloadsPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
-            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Download.plist file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Download.plist file.", ex); //NON-NLS
         }
 
         progressBar.progress(Bundle.Progress_Message_Safari_Cookies());
         try {
             processBinaryCookieFile(dataSource, context);
-        } catch (IOException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Cookies());
-            LOG.log(Level.SEVERE, "Exception thrown while processing Safari cookies file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while processing Safari cookies file.", ex); //NON-NLS
         }
     }
 
@@ -246,7 +247,7 @@ final class ExtractSafari extends Extract {
      * @throws TskCoreException
      * @throws IOException
      */
-    private void processBinaryCookieFile(Content dataSource, IngestJobContext context) throws TskCoreException, IOException {
+    private void processBinaryCookieFile(Content dataSource, IngestJobContext context) throws TskCoreException {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
         List<AbstractFile> files = fileManager.findFiles(dataSource, COOKIE_FILE_NAME, COOKIE_FOLDER);
@@ -261,7 +262,11 @@ final class ExtractSafari extends Extract {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
-            getCookies(context, file);
+            try {
+                getCookies(context, file);
+            } catch (IOException ex) {
+                LOG.log(Level.WARNING, String.format("Failed to get cookies from file %s", Paths.get(file.getUniquePath(), file.getName())), ex); 
+            }   
         }
     }
 
