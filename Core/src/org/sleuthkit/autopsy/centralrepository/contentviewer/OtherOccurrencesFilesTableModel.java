@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,27 +36,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     @Messages({"OtherOccurrencesFilesTableModel.fileName=File Name",
         "OtherOccurrencesFilesTableModel.noData=No Data."})
-    enum TableColumns {
-        FILE_NAME(Bundle.OtherOccurrencesFilesTableModel_fileName(), 190);
 
-        private final String columnName;
-        private final int columnWidth;
-
-        TableColumns(String columnName, int columnWidth) {
-            this.columnName = columnName;
-            this.columnWidth = columnWidth;
-        }
-
-        public String columnName() {
-            return columnName;
-        }
-
-        public int columnWidth() {
-            return columnWidth;
-        }
-    };
-
-    //  private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
     private final List<String> nodeKeys = new ArrayList<>();
     private final Map<String, List<OtherOccurrenceNodeData>> nodeMap = new HashMap<>();
 
@@ -67,21 +46,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return TableColumns.values().length;
-    }
-
-    /**
-     * Get the preferred width that has been configured for this column.
-     *
-     * A value of 0 means that no preferred width has been defined for this
-     * column.
-     *
-     * @param colIdx Column index
-     *
-     * @return preferred column width >= 0
-     */
-    public int getColumnPreferredWidth(int colIdx) {
-        return TableColumns.values()[colIdx].columnWidth();
+        return 1;
     }
 
     @Override
@@ -91,7 +56,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     @Override
     public String getColumnName(int colIdx) {
-        return TableColumns.values()[colIdx].columnName();
+        return Bundle.OtherOccurrencesFilesTableModel_fileName();
     }
 
     @Override
@@ -128,9 +93,9 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
-    List<OtherOccurrenceNodeData> getNodeDataList(String nodeKey) {
-        return Collections.unmodifiableList(nodeMap.get(nodeKey));
-    }
+//    List<OtherOccurrenceNodeData> getNodeDataList(String nodeKey) {
+//        return Collections.unmodifiableList(nodeMap.get(nodeKey));
+//    }
 
     private String createNodeKey(OtherOccurrenceNodeInstanceData nodeData) {
         return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath();

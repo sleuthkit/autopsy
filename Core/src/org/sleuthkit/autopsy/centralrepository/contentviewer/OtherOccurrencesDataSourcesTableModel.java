@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 
@@ -29,27 +29,8 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
 
     @NbBundle.Messages({"OtherOccurrencesDataSourcesTableModel.dataSourceName=Data Source Name",
         "OtherOccurrencesDataSourcesTableModel.noData=No Data."})
-    enum TableColumns {
-        DATASOURCE_NAME(Bundle.OtherOccurrencesDataSourcesTableModel_dataSourceName(), 190);
 
-        private final String columnName;
-        private final int columnWidth;
-
-        TableColumns(String columnName, int columnWidth) {
-            this.columnName = columnName;
-            this.columnWidth = columnWidth;
-        }
-
-        public String columnName() {
-            return columnName;
-        }
-
-        public int columnWidth() {
-            return columnWidth;
-        }
-    };
-
-    private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
+    private final LinkedHashSet<DataSourceColumnItem> dataSourceSet = new LinkedHashSet<>();
 
     OtherOccurrencesDataSourcesTableModel() {
 
@@ -57,71 +38,29 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return TableColumns.values().length;
-    }
-
-    /**
-     * Get the preferred width that has been configured for this column.
-     *
-     * A value of 0 means that no preferred width has been defined for this
-     * column.
-     *
-     * @param colIdx Column index
-     *
-     * @return preferred column width >= 0
-     */
-    public int getColumnPreferredWidth(int colIdx) {
-        return TableColumns.values()[colIdx].columnWidth();
+        return 1;
     }
 
     @Override
     public int getRowCount() {
-        return nodeDataList.size();
+        return dataSourceSet.size();
     }
 
     @Override
     public String getColumnName(int colIdx) {
-        return TableColumns.values()[colIdx].columnName();
+        return Bundle.OtherOccurrencesDataSourcesTableModel_dataSourceName();
     }
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == nodeDataList.size()) {
+        if (0 == dataSourceSet.size()) {
             return Bundle.OtherOccurrencesDataSourcesTableModel_noData();
         }
-
-        OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
-        TableColumns columnId = TableColumns.values()[colIdx];
-        return mapNodeInstanceData((OtherOccurrenceNodeInstanceData) nodeData, columnId);
+        return ((DataSourceColumnItem) dataSourceSet.toArray()[rowIdx]).getDataSourceName();
     }
 
     public String getDeviceIdForRow(int rowIdx) {
-        return ((OtherOccurrenceNodeInstanceData) nodeDataList.get(rowIdx)).getDeviceID();
-    }
-
-    /**
-     * Map a column ID to the value in that cell for node instance data.
-     *
-     * @param nodeData The node instance data.
-     * @param columnId The ID of the cell column.
-     *
-     * @return The value in the cell.
-     */
-    private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
-        String value = Bundle.OtherOccurrencesDataSourcesTableModel_noData();
-
-        switch (columnId) {
-            case DATASOURCE_NAME:
-                value = nodeData.getDataSourceName();
-                break;
-            default: //Use default "No data" value.
-                break;
-        }
-        return value;
-    }
-
-    Object getRow(int rowIdx) {
-        return nodeDataList.get(rowIdx);
+        return ((DataSourceColumnItem) dataSourceSet.toArray()[rowIdx]).getDeviceId();
     }
 
     @Override
@@ -135,7 +74,8 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
      * @param newNodeData data to add to the table
      */
     void addNodeData(OtherOccurrenceNodeData newNodeData) {
-        nodeDataList.add(newNodeData);
+//        String key = createDataSourceKey((OtherOccurrenceNodeInstanceData)newNodeData);
+        dataSourceSet.add(new DataSourceColumnItem((OtherOccurrenceNodeInstanceData) newNodeData));
         fireTableDataChanged();
     }
 
@@ -143,8 +83,50 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
      * Clear the node data table.
      */
     void clearTable() {
-        nodeDataList.clear();
+        dataSourceSet.clear();
         fireTableDataChanged();
+    }
+
+    private final class DataSourceColumnItem {
+
+        private final String caseName;
+        private final String deviceId;
+        private final String dataSourceName;
+
+        private DataSourceColumnItem(OtherOccurrenceNodeInstanceData nodeData) {
+            this(nodeData.getCaseName(), nodeData.getDeviceID(), nodeData.getDataSourceName());
+        }
+
+        private DataSourceColumnItem(String caseName, String deviceId, String dataSourceName) {
+            this.caseName = caseName;
+            this.deviceId = deviceId;
+            this.dataSourceName = dataSourceName;
+        }
+
+        private String getDeviceId() {
+            return deviceId;
+        }
+
+        private String getDataSourceName() {
+            return dataSourceName;
+        }
+
+        private String getCaseName() {
+            return caseName;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof DataSourceColumnItem
+                    && caseName.equals(((DataSourceColumnItem) other).getCaseName())
+                    && dataSourceName.equals(((DataSourceColumnItem) other).getDataSourceName())
+                    && deviceId.equals(((DataSourceColumnItem) other).getDeviceId());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(caseName, deviceId, dataSourceName);
+        }
     }
 
 }
