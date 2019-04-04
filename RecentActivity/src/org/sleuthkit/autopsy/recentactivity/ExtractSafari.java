@@ -265,7 +265,7 @@ final class ExtractSafari extends Extract {
             try {
                 getCookies(context, file);
             } catch (IOException ex) {
-                LOG.log(Level.WARNING, String.format("Failed to get cookies from file %s", Paths.get(file.getUniquePath(), file.getName())), ex); 
+                LOG.log(Level.WARNING, String.format("Failed to get cookies from file %s", Paths.get(file.getUniquePath(), file.getName()).toString()), ex); 
             }   
         }
     }
