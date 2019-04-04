@@ -20,11 +20,12 @@ package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.apache.commons.io.FilenameUtils;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Model for cells in the files section of the other occurrences data content
@@ -56,7 +57,9 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
         }
     };
 
-    private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
+    //  private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
+    private final List<String> nodeKeys = new ArrayList<>();
+    private final Map<String, List<OtherOccurrenceNodeData>> nodeMap = new HashMap<>();
 
     OtherOccurrencesFilesTableModel() {
 
@@ -83,7 +86,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     @Override
     public int getRowCount() {
-        return nodeDataList.size();
+        return nodeKeys.size();
     }
 
     @Override
@@ -93,46 +96,51 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == nodeDataList.size()) {
+        if (0 == nodeKeys.size()) {
             return Bundle.OtherOccurrencesFilesTableModel_noData();
-        }
-
-        OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
-        TableColumns columnId = TableColumns.values()[colIdx];
-        return mapNodeInstanceData((OtherOccurrenceNodeInstanceData) nodeData, columnId);
+        }System.out.println("Getting file path");
+        String nodeKey = nodeKeys.get(rowIdx);
+        System.out.println("KEY: " + nodeKey);
+        List<OtherOccurrenceNodeData> dataList = nodeMap.get(nodeKey);
+        OtherOccurrenceNodeInstanceData data = (OtherOccurrenceNodeInstanceData)dataList.get(0);
+        String filePath = data.getFilePath();
+        System.out.println("PATH: " + filePath);
+        String fileName = FilenameUtils.getName(filePath);
+        System.out.println("NAME: " + fileName);
+        return fileName;
+//        return nodeMap.get(FilenameUtils.getName(((OtherOccurrenceNodeInstanceData)nodeMap.get(nodeKeys.get(rowIdx)).get(0)).getFilePath()));
     }
 
-    public TskData.FileKnown getKnownStatusForRow(int rowIdx) {
-        if (rowIdx >= nodeDataList.size()) {
-            return TskData.FileKnown.UNKNOWN;
-        } else {
-            return ((OtherOccurrenceNodeInstanceData) nodeDataList.get(rowIdx)).getKnown();
-        }
-    }
+//    public TskData.FileKnown getKnownStatusForRow(int rowIdx) {
+//        if (rowIdx >= nodeDataList.size()) {
+//            return TskData.FileKnown.UNKNOWN;
+//        } else {
+//            return ((OtherOccurrenceNodeInstanceData) nodeDataList.get(rowIdx)).getKnown();
+//        }
+//    }
+//    /**
+//     * Map a column ID to the value in that cell for node instance data.
+//     *
+//     * @param nodeData The node instance data.
+//     * @param columnId The ID of the cell column.
+//     *
+//     * @return The value in the cell.
+//     */
+//    private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
+//        String value = Bundle.OtherOccurrencesFilesTableModel_noData();
+//
+//        switch (columnId) {
+//            case FILE_NAME:
+//                value = FilenameUtils.getName(nodeData.getFilePath());
+//                break;
+//            default: //Use default "No data" value.
+//                break;
+//        }
+//        return value;
+//    }
 
-    /**
-     * Map a column ID to the value in that cell for node instance data.
-     *
-     * @param nodeData The node instance data.
-     * @param columnId The ID of the cell column.
-     *
-     * @return The value in the cell.
-     */
-    private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
-        String value = Bundle.OtherOccurrencesFilesTableModel_noData();
-
-        switch (columnId) {
-            case FILE_NAME:
-                value = FilenameUtils.getName(nodeData.getFilePath());
-                break;
-            default: //Use default "No data" value.
-                break;
-        }
-        return value;
-    }
-
-    Object getRow(int rowIdx) {
-        return nodeDataList.get(rowIdx);
+    List<OtherOccurrenceNodeData> getRow(int rowIdx) {
+        return nodeMap.get(nodeKeys.get(rowIdx));
     }
 
     @Override
@@ -146,19 +154,31 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
      * @param newNodeData data to add to the table
      */
     void addNodeData(OtherOccurrenceNodeData newNodeData) {
-        nodeDataList.add(newNodeData);
+        String newNodeKey = createNodeKey((OtherOccurrenceNodeInstanceData) newNodeData);//FilenameUtils.getName(((OtherOccurrenceNodeInstanceData)newNodeData).getFilePath());
+        List<OtherOccurrenceNodeData> nodeList = nodeMap.get(newNodeKey);
+        if (nodeList == null) {
+            nodeKeys.add(newNodeKey);
+            nodeList = new ArrayList<>();
+        }
+        nodeList.add(newNodeData);
+        nodeMap.put(newNodeKey, nodeList);
         fireTableDataChanged();
     }
 
-    List<OtherOccurrenceNodeData> getNodeDataList() {
-        return Collections.unmodifiableList(nodeDataList);
+    List<OtherOccurrenceNodeData> getNodeDataList(String nodeKey) {
+        return Collections.unmodifiableList(nodeMap.get(nodeKey));
+    }
+
+    private String createNodeKey(OtherOccurrenceNodeInstanceData nodeData) {
+        return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath();
     }
 
     /**
      * Clear the node data table.
      */
     void clearTable() {
-        nodeDataList.clear();
+        nodeKeys.clear();
+        nodeMap.clear();
         fireTableDataChanged();
     }
 

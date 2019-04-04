@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.awt.Font;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.openide.util.NbBundle.Messages;
 
 final class OccurrencePanel extends javax.swing.JPanel {
@@ -33,20 +35,29 @@ final class OccurrencePanel extends javax.swing.JPanel {
     private static final long serialVersionUID = 1L;
 
     private int gridY = 0;
-    List<OtherOccurrenceNodeData> nodeData;
+    private final List<OtherOccurrenceNodeData> nodeData;
+    private final Set<String> caseNames = new HashSet<>();
+    private final Set<String> dataSourceNames = new HashSet<>();
+    private final Set<String> filePaths = new HashSet<>();
 
     /**
      * Creates new form OccurrencePanel2
      */
     OccurrencePanel(List<OtherOccurrenceNodeData> nodeDataList) {
         nodeData = nodeDataList;
-//        if (nodeData != null && !nodeData.isEmpty()) {
-            initComponents();
+        initComponents();
+        if (!nodeData.isEmpty()) {
             addInstanceDetails();
-            addFileDetails();
-            addDataSourceDetails();
-            addCaseDetails();
-//        }
+            if (!filePaths.isEmpty()) {
+                addFileDetails();
+            }
+            if (!dataSourceNames.isEmpty()) {
+                addDataSourceDetails();
+            }
+            if (!caseNames.isEmpty()) {
+                addCaseDetails();
+            }
+        }
         //add filler to keep everything else at the top
         addItemToBag(gridY, 0, 0, 0, new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767)));
     }
@@ -65,43 +76,60 @@ final class OccurrencePanel extends javax.swing.JPanel {
         addItemToBag(gridY, 0, TOP_INSET, 0, commonPropertiesLabel);
         gridY++;
         //for each other occurrence
-        for (int i = 1; i < 3; i++) {
-            javax.swing.JLabel typeLabel = new javax.swing.JLabel();
-            org.openide.awt.Mnemonics.setLocalizedText(typeLabel, Bundle.OccurrencePanel_commonPropertyTypeLabel_text());
-            addItemToBag(gridY, 0, VERTICAL_GAP, 0, typeLabel);
-            javax.swing.JLabel typeFieldValue = new javax.swing.JLabel();
-            typeFieldValue.setText("FAKETYPE" + i);
-            addItemToBag(gridY, 1, VERTICAL_GAP, 0, typeFieldValue);
-            gridY++;
-            javax.swing.JLabel valueLabel = new javax.swing.JLabel();
-            org.openide.awt.Mnemonics.setLocalizedText(valueLabel, Bundle.OccurrencePanel_commonPropertyValueLabel_text());
-            addItemToBag(gridY, 0, 0, 0, valueLabel);
-            javax.swing.JLabel valueFieldValue = new javax.swing.JLabel();
-            valueFieldValue.setText("FAKEVALUE" + i);
-            addItemToBag(gridY, 1, 0, 0, valueFieldValue);
-            gridY++;
-            javax.swing.JLabel knownStatusLabel = new javax.swing.JLabel();
-            org.openide.awt.Mnemonics.setLocalizedText(knownStatusLabel, Bundle.OccurrencePanel_commonPropertyKnownStatusLabel_text());
-            addItemToBag(gridY, 0, 0, 0, knownStatusLabel);
-            javax.swing.JLabel knownStatusValue = new javax.swing.JLabel();
-            knownStatusValue.setText("FAKESTATUS" + i);
-            addItemToBag(gridY, 1, 0, 0, knownStatusValue);
-            gridY++;
-            javax.swing.JLabel commentLabel = new javax.swing.JLabel();
-            org.openide.awt.Mnemonics.setLocalizedText(commentLabel, Bundle.OccurrencePanel_commonPropertyCommentLabel_text());
-            addItemToBag(gridY, 0, 0, VERTICAL_GAP, commentLabel);
-            javax.swing.JTextArea commentValue = new javax.swing.JTextArea();
-            commentValue.setText("FAKECOMMENT" + i);
-            commentValue.setEditable(false);
-            commentValue.setColumns(20);
-            commentValue.setLineWrap(true);
-            commentValue.setRows(3);
-            commentValue.setTabSize(4);
-            commentValue.setWrapStyleWord(true);
-            commentValue.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-            commentValue.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
-            addItemToBag(gridY, 1, 0, VERTICAL_GAP, commentValue);
-            gridY++;
+        for (OtherOccurrenceNodeData occurrence : nodeData) {
+            if (occurrence instanceof OtherOccurrenceNodeInstanceData) {
+                String type = ((OtherOccurrenceNodeInstanceData) occurrence).getType();
+                if (!type.isEmpty()) {
+                    javax.swing.JLabel typeLabel = new javax.swing.JLabel();
+                    org.openide.awt.Mnemonics.setLocalizedText(typeLabel, Bundle.OccurrencePanel_commonPropertyTypeLabel_text());
+                    addItemToBag(gridY, 0, VERTICAL_GAP, 0, typeLabel);
+                    javax.swing.JLabel typeFieldValue = new javax.swing.JLabel();
+                    typeFieldValue.setText(type);
+                    addItemToBag(gridY, 1, VERTICAL_GAP, 0, typeFieldValue);
+                    gridY++;
+                }
+                String value = ((OtherOccurrenceNodeInstanceData) occurrence).getValue();
+                if (!value.isEmpty()) {
+                    javax.swing.JLabel valueLabel = new javax.swing.JLabel();
+                    org.openide.awt.Mnemonics.setLocalizedText(valueLabel, Bundle.OccurrencePanel_commonPropertyValueLabel_text());
+                    addItemToBag(gridY, 0, 0, 0, valueLabel);
+                    javax.swing.JLabel valueFieldValue = new javax.swing.JLabel();
+                    valueFieldValue.setText(value);
+                    addItemToBag(gridY, 1, 0, 0, valueFieldValue);
+                    gridY++;
+                }
+                String known = ((OtherOccurrenceNodeInstanceData) occurrence).getKnown().toString();
+                if (!known.isEmpty()) {
+                    javax.swing.JLabel knownStatusLabel = new javax.swing.JLabel();
+                    org.openide.awt.Mnemonics.setLocalizedText(knownStatusLabel, Bundle.OccurrencePanel_commonPropertyKnownStatusLabel_text());
+                    addItemToBag(gridY, 0, 0, 0, knownStatusLabel);
+                    javax.swing.JLabel knownStatusValue = new javax.swing.JLabel();
+                    knownStatusValue.setText(known);
+                    addItemToBag(gridY, 1, 0, 0, knownStatusValue);
+                    gridY++;
+                }
+                String comment = ((OtherOccurrenceNodeInstanceData) occurrence).getComment();
+                if (!comment.isEmpty()) {
+                    javax.swing.JLabel commentLabel = new javax.swing.JLabel();
+                    org.openide.awt.Mnemonics.setLocalizedText(commentLabel, Bundle.OccurrencePanel_commonPropertyCommentLabel_text());
+                    addItemToBag(gridY, 0, 0, VERTICAL_GAP, commentLabel);
+                    javax.swing.JTextArea commentValue = new javax.swing.JTextArea();
+                    commentValue.setText(comment);
+                    commentValue.setEditable(false);
+                    commentValue.setColumns(20);
+                    commentValue.setLineWrap(true);
+                    commentValue.setRows(3);
+                    commentValue.setTabSize(4);
+                    commentValue.setWrapStyleWord(true);
+                    commentValue.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+                    commentValue.setBackground(javax.swing.UIManager.getDefaults().getColor("TextArea.disabledBackground"));
+                    addItemToBag(gridY, 1, 0, VERTICAL_GAP, commentValue);
+                    gridY++;
+                }
+                caseNames.add(((OtherOccurrenceNodeInstanceData) occurrence).getCaseName());
+                dataSourceNames.add(((OtherOccurrenceNodeInstanceData) occurrence).getDataSourceName());
+                filePaths.add(((OtherOccurrenceNodeInstanceData) occurrence).getFilePath());
+            }
         }
         //end for each
     }
@@ -111,16 +139,18 @@ final class OccurrencePanel extends javax.swing.JPanel {
         "OccurrencePanel.filePathLabel.text=File Path:"
     })
     private void addFileDetails() {
+
         javax.swing.JLabel fileDetailsLabel = new javax.swing.JLabel();
         org.openide.awt.Mnemonics.setLocalizedText(fileDetailsLabel, Bundle.OccurrencePanel_fileDetails_text());
         fileDetailsLabel.setFont(fileDetailsLabel.getFont().deriveFont(Font.BOLD, fileDetailsLabel.getFont().getSize()));
         addItemToBag(gridY, 0, TOP_INSET, 0, fileDetailsLabel);
         gridY++;
+        String filePath = filePaths.size() > 1 ? "too many files" : filePaths.iterator().next();
         javax.swing.JLabel filePathLabel = new javax.swing.JLabel();
         org.openide.awt.Mnemonics.setLocalizedText(filePathLabel, Bundle.OccurrencePanel_filePathLabel_text());
         addItemToBag(gridY, 0, VERTICAL_GAP, VERTICAL_GAP, filePathLabel);
         javax.swing.JTextArea filePathValue = new javax.swing.JTextArea();
-        filePathValue.setText("fakedataSourceName");
+        filePathValue.setText(filePath);
         filePathValue.setEditable(false);
         filePathValue.setColumns(20);
         filePathValue.setLineWrap(true);
@@ -143,11 +173,12 @@ final class OccurrencePanel extends javax.swing.JPanel {
         dataSourceDetailsLabel.setFont(dataSourceDetailsLabel.getFont().deriveFont(Font.BOLD, dataSourceDetailsLabel.getFont().getSize()));
         addItemToBag(gridY, 0, TOP_INSET, 0, dataSourceDetailsLabel);
         gridY++;
+        String dataSourceName = dataSourceNames.size() > 1 ? "too many data sources" : dataSourceNames.iterator().next();
         javax.swing.JLabel dataSourceNameLabel = new javax.swing.JLabel();
         org.openide.awt.Mnemonics.setLocalizedText(dataSourceNameLabel, Bundle.OccurrencePanel_dataSourceNameLabel_text());
         addItemToBag(gridY, 0, VERTICAL_GAP, VERTICAL_GAP, dataSourceNameLabel);
         javax.swing.JLabel dataSourceNameValue = new javax.swing.JLabel();
-        dataSourceNameValue.setText("fakedataSourceName");
+        dataSourceNameValue.setText(dataSourceName);
         addItemToBag(gridY, 1, VERTICAL_GAP, VERTICAL_GAP, dataSourceNameValue);
         gridY++;
     }
@@ -163,11 +194,12 @@ final class OccurrencePanel extends javax.swing.JPanel {
         caseDetailsLabel.setFont(caseDetailsLabel.getFont().deriveFont(Font.BOLD, caseDetailsLabel.getFont().getSize()));
         addItemToBag(gridY, 0, TOP_INSET, 0, caseDetailsLabel);
         gridY++;
+        String caseName = caseNames.size() > 1 ? "too many cases" : caseNames.iterator().next();
         javax.swing.JLabel caseNameLabel = new javax.swing.JLabel();
         org.openide.awt.Mnemonics.setLocalizedText(caseNameLabel, Bundle.OccurrencePanel_caseNameLabel_text());
         addItemToBag(gridY, 0, VERTICAL_GAP, 0, caseNameLabel);
         javax.swing.JLabel caseNameValue = new javax.swing.JLabel();
-        caseNameValue.setText("fakecaseName");
+        caseNameValue.setText(caseName);
         addItemToBag(gridY, 1, VERTICAL_GAP, 0, caseNameValue);
         gridY++;
         javax.swing.JLabel caseCreatedLabel = new javax.swing.JLabel();

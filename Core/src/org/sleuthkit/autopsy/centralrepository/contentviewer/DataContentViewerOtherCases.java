@@ -33,7 +33,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -237,47 +236,37 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         "DataContentViewerOtherCases.caseDetailsDialog.noCaseNameError=Error",
         "DataContentViewerOtherCases.noOpenCase.errMsg=No open case available."})
     private void showCaseDetails(int selectedRowViewIdx) {
-
         String caseDisplayName = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noCaseNameError();
+        String details = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails();
         try {
             if (-1 != selectedRowViewIdx) {
                 EamDb dbManager = EamDb.getInstance();
                 int selectedRowModelIdx = filesTable.convertRowIndexToModel(selectedRowViewIdx);
-                OtherOccurrenceNodeInstanceData nodeData = (OtherOccurrenceNodeInstanceData) filesTableModel.getRow(selectedRowModelIdx);
-                CorrelationCase eamCasePartial = nodeData.getCorrelationAttributeInstance().getCorrelationCase();
-                if (eamCasePartial == null) {
-                    JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
-                            Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetailsReference(),
-                            caseDisplayName,
-                            DEFAULT_OPTION, PLAIN_MESSAGE);
-                    return;
+                CorrelationCase eamCasePartial = null;
+                List<OtherOccurrenceNodeData> rowList = filesTableModel.getRow(selectedRowModelIdx);
+                if (rowList.get(0) instanceof OtherOccurrenceNodeInstanceData) {
+                    if (!rowList.isEmpty()) {
+                        eamCasePartial = ((OtherOccurrenceNodeInstanceData) rowList.get(0)).getCorrelationAttributeInstance().getCorrelationCase();
+                        caseDisplayName = eamCasePartial.getDisplayName();
+                        // query case details
+                        CorrelationCase eamCase = dbManager.getCaseByUUID(eamCasePartial.getCaseUUID());
+                        if (eamCase != null) {
+                            details = eamCase.getCaseDetailsOptionsPaneDialog();
+                        } else {
+                            details = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails();
+                        }
+                    } else {
+                        details = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetailsReference();
+                    }
+                } else {
+                    details = Bundle.DataContentViewerOtherCases_caseDetailsDialog_notSelected();
                 }
-                caseDisplayName = eamCasePartial.getDisplayName();
-                // query case details
-                CorrelationCase eamCase = dbManager.getCaseByUUID(eamCasePartial.getCaseUUID());
-                if (eamCase == null) {
-                    JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
-                            Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails(),
-                            caseDisplayName,
-                            DEFAULT_OPTION, PLAIN_MESSAGE);
-                    return;
-                }
-
-                // display case details
-                JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
-                        eamCase.getCaseDetailsOptionsPaneDialog(),
-                        caseDisplayName,
-                        DEFAULT_OPTION, PLAIN_MESSAGE);
-            } else {
-                JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
-                        Bundle.DataContentViewerOtherCases_caseDetailsDialog_notSelected(),
-                        caseDisplayName,
-                        DEFAULT_OPTION, PLAIN_MESSAGE);
             }
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error loading case details", ex);
+        } finally {
             JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
-                    Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails(),
+                    details,
                     caseDisplayName,
                     DEFAULT_OPTION, PLAIN_MESSAGE);
         }
@@ -301,6 +290,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
                 writeSelectedRowsToFileAsCSV(selectedFile);
             }
+
         }
     }
 
@@ -308,9 +298,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         StringBuilder content;
         int[] selectedRowViewIndices = filesTable.getSelectedRows();
         int colCount = filesTableModel.getColumnCount();
-
         try (BufferedWriter writer = Files.newBufferedWriter(destFile.toPath())) {
-
             // write column names
             content = new StringBuilder("");
             for (int colIdx = 0; colIdx < colCount; colIdx++) {
@@ -319,7 +307,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     content.append(",");
                 }
             }
-
             content.append(System.getProperty("line.separator"));
             writer.write(content.toString());
 
@@ -387,6 +374,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     @Override
     public int isPreferred(Node node) {
         return 1;
+
     }
 
     /**
@@ -886,9 +874,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void updateOnFileSelection() {
         //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
         if (filesTable.getSelectedRowCount() == 1) {
-            occurrencePanel = new OccurrencePanel(filesTableModel.getNodeDataList());
+            occurrencePanel = new OccurrencePanel(filesTableModel.getRow(filesTable.convertRowIndexToModel(filesTable.getSelectedRow())));
         } else if (dataSourcesTable.getSelectedRowCount() == 1) {
-            
+
         } else if (casesTable.getSelectedRowCount() == 1) {
 
         } else {
@@ -1075,18 +1063,18 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }// </editor-fold>//GEN-END:initComponents
 
     private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
-        boolean enableCentralRepoActions = false;
-
-        if (EamDb.isEnabled() && filesTable.getSelectedRowCount() == 1) {
-            int rowIndex = filesTable.getSelectedRow();
-            OtherOccurrenceNodeData selectedNode = (OtherOccurrenceNodeData) filesTableModel.getRow(rowIndex);
-            if (selectedNode instanceof OtherOccurrenceNodeInstanceData) {
-                OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) selectedNode;
-                enableCentralRepoActions = instanceData.isCentralRepoNode();
-            }
-        }
-        showCaseDetailsMenuItem.setVisible(enableCentralRepoActions);
-        showCommonalityMenuItem.setVisible(enableCentralRepoActions);
+//        boolean enableCentralRepoActions = false;
+//
+//        if (EamDb.isEnabled() && filesTable.getSelectedRowCount() == 1) {
+//            int rowIndex = filesTable.getSelectedRow();
+//            List<OtherOccurrenceNodeData> selectedNode = (OtherOccurrenceNodeData) filesTableModel.getRow(rowIndex);
+//            if (selectedNode instanceof OtherOccurrenceNodeInstanceData) {
+//                OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) selectedNode;
+//                enableCentralRepoActions = instanceData.isCentralRepoNode();
+//            }
+//        }
+//        showCaseDetailsMenuItem.setVisible(enableCentralRepoActions);
+//        showCommonalityMenuItem.setVisible(enableCentralRepoActions);
     }//GEN-LAST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

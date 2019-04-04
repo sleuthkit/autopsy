@@ -24,7 +24,6 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Renderer for cells in the files section of the other occurrences data content viewer
@@ -49,17 +48,17 @@ public class OtherOccurrencesFilesTableCellRenderer implements TableCellRenderer
             foreground = Color.WHITE;
             background = new Color(51,153,255);
         } else {
-            TskData.FileKnown knownStatus = ((OtherOccurrencesFilesTableModel)table.getModel()).getKnownStatusForRow(table.convertRowIndexToModel(row));
-            if (knownStatus.equals(TskData.FileKnown.BAD)) {
-                    foreground = Color.WHITE;
-                    background = Color.RED;
-            } else if (knownStatus.equals(TskData.FileKnown.UNKNOWN)) {
+//            TskData.FileKnown knownStatus = ((OtherOccurrencesFilesTableModel)table.getModel()).getKnownStatusForRow(table.convertRowIndexToModel(row));
+//            if (knownStatus.equals(TskData.FileKnown.BAD)) {
+//                    foreground = Color.WHITE;
+//                    background = Color.RED;
+//            } else if (knownStatus.equals(TskData.FileKnown.UNKNOWN)) {
+//                    foreground = Color.BLACK;
+//                    background = Color.WHITE;
+//            } else {
                     foreground = Color.BLACK;
                     background = Color.WHITE;
-            } else {
-                    foreground = Color.BLACK;
-                    background = Color.WHITE;
-            }
+//            }
         }
         renderer.setForeground(foreground);
         renderer.setBackground(background);
