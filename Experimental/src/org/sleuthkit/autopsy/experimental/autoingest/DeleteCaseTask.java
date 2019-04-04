@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CategoryNode;
@@ -785,12 +786,14 @@ final class DeleteCaseTask implements Runnable {
      * case.
      *
      * @param flag The flag to set.
+     *
+     * @throws InterruptedException If the interrupted flag is set.
      */
-    private void setDeletedItemFlag(CaseNodeData.DeletedFlags flag) {
+    private void setDeletedItemFlag(CaseNodeData.DeletedFlags flag) throws InterruptedException {
         try {
             caseNodeData.setDeletedFlag(flag);
-            coordinationService.setNodeData(CategoryNode.CASES, caseNodeData.getDirectory().toString(), caseNodeData.toArray());
-        } catch (IOException | CoordinationServiceException | InterruptedException ex) {
+            CaseNodeData.writeCaseNodeData(caseNodeData);
+        } catch (CaseNodeDataException ex) {
             logger.log(Level.SEVERE, String.format("Error updating deleted item flag %s for %s", flag.name(), caseNodeData.getDisplayName()), ex);
         }
     }

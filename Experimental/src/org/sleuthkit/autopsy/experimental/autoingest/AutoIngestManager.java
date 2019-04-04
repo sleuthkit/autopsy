@@ -62,6 +62,7 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseDetails;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
@@ -1016,22 +1017,19 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
      *
      * @param caseDirectoryPath The case directory path.
      *
-     * @throws CoordinationServiceException If there was an error getting the
-     *                                      node data from the cooordination
-     *                                      service.
-     * @throws IOException                  If the node data was missing or
-     *                                      there was an error interpreting it.
-     * @throws InterruptedException         If the thread running the input
-     *                                      directory scan task is interrupted
-     *                                      while blocked, i.e., if auto ingest
-     *                                      is shutting down.
+     * @throws InterruptedException  If the thread running the input directory
+     *                               scan task is interrupted while blocked,
+     *                               i.e., if auto ingest is shutting down.
      */
-    private void setCaseNodeDataErrorsOccurred(Path caseDirectoryPath) throws IOException, CoordinationServiceException, InterruptedException {
-        byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString());
-        CaseNodeData caseNodeData = new CaseNodeData(rawData);
-        caseNodeData.setErrorsOccurred(true);
-        rawData = caseNodeData.toArray();
-        coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, caseDirectoryPath.toString(), rawData);
+    private void setCaseNodeDataErrorsOccurred(Path caseDirectoryPath) throws InterruptedException {
+        try {
+            CaseNodeData caseNodeData = CaseNodeData.readCaseNodeData(caseDirectoryPath.toString());
+            caseNodeData.setErrorsOccurred(true);
+            CaseNodeData.writeCaseNodeData(caseNodeData);
+        } catch (CaseNodeDataException ex) {
+            sysLogger.log(Level.WARNING, String.format("Error attempting to set error flag in case node data for %s", caseDirectoryPath), ex);
+        }
+
     }
 
     /**
@@ -1381,11 +1379,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             if (null != caseDirectoryPath) {
                 job.setCaseDirectoryPath(caseDirectoryPath);
                 job.setErrorsOccurred(true);
-                try {
-                    setCaseNodeDataErrorsOccurred(caseDirectoryPath);
-                } catch (IOException ex) {
-                    sysLogger.log(Level.WARNING, String.format("Error attempting to set error flag in case node data for %s", caseDirectoryPath), ex);
-                }
+                setCaseNodeDataErrorsOccurred(caseDirectoryPath);
             } else {
                 job.setErrorsOccurred(false);
             }
