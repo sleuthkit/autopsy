@@ -777,7 +777,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         } else if (caseCount == 0) {
             casesTableModel.addCorrelationCase(NO_RESULTS_CASE);
         }
-        setColumnWidths();
         setEarliestCaseDate();
         foundInLabel.setText(String.format(Bundle.DataContentViewerOtherCases_foundIn_text(), totalCount, caseCount, dataSources.size()));
         if (caseCount > 0) {
@@ -881,27 +880,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         }
         occurrencePanel.getPreferredSize();
         detailsPanelScrollPane.setViewportView(occurrencePanel);
-    }
-
-    /**
-     * Adjust column widths to their preferred values.
-     */
-    private void setColumnWidths() {
-        for (int idx = 0; idx < filesTableModel.getColumnCount(); idx++) {
-            TableColumn column = filesTable.getColumnModel().getColumn(idx);
-            column.setMinWidth(DEFAULT_MIN_CELL_WIDTH);
-            int columnWidth = filesTableModel.getColumnPreferredWidth(idx);
-            if (columnWidth > 0) {
-                column.setPreferredWidth(columnWidth);
-            }
-        }
-        for (int idx = 0; idx < dataSourcesTable.getColumnCount(); idx++) {
-            if (dataSourcesTable.getColumnModel().getColumn(idx).getHeaderValue().toString().equals(Bundle.DataContentViewerOtherCases_dataSources_header_text())) {
-                dataSourcesTable.getColumnModel().getColumn(idx).setPreferredWidth(100);
-            } else {
-                dataSourcesTable.getColumnModel().getColumn(idx).setPreferredWidth(210);
-            }
-        }
     }
 
     /**
