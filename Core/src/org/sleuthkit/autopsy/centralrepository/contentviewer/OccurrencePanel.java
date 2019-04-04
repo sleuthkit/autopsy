@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -138,9 +140,11 @@ final class OccurrencePanel extends javax.swing.JPanel {
                 try {
                     OtherOccurrenceNodeInstanceData nodeData = ((OtherOccurrenceNodeInstanceData) occurrence);
                     if (nodeData.isCentralRepoNode()) {
-                        caseDate = nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCreationDate();
-                    }
-                    else {
+                        if (EamDb.isEnabled()) {
+                            CorrelationCase partialCase = nodeData.getCorrelationAttributeInstance().getCorrelationCase();
+                            caseDate = EamDb.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
+                        }
+                    } else {
                         caseDate = Case.getCurrentCase().getCreatedDate();
                     }
                 } catch (EamDbException ex) {

@@ -871,9 +871,11 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         if (filesTable.getSelectedRowCount() == 1) {
             occurrencePanel = new OccurrencePanel(filesTableModel.getRow(filesTable.convertRowIndexToModel(filesTable.getSelectedRow())));
         } else if (dataSourcesTable.getSelectedRowCount() == 1) {
-
+            //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
+            occurrencePanel = new OccurrencePanel(new ArrayList<>());
         } else if (casesTable.getSelectedRowCount() == 1) {
-
+            //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
+            occurrencePanel = new OccurrencePanel(new ArrayList<>());
         } else {
             //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
             occurrencePanel = new OccurrencePanel(new ArrayList<>());
