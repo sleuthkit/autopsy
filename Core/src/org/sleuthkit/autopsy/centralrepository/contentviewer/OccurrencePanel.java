@@ -26,15 +26,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
 
 final class OccurrencePanel extends javax.swing.JPanel {
 
+    private static final Logger LOGGER = Logger.getLogger(OccurrencePanel.class.getName());
     private static final int LEFT_INSET = 10;
     private static final int RIGHT_INSET = 10;
     private static final int TOP_INSET = 10;
@@ -51,16 +54,18 @@ final class OccurrencePanel extends javax.swing.JPanel {
 
     OccurrencePanel() {
         nodeDataList = new ArrayList<>();
+        customizeComponents();
     }
 
     OccurrencePanel(String caseName, String caseCreatedDate) {
-        this();
+        nodeDataList = new ArrayList<>();
         caseNamesAndDates.put(caseName, caseCreatedDate);
         customizeComponents();
     }
 
     OccurrencePanel(String caseName, String caseCreatedDate, String dataSourceName) {
-        this(caseName, caseCreatedDate);
+        nodeDataList = new ArrayList<>();
+        caseNamesAndDates.put(caseName, caseCreatedDate);
         dataSourceNames.add(dataSourceName);
         customizeComponents();
     }
@@ -169,7 +174,7 @@ final class OccurrencePanel extends javax.swing.JPanel {
                         caseDate = Case.getCurrentCase().getCreatedDate();
                     }
                 } catch (EamDbException ex) {
-                    System.out.println("UNABLE TO GET CASE DATE");
+                    LOGGER.log(Level.WARNING, "Error getting case created date for other occurrence content viewer", ex);
                 }
                 caseNamesAndDates.put(((OtherOccurrenceNodeInstanceData) occurrence).getCaseName(), caseDate);
                 dataSourceNames.add(((OtherOccurrenceNodeInstanceData) occurrence).getDataSourceName());

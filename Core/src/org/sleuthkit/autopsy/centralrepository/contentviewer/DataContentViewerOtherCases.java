@@ -50,14 +50,11 @@ import static javax.swing.JOptionPane.PLAIN_MESSAGE;
 import static javax.swing.JOptionPane.ERROR_MESSAGE;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -134,23 +131,20 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     private void customizeComponents() {
-        ActionListener actList = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JMenuItem jmi = (JMenuItem) e.getSource();
-                if (jmi.equals(selectAllMenuItem)) {
-                    filesTable.selectAll();
-                } else if (jmi.equals(showCaseDetailsMenuItem)) {
-                    showCaseDetails(filesTable.getSelectedRow());
-                } else if (jmi.equals(exportToCSVMenuItem)) {
-                    try {
-                        saveToCSV();
-                    } catch (NoCurrentCaseException ex) {
-                        LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
-                    }
-                } else if (jmi.equals(showCommonalityMenuItem)) {
-                    showCommonalityDetails();
+        ActionListener actList = (ActionEvent e) -> {
+            JMenuItem jmi = (JMenuItem) e.getSource();
+            if (jmi.equals(selectAllMenuItem)) {
+                filesTable.selectAll();
+            } else if (jmi.equals(showCaseDetailsMenuItem)) {
+                showCaseDetails(filesTable.getSelectedRow());
+            } else if (jmi.equals(exportToCSVMenuItem)) {
+                try {
+                    saveToCSV();
+                } catch (NoCurrentCaseException ex) {
+                    LOGGER.log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
                 }
+            } else if (jmi.equals(showCommonalityMenuItem)) {
+                showCommonalityDetails();
             }
         };
 
@@ -174,6 +168,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         });
         filesTable.getSelectionModel().addListSelectionListener((e) -> {
             if (Case.isCaseOpen()) {
+                occurrencePanel = new OccurrencePanel();
                 updateOnFileSelection();
             }
         });
@@ -239,11 +234,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             if (-1 != selectedRowViewIdx) {
                 EamDb dbManager = EamDb.getInstance();
                 int selectedRowModelIdx = filesTable.convertRowIndexToModel(selectedRowViewIdx);
-                CorrelationCase eamCasePartial = null;
                 List<OtherOccurrenceNodeData> rowList = filesTableModel.getRow(selectedRowModelIdx);
                 if (rowList.get(0) instanceof OtherOccurrenceNodeInstanceData) {
                     if (!rowList.isEmpty()) {
-                        eamCasePartial = ((OtherOccurrenceNodeInstanceData) rowList.get(0)).getCorrelationAttributeInstance().getCorrelationCase();
+                        CorrelationCase eamCasePartial = ((OtherOccurrenceNodeInstanceData) rowList.get(0)).getCorrelationAttributeInstance().getCorrelationCase();
                         caseDisplayName = eamCasePartial.getDisplayName();
                         // query case details
                         CorrelationCase eamCase = dbManager.getCaseByUUID(eamCasePartial.getCaseUUID());
@@ -756,14 +750,14 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         dataSources.add(makeDataSourceString(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                         caseNames.put(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID(), nodeData.getCorrelationAttributeInstance().getCorrelationCase());
                     } catch (EamDbException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName());
+                        LOGGER.log(Level.WARNING, "Unable to get correlation case for displaying other occurrence for case: " + nodeData.getCaseName(), ex);
                     }
                 } else {
                     try {
                         dataSources.add(makeDataSourceString(Case.getCurrentCaseThrows().getName(), nodeData.getDeviceID(), nodeData.getDataSourceName()));
                         caseNames.put(Case.getCurrentCaseThrows().getName(), new CorrelationCase(Case.getCurrentCaseThrows().getName(), Case.getCurrentCaseThrows().getDisplayName()));
                     } catch (NoCurrentCaseException ex) {
-                        LOGGER.log(Level.WARNING, "No current case open for other occurrences");
+                        LOGGER.log(Level.WARNING, "No current case open for other occurrences", ex);
                     }
                 }
                 totalCount++;
@@ -800,30 +794,38 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         int[] selectedCaseIndexes = casesTable.getSelectedRows();
         dataSourcesTableModel.clearTable();
         filesTableModel.clearTable();
-        for (CorrelationAttributeInstance corAttr : correlationAttributes) {
-            Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
 
-            // get correlation and reference set instances from DB
-            correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
-            for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
-                for (int selectedRow : selectedCaseIndexes) {
-                    try {
-                        if (nodeData.isCentralRepoNode()) {
-                            if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
-                                    && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+        if (selectedCaseIndexes.length == 0) {
+            //special case when no cases are selected
+            occurrencePanel = new OccurrencePanel();
+            occurrencePanel.getPreferredSize();
+            detailsPanelScrollPane.setViewportView(occurrencePanel);
+        } else {
+            for (CorrelationAttributeInstance corAttr : correlationAttributes) {
+                Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
+
+                // get correlation and reference set instances from DB
+                correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
+                for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
+                    for (int selectedRow : selectedCaseIndexes) {
+                        try {
+                            if (nodeData.isCentralRepoNode()) {
+                                if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
+                                        && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                                    dataSourcesTableModel.addNodeData(nodeData);
+                                }
+                            } else {
                                 dataSourcesTableModel.addNodeData(nodeData);
                             }
-                        } else {
-                            dataSourcesTableModel.addNodeData(nodeData);
+                        } catch (EamDbException ex) {
+                            LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                         }
-                    } catch (EamDbException ex) {
-                        LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName());
                     }
                 }
             }
-        }
-        if (dataSourcesTable.getRowCount() > 0) {
-            dataSourcesTable.setRowSelectionInterval(0, 0);
+            if (dataSourcesTable.getRowCount() > 0) {
+                dataSourcesTable.setRowSelectionInterval(0, 0);
+            }
         }
     }
 
@@ -856,7 +858,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                                 }
                             }
                         } catch (EamDbException ex) {
-                            LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName());
+                            LOGGER.log(Level.WARNING, "Unable to get correlation attribute instance from OtherOccurrenceNodeInstanceData for case " + nodeData.getCaseName(), ex);
                         }
                     }
                 }
@@ -868,13 +870,18 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     private void updateOnFileSelection() {
+        occurrencePanel = new OccurrencePanel();
+        occurrencePanel.getPreferredSize();
+        detailsPanelScrollPane.setViewportView(occurrencePanel);
         //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
         if (filesTable.getSelectedRowCount() == 1) {
             occurrencePanel = new OccurrencePanel(filesTableModel.getRow(filesTable.convertRowIndexToModel(filesTable.getSelectedRow())));
+            occurrencePanel.getPreferredSize();
+            detailsPanelScrollPane.setViewportView(occurrencePanel);
         } else if (dataSourcesTable.getSelectedRowCount() == 1) {
             //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
             String caseName = dataSourcesTableModel.getCaseNameForRow(dataSourcesTable.convertRowIndexToModel(dataSourcesTable.getSelectedRow()));
-            String dataSourceName = dataSourcesTableModel.getValueAt(dataSourcesTable.convertRowIndexToModel(dataSourcesTable.getSelectedRow()), 0).toString();
+            String dsName = dataSourcesTableModel.getValueAt(dataSourcesTable.convertRowIndexToModel(dataSourcesTable.getSelectedRow()), 0).toString();
             String caseCreatedDate = "";
             for (int row : casesTable.getSelectedRows()) {
                 if (casesTableModel.getValueAt(casesTable.convertRowIndexToModel(row), 0).toString().equals(caseName)) {
@@ -882,7 +889,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     break;
                 }
             }
-            occurrencePanel = new OccurrencePanel(caseName, caseCreatedDate, dataSourceName);
+            occurrencePanel = new OccurrencePanel(caseName, caseCreatedDate, dsName);
+            occurrencePanel.getPreferredSize();
+            detailsPanelScrollPane.setViewportView(occurrencePanel);
         } else if (casesTable.getSelectedRowCount() == 1) {
             //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
             String createdDate = "";
@@ -896,12 +905,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 createdDate = getCaseCreatedDate(casesTable.getSelectedRow());
                 occurrencePanel = new OccurrencePanel(caseName, createdDate);
             }
-        } else {
-            //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
-            occurrencePanel = new OccurrencePanel();
+            occurrencePanel.getPreferredSize();
+            detailsPanelScrollPane.setViewportView(occurrencePanel);
         }
-        occurrencePanel.getPreferredSize();
-        detailsPanelScrollPane.setViewportView(occurrencePanel);
     }
 
     private String getCaseCreatedDate(int caseTableRowIdx) {
@@ -909,12 +915,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             if (EamDb.isEnabled()) {
                 CorrelationCase partialCase;
                 partialCase = casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(caseTableRowIdx));
-                 return EamDb.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
+                return EamDb.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
             } else {
-                 return Case.getCurrentCase().getCreatedDate();
+                return Case.getCurrentCase().getCreatedDate();
             }
         } catch (EamDbException ex) {
-
+            LOGGER.log(Level.WARNING, "Error getting case created date for row: " + caseTableRowIdx, ex);
         }
         return "";
     }
@@ -1145,9 +1151,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         @Override
         public int hashCode() {
-            //int hash = 7;
-            //hash = 67 * hash + this.dataSourceID.hashCode();
-            //hash = 67 * hash + this.filePath.hashCode();
             return Objects.hash(getDataSourceID(), getFilePath(), getType());
         }
 
