@@ -19,12 +19,17 @@
 package org.sleuthkit.autopsy.communications;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.eventbus.Subscribe;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
@@ -258,6 +263,75 @@ final public class FiltersPanel extends JPanel {
             logger.log(Level.INFO, "Filter update cancelled.  Case is closed.");
         } catch (TskCoreException tskCoreException) {
             logger.log(Level.SEVERE, "There was a error loading the datasources for the case.", tskCoreException);
+        }
+    }
+    
+    /**
+     * Given a list of subFilters, set the states of the panel controls 
+     * accordingly.
+     * 
+     * @param subFilters A list of subFilters
+     */
+    public void setFilters(List<CommunicationsFilter.SubFilter> subFilters) {
+        
+        subFilters.forEach(subFilter -> {
+            if( subFilter instanceof DeviceFilter ) {
+                setDeviceFilter((DeviceFilter)subFilter);
+            } else if (subFilter instanceof DateRangeFilter) {
+                setDateRangeFilter( (DateRangeFilter) subFilter);
+            } else if( subFilter instanceof AccountTypeFilter) {
+                setAccountTypeFilter((AccountTypeFilter) subFilter);
+            }
+        });
+    }
+    
+    /**
+     * Sets the state of the device filter checkboxes
+     * 
+     * @param deviceFilter Selected devices
+     */
+    private void setDeviceFilter(DeviceFilter deviceFilter) {
+        Collection<String> deviceIDs = deviceFilter.getDevices();
+        devicesMap.forEach((type, cb) -> {
+            cb.setSelected(deviceIDs.contains(type));
+        });
+    }
+    
+    /**
+     * Sets the value of the DateRangeFilters.
+     * 
+     * @param dateFilter 
+     */
+    private void setDateRangeFilter(DateRangeFilter dateFilter) {
+        ZonedDateTime zoneDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(dateFilter.getStartDate()), Utils.getUserPreferredZoneId());
+        startDatePicker.setEnabled(dateFilter.isStartDateEnabled());
+        startCheckBox.setSelected(dateFilter.isStartDateEnabled());
+        startDatePicker.setDate(zoneDate.toLocalDate());
+
+        zoneDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(dateFilter.getEndDate()), Utils.getUserPreferredZoneId());
+        endDatePicker.setEnabled(dateFilter.isEndDateEnabled());
+        endCheckBox.setSelected(dateFilter.isEndDateEnabled());
+        endDatePicker.setDate(zoneDate.toLocalDate());
+    }
+    
+     /**
+     * Set the state of the account type checkboxes to match the passed in filter
+     * 
+     * @param typeFilter Account Types to be selected
+     */
+    private void setAccountTypeFilter(AccountTypeFilter typeFilter){
+       
+        accountTypeMap.forEach((type, cb) -> {
+            cb.setSelected(typeFilter.getAccountTypes().contains(type));
+        });
+    }
+    
+    @Subscribe
+    void filtersBack(CVTEvents.StateEvent event) {
+        if(event.getCommunicationsState().getCommunicationsFilters() != null){
+            setFilters(event.getCommunicationsState().getCommunicationsFilters());
+            needsRefresh = false;
+            validateFilters();
         }
     }
 
@@ -508,7 +582,12 @@ final public class FiltersPanel extends JPanel {
         validateFilters();
     }
 
-    private CommunicationsFilter getFilter() {
+    /**
+     * Get an instance of CommunicationsFilters base on the current panel state.
+     * 
+     * @return an instance of CommunicationsFilter
+     */
+    protected CommunicationsFilter getFilter() {
         CommunicationsFilter commsFilter = new CommunicationsFilter();
         commsFilter.addAndFilter(getDeviceFilter());
         commsFilter.addAndFilter(getAccountTypeFilter());
@@ -553,9 +632,11 @@ final public class FiltersPanel extends JPanel {
      */
     private DateRangeFilter getDateRangeFilter() {
         ZoneId zone = Utils.getUserPreferredZoneId();
-        long start = startDatePicker.isEnabled() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
-        long end = endDatePicker.isEnabled() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0;
-        return new DateRangeFilter(start, end);
+        
+        return new DateRangeFilter(startDatePicker.isEnabled(), 
+                                    startDatePicker.getDate().atStartOfDay(zone).toEpochSecond(), 
+                                    endDatePicker.isEnabled(), 
+                                    endDatePicker.getDate().atStartOfDay(zone).toEpochSecond());
     }
 
     /**

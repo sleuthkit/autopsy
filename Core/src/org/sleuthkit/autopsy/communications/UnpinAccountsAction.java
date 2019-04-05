@@ -46,7 +46,7 @@ final class UnpinAccountsAction extends AbstractCVTAction {
     public void actionPerformed(final ActionEvent event) {
         CVTEvents.getCVTEventBus().post(new CVTEvents.UnpinAccountsEvent(getSelectedAccounts()));
     }
-
+    
     @Override
     String getActionDisplayName() {
         return getSelectedAccounts().size() > 1 ? PLURAL_TEXT : SINGULAR_TEXT;
