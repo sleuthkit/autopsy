@@ -19,12 +19,11 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.experimental.autoingest.DeleteCaseTask.DeleteOptions;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
  * An action that deletes everything except the auto ingest job input
@@ -32,13 +31,8 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
  * where a case needs to be reprocessed, so the input directories are not
  * deleted even though the coordination service nodes for the auto ingest jobs
  * are deleted.
- *
- * This cases to delete are discovered by querying the actions global context
- * lookup for CaseNodeData objects. See
- * https://platform.netbeans.org/tutorials/nbm-selection-1.html and
- * https://platform.netbeans.org/tutorials/nbm-selection-2.html for details.
  */
-final class DeleteCasesForReprocessingAction extends AbstractAction {
+final class DeleteCaseOutputAction extends DeleteCaseAction {
 
     private static final long serialVersionUID = 1L;
 
@@ -50,27 +44,27 @@ final class DeleteCasesForReprocessingAction extends AbstractAction {
      * ingest jobs are deleted.
      */
     @NbBundle.Messages({
-        "DeleteCasesForReprocessingAction.menuItemText=Delete for Reprocessing"
+        "DeleteCaseOutputAction.menuItemText=Delete Output",
+        "DeleteCaseOutputAction.progressDisplayName=Delete Output",
+        "DeleteCaseOutputAction.taskName=output"        
     })
-    DeleteCasesForReprocessingAction() {
-        super(Bundle.DeleteCasesForReprocessingAction_menuItemText());
-        setEnabled(false); // RJCTODO: Enable when implemented
+    DeleteCaseOutputAction() {
+        super(Bundle.DeleteCaseOutputAction_menuItemText(), Bundle.DeleteCaseOutputAction_progressDisplayName(), Bundle.DeleteCaseOutputAction_taskName());
     }
 
+    @NbBundle.Messages({
+        "DeleteCaseOutputAction.confirmationText=Are you sure you want to delete the following for the case(s):\n\tManifest file znodes\n\tCase database\n\tCore.properties file\n\tCase directory\n\tCase znodes"
+    })
     @Override
     public void actionPerformed(ActionEvent event) {
-        final Collection<CaseNodeData> selectedNodeData = new ArrayList<>(Utilities.actionsGlobalContext().lookupAll(CaseNodeData.class));
-//        if (!selectedNodeData.isEmpty()) {
-//            /*
-//             * RJCTODO: Create a background task that does the deletion and
-//             * displays results in a dialog with a scrolling text pane.
-//             */
-//        }
-    }
-
+        if (MessageNotifyUtil.Message.confirm(Bundle.DeleteCaseOutputAction_confirmationText())) {
+            super.actionPerformed(event);
+        }
+    }    
+    
     @Override
-    public DeleteCasesForReprocessingAction clone() throws CloneNotSupportedException {
-        throw new CloneNotSupportedException();
+    DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
+        return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_OUTPUT, progress);
     }
 
 }

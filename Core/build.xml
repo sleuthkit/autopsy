@@ -40,6 +40,24 @@
             <fileset dir="${thirdparty.dir}/Tesseract-OCR"/>
         </copy>
             
+        <!--Copy GStreamer to release-->
+        <copy todir="${basedir}/release/gstreamer" >
+            <fileset dir="${thirdparty.dir}/gstreamer"/>
+        </copy>
+
+        <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
+        have it stored in a ZIP file. We'll extract it in place and remove
+        the ZIP file afterward. -->
+        <property name="gstreamer-base-path" value="${basedir}/release/gstreamer/1.0/" />
+
+        <unzip src="${gstreamer-base-path}/x86_64/lib/gstreamer-1.0/libgstlibav.zip"
+               dest="${gstreamer-base-path}/x86_64/lib/gstreamer-1.0/"/>
+        <delete file="${gstreamer-base-path}/x86_64/lib/gstreamer-1.0/libgstlibav.zip" />
+
+        <unzip src="${gstreamer-base-path}/x86/lib/gstreamer-1.0/libgstlibav.zip"
+               dest="${gstreamer-base-path}/x86/lib/gstreamer-1.0/"/>
+        <delete file="${gstreamer-base-path}/x86/lib/gstreamer-1.0/libgstlibav.zip" />
+
         <!--Copy other jars-->
         <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />

@@ -26,7 +26,6 @@ import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobsNode.JobNode;
 
 /**
  * A panel which displays an outline view with all auto ingest nodes and their

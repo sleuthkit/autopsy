@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import com.google.common.annotations.Beta;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -31,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
@@ -79,6 +81,7 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceNameChangedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils;
 import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeSearchAction;
 import org.sleuthkit.autopsy.communications.OpenCommVisualizationToolAction;
@@ -119,7 +122,6 @@ import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
-import org.sleuthkit.autopsy.coreutils.StopWatch;
 
 /**
  * An Autopsy case. Currently, only one case at a time may be open.
@@ -139,6 +141,7 @@ public class Case {
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
     private static final String CASE_RESOURCES_THREAD_NAME = "%s-manage-case-resources";
+    private static final String NO_NODE_ERROR_MSG_FRAGMENT = "KeeperErrorCode = NoNode";
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
@@ -699,38 +702,28 @@ public class Case {
     }
 
     /**
-     * Deletes a case. This method cannot be used to delete the current case;
-     * deleting the current case must be done by calling Case.deleteCurrentCase.
+     * Deletes a case. The case to be deleted must not be the "current case."
+     * Deleting the current case must be done by calling Case.deleteCurrentCase.
      *
-     * @param metadata The metadata for the case to delete.
+     * @param metadata The case metadata.
      *
-     * @throws CaseActionException if there is a problem deleting the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * @throws CaseActionException If there were one or more errors deleting the
+     *                             case. The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
      */
     @Messages({
         "Case.progressIndicatorTitle.deletingCase=Deleting Case",
         "Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first.",
-        "Case.progressMessage.checkingForOtherUser=Checking to see if another user has the case open...",
-        "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or there is a problem with the coordination service.",
-        "Case.exceptionMessage.failedToDeleteCoordinationServiceNodes=Failed to delete the coordination service nodes for the case."
+        "# {0} - case display name", "Case.exceptionMessage.deletionInterrupted=Deletion of the case {0} was cancelled."
     })
     public static void deleteCase(CaseMetadata metadata) throws CaseActionException {
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
         synchronized (caseActionSerializationLock) {
             if (null != currentCase) {
                 throw new CaseActionException(Bundle.Case_exceptionMessage_cannotDeleteCurrentCase());
             }
         }
-        stopWatch.stop();
-        logger.log(Level.INFO, String.format("Used %d s to acquire caseActionSerializationLock (Java monitor in Case class) for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
 
-        /*
-         * Set up either a GUI progress indicator without a cancel button (can't
-         * cancel deleting a case) or a logging progress indicator.
-         */
         ProgressIndicator progressIndicator;
         if (RuntimeProperties.runningWithGUI()) {
             progressIndicator = new ModalDialogProgressIndicator(mainFrame, Bundle.Case_progressIndicatorTitle_deletingCase());
@@ -740,73 +733,21 @@ public class Case {
         progressIndicator.start(Bundle.Case_progressMessage_preparing());
         try {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
-                deleteCase(metadata, progressIndicator);
+                deleteSingleUserCase(metadata, progressIndicator);
             } else {
-                /*
-                 * First, acquire an exclusive case directory lock. The case
-                 * cannot be deleted if another node has it open.
-                 */
-                progressIndicator.progress(Bundle.Case_progressMessage_checkingForOtherUser());
-                stopWatch.reset();
-                stopWatch.start();
-                try (CoordinationService.Lock dirLock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
-                    stopWatch.stop();
-                    logger.log(Level.INFO, String.format("Used %d s to acquire case directory coordination service lock for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-                    if (dirLock != null) {
-                        deleteCase(metadata, progressIndicator);
-                    } else {
-                        throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
-                    }
-                } catch (CoordinationServiceException ex) {
-                    stopWatch.stop();
-                    logger.log(Level.INFO, String.format("Used %d s to fail to acquire case directory coordination service lock for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-                    throw new CaseActionException(Bundle.Case_exceptionMessage_failedToDeleteCoordinationServiceNodes(), ex);
-                }
                 try {
-                    deleteCoordinationServiceNodes(metadata, progressIndicator);
-                } catch (CoordinationServiceException ex) {
-                    throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock(), ex);
+                    deleteMultiUserCase(metadata, progressIndicator);
+                } catch (InterruptedException ex) {
+                    /*
+                     * Note that task cancellation is not currently supported
+                     * for this code path, so this catch block is not expected
+                     * to be executed.
+                     */
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_deletionInterrupted(metadata.getCaseDisplayName()), ex);
                 }
             }
         } finally {
             progressIndicator.finish();
-        }
-    }
-
-    /**
-     * Deletes the coordination nodes for a multi-user case.
-     *
-     * @param metadata          The metadata for the case to delete.
-     * @param progressIndicator The progress indicator for the deletion
-     *                          operation.
-     *
-     * @throws CoordinationServiceException If there is a problem getting the
-     *                                      coordination service.
-     */
-    @Messages({
-        "Case.progressMessage.deletingCoordinationServiceNodes=Deleting coordination service nodes..."
-    })
-    static void deleteCoordinationServiceNodes(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CoordinationServiceException {
-        progressIndicator.progress(Bundle.Case_progressMessage_deletingCoordinationServiceNodes());
-        CoordinationService coordinationService;
-        coordinationService = CoordinationService.getInstance();
-        String resourcesLockNodePath = metadata.getCaseDirectory() + "_resources";
-        try {
-            coordinationService.deleteNode(CategoryNode.CASES, resourcesLockNodePath);
-        } catch (CoordinationServiceException ex) {
-            /*
-             * Log but do not notify the user.
-             */
-            logger.log(Level.SEVERE, String.format("Failed to delete resources lock coordination service node for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
-        }
-        String caseDirectoryLockNodePath = metadata.getCaseDirectory();
-        try {
-            coordinationService.deleteNode(CategoryNode.CASES, caseDirectoryLockNodePath);
-        } catch (CoordinationServiceException ex) {
-            /*
-             * Log but do not notify the user.
-             */
-            logger.log(Level.SEVERE, String.format("Failed to delete case directory lock coordination service node for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
         }
     }
 
@@ -988,105 +929,6 @@ public class Case {
     }
 
     /**
-     *
-     * Deletes the case directory of a deleted case and removes the case form
-     * the Recent Cases menu.
-     *
-     * @param metadata          The case metadata.
-     * @param progressIndicator A progress indicator.
-     *
-     * @throws UserPreferencesException if there is a problem getting the case
-     *                                  databse connection info for a multi-user
-     *                                  case.
-     * @throws ClassNotFoundException   if there is a problem loading the JDBC
-     *                                  driver for PostgreSQL for a multi-user
-     *                                  case.
-     * @throws SQLException             If there is a problem
-     */
-    @Messages({
-        "Case.progressMessage.deletingTextIndex=Deleting text index...",
-        "Case.progressMessage.deletingCaseDatabase=Deleting case database...",
-        "Case.progressMessage.deletingCaseDirectory=Deleting case directory...",
-        "Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details"
-    })
-    private static void deleteCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
-        StopWatch stopWatch = new StopWatch();
-        boolean errorsOccurred = false;
-        if (CaseType.MULTI_USER_CASE == metadata.getCaseType()) {
-            /*
-             * Delete the case database from the database server.
-             */
-            stopWatch.start();
-            try {
-                progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDatabase());
-                CaseDbConnectionInfo db;
-                db = UserPreferences.getDatabaseConnectionInfo();
-                Class.forName("org.postgresql.Driver"); //NON-NLS
-                try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/postgres", db.getUserName(), db.getPassword()); //NON-NLS
-                        Statement statement = connection.createStatement();) {
-                    String deleteCommand = "DROP DATABASE \"" + metadata.getCaseDatabaseName() + "\""; //NON-NLS
-                    statement.execute(deleteCommand);
-                    stopWatch.stop();
-                    logger.log(Level.INFO, String.format("Used %d s to delete case database for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-                }
-            } catch (UserPreferencesException | ClassNotFoundException | SQLException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to delete case database %s for %s (%s) in %s", metadata.getCaseDatabaseName(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
-                errorsOccurred = true;
-                stopWatch.stop();
-                logger.log(Level.INFO, String.format("Used %d s to fail delete case database for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-            }
-        }
-
-        /*
-         * Delete the text index.
-         */
-        progressIndicator.progress(Bundle.Case_progressMessage_deletingTextIndex());
-        for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class)) {
-            try {
-                stopWatch.reset();
-                stopWatch.start();
-                searchService.deleteTextIndex(metadata);
-                stopWatch.stop();
-                logger.log(Level.INFO, String.format("Used %d s to delete text index for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-            } catch (KeywordSearchServiceException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to delete text index for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex);
-                errorsOccurred = true;
-                stopWatch.stop();
-                logger.log(Level.INFO, String.format("Used %d s to fail to delete text index for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-            }
-        }
-
-        /*
-         * Delete the case directory.
-         */
-        progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDirectory());
-        stopWatch.reset();
-        stopWatch.start();
-        if (!FileUtil.deleteDir(new File(metadata.getCaseDirectory()))) {
-            logger.log(Level.SEVERE, String.format("Failed to delete case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-            errorsOccurred = true;
-            stopWatch.stop();
-            logger.log(Level.INFO, String.format("Used %d s to fail to delete case directory for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-        } else {
-            stopWatch.stop();
-            logger.log(Level.INFO, String.format("Used %d s to delete case directory for %s (%s) in %s", stopWatch.getElapsedTimeSecs(), metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
-        }
-
-        /*
-         * If running in a GUI, remove the case from the Recent Cases menu
-         */
-        if (RuntimeProperties.runningWithGUI()) {
-            SwingUtilities.invokeLater(() -> {
-                RecentCases.getInstance().removeRecentCase(metadata.getCaseDisplayName(), metadata.getFilePath().toString());
-            });
-        }
-
-        if (errorsOccurred) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
-        }
-    }
-
-    /**
      * Acquires an exclusive case resources lock.
      *
      * @param caseDir The full path of the case directory.
@@ -1101,7 +943,8 @@ public class Case {
     })
     private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseDir) throws CaseActionException {
         try {
-            String resourcesNodeName = caseDir + "_resources";
+            Path caseDirPath = Paths.get(caseDir);
+            String resourcesNodeName = CoordinationServiceUtils.getCaseResourcesNodePath(caseDirPath);
             Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, RESOURCES_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             return lock;
         } catch (InterruptedException ex) {
@@ -2346,7 +2189,6 @@ public class Case {
         "# {0} - service name", "Case.servicesException.notificationTitle={0} Error"
     })
     private void openAppServiceCaseResources(ProgressIndicator progressIndicator) throws CaseActionException {
-        progressIndicator.progress(Bundle.Case_progressMessage_openingApplicationServiceResources());
         /*
          * Each service gets its own independently cancellable/interruptible
          * task, running in a named thread managed by an executor service, with
@@ -2355,6 +2197,7 @@ public class Case {
          * possible to ensure that each service task completes before the next
          * one starts by awaiting termination of the executor service.
          */
+        progressIndicator.progress(Bundle.Case_progressMessage_openingApplicationServiceResources());
         for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
             /*
              * Create a progress indicator for the task and start the task. If
@@ -2702,6 +2545,365 @@ public class Case {
         }
         return subDirectory.toString();
 
+    }
+
+    /**
+     * Deletes a single-user case.
+     *
+     * @param metadata          The case metadata.
+     * @param progressIndicator A progress indicator.
+     *
+     * @throws CaseActionException If there were one or more errors deleting the
+     *                             case. The exception will have a user-friendly
+     *                             message and may be a wrapper for a
+     *                             lower-level exception.
+     */
+    @Messages({
+        "Case.exceptionMessage.errorsDeletingCase=Errors occured while deleting the case. See the application log for details."
+    })
+    private static void deleteSingleUserCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
+        boolean errorsOccurred = false;
+        try {
+            deleteTextIndex(metadata, progressIndicator);
+        } catch (KeywordSearchServiceException ex) {
+            errorsOccurred = true;
+            logger.log(Level.WARNING, String.format("Failed to delete text index for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+        }
+
+        try {
+            deleteCaseDirectory(metadata, progressIndicator);
+        } catch (CaseActionException ex) {
+            errorsOccurred = true;
+            logger.log(Level.WARNING, String.format("Failed to delete case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+        }
+
+        deleteFromRecentCases(metadata, progressIndicator);
+
+        if (errorsOccurred) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
+        }
+    }
+
+    /**
+     * Deletes a multi-user case. This method does so after acquiring the case
+     * directory coordination service lock and is intended to be used for
+     * deleting simple multi-user cases without auto ingest input. Note that the
+     * case directory coordination service node for the case is only deleted if
+     * no errors occurred.
+     *
+     * @param metadata          The case metadata.
+     * @param progressIndicator A progress indicator.
+     *
+     * @throws CaseActionException  If there were one or more errors deleting
+     *                              the case. The exception will have a
+     *                              user-friendly message and may be a wrapper
+     *                              for a lower-level exception.
+     * @throws InterruptedException If the thread this code is running in is
+     *                              interrupted while blocked, i.e., if
+     *                              cancellation of the operation is detected
+     *                              during a wait.
+     */
+    @Messages({
+        "Case.progressMessage.connectingToCoordSvc=Connecting to coordination service...",
+        "# {0} - exception message", "Case.exceptionMessage.failedToConnectToCoordSvc=Failed to connect to coordination service:\n{0}.",
+        "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or host.",
+        "# {0} - exception message", "Case.exceptionMessage.failedToLockCaseForDeletion=Failed to exclusively lock case for deletion:\n{0}.",
+        "Case.progressMessage.fetchingCoordSvcNodeData=Fetching coordination service node data for the case...",
+        "# {0} - exception message", "Case.exceptionMessage.failedToFetchCoordSvcNodeData=Failed to fetch coordination service node data:\n{0}.",
+        "Case.progressMessage.deletingResourcesCoordSvcNode=Deleting case resources coordination service node...",
+        "Case.progressMessage.deletingCaseDirCoordSvcNode=Deleting case directory coordination service node..."
+    })
+    private static void deleteMultiUserCase(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException, InterruptedException {
+        progressIndicator.progress(Bundle.Case_progressMessage_connectingToCoordSvc());
+        CoordinationService coordinationService;
+        try {
+            coordinationService = CoordinationService.getInstance();
+        } catch (CoordinationServiceException ex) {
+            logger.log(Level.SEVERE, String.format("Failed to connect to coordination service when attempting to delete %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+            throw new CaseActionException(Bundle.Case_exceptionMessage_failedToConnectToCoordSvc(ex.getLocalizedMessage()));
+        }
+
+        CaseNodeData caseNodeData;
+        boolean errorsOccurred = false;
+        try (CoordinationService.Lock dirLock = coordinationService.tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
+            if (dirLock == null) {
+                logger.log(Level.INFO, String.format("Could not delete %s (%s) in %s because a case directory lock was held by another host", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory())); //NON-NLS
+                throw new CaseActionException(Bundle.Case_exceptionMessage_cannotGetLockToDeleteCase());
+            }
+
+            progressIndicator.progress(Bundle.Case_progressMessage_fetchingCoordSvcNodeData());
+            try {
+                byte[] nodeBytes = coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory());
+                caseNodeData = new CaseNodeData(nodeBytes);
+            } catch (CoordinationServiceException | InterruptedException | IOException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to get coordination service node data %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+                throw new CaseActionException(Bundle.Case_exceptionMessage_failedToFetchCoordSvcNodeData(ex.getLocalizedMessage()));
+            }
+
+            errorsOccurred = deleteMultiUserCase(caseNodeData, metadata, progressIndicator, logger);
+
+            progressIndicator.progress(Bundle.Case_progressMessage_deletingResourcesCoordSvcNode());
+            try {
+                String resourcesLockNodePath = CoordinationServiceUtils.getCaseResourcesNodePath(caseNodeData.getDirectory());
+                coordinationService.deleteNode(CategoryNode.CASES, resourcesLockNodePath);
+            } catch (CoordinationServiceException ex) {
+                if (!isNoNodeException(ex)) {
+                    errorsOccurred = true;
+                    logger.log(Level.WARNING, String.format("Error deleting the case resources coordination service node for the case at %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+                }
+            } catch (InterruptedException ex) {
+                logger.log(Level.WARNING, String.format("Error deleting the case resources coordination service node for the case at %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+            }
+
+        } catch (CoordinationServiceException ex) {
+            logger.log(Level.SEVERE, String.format("Error exclusively locking the case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+            throw new CaseActionException(Bundle.Case_exceptionMessage_failedToLockCaseForDeletion(ex.getLocalizedMessage()));
+        }
+
+        if (!errorsOccurred) {
+            progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDirCoordSvcNode());
+            try {
+                String casDirNodePath = CoordinationServiceUtils.getCaseDirectoryNodePath(caseNodeData.getDirectory());
+                coordinationService.deleteNode(CategoryNode.CASES, casDirNodePath);
+            } catch (CoordinationServiceException | InterruptedException ex) {
+                logger.log(Level.SEVERE, String.format("Error deleting the case directory lock node for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+                errorsOccurred = true;
+            }
+        }
+
+        if (errorsOccurred) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_errorsDeletingCase());
+        }
+    }
+
+    /**
+     * IMPORTANT: This is a "beta" method and is subject to change or removal
+     * without notice!
+     *
+     * Deletes a mulit-user case by attempting to delete the case database, the
+     * text index, the case directory, and the case resources coordination
+     * service node for a case, and removes the case from the recent cases menu
+     * of the main application window. Callers of this method MUST acquire and
+     * release the case directory lock for the case and are responsible for
+     * deleting the corresponding coordination service nodes, if desired.
+     *
+     * @param caseNodeData      The coordination service node data for the case.
+     * @param metadata          The case metadata.
+     * @param progressIndicator A progress indicator.
+     * @param logger            A logger.
+     *
+     * @return True if one or more errors occurred (see log for details), false
+     *         otherwise.
+     *
+     * @throws InterruptedException If the thread this code is running in is
+     *                              interrupted while blocked, i.e., if
+     *                              cancellation of the operation is detected
+     *                              during a wait.
+     */
+    @Beta
+    public static boolean deleteMultiUserCase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws InterruptedException {
+        boolean errorsOccurred = false;
+        try {
+            deleteMultiUserCaseDatabase(caseNodeData, metadata, progressIndicator, logger);
+            deleteMultiUserCaseTextIndex(caseNodeData, metadata, progressIndicator, logger);
+            deleteMultiUserCaseDirectory(caseNodeData, metadata, progressIndicator, logger);
+            deleteFromRecentCases(metadata, progressIndicator);
+        } catch (UserPreferencesException | ClassNotFoundException | SQLException ex) {
+            errorsOccurred = true;
+            logger.log(Level.WARNING, String.format("Failed to delete the case database for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+        } catch (KeywordSearchServiceException ex) {
+            errorsOccurred = true;
+            logger.log(Level.WARNING, String.format("Failed to delete the text index for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+        } catch (CaseActionException ex) {
+            errorsOccurred = true;
+            logger.log(Level.WARNING, String.format("Failed to delete the case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()), ex); //NON-NLS
+        }
+        return errorsOccurred;
+    }
+
+    /**
+     * Attempts to delete the case database for a multi-user case.
+     *
+     * @param caseNodeData      The coordination service node data for the case.
+     * @param metadata          The case metadata.
+     * @param progressIndicator A progress indicator.
+     * @param logger            A logger.
+     *
+     * @throws UserPreferencesException if there is an error getting the
+     *                                  database server connection info.
+     * @throws ClassNotFoundException   if there is an error gettting the
+     *                                  required JDBC driver.
+     * @throws SQLException             if there is an error executing the SQL
+     *                                  to drop the database from the database
+     *                                  server.
+     * @throws InterruptedException     If interrupted while blocked waiting for
+     *                                  coordination service data to be written
+     *                                  to the coordination service node
+     *                                  database.
+     */
+    @Messages({
+        "Case.progressMessage.deletingCaseDatabase=Deleting case database..."
+    })
+    private static void deleteMultiUserCaseDatabase(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws UserPreferencesException, ClassNotFoundException, SQLException, InterruptedException {
+        if (!caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.CASE_DB)) {
+            progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDatabase());
+            logger.log(Level.INFO, String.format("Deleting case database for %s (%s) in %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory())); //NON-NLS
+            CaseDbConnectionInfo info = UserPreferences.getDatabaseConnectionInfo();
+            String url = "jdbc:postgresql://" + info.getHost() + ":" + info.getPort() + "/postgres"; //NON-NLS
+            Class.forName("org.postgresql.Driver"); //NON-NLS
+            try (Connection connection = DriverManager.getConnection(url, info.getUserName(), info.getPassword()); Statement statement = connection.createStatement()) {
+                String dbExistsQuery = "SELECT 1 from pg_database WHERE datname = '" + metadata.getCaseDatabaseName() + "'"; //NON-NLS
+                try (ResultSet queryResult = statement.executeQuery(dbExistsQuery)) {
+                    if (queryResult.next()) {
+                        String deleteCommand = "DROP DATABASE \"" + metadata.getCaseDatabaseName() + "\""; //NON-NLS
+                        statement.execute(deleteCommand);
+                    }
+                }
+            }
+            setDeletedItemFlag(caseNodeData, CaseNodeData.DeletedFlags.CASE_DB);
+        }
+    }
+
+    /**
+     * Attempts to delete the text index for a multi-user case.
+     *
+     * @param caseNodeData      The coordination service node data for the case.
+     * @param metadata          The case metadata.
+     * @param progressIndicator A progress indicator.
+     * @param logger            A logger.
+     *
+     * @throws KeywordSearchServiceException If there is an error deleting the
+     *                                       text index.
+     * @throws InterruptedException          If interrupted while blocked
+     *                                       waiting for coordination service
+     *                                       data to be written to the
+     *                                       coordination service node database.
+     */
+    private static void deleteMultiUserCaseTextIndex(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws KeywordSearchServiceException, InterruptedException {
+        if (!caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.TEXT_INDEX)) {
+            logger.log(Level.INFO, String.format("Deleting text index for %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory())); //NON-NLS
+            deleteTextIndex(metadata, progressIndicator);
+            setDeletedItemFlag(caseNodeData, CaseNodeData.DeletedFlags.TEXT_INDEX);
+        }
+    }
+
+    /**
+     * Attempts to delete the text index for a case.
+     *
+     * @param metadata          The case metadata.
+     * @param progressIndicator A progress indicator.
+     *
+     * @throws KeywordSearchServiceException If there is an error deleting the
+     *                                       text index.
+     */
+    @Messages({
+        "Case.progressMessage.deletingTextIndex=Deleting text index..."
+    })
+    private static void deleteTextIndex(CaseMetadata metadata, ProgressIndicator progressIndicator) throws KeywordSearchServiceException {
+        progressIndicator.progress(Bundle.Case_progressMessage_deletingTextIndex());
+        for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class)) {
+            searchService.deleteTextIndex(metadata);
+        }
+    }
+
+    /**
+     * Attempts to delete the case directory for a multi-user case.
+     *
+     * @param caseNodeData      The coordination service node data for the case.
+     * @param metadata          The case metadata.
+     * @param progressIndicator A progress indicator.
+     * @param logger            A logger.
+     *
+     * @throws CaseActionException  if there is an error deleting the case
+     *                              directory.
+     * @throws InterruptedException If interrupted while blocked waiting for
+     *                              coordination service data to be written to
+     *                              the coordination service node database.
+     */
+    private static void deleteMultiUserCaseDirectory(CaseNodeData caseNodeData, CaseMetadata metadata, ProgressIndicator progressIndicator, Logger logger) throws CaseActionException, InterruptedException {
+        if (!caseNodeData.isDeletedFlagSet(CaseNodeData.DeletedFlags.CASE_DIR)) {
+            logger.log(Level.INFO, String.format("Deleting case directory for %s", caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory())); //NON-NLS
+            deleteCaseDirectory(metadata, progressIndicator);
+            setDeletedItemFlag(caseNodeData, CaseNodeData.DeletedFlags.CASE_DIR);
+        }
+    }
+
+    /**
+     * Attempts to delete the case directory for a case.
+     *
+     * @param metadata          The case metadata.
+     * @param progressIndicator A progress indicator.
+     *
+     * @throws CaseActionException If there is an error deleting the case
+     *                             directory.
+     */
+    @Messages({
+        "Case.progressMessage.deletingCaseDirectory=Deleting case directory..."
+    })
+    private static void deleteCaseDirectory(CaseMetadata metadata, ProgressIndicator progressIndicator) throws CaseActionException {
+        progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDirectory());
+        if (!FileUtil.deleteDir(new File(metadata.getCaseDirectory()))) {
+            throw new CaseActionException(String.format("Failed to delete %s", metadata.getCaseDirectory())); //NON-NLS
+        }
+    }
+
+    /**
+     * Attempts to remove a case from the recent cases menu if the main
+     * application window is present.
+     *
+     * @param metadata          The case metadata.
+     * @param progressIndicator A progress indicator.
+     */
+    @Messages({
+        "Case.progressMessage.removingCaseFromRecentCases=Removing case from Recent Cases menu..."
+    })
+    private static void deleteFromRecentCases(CaseMetadata metadata, ProgressIndicator progressIndicator) {
+        if (RuntimeProperties.runningWithGUI()) {
+            progressIndicator.progress(Bundle.Case_progressMessage_removingCaseFromRecentCases());
+            SwingUtilities.invokeLater(() -> {
+                RecentCases.getInstance().removeRecentCase(metadata.getCaseDisplayName(), metadata.getFilePath().toString());
+            });
+        }
+    }
+
+    /**
+     * Examines a coordination service exception to try to determine if it is a
+     * "no node" exception, i.e., an operation was attempted on a node that does
+     * not exist.
+     *
+     * @param ex A coordination service exception.
+     *
+     * @return True or false.
+     */
+    private static boolean isNoNodeException(CoordinationServiceException ex) {
+        boolean isNodeNodeEx = false;
+        Throwable cause = ex.getCause();
+        if (cause != null) {
+            String causeMessage = cause.getMessage();
+            isNodeNodeEx = causeMessage.contains(NO_NODE_ERROR_MSG_FRAGMENT);
+        }
+        return isNodeNodeEx;
+    }
+
+    /**
+     * Sets a deleted item flag in the coordination service node data for a
+     * multi-user case.
+     *
+     * @param caseNodeData The coordination service node data for the case.
+     * @param flag         The flag to set.
+     *
+     * @throws InterruptedException If interrupted while blocked waiting for
+     *                              coordination service data to be written to
+     *                              the coordination service node database.
+     */
+    private static void setDeletedItemFlag(CaseNodeData caseNodeData, CaseNodeData.DeletedFlags flag) throws InterruptedException {
+        try {
+            caseNodeData.setDeletedFlag(flag);
+            CoordinationService coordinationService = CoordinationService.getInstance();
+            coordinationService.setNodeData(CategoryNode.CASES, caseNodeData.getDirectory().toString(), caseNodeData.toArray());
+        } catch (IOException | CoordinationServiceException ex) {
+            logger.log(Level.SEVERE, String.format("Error updating deleted item flag %s for %s (%s) in %s", flag.name(), caseNodeData.getDisplayName(), caseNodeData.getName(), caseNodeData.getDirectory()), ex);
+        }
     }
 
     /**
