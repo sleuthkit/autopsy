@@ -70,11 +70,11 @@ final class OccurrencePanel extends javax.swing.JPanel {
      */
     OccurrencePanel(List<OtherOccurrenceNodeData> nodeDataList) {
         this.nodeDataList = nodeDataList;
-        initComponents();
         customizeComponents();
     }
 
     private void customizeComponents() {
+        initComponents();
         if (!this.nodeDataList.isEmpty()) {
             addInstanceDetails();
             if (!filePaths.isEmpty()) {
