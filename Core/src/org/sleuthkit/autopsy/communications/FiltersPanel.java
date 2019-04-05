@@ -22,10 +22,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -272,13 +270,11 @@ final public class FiltersPanel extends JPanel {
      * 
      * @param subFilters A list of subFilters
      */
-    public void setFilters(List<CommunicationsFilter.SubFilter> subFilters) {
-        
+    public void setFilters(CommunicationsFilter commFilter) {
+        List<CommunicationsFilter.SubFilter> subFilters = commFilter.getAndFilters();
         subFilters.forEach(subFilter -> {
             if( subFilter instanceof DeviceFilter ) {
                 setDeviceFilter((DeviceFilter)subFilter);
-            } else if (subFilter instanceof DateRangeFilter) {
-                setDateRangeFilter( (DateRangeFilter) subFilter);
             } else if( subFilter instanceof AccountTypeFilter) {
                 setAccountTypeFilter((AccountTypeFilter) subFilter);
             }
@@ -297,23 +293,6 @@ final public class FiltersPanel extends JPanel {
         });
     }
     
-    /**
-     * Sets the value of the DateRangeFilters.
-     * 
-     * @param dateFilter 
-     */
-    private void setDateRangeFilter(DateRangeFilter dateFilter) {
-        ZonedDateTime zoneDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(dateFilter.getStartDate()), Utils.getUserPreferredZoneId());
-        startDatePicker.setEnabled(dateFilter.isStartDateEnabled());
-        startCheckBox.setSelected(dateFilter.isStartDateEnabled());
-        startDatePicker.setDate(zoneDate.toLocalDate());
-
-        zoneDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(dateFilter.getEndDate()), Utils.getUserPreferredZoneId());
-        endDatePicker.setEnabled(dateFilter.isEndDateEnabled());
-        endCheckBox.setSelected(dateFilter.isEndDateEnabled());
-        endDatePicker.setDate(zoneDate.toLocalDate());
-    }
-    
      /**
      * Set the state of the account type checkboxes to match the passed in filter
      * 
@@ -326,10 +305,36 @@ final public class FiltersPanel extends JPanel {
         });
     }
     
+    /**
+     * Set up the startDatePicker and startCheckBox based on the passed in 
+     * DateControlState.
+     * 
+     * @param state new control state
+     */
+    private void setStartDateControlState(DateControlState state) {
+        startDatePicker.setDate(state.getDate());
+        startCheckBox.setSelected(state.isEnabled());
+        startDatePicker.setEnabled(state.isEnabled());
+    }
+    
+    /**
+     * Set up the endDatePicker and endCheckBox based on the passed in 
+     * DateControlState. 
+     * 
+     * @param state new control state
+     */
+    private void setEndDateControlState(DateControlState state) {
+        endDatePicker.setDate(state.getDate());
+        endCheckBox.setSelected(state.isEnabled());
+        endDatePicker.setEnabled(state.isEnabled());
+    }
+    
     @Subscribe
-    void filtersBack(CVTEvents.StateEvent event) {
-        if(event.getCommunicationsState().getCommunicationsFilters() != null){
-            setFilters(event.getCommunicationsState().getCommunicationsFilters());
+    void filtersBack(CVTEvents.StateChangeEvent event) {
+        if(event.getCommunicationsState().getCommunicationsFilter() != null){
+            setFilters(event.getCommunicationsState().getCommunicationsFilter());
+            setStartDateControlState(event.getCommunicationsState().getStartControlState());
+            setEndDateControlState(event.getCommunicationsState().getEndControlState());
             needsRefresh = false;
             validateFilters();
         }
@@ -577,7 +582,7 @@ final public class FiltersPanel extends JPanel {
      * Post an event with the new filters.
      */
     private void applyFilters() {
-        CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter()));
+        CVTEvents.getCVTEventBus().post(new CVTEvents.FilterChangeEvent(getFilter(), getStartControlState(), getEndControlState()));
         needsRefresh = false;
         validateFilters();
     }
@@ -633,10 +638,16 @@ final public class FiltersPanel extends JPanel {
     private DateRangeFilter getDateRangeFilter() {
         ZoneId zone = Utils.getUserPreferredZoneId();
         
-        return new DateRangeFilter(startDatePicker.isEnabled(), 
-                                    startDatePicker.getDate().atStartOfDay(zone).toEpochSecond(), 
-                                    endDatePicker.isEnabled(), 
-                                    endDatePicker.getDate().atStartOfDay(zone).toEpochSecond());
+        return new DateRangeFilter( startCheckBox.isSelected() ? startDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0, 
+                                    endCheckBox.isSelected() ? endDatePicker.getDate().atStartOfDay(zone).toEpochSecond() : 0);
+    }
+    
+    private DateControlState getStartControlState() {
+        return new DateControlState (startDatePicker.getDate(), startCheckBox.isSelected());
+    }
+    
+    private DateControlState getEndControlState() {
+        return new DateControlState (endDatePicker.getDate(), endCheckBox.isSelected());
     }
 
     /**
@@ -710,7 +721,47 @@ final public class FiltersPanel extends JPanel {
         endDatePicker.setEnabled(endCheckBox.isSelected());
     }//GEN-LAST:event_endCheckBoxStateChanged
 
-
+    /**
+     * A class to wrap the state of the date controls that consist of a date picker
+     * and a checkbox.
+     * 
+     */
+    final class DateControlState {
+        private final LocalDate date;
+        private final boolean enabled;
+        
+        /**
+         * Wraps the state of the date controls that consist of a date picker
+         * and checkbox
+         * 
+         * @param date LocalDate value of the datepicker
+         * @param enabled State of the checkbox
+         */
+        protected DateControlState(LocalDate date, boolean enabled) {
+            this.date = date;
+            this.enabled = enabled;
+        }
+        
+        /**
+         * Returns the given LocalDate from the datepicker 
+         * 
+         * @return Current state LocalDate
+         */
+        public LocalDate getDate(){
+            return date;
+        }
+        
+        /**
+         * Returns the given state of the datepicker checkbox
+         * 
+         * @return boolean, whether or not the datepicker was enabled
+         */
+        public boolean isEnabled() {
+            return enabled;
+        }
+        
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private final javax.swing.JPanel accountTypePane = new javax.swing.JPanel();
     private final javax.swing.JLabel accountTypeRequiredLabel = new javax.swing.JLabel();

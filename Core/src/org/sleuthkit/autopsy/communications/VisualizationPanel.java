@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.layout.mxCircleLayout;
@@ -609,17 +608,17 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private void zoomActualButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomActualButtonActionPerformed
         graphComponent.zoomActual();
-        CVTEvents.getCVTEventBus().post(new CVTEvents.ZoomEvent(graph.getView().getScale()));
+        CVTEvents.getCVTEventBus().post(new CVTEvents.ScaleChangeEvent(graph.getView().getScale()));
     }//GEN-LAST:event_zoomActualButtonActionPerformed
 
     private void zoomInButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
         graphComponent.zoomIn();
-        CVTEvents.getCVTEventBus().post(new CVTEvents.ZoomEvent(graph.getView().getScale()));
+        CVTEvents.getCVTEventBus().post(new CVTEvents.ScaleChangeEvent(graph.getView().getScale()));
     }//GEN-LAST:event_zoomInButtonActionPerformed
 
     private void zoomOutButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
         graphComponent.zoomOut();
-        CVTEvents.getCVTEventBus().post(new CVTEvents.ZoomEvent(graph.getView().getScale()));
+        CVTEvents.getCVTEventBus().post(new CVTEvents.ScaleChangeEvent(graph.getView().getScale()));
     }//GEN-LAST:event_zoomOutButtonActionPerformed
 
     /**
@@ -695,7 +694,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         }
 
         // This will cause the FilterPane to update its controls
-        CVTEvents.getCVTEventBus().post(new CVTEvents.StateEvent(newState));
+        CVTEvents.getCVTEventBus().post(new CVTEvents.StateChangeEvent(newState));
         setStateButtonsEnabled();
 
         graph.getModel().beginUpdate();
@@ -1133,7 +1132,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
                 graphComponent.zoomOut();
             }
             
-            CVTEvents.getCVTEventBus().post(new CVTEvents.ZoomEvent(graph.getView().getScale()));
+            CVTEvents.getCVTEventBus().post(new CVTEvents.ScaleChangeEvent(graph.getView().getScale()));
         }
 
         /**

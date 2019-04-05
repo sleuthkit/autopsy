@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.communications;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
+import org.sleuthkit.autopsy.communications.FiltersPanel.DateControlState;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.autopsy.communications.StateManager.CommunicationsState;
 
@@ -39,18 +40,30 @@ final class CVTEvents {
     }
 
     /**
-     * Invoked when a ComminucationsFilter change occures.
+     * Invoked when a change from the FiltersPanel occures.
      */
     static final class FilterChangeEvent {
 
         private final CommunicationsFilter newFilter;
+        private final DateControlState startControlState;
+        private final DateControlState endControlState;
 
         CommunicationsFilter getNewFilter() {
             return newFilter;
         }
+        
+        DateControlState getStartControlState() {
+            return startControlState;
+        }
+        
+        DateControlState getEndControlState() {
+            return endControlState;
+        }
 
-        FilterChangeEvent(CommunicationsFilter newFilter) {
+        FilterChangeEvent(CommunicationsFilter newFilter, DateControlState startControlState, DateControlState endControlState) {
             this.newFilter = newFilter;
+            this.startControlState = startControlState;
+            this.endControlState = endControlState;
         }
 
     }
@@ -96,10 +109,10 @@ final class CVTEvents {
     /**
     * Invoked when there is a change in the state of the window.
     */
-    static final class StateEvent {
+    static final class StateChangeEvent {
         private final CommunicationsState newState;
         
-        StateEvent(CommunicationsState newState) {
+        StateChangeEvent(CommunicationsState newState) {
             this.newState = newState;
         }
         
@@ -111,15 +124,15 @@ final class CVTEvents {
     /**
     * Invoked when change in the link analysis graph scale occures.
     */
-    static final class ZoomEvent {
-        private final double zoomValue;
+    static final class ScaleChangeEvent {
+        private final double scaleValue;
         
-        ZoomEvent(double zoomValue) {
-            this.zoomValue = zoomValue;
+        ScaleChangeEvent(double scaleValue) {
+            this.scaleValue = scaleValue;
         }
         
         public double getZoomValue(){
-            return zoomValue;
+            return scaleValue;
         }
     }
 }

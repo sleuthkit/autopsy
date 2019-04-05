@@ -18,16 +18,12 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.Subscribe;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import org.sleuthkit.autopsy.communications.FiltersPanel.DateControlState;
 import org.sleuthkit.autopsy.coreutils.History;
 import org.sleuthkit.datamodel.CommunicationsFilter;
-import org.sleuthkit.datamodel.CommunicationsFilter.SubFilter;
-import static org.sleuthkit.datamodel.Relationship.Type.CALL_LOG;
-import static org.sleuthkit.datamodel.Relationship.Type.MESSAGE;
 
 /**
  * Manages the state history for the Communications window. History is currently
@@ -39,6 +35,8 @@ final class StateManager {
     private final History<CommunicationsState> historyManager = new History<>();
     private CommunicationsFilter comFilter;
     private final PinnedAccountModel pinModel;
+    private DateControlState currentStartState;
+    private DateControlState currentEndState;
     
     /**
      * Manages the state history for the Communications window.
@@ -55,20 +53,22 @@ final class StateManager {
         if(pinEvent.isReplace()){
             HashSet<AccountDeviceInstanceKey> pinnedList = new HashSet<>();
             pinnedList.addAll(pinEvent.getAccountDeviceInstances());
-            historyManager.advance(new CommunicationsState(comFilter.getAndFilters(), pinnedList, -1));
+            historyManager.advance(new CommunicationsState(comFilter, pinnedList, -1, currentStartState, currentEndState));
         } else {
             HashSet<AccountDeviceInstanceKey> pinnedList = new HashSet<>();
             pinnedList.addAll(pinEvent.getAccountDeviceInstances());
             pinnedList.addAll(pinModel.getPinnedAccounts());
             
-            historyManager.advance(new CommunicationsState( comFilter.getAndFilters(), pinnedList, -1));
+            historyManager.advance(new CommunicationsState( comFilter, pinnedList, -1, currentStartState, currentEndState));
         }
     }
     
     @Subscribe
-    void filterChange(CVTEvents.FilterChangeEvent fileterEvent) {
-        comFilter = fileterEvent.getNewFilter();
-        historyManager.advance(new CommunicationsState(comFilter.getAndFilters(), pinModel.getPinnedAccounts(), -1));
+    void filterChange(CVTEvents.FilterChangeEvent filterEvent) {
+        comFilter = filterEvent.getNewFilter();
+        currentStartState = filterEvent.getStartControlState();
+        currentEndState = filterEvent.getEndControlState();
+        historyManager.advance(new CommunicationsState(comFilter, pinModel.getPinnedAccounts(), -1, currentStartState, currentEndState));
     }
     
     @Subscribe
@@ -78,12 +78,12 @@ final class StateManager {
         pinnedList.addAll(pinModel.getPinnedAccounts());
         pinnedList.removeAll(pinEvent.getAccountDeviceInstances());
         
-        historyManager.advance(new CommunicationsState(comFilter.getAndFilters(), pinnedList, -1));
+        historyManager.advance(new CommunicationsState(comFilter, pinnedList, -1, currentStartState, currentEndState));
     }
     
     @Subscribe
-    void zoomedGraph(CVTEvents.ZoomEvent zoomEvent) {
-        historyManager.advance(new CommunicationsState(comFilter.getAndFilters(), pinModel.getPinnedAccounts(), zoomEvent.getZoomValue()));
+    void zoomedGraph(CVTEvents.ScaleChangeEvent zoomEvent) {
+        historyManager.advance(new CommunicationsState(comFilter, pinModel.getPinnedAccounts(), zoomEvent.getZoomValue(), currentStartState, currentEndState));
     }
     
     /**
@@ -134,22 +134,28 @@ final class StateManager {
      * Object to store one instance of the state of the Communications window.
      */
     final class CommunicationsState{
-        private final List<SubFilter> communcationFilters;
+        private final CommunicationsFilter communcationFilter;
         private final Set<AccountDeviceInstanceKey> pinnedList;
         private final double zoomValue;
+        private final DateControlState startDateState;
+        private final DateControlState endDateState;
         
         /**
          * Stores all the properties of the current state of the Communications 
          * window.
          * 
-         * @param communcationFilters List of the SubFilters from the FiltersPanel
+         * @param communcationFilter Instance of CommunicationsFilter
          * @param pinnedList Set of AccountDeviceInstanceKey
          * @param zoomValue Double value of the current graph scale
          */
-        protected CommunicationsState(List<SubFilter> communcationFilters, Set<AccountDeviceInstanceKey> pinnedList, double zoomValue){
+        protected CommunicationsState(CommunicationsFilter communcationFilter, 
+                Set<AccountDeviceInstanceKey> pinnedList, double zoomValue, 
+                DateControlState startDateState, DateControlState endDateState){
             this.pinnedList = pinnedList;
-            this.communcationFilters = communcationFilters;
+            this.communcationFilter = communcationFilter;
             this.zoomValue = zoomValue;
+            this.startDateState = startDateState;
+            this.endDateState = endDateState;
         }
    
         /**
@@ -169,16 +175,7 @@ final class StateManager {
         public Set<AccountDeviceInstanceKey> getPinnedList(){
             return pinnedList;
         }
-        
-        /**
-         * Returns a list of communication SubFilters.
-         * 
-         * @return List of SubFilter
-         */
-        public List<SubFilter> getCommunicationsFilters(){
-            return communcationFilters;
-        }
-        
+
         /**
          * Return a new CommunicationsFilter object based on the list of
          * SubFilters
@@ -186,13 +183,7 @@ final class StateManager {
          * @return CommunicationsFilter
          */
         public CommunicationsFilter getCommunicationsFilter() {
-            CommunicationsFilter newFilters = new CommunicationsFilter();
-            newFilters.addAndFilter(new CommunicationsFilter.RelationshipTypeFilter(ImmutableSet.of(CALL_LOG, MESSAGE)));
-            communcationFilters.forEach(filter -> {
-                newFilters.addAndFilter(filter);
-            });
-
-            return newFilters;
+            return communcationFilter;
         }
         
         /**
@@ -202,6 +193,24 @@ final class StateManager {
          */
         public double getZoomValue() {
             return zoomValue;
+        }
+        
+        /**
+         * Returns the state for the start date picker.
+         * 
+         * @return Start DateControlState
+         */
+        public DateControlState getStartControlState() {
+            return startDateState;
+        }
+        
+         /** 
+         * Returns the state for the end date picker.
+         * 
+         * @return Etart DateControlState
+         */
+        public DateControlState getEndControlState() {
+            return endDateState;
         }
     }
 }
