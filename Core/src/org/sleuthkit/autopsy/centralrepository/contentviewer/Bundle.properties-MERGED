@@ -24,7 +24,6 @@ DataContentViewerOtherCases.earliestCaseDate.text=Earliest Case Date
 DataContentViewerOtherCases.earliestCaseLabel.toolTipText=
 DataContentViewerOtherCases.earliestCaseLabel.text=Central Repository Starting Date:
 DataContentViewerOtherCases.foundInLabel.text=
-DataContentViewerOtherCases.caseDatasourceFileSplitPane.toolTipText=
 DataContentViewerOtherCases.title=Other Occurrences
 DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.
 DataContentViewerOtherCasesModel.csvHeader.attribute=Matched Attribute

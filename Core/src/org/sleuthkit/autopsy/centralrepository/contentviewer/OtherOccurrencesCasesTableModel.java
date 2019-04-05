@@ -33,6 +33,9 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     private static final long serialVersionUID = 1L;
     private final List<CorrelationCaseWrapper> correlationCaseList = new ArrayList<>();
 
+    /**
+     * Create a table model for displaying case names
+     */
     OtherOccurrencesCasesTableModel() {
     }
 
@@ -66,6 +69,15 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
         return value;
     }
 
+    /**
+     * Get a correlation case for the selected index. Does not query the Central
+     * Repository so CorrelationCase will be partial missing CR case ID and
+     * other information that is stored in the CR.
+     *
+     * @param rowIdx the row from the table model which corresponds to the case
+     *
+     * @return CorrelationCase for the table item specified
+     */
     CorrelationCase getCorrelationCase(int rowIdx) {
         if (rowIdx < correlationCaseList.size()) {
             return correlationCaseList.get(rowIdx).getCorrelationCase();
@@ -80,7 +92,7 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Add one correlated instance object to the table
+     * Add one correlation case wrapper object to the table
      *
      * @param newCorrelationCaseWrapper data to add to the table
      */

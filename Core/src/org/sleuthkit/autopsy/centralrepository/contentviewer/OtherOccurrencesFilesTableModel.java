@@ -33,13 +33,12 @@ import org.apache.commons.io.FilenameUtils;
 public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
-
-    @Messages({"OtherOccurrencesFilesTableModel.fileName=File Name",
-        "OtherOccurrencesFilesTableModel.noData=No Data."})
-
     private final List<String> nodeKeys = new ArrayList<>();
     private final Map<String, List<OtherOccurrenceNodeData>> nodeMap = new HashMap<>();
 
+    /**
+     * Create a table model for displaying file names
+     */
     OtherOccurrencesFilesTableModel() {
 
     }
@@ -54,6 +53,8 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
         return nodeKeys.size();
     }
 
+    @Messages({"OtherOccurrencesFilesTableModel.fileName=File Name",
+        "OtherOccurrencesFilesTableModel.noData=No Data."})
     @Override
     public String getColumnName(int colIdx) {
         return Bundle.OtherOccurrencesFilesTableModel_fileName();
@@ -67,7 +68,15 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
         return FilenameUtils.getName(((OtherOccurrenceNodeInstanceData) nodeMap.get(nodeKeys.get(rowIdx)).get(0)).getFilePath());
     }
 
-    List<OtherOccurrenceNodeData> getRow(int rowIdx) {
+    /**
+     * Get a list of OtherOccurrenceNodeData that exist for the file which
+     * corresponds to the Index
+     *
+     * @param rowIdx the index of the file to get data for
+     *
+     * @return a list of OtherOccurrenceNodeData for the specified index
+     */
+    List<OtherOccurrenceNodeData> getListOfNodesForFile(int rowIdx) {
         return nodeMap.get(nodeKeys.get(rowIdx));
     }
 
@@ -92,10 +101,6 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
         nodeMap.put(newNodeKey, nodeList);
         fireTableDataChanged();
     }
-
-//    List<OtherOccurrenceNodeData> getNodeDataList(String nodeKey) {
-//        return Collections.unmodifiableList(nodeMap.get(nodeKey));
-//    }
 
     private String createNodeKey(OtherOccurrenceNodeInstanceData nodeData) {
         return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath();

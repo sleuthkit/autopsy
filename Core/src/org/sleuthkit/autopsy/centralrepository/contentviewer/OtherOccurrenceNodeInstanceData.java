@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -232,6 +232,12 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
         return originalCorrelationInstance;
     }
 
+    /**
+     * Create a string representation of the node's data comma separated with a
+     * line separator ending
+     *
+     * @return a comma separated string representation of the node's data
+     */
     String toCsvString() {
         StringBuilder line = new StringBuilder("");
         line.append('"').append(getCaseName()).append('"').append(',');
