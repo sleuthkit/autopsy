@@ -994,7 +994,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         caseDatasourceFileSplitPane.setDividerLocation(300);
         caseDatasourceFileSplitPane.setResizeWeight(0.6);
-        caseDatasourceFileSplitPane.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.caseDatasourceFileSplitPane.toolTipText")); // NOI18N
+        caseDatasourceFileSplitPane.setToolTipText("");
 
         caseDatasourceSplitPane.setDividerLocation(150);
         caseDatasourceSplitPane.setResizeWeight(0.5);
