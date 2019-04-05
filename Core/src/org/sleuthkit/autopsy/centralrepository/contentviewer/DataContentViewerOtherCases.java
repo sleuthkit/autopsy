@@ -302,7 +302,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value()).append('"').append(',');
             headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_known()).append('"').append(',');
             headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_path()).append('"').append(',');
-            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value()).append('"').append(System.getProperty("line.separator"));
+            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_comment()).append('"').append(System.getProperty("line.separator"));
             writer.write(headers.toString());
             //write content
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
@@ -1078,18 +1078,17 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }// </editor-fold>//GEN-END:initComponents
 
     private void rightClickPopupMenuPopupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
-//        boolean enableCentralRepoActions = false;
-//
-//        if (EamDb.isEnabled() && filesTable.getSelectedRowCount() == 1) {
-//            int rowIndex = filesTable.getSelectedRow();
-//            List<OtherOccurrenceNodeData> selectedNode = (OtherOccurrenceNodeData) filesTableModel.getRow(rowIndex);
-//            if (selectedNode instanceof OtherOccurrenceNodeInstanceData) {
-//                OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) selectedNode;
-//                enableCentralRepoActions = instanceData.isCentralRepoNode();
-//            }
-//        }
-//        showCaseDetailsMenuItem.setVisible(enableCentralRepoActions);
-//        showCommonalityMenuItem.setVisible(enableCentralRepoActions);
+        boolean enableCentralRepoActions = false;
+        if (EamDb.isEnabled() && filesTable.getSelectedRowCount() == 1) {
+            int rowIndex = filesTable.getSelectedRow();
+            List<OtherOccurrenceNodeData> selectedFile = filesTableModel.getRow(rowIndex);
+            if (selectedFile.get(0) instanceof OtherOccurrenceNodeInstanceData) {
+                OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) selectedFile.get(0);
+                enableCentralRepoActions = instanceData.isCentralRepoNode();
+            }
+        }
+        showCaseDetailsMenuItem.setVisible(enableCentralRepoActions);
+        showCommonalityMenuItem.setVisible(enableCentralRepoActions);
     }//GEN-LAST:event_rightClickPopupMenuPopupMenuWillBecomeVisible
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
