@@ -22,6 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.CaseNodeDataException;
+import static org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils.isCaseAutoIngestLogNodePath;
+import static org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils.isCaseNameNodePath;
+import static org.sleuthkit.autopsy.casemodule.multiusercases.CoordinationServiceUtils.isCaseResourcesNodePath;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -56,14 +59,12 @@ final public class CaseNodeDataCollector {
              * Skip the case name, case resources, and case auto ingest log
              * coordination service nodes. They are not used to store case data.
              */
-            if (CoordinationServiceUtils.isCaseNameNodePath(nodePath)
-                    || CoordinationServiceUtils.isCaseResourcesNodePath(nodePath)
-                    || CoordinationServiceUtils.isCaseAutoIngestLogNodePath(nodePath)) {
+            if (isCaseNameNodePath(nodePath) || isCaseResourcesNodePath(nodePath) || isCaseAutoIngestLogNodePath(nodePath)) {
                 continue;
             }
 
             /*
-             * Get the data from the case directory coordination service node.
+             * Get the case node data from the case directory coordination service node.
              */
             try {
                 CaseNodeData nodeData = CaseNodeData.readCaseNodeData(nodePath);
