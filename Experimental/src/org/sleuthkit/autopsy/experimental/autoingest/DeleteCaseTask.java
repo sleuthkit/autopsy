@@ -594,12 +594,12 @@ final class DeleteCaseTask implements Runnable {
      *         otherwise.
      */
     @NbBundle.Messages({
-        "# {0} - data source name", "# {1} - device id", "DeleteCaseTask.progress.deletingDataSource=Deleting data source {0} with device id {1}...",})
+        "# {0} - data source path", "DeleteCaseTask.progress.deletingDataSource=Deleting data source {0}..."
+    })
     private boolean deleteDataSources(Manifest manifest, List<DataSource> dataSources) {
-        final String dataSourceFileName = manifest.getDataSourceFileName();
-        final String dataSourceDeviceId = manifest.getDeviceId();
-        progress.progress(Bundle.DeleteCaseTask_progress_deletingDataSource(dataSourceFileName, dataSourceDeviceId));
-        logger.log(Level.INFO, String.format("Deleting data source %s with device id %s from %s", dataSourceFileName, dataSourceDeviceId, caseNodeData.getDisplayName()));
+        final Path dataSourcePath = manifest.getDataSourcePath();
+        progress.progress(Bundle.DeleteCaseTask_progress_deletingDataSource(dataSourcePath));
+        logger.log(Level.INFO, String.format("Deleting data source %s from %s", dataSourcePath, caseNodeData.getDisplayName()));
 
         /*
          * There are two possibilities here. The data source may be an image,
@@ -609,26 +609,27 @@ final class DeleteCaseTask implements Runnable {
          * set, report file, archive file, etc.). In this case, just the file
          * referenced by the manifest will be deleted.
          */
-        boolean allFilesDeleted = true;
         Set<Path> filesToDelete = new HashSet<>();
-        for (DataSource dataSource : dataSources) {
+        int index = 0;
+        while (index < dataSources.size() && filesToDelete.isEmpty()) {
+            DataSource dataSource = dataSources.get(index);
             if (dataSource instanceof Image) {
                 Image image = (Image) dataSource;
-                if (image.getName().equals(dataSourceFileName) && image.getDeviceId().equals(dataSourceDeviceId)) {
-                    String[] imageFilePaths = image.getPaths();
-                    for (String path : imageFilePaths) {
-                        Path imageFilePath = Paths.get(path);
-                        filesToDelete.add(imageFilePath);
+                String[] imageFilePaths = image.getPaths();
+                for (String imageFilePath : imageFilePaths) {
+                    Path candidatePath = Paths.get(imageFilePath);
+                    if (candidatePath.equals(dataSourcePath)) {
+                        for (String path : imageFilePaths) {
+                            filesToDelete.add(Paths.get(path));
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }
-        if (filesToDelete.isEmpty()) {
-            final Path dataSourcePath = manifest.getDataSourcePath();
-            filesToDelete.add(dataSourcePath);
-        }
-
+        filesToDelete.add(dataSourcePath);
+        
+        boolean allFilesDeleted = true;
         for (Path path : filesToDelete) {
             File fileOrDir = path.toFile();
             if (fileOrDir.exists() && !FileUtil.deleteFileDir(fileOrDir)) {
