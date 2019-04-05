@@ -69,13 +69,13 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
     
     private void customizeComponents() {
         populateTagNameComponents();
-        
+        /*
         try {
             outputFolderTextField.setText(Case.getCurrentCaseThrows().getReportDirectory());
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(CreatePortableCasePanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
             JOptionPane.showMessageDialog(this, Bundle.CreatePortableCasePanel_error_noOpenCase(), Bundle.CreatePortableCasePanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
-        }
+        }*/
     }
     
     private void populateTagNameComponents() {
@@ -138,7 +138,8 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
      * @return The output folder for the portable case
      */
     String getOutputFolder() {
-        return outputFolderTextField.getText();
+        return "";
+        //return outputFolderTextField.getText();
     }
     
     // This class is a list model for the tag names JList component.
@@ -195,10 +196,7 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
         deselectAllButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tagNamesListBox = new javax.swing.JList<>();
-        outputFolderTextField = new javax.swing.JTextField();
-        chooseOutputFolderButton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
         jComboBox1 = new javax.swing.JComboBox<>();
         jCheckBox1 = new javax.swing.JCheckBox();
         jLabel3 = new javax.swing.JLabel();
@@ -222,18 +220,7 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
 
         jScrollPane1.setViewportView(tagNamesListBox);
 
-        outputFolderTextField.setText(org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.outputFolderTextField.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(chooseOutputFolderButton, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.chooseOutputFolderButton.text")); // NOI18N
-        chooseOutputFolderButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chooseOutputFolderButtonActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.jLabel1.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel2, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.jLabel2.text")); // NOI18N
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Do not split" }));
         jComboBox1.addActionListener(new java.awt.event.ActionListener() {
@@ -265,21 +252,14 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
                             .addComponent(deselectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(selectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
-                            .addComponent(jLabel2))
+                        .addComponent(jLabel1)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(outputFolderTextField)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jCheckBox1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel3)))
+                        .addComponent(jCheckBox1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(chooseOutputFolderButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -297,13 +277,6 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(deselectAllButton))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 104, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(outputFolderTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(chooseOutputFolderButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -328,23 +301,6 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
         tagNamesListBox.repaint();
     }//GEN-LAST:event_deselectAllButtonActionPerformed
 
-    private void chooseOutputFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chooseOutputFolderButtonActionPerformed
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        File currentSelection = new File(outputFolderTextField.getText());
-        if (currentSelection.exists()) {
-            fileChooser.setCurrentDirectory(currentSelection);
-        }
-
-        int result = fileChooser.showOpenDialog(this);
-
-        if (result == JFileChooser.APPROVE_OPTION) {
-            String outputDir = fileChooser.getSelectedFile().getAbsolutePath();
-            outputFolderTextField.setText(outputDir);
-        }
-    }//GEN-LAST:event_chooseOutputFolderButtonActionPerformed
-
     private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jCheckBox1ActionPerformed
@@ -355,15 +311,12 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton chooseOutputFolderButton;
     private javax.swing.JButton deselectAllButton;
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextField outputFolderTextField;
     private javax.swing.JButton selectAllButton;
     private javax.swing.JList<String> tagNamesListBox;
     // End of variables declaration//GEN-END:variables
