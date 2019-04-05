@@ -93,7 +93,6 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private static final Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
     private static final CorrelationCaseWrapper NO_ARTIFACTS_CASE = new CorrelationCaseWrapper(Bundle.DataContentViewerOtherCases_table_noArtifacts());
     private static final CorrelationCaseWrapper NO_RESULTS_CASE = new CorrelationCaseWrapper(Bundle.DataContentViewerOtherCases_table_noResultsFound());
-    private static final int DEFAULT_MIN_CELL_WIDTH = 15;
 
     private final OtherOccurrencesFilesTableModel filesTableModel;
     private final OtherOccurrencesCasesTableModel casesTableModel;
