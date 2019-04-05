@@ -40,11 +40,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 public final class CaseNodeData {
 
-    private static final int CURRENT_VERSION = 1;
+    private static final int MAJOR_VERSION = 2;
+    private static final int MINOR_VERSION = 0;
     private static final Logger logger = Logger.getLogger(CaseNodeData.class.getName());
 
     /*
-     * Version 0 fields.
+     * Version 0 fields. Note that version 0 node data was only written to the
+     * coordination service node if an auto ingest job error occurred and the
+     * errorsOccurred field needed to be set.
      */
     private int version;
     private boolean errorsOccurred;
@@ -58,6 +61,11 @@ public final class CaseNodeData {
     private String name;
     private String displayName;
     private short deletedItemFlags;
+
+    /*
+     * Version 2 fields.
+     */
+    private int minorVersion;
 
     /**
      * Creates case node data from the metadata for a case and writes it to the
@@ -116,7 +124,7 @@ public final class CaseNodeData {
                 CaseMetadata metadata = getCaseMetadata(nodePath);
                 nodeData = createCaseNodeData(metadata);
             }
-            if (nodeData.getVersion() < CaseNodeData.CURRENT_VERSION) {
+            if (nodeData.getVersion() < CaseNodeData.MAJOR_VERSION) {
                 nodeData = upgradeCaseNodeData(nodePath, nodeData);
             }
             return nodeData;
@@ -162,18 +170,26 @@ public final class CaseNodeData {
      */
     private static CaseNodeData upgradeCaseNodeData(String nodePath, CaseNodeData oldNodeData) throws CaseNodeDataException, CaseMetadataException, ParseException, IOException, CoordinationServiceException, InterruptedException {
         CaseMetadata metadata = getCaseMetadata(nodePath);
-        CaseNodeData nodeData = oldNodeData;
+        CaseNodeData nodeData;
         if (oldNodeData.getVersion() == 0) {
             /*
              * Version 0 node data consisted of only the version number and the
              * error occurred flag and was only written when an auto ingest job
-             * error occurred. The version 1 fields need to set from the case
+             * error occurred. The version 1 fields need to be set from the case
              * metadata and the errors occurred flag needs to be carried
              * forward. Note that the last accessed date gets advanced to now,
              * since it is otherwise unknown.
              */
             nodeData = new CaseNodeData(metadata);
             nodeData.setErrorsOccurred(oldNodeData.getErrorsOccurred());
+        } else if (oldNodeData.getVersion() == 1) {
+            /*
+             * Version 1 node data did not have a minor version number field.
+             */
+            oldNodeData.setMinorVersion(MINOR_VERSION);
+            nodeData = oldNodeData;
+        } else {
+            nodeData = oldNodeData;
         }
         writeCaseNodeData(nodeData);
         return nodeData;
@@ -215,7 +231,7 @@ public final class CaseNodeData {
      *                        representations of dates in the meta data.
      */
     private CaseNodeData(CaseMetadata metadata) throws ParseException {
-        this.version = CURRENT_VERSION;
+        this.version = MAJOR_VERSION;
         this.errorsOccurred = false;
         this.directory = Paths.get(metadata.getCaseDirectory());
         this.createDate = CaseMetadata.getDateFormat().parse(metadata.getCreatedDate());
@@ -223,6 +239,7 @@ public final class CaseNodeData {
         this.name = metadata.getCaseName();
         this.displayName = metadata.getCaseDisplayName();
         this.deletedItemFlags = 0;
+        this.minorVersion = MINOR_VERSION;
     }
 
     /**
@@ -240,7 +257,7 @@ public final class CaseNodeData {
         }
         try (ByteArrayInputStream byteStream = new ByteArrayInputStream(nodeData); DataInputStream inputStream = new DataInputStream(byteStream)) {
             this.version = inputStream.readInt();
-            if (this.version > 0) {
+            if (this.version == 1) {
                 this.errorsOccurred = inputStream.readBoolean();
             } else {
                 byte errorsOccurredByte = inputStream.readByte();
@@ -254,16 +271,28 @@ public final class CaseNodeData {
                 this.displayName = inputStream.readUTF();
                 this.deletedItemFlags = inputStream.readShort();
             }
+            if (this.version > 1) {
+                this.minorVersion = inputStream.readInt();
+            }
         }
     }
 
     /**
-     * Gets the node data version number of this node.
+     * Gets the version number of this node data.
      *
      * @return The version number.
      */
-    public int getVersion() {
+    private int getVersion() {
         return this.version;
+    }
+
+    /**
+     * Sets the version number of this node data.
+     *
+     * @param version The version number.
+     */
+    private void setMinorVersion(int minorVersion) {
+        this.minorVersion = minorVersion;
     }
 
     /**
@@ -383,13 +412,14 @@ public final class CaseNodeData {
     private byte[] toArray() throws IOException {
         try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); DataOutputStream outputStream = new DataOutputStream(byteStream)) {
             outputStream.writeInt(this.version);
-            outputStream.writeBoolean(this.errorsOccurred);
+            outputStream.writeByte((byte) (this.errorsOccurred ? 0x80 : 0));
             outputStream.writeUTF(this.directory.toString());
             outputStream.writeLong(this.createDate.getTime());
             outputStream.writeLong(this.lastAccessDate.getTime());
             outputStream.writeUTF(this.name);
             outputStream.writeUTF(this.displayName);
             outputStream.writeShort(this.deletedItemFlags);
+            outputStream.writeInt(this.minorVersion);
             outputStream.flush();
             byteStream.flush();
             return byteStream.toByteArray();
