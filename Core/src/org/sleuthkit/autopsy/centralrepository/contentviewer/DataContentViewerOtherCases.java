@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2019 Basis Technology Corp.
+ * Copyright 2017-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -99,12 +99,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private final OtherOccurrencesDataSourcesTableModel dataSourcesTableModel;
     private OccurrencePanel occurrencePanel;
     private final Collection<CorrelationAttributeInstance> correlationAttributes;
-    private String dataSourceName = "";
-    private String deviceId = "";
+    private String dataSourceName = "";  //the data source of the file which the content viewer is being populated for
+    private String deviceId = ""; //the device id of the data source for the file which the content viewer is being populated for
     /**
      * Could be null.
      */
-    private AbstractFile file;
+    private AbstractFile file; //the file which the content viewer is being populated for
 
     /**
      * Creates new form DataContentViewerOtherCases
