@@ -391,6 +391,11 @@ class ExtractRegistry extends Extract {
             // that we will submit in a ModuleDataEvent for additional processing.
             Collection<BlackboardArtifact> wifiBBartifacts = new ArrayList<>();
             for (int i = 0; i < len; i++) {
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    return false;
+                }
+                
                 Element tempnode = (Element) children.item(i);
 
                 String dataType = tempnode.getNodeName();
