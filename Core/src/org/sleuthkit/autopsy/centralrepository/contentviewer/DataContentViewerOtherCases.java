@@ -263,7 +263,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     }
 
     private void saveToCSV() throws NoCurrentCaseException {
-        if (0 != filesTable.getSelectedRowCount()) {
+        if (casesTableModel.getRowCount() > 0) {
             Calendar now = Calendar.getInstance();
             String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_data_sources.csv", now);
             CSVFileChooser.setCurrentDirectory(new File(Case.getCurrentCaseThrows().getExportDirectory()));
@@ -277,43 +277,42 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 if (!selectedFile.getName().endsWith(".csv")) { // NON-NLS
                     selectedFile = new File(selectedFile.toString() + ".csv"); // NON-NLS
                 }
-
-                writeSelectedRowsToFileAsCSV(selectedFile);
+                writeOtherOccurrencesToFileAsCSV(selectedFile);
             }
-
         }
     }
 
-    private void writeSelectedRowsToFileAsCSV(File destFile) {
-        StringBuilder content;
-        int[] selectedRowViewIndices = filesTable.getSelectedRows();
-        int colCount = filesTableModel.getColumnCount();
+    @Messages({
+        "DataContentViewerOtherCasesModel.csvHeader.case=Case",
+        "DataContentViewerOtherCasesModel.csvHeader.device=Device",
+        "DataContentViewerOtherCasesModel.csvHeader.dataSource=Data Source",
+        "DataContentViewerOtherCasesModel.csvHeader.attribute=Matched Attribute",
+        "DataContentViewerOtherCasesModel.csvHeader.value=Attribute Value",
+        "DataContentViewerOtherCasesModel.csvHeader.known=Known",
+        "DataContentViewerOtherCasesModel.csvHeader.path=Path",
+        "DataContentViewerOtherCasesModel.csvHeader.comment=Comment"
+    })
+    private void writeOtherOccurrencesToFileAsCSV(File destFile) {
         try (BufferedWriter writer = Files.newBufferedWriter(destFile.toPath())) {
-            // write column names
-            content = new StringBuilder("");
-            for (int colIdx = 0; colIdx < colCount; colIdx++) {
-                content.append('"').append(filesTableModel.getColumnName(colIdx)).append('"');
-                if (colIdx < (colCount - 1)) {
-                    content.append(",");
+            //write headers 
+            StringBuilder headers = new StringBuilder("");
+            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_case()).append('"').append(',');
+            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_dataSource()).append('"').append(',');
+            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_attribute()).append('"').append(',');
+            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value()).append('"').append(',');
+            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_known()).append('"').append(',');
+            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_path()).append('"').append(',');
+            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value()).append('"').append(System.getProperty("line.separator"));
+            writer.write(headers.toString());
+            //write content
+            for (CorrelationAttributeInstance corAttr : correlationAttributes) {
+                Map<UniquePathKey, OtherOccurrenceNodeInstanceData> correlatedNodeDataMap = new HashMap<>(0);
+                // get correlation and reference set instances from DB
+                correlatedNodeDataMap.putAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
+                for (OtherOccurrenceNodeInstanceData nodeData : correlatedNodeDataMap.values()) {
+                    writer.write(nodeData.toCsvString());
                 }
             }
-            content.append(System.getProperty("line.separator"));
-            writer.write(content.toString());
-
-            // write rows
-            for (int rowViewIdx : selectedRowViewIndices) {
-                content = new StringBuilder("");
-                for (int colIdx = 0; colIdx < colCount; colIdx++) {
-                    int rowModelIdx = filesTable.convertRowIndexToModel(rowViewIdx);
-                    content.append('"').append(filesTableModel.getValueAt(rowModelIdx, colIdx)).append('"');
-                    if (colIdx < (colCount - 1)) {
-                        content.append(",");
-                    }
-                }
-                content.append(System.getProperty("line.separator"));
-                writer.write(content.toString());
-            }
-
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Error writing selected rows to CSV.", ex);
         }

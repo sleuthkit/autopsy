@@ -31,11 +31,11 @@ import org.sleuthkit.datamodel.TskDataException;
  * Class for populating the Other Occurrences tab
  */
 class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
-    
+
     // For now hard code the string for the central repo files type, since 
     // getting it dynamically can fail.
     private static final String FILE_TYPE_STR = "Files";
-    
+
     private final String caseName;
     private String deviceID;
     private String dataSourceName;
@@ -44,12 +44,13 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
     private final String value;
     private TskData.FileKnown known;
     private String comment;
-    
+
     private AbstractFile originalAbstractFile = null;
     private CorrelationAttributeInstance originalCorrelationInstance = null;
-    
+
     /**
      * Create a node from a central repo instance.
+     *
      * @param instance The central repo instance
      * @param type     The type of the instance
      * @param value    The value of the instance
@@ -63,15 +64,17 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
         this.value = value;
         known = instance.getKnownStatus();
         comment = instance.getComment();
-        
+
         originalCorrelationInstance = instance;
     }
-    
+
     /**
      * Create a node from an abstract file.
+     *
      * @param newFile     The abstract file
      * @param autopsyCase The current case
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     OtherOccurrenceNodeInstanceData(AbstractFile newFile, Case autopsyCase) throws EamDbException {
         caseName = autopsyCase.getDisplayName();
@@ -82,115 +85,129 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
         } catch (TskDataException | TskCoreException ex) {
             throw new EamDbException("Error loading data source for abstract file ID " + newFile.getId(), ex);
         }
-        
+
         filePath = newFile.getParentPath() + newFile.getName();
         typeStr = FILE_TYPE_STR;
         value = newFile.getMd5Hash();
         known = newFile.getKnown();
         comment = "";
-        
+
         originalAbstractFile = newFile;
     }
-    
+
     /**
      * Check if this node is a "file" type
+     *
      * @return true if it is a file type
      */
     boolean isFileType() {
         return FILE_TYPE_STR.equals(typeStr);
     }
-    
+
     /**
      * Update the known status for this node
+     *
      * @param newKnownStatus The new known status
      */
     void updateKnown(TskData.FileKnown newKnownStatus) {
         known = newKnownStatus;
     }
-    
+
     /**
      * Update the comment for this node
+     *
      * @param newComment The new comment
      */
     void updateComment(String newComment) {
         comment = newComment;
     }
-    
+
     /**
      * Check if this is a central repo node.
-     * @return true if this node was created from a central repo instance, false otherwise
+     *
+     * @return true if this node was created from a central repo instance, false
+     *         otherwise
      */
     boolean isCentralRepoNode() {
         return (originalCorrelationInstance != null);
-    }    
- 
+    }
+
     /**
      * Get the case name
+     *
      * @return the case name
      */
     String getCaseName() {
         return caseName;
     }
-    
+
     /**
      * Get the device ID
+     *
      * @return the device ID
      */
     String getDeviceID() {
         return deviceID;
     }
-    
+
     /**
      * Get the data source name
+     *
      * @return the data source name
      */
     String getDataSourceName() {
         return dataSourceName;
     }
-    
+
     /**
      * Get the file path
+     *
      * @return the file path
      */
     String getFilePath() {
         return filePath;
     }
-    
+
     /**
      * Get the type (as a string)
+     *
      * @return the type
      */
     String getType() {
         return typeStr;
     }
-    
+
     /**
      * Get the value (MD5 hash for files)
+     *
      * @return the value
      */
     String getValue() {
         return value;
     }
-    
+
     /**
      * Get the known status
+     *
      * @return the known status
      */
     TskData.FileKnown getKnown() {
         return known;
     }
-    
+
     /**
      * Get the comment
+     *
      * @return the comment
      */
     String getComment() {
         return comment;
     }
-    
+
     /**
-     * Get the backing abstract file.
-     * Should only be called if isCentralRepoNode() is false
+     * Get the backing abstract file. Should only be called if
+     * isCentralRepoNode() is false
+     *
      * @return the original abstract file
      */
     AbstractFile getAbstractFile() throws EamDbException {
@@ -199,17 +216,31 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
         }
         return originalAbstractFile;
     }
-    
+
     /**
-     * Get the backing CorrelationAttributeInstance.
-     * Should only be called if isCentralRepoNode() is true
+     * Get the backing CorrelationAttributeInstance. Should only be called if
+     * isCentralRepoNode() is true
+     *
      * @return the original CorrelationAttributeInstance
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     CorrelationAttributeInstance getCorrelationAttributeInstance() throws EamDbException {
         if (originalCorrelationInstance == null) {
             throw new EamDbException("CorrelationAttributeInstance is null");
         }
         return originalCorrelationInstance;
+    }
+
+    String toCsvString() {
+        StringBuilder line = new StringBuilder("");
+        line.append('"').append(getCaseName()).append('"').append(',');
+        line.append('"').append(getDataSourceName()).append('"').append(',');
+        line.append('"').append(getType()).append('"').append(',');
+        line.append('"').append(getValue()).append('"').append(',');
+        line.append('"').append(getKnown().toString()).append('"').append(',');
+        line.append('"').append(getFilePath()).append('"').append(',');
+        line.append('"').append(getComment()).append('"').append(System.getProperty("line.separator"));
+        return line.toString();
     }
 }
