@@ -62,6 +62,10 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
     public String getDeviceIdForRow(int rowIdx) {
         return ((DataSourceColumnItem) dataSourceSet.toArray()[rowIdx]).getDeviceId();
     }
+    
+    public String getCaseNameForRow(int rowIdx){
+        return ((DataSourceColumnItem) dataSourceSet.toArray()[rowIdx]).getCaseName();
+    }
 
     @Override
     public Class<String> getColumnClass(int colIdx) {

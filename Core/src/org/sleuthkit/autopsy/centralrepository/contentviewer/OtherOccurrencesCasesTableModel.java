@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 
 /**
  * Model for cells in the cases section of the other occurrences data content
@@ -39,7 +40,6 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     public int getColumnCount() {
         return 1;
     }
-
 
     @Override
     public int getRowCount() {
@@ -66,8 +66,12 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
         return value;
     }
 
-    Object getCorrelationCase(int rowIdx) {
-        return correlationCaseList.get(rowIdx).getCorrelationCase();
+    CorrelationCase getCorrelationCase(int rowIdx) {
+        if (rowIdx < correlationCaseList.size()) {
+            return correlationCaseList.get(rowIdx).getCorrelationCase();
+        } else {
+            return null;
+        }
     }
 
     @Override

@@ -57,6 +57,7 @@ import javax.swing.table.TableRowSorter;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -117,7 +118,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         this.casesTableModel = new OtherOccurrencesCasesTableModel();
         this.dataSourcesTableModel = new OtherOccurrencesDataSourcesTableModel();
         this.correlationAttributes = new ArrayList<>();
-        occurrencePanel = new OccurrencePanel(new ArrayList<>());
+        occurrencePanel = new OccurrencePanel();
         initComponents();
         customizeComponents();
 
@@ -337,7 +338,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         earliestCaseDate.setText(Bundle.DataContentViewerOtherCases_earliestCaseNotAvailable());
         foundInLabel.setText("");
         //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
-        occurrencePanel = new OccurrencePanel(new ArrayList<>());
+        occurrencePanel = new OccurrencePanel();
         occurrencePanel.getPreferredSize();
         detailsPanelScrollPane.setViewportView(occurrencePanel);
     }
@@ -809,7 +810,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     try {
                         if (nodeData.isCentralRepoNode()) {
                             if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)) != null
-                                    && ((CorrelationCase) casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
+                                    && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())) {
                                 dataSourcesTableModel.addNodeData(nodeData);
                             }
                         } else {
@@ -845,7 +846,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         try {
                             if (nodeData.isCentralRepoNode()) {
                                 if (casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow)) != null
-                                        && ((CorrelationCase) casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow))).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
+                                        && casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(selectedCaseRow)).getCaseUUID().equals(nodeData.getCorrelationAttributeInstance().getCorrelationCase().getCaseUUID())
                                         && dataSourcesTableModel.getDeviceIdForRow(dataSourcesTable.convertRowIndexToModel(selectedDataSourceRow)).equals(nodeData.getDeviceID())) {
                                     filesTableModel.addNodeData(nodeData);
                                 }
@@ -872,16 +873,50 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             occurrencePanel = new OccurrencePanel(filesTableModel.getRow(filesTable.convertRowIndexToModel(filesTable.getSelectedRow())));
         } else if (dataSourcesTable.getSelectedRowCount() == 1) {
             //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
-            occurrencePanel = new OccurrencePanel(new ArrayList<>());
+            String caseName = dataSourcesTableModel.getCaseNameForRow(dataSourcesTable.convertRowIndexToModel(dataSourcesTable.getSelectedRow()));
+            String dataSourceName = dataSourcesTableModel.getValueAt(dataSourcesTable.convertRowIndexToModel(dataSourcesTable.getSelectedRow()), 0).toString();
+            String caseCreatedDate = "";
+            for (int row : casesTable.getSelectedRows()) {
+                if (casesTableModel.getValueAt(casesTable.convertRowIndexToModel(row), 0).toString().equals(caseName)) {
+                    caseCreatedDate = getCaseCreatedDate(row);
+                    break;
+                }
+            }
+            occurrencePanel = new OccurrencePanel(caseName, caseCreatedDate, dataSourceName);
         } else if (casesTable.getSelectedRowCount() == 1) {
             //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
-            occurrencePanel = new OccurrencePanel(new ArrayList<>());
+            String createdDate = "";
+            String caseName = "";
+            if (casesTable.getRowCount() > 0) {
+                caseName = casesTableModel.getValueAt(casesTable.convertRowIndexToModel(casesTable.getSelectedRow()), 0).toString();
+            }
+            if (caseName.isEmpty()) {
+                occurrencePanel = new OccurrencePanel();
+            } else {
+                createdDate = getCaseCreatedDate(casesTable.getSelectedRow());
+                occurrencePanel = new OccurrencePanel(caseName, createdDate);
+            }
         } else {
             //calling getPreferredSize has a side effect of ensuring it has a preferred size which reflects the contents which are visible
-            occurrencePanel = new OccurrencePanel(new ArrayList<>());
+            occurrencePanel = new OccurrencePanel();
         }
         occurrencePanel.getPreferredSize();
         detailsPanelScrollPane.setViewportView(occurrencePanel);
+    }
+
+    private String getCaseCreatedDate(int caseTableRowIdx) {
+        try {
+            if (EamDb.isEnabled()) {
+                CorrelationCase partialCase;
+                partialCase = casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(caseTableRowIdx));
+                 return EamDb.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
+            } else {
+                 return Case.getCurrentCase().getCreatedDate();
+            }
+        } catch (EamDbException ex) {
+
+        }
+        return "";
     }
 
     /**

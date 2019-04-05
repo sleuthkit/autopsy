@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,23 +49,43 @@ final class OccurrencePanel extends javax.swing.JPanel {
     private final Set<String> dataSourceNames = new HashSet<>();
     private final Set<String> filePaths = new HashSet<>();
 
+    OccurrencePanel() {
+        nodeDataList = new ArrayList<>();
+    }
+
+    OccurrencePanel(String caseName, String caseCreatedDate) {
+        this();
+        caseNamesAndDates.put(caseName, caseCreatedDate);
+        customizeComponents();
+    }
+
+    OccurrencePanel(String caseName, String caseCreatedDate, String dataSourceName) {
+        this(caseName, caseCreatedDate);
+        dataSourceNames.add(dataSourceName);
+        customizeComponents();
+    }
+
     /**
      * Creates new form OccurrencePanel2
      */
     OccurrencePanel(List<OtherOccurrenceNodeData> nodeDataList) {
         this.nodeDataList = nodeDataList;
         initComponents();
+        customizeComponents();
+    }
+
+    private void customizeComponents() {
         if (!this.nodeDataList.isEmpty()) {
             addInstanceDetails();
             if (!filePaths.isEmpty()) {
                 addFileDetails();
             }
-            if (!dataSourceNames.isEmpty()) {
-                addDataSourceDetails();
-            }
-            if (!caseNamesAndDates.keySet().isEmpty()) {
-                addCaseDetails();
-            }
+        }
+        if (!dataSourceNames.isEmpty()) {
+            addDataSourceDetails();
+        }
+        if (!caseNamesAndDates.keySet().isEmpty()) {
+            addCaseDetails();
         }
         //add filler to keep everything else at the top
         addItemToBag(gridY, 0, 0, 0, new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767)));
