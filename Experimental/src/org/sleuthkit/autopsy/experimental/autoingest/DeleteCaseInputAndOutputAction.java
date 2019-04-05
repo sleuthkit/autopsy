@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.progress.ProgressIndicator;
  * associated auto ingest job input directories and all coordination service
  * nodes.
  */
-final class DeleteCaseInputAndOutputAction extends DeleteCaseAction {
+final class DeleteCaseInputAndOutputAction extends DeleteCaseComponentsAction {
 
     private static final long serialVersionUID = 1L;
 

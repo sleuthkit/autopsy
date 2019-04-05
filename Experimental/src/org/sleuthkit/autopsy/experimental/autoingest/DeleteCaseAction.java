@@ -18,89 +18,51 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import javax.swing.AbstractAction;
-import org.openide.util.Utilities;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
-import org.sleuthkit.autopsy.progress.AppFrameProgressBar;
-import org.sleuthkit.autopsy.progress.TaskCancellable;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
- * An abstract class for an action that deletes one or more auto ingest cases
- * using a thread pool, one task per case. Uses the Template Method design
- * pattern to allow subclasses to specify the deletion task to be performed.
- *
- * This cases to delete are discovered by querying the actions global context
- * lookup for CaseNodeData objects. See
- * https://platform.netbeans.org/tutorials/nbm-selection-1.html and
- * https://platform.netbeans.org/tutorials/nbm-selection-2.html for details.
+ * An action that completely deletes one or more multi-user cases. Only the
+ * components created by the application are deleted: the case output and the
+ * coordination service nodes. Note that manifest file coordination service
+ * nodes are only marked as deleted by setting the processing status field for
+ * the corresponding auto ingest job to DELETED. This is done to avoid imposing
+ * the requirement that the manifests be deleted before deleting the cases,
+ * since at this time manifests are not considered to be case components created
+ * by the application.
  */
-abstract class DeleteCaseAction extends AbstractAction {
+final class DeleteCaseAction extends DeleteCaseComponentsAction {
 
     private static final long serialVersionUID = 1L;
-    private static final int NUMBER_OF_THREADS = 4;
-    private static final String THREAD_NAME_SUFFIX = "-task-%d";  //NON-NLS
-    private static final String PROGRESS_DISPLAY_NAME = "%s for %s"; //NON-NLS
-    private final String taskDisplayName;
-    private final ExecutorService executor;
 
     /**
-     * Constructs an abstract class for an action that deletes one or more auto
-     * ingest cases using a thread pool, one task per case. Uses the Template
-     * Method design pattern to allow subclasses to specify the deletion task to
-     * be performed.
-     *
-     * @param menuItemText    The menu item text for the action.
-     * @param taskDisplayName The task display name for the progress indicator
-     *                        for the task, to be inserted in the first position
-     *                        of "%s for %s", where the second substitution is
-     *                        the case name.
-     * @param taskName        The task name, to be inserted in the first
-     *                        position of "%s-task-%d", where the second
-     *                        substitution is the pool thread number.
+     * Constructs an action that completely deletes one or more multi-user
+     * cases, including any associated auto ingest job input directories and
+     * coordination service nodes.
      */
-    DeleteCaseAction(String menuItemText, String taskDisplayName, String taskName) {
-        super(menuItemText);
-        this.taskDisplayName = taskDisplayName;
-        String threadNameFormat = taskName + THREAD_NAME_SUFFIX;
-        executor = Executors.newFixedThreadPool(NUMBER_OF_THREADS, new ThreadFactoryBuilder().setNameFormat(threadNameFormat).build());
+    @NbBundle.Messages({
+        "DeleteCaseAction.menuItemText=Delete Case(s)",
+        "DeleteCaseAction.progressDisplayName=Delete Case(s)",
+        "DeleteCaseAction.taskName=app-input-and-output"
+    })
+    DeleteCaseAction() {
+        super(Bundle.DeleteCaseAction_menuItemText(), Bundle.DeleteCaseAction_progressDisplayName(), Bundle.DeleteCaseAction_taskName());
     }
 
+    @NbBundle.Messages({
+        "DeleteCaseAction.confirmationText=Are you sure you want to delete the following for the case(s):\n\tManifest file znodes\n\tCase database\n\tCore.properties file\n\tCase directory\n\tCase znodes"
+    })
     @Override
     public void actionPerformed(ActionEvent event) {
-        Collection<CaseNodeData> selectedNodeData = new ArrayList<>(Utilities.actionsGlobalContext().lookupAll(CaseNodeData.class));
-        for (CaseNodeData nodeData : selectedNodeData) {
-            AppFrameProgressBar progress = new AppFrameProgressBar(String.format(PROGRESS_DISPLAY_NAME, taskDisplayName, nodeData.getDisplayName()));
-            TaskCancellable taskCanceller = new TaskCancellable(progress);
-            progress.setCancellationBehavior(taskCanceller);
-            Future<?> future = executor.submit(getTask(nodeData, progress));
-            taskCanceller.setFuture(future);
+        if (MessageNotifyUtil.Message.confirm(Bundle.DeleteCaseAction_confirmationText())) {
+            super.actionPerformed(event);
         }
-    }
-
-    /**
-     * Uses the Template Method design pattern to allow subclasses to specify
-     * the deletion task to be performed in a worker thread by this action.
-     *
-     * @param caseNodeData The case directory lock coordination service node
-     *                     data for the case to be deleted.
-     * @param progress     A progress indicator for the task.
-     *
-     * @return A case deletion task, ready to be executed.
-     */
-    abstract DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress);
-
+    }     
+    
     @Override
-    public DeleteCaseAction clone() throws CloneNotSupportedException {
-        super.clone();
-        throw new CloneNotSupportedException();
-    }
-
-}
+    DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
+        return new DeleteCaseTask(caseNodeData, DeleteCaseTask.DeleteOptions.DELETE_STANDARD, progress);
+    }}

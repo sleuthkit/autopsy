@@ -164,6 +164,10 @@ CTL_AutoIngestDashboardOpenAction=Auto Ingest Dashboard
 CTL_AutoIngestDashboardTopComponent=Auto Ingest Jobs
 CTL_CasesDashboardAction=Multi-User Cases Dashboard
 CTL_CasesDashboardTopComponent=Cases
+DeleteCaseAction.confirmationText=Are you sure you want to delete the following for the case(s):\n\tManifest file znodes\n\tCase database\n\tCore.properties file\n\tCase directory\n\tCase znodes
+DeleteCaseAction.menuItemText=Delete Case(s)
+DeleteCaseAction.progressDisplayName=Delete Case(s)
+DeleteCaseAction.taskName=app-input-and-output
 DeleteCaseInputAction.confirmationText=Are you sure you want to delete the following for the case(s):\n\tManifest files\n\tData sources\n
 DeleteCaseInputAction.menuItemText=Delete Input
 DeleteCaseInputAction.progressDisplayName=Delete Input
@@ -194,6 +198,8 @@ DeleteCaseTask.progress.deletingResourcesLockNode=Deleting case resources znode.
 DeleteCaseTask.progress.gettingManifestPaths=Getting manifest file paths...
 # {0} - manifest file path
 DeleteCaseTask.progress.lockingManifest=Locking manifest file {0}...
+# {0} - manifest file path
+DeleteCaseTask.progress.Manifest=Deleting manifest file {0}...
 DeleteCaseTask.progress.openingCaseDatabase=Opening the case database...
 DeleteCaseTask.progress.openingCaseMetadataFile=Opening case metadata file...
 # {0} - manifest file path

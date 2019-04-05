@@ -18,11 +18,14 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrowserCustomizer;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * A customizer for the multi-user case browser panel used in the administrative
@@ -31,9 +34,12 @@ import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrows
  */
 final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
 
+    private final static String ADMIN_EXT_ACCESS_FILE_NAME = "adminext"; // NON-NLS
+    private final static String ADMIN_EXT_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_EXT_ACCESS_FILE_NAME).toString();
+    private final DeleteCaseAction deleteCaseAction;
     private final DeleteCaseInputAction deleteCaseInputAction;
     private final DeleteCaseOutputAction deleteCaseOutputAction;
-    private final DeleteCaseInputAndOutputAction deleteCaseAction;
+    private final DeleteCaseInputAndOutputAction deleteAllAction;
 
     /**
      * Constructs a customizer for the multi-user case browser panel used in the
@@ -48,9 +54,10 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
          * These actions are shared by all nodes in order to support multiple
          * selection.
          */
+        deleteCaseAction = new DeleteCaseAction();
         deleteCaseInputAction = new DeleteCaseInputAction();
         deleteCaseOutputAction = new DeleteCaseOutputAction();
-        deleteCaseAction = new DeleteCaseInputAndOutputAction();
+        deleteAllAction = new DeleteCaseInputAndOutputAction();
     }
 
     @Override
@@ -60,7 +67,9 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         properties.add(Column.LAST_ACCESS_DATE);
         properties.add(Column.DIRECTORY);
         properties.add(Column.MANIFEST_FILE_ZNODES_DELETE_STATUS);
-        properties.add(Column.DATA_SOURCES_DELETE_STATUS);
+        if (CasesDashboardCustomizer.extendedFeaturesAreEnabled()) {
+            properties.add(Column.DATA_SOURCES_DELETE_STATUS);
+        }
         properties.add(Column.TEXT_INDEX_DELETE_STATUS);
         properties.add(Column.CASE_DB_DELETE_STATUS);
         properties.add(Column.CASE_DIR_DELETE_STATUS);
@@ -84,15 +93,30 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         List<Action> actions = new ArrayList<>();
         actions.add(new OpenCaseAction(nodeData));
         actions.add(new OpenAutoIngestLogAction(nodeData));
-        actions.add(deleteCaseInputAction);
-        actions.add(deleteCaseOutputAction);
-        actions.add(deleteCaseAction);
+        if (CasesDashboardCustomizer.extendedFeaturesAreEnabled()) {
+            actions.add(deleteCaseInputAction);
+            actions.add(deleteCaseOutputAction);
+            actions.add(deleteAllAction);
+        } else {
+            actions.add(deleteCaseAction);
+        }
         return actions;
     }
 
     @Override
     public Action getPreferredAction(CaseNodeData nodeData) {
         return new OpenCaseAction(nodeData);
+    }
+
+    /**
+     * Determines whether the extended system administrator features of the
+     * cases dashboard are enabled.
+     *
+     * @return True or false.
+     */
+    static boolean extendedFeaturesAreEnabled() {
+        File f = new File(ADMIN_EXT_ACCESS_FILE_PATH);
+        return f.exists();
     }
 
 }

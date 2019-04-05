@@ -112,7 +112,7 @@ public final class CaseNodeData {
                     nodeData = createCaseNodeData(metadata);
                 }
             } else {
-                logger.log(Level.INFO, String.format("Missing coordination service node data for %s, will attempt to create it", nodePath.toUpperCase())); //NON-NLS
+                logger.log(Level.WARNING, String.format("Missing coordination service node data for %s, will attempt to create it", nodePath.toUpperCase())); //NON-NLS
                 CaseMetadata metadata = getCaseMetadata(nodePath);
                 nodeData = createCaseNodeData(metadata);
             }
