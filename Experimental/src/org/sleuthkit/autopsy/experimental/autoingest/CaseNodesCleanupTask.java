@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeDataCollector;

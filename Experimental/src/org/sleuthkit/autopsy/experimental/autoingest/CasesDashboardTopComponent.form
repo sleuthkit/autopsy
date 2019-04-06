@@ -20,10 +20,12 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <Component id="refreshButton" min="-2" max="-2" attributes="0"/>
+                      <Component id="refreshButton" linkSize="1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cleanCaseNodesButton" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="313" max="32767" attributes="0"/>
+                      <Component id="cleanCaseNodesButton" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cleanManifestNodesButton" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="44" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="caseBrowserScrollPane" max="32767" attributes="0"/>
@@ -40,8 +42,9 @@
               <Component id="caseBrowserScrollPane" pref="246" max="32767" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="refreshButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="cleanCaseNodesButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="refreshButton" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cleanCaseNodesButton" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cleanManifestNodesButton" linkSize="2" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -71,6 +74,16 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cleanCaseNodesButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="cleanManifestNodesButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties" key="CasesDashboardTopComponent.cleanManifestNodesButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cleanManifestNodesButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

@@ -120,6 +120,7 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
         refreshButton = new javax.swing.JButton();
         caseBrowserScrollPane = new javax.swing.JScrollPane();
         cleanCaseNodesButton = new javax.swing.JButton();
+        cleanManifestNodesButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(CasesDashboardTopComponent.class, "CasesDashboardTopComponent.refreshButton.text")); // NOI18N
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
@@ -135,6 +136,13 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(cleanManifestNodesButton, org.openide.util.NbBundle.getMessage(CasesDashboardTopComponent.class, "CasesDashboardTopComponent.cleanManifestNodesButton.text")); // NOI18N
+        cleanManifestNodesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cleanManifestNodesButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -146,11 +154,16 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
                         .addComponent(refreshButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cleanCaseNodesButton)
-                        .addGap(0, 313, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cleanManifestNodesButton)
+                        .addGap(0, 44, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(caseBrowserScrollPane)
                         .addContainerGap())))
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cleanCaseNodesButton, cleanManifestNodesButton, refreshButton});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -159,9 +172,13 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)
-                    .addComponent(cleanCaseNodesButton))
+                    .addComponent(cleanCaseNodesButton)
+                    .addComponent(cleanManifestNodesButton))
                 .addContainerGap())
         );
+
+        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {cleanCaseNodesButton, cleanManifestNodesButton, refreshButton});
+
     }// </editor-fold>//GEN-END:initComponents
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
@@ -172,9 +189,14 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
         new CaseNodesCleanupAction().actionPerformed(evt);
     }//GEN-LAST:event_cleanCaseNodesButtonActionPerformed
 
+    private void cleanManifestNodesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cleanManifestNodesButtonActionPerformed
+        new ManifestNodesCleanupAction().actionPerformed(evt);
+    }//GEN-LAST:event_cleanManifestNodesButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane caseBrowserScrollPane;
     private javax.swing.JButton cleanCaseNodesButton;
+    private javax.swing.JButton cleanManifestNodesButton;
     private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables
 
