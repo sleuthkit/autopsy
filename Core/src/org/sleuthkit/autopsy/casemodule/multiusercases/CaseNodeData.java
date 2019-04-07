@@ -46,8 +46,7 @@ public final class CaseNodeData {
 
     /*
      * Version 0 fields. Note that version 0 node data was only written to the
-     * coordination service node if an auto ingest job error occurred and the
-     * errorsOccurred field needed to be set.
+     * coordination service node if an auto ingest job error occurred.
      */
     private int version;
     private boolean errorsOccurred;
@@ -69,26 +68,27 @@ public final class CaseNodeData {
 
     /**
      * Creates case node data from the metadata for a case and writes it to the
-     * case directory coordination service node, which must already exist.
+     * appropriate case directory coordination service node, which must already
+     * exist.
      *
      * @param metadata The case metadata.
      *
-     * @return The case data that was written to the coordination service node.
+     * @return The case node data that was written to the coordination service
+     *         node.
      *
      * @throws CaseNodeDataException If there is an error creating or writing
      *                               the case node data.
      * @throws InterruptedException  If the current thread is interrupted while
      *                               waiting for the coordination service.
      */
-    public static CaseNodeData createCaseNodeData(CaseMetadata metadata) throws CaseNodeDataException, InterruptedException {
+    public static CaseNodeData createCaseNodeData(final CaseMetadata metadata) throws CaseNodeDataException, InterruptedException {
         try {
-            CaseNodeData nodeData = new CaseNodeData(metadata);
-            CoordinationService coordinationService = CoordinationService.getInstance();
-            coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodeData.getDirectory().toString(), nodeData.toArray());
+            final CaseNodeData nodeData = new CaseNodeData(metadata);
+            CoordinationService.getInstance().setNodeData(CoordinationService.CategoryNode.CASES, nodeData.getDirectory().toString(), nodeData.toArray());
             return nodeData;
 
         } catch (ParseException | IOException | CoordinationServiceException ex) {
-            throw new CaseNodeDataException(String.format("Failed to create/write case node data for %s", metadata.getCaseDirectory().toUpperCase()), ex); //NON-NLS
+            throw new CaseNodeDataException(String.format("Failed to create case node data for %s", metadata.getCaseDirectory().toUpperCase()), ex); //NON-NLS
         }
     }
 
@@ -101,27 +101,34 @@ public final class CaseNodeData {
      *
      * @return The case node data.
      *
-     * @throws CaseNodeDataException If there is an error writing the case node
-     *                               data.
+     * @throws CaseNodeDataException If there is an error reading or writing the
+     *                               case node data.
      * @throws InterruptedException  If the current thread is interrupted while
      *                               waiting for the coordination service.
      */
     public static CaseNodeData readCaseNodeData(String nodePath) throws CaseNodeDataException, InterruptedException {
         try {
             CaseNodeData nodeData;
-            CoordinationService coordinationService = CoordinationService.getInstance();
-            byte[] nodeBytes = coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, nodePath);
+            final byte[] nodeBytes = CoordinationService.getInstance().getNodeData(CoordinationService.CategoryNode.CASES, nodePath);
             if (nodeBytes != null && nodeBytes.length > 0) {
                 try {
                     nodeData = new CaseNodeData(nodeBytes);
                 } catch (IOException ex) {
+                    /*
+                     * The existing case node data is corrupted.
+                     */
                     logger.log(Level.WARNING, String.format("Error reading coordination service node data for %s, will attempt to replace it", nodePath.toUpperCase()), ex); //NON-NLS
-                    CaseMetadata metadata = getCaseMetadata(nodePath);
+                    final CaseMetadata metadata = getCaseMetadata(nodePath);
                     nodeData = createCaseNodeData(metadata);
                 }
             } else {
+                /*
+                 * The case node data is missing. Version 0 node data was only
+                 * written to the coordination service node if an auto ingest
+                 * job error occurred.
+                 */
                 logger.log(Level.INFO, String.format("Missing coordination service node data for %s, will attempt to create it", nodePath.toUpperCase())); //NON-NLS
-                CaseMetadata metadata = getCaseMetadata(nodePath);
+                final CaseMetadata metadata = getCaseMetadata(nodePath);
                 nodeData = createCaseNodeData(metadata);
             }
             if (nodeData.getVersion() < CaseNodeData.MAJOR_VERSION) {
@@ -130,14 +137,14 @@ public final class CaseNodeData {
             return nodeData;
 
         } catch (CaseNodeDataException | CaseMetadataException | ParseException | IOException | CoordinationServiceException ex) {
-            throw new CaseNodeDataException(String.format("Failed to create/write case node data for %s", nodePath.toUpperCase()), ex); //NON-NLS
+            throw new CaseNodeDataException(String.format("Failed to read or write case node data for %s", nodePath.toUpperCase()), ex); //NON-NLS
         }
     }
 
     /**
-     * Writes updated case data to a case directory coordination service node.
-     * Obtain the case data to be updated by calling createCaseNodeData() or
-     * readCaseNodeData().
+     * Writes case data to a case directory coordination service node. Obtain
+     * the case data to be updated and written by calling createCaseNodeData()
+     * or readCaseNodeData().
      *
      * @param nodeData The case node data.
      *
@@ -148,8 +155,8 @@ public final class CaseNodeData {
      */
     public static void writeCaseNodeData(CaseNodeData nodeData) throws CaseNodeDataException, InterruptedException {
         try {
-            CoordinationService coordinationService = CoordinationService.getInstance();
-            coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodeData.getDirectory().toString(), nodeData.toArray());
+            CoordinationService.getInstance().setNodeData(CoordinationService.CategoryNode.CASES, nodeData.getDirectory().toString(), nodeData.toArray());
+            
         } catch (IOException | CoordinationServiceException ex) {
             throw new CaseNodeDataException(String.format("Failed to write case node data to %s", nodeData.getDirectory().toString().toUpperCase()), ex); //NON-NLS
         }
@@ -164,32 +171,35 @@ public final class CaseNodeData {
      *
      * @return The updated node data.
      *
-     * @throws CaseNodeDataException If the case neta data file or case
+     * @throws CaseNodeDataException If the case meta data file or case
      *                               directory do not exist.
      * @throws CaseMetadataException If the case metadata cannot be read.
      */
     private static CaseNodeData upgradeCaseNodeData(String nodePath, CaseNodeData oldNodeData) throws CaseNodeDataException, CaseMetadataException, ParseException, IOException, CoordinationServiceException, InterruptedException {
-        CaseMetadata metadata = getCaseMetadata(nodePath);
+        final CaseMetadata metadata = getCaseMetadata(nodePath);
         CaseNodeData nodeData;
         if (oldNodeData.getVersion() == 0) {
             /*
              * Version 0 node data consisted of only the version number and the
-             * error occurred flag and was only written when an auto ingest job
-             * error occurred. The version 1 fields need to be set from the case
-             * metadata and the errors occurred flag needs to be carried
-             * forward. Note that the last accessed date gets advanced to now,
-             * since it is otherwise unknown.
+             * errors occurred flag and was only written when an auto ingest job
+             * error occurred. To upgrade from version 0, the version 1 fields
+             * need to be set from the case metadata and the errors occurred
+             * flag needs to be carried forward. Note that the last accessed
+             * date gets advanced to now, since it is otherwise unknown.
              */
             nodeData = new CaseNodeData(metadata);
             nodeData.setErrorsOccurred(oldNodeData.getErrorsOccurred());
+            
         } else if (oldNodeData.getVersion() == 1) {
             /*
              * Version 1 node data did not have a minor version number field.
              */
             oldNodeData.setMinorVersion(MINOR_VERSION);
             nodeData = oldNodeData;
+            
         } else {
             nodeData = oldNodeData;
+            
         }
         writeCaseNodeData(nodeData);
         return nodeData;
@@ -208,17 +218,16 @@ public final class CaseNodeData {
      * @throws CaseMetadataException If the case metadata cannot be read.
      */
     private static CaseMetadata getCaseMetadata(String nodePath) throws CaseNodeDataException, CaseMetadataException {
-        Path caseDirectoryPath = Paths.get(nodePath);
-        File caseDirectory = caseDirectoryPath.toFile();
+        final Path caseDirectoryPath = Paths.get(nodePath);
+        final File caseDirectory = caseDirectoryPath.toFile();
         if (!caseDirectory.exists()) {
             throw new CaseNodeDataException("Case directory does not exist"); // NON-NLS
         }
-        Path metadataFilePath = CaseMetadata.getCaseMetadataFilePath(caseDirectoryPath);
+        final Path metadataFilePath = CaseMetadata.getCaseMetadataFilePath(caseDirectoryPath);
         if (metadataFilePath == null) {
             throw new CaseNodeDataException("Case meta data file does not exist"); // NON-NLS            
         }
-        CaseMetadata metadata = new CaseMetadata(metadataFilePath);
-        return metadata;
+        return new CaseMetadata(metadataFilePath);
     }
 
     /**
@@ -287,7 +296,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Sets the version number of this node data.
+     * Sets the minor version number of this node data.
      *
      * @param version The version number.
      */
@@ -297,7 +306,7 @@ public final class CaseNodeData {
 
     /**
      * Gets whether or not any errors occurred during the processing of any auto
-     * ingest job for the case represented by this node data.
+     * ingest job for the case.
      *
      * @return True or false.
      */
@@ -307,7 +316,7 @@ public final class CaseNodeData {
 
     /**
      * Sets whether or not any errors occurred during the processing of any auto
-     * ingest job for the case represented by this node data.
+     * ingest job for the case.
      *
      * @param errorsOccurred True or false.
      */
@@ -316,8 +325,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Gets the path of the case directory of the case represented by this node
-     * data.
+     * Gets the path of the case directory.
      *
      * @return The case directory path.
      */
@@ -326,7 +334,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Gets the date the case represented by this node data was created.
+     * Gets the date the case was created.
      *
      * @return The create date.
      */
@@ -335,7 +343,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Gets the date the case represented by this node data last accessed.
+     * Gets the date the case was last accessed.
      *
      * @return The last access date.
      */
@@ -344,7 +352,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Sets the date the case represented by this node data was last accessed.
+     * Sets the date the case was last accessed.
      *
      * @param lastAccessDate The last access date.
      */
@@ -353,8 +361,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Gets the unique and immutable (user cannot change it) name of the case
-     * represented by this node data.
+     * Gets the unique and immutable name of the case.
      *
      * @return The case name.
      */
@@ -363,7 +370,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Gets the display name of the case represented by this node data.
+     * Gets the display name of the case.
      *
      * @return The case display name.
      */
@@ -372,7 +379,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Sets the display name of the case represented by this node data.
+     * Sets the display name of the case.
      *
      * @param displayName The case display name.
      */
@@ -381,19 +388,18 @@ public final class CaseNodeData {
     }
 
     /**
-     * Checks whether a deleted item flag is set for the case represented by
-     * this node data.
+     * Checks whether a given deleted item flag is set for the case.
      *
      * @param flag The flag to check.
      *
-     * @return
+     * @return True or false.
      */
     public boolean isDeletedFlagSet(DeletedFlags flag) {
         return (this.deletedItemFlags & flag.getValue()) == flag.getValue();
     }
 
     /**
-     * Sets a deleted item flag for the case represented by this node data.
+     * Sets a given deleted item flag.
      *
      * @param flag The flag to set.
      */
@@ -407,7 +413,7 @@ public final class CaseNodeData {
      *
      * @return The node data as a byte array.
      *
-     * @throws IOException If there is an error writing the node data.
+     * @throws IOException If there is an error writing the node data to the array.
      */
     private byte[] toArray() throws IOException {
         try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); DataOutputStream outputStream = new DataOutputStream(byteStream)) {
