@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Coordinatio
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Case data stored in case directory coordination service nodes.
+ * Case data stored in a case directory coordination service node.
  */
 public final class CaseNodeData {
 
@@ -88,7 +88,7 @@ public final class CaseNodeData {
             return nodeData;
 
         } catch (ParseException | IOException | CoordinationServiceException ex) {
-            throw new CaseNodeDataException(String.format("Failed to create case node data for %s", metadata.getCaseDirectory().toUpperCase()), ex); //NON-NLS
+            throw new CaseNodeDataException(String.format("Error creating case node data for coordination service node with path %s", metadata.getCaseDirectory().toUpperCase()), ex); //NON-NLS
         }
     }
 
@@ -117,9 +117,10 @@ public final class CaseNodeData {
                     /*
                      * The existing case node data is corrupted.
                      */
-                    logger.log(Level.WARNING, String.format("Error reading coordination service node data for %s, will attempt to replace it", nodePath.toUpperCase()), ex); //NON-NLS
+                    logger.log(Level.WARNING, String.format("Error reading node data for coordination service node with path %s, will attempt to replace it", nodePath.toUpperCase()), ex); //NON-NLS
                     final CaseMetadata metadata = getCaseMetadata(nodePath);
                     nodeData = createCaseNodeData(metadata);
+                    logger.log(Level.INFO, String.format("Replaced corrupt node data for coordination service node with path %s", nodePath.toUpperCase())); //NON-NLS
                 }
             } else {
                 /*
@@ -127,9 +128,10 @@ public final class CaseNodeData {
                  * written to the coordination service node if an auto ingest
                  * job error occurred.
                  */
-                logger.log(Level.INFO, String.format("Missing coordination service node data for %s, will attempt to create it", nodePath.toUpperCase())); //NON-NLS
+                logger.log(Level.INFO, String.format("Missing node data for coordination service node with path %s, will attempt to create it", nodePath.toUpperCase())); //NON-NLS
                 final CaseMetadata metadata = getCaseMetadata(nodePath);
                 nodeData = createCaseNodeData(metadata);
+                logger.log(Level.INFO, String.format("Created node data for coordination service node with path %s", nodePath.toUpperCase())); //NON-NLS
             }
             if (nodeData.getVersion() < CaseNodeData.MAJOR_VERSION) {
                 nodeData = upgradeCaseNodeData(nodePath, nodeData);
@@ -137,7 +139,7 @@ public final class CaseNodeData {
             return nodeData;
 
         } catch (CaseNodeDataException | CaseMetadataException | ParseException | IOException | CoordinationServiceException ex) {
-            throw new CaseNodeDataException(String.format("Failed to read or write case node data for %s", nodePath.toUpperCase()), ex); //NON-NLS
+            throw new CaseNodeDataException(String.format("Error reading/writing node data coordination service node with path %s", nodePath.toUpperCase()), ex); //NON-NLS
         }
     }
 
@@ -156,9 +158,9 @@ public final class CaseNodeData {
     public static void writeCaseNodeData(CaseNodeData nodeData) throws CaseNodeDataException, InterruptedException {
         try {
             CoordinationService.getInstance().setNodeData(CoordinationService.CategoryNode.CASES, nodeData.getDirectory().toString(), nodeData.toArray());
-            
+
         } catch (IOException | CoordinationServiceException ex) {
-            throw new CaseNodeDataException(String.format("Failed to write case node data to %s", nodeData.getDirectory().toString().toUpperCase()), ex); //NON-NLS
+            throw new CaseNodeDataException(String.format("Error writing node data coordination service node with path %s", nodeData.getDirectory().toString().toUpperCase()), ex); //NON-NLS
         }
     }
 
@@ -189,17 +191,17 @@ public final class CaseNodeData {
              */
             nodeData = new CaseNodeData(metadata);
             nodeData.setErrorsOccurred(oldNodeData.getErrorsOccurred());
-            
+
         } else if (oldNodeData.getVersion() == 1) {
             /*
              * Version 1 node data did not have a minor version number field.
              */
             oldNodeData.setMinorVersion(MINOR_VERSION);
             nodeData = oldNodeData;
-            
+
         } else {
             nodeData = oldNodeData;
-            
+
         }
         writeCaseNodeData(nodeData);
         return nodeData;
@@ -231,8 +233,8 @@ public final class CaseNodeData {
     }
 
     /**
-     * Constucts an object to use for reading and writing case data stored in
-     * case directory coordination service nodes from case meta data.
+     * Uses case metadata to construct the case data to store in a case
+     * directory coordination service node.
      *
      * @param metadata The case meta data.
      *
@@ -252,9 +254,8 @@ public final class CaseNodeData {
     }
 
     /**
-     * Constucts an object to use for reading and writing case data stored in
-     * case directory coordination service nodes from a byte array read from a
-     * case directory coordination service node.
+     * Uses the raw bytes from a case directory coordination service node to
+     * construct a case node data object.
      *
      * @param nodeData The raw bytes received from the coordination service.
      *
@@ -413,7 +414,8 @@ public final class CaseNodeData {
      *
      * @return The node data as a byte array.
      *
-     * @throws IOException If there is an error writing the node data to the array.
+     * @throws IOException If there is an error writing the node data to the
+     *                     array.
      */
     private byte[] toArray() throws IOException {
         try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); DataOutputStream outputStream = new DataOutputStream(byteStream)) {

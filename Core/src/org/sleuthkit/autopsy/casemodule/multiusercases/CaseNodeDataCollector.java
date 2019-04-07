@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.casemodule.multiusercases;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -53,6 +55,7 @@ final public class CaseNodeDataCollector {
     public static List<CaseNodeData> getNodeData() throws CoordinationServiceException, InterruptedException {
         List<CaseNodeData> nodeDataList = new ArrayList<>();
         CoordinationService coordinationService = CoordinationService.getInstance();
+        runTests(coordinationService);
         List<String> nodePaths = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
         for (String nodePath : nodePaths) {
             /*
@@ -83,52 +86,52 @@ final public class CaseNodeDataCollector {
     private CaseNodeDataCollector() {
     }
 
-//    private static void runTests(CoordinationService coordinationService) {
-//        String nodePath = "\\\\fstore\\forensics\\Viking\\Output\\rcordovano\\cordovano_case00_2019_04_01_13_56_50";
-//        byte[] originalBytes;
-//        try {
-//            originalBytes = coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, nodePath);
-//        } catch (CoordinationServiceException | InterruptedException ex) {
-//            return;
-//        }
-//
-//        try {
-//            // Version 1 to version 2 upgrade
-//            CaseNodeData nodeData = CaseNodeData.readCaseNodeData(nodePath);
-//
-//            // Version 0 to version 2 upgrade
-//            try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); DataOutputStream outputStream = new DataOutputStream(byteStream)) {
-//                outputStream.writeInt(0);
-//                outputStream.writeByte((byte) 0x80);
-//                byteStream.flush();
-//                byteStream.toByteArray();
-//                coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodePath, byteStream.toByteArray());
-//                CaseNodeData.readCaseNodeData(nodePath);
-//            }
-//
-//            // Corrupt data repair
-//            try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); DataOutputStream outputStream = new DataOutputStream(byteStream)) {
-//                outputStream.writeInt(2);
-//                outputStream.writeBoolean(false);
-//                outputStream.writeInt(3);
-//                outputStream.writeInt(4);
-//                byteStream.toByteArray();
-//                coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodePath, byteStream.toByteArray());
-//                CaseNodeData.readCaseNodeData(nodePath);
-//            }
-//
-//            // Missing data replacement
-//            coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodePath, null);
-//            CaseNodeData.readCaseNodeData(nodePath);
-//
-//        } catch (Exception ex) {
-//            logger.log(Level.SEVERE, "Error", ex);
-//        } finally {
-//            try {
-//                coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodePath, originalBytes);
-//            } catch (CoordinationServiceException | InterruptedException ex) {
-//            }
-//        }
-//    }    
+    private static void runTests(CoordinationService coordinationService) {
+        String nodePath = "\\\\FSTORE\\FORENSICS\\VIKING\\OUTPUT\\RCORDOVANO\\CORDOVANO_CASE0_2019_04_07_17_26_04";
+        byte[] originalBytes;
+        try {
+            originalBytes = coordinationService.getNodeData(CoordinationService.CategoryNode.CASES, nodePath);
+        } catch (CoordinationServiceException | InterruptedException ex) {
+            return;
+        }
+
+        try {
+            // Version 1 to version 2 upgrade
+            CaseNodeData nodeData = CaseNodeData.readCaseNodeData(nodePath);
+
+            // Version 0 to version 2 upgrade
+            try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); DataOutputStream outputStream = new DataOutputStream(byteStream)) {
+                outputStream.writeInt(0);
+                outputStream.writeByte((byte) 0x80);
+                byteStream.flush();
+                byteStream.toByteArray();
+                coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodePath, byteStream.toByteArray());
+                CaseNodeData.readCaseNodeData(nodePath);
+            }
+
+            // Corrupt data repair
+            try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); DataOutputStream outputStream = new DataOutputStream(byteStream)) {
+                outputStream.writeInt(2);
+                outputStream.writeBoolean(false);
+                outputStream.writeInt(3);
+                outputStream.writeInt(4);
+                byteStream.toByteArray();
+                coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodePath, byteStream.toByteArray());
+                CaseNodeData.readCaseNodeData(nodePath);
+            }
+
+            // Missing data replacement
+            coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodePath, null);
+            CaseNodeData.readCaseNodeData(nodePath);
+
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, "Error", ex);
+        } finally {
+            try {
+                coordinationService.setNodeData(CoordinationService.CategoryNode.CASES, nodePath, originalBytes);
+            } catch (CoordinationServiceException | InterruptedException ex) {
+            }
+        }
+    }    
     
 }
