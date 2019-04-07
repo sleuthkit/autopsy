@@ -180,28 +180,29 @@ public final class CaseNodeData {
     private static CaseNodeData upgradeCaseNodeData(String nodePath, CaseNodeData oldNodeData) throws CaseNodeDataException, CaseMetadataException, ParseException, IOException, CoordinationServiceException, InterruptedException {
         final CaseMetadata metadata = getCaseMetadata(nodePath);
         CaseNodeData nodeData;
-        if (oldNodeData.getVersion() == 0) {
-            /*
-             * Version 0 node data consisted of only the version number and the
-             * errors occurred flag and was only written when an auto ingest job
-             * error occurred. To upgrade from version 0, the version 1 fields
-             * need to be set from the case metadata and the errors occurred
-             * flag needs to be carried forward. Note that the last accessed
-             * date gets advanced to now, since it is otherwise unknown.
-             */
-            nodeData = new CaseNodeData(metadata);
-            nodeData.setErrorsOccurred(oldNodeData.getErrorsOccurred());
-
-        } else if (oldNodeData.getVersion() == 1) {
-            /*
-             * Version 1 node data did not have a minor version number field.
-             */
-            oldNodeData.setMinorVersion(MINOR_VERSION);
-            nodeData = oldNodeData;
-
-        } else {
-            nodeData = oldNodeData;
-
+        switch (oldNodeData.getVersion()) {
+            case 0:
+                /*
+                 * Version 0 node data consisted of only the version number and the
+                 * errors occurred flag and was only written when an auto ingest job
+                 * error occurred. To upgrade from version 0, the version 1 fields
+                 * need to be set from the case metadata and the errors occurred
+                 * flag needs to be carried forward. Note that the last accessed
+                 * date gets advanced to now, since it is otherwise unknown.
+                 */
+                nodeData = new CaseNodeData(metadata);
+                nodeData.setErrorsOccurred(oldNodeData.getErrorsOccurred());
+                break;
+            case 1:
+                /*
+                 * Version 1 node data did not have a minor version number field.
+                 */
+                oldNodeData.setMinorVersion(MINOR_VERSION);
+                nodeData = oldNodeData;
+                break;
+            default:
+                nodeData = oldNodeData;
+                break;
         }
         writeCaseNodeData(nodeData);
         return nodeData;
