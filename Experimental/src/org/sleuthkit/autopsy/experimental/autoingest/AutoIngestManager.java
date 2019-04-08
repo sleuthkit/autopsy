@@ -1246,9 +1246,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                     break;
                                 case DELETED:
                                     /*
-                                     * Ignore jobs marked as deleted. Note that
-                                     * this state is no longer used and is
-                                     * retained for legacy jobs only.
+                                     * Ignore jobs marked as deleted.
                                      */
                                     break;
                                 default:
