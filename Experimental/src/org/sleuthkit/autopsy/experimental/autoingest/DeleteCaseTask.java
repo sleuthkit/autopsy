@@ -280,10 +280,6 @@ final class DeleteCaseTask implements Runnable {
         } else {
             return getManifestPathsFromNodes();
         }
-//        if (manifestFilePaths.isEmpty()) {
-//            setDeletedItemFlag(CaseNodeData.DeletedFlags.MANIFEST_FILE_NODES);
-//        }
-//        logger.log(Level.INFO, String.format("Found %d manifest file path(s) for %s", manifestFilePaths.size(), caseNodeData.getDisplayName()));
     }
 
     /**
