@@ -631,6 +631,7 @@ final class DeleteCaseTask implements Runnable {
                     }
                 }
             }
+            ++index;
         }
 
         /*
