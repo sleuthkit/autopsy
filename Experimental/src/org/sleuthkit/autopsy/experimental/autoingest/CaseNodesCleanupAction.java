@@ -19,10 +19,8 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.event.ActionEvent;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import javax.swing.AbstractAction;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.progress.AppFrameProgressBar;
 import org.sleuthkit.autopsy.progress.TaskCancellable;
