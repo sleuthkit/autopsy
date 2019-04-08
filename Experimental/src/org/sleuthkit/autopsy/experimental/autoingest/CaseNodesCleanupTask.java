@@ -51,10 +51,12 @@ final class CaseNodesCleanupTask implements Runnable {
 
     @Override
     @NbBundle.Messages({
+        "CaseNodesCleanupTask.progress.startMessage=Starting orphaned case znode cleanup...",
         "CaseNodesCleanupTask.progress.connectingToCoordSvc=Connecting to the coordination service...",
         "CaseNodesCleanupTask.progress.gettingCaseNodesListing=Querying coordination service for case nodes..."
     })
     public void run() {
+        progress.start(Bundle.CaseNodesCleanupTask_progress_startMessage());
         try {
             progress.progress(Bundle.CaseNodesCleanupTask_progress_connectingToCoordSvc());
             logger.log(Level.INFO, "Connecting to the coordination service for orphan case node clean up");  // NON-NLS
@@ -67,7 +69,7 @@ final class CaseNodesCleanupTask implements Runnable {
             }
 
             progress.progress(Bundle.CaseNodesCleanupTask_progress_gettingCaseNodesListing());
-            logger.log(Level.INFO, "Querying coordination service for case nodes for orphan case node clean up");  // NON-NLS
+            logger.log(Level.INFO, "Querying coordination service for case nodes for orphaned case node clean up");  // NON-NLS
             List<CaseNodeData> nodeDataList;
             try {
                 nodeDataList = CaseNodeDataCollector.getNodeData();
@@ -99,11 +101,21 @@ final class CaseNodesCleanupTask implements Runnable {
                         deleteNode(coordinationService, caseName, nodePath);
 
                     } catch (InterruptedException ex) {
-                        logger.log(Level.WARNING, String.format("Unexpected interrupt while deleting znode %s for %s", nodePath, caseName), ex);  // NON-NLS
+                        logger.log(Level.WARNING, String.format("Unexpected interrupt while deleting orphaned znode %s for %s", nodePath, caseName), ex); // NON-NLS
                         return;
                     }
                 }
             }
+        } catch (Exception ex) {
+            /*
+             * This is an unexpected runtime exceptions firewall. It is here
+             * because this task is designed to be able to be run in scenarios
+             * where there is no call to get() on a Future<Void> associated with
+             * the task, so this ensures that any such errors get logged.
+             */
+            logger.log(Level.SEVERE, "Unexpected error during orphan case znode cleanup", ex); // NON-NLS
+            throw ex;
+            
         } finally {
             progress.finish();
         }

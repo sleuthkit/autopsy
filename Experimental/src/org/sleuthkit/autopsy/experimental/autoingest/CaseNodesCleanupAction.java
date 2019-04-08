@@ -48,13 +48,6 @@ final class CaseNodesCleanupAction extends AbstractAction {
         final FutureTask<Void> future = new FutureTask<>(task, null);
         taskCanceller.setFuture(future);
         new Thread(future).start();
-        try {
-            future.get();
-        } catch (InterruptedException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (ExecutionException ex) {
-            Exceptions.printStackTrace(ex);
-        }
     }
 
     @Override
