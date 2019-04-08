@@ -127,7 +127,6 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
     private static final int NUM_INPUT_SCAN_SCHEDULING_THREADS = 1;
     private static final String INPUT_SCAN_SCHEDULER_THREAD_NAME = "AIM-input-scan-scheduler-%d";
     private static final String INPUT_SCAN_THREAD_NAME = "AIM-input-scan-%d";
-    private static final int INPUT_SCAN_LOCKING_TIMEOUT_MINS = 5;
     private static final String AUTO_INGEST_THREAD_NAME = "AIM-job-processing-%d";
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
     private static final String EVENT_CHANNEL_NAME = "Auto-Ingest-Manager-Events";
