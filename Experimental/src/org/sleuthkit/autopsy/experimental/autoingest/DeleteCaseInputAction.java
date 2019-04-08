@@ -19,12 +19,11 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
-import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.experimental.autoingest.DeleteCaseTask.DeleteOptions;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
  * An action that deletes the auto ingest job input directories associated with
@@ -32,13 +31,8 @@ import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
  * ingest jobs are not deleted. This supports the use case where the directories
  * may need to be directed to reclaim space, but the option to restore the
  * directories without having the jobs be reprocessed is retained.
- *
- * This cases to delete are discovered by querying the actions global context
- * lookup for CaseNodeData objects. See
- * https://platform.netbeans.org/tutorials/nbm-selection-1.html and
- * https://platform.netbeans.org/tutorials/nbm-selection-2.html for details.
  */
-final class DeleteCaseInputDirectoriesAction extends AbstractAction {
+final class DeleteCaseInputAction extends DeleteCaseAction {
 
     private static final long serialVersionUID = 1L;
 
@@ -51,27 +45,27 @@ final class DeleteCaseInputDirectoriesAction extends AbstractAction {
      * reprocessed is retained.
      */
     @NbBundle.Messages({
-        "DeleteCaseInputDirectoriesAction.menuItemText=Delete Input Directories"
+        "DeleteCaseInputAction.menuItemText=Delete Input",
+        "DeleteCaseInputAction.progressDisplayName=Delete Input",
+        "DeleteCaseInputAction.taskName=input"
     })
-    DeleteCaseInputDirectoriesAction() {
-        super(Bundle.DeleteCaseInputDirectoriesAction_menuItemText());
-        setEnabled(false); // RJCTODO: Enable when implemented
+    DeleteCaseInputAction() {
+        super(Bundle.DeleteCaseInputAction_menuItemText(), Bundle.DeleteCaseInputAction_progressDisplayName(), Bundle.DeleteCaseInputAction_taskName());
     }
 
+    @NbBundle.Messages({
+        "DeleteCaseInputAction.confirmationText=Are you sure you want to delete the following for the case(s):\n\tManifest files\n\tData sources\n"
+    })
     @Override
     public void actionPerformed(ActionEvent event) {
-        final Collection<CaseNodeData> selectedNodeData = new ArrayList<>(Utilities.actionsGlobalContext().lookupAll(CaseNodeData.class));
-//        if (!selectedNodeData.isEmpty()) {
-//            /*
-//             * RJCTODO: Create a background task that does the deletion and
-//             * displays results in a dialog with a scrolling text pane.
-//             */
-//        }
+        if (MessageNotifyUtil.Message.confirm(Bundle.DeleteCaseInputAction_confirmationText())) {
+            super.actionPerformed(event);
+        }
     }
 
     @Override
-    public DeleteCaseInputDirectoriesAction clone() throws CloneNotSupportedException {
-        throw new CloneNotSupportedException();
+    DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
+        return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_INPUT, progress);
     }
 
 }

@@ -29,7 +29,7 @@ import org.sleuthkit.datamodel.Report;
 /**
  * Factory for creating TextExtractors given a Content instance
  *
- * See {@link org.sleuthkit.autopsy.textextractors.textextractorconfigs} for
+ * See {@link org.sleuthkit.autopsy.textextractors.configs} for
  * available extractor configuration options.
  *
  * @see org.openide.util.Lookup
@@ -40,7 +40,7 @@ public class TextExtractorFactory {
      * Returns a TextExtractor containing the Content text. Configuration files
      * can be added to the Lookup.
      *
-     * See {@link org.sleuthkit.autopsy.textextractors.textextractorconfigs} for
+     * See {@link org.sleuthkit.autopsy.textextractors.configs} for
      * available extractor configuration options.
      *
      * @param content Content source that will be read from
@@ -124,7 +124,7 @@ public class TextExtractorFactory {
      * getExtractor(Content, Lookup).
      *
      * Configure this extractor with the StringsConfig in
-     * {@link org.sleuthkit.autopsy.textextractors.textextractorconfigs}
+     * {@link org.sleuthkit.autopsy.textextractors.configs}
      *
      * @param content Content source to read from
      * @param context Contains extraction configurations for certain file types

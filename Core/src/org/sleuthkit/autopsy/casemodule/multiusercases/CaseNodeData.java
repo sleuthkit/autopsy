@@ -239,6 +239,27 @@ public final class CaseNodeData {
     }
 
     /**
+     * Checks whether a deleted item flag is set for the case represented by
+     * this node data.
+     *
+     * @param flag The flag to check.
+     *
+     * @return
+     */
+    public boolean isDeletedFlagSet(DeletedFlags flag) {
+        return (this.deletedItemFlags & flag.getValue()) == flag.getValue();
+    }
+
+    /**
+     * Sets a deleted item flag for the case represented by this node data.
+     *
+     * @param flag The flag to set.
+     */
+    public void setDeletedFlag(DeletedFlags flag) {
+        this.deletedItemFlags |= flag.getValue();
+    }
+
+    /**
      * Gets the node data as a byte array that can be sent to the coordination
      * service.
      *
@@ -262,16 +283,37 @@ public final class CaseNodeData {
         return byteStream.toByteArray();
     }
 
-    public final static class InvalidDataException extends Exception {
+    /**
+     * Flags for the various components of a case that can be deleted.
+     */
+    public enum DeletedFlags {
 
-        private static final long serialVersionUID = 1L;
+        TEXT_INDEX(1),
+        CASE_DB(2),
+        CASE_DIR(4),
+        DATA_SOURCES(8),
+        MANIFEST_FILE_NODES(16);
 
-        private InvalidDataException(String message) {
-            super(message);
+        private final short value;
+
+        /**
+         * Constructs a flag for a case component that can be deleted.
+         *
+         * @param value
+         */
+        private DeletedFlags(int value) {
+            this.value = (short) value;
         }
 
-        private InvalidDataException(String message, Throwable cause) {
-            super(message, cause);
+        /**
+         * Gets the value of the flag.
+         *
+         * @return The value as a short.
+         */
+        private short getValue() {
+            return value;
         }
+
     }
+
 }

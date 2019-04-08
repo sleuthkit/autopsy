@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +59,19 @@ public final class ExecUtil {
     }
 
     /**
-     * Process terminator that can be used to kill a processes after it exceeds
+     * A process terminator that can be used to kill a process spawned by a
+     * thread that has been interrupted.
+     */
+    public static class InterruptedThreadProcessTerminator implements ProcessTerminator {
+
+        @Override
+        public boolean shouldTerminateProcess() {
+            return Thread.currentThread().isInterrupted();
+        }
+    }
+
+    /**
+     * A process terminator that can be used to kill a process after it exceeds
      * a maximum allowable run time.
      */
     public static class TimedProcessTerminator implements ProcessTerminator {
@@ -212,9 +224,6 @@ public final class ExecUtil {
         }
     }
 
-    /**
-     * EVERYTHING FOLLOWING THIS LINE IS DEPRECATED AND SLATED FOR REMOVAL
-     */
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
     private Process proc = null;
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;

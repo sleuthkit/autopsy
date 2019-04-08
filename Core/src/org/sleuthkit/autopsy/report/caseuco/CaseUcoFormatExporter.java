@@ -248,7 +248,7 @@ public final class CaseUcoFormatExporter {
      * @param selectedDataSourceId Object ID of the data source
      * @param caseTraceId CASE-UCO trace ID object for the Autopsy case entry
      * @param skCase SleuthkitCase object
-     * @param catalog JsonGenerator object
+     * @param jsonGenerator JsonGenerator object
      * @return
      * @throws TskCoreException
      * @throws SQLException
