@@ -1200,11 +1200,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                  * If a manifest file has been found, analyze the job state and
                  * put a job into the appropriate job list. Note that there can
                  * be a race condition between this analysis and case deletion.
-                 * However, eliminating the race condition by acquiring a
-                 * manifest file coordination service lock at this point has a
-                 * tremendous performance cost for both input directory scanning
-                 * and dequeuing jobs. Therefore, the job state must be checked
-                 * again before executing the job.
+                 * However, in practice eliminating the race condition by
+                 * acquiring a manifest file coordination service lock at this
+                 * point seems to have a significant performance cost for both
+                 * input directory scanning and dequeuing jobs. Therefore,
+                 * locking is not done here, with the consequence that the job
+                 * state must be checked again before executing the job.
                  */
                 try {
                     byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString());
@@ -2002,6 +2003,17 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     }
 
                     try {
+                        /*
+                         * There can be a race condition between queuing jobs
+                         * and case deletion. However, in proactice eliminating
+                         * the race condition by acquiring a manifest file
+                         * coordination service lock when analyzing job state
+                         * during the input directory scan appears to have a
+                         * significant performance cost for both input directory
+                         * scanning and dequeuing jobs. Therefore, job state
+                         * must be checked again here, while actually holding
+                         * the lock, before executing the job.
+                         */
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
                         if (!nodeData.getProcessingStatus().equals(PENDING)) {
                             iterator.remove();
