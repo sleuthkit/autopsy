@@ -89,6 +89,10 @@ AutoIngestControlPanel.runningTable.toolTipText=The Running table displays the c
 AutoIngestControlPanel.SharedConfigurationDisabled=Shared configuration disabled
 AutoIngestControlPanel.ShowLogFailed.Message=Case log file does not exist
 AutoIngestControlPanel.ShowLogFailed.Title=Unable to display case log
+# {0} - case db status
+# {1} - search svc Status
+# {2} - coord svc Status
+# {3} - msg broker status
 AutoIngestControlPanel.tbServicesStatusMessage.Message=Case databases {0}, keyword search {1}, coordination {2}, messaging {3} 
 AutoIngestControlPanel.tbServicesStatusMessage.Message.Down=down
 AutoIngestControlPanel.tbServicesStatusMessage.Message.Unknown=unknown
@@ -204,6 +208,7 @@ HINT_CasesDashboardTopComponent=This is an adminstrative dashboard for multi-use
 OpenAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.
 OpenAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details.
 OpenAutoIngestLogAction.menuItemText=Open Auto Ingest Log File
+# {0} - caseErrorMessage
 OpenCaseAction.errorMsg=Failed to open case: {0}
 OpenCaseAction.menuItemText=Open
 OpenIDE-Module-Long-Description=This module contains features that are being developed by Basis Technology and are not part of the default Autopsy distribution. You can enable this module to use the new features. The features should be stable, but their exact behavior and API are subject to change.\n\nWe make no guarantee that the API of this module will not change, so developers should be careful when relying on it.
