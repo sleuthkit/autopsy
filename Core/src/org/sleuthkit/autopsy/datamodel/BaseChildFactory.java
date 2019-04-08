@@ -33,8 +33,9 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Abstract child factory that provides paging and filtering functionality
- * to subclasses.
+ * Abstract child factory that provides paging and filtering functionality to
+ * subclasses.
+ *
  * @param <T>
  */
 public abstract class BaseChildFactory<T extends Content> extends ChildFactory.Detachable<T> {
@@ -45,8 +46,8 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     private final PagingSupport pagingSupport;
 
     /**
-     * This static map is used to facilitate communication between the UI
-     * and the child factory.
+     * This static map is used to facilitate communication between the UI and
+     * the child factory.
      */
     public static Map<String, EventBus> nodeNameToEventBusMap = new ConcurrentHashMap<>();
 
@@ -59,9 +60,9 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     @Override
     protected void addNotify() {
         onAdd();
-        pagingSupport.initialize();        
+        pagingSupport.initialize();
     }
-    
+
     @Override
     protected void removeNotify() {
         onRemove();
@@ -70,7 +71,8 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
     /**
      * Subclasses implement this to construct a collection of keys.
-     * @return 
+     *
+     * @return
      */
     protected abstract List<T> makeKeys();
 
@@ -78,10 +80,10 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * Subclasses implement this to initialize any required resources.
      */
     protected abstract void onAdd();
-    
+
     /**
-     * Subclasses implement this to clean up any resources they 
-     * acquired in onAdd()
+     * Subclasses implement this to clean up any resources they acquired in
+     * onAdd()
      */
     protected abstract void onRemove();
 
@@ -94,7 +96,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
             // Filter keys
             allKeys.stream().filter(filter).collect(Collectors.toList());
-            
+
             pagingSupport.splitKeysIntoPages(allKeys);
         }
 
@@ -107,8 +109,45 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     }
 
     /**
-     * Class that supplies paging related functionality to the base
-     * child factory class.
+     * Event used to let subscribers know that the user has
+     * navigated to a different page.
+     */
+    public static class PageChangeEvent {
+
+        private final int pageNumber;
+
+        public PageChangeEvent(int newPageNumber) {
+            pageNumber = newPageNumber;
+        }
+
+        public int getPageNumber() {
+            return pageNumber;
+        }
+    }
+
+    /**
+     * Event used to let subscribers know that the number of
+     * pages has changed.
+     */
+    public static class PageCountChangeEvent {
+
+        private final int pageCount;
+
+        public PageCountChangeEvent(int newPageCount) {
+            pageCount = newPageCount;
+        }
+
+        public int getPageCount() {
+            return pageCount;
+        }
+    }
+
+    public static class PagingDestroyedEvent {
+    }
+
+    /**
+     * Class that supplies paging related functionality to the base child
+     * factory class.
      */
     class PagingSupport {
 
@@ -120,9 +159,11 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
         /**
          * Construct PagingSupport instance for the given node name.
-         * @param nodeName Name of the node in the tree for which results
-         * are being displayed. The node name is used to allow communication
-         * between the UI and the ChildFactory via an EventBus.
+         *
+         * @param nodeName Name of the node in the tree for which results are
+         *                 being displayed. The node name is used to allow
+         *                 communication between the UI and the ChildFactory via
+         *                 an EventBus.
          */
         PagingSupport(String nodeName) {
             pageSize = UserPreferences.getResultsTablePageSize();
@@ -130,14 +171,14 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
             pages = new ArrayList<>();
             this.nodeName = nodeName;
         }
-        
+
         void initialize() {
             if (pageSize > 0) {
                 // Only configure an EventBus if paging functionality is enabled.
                 bus = new EventBus(nodeName);
                 nodeNameToEventBusMap.put(bus.identifier(), bus);
                 bus.register(this);
-            }            
+            }
         }
 
         void destroy() {
@@ -146,31 +187,33 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
                 bus.unregister(this);
                 bus.post(new PagingDestroyedEvent());
                 bus = null;
-            }            
+            }
         }
-        
+
         /**
          * Get the list of keys at the current page.
+         *
          * @return List of keys.
          */
         List<T> getCurrentPage() {
             if (pages.size() > 0) {
                 return pages.get(currentPage - 1);
             }
-            
+
             return Collections.emptyList();
         }
-        
+
         /**
          * Split the given collection of keys into pages based on page size.
-         * @param keys 
+         *
+         * @param keys
          */
         void splitKeysIntoPages(List<T> keys) {
             int oldPageCount = pages.size();
 
             /**
-             * If pageSize is set split keys into pages,
-             * otherwise create a single page containing all keys.
+             * If pageSize is set split keys into pages, otherwise create a
+             * single page containing all keys.
              */
             pages = Lists.partition(keys, pageSize > 0 ? pageSize : keys.size());
             if (pages.size() != oldPageCount) {
@@ -189,35 +232,5 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
                 refresh(true);
             }
         }
-    }
-
-    public static class PageChangeEvent {
-
-        private final int pageNumber;
-
-        public PageChangeEvent(int newPageNumber) {
-            pageNumber = newPageNumber;
-        }
-
-        public int getPageNumber() {
-            return pageNumber;
-        }
-    }
-
-    public static class PageCountChangeEvent {
-
-        private final int pageCount;
-
-        public PageCountChangeEvent(int newPageCount) {
-            pageCount = newPageCount;
-        }
-
-        public int getPageCount() {
-            return pageCount;
-        }
-    }
-
-    public static class PagingDestroyedEvent {
-
     }
 }
