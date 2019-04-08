@@ -61,7 +61,7 @@ final class DeleteCaseInputAndOutputAction extends DeleteCaseComponentsAction {
     
     @Override
     DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
-        return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_ALL, progress);
+        return new DeleteCaseTask(caseNodeData, DeleteOptions.DELETE_INPUT_AND_OUTPUT, progress);
     }
 
 }
