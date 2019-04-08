@@ -51,9 +51,9 @@ final public class CaseNodeDataCollector {
      *                                      service.
      */
     public static List<CaseNodeData> getNodeData() throws CoordinationServiceException, InterruptedException {
-        List<CaseNodeData> nodeDataList = new ArrayList<>();
-        CoordinationService coordinationService = CoordinationService.getInstance();
-        List<String> nodePaths = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
+        final List<CaseNodeData> nodeDataList = new ArrayList<>();
+        final CoordinationService coordinationService = CoordinationService.getInstance();
+        final List<String> nodePaths = coordinationService.getNodeList(CoordinationService.CategoryNode.CASES);
         for (String nodePath : nodePaths) {
             /*
              * Skip the case name, case resources, and case auto ingest log
@@ -67,7 +67,7 @@ final public class CaseNodeDataCollector {
              * Get the case node data from the case directory coordination service node.
              */
             try {
-                CaseNodeData nodeData = CaseNodeData.readCaseNodeData(nodePath);
+                final CaseNodeData nodeData = CaseNodeData.readCaseNodeData(nodePath);
                 nodeDataList.add(nodeData);
             } catch (CaseNodeDataException | InterruptedException ex) {
                 logger.log(Level.WARNING, String.format("Error reading case node data from %s", nodePath), ex);
@@ -82,5 +82,5 @@ final public class CaseNodeDataCollector {
      */
     private CaseNodeDataCollector() {
     }
-
+    
 }

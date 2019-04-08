@@ -39,9 +39,14 @@ final class DeleteCaseAction extends DeleteCaseComponentsAction {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Constructs an action that completely deletes one or more multi-user
-     * cases, including any associated auto ingest job input directories and
-     * coordination service nodes.
+     * Constructs action that completely deletes one or more multi-user cases.
+     * Only the components created by the application are deleted: the case
+     * output and the coordination service nodes. Note that manifest file
+     * coordination service nodes are only marked as deleted by setting the
+     * processing status field for the corresponding auto ingest job to DELETED.
+     * This is done to avoid imposing the requirement that the manifests be
+     * deleted before deleting the cases, since at this time manifests are not
+     * considered to be case components created by the application.
      */
     @NbBundle.Messages({
         "DeleteCaseAction.menuItemText=Delete Case(s)",
@@ -60,9 +65,10 @@ final class DeleteCaseAction extends DeleteCaseComponentsAction {
         if (MessageNotifyUtil.Message.confirm(Bundle.DeleteCaseAction_confirmationText())) {
             super.actionPerformed(event);
         }
-    }     
-    
+    }
+
     @Override
     DeleteCaseTask getTask(CaseNodeData caseNodeData, ProgressIndicator progress) {
-        return new DeleteCaseTask(caseNodeData, DeleteCaseTask.DeleteOptions.DELETE_STANDARD, progress);
-    }}
+        return new DeleteCaseTask(caseNodeData, DeleteCaseTask.DeleteOptions.DELETE_CASE, progress);
+    }
+}
