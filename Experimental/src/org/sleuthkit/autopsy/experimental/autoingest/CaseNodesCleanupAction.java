@@ -19,8 +19,10 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.awt.event.ActionEvent;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import javax.swing.AbstractAction;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.progress.AppFrameProgressBar;
 import org.sleuthkit.autopsy.progress.TaskCancellable;
@@ -46,6 +48,13 @@ final class CaseNodesCleanupAction extends AbstractAction {
         final FutureTask<Void> future = new FutureTask<>(task, null);
         taskCanceller.setFuture(future);
         new Thread(future).start();
+        try {
+            future.get();
+        } catch (InterruptedException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (ExecutionException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
 
     @Override
