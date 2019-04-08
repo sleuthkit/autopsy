@@ -152,6 +152,11 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
      *         there was a problem.
      */
     private IngestModule.ProcessResult flagVolume(Volume volume, BlackboardArtifact.ARTIFACT_TYPE artifactType, String comment) {
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return ProcessResult.OK;
+        }
+        
         try {
             BlackboardArtifact artifact = volume.newArtifact(artifactType);
             artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, EncryptionDetectionModuleFactory.getModuleName(), comment));
