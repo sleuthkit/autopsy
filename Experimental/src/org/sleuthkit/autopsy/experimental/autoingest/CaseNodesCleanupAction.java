@@ -18,34 +18,33 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.awt.event.ActionEvent;
-import java.util.concurrent.FutureTask;
-import javax.swing.AbstractAction;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.progress.AppFrameProgressBar;
-import org.sleuthkit.autopsy.progress.TaskCancellable;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
  * An action class that kicks off a cancellable case nodes cleanup task that
  * runs in a background thread and reports progress using an application frame
  * progress bar.
  */
-final class CaseNodesCleanupAction extends AbstractAction {
+final class CaseNodesCleanupAction extends BackgroundTaskAction {
 
     private static final long serialVersionUID = 1L;
 
-    @Override
+    /**
+     * Constructs an instance of an action class that kicks off a cancellable
+     * case nodes cleanup task that runs in a background thread and reports
+     * progress using an application frame progress bar.
+     */
     @NbBundle.Messages({
         "CaseNodesCleanupAction.progressDisplayName=Cleanup Case Znodes"
     })
-    public void actionPerformed(ActionEvent event) {
-        final AppFrameProgressBar progress = new AppFrameProgressBar(Bundle.CaseNodesCleanupAction_progressDisplayName());        
-        final TaskCancellable taskCanceller = new TaskCancellable(progress);
-        progress.setCancellationBehavior(taskCanceller);
-        final Runnable task = new CaseNodesCleanupTask(progress);
-        final FutureTask<Void> future = new FutureTask<>(task, null);
-        taskCanceller.setFuture(future);
-        new Thread(future).start();
+    CaseNodesCleanupAction() {
+        super(Bundle.CaseNodesCleanupAction_progressDisplayName(), Bundle.CaseNodesCleanupAction_progressDisplayName());
+    }
+
+    @Override
+    Runnable getTask(ProgressIndicator progress) {
+        return new CaseNodesCleanupTask(progress);
     }
 
     @Override

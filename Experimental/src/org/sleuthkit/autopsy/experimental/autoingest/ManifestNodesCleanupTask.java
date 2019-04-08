@@ -22,6 +22,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
@@ -46,43 +47,69 @@ final class ManifestNodesCleanupTask implements Runnable {
     }
 
     @Override
+    @NbBundle.Messages({
+        "ManifestNodesCleanupTask.progress.startMessage=Starting orphaned manifest file znode cleanup...",
+        "ManifestNodesCleanupTask.progress.connectingToCoordSvc=Connecting to the coordination service...",
+        "ManifestNodesCleanupTask.progress.gettingCaseNodesListing=Querying coordination service for manifest file znodes...",
+        "# {0} - node path", "ManifestNodesCleanupTask.progress.deletingOrphanedManifestNode=Deleting orphaned manifest file node {0}..."
+    })
     public void run() {
-
-        CoordinationService coordinationService;
+        progress.start(Bundle.ManifestNodesCleanupTask_progress_startMessage());
         try {
-            coordinationService = CoordinationService.getInstance();
-        } catch (CoordinationService.CoordinationServiceException ex) {
-            logger.log(Level.WARNING, "Error connecting to the coordination service", ex); // NON-NLS
-            return;
-        }
+            progress.progress(Bundle.ManifestNodesCleanupTask_progress_connectingToCoordSvc());
+            logger.log(Level.INFO, "Connecting to the coordination service for orphan manifest file node clean up");  // NON-NLS            
+            CoordinationService coordinationService;
+            try {
+                coordinationService = CoordinationService.getInstance();
+            } catch (CoordinationService.CoordinationServiceException ex) {
+                logger.log(Level.WARNING, "Error connecting to the coordination service", ex); // NON-NLS
+                return;
+            }
 
-        List<AutoIngestJobNodeData> nodeDataList;
-        try {
-            nodeDataList = AutoIngestJobNodeDataCollector.getNodeData();
-        } catch (CoordinationService.CoordinationServiceException ex) {
-            logger.log(Level.WARNING, "Error collecting auto ingest job node data", ex); // NON-NLS
-            return;
-        } catch (InterruptedException ex) {
-            logger.log(Level.WARNING, "Unexpected interrupt while collecting auot ingest job node data", ex); // NON-NLS
-            return;
-        }
+            progress.progress(Bundle.ManifestNodesCleanupTask_progress_gettingCaseNodesListing());
+            logger.log(Level.INFO, "Querying coordination service for case nodes for orphaned case node clean up");  // NON-NLS
+            List<AutoIngestJobNodeData> nodeDataList;
+            try {
+                nodeDataList = AutoIngestJobNodeDataCollector.getNodeData();
+            } catch (CoordinationService.CoordinationServiceException ex) {
+                logger.log(Level.WARNING, "Error collecting auto ingest job node data", ex); // NON-NLS
+                return;
+            } catch (InterruptedException ex) {
+                logger.log(Level.WARNING, "Unexpected interrupt while collecting auto ingest job node data", ex); // NON-NLS
+                return;
+            }
 
-        for (AutoIngestJobNodeData nodeData : nodeDataList) {
-            final String caseName = nodeData.getCaseName();
-            final Path manifestFilePath = nodeData.getManifestFilePath();
-            final File manifestFile = manifestFilePath.toFile();
-            if (!manifestFile.exists()) {
-                try {
-                    coordinationService.deleteNode(CoordinationService.CategoryNode.MANIFESTS, manifestFilePath.toString());
-                } catch (CoordinationService.CoordinationServiceException ex) {
-                    if (!DeleteCaseUtils.isNoNodeException(ex)) {
-                        logger.log(Level.SEVERE, String.format("Error deleting %s znode for %s", manifestFilePath, caseName), ex);  // NON-NLS
+            for (AutoIngestJobNodeData nodeData : nodeDataList) {
+                final String caseName = nodeData.getCaseName();
+                final Path manifestFilePath = nodeData.getManifestFilePath();
+                final File manifestFile = manifestFilePath.toFile();
+                if (!manifestFile.exists()) {
+                    try {
+                        progress.progress(Bundle.ManifestNodesCleanupTask_progress_deletingOrphanedManifestNode(manifestFilePath));
+                        logger.log(Level.INFO, String.format("Deleting orphaned case node %s for %s", manifestFilePath, caseName));  // NON-NLS
+                        coordinationService.deleteNode(CoordinationService.CategoryNode.MANIFESTS, manifestFilePath.toString());
+                    } catch (CoordinationService.CoordinationServiceException ex) {
+                        if (!DeleteCaseUtils.isNoNodeException(ex)) {
+                            logger.log(Level.SEVERE, String.format("Error deleting %s znode for %s", manifestFilePath, caseName), ex);  // NON-NLS
+                        }
+                    } catch (InterruptedException ex) {
+                        logger.log(Level.WARNING, String.format("Unexpected interrupt while deleting %s znode for %s", manifestFilePath, caseName), ex);  // NON-NLS
+                        return;
                     }
-                } catch (InterruptedException ex) {
-                    logger.log(Level.WARNING, String.format("Unexpected interrupt while deleting %s znode for %s", manifestFilePath, caseName), ex);  // NON-NLS
-                    return;
                 }
             }
+        } catch (Exception ex) {
+            /*
+             * This is an unexpected runtime exceptions firewall. It is here
+             * because this task is designed to be able to be run in scenarios
+             * where there is no call to get() on a Future<Void> associated with
+             * the task, so this ensures that any such errors get logged.
+             */
+            logger.log(Level.SEVERE, "Unexpected error during orphan manifest file znode cleanup", ex); // NON-NLS
+            throw ex;
+
+        } finally {
+            progress.finish();
         }
     }
 

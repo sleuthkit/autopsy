@@ -40,11 +40,11 @@ abstract class BackgroundTaskAction extends AbstractAction {
      * cancellable task that runs in a background thread and reports progress
      * using an application frame progress bar.
      *
-     * @param name                The name of the action.
+     * @param actionName                The name of the action.
      * @param progressDisplayName The display name for the progress bar.
      */
-    BackgroundTaskAction(String name, String progressDisplayName) {
-        super(name);
+    BackgroundTaskAction(String actionName, String progressDisplayName) {
+        super(actionName);
         this.progressDisplayName = progressDisplayName;
     }
 
@@ -53,14 +53,24 @@ abstract class BackgroundTaskAction extends AbstractAction {
         final AppFrameProgressBar progress = new AppFrameProgressBar(progressDisplayName);
         final TaskCancellable taskCanceller = new TaskCancellable(progress);
         progress.setCancellationBehavior(taskCanceller);
-        final Runnable task = new CaseNodesCleanupTask(progress);
+        final Runnable task = getTask(progress);
         final FutureTask<Void> future = new FutureTask<>(task, null);
         taskCanceller.setFuture(future);
         new Thread(future).start();
     }
 
+    /**
+     * Gets the background task to be executed. The task is expected to report
+     * its progress using the supplied progress indicator and to check for
+     * cancellation by checking to see if the thread it is running in has been
+     * interrupted.
+     *
+     * @param progress A progress indicator for the task.
+     *
+     * @return The Runnnable task.
+     */
     abstract Runnable getTask(ProgressIndicator progress);
-    
+
     @Override
     public BackgroundTaskAction clone() throws CloneNotSupportedException {
         super.clone();

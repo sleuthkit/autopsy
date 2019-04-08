@@ -53,7 +53,7 @@ final class CaseNodesCleanupTask implements Runnable {
     @NbBundle.Messages({
         "CaseNodesCleanupTask.progress.startMessage=Starting orphaned case znode cleanup...",
         "CaseNodesCleanupTask.progress.connectingToCoordSvc=Connecting to the coordination service...",
-        "CaseNodesCleanupTask.progress.gettingCaseNodesListing=Querying coordination service for case nodes..."
+        "CaseNodesCleanupTask.progress.gettingCaseNodesListing=Querying coordination service for case znodes..."
     })
     public void run() {
         progress.start(Bundle.CaseNodesCleanupTask_progress_startMessage());
