@@ -433,7 +433,7 @@ final class DeleteCaseTask implements Runnable {
                 try {
                     caseMetadata = new CaseMetadata(caseMetadataPath);
                     checkForCancellation();
-                    if (!manifestFileLocks.isEmpty() && (deleteOption == DeleteOptions.DELETE_INPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT || deleteOption == DeleteOptions.DELETE_CASE)) {
+                    if (!manifestFileLocks.isEmpty()) {
                         if (deleteOption == DeleteOptions.DELETE_INPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT) {
                             deleteAutoIngestInput();
                         } else if (deleteOption == DeleteOptions.DELETE_CASE) {
