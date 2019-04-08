@@ -427,7 +427,7 @@ final class DeleteCaseTask implements Runnable {
                         }
                     }
                     checkForCancellation();
-                    if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT) {
+                    if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT || deleteOption == DeleteOptions.DELETE_CASE) {
                         Case.deleteMultiUserCase(caseNodeData, caseMetadata, progress, logger);
                     }
 
@@ -663,7 +663,7 @@ final class DeleteCaseTask implements Runnable {
      *                              coordination service operation to complete.
      */
     private void deleteCaseResourcesNode() throws InterruptedException {
-        if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT) {
+        if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT || deleteOption == DeleteOptions.DELETE_CASE) {
             progress.progress(Bundle.DeleteCaseTask_progress_deletingResourcesLockNode());
             logger.log(Level.INFO, String.format("Deleting case resources log znode for %s", caseNodeData.getDisplayName()));
             String resourcesNodePath = CoordinationServiceUtils.getCaseResourcesNodePath(caseNodeData.getDirectory());
@@ -685,7 +685,7 @@ final class DeleteCaseTask implements Runnable {
      *                              coordination service operation to complete.
      */
     private void deleteCaseAutoIngestLogNode() throws InterruptedException {
-        if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT) {
+        if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT || deleteOption == DeleteOptions.DELETE_CASE) {
             progress.progress(Bundle.DeleteCaseTask_progress_deletingJobLogLockNode());
             logger.log(Level.INFO, String.format("Deleting case auto ingest job log znode for %s", caseNodeData.getDisplayName()));
             String logFilePath = CoordinationServiceUtils.getCaseAutoIngestLogNodePath(caseNodeData.getDirectory());
@@ -739,7 +739,7 @@ final class DeleteCaseTask implements Runnable {
      *                              coordination service operation to complete.
      */
     private void deleteCaseNameNode() throws InterruptedException {
-        if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT) {
+        if (deleteOption == DeleteOptions.DELETE_OUTPUT || deleteOption == DeleteOptions.DELETE_INPUT_AND_OUTPUT || deleteOption == DeleteOptions.DELETE_CASE) {
             progress.progress(Bundle.DeleteCaseTask_progress_deletingCaseNameCoordSvcNode());
             logger.log(Level.INFO, String.format("Deleting case name znode for %s", caseNodeData.getDisplayName()));
             try {
