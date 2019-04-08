@@ -39,7 +39,7 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
     private final DeleteCaseAction deleteCaseAction;
     private final DeleteCaseInputAction deleteCaseInputAction;
     private final DeleteCaseOutputAction deleteCaseOutputAction;
-    private final DeleteCaseInputAndOutputAction deleteAllAction;
+    private final DeleteCaseInputAndOutputAction deleteCaseInputAndOutputAction;
 
     /**
      * Constructs a customizer for the multi-user case browser panel used in the
@@ -57,7 +57,7 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         deleteCaseAction = new DeleteCaseAction();
         deleteCaseInputAction = new DeleteCaseInputAction();
         deleteCaseOutputAction = new DeleteCaseOutputAction();
-        deleteAllAction = new DeleteCaseInputAndOutputAction();
+        deleteCaseInputAndOutputAction = new DeleteCaseInputAndOutputAction();
     }
 
     @Override
@@ -96,7 +96,7 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         if (CasesDashboardCustomizer.extendedFeaturesAreEnabled()) {
             actions.add(deleteCaseInputAction);
             actions.add(deleteCaseOutputAction);
-            actions.add(deleteAllAction);
+            actions.add(deleteCaseInputAndOutputAction);
         } else {
             actions.add(deleteCaseAction);
         }
