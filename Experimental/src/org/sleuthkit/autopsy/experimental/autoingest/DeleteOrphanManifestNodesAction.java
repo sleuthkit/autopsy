@@ -22,33 +22,33 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
- * An action class that kicks off a cancellable manifest file nodes cleanup task
- * that runs in a background thread and reports progress using an application
- * frame progress bar.
+ * An action class that kicks off a cancellable orphaned manifest file nodes
+ * deletion task that runs in a background thread and reports progress using an
+ * application frame progress bar.
  */
-public class ManifestNodesCleanupAction extends BackgroundTaskAction {
+public class DeleteOrphanManifestNodesAction extends BackgroundTaskAction {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * Constructs an instance of an action class that kicks off a cancellable
-     * manifest file nodes cleanup task that runs in a background thread and
-     * reports progress using an application frame progress bar.
+     * orphaned manifest file nodes deletion task that runs in a background
+     * thread and reports progress using an application frame progress bar.
      */
     @NbBundle.Messages({
         "ManifestNodesCleanupAction.progressDisplayName=Cleanup Manifest File Znodes"
     })
-    ManifestNodesCleanupAction() {
+    DeleteOrphanManifestNodesAction() {
         super(Bundle.ManifestNodesCleanupAction_progressDisplayName(), Bundle.ManifestNodesCleanupAction_progressDisplayName());
     }
-    
-    @Override
-    Runnable getTask(ProgressIndicator progress) {
-        return new ManifestNodesCleanupTask(progress);
-    }    
 
     @Override
-    public ManifestNodesCleanupAction clone() throws CloneNotSupportedException {
+    Runnable getTask(ProgressIndicator progress) {
+        return new DeleteOrphanManifestNodesTask(progress);
+    }
+
+    @Override
+    public DeleteOrphanManifestNodesAction clone() throws CloneNotSupportedException {
         super.clone();
         throw new CloneNotSupportedException();
     }

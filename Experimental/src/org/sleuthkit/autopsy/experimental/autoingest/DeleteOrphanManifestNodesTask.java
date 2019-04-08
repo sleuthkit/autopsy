@@ -31,9 +31,9 @@ import org.sleuthkit.autopsy.progress.ProgressIndicator;
  * A task class for cleaning up auto ingest job coordination service nodes for
  * which there is no longer a corresponding manifest file.
  */
-final class ManifestNodesCleanupTask implements Runnable {
+final class DeleteOrphanManifestNodesTask implements Runnable {
 
-    private static final Logger logger = Logger.getLogger(ManifestNodesCleanupTask.class.getName());
+    private static final Logger logger = Logger.getLogger(DeleteOrphanManifestNodesTask.class.getName());
     private final ProgressIndicator progress;
 
     /**
@@ -42,7 +42,7 @@ final class ManifestNodesCleanupTask implements Runnable {
      *
      * @param progress
      */
-    ManifestNodesCleanupTask(ProgressIndicator progress) {
+    DeleteOrphanManifestNodesTask(ProgressIndicator progress) {
         this.progress = progress;
     }
 

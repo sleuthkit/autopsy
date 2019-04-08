@@ -20,12 +20,12 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <Component id="refreshButton" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      <Component id="refreshButton" linkSize="3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cleanCaseNodesButton" linkSize="1" min="-2" max="-2" attributes="0"/>
+                      <Component id="cleanCaseNodesButton" linkSize="3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cleanManifestNodesButton" linkSize="1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="44" max="32767" attributes="0"/>
+                      <Component id="cleanManifestNodesButton" linkSize="3" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="caseBrowserScrollPane" max="32767" attributes="0"/>

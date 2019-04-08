@@ -22,33 +22,33 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
- * An action class that kicks off a cancellable case nodes cleanup task that
- * runs in a background thread and reports progress using an application frame
- * progress bar.
+ * An action class that kicks off a cancellable orphaned case nodes deletion
+ * task that runs in a background thread and reports progress using an
+ * application frame progress bar.
  */
-final class CaseNodesCleanupAction extends BackgroundTaskAction {
+final class DeleteOrphanCaseNodesAction extends BackgroundTaskAction {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * Constructs an instance of an action class that kicks off a cancellable
-     * case nodes cleanup task that runs in a background thread and reports
-     * progress using an application frame progress bar.
+     * orphaned case nodes deletion task that runs in a background thread and
+     * reports progress using an application frame progress bar.
      */
     @NbBundle.Messages({
         "CaseNodesCleanupAction.progressDisplayName=Cleanup Case Znodes"
     })
-    CaseNodesCleanupAction() {
+    DeleteOrphanCaseNodesAction() {
         super(Bundle.CaseNodesCleanupAction_progressDisplayName(), Bundle.CaseNodesCleanupAction_progressDisplayName());
     }
 
     @Override
     Runnable getTask(ProgressIndicator progress) {
-        return new CaseNodesCleanupTask(progress);
+        return new DeleteOrphanCaseNodesTask(progress);
     }
 
     @Override
-    public CaseNodesCleanupAction clone() throws CloneNotSupportedException {
+    public DeleteOrphanCaseNodesAction clone() throws CloneNotSupportedException {
         super.clone();
         throw new CloneNotSupportedException();
     }

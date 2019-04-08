@@ -156,7 +156,7 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
                         .addComponent(cleanCaseNodesButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cleanManifestNodesButton)
-                        .addGap(0, 44, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(caseBrowserScrollPane)
                         .addContainerGap())))
@@ -186,11 +186,11 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
     }//GEN-LAST:event_refreshButtonActionPerformed
 
     private void cleanCaseNodesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cleanCaseNodesButtonActionPerformed
-        new CaseNodesCleanupAction().actionPerformed(evt);
+        new DeleteOrphanCaseNodesAction().actionPerformed(evt);
     }//GEN-LAST:event_cleanCaseNodesButtonActionPerformed
 
     private void cleanManifestNodesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cleanManifestNodesButtonActionPerformed
-        new ManifestNodesCleanupAction().actionPerformed(evt);
+        new DeleteOrphanManifestNodesAction().actionPerformed(evt);
     }//GEN-LAST:event_cleanManifestNodesButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
