@@ -291,7 +291,7 @@ final class ExtractSafari extends Extract {
         }
 
         try {
-            Collection<BlackboardArtifact> bbartifacts = getHistoryArtifacts(historyFile, tempHistoryFile.toPath());
+            Collection<BlackboardArtifact> bbartifacts = getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context);
             if (!bbartifacts.isEmpty()) {
                 services.fireModuleDataEvent(new ModuleDataEvent(
                         RecentActivityExtracterModuleFactory.getModuleName(),
@@ -323,7 +323,7 @@ final class ExtractSafari extends Extract {
         File tempFile = createTemporaryFile(context, file);
 
         try {
-            Collection<BlackboardArtifact> bbartifacts = getBookmarkArtifacts(file, tempFile);
+            Collection<BlackboardArtifact> bbartifacts = getBookmarkArtifacts(file, tempFile, context);
             if (!bbartifacts.isEmpty()) {
                 services.fireModuleDataEvent(new ModuleDataEvent(
                         RecentActivityExtracterModuleFactory.getModuleName(),
@@ -389,7 +389,7 @@ final class ExtractSafari extends Extract {
         try {
             tempFile = createTemporaryFile(context, file);
 
-            Collection<BlackboardArtifact> bbartifacts = getCookieArtifacts(file, tempFile);
+            Collection<BlackboardArtifact> bbartifacts = getCookieArtifacts(file, tempFile, context);
 
             if (!bbartifacts.isEmpty()) {
                 services.fireModuleDataEvent(new ModuleDataEvent(
@@ -413,7 +413,7 @@ final class ExtractSafari extends Extract {
      * history artifacts
      * @throws TskCoreException
      */
-    private Collection<BlackboardArtifact> getHistoryArtifacts(AbstractFile origFile, Path tempFilePath) throws TskCoreException {
+    private Collection<BlackboardArtifact> getHistoryArtifacts(AbstractFile origFile, Path tempFilePath, IngestJobContext context) throws TskCoreException {
         List<HashMap<String, Object>> historyList = this.dbConnect(tempFilePath.toString(), HISTORY_QUERY);
 
         if (historyList == null || historyList.isEmpty()) {
@@ -422,6 +422,10 @@ final class ExtractSafari extends Extract {
 
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (HashMap<String, Object> row : historyList) {
+            if (context.dataSourceIngestIsCancelled()) {
+                return bbartifacts;
+            }
+            
             String url = row.get(HEAD_URL).toString();
             String title = row.get(HEAD_TITLE).toString();
             Long time = (Double.valueOf(row.get(HEAD_TIME).toString())).longValue();
@@ -448,13 +452,13 @@ final class ExtractSafari extends Extract {
      * @throws SAXException
      * @throws TskCoreException
      */
-    private Collection<BlackboardArtifact> getBookmarkArtifacts(AbstractFile origFile, File tempFile) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException, TskCoreException {
+    private Collection<BlackboardArtifact> getBookmarkArtifacts(AbstractFile origFile, File tempFile, IngestJobContext context) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException, TskCoreException {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
 
         try {
             NSDictionary root = (NSDictionary) PropertyListParser.parse(tempFile);
 
-            parseBookmarkDictionary(bbartifacts, origFile, root);
+            parseBookmarkDictionary(bbartifacts, origFile, root, context);
         } catch (PropertyListFormatException ex) {
             PropertyListFormatException plfe = new PropertyListFormatException(origFile.getName() + ": " + ex.getMessage());
             plfe.setStackTrace(ex.getStackTrace());
@@ -546,7 +550,7 @@ final class ExtractSafari extends Extract {
      * @throws TskCoreException
      * @throws IOException
      */
-    private Collection<BlackboardArtifact> getCookieArtifacts(AbstractFile origFile, File tempFile) throws TskCoreException, IOException {
+    private Collection<BlackboardArtifact> getCookieArtifacts(AbstractFile origFile, File tempFile, IngestJobContext context) throws TskCoreException, IOException {
         Collection<BlackboardArtifact> bbartifacts = null;
         BinaryCookieReader reader = BinaryCookieReader.initalizeReader(tempFile);
 
@@ -555,6 +559,10 @@ final class ExtractSafari extends Extract {
 
             Iterator<Cookie> iter = reader.iterator();
             while (iter.hasNext()) {
+                if (context.dataSourceIngestIsCancelled()) {
+                    return bbartifacts;
+                }
+                
                 Cookie cookie = iter.next();
 
                 BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
@@ -575,13 +583,18 @@ final class ExtractSafari extends Extract {
      * @param root NSDictionary object to parse
      * @throws TskCoreException
      */
-    private void parseBookmarkDictionary(Collection<BlackboardArtifact> bbartifacts, AbstractFile origFile, NSDictionary root) throws TskCoreException {
+    private void parseBookmarkDictionary(Collection<BlackboardArtifact> bbartifacts, AbstractFile origFile, NSDictionary root, IngestJobContext context) throws TskCoreException {
+
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+
         if (root.containsKey(PLIST_KEY_CHILDREN)) {
             NSArray children = (NSArray) root.objectForKey(PLIST_KEY_CHILDREN);
 
             if (children != null) {
                 for (NSObject obj : children.getArray()) {
-                    parseBookmarkDictionary(bbartifacts, origFile, (NSDictionary) obj);
+                    parseBookmarkDictionary(bbartifacts, origFile, (NSDictionary) obj, context);
                 }
             }
         } else if (root.containsKey(PLIST_KEY_URL)) {
