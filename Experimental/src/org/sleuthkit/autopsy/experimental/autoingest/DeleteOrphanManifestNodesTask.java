@@ -67,7 +67,7 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
             }
 
             progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_gettingCaseNodesListing());
-            logger.log(Level.INFO, "Querying coordination service for case nodes for orphaned case node clean up");  // NON-NLS
+            logger.log(Level.INFO, "Querying coordination service for manifest file nodes for orphaned node clean up");  // NON-NLS
             List<AutoIngestJobNodeData> nodeDataList;
             try {
                 nodeDataList = AutoIngestJobNodeDataCollector.getNodeData();
