@@ -31,53 +31,53 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
- * Task for cleaning up case coordination service nodes for which there is no
+ * Task for deleting case coordination service nodes for which there is no
  * longer a corresponding case.
  */
-final class CaseNodesCleanupTask implements Runnable {
+final class DeleteOrphanCaseNodesTask implements Runnable {
 
     private static final Logger logger = AutoIngestDashboardLogger.getLogger();
     private final ProgressIndicator progress;
 
     /**
-     * Constucts an instance of a task for cleaning up case coordination service
+     * Constucts an instance of a task for deleting case coordination service
      * nodes for which there is no longer a corresponding case.
      *
      * @param progress
      */
-    CaseNodesCleanupTask(ProgressIndicator progress) {
+    DeleteOrphanCaseNodesTask(ProgressIndicator progress) {
         this.progress = progress;
     }
 
     @Override
     @NbBundle.Messages({
-        "CaseNodesCleanupTask.progress.startMessage=Starting orphaned case znode cleanup...",
-        "CaseNodesCleanupTask.progress.connectingToCoordSvc=Connecting to the coordination service...",
-        "CaseNodesCleanupTask.progress.gettingCaseNodesListing=Querying coordination service for case nodes..."
+        "DeleteOrphanCaseNodesTask.progress.startMessage=Starting orphaned case znode cleanup",
+        "DeleteOrphanCaseNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service",
+        "DeleteOrphanCaseNodesTask.progress.gettingCaseNodesListing=Querying coordination service for case znodes"
     })
     public void run() {
-        progress.start(Bundle.CaseNodesCleanupTask_progress_startMessage());
+        progress.start(Bundle.DeleteOrphanCaseNodesTask_progress_startMessage());
         try {
-            progress.progress(Bundle.CaseNodesCleanupTask_progress_connectingToCoordSvc());
-            logger.log(Level.INFO, "Connecting to the coordination service for orphan case node clean up");  // NON-NLS
+            progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_connectingToCoordSvc());
+            logger.log(Level.INFO, Bundle.DeleteOrphanCaseNodesTask_progress_connectingToCoordSvc());
             CoordinationService coordinationService;
             try {
                 coordinationService = CoordinationService.getInstance();
             } catch (CoordinationService.CoordinationServiceException ex) {
-                logger.log(Level.WARNING, "Error connecting to the coordination service", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error connecting to the coordination service", ex); //NON-NLS
                 return;
             }
 
-            progress.progress(Bundle.CaseNodesCleanupTask_progress_gettingCaseNodesListing());
-            logger.log(Level.INFO, "Querying coordination service for case nodes for orphaned case node clean up");  // NON-NLS
+            progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseNodesListing());
+            logger.log(Level.INFO, Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseNodesListing());
             List<CaseNodeData> nodeDataList;
             try {
                 nodeDataList = CaseNodeDataCollector.getNodeData();
             } catch (CoordinationService.CoordinationServiceException ex) {
-                logger.log(Level.WARNING, "Error collecting case node data", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error collecting case node data", ex); //NON-NLS
                 return;
-            } catch (InterruptedException ex) {
-                logger.log(Level.WARNING, "Unexpected interrupt while collecting case node data", ex); // NON-NLS
+            } catch (InterruptedException unused) {
+                logger.log(Level.WARNING, "Task cancelled while collecting case node data"); //NON-NLS
                 return;
             }
 
@@ -100,8 +100,8 @@ final class CaseNodesCleanupTask implements Runnable {
                         nodePath = CoordinationServiceUtils.getCaseDirectoryNodePath(caseDirectoryPath);
                         deleteNode(coordinationService, caseName, nodePath);
 
-                    } catch (InterruptedException ex) {
-                        logger.log(Level.WARNING, String.format("Unexpected interrupt while deleting orphaned znode %s for %s", nodePath, caseName), ex); // NON-NLS
+                    } catch (InterruptedException unused) {
+                        logger.log(Level.WARNING, String.format("Task cancelled while deleting orphaned znode %s for %s", nodePath, caseName)); //NON-NLS
                         return;
                     }
                 }
@@ -113,9 +113,9 @@ final class CaseNodesCleanupTask implements Runnable {
              * where there is no call to get() on a Future<Void> associated with
              * the task, so this ensures that any such errors get logged.
              */
-            logger.log(Level.SEVERE, "Unexpected error during orphan case znode cleanup", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Unexpected error during orphan case znode cleanup", ex); //NON-NLS
             throw ex;
-            
+
         } finally {
             progress.finish();
         }
@@ -132,16 +132,16 @@ final class CaseNodesCleanupTask implements Runnable {
      *                              interrupted during the delete operation.
      */
     @NbBundle.Messages({
-        "# {0} - node path", "CaseNodesCleanupTask.progress.deletingOrphanedCaseNode=Deleting orphaned case node {0}..."
+        "# {0} - node path", "DeleteOrphanCaseNodesTask.progress.deletingOrphanedCaseNode=Deleting orphaned case znode {0}"
     })
     private void deleteNode(CoordinationService coordinationService, String caseName, String nodePath) throws InterruptedException {
         try {
-            progress.progress(Bundle.CaseNodesCleanupTask_progress_deletingOrphanedCaseNode(nodePath));
-            logger.log(Level.INFO, String.format("Deleting orphaned case node %s for %s", nodePath, caseName));  // NON-NLS
+            progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_deletingOrphanedCaseNode(nodePath));
+            logger.log(Level.INFO, String.format("Deleting orphaned case node %s for %s", nodePath, caseName)); //NON-NLS
             coordinationService.deleteNode(CoordinationService.CategoryNode.CASES, nodePath);
         } catch (CoordinationService.CoordinationServiceException ex) {
             if (!DeleteCaseUtils.isNoNodeException(ex)) {
-                logger.log(Level.SEVERE, String.format("Error deleting orphaned case node %s for %s", nodePath, caseName), ex);  // NON-NLS
+                logger.log(Level.SEVERE, String.format("Error deleting orphaned case node %s for %s", nodePath, caseName), ex); //NON-NLS
             }
         }
     }

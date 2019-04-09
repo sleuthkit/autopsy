@@ -72,6 +72,7 @@ import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
@@ -711,10 +712,10 @@ public class EventsRepository {
             // if the time is legitimate ( greater than zero ) insert it into the db
             if (eventDescription != null && eventDescription.getTime() > 0) {
                 long objectID = bbart.getObjectID();
-                AbstractFile f = skCase.getAbstractFileById(objectID);
-                long datasourceID = f.getDataSource().getId();
+                Content content = skCase.getContentById(objectID);
+                long datasourceID = content.getDataSource().getId();
                 long artifactID = bbart.getArtifactID();
-                Set<String> hashSets = f.getHashSetNames();
+                Set<String> hashSets = content.getHashSetNames();
                 List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbart);
                 String fullDescription = eventDescription.getFullDescription();
                 String medDescription = eventDescription.getMedDescription();

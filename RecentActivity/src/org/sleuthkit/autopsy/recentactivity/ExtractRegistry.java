@@ -391,6 +391,11 @@ class ExtractRegistry extends Extract {
             // that we will submit in a ModuleDataEvent for additional processing.
             Collection<BlackboardArtifact> wifiBBartifacts = new ArrayList<>();
             for (int i = 0; i < len; i++) {
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    return false;
+                }
+                
                 Element tempnode = (Element) children.item(i);
 
                 String dataType = tempnode.getNodeName();
@@ -809,11 +814,11 @@ class ExtractRegistry extends Extract {
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
         } catch (SAXException ex) {
-            logger.log(Level.SEVERE, "Error parsing the registry XML: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error parsing the registry XML.", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error building the document parser.", ex); //NON-NLS
         } catch (ParserConfigurationException ex) {
-            logger.log(Level.SEVERE, "Error configuring the registry parser: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error configuring the registry parser.", ex); //NON-NLS
         } finally {
             try {
                 if (fstream != null) {
