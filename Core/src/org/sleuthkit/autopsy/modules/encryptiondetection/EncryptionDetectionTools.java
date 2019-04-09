@@ -22,6 +22,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestModule;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.Content;
@@ -69,6 +70,7 @@ final class EncryptionDetectionTools {
      * content as possibly encrypted.
      *
      * @param content The content to be calculated against.
+     * @param context The ingest job context for cancellation checks
      *
      * @return The entropy of the content.
      *
@@ -77,7 +79,7 @@ final class EncryptionDetectionTools {
      * @throws IOException                     If there is a failure closing or
      *                                         reading from the InputStream.
      */
-    static double calculateEntropy(Content content) throws ReadContentInputStream.ReadContentInputStreamException, IOException {
+    static double calculateEntropy(Content content, IngestJobContext context) throws ReadContentInputStream.ReadContentInputStreamException, IOException {
         /*
          * Logic in this method is based on
          * https://github.com/willjasen/entropy/blob/master/entropy.java
@@ -95,8 +97,17 @@ final class EncryptionDetectionTools {
              */
             int[] byteOccurences = new int[BYTE_OCCURENCES_BUFFER_SIZE];
             int readByte;
+            long bytesRead = 0;
             while ((readByte = bin.read()) != -1) {
                 byteOccurences[readByte]++;
+                
+                // Do a cancellation check every 10,000 bytes
+                bytesRead++;
+                if (bytesRead % 10000 == 0) {
+                    if (context.dataSourceIngestIsCancelled() || context.fileIngestIsCancelled()) {
+                        return 0;
+                    }
+                }
             }
 
             /*
