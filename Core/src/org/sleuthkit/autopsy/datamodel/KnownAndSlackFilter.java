@@ -28,7 +28,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
+ * Predicate that can be used to filter known and/or slack files from
+ * Content collections based on user preferences.
  */
 class KnownAndSlackFilter<T extends Content> implements Predicate<T> {
 
