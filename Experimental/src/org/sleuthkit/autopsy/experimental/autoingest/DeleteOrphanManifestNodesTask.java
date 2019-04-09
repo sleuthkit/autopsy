@@ -48,15 +48,15 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
 
     @Override
     @NbBundle.Messages({
-        "ManifestNodesCleanupTask.progress.startMessage=Starting orphaned manifest file znode cleanup...",
-        "ManifestNodesCleanupTask.progress.connectingToCoordSvc=Connecting to the coordination service...",
-        "ManifestNodesCleanupTask.progress.gettingCaseNodesListing=Querying coordination service for manifest file znodes...",
-        "# {0} - node path", "ManifestNodesCleanupTask.progress.deletingOrphanedManifestNode=Deleting orphaned manifest file node {0}..."
+        "DeleteOrphanManifestNodesTask.progress.startMessage=Starting orphaned manifest file znode cleanup...",
+        "DeleteOrphanManifestNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service...",
+        "DeleteOrphanManifestNodesTask.progress.gettingCaseNodesListing=Querying coordination service for manifest file znodes...",
+        "# {0} - node path", "DeleteOrphanManifestNodesTask.progress.deletingOrphanedManifestNode=Deleting orphaned manifest file node {0}..."
     })
     public void run() {
-        progress.start(Bundle.ManifestNodesCleanupTask_progress_startMessage());
+        progress.start(Bundle.DeleteOrphanManifestNodesTask_progress_startMessage());
         try {
-            progress.progress(Bundle.ManifestNodesCleanupTask_progress_connectingToCoordSvc());
+            progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_connectingToCoordSvc());
             logger.log(Level.INFO, "Connecting to the coordination service for orphan manifest file node clean up");  // NON-NLS            
             CoordinationService coordinationService;
             try {
@@ -66,7 +66,7 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
                 return;
             }
 
-            progress.progress(Bundle.ManifestNodesCleanupTask_progress_gettingCaseNodesListing());
+            progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_gettingCaseNodesListing());
             logger.log(Level.INFO, "Querying coordination service for case nodes for orphaned case node clean up");  // NON-NLS
             List<AutoIngestJobNodeData> nodeDataList;
             try {
@@ -85,7 +85,7 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
                 final File manifestFile = manifestFilePath.toFile();
                 if (!manifestFile.exists()) {
                     try {
-                        progress.progress(Bundle.ManifestNodesCleanupTask_progress_deletingOrphanedManifestNode(manifestFilePath));
+                        progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_deletingOrphanedManifestNode(manifestFilePath));
                         logger.log(Level.INFO, String.format("Deleting orphaned case node %s for %s", manifestFilePath, caseName));  // NON-NLS
                         coordinationService.deleteNode(CoordinationService.CategoryNode.MANIFESTS, manifestFilePath.toString());
                     } catch (CoordinationService.CoordinationServiceException ex) {

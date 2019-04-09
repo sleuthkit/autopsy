@@ -36,10 +36,10 @@ final class DeleteOrphanCaseNodesAction extends BackgroundTaskAction {
      * reports progress using an application frame progress bar.
      */
     @NbBundle.Messages({
-        "CaseNodesCleanupAction.progressDisplayName=Cleanup Case Znodes"
+        "DeleteOrphanCaseNodesAction.progressDisplayName=Cleanup Case Znodes"
     })
     DeleteOrphanCaseNodesAction() {
-        super(Bundle.CaseNodesCleanupAction_progressDisplayName(), Bundle.CaseNodesCleanupAction_progressDisplayName());
+        super(Bundle.DeleteOrphanCaseNodesAction_progressDisplayName(), Bundle.DeleteOrphanCaseNodesAction_progressDisplayName());
     }
 
     @Override

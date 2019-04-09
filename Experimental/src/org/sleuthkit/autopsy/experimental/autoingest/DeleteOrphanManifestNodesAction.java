@@ -36,10 +36,10 @@ public class DeleteOrphanManifestNodesAction extends BackgroundTaskAction {
      * thread and reports progress using an application frame progress bar.
      */
     @NbBundle.Messages({
-        "ManifestNodesCleanupAction.progressDisplayName=Cleanup Manifest File Znodes"
+        "DeleteOrphanManifestNodesAction.progressDisplayName=Cleanup Manifest File Znodes"
     })
     DeleteOrphanManifestNodesAction() {
-        super(Bundle.ManifestNodesCleanupAction_progressDisplayName(), Bundle.ManifestNodesCleanupAction_progressDisplayName());
+        super(Bundle.DeleteOrphanManifestNodesAction_progressDisplayName(), Bundle.DeleteOrphanManifestNodesAction_progressDisplayName());
     }
 
     @Override
