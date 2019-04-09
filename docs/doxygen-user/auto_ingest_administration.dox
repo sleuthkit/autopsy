@@ -19,7 +19,7 @@ Examiner nodes in an \ref auto_ingest_page environment can be given a type of ad
 
 \section auto_ingest_admin_setup Setup
 
-The admin panel is enabled by creating the file "_aiaa" in the user config directory. Note that the name must be exactly that with no extension. It also works to make a folder named "_aiaa" instead of a file which can be easier on machines where the file extension is hidden. No restart is needed; simply reopen the Auto Ingest Dashboard after creating the file. 
+The admin panel is enabled by creating the file "admin" in the user config directory. Note that the name must be exactly that with no extension. It also works to make a folder named "admin" instead of a file which can be easier on machines where the file extension is hidden. No restart is needed; simply reopen the Auto Ingest Dashboard after creating the file. 
 
 For an installed copy of Autopsy, the file will go under \c "C:\Users\<user name>\AppData\Roaming\Autopsy\config". 
 
@@ -41,9 +41,23 @@ In the Completed Jobs table, the user can reprocess a job (generally useful when
 
 \section auto_ingest_admin_nodes_panel Auto Ingest Nodes Panel
 
-The admin panel displays the status of every online auto ingest node. Additionally, an admin can pause or resume a node, or shut down a node entirely (i.e., exit the Autopsy app).
+The Nodes panel displays the status of every online auto ingest node. Additionally, an admin can pause or resume a node, or shut down a node entirely (i.e., exit the Autopsy app).
 
 \image html AutoIngest\admin_nodes_panel.png
+
+\section auto_ingest_admin_cases_panel Cases Panel
+
+The Cases panel shows information about each auto ingest case - the name, creation and last accessed times, the case directory, and flags for which parts of the case have been deleted.
+
+\image html AutoIngest\cases_panel.png
+
+If you right-click on a case, you can open it, see the log, delete the case, or view properties of the case. 
+
+\image html AutoIngest\cases_context_menu.png
+
+Note that you can select multiple cases at once to delete. If you choose to delete a case (or cases), you'll see the following confirmation dialog:
+
+\image html case_delete_confirm.png
 
 \section auto_ingest_admin_health_monitor Health Monitor
 
