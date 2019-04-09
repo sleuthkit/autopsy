@@ -51,14 +51,14 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
 
     @Override
     @NbBundle.Messages({
-        "CaseNodesCleanupTask.progress.startMessage=Starting orphaned case znode cleanup...",
-        "CaseNodesCleanupTask.progress.connectingToCoordSvc=Connecting to the coordination service...",
-        "CaseNodesCleanupTask.progress.gettingCaseNodesListing=Querying coordination service for case znodes..."
+        "DeleteOrphanCaseNodesTask.progress.startMessage=Starting orphaned case znode cleanup...",
+        "DeleteOrphanCaseNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service...",
+        "DeleteOrphanCaseNodesTask.progress.gettingCaseNodesListing=Querying coordination service for case znodes..."
     })
     public void run() {
-        progress.start(Bundle.CaseNodesCleanupTask_progress_startMessage());
+        progress.start(Bundle.DeleteOrphanCaseNodesTask_progress_startMessage());
         try {
-            progress.progress(Bundle.CaseNodesCleanupTask_progress_connectingToCoordSvc());
+            progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_connectingToCoordSvc());
             logger.log(Level.INFO, "Connecting to the coordination service for orphan case node clean up");  // NON-NLS
             CoordinationService coordinationService;
             try {
@@ -68,7 +68,7 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
                 return;
             }
 
-            progress.progress(Bundle.CaseNodesCleanupTask_progress_gettingCaseNodesListing());
+            progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_gettingCaseNodesListing());
             logger.log(Level.INFO, "Querying coordination service for case nodes for orphaned case node clean up");  // NON-NLS
             List<CaseNodeData> nodeDataList;
             try {
@@ -132,11 +132,11 @@ final class DeleteOrphanCaseNodesTask implements Runnable {
      *                              interrupted during the delete operation.
      */
     @NbBundle.Messages({
-        "# {0} - node path", "CaseNodesCleanupTask.progress.deletingOrphanedCaseNode=Deleting orphaned case node {0}..."
+        "# {0} - node path", "DeleteOrphanCaseNodesTask.progress.deletingOrphanedCaseNode=Deleting orphaned case node {0}..."
     })
     private void deleteNode(CoordinationService coordinationService, String caseName, String nodePath) throws InterruptedException {
         try {
-            progress.progress(Bundle.CaseNodesCleanupTask_progress_deletingOrphanedCaseNode(nodePath));
+            progress.progress(Bundle.DeleteOrphanCaseNodesTask_progress_deletingOrphanedCaseNode(nodePath));
             logger.log(Level.INFO, String.format("Deleting orphaned case node %s for %s", nodePath, caseName));  // NON-NLS
             coordinationService.deleteNode(CoordinationService.CategoryNode.CASES, nodePath);
         } catch (CoordinationService.CoordinationServiceException ex) {
