@@ -1157,7 +1157,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
 
         /**
          * Creates a pending or completed auto ingest job if the file visited is
-         * a manifest file.
+         * a manifest file, based on the data stored in the coordination service
+         * node for the manifest.
          *
          * @param filePath The path of the file.
          * @param attrs    The file system attributes of the file.
@@ -1198,11 +1199,19 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 if (manifest == null) {
                     return CONTINUE;
                 }
-
                 /*
                  * If a manifest file has been found, get the corresponding auto
                  * ingest job state from the manifest file coordination service
                  * node and put the job in the appropriate jobs list.
+                 *
+                 * There can be a race condition between queuing jobs and case
+                 * deletion. However, in practice eliminating the race condition
+                 * by acquiring a manifest file coordination service lock when
+                 * analyzing job state here appears to have a significant
+                 * performance cost for both input directory scanning and
+                 * dequeuing jobs. Therefore, job state must be checked again
+                 * during job dequeuing, while actually holding the lock, before
+                 * executing the job.
                  */
                 String manifestFilePath = manifest.getFilePath().toString();
                 byte[] rawData = coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestFilePath);
@@ -1277,6 +1286,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
             if (nodeData.getVersion() == AutoIngestJobNodeData.getCurrentVersion()) {
                 job = new AutoIngestJob(nodeData);
             } else {
+                /*
+                 * Upgrade the auto ingest node data to the current version.
+                 */
                 job = new AutoIngestJob(manifest);
                 job.setPriority(nodeData.getPriority());
                 Path caseDirectory = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
@@ -1285,17 +1297,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 }
 
                 /*
-                 * Try to upgrade/update the coordination service manifest node
-                 * data for the job.
-                 *
-                 * An exclusive lock is obtained before doing so because another
-                 * host may have already found the job, obtained an exclusive
-                 * lock, and started processing it. However, this locking does
-                 * make it possible that two processing hosts will both try to
-                 * obtain the lock to do the upgrade operation at the same time.
-                 * If this happens, the host that is holding the lock will
-                 * complete the upgrade operation, so there is nothing more for
-                 * this host to do.
+                 * Try to write the upgraded node data to coordination service
+                 * manifest node data for the job. If the lock cannot be
+                 * obtained, assume that the auto ingest node holding the lock
+                 * is taking care of this.
                  */
                 try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
                     if (null != manifestLock) {
@@ -1326,12 +1331,13 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
         private void addNewPendingJob(Manifest manifest) throws AutoIngestJobException, CoordinationServiceException, InterruptedException {
             /*
              * Create the coordination service manifest file node data for the
-             * job. Getting the lock both safeguards the cretion of the node
-             * data and created the coordination service node if it does not
-             * already exist. Note that if this auot ingest node cannot get the
-             * lock, it will not add the job to its pending queue for this scan
-             * of the input directory, but it will be picked up on the next
-             * scan.
+             * job. Getting the lock both guards the writing of the new node
+             * data and creates the coordination service node if it does not
+             * already exist. Note that if this auto ingest node cannot get the
+             * lock, it is assumed that the auto ingest node holding the lock is
+             * taking care of this. In this case, this auto ingest node will not
+             * add the new job to its pending queue during this scan of the
+             * input directory, but it will be picked up during the next scan.
              */
             try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
                 if (null != manifestLock) {
@@ -1339,7 +1345,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                     updateAutoIngestJobData(job);
                     newPendingJobsList.add(job);
                 }
-            } 
+            }
         }
 
         /**
@@ -1427,7 +1433,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         newPendingJobsList.add(job);
                     }
                 }
-            } 
+            }
         }
 
         /**
@@ -1459,19 +1465,11 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 job = new AutoIngestJob(nodeData);
                 job.setCaseDirectoryPath(caseDirectoryPath);
             } else {
-                /**
-                 * Use the manifest rather than the node data here to create a
-                 * new AutoIngestJob instance because the AutoIngestJob
-                 * constructor that takes a node data object expects the node
-                 * data to have fields that do not exist in earlier versions.
+                /*
+                 * Upgrade the auto ingest node data to the current version.
                  */
                 job = new AutoIngestJob(manifest);
                 job.setCaseDirectoryPath(caseDirectoryPath);
-
-                /**
-                 * Update the job with the fields that exist in all versions of
-                 * the nodeData.
-                 */
                 job.setCompletedDate(nodeData.getCompletedDate());
                 job.setErrorsOccurred(nodeData.getErrorsOccurred());
                 job.setPriority(nodeData.getPriority());
@@ -1480,11 +1478,10 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                 job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
 
                 /*
-                 * Try to upgrade/update the coordination service manifest node
-                 * data for the job. It is possible that two hosts will both try
-                 * to obtain the lock to do the upgrade operation at the same
-                 * time. If this happens, the host that is holding the lock will
-                 * complete the upgrade operation.
+                 * Try to write the upgraded node data to coordination service
+                 * manifest node data for the job. If the lock cannot be
+                 * obtained, assume that the auto ingest node holding the lock
+                 * is taking care of this.
                  */
                 try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
                     if (null != manifestLock) {
