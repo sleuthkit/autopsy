@@ -62,7 +62,6 @@ final class DeleteCaseTask implements Runnable {
 
     private static final int MANIFEST_FILE_LOCKING_TIMEOUT_MINS = 5;
     private static final int MANIFEST_DELETE_TRIES = 3;
-    private static final String NO_NODE_ERROR_MSG_FRAGMENT = "KeeperErrorCode = NoNode";
     private static final Logger logger = AutoIngestDashboardLogger.getLogger();
     private final CaseNodeData caseNodeData;
     private final DeleteOptions deleteOption;
@@ -591,12 +590,12 @@ final class DeleteCaseTask implements Runnable {
      *         otherwise.
      */
     @NbBundle.Messages({
-        "# {0} - data source name", "# {1} - device id", "DeleteCaseTask.progress.deletingDataSource=Deleting data source {0} with device id {1}...",})
+        "# {0} - data source path", "DeleteCaseTask.progress.deletingDataSource=Deleting data source {0}..."
+    })
     private boolean deleteDataSources(Manifest manifest, List<DataSource> dataSources) {
-        final String dataSourceFileName = manifest.getDataSourceFileName();
-        final String dataSourceDeviceId = manifest.getDeviceId();
-        progress.progress(Bundle.DeleteCaseTask_progress_deletingDataSource(dataSourceFileName, dataSourceDeviceId));
-        logger.log(Level.INFO, String.format("Deleting data source %s with device id %s from %s", dataSourceFileName, dataSourceDeviceId, caseNodeData.getDisplayName()));
+        final Path dataSourcePath = manifest.getDataSourcePath();
+        progress.progress(Bundle.DeleteCaseTask_progress_deletingDataSource(dataSourcePath));
+        logger.log(Level.INFO, String.format("Deleting data source %s from %s", dataSourcePath, caseNodeData.getDisplayName()));
 
         /*
          * There are two possibilities here. The data source may be an image,
@@ -606,26 +605,48 @@ final class DeleteCaseTask implements Runnable {
          * set, report file, archive file, etc.). In this case, just the file
          * referenced by the manifest will be deleted.
          */
-        boolean allFilesDeleted = true;
         Set<Path> filesToDelete = new HashSet<>();
-        for (DataSource dataSource : dataSources) {
+        int index = 0;
+        while (index < dataSources.size() && filesToDelete.isEmpty()) {
+            DataSource dataSource = dataSources.get(index);
             if (dataSource instanceof Image) {
                 Image image = (Image) dataSource;
-                if (image.getName().equals(dataSourceFileName) && image.getDeviceId().equals(dataSourceDeviceId)) {
-                    String[] imageFilePaths = image.getPaths();
-                    for (String path : imageFilePaths) {
-                        Path imageFilePath = Paths.get(path);
-                        filesToDelete.add(imageFilePath);
+                String[] imageFilePaths = image.getPaths();
+                /*
+                 * Check for a match between one of the paths for the image
+                 * files and the data source file path in the manifest.
+                 */
+                for (String imageFilePath : imageFilePaths) {
+                    Path candidatePath = Paths.get(imageFilePath);
+                    if (candidatePath.equals(dataSourcePath)) {
+                        /*
+                         * If a match is found, add all of the file paths for
+                         * the image to the set of files to be deleted.
+                         */
+                        for (String path : imageFilePaths) {
+                            filesToDelete.add(Paths.get(path));
+                        }
+                        break;
                     }
-                    break;
                 }
             }
-        }
-        if (filesToDelete.isEmpty()) {
-            final Path dataSourcePath = manifest.getDataSourcePath();
-            filesToDelete.add(dataSourcePath);
+            ++index;
         }
 
+        /*
+         * At a minimum, the data source at the file path given in the manifest
+         * should be deleted. If the data source is not a disk image, this will
+         * be the path of an archive, a logical file, or a logical directory.
+         * TODO-4933: Currently, the contents extracted from an archive are not
+         * deleted, nor are any additional files associated with a report data
+         * source.
+         */
+        filesToDelete.add(dataSourcePath);
+
+        /*
+         * Delete the file(s).
+         */
+        boolean allFilesDeleted = true;
         for (Path path : filesToDelete) {
             File fileOrDir = path.toFile();
             if (fileOrDir.exists() && !FileUtil.deleteFileDir(fileOrDir)) {
@@ -681,7 +702,7 @@ final class DeleteCaseTask implements Runnable {
             try {
                 coordinationService.deleteNode(CategoryNode.CASES, resourcesNodePath);
             } catch (CoordinationServiceException ex) {
-                if (!isNoNodeException(ex)) {
+                if (!DeleteCaseUtils.isNoNodeException(ex)) {
                     logger.log(Level.SEVERE, String.format("Error deleting case resources znode for %s", caseNodeData.getDisplayName()), ex);
                 }
             }
@@ -703,7 +724,7 @@ final class DeleteCaseTask implements Runnable {
             try {
                 coordinationService.deleteNode(CategoryNode.CASES, logFilePath);
             } catch (CoordinationServiceException ex) {
-                if (!isNoNodeException(ex)) {
+                if (!DeleteCaseUtils.isNoNodeException(ex)) {
                     logger.log(Level.SEVERE, String.format("Error deleting case auto ingest job log znode for %s", caseNodeData.getDisplayName()), ex);
                 }
             }
@@ -760,24 +781,6 @@ final class DeleteCaseTask implements Runnable {
                 logger.log(Level.SEVERE, String.format("Error deleting case name lock node for %s", caseNodeData.getDisplayName()), ex);
             }
         }
-    }
-
-    /**
-     * Examines a coordination service exception to try to determine if it is a
-     * no node exception.
-     *
-     * @param ex A coordination service exception.
-     *
-     * @return True or false.
-     */
-    private boolean isNoNodeException(CoordinationServiceException ex) {
-        boolean isNodeNodeEx = false;
-        Throwable cause = ex.getCause();
-        if (cause != null) {
-            String causeMessage = cause.getMessage();
-            isNodeNodeEx = causeMessage.contains(NO_NODE_ERROR_MSG_FRAGMENT);
-        }
-        return isNodeNodeEx;
     }
 
     /**
