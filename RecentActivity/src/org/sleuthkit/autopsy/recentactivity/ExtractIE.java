@@ -574,7 +574,6 @@ class ExtractIE extends Extract {
                 bbartifacts.add(bbart);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard. Pasco results will be incomplete", ex); //NON-NLS
-                return bbartifacts;
             }
         }
         fileScanner.close();
