@@ -48,34 +48,34 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
 
     @Override
     @NbBundle.Messages({
-        "DeleteOrphanManifestNodesTask.progress.startMessage=Starting orphaned manifest file znode cleanup...",
-        "DeleteOrphanManifestNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service...",
-        "DeleteOrphanManifestNodesTask.progress.gettingCaseNodesListing=Querying coordination service for manifest file znodes...",
-        "# {0} - node path", "DeleteOrphanManifestNodesTask.progress.deletingOrphanedManifestNode=Deleting orphaned manifest file node {0}..."
+        "DeleteOrphanManifestNodesTask.progress.startMessage=Starting orphaned manifest file znode cleanup",
+        "DeleteOrphanManifestNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service",
+        "DeleteOrphanManifestNodesTask.progress.gettingManifestNodes=Querying the coordination service for manifest file znodes",
+        "# {0} - node path", "DeleteOrphanManifestNodesTask.progress.deletingOrphanedManifestNode=Deleting orphaned manifest file znode {0}"
     })
     public void run() {
         progress.start(Bundle.DeleteOrphanManifestNodesTask_progress_startMessage());
         try {
             progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_connectingToCoordSvc());
-            logger.log(Level.INFO, "Connecting to the coordination service for orphan manifest file node clean up");  // NON-NLS            
+            logger.log(Level.INFO, Bundle.DeleteOrphanManifestNodesTask_progress_connectingToCoordSvc());            
             CoordinationService coordinationService;
             try {
                 coordinationService = CoordinationService.getInstance();
             } catch (CoordinationService.CoordinationServiceException ex) {
-                logger.log(Level.WARNING, "Error connecting to the coordination service", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error connecting to the coordination service", ex); // NON-NLS
                 return;
             }
 
-            progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_gettingCaseNodesListing());
-            logger.log(Level.INFO, "Querying coordination service for manifest file nodes for orphaned node clean up");  // NON-NLS
+            progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_gettingManifestNodes());
+            logger.log(Level.INFO, Bundle.DeleteOrphanManifestNodesTask_progress_gettingManifestNodes());
             List<AutoIngestJobNodeData> nodeDataList;
             try {
                 nodeDataList = AutoIngestJobNodeDataCollector.getNodeData();
             } catch (CoordinationService.CoordinationServiceException ex) {
-                logger.log(Level.WARNING, "Error collecting auto ingest job node data", ex); // NON-NLS
+                logger.log(Level.SEVERE, "Error collecting auto ingest job node data", ex); // NON-NLS
                 return;
-            } catch (InterruptedException ex) {
-                logger.log(Level.WARNING, "Unexpected interrupt while collecting auto ingest job node data", ex); // NON-NLS
+            } catch (InterruptedException unused) {
+                logger.log(Level.WARNING, "Task cancelled while collecting auto ingest job node data"); // NON-NLS
                 return;
             }
 
@@ -86,14 +86,14 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
                 if (!manifestFile.exists()) {
                     try {
                         progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_deletingOrphanedManifestNode(manifestFilePath));
-                        logger.log(Level.INFO, String.format("Deleting orphaned case node %s for %s", manifestFilePath, caseName));  // NON-NLS
+                        logger.log(Level.INFO, String.format("Deleting orphaned manifest file znode %s for %s", manifestFilePath, caseName));
                         coordinationService.deleteNode(CoordinationService.CategoryNode.MANIFESTS, manifestFilePath.toString());
                     } catch (CoordinationService.CoordinationServiceException ex) {
                         if (!DeleteCaseUtils.isNoNodeException(ex)) {
                             logger.log(Level.SEVERE, String.format("Error deleting %s znode for %s", manifestFilePath, caseName), ex);  // NON-NLS
                         }
-                    } catch (InterruptedException ex) {
-                        logger.log(Level.WARNING, String.format("Unexpected interrupt while deleting %s znode for %s", manifestFilePath, caseName), ex);  // NON-NLS
+                    } catch (InterruptedException unused) {
+                        logger.log(Level.WARNING, String.format("Task cancelled while deleting %s znode for %s", manifestFilePath, caseName));  // NON-NLS
                         return;
                     }
                 }
@@ -105,7 +105,7 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
              * where there is no call to get() on a Future<Void> associated with
              * the task, so this ensures that any such errors get logged.
              */
-            logger.log(Level.SEVERE, "Unexpected error during orphan manifest file znode cleanup", ex); // NON-NLS
+            logger.log(Level.SEVERE, "Unexpected error deleting orphan manifest file znodes", ex); // NON-NLS
             throw ex;
 
         } finally {
