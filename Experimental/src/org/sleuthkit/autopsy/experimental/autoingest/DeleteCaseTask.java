@@ -612,9 +612,17 @@ final class DeleteCaseTask implements Runnable {
             if (dataSource instanceof Image) {
                 Image image = (Image) dataSource;
                 String[] imageFilePaths = image.getPaths();
+                /*
+                 * Check for a match between one of the paths for the image
+                 * files and the data source file path in the manifest.
+                 */
                 for (String imageFilePath : imageFilePaths) {
                     Path candidatePath = Paths.get(imageFilePath);
                     if (candidatePath.equals(dataSourcePath)) {
+                        /*
+                         * If a match is found, add all of the file paths for
+                         * the image to the set of files to be deleted.
+                         */
                         for (String path : imageFilePaths) {
                             filesToDelete.add(Paths.get(path));
                         }
@@ -622,9 +630,22 @@ final class DeleteCaseTask implements Runnable {
                     }
                 }
             }
+            ++index;
         }
+
+        /*
+         * At a minimum, the data source at the file path given in the manifest
+         * should be deleted. If the data source is not a disk image, this will
+         * be the path of an archive, a logical file, or a logical directory.
+         * TODO-4933: Currently, the contents extracted from an archive are not
+         * deleted, nor are any additional files associated with a report data
+         * source.
+         */
         filesToDelete.add(dataSourcePath);
-        
+
+        /*
+         * Delete the file(s).
+         */
         boolean allFilesDeleted = true;
         for (Path path : filesToDelete) {
             File fileOrDir = path.toFile();
