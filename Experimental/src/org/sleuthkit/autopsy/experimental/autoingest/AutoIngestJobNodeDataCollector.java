@@ -34,9 +34,9 @@ final class AutoIngestJobNodeDataCollector {
     private static final Logger logger = Logger.getLogger(AutoIngestJobNodeDataCollector.class.getName());
         
     static List<AutoIngestJobNodeData> getNodeData() throws CoordinationServiceException, InterruptedException {
-        List<AutoIngestJobNodeData> nodeDataList = new ArrayList<>();
-        CoordinationService coordinationService = CoordinationService.getInstance();
-        List<String> nodePaths = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
+        final CoordinationService coordinationService = CoordinationService.getInstance();
+        final List<String> nodePaths = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
+        final List<AutoIngestJobNodeData> nodeDataList = new ArrayList<>();
         for (String nodePath : nodePaths) {
             try {
                 final byte[] nodeBytes = coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, nodePath);
