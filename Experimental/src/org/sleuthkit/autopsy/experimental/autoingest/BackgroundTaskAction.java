@@ -40,7 +40,7 @@ abstract class BackgroundTaskAction extends AbstractAction {
      * cancellable task that runs in a background thread and reports progress
      * using an application frame progress bar.
      *
-     * @param actionName                The name of the action.
+     * @param actionName          The name of the action.
      * @param progressDisplayName The display name for the progress bar.
      */
     BackgroundTaskAction(String actionName, String progressDisplayName) {
