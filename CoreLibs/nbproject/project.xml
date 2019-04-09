@@ -702,7 +702,7 @@
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gst1-java-core-1.0.0.jar</runtime-relative-path>
-                <binary-origin>C:\cygwin64\home\dsmyda\autopsy\CoreLibs\release\modules\ext\gst1-java-core-1.0.0.jar</binary-origin>
+                <binary-origin>release\modules\ext\gst1-java-core-1.0.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-jpeg-3.2.jar</runtime-relative-path>
