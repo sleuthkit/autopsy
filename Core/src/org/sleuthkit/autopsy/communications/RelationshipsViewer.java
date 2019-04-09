@@ -21,14 +21,29 @@ package org.sleuthkit.autopsy.communications;
 import javax.swing.JPanel;
 
 /**
- *
- * 
+ * Interface for Controls wishing to appear in the RelationshipBrowser tabPane.
  */
 public interface RelationshipsViewer {
    
+    /**
+     * Returns the value to be displayed on the "tab"
+     * 
+     * @return String display name
+     */
     public String getDisplayName();
     
+    /**
+     * Returns the JPanel to be displayed in the RelationshipBrowser.
+     * 
+     * @return JPanel to be displayed
+     */
     public JPanel getPanel();
     
+    /**
+     * Sets current SelectionInfo allowing the panel to update accordingly.
+     * 
+     * @param info SelectionInfo instance representing the currently selected
+     * accounts
+     */
     public void setSelectionInfo(SelectionInfo info); 
 }

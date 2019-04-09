@@ -22,7 +22,7 @@ import javax.swing.JPanel;
 import org.openide.util.Lookup;
 
 /**
- *
+ * Displays the Relationship information for the currently selected accounts.
  * 
  */
 public class RelationshipBrowser extends JPanel {
