@@ -119,11 +119,19 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
 
         refreshButton = new javax.swing.JButton();
         caseBrowserScrollPane = new javax.swing.JScrollPane();
+        cleanCaseNodesButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(CasesDashboardTopComponent.class, "CasesDashboardTopComponent.refreshButton.text")); // NOI18N
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(cleanCaseNodesButton, org.openide.util.NbBundle.getMessage(CasesDashboardTopComponent.class, "CasesDashboardTopComponent.cleanCaseNodesButton.text")); // NOI18N
+        cleanCaseNodesButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cleanCaseNodesButtonActionPerformed(evt);
             }
         });
 
@@ -136,7 +144,9 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(refreshButton)
-                        .addGap(0, 458, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cleanCaseNodesButton)
+                        .addGap(0, 313, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(caseBrowserScrollPane)
                         .addContainerGap())))
@@ -147,7 +157,9 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
                 .addContainerGap()
                 .addComponent(caseBrowserScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 246, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(refreshButton)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(refreshButton)
+                    .addComponent(cleanCaseNodesButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -156,8 +168,13 @@ public final class CasesDashboardTopComponent extends TopComponent implements Ex
         caseBrowserPanel.displayCases();
     }//GEN-LAST:event_refreshButtonActionPerformed
 
+    private void cleanCaseNodesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cleanCaseNodesButtonActionPerformed
+        new CaseNodesCleanupAction().actionPerformed(evt);
+    }//GEN-LAST:event_cleanCaseNodesButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane caseBrowserScrollPane;
+    private javax.swing.JButton cleanCaseNodesButton;
     private javax.swing.JButton refreshButton;
     // End of variables declaration//GEN-END:variables
 

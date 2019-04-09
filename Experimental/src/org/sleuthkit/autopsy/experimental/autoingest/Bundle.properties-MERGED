@@ -138,6 +138,12 @@ AutoIngestJobsNode.status.text=Status
 AutoIngestJobsPanel.waitNode.text=Please Wait...
 AutoIngestMetricsDialog.initReportText=Select a date above and click the 'Generate Metrics Report' button to generate\na metrics report.
 AutoIngestMetricsDialog.title.text=Auto Ingest Metrics
+CaseNodesCleanupAction.progressDisplayName=Cleanup Case Znodes
+CaseNodesCleanupTask.progress.connectingToCoordSvc=Connecting to the coordination service...
+# {0} - node path
+CaseNodesCleanupTask.progress.deletingOrphanedCaseNode=Deleting orphaned case node {0}...
+CaseNodesCleanupTask.progress.gettingCaseNodesListing=Querying coordination service for case nodes...
+CaseNodesCleanupTask.progress.startMessage=Starting orphaned case znode cleanup...
 ConfirmationDialog.DoNotDelete=Do not delete
 ConfirmationDialog.Delete=Permanently delete
 ConfirmationDialog.DeleteAreYouSure=The entire case will be removed. Are you sure you want to delete case 
@@ -440,3 +446,4 @@ AinStatusDashboard.nodeStatusTableTitle.text=Auto Ingest Nodes
 AinStatusDashboard.healthMonitorButton.text=Health Monitor
 CasesDashboardTopComponent.refreshButton.text=Refresh
 AutoIngestCasesDeletionDialog.jLabel1.text=Progress
+CasesDashboardTopComponent.cleanCaseNodesButton.text=Clean Case Znodes
