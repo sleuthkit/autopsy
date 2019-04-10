@@ -302,7 +302,7 @@ public final class CaseNodeData {
     /**
      * Sets the minor version number of this node data.
      *
-     * @param version The version number.
+     * @param minorVersion The version number.
      */
     private void setMinorVersion(int minorVersion) {
         this.minorVersion = minorVersion;
