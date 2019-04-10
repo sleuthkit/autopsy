@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2018 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
-class TableReportGenerator { 
+class TableReportGenerator {
 
     private final List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
     private final HashSet<String> tagNamesFilter = new HashSet<>();
@@ -288,7 +288,7 @@ class TableReportGenerator {
         ArrayList<String> columnHeaders = new ArrayList<>(Arrays.asList(
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.tag"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.file"),
-                NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment"), 
+                NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.comment"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.userName"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeModified"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.htmlOutput.header.timeChanged"),
@@ -389,7 +389,7 @@ class TableReportGenerator {
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.resultType"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.tag"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.comment"),
-                NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.srcFile"), 
+                NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.srcFile"),
                 NbBundle.getMessage(this.getClass(), "ReportGenerator.tagTable.header.userName"))));
 
         // Give the modules the rows for the content tags. 
@@ -400,7 +400,7 @@ class TableReportGenerator {
             }
 
             List<String> row;
-            row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName() + notableString, 
+            row = new ArrayList<>(Arrays.asList(tag.getArtifact().getArtifactTypeName(), tag.getName().getDisplayName() + notableString,
                     tag.getComment(), tag.getContent().getName(), tag.getUserName()));
             tableReport.addRow(row);
 
@@ -528,7 +528,7 @@ class TableReportGenerator {
      * @param tableModule module to report on
      */
     @SuppressWarnings("deprecation")
-    @NbBundle.Messages ({"ReportGenerator.errList.noOpenCase=No open case available."})
+    @NbBundle.Messages({"ReportGenerator.errList.noOpenCase=No open case available."})
     private void writeKeywordHits(TableReportModule tableModule, String comment, HashSet<String> tagNamesFilter) {
 
         // Query for keyword lists-only so that we can tell modules what lists
@@ -545,24 +545,24 @@ class TableReportGenerator {
             logger.log(Level.SEVERE, "Exception while getting open case: ", ex); //NON-NLS
             return;
         }
-        
+
         // Get a list of all selected tag IDs
         String tagIDList = "";
-        if( ! tagNamesFilter.isEmpty()) {
+        if (!tagNamesFilter.isEmpty()) {
             try {
                 Map<String, TagName> tagNamesMap = Case.getCurrentCaseThrows().getServices().getTagsManager().getDisplayNamesToTagNamesMap();
-                for(String tagDisplayName : tagNamesFilter) {
-                    if(tagNamesMap.containsKey(tagDisplayName)) {
-                        if (! tagIDList.isEmpty()) {
+                for (String tagDisplayName : tagNamesFilter) {
+                    if (tagNamesMap.containsKey(tagDisplayName)) {
+                        if (!tagIDList.isEmpty()) {
                             tagIDList += ",";
                         }
                         tagIDList += tagNamesMap.get(tagDisplayName).getId();
                     } else {
                         // If the tag name ends with "(Notable)", try stripping that off
-                        if(tagDisplayName.endsWith(getNotableTagLabel())) {
+                        if (tagDisplayName.endsWith(getNotableTagLabel())) {
                             String editedDisplayName = tagDisplayName.substring(0, tagDisplayName.length() - getNotableTagLabel().length());
-                            if(tagNamesMap.containsKey(editedDisplayName)) {
-                                if (! tagIDList.isEmpty()) {
+                            if (tagNamesMap.containsKey(editedDisplayName)) {
+                                if (!tagIDList.isEmpty()) {
                                     tagIDList += ",";
                                 }
                                 tagIDList += tagNamesMap.get(editedDisplayName).getId();
@@ -575,9 +575,10 @@ class TableReportGenerator {
                 tagIDList = "";
             }
         }
-        
+
         // Check if there are any ad-hoc results
-        String adHocCountQuery = "SELECT COUNT(*) FROM " + //NON-NLS
+        String adHocCountQuery = "SELECT COUNT(*) FROM "
+                + //NON-NLS
                 "(SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 ";//NON-NLS
         if (!tagIDList.isEmpty()) {
             adHocCountQuery += ", blackboard_artifact_tags as tag "; //NON-NLS
@@ -586,7 +587,8 @@ class TableReportGenerator {
         if (!tagIDList.isEmpty()) {
             adHocCountQuery += " AND (art.artifact_id = tag.artifact_id) AND (tag.tag_name_id IN (" + tagIDList + ")) "; //NON-NLS
         }
-        adHocCountQuery += "EXCEPT " + // NON-NLS
+        adHocCountQuery += "EXCEPT "
+                + // NON-NLS
                 "SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ")) AS adHocHits"; //NON-NLS
 
         int adHocCount = 0;
@@ -602,7 +604,7 @@ class TableReportGenerator {
             logger.log(Level.SEVERE, "Failed to count ad hoc searches with query " + adHocCountQuery, ex); //NON-NLS
             return;
         }
-        
+
         // Create the query to get the keyword list names
         if (openCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
             orderByClause = "ORDER BY convert_to(list, 'SQL_ASCII') ASC NULLS FIRST"; //NON-NLS
@@ -613,7 +615,7 @@ class TableReportGenerator {
                 = "SELECT att.value_text AS list "
                 + //NON-NLS
                 "FROM blackboard_attributes AS att, blackboard_artifacts AS art "; // NON-NLS
-        if(! tagIDList.isEmpty()) {
+        if (!tagIDList.isEmpty()) {
             keywordListQuery += ", blackboard_artifact_tags as tag "; //NON-NLS
         }
         keywordListQuery += "WHERE att.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + " "
@@ -621,8 +623,9 @@ class TableReportGenerator {
                 "AND art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + " "
                 + //NON-NLS
                 "AND att.artifact_id = art.artifact_id ";
-        if (! tagIDList.isEmpty()) {
-            keywordListQuery += "AND (art.artifact_id = tag.artifact_id) " + //NON-NLS
+        if (!tagIDList.isEmpty()) {
+            keywordListQuery += "AND (art.artifact_id = tag.artifact_id) "
+                    + //NON-NLS
                     "AND (tag.tag_name_id IN (" + tagIDList + ")) "; //NON-NLS
         }
         if (adHocCount > 0) {
@@ -665,7 +668,7 @@ class TableReportGenerator {
         } else {
             orderByClause = "ORDER BY list ASC, keyword ASC, parent_path ASC, name ASC, preview ASC"; //NON-NLS
         }
-        
+
         // Query for keywords that are part of a list
         String keywordListsQuery
                 = "SELECT art.artifact_id AS artifact_id, art.obj_id AS obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path "
@@ -687,22 +690,33 @@ class TableReportGenerator {
                 "AND (att3.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") "
                 + //NON-NLS
                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") ";
-        
+
         // Query for keywords that are not part of a list
-        String keywordAdHocQuery =
-                "SELECT art.artifact_id AS artifact_id, art.obj_id AS obj_id, att1.value_text AS keyword, att2.value_text AS preview, \'\' AS list, f.name AS name, f.parent_path AS parent_path " + // NON-NLS
-                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, tsk_files AS f " + // NON-NLS
-                "WHERE " + // NON-NLS
-                " (art.artifact_id IN (SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") " + // NON-NLS
-                "EXCEPT " + // NON-NLS
-                "SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "))) " + //NON-NLS
-                "AND (att1.artifact_id = art.artifact_id) " + //NON-NLS
-                "AND (att2.artifact_id = art.artifact_id) " + //NON-NLS
-                "AND (f.obj_id = art.obj_id) " + //NON-NLS 
-                "AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") " +  // NON-NLS
-                "AND (att2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") " + // NON-NLS
+        String keywordAdHocQuery
+                = "SELECT art.artifact_id AS artifact_id, art.obj_id AS obj_id, att1.value_text AS keyword, att2.value_text AS preview, \'\' AS list, f.name AS name, f.parent_path AS parent_path "
+                + // NON-NLS
+                "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, tsk_files AS f "
+                + // NON-NLS
+                "WHERE "
+                + // NON-NLS
+                " (art.artifact_id IN (SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "
+                + // NON-NLS
+                "EXCEPT "
+                + // NON-NLS
+                "SELECT art.artifact_id FROM blackboard_artifacts AS art, blackboard_attributes AS att1 WHERE (att1.artifact_id = art.artifact_id) AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "))) "
+                + //NON-NLS
+                "AND (att1.artifact_id = art.artifact_id) "
+                + //NON-NLS
+                "AND (att2.artifact_id = art.artifact_id) "
+                + //NON-NLS
+                "AND (f.obj_id = art.obj_id) "
+                + //NON-NLS 
+                "AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") "
+                + // NON-NLS
+                "AND (att2.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID() + ") "
+                + // NON-NLS
                 "AND (art.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() + ") "; // NON-NLS
-        
+
         String keywordsQuery = "SELECT * FROM ( " + keywordListsQuery + " UNION " + keywordAdHocQuery + " ) kwHits " + orderByClause;
 
         try (SleuthkitCase.CaseDbQuery dbQuery = openCase.getSleuthkitCase().executeQuery(keywordsQuery)) {
@@ -760,7 +774,7 @@ class TableReportGenerator {
                     if (!currentKeyword.equals("")) {
                         tableModule.endTable();
                     }
-                    
+
                     // Prepare for a new table.
                     currentKeyword = keyword;
                     tableModule.addSetElement(currentKeyword);
@@ -773,7 +787,7 @@ class TableReportGenerator {
 
                 tableModule.addRow(Arrays.asList(new String[]{preview, uniquePath, tagsList}));
             }
-            
+
             // End the previous table if one exists.
             if (!currentKeyword.isEmpty()) {
                 tableModule.endTable();
@@ -1242,6 +1256,7 @@ class TableReportGenerator {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.program"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)));
 
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.path"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)));
@@ -1249,6 +1264,7 @@ class TableReportGenerator {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.dateTime"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME)));
 
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
         } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.progName"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PROG_NAME)));
@@ -1509,8 +1525,8 @@ class TableReportGenerator {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.mailServer"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SERVER_NAME)));
 
-        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == artifactTypeId  || 
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID() == artifactTypeId) {
+        } else if (BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() == artifactTypeId
+                || BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID() == artifactTypeId) {
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.name"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME)));
 
@@ -1570,7 +1586,7 @@ class TableReportGenerator {
 
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tskPath"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH)));
-            
+
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.comment"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT)));
 
@@ -1647,6 +1663,8 @@ class TableReportGenerator {
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_CACHE.getTypeID()) {
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH_ID));
         } else {
             // This is the case that it is a custom type. The reason an else is 
             // necessary is to make sure that the source file column is added
