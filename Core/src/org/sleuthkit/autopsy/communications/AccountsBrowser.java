@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
@@ -31,11 +34,13 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -58,6 +63,8 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
     private final ExplorerManager messageBrowserEM = new ExplorerManager();
     private final ExplorerManager accountsTableEM = new ExplorerManager();
+    
+    final RelationshipBrowser relationshipBrowser;
 
     /*
      * This lookup proxies the selection lookup of both he accounts table and
@@ -78,17 +85,22 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
         outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         outline.setColumnSorted(3, false, 1); //it would be nice if the column index wasn't hardcoded
+        
+        relationshipBrowser = new RelationshipBrowser();
+        jSplitPane1.setRightComponent(relationshipBrowser);
 
         accountsTableEM.addPropertyChangeListener(evt -> {
             if (ExplorerManager.PROP_ROOT_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
             } else if (ExplorerManager.PROP_EXPLORED_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
+            } else if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
+                relationshipBrowser.setSelectionInfo(new SelectionInfo());
             }
         });
         final MessageBrowser messageBrowser = new MessageBrowser(accountsTableEM, messageBrowserEM);
 
-        jSplitPane1.setRightComponent(messageBrowser);
+//        jSplitPane1.setRightComponent(messageBrowser);
 
         proxyLookup = new ProxyLookup(
                 messageBrowser.getLookup(),
