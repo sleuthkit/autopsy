@@ -31,6 +31,11 @@ class ReportFileTextConfigurationPanel extends javax.swing.JPanel {
         initComponents();
     }
 
+    /**
+     * Get the delimiter that was selected on this panel
+     *
+     * @return the selected delimiter
+     */
     String getDelimiter() {
         if (commaDelimitedButton.isSelected()) {
             return COMMA_DELIMITER;
