@@ -1271,12 +1271,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @param nodeData The data stored in the manifest file coordination
          *                 service node for the job.
          *
-         * @throws AutoIngestJobException       If there was an error working
-         *                                      with the node data.
-         * @throws InterruptedException         If the thread running the input
-         *                                      directory scan task is
-         *                                      interrupted while blocked, i.e.,
-         *                                      if auto ingest is shutting down.
+         * @throws AutoIngestJobException If there was an error working with the
+         *                                node data.
+         * @throws InterruptedException   If the thread running the input
+         *                                directory scan task is interrupted
+         *                                while blocked, i.e., if auto ingest is
+         *                                shutting down.
          */
         private void addPendingJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws AutoIngestJobException, InterruptedException {
             AutoIngestJob job;
@@ -1415,6 +1415,8 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                     sysLogger.log(Level.SEVERE, String.format("Error writing case auto ingest log entry for crashed job for %s", manifestPath), ex);
                                 }
                             }
+                            updateAutoIngestJobData(job);
+                            newPendingJobsList.add(job);
                         } else {
                             job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
                             job.setCompletedDate(Date.from(Instant.now()));
@@ -1425,9 +1427,9 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                                     sysLogger.log(Level.SEVERE, String.format("Error writing case auto ingest log entry for crashed job for %s", manifestPath), ex);
                                 }
                             }
+                            updateAutoIngestJobData(job);
+                            newCompletedJobsList.add(job);
                         }
-                        updateAutoIngestJobData(job);
-                        newPendingJobsList.add(job);
                     }
                 }
             }
@@ -1440,12 +1442,12 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
          * @param nodeData The data stored in the manifest file lock
          *                 coordination service node for the job.
          *
-         * @throws AutoIngestJobException       If there was an error working
-         *                                      with the node data.
-         * @throws InterruptedException         If the thread running the input
-         *                                      directory scan task is
-         *                                      interrupted while blocked, i.e.,
-         *                                      if auto ingest is shutting down.
+         * @throws AutoIngestJobException If there was an error working with the
+         *                                node data.
+         * @throws InterruptedException   If the thread running the input
+         *                                directory scan task is interrupted
+         *                                while blocked, i.e., if auto ingest is
+         *                                shutting down.
          */
         private void addCompletedJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws AutoIngestJobException, InterruptedException {
             Path caseDirectoryPath = nodeData.getCaseDirectoryPath();
