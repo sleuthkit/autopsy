@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.report;
 class ReportFileTextConfigurationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private static final String TAB_DELIMITER = "\t"; //NON-NLS
+    private static final String COMMA_DELIMITER = ","; //NON-NLS
 
     /**
      * Creates new form ReportFileTextConfigurationPanel
@@ -31,10 +33,10 @@ class ReportFileTextConfigurationPanel extends javax.swing.JPanel {
 
     String getDelimiter() {
         if (commaDelimitedButton.isSelected()) {
-            return ",";
+            return COMMA_DELIMITER;
         } else {
             //if the comma button is not selected default to tab since it was previously the only option
-            return "\t";
+            return TAB_DELIMITER;
         }
     }
 

@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A Tab-delimited text report of the files in the case.
+ * A delimited text report of the files in the case.
  *
  * @author jwallace
  */
