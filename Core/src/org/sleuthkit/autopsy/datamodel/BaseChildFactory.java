@@ -53,6 +53,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
     public BaseChildFactory(String nodeName) {
         pagingSupport = new PagingSupport(nodeName);
+        pagingSupport.initialize();
         isPageChangeEvent = false;
         filter = new KnownAndSlackFilter<>();
     }
@@ -60,7 +61,6 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     @Override
     protected void addNotify() {
         onAdd();
-        pagingSupport.initialize();
     }
 
     @Override
@@ -142,6 +142,10 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
         }
     }
 
+    /**
+     * Event used to let subscribers know that paging is no
+     * longer required.
+     */
     public static class PagingDestroyedEvent {
     }
 
@@ -196,7 +200,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
          * @return List of keys.
          */
         List<T> getCurrentPage() {
-            if (pages.size() > 0) {
+            if (pages.isEmpty()) {
                 return pages.get(currentPage - 1);
             }
 
