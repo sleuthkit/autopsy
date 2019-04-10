@@ -2014,7 +2014,7 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         }
 
                         /*
-                         * Finally, check for devoting to many resources to a
+                         * Finally, check for devoting too many resources to a
                          * single case, if the check is enabled.
                          */
                         if (enforceMaxJobsPerCase) {
