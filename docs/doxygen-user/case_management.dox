@@ -38,15 +38,24 @@ To open a case, either:
 
 \image html multi_user_case_select.png
 
-\section case_properties Viewing Case Properties
-You can view the case properties by going to the "Case" menu and clicking "Case Properties".
+\section case_properties Viewing Case Details and the Data Source Summary
+You can view the case properties by going to the "Case" menu and clicking "Case Details".
 
 \image html case_properties.png
 
-You can use the "Ingest History" tab to view which data sources had which modules run upon them, and when, as shown in the screenshot below.
+Most of the case properties can be edited through the "Edit Details" button.
 
-\image html case-properties-history-tab.PNG
+You can view the data source summary by going to the "Case" menu and clicking "Data Source Summary". The table at the top shows general information about each data source in the case. In the lower half, the first tab shows more detailed information about the selected data source.
 
+\image html data_source_summary_details.png
+
+The second tab, "Counts", shows the number of files found of various types and number of extracted results.
+
+\image html data_source_summary_counts.png
+
+The third tab, "Ingest History", shows each ingest job, the time it was completed, and which modules were run as part of the job.
+
+\image html data_source_summary_ingest.png
 
 
 */
