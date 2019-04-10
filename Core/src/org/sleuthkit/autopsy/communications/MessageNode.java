@@ -26,7 +26,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
