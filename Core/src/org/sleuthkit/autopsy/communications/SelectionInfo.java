@@ -18,7 +18,10 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.util.Date;
+import java.util.Set;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.CommunicationsFilter;
 
 
 /**
@@ -28,19 +31,22 @@ import java.util.Date;
  */
 public class SelectionInfo {
         
-        private final String displayString;
+        static final private Logger logger = Logger.getLogger(SelectionInfo.class.getName());
+
+        private final Set<AccountDeviceInstance> accountDeviceInstances;
+        private final CommunicationsFilter communicationFilter;
         
-        SelectionInfo() {
-           displayString = (new Date()).toString();
+        SelectionInfo(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter communicationFilter) {
+           this.accountDeviceInstances = accountDeviceInstances;
+           this.communicationFilter = communicationFilter;
         }
         
-        /**
-         * Temporary function for testing data flow
-         * 
-         * @return A String representing the time the object was created
-         */
-        public String getString() {
-            return displayString;
+        public Set<AccountDeviceInstance> getAccountDevicesInstances(){
+            return accountDeviceInstances;
+        }
+        
+        public CommunicationsFilter getCommunicationsFilter() {
+            return communicationFilter;
         }
     
 }

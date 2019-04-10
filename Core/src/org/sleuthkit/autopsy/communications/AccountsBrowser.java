@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.communications;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -36,11 +35,11 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
-import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -70,7 +69,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
      * This lookup proxies the selection lookup of both he accounts table and
      * the messages table.
      */
-    private final ProxyLookup proxyLookup;
+    private final Lookup lookup;
 
     public AccountsBrowser() {
         initComponents();
@@ -95,16 +94,19 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
             } else if (ExplorerManager.PROP_EXPLORED_CONTEXT.equals(evt.getPropertyName())) {
                 SwingUtilities.invokeLater(this::setColumnWidths);
             } else if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                relationshipBrowser.setSelectionInfo(new SelectionInfo());
+                final Node[] selectedNodes = accountsTableEM.getSelectedNodes();
+                final Set<AccountDeviceInstance> accountDeviceInstances = new HashSet<>();
+           
+                CommunicationsFilter filter = null;
+                for (final Node node : selectedNodes) {
+                    accountDeviceInstances.add(((AccountDeviceInstanceNode) node).getAccountDeviceInstance());
+                    filter = ((AccountDeviceInstanceNode)node).getFilter();
+                }
+                relationshipBrowser.setSelectionInfo(new SelectionInfo(accountDeviceInstances, filter));
             }
         });
-        final MessageBrowser messageBrowser = new MessageBrowser(accountsTableEM, messageBrowserEM);
-
-//        jSplitPane1.setRightComponent(messageBrowser);
-
-        proxyLookup = new ProxyLookup(
-                messageBrowser.getLookup(),
-                ExplorerUtils.createLookup(accountsTableEM, getActionMap()));
+        
+        lookup = ExplorerUtils.createLookup(accountsTableEM, getActionMap());
     }
 
     private void setColumnWidths() {
@@ -176,6 +178,6 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
     @Override
     public Lookup getLookup() {
-        return proxyLookup;
+        return lookup;
     }
 }
