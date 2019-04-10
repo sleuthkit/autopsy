@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 - 2018 Basis Technology Corp.
+ * Copyright 2013 - 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.report;
 
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
+import javax.swing.JPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 import org.openide.util.NbBundle;
@@ -43,11 +45,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 class FileReportText implements FileReportModule {
 
     private static final Logger logger = Logger.getLogger(FileReportText.class.getName());
+    private static final String FILE_NAME = "file-report.txt"; //NON-NLS
+    private static FileReportText instance;
     private String reportPath;
     private Writer out;
-    private static final String FILE_NAME = "file-report.txt"; //NON-NLS
-
-    private static FileReportText instance;
+    private ReportFileTextConfigurationPanel configPanel;
 
     // Get the default implementation of this report
     public static synchronized FileReportText getDefault() {
@@ -62,7 +64,7 @@ class FileReportText implements FileReportModule {
         this.reportPath = baseReportDir + FILE_NAME;
         try {
             out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.reportPath)));
-        } catch (IOException ex) {
+        } catch (FileNotFoundException ex) {
             logger.log(Level.WARNING, "Failed to create report text file", ex); //NON-NLS
         }
     }
@@ -85,11 +87,12 @@ class FileReportText implements FileReportModule {
         }
     }
 
-    private String getTabDelimitedList(List<String> list) {
-        StringBuilder output = new StringBuilder();
+    private String getDelimitedList(List<String> list, String delimiter) {
+        StringBuilder output;
+        output = new StringBuilder();
         Iterator<String> it = list.iterator();
         while (it.hasNext()) {
-            output.append(it.next()).append((it.hasNext() ? "\t" : System.lineSeparator()));
+            output.append(it.next()).append((it.hasNext() ? delimiter : System.lineSeparator()));
         }
         return output.toString();
     }
@@ -101,7 +104,7 @@ class FileReportText implements FileReportModule {
             titles.add(col.getName());
         }
         try {
-            out.write(getTabDelimitedList(titles));
+            out.write(getDelimitedList(titles, configPanel.getDelimiter()));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error when writing headers to report file: {0}", ex); //NON-NLS
         }
@@ -114,7 +117,7 @@ class FileReportText implements FileReportModule {
             cells.add(type.getValue(toAdd));
         }
         try {
-            out.write(getTabDelimitedList(cells));
+            out.write(getDelimitedList(cells, configPanel.getDelimiter()));
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Error when writing row to report file: {0}", ex); //NON-NLS
         }
@@ -142,5 +145,13 @@ class FileReportText implements FileReportModule {
     @Override
     public String getRelativeFilePath() {
         return FILE_NAME;
+    }
+
+    @Override
+    public JPanel getConfigurationPanel() {
+        if (configPanel == null) {
+            configPanel = new ReportFileTextConfigurationPanel();
+        }
+        return configPanel;
     }
 }

@@ -306,4 +306,5 @@ CreatePortableCasePanel.outputFolderTextField.text=jTextField1
 CreatePortableCasePanel.chooseOutputFolderButton.text=Choose folder
 CreatePortableCasePanel.jLabel1.text=Export files tagged as:
 CreatePortableCasePanel.jLabel2.text=Select output folder:
+ReportFileTextConfigurationPanel.delimiterLabel.text=Delimiter: 
 TableReportGenerator.StatusColumn.Header=Review Status
