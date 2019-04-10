@@ -1997,15 +1997,26 @@ final class AutoIngestManager extends Observable implements PropertyChangeListen
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
                         if (!nodeData.getProcessingStatus().equals(PENDING)) {
                             iterator.remove();
+                            manifestLock.release();
+                            manifestLock = null;
                             continue;
                         }
 
+                        /*
+                         * Ditto for the presence of the manifest file.
+                         */
                         File manifestFile = nodeData.getManifestFilePath().toFile();
                         if (!manifestFile.exists()) {
                             iterator.remove();
+                            manifestLock.release();
+                            manifestLock = null;
                             continue;
                         }
 
+                        /*
+                         * Finally, check for devoting to many resources to a
+                         * single case, if the check is enabled.
+                         */
                         if (enforceMaxJobsPerCase) {
                             int currentJobsForCase = 0;
                             for (AutoIngestJob runningJob : hostNamesToRunningJobs.values()) {
