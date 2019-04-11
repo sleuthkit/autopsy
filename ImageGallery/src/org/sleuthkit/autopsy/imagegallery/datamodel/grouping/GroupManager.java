@@ -646,13 +646,22 @@ public class GroupManager {
             // reset the hash cache
             controller.getHashSetManager().invalidateHashSetsCacheForFile(fileId);
 
+            // first of all, update the current path group, regardless of what grouping is in view
+            try {
+                DrawableFile file = getDrawableDB().getFileFromID(fileId);
+                String pathVal = file.getDrawablePath();
+                GroupKey<?> pathGroupKey = new GroupKey(DrawableAttribute.PATH,pathVal, file.getDataSource());
+                
+                updateCurrentPathGroup(pathGroupKey);
+            } catch (TskCoreException | TskDataException ex) {
+                Exceptions.printStackTrace(ex);
+            }   
+                    
             // Update the current groups (if it is visible)
             Set<GroupKey<?>> groupsForFile = getGroupKeysForCurrentGroupBy(fileId);
             for (GroupKey<?> gk : groupsForFile) {
                 // see if a group has been created yet for the key
                 DrawableGroup g = getGroupForKey(gk);
-               
-                updateCurrentPathGroup(gk);
                 addFileToGroup(g, gk, fileId);
             }
         }
@@ -756,8 +765,10 @@ public class GroupManager {
                         controller.getCategoryManager().registerListener(group);
                         groupMap.put(groupKey, group);
                     }
-
-                    if (analyzedGroups.contains(group) == false) {
+                    
+                    // Add to analyzedGroups only if it's the same group type as the one in view
+                    if ((analyzedGroups.contains(group) == false) && 
+                        (getGroupBy() == group.getGroupKey().getAttribute())) {
                         analyzedGroups.add(group);
                         sortAnalyzedGroups();
                     }
