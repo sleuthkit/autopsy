@@ -59,30 +59,19 @@ public class ContactsViewer extends JPanel implements RelationshipsViewer{
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        testLabel = new javax.swing.JLabel();
-
-        org.openide.awt.Mnemonics.setLocalizedText(testLabel, org.openide.util.NbBundle.getMessage(ContactsViewer.class, "ContactsViewer.testLabel.text")); // NOI18N
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(testLabel)
-                .addContainerGap(294, Short.MAX_VALUE))
+            .addGap(0, 692, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(testLabel)
-                .addContainerGap(264, Short.MAX_VALUE))
+            .addGap(0, 573, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel testLabel;
     // End of variables declaration//GEN-END:variables
 }

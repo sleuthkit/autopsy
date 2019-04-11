@@ -18,14 +18,15 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
-import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -38,42 +39,28 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHO
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT;
 import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Wraps a BlackboardArtifact as an AbstractNode for use in an OutlookView
  */
-final class MessageNode extends AbstractNode {
+final class MessageNode extends BlackboardArtifactNode {
     private static final Logger logger = Logger.getLogger(RelationshipNode.class.getName());
     
-    private final BlackboardArtifact artifact;
-    
     MessageNode(BlackboardArtifact artifact) {
-        super(Children.LEAF, Lookups.fixed(artifact));
-        this.artifact = artifact;
+        super(artifact);
         
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s"); // NON-NLS
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message"); // NON-NLS
         setDisplayName(removeEndIgnoreCase.isEmpty() ? stripEnd : removeEndIgnoreCase);
-       
-        int typeID = artifact.getArtifactTypeID();
-        
-        String filePath = "org/sleuthkit/autopsy/images/"; //NON-NLS
-        if( typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
-            filePath = filePath + "mail-icon-16.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) {
-            filePath = filePath + "message.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID()) {
-            filePath = filePath + "calllog.png"; //NON-NLS
-        }
-        
-        setIconBaseWithExtension(filePath);
     }
     
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
+        List<Tag> tags = getAllTagsFromDatabase();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
             sheetSet = Sheet.createPropertiesSet();
@@ -81,6 +68,19 @@ final class MessageNode extends AbstractNode {
         }
 
         sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName())); //NON-NLS
+        
+        addScoreProperty(sheetSet, tags);
+        
+        CorrelationAttributeInstance correlationAttribute = null;
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+            correlationAttribute = getCorrelationAttributeInstance();
+        }
+        addCommentProperty(sheetSet, tags, correlationAttribute);
+        
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+            addCountProperty(sheetSet, correlationAttribute);
+        }
+        final BlackboardArtifact artifact = getArtifact();
         
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (null != fromID) {
@@ -159,5 +159,16 @@ final class MessageNode extends AbstractNode {
             logger.log(Level.WARNING, "Error getting attribute value.", tskCoreException); //NON-NLS
             return "";
         }
+    }
+    
+     /**
+     * Circumvent DataResultFilterNode's slightly odd delegation to
+     * BlackboardArtifactNode.getSourceName().
+     *
+     * @return the displayName of this Node, which is the type.
+     */
+    @Override
+    public String getSourceName() {
+        return getDisplayName();
     }
 }
