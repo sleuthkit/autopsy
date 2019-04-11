@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 
@@ -30,7 +31,7 @@ import org.openide.util.NbBundle;
 final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
-    private final LinkedHashSet<DataSourceColumnItem> dataSourceSet = new LinkedHashSet<>();
+    private final Set<DataSourceColumnItem> dataSourceSet = new LinkedHashSet<>();
 
     /**
      * Create a table model for displaying data source names
@@ -58,7 +59,7 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == dataSourceSet.size()) {
+        if (dataSourceSet.isEmpty()) {
             return Bundle.OtherOccurrencesDataSourcesTableModel_noData();
         }
         return ((DataSourceColumnItem) dataSourceSet.toArray()[rowIdx]).getDataSourceName();

@@ -240,13 +240,13 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      */
     String toCsvString() {
         StringBuilder line = new StringBuilder("");
-        line.append('"').append(getCaseName()).append('"').append(',');
-        line.append('"').append(getDataSourceName()).append('"').append(',');
-        line.append('"').append(getType()).append('"').append(',');
-        line.append('"').append(getValue()).append('"').append(',');
-        line.append('"').append(getKnown().toString()).append('"').append(',');
-        line.append('"').append(getFilePath()).append('"').append(',');
-        line.append('"').append(getComment()).append('"').append(System.getProperty("line.separator"));
+        line.append('"').append(getCaseName()).append("\",\"");
+        line.append(getDataSourceName()).append("\",\"");
+        line.append(getType()).append("\",\"");
+        line.append(getValue()).append("\",\"");
+        line.append(getKnown().toString()).append("\",\"");
+        line.append(getFilePath()).append("\",\"");
+        line.append(getComment()).append("\"").append(System.getProperty("line.separator"));
         return line.toString();
     }
 }

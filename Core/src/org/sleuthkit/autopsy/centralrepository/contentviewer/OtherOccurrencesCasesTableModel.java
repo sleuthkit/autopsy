@@ -58,7 +58,7 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     @Messages({"OtherOccurrencesCasesTableModel.noData=No Data."})
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == correlationCaseList.size()) {
+        if (correlationCaseList.isEmpty()) {
             return Bundle.OtherOccurrencesCasesTableModel_noData();
         }
 

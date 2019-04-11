@@ -62,7 +62,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == nodeKeys.size()) {
+        if (nodeKeys.isEmpty()) {
             return Bundle.OtherOccurrencesFilesTableModel_noData();
         }
         return FilenameUtils.getName(((OtherOccurrenceNodeInstanceData) nodeMap.get(nodeKeys.get(rowIdx)).get(0)).getFilePath());

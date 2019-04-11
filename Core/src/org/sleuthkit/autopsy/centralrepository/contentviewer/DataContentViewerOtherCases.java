@@ -238,8 +238,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                 EamDb dbManager = EamDb.getInstance();
                 int selectedRowModelIdx = filesTable.convertRowIndexToModel(selectedRowViewIdx);
                 List<OtherOccurrenceNodeData> rowList = filesTableModel.getListOfNodesForFile(selectedRowModelIdx);
-                if (rowList.get(0) instanceof OtherOccurrenceNodeInstanceData) {
-                    if (!rowList.isEmpty()) {
+                if (!rowList.isEmpty()) {
+                    if (rowList.get(0) instanceof OtherOccurrenceNodeInstanceData) {
                         CorrelationCase eamCasePartial = ((OtherOccurrenceNodeInstanceData) rowList.get(0)).getCorrelationAttributeInstance().getCorrelationCase();
                         caseDisplayName = eamCasePartial.getDisplayName();
                         // query case details
@@ -250,10 +250,10 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                             details = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails();
                         }
                     } else {
-                        details = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetailsReference();
+                        details = Bundle.DataContentViewerOtherCases_caseDetailsDialog_notSelected();
                     }
                 } else {
-                    details = Bundle.DataContentViewerOtherCases_caseDetailsDialog_notSelected();
+                    details = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetailsReference();
                 }
             }
         } catch (EamDbException ex) {
@@ -303,13 +303,13 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         try (BufferedWriter writer = Files.newBufferedWriter(destFile.toPath())) {
             //write headers 
             StringBuilder headers = new StringBuilder("");
-            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_case()).append('"').append(',');
-            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_dataSource()).append('"').append(',');
-            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_attribute()).append('"').append(',');
-            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value()).append('"').append(',');
-            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_known()).append('"').append(',');
-            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_path()).append('"').append(',');
-            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_comment()).append('"').append(System.getProperty("line.separator"));
+            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_case()).append("\",\"");
+            headers.append(Bundle.DataContentViewerOtherCasesModel_csvHeader_dataSource()).append("\",\"");
+            headers.append(Bundle.DataContentViewerOtherCasesModel_csvHeader_attribute()).append("\",\"");
+            headers.append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value()).append("\",\"");
+            headers.append(Bundle.DataContentViewerOtherCasesModel_csvHeader_known()).append("\",\"");
+            headers.append(Bundle.DataContentViewerOtherCasesModel_csvHeader_path()).append("\",\"");
+            headers.append(Bundle.DataContentViewerOtherCasesModel_csvHeader_comment()).append("\"").append(System.getProperty("line.separator"));
             writer.write(headers.toString());
             //write content
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {
