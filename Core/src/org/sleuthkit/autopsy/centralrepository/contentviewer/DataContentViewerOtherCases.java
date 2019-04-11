@@ -304,12 +304,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             //write headers 
             StringBuilder headers = new StringBuilder("\"");
             headers.append(Bundle.DataContentViewerOtherCasesModel_csvHeader_case())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_dataSource())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_attribute())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_known())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_path())
-                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_comment())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_dataSource())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_attribute())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_known())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_path())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeparator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_comment())
                     .append('"').append(System.getProperty("line.separator"));
             writer.write(headers.toString());
             //write content
