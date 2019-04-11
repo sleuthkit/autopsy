@@ -302,8 +302,8 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
     private void writeOtherOccurrencesToFileAsCSV(File destFile) {
         try (BufferedWriter writer = Files.newBufferedWriter(destFile.toPath())) {
             //write headers 
-            StringBuilder headers = new StringBuilder("");
-            headers.append('"').append(Bundle.DataContentViewerOtherCasesModel_csvHeader_case())
+            StringBuilder headers = new StringBuilder("\"");
+            headers.append(Bundle.DataContentViewerOtherCasesModel_csvHeader_case())
                     .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_dataSource())
                     .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_attribute())
                     .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value())
@@ -1097,7 +1097,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         if (EamDb.isEnabled() && filesTable.getSelectedRowCount() == 1) {
             int rowIndex = filesTable.getSelectedRow();
             List<OtherOccurrenceNodeData> selectedFile = filesTableModel.getListOfNodesForFile(rowIndex);
-            if (selectedFile.get(0) instanceof OtherOccurrenceNodeInstanceData) {
+            if (!selectedFile.isEmpty() && selectedFile.get(0) instanceof OtherOccurrenceNodeInstanceData) {
                 OtherOccurrenceNodeInstanceData instanceData = (OtherOccurrenceNodeInstanceData) selectedFile.get(0);
                 enableCentralRepoActions = instanceData.isCentralRepoNode();
             }

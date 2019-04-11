@@ -239,8 +239,8 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      * @return a comma separated string representation of the node's data
      */
     String toCsvString() {
-        StringBuilder line = new StringBuilder("");
-        line.append('"').append(getCaseName()).append("\",\"")
+        StringBuilder line = new StringBuilder("\"");
+        line.append(getCaseName()).append("\",\"")
                 .append(getDataSourceName()).append("\",\"")
                 .append(getType()).append("\",\"")
                 .append(getValue()).append("\",\"")
