@@ -92,7 +92,7 @@ class FileReportText implements FileReportModule {
         output = new StringBuilder();
         Iterator<String> it = list.iterator();
         while (it.hasNext()) {
-            output.append(it.next()).append((it.hasNext() ? delimiter : System.lineSeparator()));
+            output.append("\"").append(it.next()).append("\"").append((it.hasNext() ? delimiter : System.lineSeparator()));
         }
         return output.toString();
     }
