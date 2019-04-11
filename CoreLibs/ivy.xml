@@ -13,7 +13,7 @@
         <dependency org="com.apple" name="AppleJavaExtensions" rev="1.4"/>
         
         <!-- for viewers -->
-        <dependency conf="autopsy_core->*" org="org.freedesktop.gstreamer" name="gst1-java-core" rev="0.9.3"/>
+        <dependency conf="autopsy_core->*" org="org.freedesktop.gstreamer" name="gst1-java-core" rev="1.0.0"/>
         <dependency conf="autopsy_core->*" org="net.java.dev.jna" name="jna" rev="3.4.0"/>
         <dependency conf="autopsy_core->*" org="net.java.dev.jna" name="platform" rev="3.4.0"/>
         
