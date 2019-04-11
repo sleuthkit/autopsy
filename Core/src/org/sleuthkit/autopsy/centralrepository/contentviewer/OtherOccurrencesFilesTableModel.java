@@ -40,7 +40,7 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
      * Create a table model for displaying file names
      */
     OtherOccurrencesFilesTableModel() {
-
+        // This constructor is intentionally empty.
     }
 
     @Override

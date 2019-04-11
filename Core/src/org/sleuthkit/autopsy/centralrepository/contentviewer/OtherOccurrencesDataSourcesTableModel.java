@@ -37,7 +37,7 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
      * Create a table model for displaying data source names
      */
     OtherOccurrencesDataSourcesTableModel() {
-
+        // This constructor is intentionally empty.
     }
 
     @Override

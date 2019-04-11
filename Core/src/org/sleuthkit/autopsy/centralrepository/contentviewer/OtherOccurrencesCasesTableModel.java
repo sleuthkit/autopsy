@@ -37,6 +37,7 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
      * Create a table model for displaying case names
      */
     OtherOccurrencesCasesTableModel() {
+        // This constructor is intentionally empty.
     }
 
     @Override
