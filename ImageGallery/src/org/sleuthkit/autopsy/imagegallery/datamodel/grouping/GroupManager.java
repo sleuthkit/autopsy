@@ -650,7 +650,7 @@ public class GroupManager {
             try {
                 DrawableFile file = getDrawableDB().getFileFromID(fileId);
                 String pathVal = file.getDrawablePath();
-                GroupKey<?> pathGroupKey = new GroupKey(DrawableAttribute.PATH,pathVal, file.getDataSource());
+                GroupKey<?> pathGroupKey = new GroupKey<>(DrawableAttribute.PATH,pathVal, file.getDataSource());
                 
                 updateCurrentPathGroup(pathGroupKey);
             } catch (TskCoreException | TskDataException ex) {
