@@ -58,15 +58,15 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     @Messages({"OtherOccurrencesCasesTableModel.noData=No Data."})
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (correlationCaseList.isEmpty()) {
+        //if anything would prevent this from working we will consider it no data for the sake of simplicity
+        if (correlationCaseList.isEmpty() || rowIdx < 0
+                || rowIdx >= correlationCaseList.size()
+                || correlationCaseList.get(rowIdx) == null
+                || correlationCaseList.get(rowIdx).getMessage() == null
+                || correlationCaseList.get(rowIdx).getMessage().isEmpty()) {
             return Bundle.OtherOccurrencesCasesTableModel_noData();
         }
-
-        String value = correlationCaseList.get(rowIdx).getMessage();
-        if (value == null || value.isEmpty()) {
-            value = Bundle.OtherOccurrencesCasesTableModel_noData();
-        }
-        return value;
+        return correlationCaseList.get(rowIdx).getMessage();
     }
 
     /**
@@ -76,14 +76,17 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
      *
      * @param rowIdx the row from the table model which corresponds to the case
      *
-     * @return CorrelationCase for the table item specified
+     * @return CorrelationCase for the table item specified or null if no
+     *         correlation could be found for any reason
      */
     CorrelationCase getCorrelationCase(int rowIdx) {
-        if (rowIdx < correlationCaseList.size()) {
-            return correlationCaseList.get(rowIdx).getCorrelationCase();
-        } else {
+        //if anything would prevent this from working we will return null
+        if (correlationCaseList.isEmpty() || rowIdx < 0
+                || rowIdx >= correlationCaseList.size()
+                || correlationCaseList.get(rowIdx) == null) {
             return null;
         }
+        return correlationCaseList.get(rowIdx).getCorrelationCase();
     }
 
     @Override

@@ -59,7 +59,10 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (dataSourceSet.isEmpty()) {
+        //if anything would prevent this from working we will consider it no data for the sake of simplicity
+        if (dataSourceSet.isEmpty() || rowIdx < 0
+                || rowIdx >= dataSourceSet.size()
+                || !(dataSourceSet.toArray()[rowIdx] instanceof DataSourceColumnItem)) {
             return Bundle.OtherOccurrencesDataSourcesTableModel_noData();
         }
         return ((DataSourceColumnItem) dataSourceSet.toArray()[rowIdx]).getDataSourceName();
@@ -70,9 +73,16 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
      *
      * @param rowIdx the row index of the data source you want the device id for
      *
-     * @return the device id of the specified data source
+     * @return the device id of the specified data source or an empty string if
+     *         a device id could not be retrieved
      */
     String getDeviceIdForRow(int rowIdx) {
+        //if anything would prevent this from working we will return an empty string 
+        if (dataSourceSet.isEmpty() || rowIdx < 0
+                || rowIdx >= dataSourceSet.size()
+                || !(dataSourceSet.toArray()[rowIdx] instanceof DataSourceColumnItem)) {
+            return "";
+        }
         return ((DataSourceColumnItem) dataSourceSet.toArray()[rowIdx]).getDeviceId();
     }
 
@@ -81,9 +91,16 @@ final class OtherOccurrencesDataSourcesTableModel extends AbstractTableModel {
      *
      * @param rowIdx the row index of the data source you want the case name for
      *
-     * @return the case name of the specified data source
+     * @return the case name of the specified data source or an empty string if
+     *         a case name could not be retrieved
      */
     String getCaseNameForRow(int rowIdx) {
+        //if anything would prevent this from working we will return an empty string 
+        if (dataSourceSet.isEmpty() || rowIdx < 0
+                || rowIdx >= dataSourceSet.size()
+                || !(dataSourceSet.toArray()[rowIdx] instanceof DataSourceColumnItem)) {
+            return "";
+        }
         return ((DataSourceColumnItem) dataSourceSet.toArray()[rowIdx]).getCaseName();
     }
 

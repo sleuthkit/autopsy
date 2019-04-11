@@ -62,10 +62,13 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (nodeKeys.isEmpty() || nodeMap.get(nodeKeys.get(rowIdx)).isEmpty()) {
+        //if anything would prevent this from working we will consider it no data for the sake of simplicity
+        if (nodeMap.isEmpty() || nodeKeys.isEmpty() || rowIdx < 0
+                || rowIdx >= nodeKeys.size() || nodeKeys.get(rowIdx) == null
+                || nodeMap.get(nodeKeys.get(rowIdx)) == null
+                || nodeMap.get(nodeKeys.get(rowIdx)).isEmpty()) {
             return Bundle.OtherOccurrencesFilesTableModel_noData();
         }
-        
         return FilenameUtils.getName(((OtherOccurrenceNodeInstanceData) nodeMap.get(nodeKeys.get(rowIdx)).get(0)).getFilePath());
     }
 
@@ -75,9 +78,16 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
      *
      * @param rowIdx the index of the file to get data for
      *
-     * @return a list of OtherOccurrenceNodeData for the specified index
+     * @return a list of OtherOccurrenceNodeData for the specified index or an
+     *         empty list if no data was found
      */
     List<OtherOccurrenceNodeData> getListOfNodesForFile(int rowIdx) {
+        //if anything would prevent this from working return an empty list
+        if (nodeMap.isEmpty() || nodeKeys.isEmpty() || rowIdx < 0
+                || rowIdx >= nodeKeys.size() || nodeKeys.get(rowIdx) == null
+                || nodeMap.get(nodeKeys.get(rowIdx)) == null) {
+            return new ArrayList<>();
+        }
         return nodeMap.get(nodeKeys.get(rowIdx));
     }
 

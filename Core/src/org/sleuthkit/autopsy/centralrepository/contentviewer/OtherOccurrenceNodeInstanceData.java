@@ -35,6 +35,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
     // For now hard code the string for the central repo files type, since 
     // getting it dynamically can fail.
     private static final String FILE_TYPE_STR = "Files";
+    private static final String CSV_ITEM_SEPERATOR = "\",\"";
 
     private final String caseName;
     private String deviceID;
@@ -233,6 +234,16 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
     }
 
     /**
+     * Get the string to append between elements when writing the node instance
+     * data to a CSV
+     *
+     * @return the CSV_ITEM_SEPERATOR string
+     */
+    static String getCsvItemSeperator() {
+        return CSV_ITEM_SEPERATOR;
+    }
+
+    /**
      * Create a string representation of the node's data comma separated with a
      * line separator ending
      *
@@ -240,12 +251,12 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
      */
     String toCsvString() {
         StringBuilder line = new StringBuilder("\"");
-        line.append(getCaseName()).append("\",\"")
-                .append(getDataSourceName()).append("\",\"")
-                .append(getType()).append("\",\"")
-                .append(getValue()).append("\",\"")
-                .append(getKnown().toString()).append("\",\"")
-                .append(getFilePath()).append("\",\"")
+        line.append(getCaseName()).append(CSV_ITEM_SEPERATOR)
+                .append(getDataSourceName()).append(CSV_ITEM_SEPERATOR)
+                .append(getType()).append(CSV_ITEM_SEPERATOR)
+                .append(getValue()).append(CSV_ITEM_SEPERATOR)
+                .append(getKnown().toString()).append(CSV_ITEM_SEPERATOR)
+                .append(getFilePath()).append(CSV_ITEM_SEPERATOR)
                 .append(getComment()).append('"')
                 .append(System.getProperty("line.separator"));
         return line.toString();

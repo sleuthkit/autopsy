@@ -304,12 +304,12 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             //write headers 
             StringBuilder headers = new StringBuilder("\"");
             headers.append(Bundle.DataContentViewerOtherCasesModel_csvHeader_case())
-                    .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_dataSource())
-                    .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_attribute())
-                    .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value())
-                    .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_known())
-                    .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_path())
-                    .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_comment())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_dataSource())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_attribute())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_value())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_known())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_path())
+                    .append(OtherOccurrenceNodeInstanceData.getCsvItemSeperator()).append(Bundle.DataContentViewerOtherCasesModel_csvHeader_comment())
                     .append('"').append(System.getProperty("line.separator"));
             writer.write(headers.toString());
             //write content
@@ -928,6 +928,9 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
             if (EamDb.isEnabled()) {
                 CorrelationCase partialCase;
                 partialCase = casesTableModel.getCorrelationCase(casesTable.convertRowIndexToModel(caseTableRowIdx));
+                if (partialCase == null){
+                    return "";
+                }
                 return EamDb.getInstance().getCaseByUUID(partialCase.getCaseUUID()).getCreationDate();
             } else {
                 return Case.getCurrentCase().getCreatedDate();
