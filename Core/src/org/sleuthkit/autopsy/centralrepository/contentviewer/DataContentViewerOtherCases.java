@@ -310,7 +310,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                     .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_known())
                     .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_path())
                     .append("\",\"").append(Bundle.DataContentViewerOtherCasesModel_csvHeader_comment())
-                    .append("\"").append(System.getProperty("line.separator"));
+                    .append('"').append(System.getProperty("line.separator"));
             writer.write(headers.toString());
             //write content
             for (CorrelationAttributeInstance corAttr : correlationAttributes) {

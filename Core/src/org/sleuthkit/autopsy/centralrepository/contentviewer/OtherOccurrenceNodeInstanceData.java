@@ -246,7 +246,7 @@ class OtherOccurrenceNodeInstanceData implements OtherOccurrenceNodeData {
                 .append(getValue()).append("\",\"")
                 .append(getKnown().toString()).append("\",\"")
                 .append(getFilePath()).append("\",\"")
-                .append(getComment()).append("\"")
+                .append(getComment()).append('"')
                 .append(System.getProperty("line.separator"));
         return line.toString();
     }
