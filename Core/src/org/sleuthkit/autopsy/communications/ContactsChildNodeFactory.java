@@ -38,8 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     private static final Logger logger = Logger.getLogger(MessagesChildNodeFactory.class.getName());
 
-    private CommunicationsManager communicationManager = null;
-    private final SelectionInfo selectionInfo;
+    private SelectionInfo selectionInfo;
 
     /**
      * Construct a new ContactsChildNodeFactory from the currently selectionInfo
@@ -48,13 +47,17 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
      *                      accounts
      */
     ContactsChildNodeFactory(SelectionInfo selectionInfo) {
+        this.selectionInfo = selectionInfo;    
+    }
+    
+    /**
+     * Updates the current instance of selectionInfo and calls the refresh method.
+     * 
+     * @param selectionInfo New instance of the currently selected accounts
+     */
+    public void refresh(SelectionInfo selectionInfo) {
         this.selectionInfo = selectionInfo;
-
-        try {
-            communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
-        } catch (NoCurrentCaseException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to get communications manager from case.", ex); //NON-NLS
-        }
+        refresh(true);
     }
 
     /**
@@ -65,8 +68,16 @@ final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
      */
     @Override
     protected boolean createKeys(List<BlackboardArtifact> list) {
-        if (communicationManager == null) {
+        CommunicationsManager communicationManager;
+        try {
+            communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
+        } catch (NoCurrentCaseException | TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to get communications manager from case.", ex); //NON-NLS
             return false;
+        }
+        
+        if(selectionInfo == null) {
+            return true;
         }
 
         final Set<Content> relationshipSources;

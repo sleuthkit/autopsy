@@ -26,7 +26,7 @@ import org.sleuthkit.datamodel.CommunicationsFilter;
  * Class to wrap the details of the current selection from the AccountBrowser or
  * VisualizationPane
  */
-final class SelectionInfo {
+public final class SelectionInfo {
 
     private final Set<AccountDeviceInstance> accountDeviceInstances;
     private final CommunicationsFilter communicationFilter;

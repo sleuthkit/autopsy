@@ -49,6 +49,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
     private final Outline outline;
     private final ModifiableProxyLookup proxyLookup;
     private final PropertyChangeListener focusPropertyListener;
+    private final ContactsChildNodeFactory nodeFactory;
 
     @NbBundle.Messages({
         "ContactsViewer_tabTitle=Contacts",
@@ -62,6 +63,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
     public ContactsViewer() {
         tableEM = new ExplorerManager();
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
+        nodeFactory = new ContactsChildNodeFactory(null);
 
         // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
         // explaination of focusPropertyListener
@@ -104,6 +106,8 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
                 }
             }
         });
+        
+        tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(nodeFactory, true)), getExplorerManager()), true));
     }
 
     @Override
@@ -120,7 +124,8 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
     public void setSelectionInfo(SelectionInfo info) {
         contactPane.setNode(new Node[]{new AbstractNode(Children.LEAF)});
         contactPane.setEnabled(false);
-        tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(new ContactsChildNodeFactory(info), true)), getExplorerManager()), true));
+        
+        nodeFactory.refresh(info);
     }
 
     @Override
