@@ -167,7 +167,7 @@ public class KeywordList {
      *
      * @return A colleciton of Keyword objects.
      */
-    List<Keyword> getKeywords() {
+    public List<Keyword> getKeywords() {
         return keywords;
     }
 

@@ -253,6 +253,7 @@ class ExtractRegistry extends Extract {
                         logger.log(Level.WARNING, "Keyword search service not found. Report will not be indexed");
                     } else {
                         searchService.index(report);
+                        report.close();
                     }
                 } catch (TskCoreException e) {
                     this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage()); //NON-NLS

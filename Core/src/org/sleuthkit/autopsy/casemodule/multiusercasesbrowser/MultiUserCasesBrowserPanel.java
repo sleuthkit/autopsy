@@ -43,6 +43,8 @@ import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrows
 public final class MultiUserCasesBrowserPanel extends javax.swing.JPanel implements ExplorerManager.Provider {
 
     private static final long serialVersionUID = 1L;
+    private static final int NAME_COLUMN_INDEX = 0;
+    private static final int NAME_COLUMN_WIDTH = 150;
     private final ExplorerManager explorerManager;
     private final MultiUserCaseBrowserCustomizer customizer;
     private final OutlineView outlineView;
@@ -103,6 +105,11 @@ public final class MultiUserCasesBrowserPanel extends javax.swing.JPanel impleme
             }
         }
 
+        /*
+         * Give the case name column a greater width.
+         */
+        outline.getColumnModel().getColumn(NAME_COLUMN_INDEX).setPreferredWidth(NAME_COLUMN_WIDTH);
+        
         /*
          * Hide the root node and configure the node selection mode.
          */
