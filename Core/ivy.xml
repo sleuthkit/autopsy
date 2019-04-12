@@ -46,7 +46,7 @@
         
         <!-- Tika 1.14 seems to declare a (transitive?) dependency on cleartk-util 3.2.2, but the most recent
         version available is 2.0.0  Overriding the version worked-->
-        <override  org="org.cleartk" module="cleartk-util" rev="2.0.0"/>       
+        <override  org="org.cleartk" module="cleartk" rev="2.0.0"/>       
         <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>     
     </dependencies>
 </ivy-module>
