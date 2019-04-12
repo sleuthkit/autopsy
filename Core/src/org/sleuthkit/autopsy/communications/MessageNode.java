@@ -47,16 +47,17 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Wraps a BlackboardArtifact as an AbstractNode for use in an OutlookView
  */
 final class MessageNode extends BlackboardArtifactNode {
+
     private static final Logger logger = Logger.getLogger(RelationshipNode.class.getName());
-    
+
     MessageNode(BlackboardArtifact artifact) {
         super(artifact);
-        
+
         final String stripEnd = StringUtils.stripEnd(artifact.getDisplayName(), "s"); // NON-NLS
         String removeEndIgnoreCase = StringUtils.removeEndIgnoreCase(stripEnd, "message"); // NON-NLS
         setDisplayName(removeEndIgnoreCase.isEmpty() ? stripEnd : removeEndIgnoreCase);
     }
-    
+
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
@@ -68,20 +69,20 @@ final class MessageNode extends BlackboardArtifactNode {
         }
 
         sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName())); //NON-NLS
-        
+
         addScoreProperty(sheetSet, tags);
-        
+
         CorrelationAttributeInstance correlationAttribute = null;
-        if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             correlationAttribute = getCorrelationAttributeInstance();
         }
         addCommentProperty(sheetSet, tags, correlationAttribute);
-        
-        if (UserPreferences.hideCentralRepoCommentsAndOccurrences()== false) {
+
+        if (UserPreferences.hideCentralRepoCommentsAndOccurrences() == false) {
             addCountProperty(sheetSet, correlationAttribute);
         }
         final BlackboardArtifact artifact = getArtifact();
-        
+
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (null != fromID) {
             //Consider refactoring this to reduce boilerplate
@@ -160,8 +161,8 @@ final class MessageNode extends BlackboardArtifactNode {
             return "";
         }
     }
-    
-     /**
+
+    /**
      * Circumvent DataResultFilterNode's slightly odd delegation to
      * BlackboardArtifactNode.getSourceName().
      *
