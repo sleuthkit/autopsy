@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.report;
 
+/**
+ * Panel for configuring settings for the file text report
+ */
 class ReportFileTextConfigurationPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
