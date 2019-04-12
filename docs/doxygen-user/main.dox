@@ -65,6 +65,7 @@ The following topics are available here:
 - \subpage live_triage_page
 - \subpage advanced_page
 - \subpage experimental_page
+- \subpage command_line_ingest_page
 - \subpage translations_page
 
 If the topic you need is not listed, refer to the <a href="http://wiki.sleuthkit.org/index.php?title=Autopsy_User%27s_Guide">Autopsy Wiki</a> or join the <a href="https://lists.sourceforge.net/lists/listinfo/sleuthkit-users">SleuthKit User List</a> at SourceForge.
