@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,17 +23,23 @@ import java.util.List;
 
 /**
  * Interface used to capture frames from a video file.
+ *
+ * @deprecated This "extension point" is not currently supported.
  */
+@Deprecated
 public interface FrameCapture {
 
     /**
-     * @param file      the video file to use
-     * @param numFrames the number of frames to capture. Note that the actual
+     * Captures the specified number of frames from a video file.
+     *
+     * @param file      The video file to use
+     * @param numFrames The number of frames to capture. Note that the actual
      *                  number of frames returned may be less than this number.
      *                  Specifically, this may happen if the video is very
      *                  short.
      *
-     * @return a list of VideoFrames representing the captured frames
+     * @throws Exception If anything goes wrong.
+     * @return A list of VideoFrames representing the captured frames
      */
     List<VideoFrame> captureFrames(File file, int numFrames) throws Exception;
 

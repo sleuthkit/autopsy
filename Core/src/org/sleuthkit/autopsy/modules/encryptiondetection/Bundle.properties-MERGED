@@ -1,0 +1,17 @@
+EncryptionDetectionDataSourceIngestModule.artifactComment.bitlocker=Bitlocker encryption detected.
+EncryptionDetectionDataSourceIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f).
+EncryptionDetectionDataSourceIngestModule.processing.message=Checking image for encryption.
+EncryptionDetectionFileIngestModule.artifactComment.password=Password protection detected.
+EncryptionDetectionFileIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f).
+EncryptionDetectionFileIngestModule.getDesc.text=Looks for files with the specified minimum entropy.
+EncryptionDetectionFileIngestModule.moduleName.text=Encryption Detection
+EncryptionDetectionIngestJobSettingsPanel.minimumEntropyLabel.text=Minimum Entropy:
+EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeLabel.text=Minimum File Size:
+EncryptionDetectionIngestJobSettingsPanel.fileSizeMultiplesEnforcedCheckbox.text=Consider only file sizes that are multiples of 512.
+EncryptionDetectionIngestJobSettingsPanel.slackFilesAllowedCheckbox.text=Consider slack space files.
+EncryptionDetectionIngestJobSettingsPanel.mbLabel.text=MB
+EncryptionDetectionIngestJobSettingsPanel.detectionSettingsLabel.text=Detection Settings
+EncryptionDetectionIngestJobSettingsPanel.minimumFileSizeTextbox.text=
+EncryptionDetectionIngestJobSettingsPanel.minimumEntropyTextbox.text=
+EncryptionDetectionTools.errorMessage.minimumEntropyInput=Minimum entropy input must be a number between 6.0 and 8.0.
+EncryptionDetectionTools.errorMessage.minimumFileSizeInput=Minimum file size input must be an integer (in megabytes) of 1 or greater.

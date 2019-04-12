@@ -72,13 +72,13 @@ final class AutoIngestMetricsCollector {
                     switch (processingStatus) {
                         case PENDING:
                         case PROCESSING:
-                        case DELETED:
                             /*
                              * These are not jobs we care about for metrics, so
                              * we will ignore them.
                              */
                             break;
                         case COMPLETED:
+                        case DELETED: // Assuming deleted jobs were completed before they were deleted.
                             newMetricsSnapshot.addCompletedJobMetric(job.getCompletedDate(), job.getDataSourceSize());
                             break;
                         default:
@@ -96,7 +96,7 @@ final class AutoIngestMetricsCollector {
 
             return newMetricsSnapshot;
 
-        } catch (CoordinationService.CoordinationServiceException ex) {
+        } catch (CoordinationService.CoordinationServiceException | InterruptedException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get node list from coordination service", ex);
             return new MetricsSnapshot();
         }

@@ -47,8 +47,8 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
  * of the error.
  */
 @Immutable
-final class AutoIngestJobLogger {
-
+final class AutoIngestJobLogger {    
+    
     private static final String LOG_FILE_NAME = "auto_ingest_log.txt";
     private static final int LOCK_TIME_OUT = 15;
     private static final TimeUnit LOCK_TIME_OUT_UNIT = TimeUnit.MINUTES;

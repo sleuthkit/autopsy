@@ -1,4 +1,4 @@
-                  Last Updated: 30 October 2015
+                  Last Updated: 1 February 2019
 
 This file outlines what it takes to build Autopsy from source.
 
@@ -55,11 +55,13 @@ from the TSK root directory to install the libraries and such in
 the needed places (i.e. '/usr/local').
 
 
-3) For 32-bit targets, get GStreamer Setup. GStreamer is used to view video files.
-You can either download it and install it or manually by unzipping the
-version that is included in the 'thirdparty/gstreamer' folder.  You
-will need the 'bin' and 'lib/gstreamer-0.10' folders to be in your
-Windows PATH environment variable.
+3) For Windows builds, GStreamer must be setup. GStreamer is used to view video
+files. You can either download it and install it, or you can copy it from the
+'thirdparty/gstreamer' folder. Both 32-bit (x86) and 64-bit (x86_64) versions
+are included, so feel free to exclude what you want. You will need to unzip the
+'lib/gstreamer-1.0/libgstlibav.zip' file into it's residing
+folder. You will also need the 'bin' and 'lib/gstreamer-1.0' paths included in
+your Windows PATH environment variable.
 
 NOTE: This has not been fully tested in non-Windows environments
 yet, so we don't have instructions for that yet.

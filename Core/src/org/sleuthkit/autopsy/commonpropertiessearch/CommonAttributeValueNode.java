@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,8 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.FILES_TYPE_ID;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -48,16 +50,21 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
      * Create a Match node whose children will all have this object in common.
      *
      * @param data the common feature, and the children
+     * @param type the data type
      */
-    public CommonAttributeValueNode(CommonAttributeValue data) {
+    public CommonAttributeValueNode(CommonAttributeValue data, CorrelationAttributeInstance.Type type) {
         super(Children.create(
                 new FileInstanceNodeFactory(data), true));
         this.commonFileCount = data.getInstanceCount();
         this.cases = data.getCases();
-        // @@ We seem to be doing this string concat twice.  We also do it in getDataSources()
         this.dataSources = String.join(", ", data.getDataSources());
         this.value = data.getValue();
-        this.setDisplayName(String.format(Bundle.CommonAttributeValueNode_CommonAttributeValueNode_format(), this.value));
+        //if the type is null (indicating intra-case) or files then make the node name the representitive file name
+        if (type == null || type.getId() == FILES_TYPE_ID) {
+            this.setDisplayName(data.getTokenFileName());
+        } else {
+            this.setDisplayName(String.format(Bundle.CommonAttributeValueNode_CommonAttributeValueNode_format(), this.value));
+        }
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
     }
 

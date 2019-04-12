@@ -143,7 +143,7 @@ If you would like to prevent the Interesting Items from being created in a parti
 through the run time ingest properties. Note that this only disables the Interesting Item results - all properties
 are still added to the central repository.
 
-\image html central_repo_disable_flagging.png
+\image html central_repo_ingest_settings.png
 
 \section cr_viewing_results Viewing Results
 
@@ -161,20 +161,19 @@ properties from the central repository. If the selected file or artifact is asso
 to one or more properties in the database, the associated properties will be displayed. Note: the Content 
 Viewer will display ALL associated properties available in the database. It ignores the user's enabled/disabled Correlation Properties.
 
-By default, the rows in the content viewer will have background colors to indicate if they are known to be of interest. Properties that are notable 
-will have a Red background, all others will have a White background.
+The other occurrences are grouped by case and then data source. The rows in the content viewer have background colors to indicate if they are known to be of interest. Properties that are notable 
+will have a Red background, all others will have a White background. The notable status will also be displayed in the "Known" column.
 
 \image html central_repo_content_viewer.png
 
 The user can click on any column heading to sort by the values in that column.
 
-If the user right-clicks on a row, a menu will be displayed.
+If the user selects a row and then right-clicks, a menu will be displayed.
 This menu has several options.
 -# Select All
 -# Export Selected Rows to CSV
 -# Show Case Details
 -# Show Frequency
--# Add/Edit Comment
 
 <b>Select All</b>
 
@@ -206,9 +205,9 @@ the Case -> Case Properties menu.
 
 This shows how common the selected file is. The value is the percentage of case/data source tuples that have the selected property.
 
-<b>Add/Edit Comment</b>
+\subsection central_repo_comment Add/Edit Comment
 
-This allows you to add a comment for this entry or edit an existing comment. If you want instead to edit the comment of the originally selected node, it can be done by right clicking on the original item in the result viewer and selecting "Add/Edit Central Repository Comment".
+If you want instead to edit the comment of a node, it can be done by right clicking on the original item in the result viewer and selecting "Add/Edit Central Repository Comment".
 
 \image html central_repo_comment_menu.png
 

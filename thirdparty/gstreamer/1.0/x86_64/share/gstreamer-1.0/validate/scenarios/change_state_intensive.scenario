@@ -1,0 +1,3 @@
+description, duration=0, summary="Set state to NULL->PLAYING->NULL 20 times", need-clock-sync=true, min-media-duration=1.0, live_content_compatible=True, handles-states=true
+set-state, state="playing", sub-action="set-state, state=null", repeat=40
+stop;

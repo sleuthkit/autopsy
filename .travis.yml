@@ -25,5 +25,8 @@ script:
  - echo -en 'travis_fold:end:script.build\\r'
  - echo "Testing Autopsy..." && echo -en 'travis_fold:start:script.tests\\r'
  - cd Core/
+ - ant -q getTestDataFiles
+ - echo "Free Space:"
+ - echo `df -h .` 
  - xvfb-run ant -q test
  - echo -en 'travis_fold:end:script.tests\\r'

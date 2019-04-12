@@ -41,6 +41,7 @@ import java.util.Collection;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -53,6 +54,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.*;
 
@@ -71,6 +73,16 @@ class ExtractIE extends Extract {
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
+    
+    @Messages({
+        "Progress_Message_IE_History=IE History",
+        "Progress_Message_IE_Bookmarks=IE Bookmarks",
+        "Progress_Message_IE_Cookies=IE Cookies",
+        "Progress_Message_IE_Downloads=IE Downloads",
+        "Progress_Message_IE_FormHistory=IE Form History",
+        "Progress_Message_IE_AutoFill=IE Auto Fill",
+        "Progress_Message_IE_Logins=IE Logins",
+    })
 
     ExtractIE() throws NoCurrentCaseException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
@@ -79,12 +91,18 @@ class ExtractIE extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
+        
+        progressBar.progress(Bundle.Progress_Message_IE_Bookmarks());
         this.getBookmark();
+        
+        progressBar.progress(Bundle.Progress_Message_IE_Cookies());
         this.getCookie();
+        
+        progressBar.progress(Bundle.Progress_Message_IE_History());
         this.getHistory();
     }
 
@@ -130,22 +148,17 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), url));
+                   RecentActivityExtracterModuleFactory.getModuleName(), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), name));
+                    RecentActivityExtracterModuleFactory.getModuleName(), name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), datetime));
+                    RecentActivityExtracterModuleFactory.getModuleName(), datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"),
+                    RecentActivityExtracterModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
             if (domain != null && domain.isEmpty() == false) {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), domain));
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
 
             BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
@@ -245,25 +258,19 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), url));
+                    RecentActivityExtracterModuleFactory.getModuleName(), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), datetime));
+                    RecentActivityExtracterModuleFactory.getModuleName(), datetime));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), (name != null) ? name : ""));
+                    RecentActivityExtracterModuleFactory.getModuleName(), (name != null) ? name : ""));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_VALUE,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"), value));
+                    RecentActivityExtracterModuleFactory.getModuleName(), value));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                    NbBundle.getMessage(this.getClass(),
-                            "ExtractIE.parentModuleName.noSpace"),
+                    RecentActivityExtracterModuleFactory.getModuleName(),
                     NbBundle.getMessage(this.getClass(), "ExtractIE.moduleName.text")));
             if (domain != null && domain.isEmpty() == false) {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), domain));
+                        RecentActivityExtracterModuleFactory.getModuleName(), domain));
             }
             BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
             if (bbart != null) {
@@ -357,6 +364,9 @@ class ExtractIE extends Extract {
                 bbartifacts.addAll(parsePascoOutput(indexFile, filename).stream()
                         .filter(bbart -> bbart.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID())
                         .collect(Collectors.toList()));
+                if (context.dataSourceIngestIsCancelled()) {
+                    return;
+                }
                 foundHistory = true;
 
                 //Delete index<n>.dat file since it was succcessfully by Pasco
@@ -458,6 +468,11 @@ class ExtractIE extends Extract {
             return bbartifacts;
         }
         while (fileScanner.hasNext()) {
+            
+            if (context.dataSourceIngestIsCancelled()) {
+                return bbartifacts;
+            }
+            
             String line = fileScanner.nextLine();
             if (!line.startsWith("URL")) {   //NON-NLS
                 continue;
@@ -534,37 +549,31 @@ class ExtractIE extends Extract {
                 BlackboardArtifact bbart = origFile.newArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY);
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), realurl));
+                        RecentActivityExtracterModuleFactory.getModuleName(), realurl));
                 //bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL_DECODED.getTypeID(), "RecentActivity", EscapeUtil.decodeURL(realurl)));
 
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), ftime));
+                        RecentActivityExtracterModuleFactory.getModuleName(), ftime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), ""));
+                       RecentActivityExtracterModuleFactory.getModuleName(), ""));
                 // @@@ NOte that other browser modules are adding TITLE in hre for the title
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"),
+                        RecentActivityExtracterModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(),
                                 "ExtractIE.moduleName.text")));
                 if (domain != null && domain.isEmpty() == false) {
                     bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
-                            NbBundle.getMessage(this.getClass(),
-                                    "ExtractIE.parentModuleName.noSpace"), domain));
+                            RecentActivityExtracterModuleFactory.getModuleName(), domain));
                 }
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
-                        NbBundle.getMessage(this.getClass(),
-                                "ExtractIE.parentModuleName.noSpace"), user));
+                        RecentActivityExtracterModuleFactory.getModuleName(), user));
                 bbart.addAttributes(bbattributes);
 
                 // index the artifact for keyword search
                 this.indexArtifact(bbart);
                 bbartifacts.add(bbart);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard. Pasco results will be incomplete", ex); //NON-NLS
             }
         }
         fileScanner.close();

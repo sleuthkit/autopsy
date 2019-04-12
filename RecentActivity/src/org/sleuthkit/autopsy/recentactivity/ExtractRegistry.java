@@ -52,6 +52,7 @@ import org.xml.sax.SAXException;
 import java.nio.file.Path;
 import static java.util.TimeZone.getTimeZone;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestModule.IngestModuleException;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -66,7 +67,8 @@ import org.sleuthkit.datamodel.ReadContentInputStream.ReadContentInputStreamExce
  */
 @NbBundle.Messages({
     "RegRipperNotFound=Autopsy RegRipper executable not found.",
-    "RegRipperFullNotFound=Full version RegRipper executable not found."
+    "RegRipperFullNotFound=Full version RegRipper executable not found.",
+    "Progress_Message_Analyze_Registry=Analyzing Registry Files"
 })
 class ExtractRegistry extends Extract {
 
@@ -251,6 +253,7 @@ class ExtractRegistry extends Extract {
                         logger.log(Level.WARNING, "Keyword search service not found. Report will not be indexed");
                     } else {
                         searchService.index(report);
+                        report.close();
                     }
                 } catch (TskCoreException e) {
                     this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage()); //NON-NLS
@@ -389,6 +392,11 @@ class ExtractRegistry extends Extract {
             // that we will submit in a ModuleDataEvent for additional processing.
             Collection<BlackboardArtifact> wifiBBartifacts = new ArrayList<>();
             for (int i = 0; i < len; i++) {
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    return false;
+                }
+                
                 Element tempnode = (Element) children.item(i);
 
                 String dataType = tempnode.getNodeName();
@@ -415,7 +423,7 @@ class ExtractRegistry extends Extract {
 
                 Element artroot = (Element) artroots.item(0);
                 NodeList myartlist = artroot.getChildNodes();
-                String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
+                String parentModuleName = RecentActivityExtracterModuleFactory.getModuleName();
                 String winver = "";
 
                 // If all artifact nodes should really go under one Blackboard artifact, need to process it differently
@@ -807,11 +815,11 @@ class ExtractRegistry extends Extract {
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Error finding the registry file.", ex); //NON-NLS
         } catch (SAXException ex) {
-            logger.log(Level.SEVERE, "Error parsing the registry XML: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error parsing the registry XML.", ex); //NON-NLS
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error building the document parser: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error building the document parser.", ex); //NON-NLS
         } catch (ParserConfigurationException ex) {
-            logger.log(Level.SEVERE, "Error configuring the registry parser: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error configuring the registry parser.", ex); //NON-NLS
         } finally {
             try {
                 if (fstream != null) {
@@ -834,7 +842,7 @@ class ExtractRegistry extends Extract {
      */
     private boolean parseSamPluginOutput(String regFilePath, AbstractFile regAbstractFile) {
         File regfile = new File(regFilePath);
-        String parentModuleName = NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace");
+        String parentModuleName = RecentActivityExtracterModuleFactory.getModuleName();
         SimpleDateFormat regRipperTimeFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy 'Z'");
         regRipperTimeFormat.setTimeZone(getTimeZone("GMT"));
         try (BufferedReader bufferedReader = new BufferedReader(new FileReader(regfile))) {
@@ -969,9 +977,11 @@ class ExtractRegistry extends Extract {
     }
 
     @Override
-    public void process(Content dataSource, IngestJobContext context) {
+    public void process(Content dataSource, IngestJobContext context, DataSourceIngestModuleProgress progressBar) {
         this.dataSource = dataSource;
         this.context = context;
+        
+        progressBar.progress(Bundle.Progress_Message_Analyze_Registry());
         analyzeRegistryFiles();
 
     }

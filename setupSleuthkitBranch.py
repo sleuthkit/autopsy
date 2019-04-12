@@ -17,19 +17,6 @@ DEVELOP_BRANCH='develop'
 
 passed = 1
 
-def getSleuthkitBranchList(branchOwner):
-    # Returns the list of sleuthkit branches
-    cmd = ['git','branch','-a']
-    retdir = os.getcwd()
-    os.chdir(TSK_HOME)
-    output = subprocess.check_output(cmd)
-    branches = []
-    for branch in output.strip().split():
-        if branch.startswith('remotes/'+branchOwner):
-            branches.append(branch.split('/')[2])
-    os.chdir(retdir)
-    return branches
-
 def gitSleuthkitCheckout(branch, branchOwner):
     '''
         Checksout sleuthkit branch
@@ -39,26 +26,25 @@ def gitSleuthkitCheckout(branch, branchOwner):
     # passed is a global variable that gets set to non-zero integer
     # When an error occurs
     global passed
-    if branch in getSleuthkitBranchList(branchOwner):
-        #add the remotes
-        #if the branch owner was origin substitute in the name of that owner
-        if (branchOwner==ORIGIN_OWNER):
-             gitHubUser="sleuthkit"
-        else:
-             gitHubUser=branchOwner
-        checkout=['git','checkout','-b',branchOwner+'-'+branch]
-        print("Command run:" + " ".join(checkout))
-        passed = subprocess.call(checkout, stdout=sys.stdout,cwd=TSK_HOME)
-        cmd = ['git','pull', "/".join(["https://github.com", gitHubUser, "sleuthkit.git"]), branch]
-        if passed != 0: #0 would be success
-            #unable to create new branch return instead of pulling
-            return
-        print("Command run:" + " ".join(cmd))
-        passed = subprocess.call(cmd,stdout=sys.stdout,cwd=TSK_HOME)
-        if (passed == 0):
-            sys.exit() #exit if successful
+    #add the remotes
+    #if the branch owner was origin substitute in the name of that owner
+    if (branchOwner==ORIGIN_OWNER):
+        gitHubUser="sleuthkit"
     else:
-        print("Branch: " + branch + " does not exist for owner: " + branchOwner)
+        gitHubUser=branchOwner
+    checkout=['git','checkout','-b',branchOwner+'-'+branch]
+    print("Command run:" + " ".join(checkout))
+    passed = subprocess.call(checkout, stdout=sys.stdout,cwd=TSK_HOME)
+    cmd = ['git','pull', "/".join(["https://github.com", gitHubUser, "sleuthkit.git"]), branch]
+    if passed != 0: #0 would be success
+        #unable to create new branch return instead of pulling
+        return
+    print("Command run:" + " ".join(cmd))
+    passed = subprocess.call(cmd,stdout=sys.stdout,cwd=TSK_HOME)
+    if (passed == 0):
+        sys.exit() #exit if successful
+    else:
+        print("Branch: " + branch + " does not exist for github user: " + gitHubUser)
 
 def parseXML(xmlFile):
     '''

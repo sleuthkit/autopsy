@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.util.Collections;
@@ -60,7 +59,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Image viewer part of the Media View layered pane. Uses JavaFX to display the
  * image.
  */
-@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer",
+@NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer  Ctrl+E",
     "MediaViewImagePanel.errorLabel.text=Could not load file into Media View.",
     "MediaViewImagePanel.errorLabel.OOMText=Could not load file into Media View: insufficent memory."})
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
@@ -126,7 +125,6 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm()); //NOI18N
                 fxPanel.setScene(scene);
 
-                //bind size of image to that of scene, while keeping proportions
                 fxImageView.setSmooth(true);
                 fxImageView.setCache(true);
 
@@ -142,11 +140,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     }
 
     /**
-     * clear the displayed image
+     * Clear the displayed image
      */
     public void reset() {
         Platform.runLater(() -> {
+            fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
             fxImageView.setImage(null);
+            
             scrollPane.setContent(null);
             scrollPane.setContent(fxImageView);
         });
@@ -171,9 +171,8 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * Show the contents of the given AbstractFile as a visual image.
      *
      * @param file image file to show
-     * @param dims dimension of the parent window (ignored)
      */
-    void showImageFx(final AbstractFile file, final Dimension dims) {
+    void showImageFx(final AbstractFile file) {
         if (!fxInited) {
             return;
         }
@@ -245,7 +244,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @return supported mime types
      */
     @Override
-    public List<String> getMimeTypes() {
+    public List<String> getSupportedMimeTypes() {
         return Collections.unmodifiableList(Lists.newArrayList(supportedMimes));
     }
 
@@ -255,7 +254,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
      * @return
      */
     @Override
-    public List<String> getExtensionsList() {
+    public List<String> getSupportedExtensions() {
         return getExtensions();
     }
 

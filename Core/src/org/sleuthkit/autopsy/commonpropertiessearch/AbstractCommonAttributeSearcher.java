@@ -130,12 +130,12 @@ public abstract class AbstractCommonAttributeSearcher {
         }
     }
 
-    static Map<Integer, CommonAttributeValueList> collateMatchesByNumberOfInstances(Map<String, CommonAttributeValue> commonFiles) {
+    static TreeMap<Integer, CommonAttributeValueList> collateMatchesByNumberOfInstances(Map<String, CommonAttributeValue> commonFiles) {
         //collate matches by number of matching instances - doing this in sql doesnt seem efficient
-        Map<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new TreeMap<>();
+        TreeMap<Integer, CommonAttributeValueList> instanceCollatedCommonFiles = new TreeMap<>();
 
         for (CommonAttributeValue md5Metadata : commonFiles.values()) {
-            Integer size = md5Metadata.getInstanceCount();
+            Integer size = md5Metadata.getNumberOfDataSourcesInCurrentCase();
 
             if (instanceCollatedCommonFiles.containsKey(size)) {
                 instanceCollatedCommonFiles.get(size).addMetadataToList(md5Metadata);
@@ -186,9 +186,9 @@ public abstract class AbstractCommonAttributeSearcher {
      * when checkType is ONLY_TEXT_FILES. ".doc", ".docx", ".odt", ".xls",
      * ".xlsx", ".ppt", ".pptx" ".txt", ".rtf", ".log", ".text", ".xml" ".html",
      * ".htm", ".css", ".js", ".php", ".aspx" ".pdf"
+     * //ignore text/plain due to large number of results with that type 
      */
     static final Set<String> TEXT_FILES_MIME_TYPES = Stream.of(
-            "text/plain", //NON-NLS
             "application/rtf", //NON-NLS
             "application/pdf", //NON-NLS
             "text/css", //NON-NLS
