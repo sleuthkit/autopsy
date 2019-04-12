@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 
 /**
  * Model for cells in the cases section of the other occurrences data content
@@ -32,26 +33,16 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     private static final long serialVersionUID = 1L;
     private final List<CorrelationCaseWrapper> correlationCaseList = new ArrayList<>();
 
+    /**
+     * Create a table model for displaying case names
+     */
     OtherOccurrencesCasesTableModel() {
+        // This constructor is intentionally empty.
     }
 
     @Override
     public int getColumnCount() {
-        return TableColumns.values().length;
-    }
-
-    /**
-     * Get the preferred width that has been configured for this column.
-     *
-     * A value of 0 means that no preferred width has been defined for this
-     * column.
-     *
-     * @param colIdx Column index
-     *
-     * @return preferred column width >= 0
-     */
-    public int getColumnPreferredWidth(int colIdx) {
-        return TableColumns.values()[colIdx].columnWidth();
+        return 1;
     }
 
     @Override
@@ -59,45 +50,43 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
         return correlationCaseList.size();
     }
 
+    @Messages({"OtherOccurrencesCasesTableModel.case=Case",})
     @Override
     public String getColumnName(int colIdx) {
-        return TableColumns.values()[colIdx].columnName();
+        return Bundle.OtherOccurrencesCasesTableModel_case();
     }
 
+    @Messages({"OtherOccurrencesCasesTableModel.noData=No Data."})
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == correlationCaseList.size()) {
+        //if anything would prevent this from working we will consider it no data for the sake of simplicity
+        if (correlationCaseList.isEmpty() || rowIdx < 0
+                || rowIdx >= correlationCaseList.size()
+                || correlationCaseList.get(rowIdx) == null
+                || correlationCaseList.get(rowIdx).getMessage() == null
+                || correlationCaseList.get(rowIdx).getMessage().isEmpty()) {
             return Bundle.OtherOccurrencesCasesTableModel_noData();
         }
-
-        CorrelationCaseWrapper caseWrapper = correlationCaseList.get(rowIdx);
-        TableColumns columnId = TableColumns.values()[colIdx];
-        return mapCorrelationCase(caseWrapper, columnId);
+        return correlationCaseList.get(rowIdx).getMessage();
     }
 
     /**
-     * Map a column ID to the value in that cell for correlation case wrapper.
+     * Get a correlation case for the selected index. Does not query the Central
+     * Repository so CorrelationCase will be partial missing CR case ID and
+     * other information that is stored in the CR.
      *
-     * @param correlationCaseWrapper The correlation case wrapper
-     * @param columnId               The ID of the cell column.
+     * @param rowIdx the row from the table model which corresponds to the case
      *
-     * @return The value in the cell.
+     * @return CorrelationCase for the table item specified or null if no
+     *         correlation could be found for any reason
      */
-    @Messages({"OtherOccurrencesCasesTableModel.noData=No Data."})
-    private Object mapCorrelationCase(CorrelationCaseWrapper correlationCaseWrapper, TableColumns columnId) {
-        String value = Bundle.OtherOccurrencesCasesTableModel_noData();
-
-        switch (columnId) {
-            case CASE_NAME:
-                value = correlationCaseWrapper.getMessage();
-                break;
-            default: //Use default "No data" value.
-                break;
+    CorrelationCase getCorrelationCase(int rowIdx) {
+        //if anything would prevent this from working we will return null
+        if (correlationCaseList.isEmpty() || rowIdx < 0
+                || rowIdx >= correlationCaseList.size()
+                || correlationCaseList.get(rowIdx) == null) {
+            return null;
         }
-        return value;
-    }
-
-    Object getCorrelationCase(int rowIdx) {
         return correlationCaseList.get(rowIdx).getCorrelationCase();
     }
 
@@ -107,7 +96,7 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Add one correlated instance object to the table
+     * Add one correlation case wrapper object to the table
      *
      * @param newCorrelationCaseWrapper data to add to the table
      */
@@ -122,28 +111,5 @@ public class OtherOccurrencesCasesTableModel extends AbstractTableModel {
     void clearTable() {
         correlationCaseList.clear();
         fireTableDataChanged();
-    }
-
-    @Messages({"OtherOccurrencesCasesTableModel.case=Case",})
-    enum TableColumns {
-        // Ordering here determines displayed column order in Content Viewer.
-        // If order is changed, update the CellRenderer to ensure correct row coloring.
-        CASE_NAME(Bundle.OtherOccurrencesCasesTableModel_case(), 100);
-
-        private final String columnName;
-        private final int columnWidth;
-
-        TableColumns(String columnName, int columnWidth) {
-            this.columnName = columnName;
-            this.columnWidth = columnWidth;
-        }
-
-        public String columnName() {
-            return columnName;
-        }
-
-        public int columnWidth() {
-            return columnWidth;
-        }
     }
 }
