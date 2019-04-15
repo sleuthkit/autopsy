@@ -30,19 +30,27 @@ public class PlasoModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Map from parser name (or match pattern) to its enabled state.
-     */
+    /** Map from parser name (or match pattern) to its enabled state. */
     final Map<String, Boolean> parsers = new HashMap<>();
 
+    /**
+     * Get an immutable map from parser name to its enabled state. Parsers
+     * mapped to true or with no entry will be enabled. Parsers mapped to false,
+     * will be disabled.
+     */
     Map<String, Boolean> getParsers() {
         return ImmutableMap.copyOf(parsers);
     }
 
+    /**
+     * Constructor. The PlasoModuleSettings will have the default parsers
+     * (winreg, pe, chrome, firefox, internet explorer) disabled.
+     */
     public PlasoModuleSettings() {
         parsers.put("winreg", false);
         parsers.put("pe", false);
 
+        //chrome
         parsers.put("chrome_preferences", false);
         parsers.put("chrome_cache", false);
         parsers.put("chrome_27_history", false);
@@ -50,12 +58,14 @@ public class PlasoModuleSettings implements IngestModuleIngestJobSettings {
         parsers.put("chrome_cookies", false);
         parsers.put("chrome_extension_activity", false);
 
+        //firefox
         parsers.put("firefox_cache", false);
         parsers.put("firefox_cache2", false);
         parsers.put("firefox_cookies", false);
         parsers.put("firefox_downloads", false);
         parsers.put("firefox_history", false);
 
+        //Internet Explorer
         parsers.put("msiecf", false);
         parsers.put("msie_webcache", false);
     }
@@ -70,6 +80,12 @@ public class PlasoModuleSettings implements IngestModuleIngestJobSettings {
         return serialVersionUID;
     }
 
+    /**
+     * Set the given parser enabled/disabled
+     *
+     * @param parserName The name of the parser to enable/disable
+     * @param selected   The new state (enabled/disabled) for the given parser.
+     */
     void setParserEnabled(String parserName, boolean selected) {
         parsers.put(parserName, selected);
     }

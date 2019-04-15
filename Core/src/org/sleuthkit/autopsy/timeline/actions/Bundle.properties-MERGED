@@ -1,3 +1,14 @@
+AddManualEvent.createArtifactFailed=Failed to create artifact for event.
+# {0} - datasource name
+# {1} - datasource id
+AddManualEvent.EventCreationDialogPane.dataSourceStringConverter.template={0} (ID: {1})
+AddManualEvent.EventCreationDialogPane.initialize.dataSourcesError=Error getting datasources in case.
+AddManualEvent.longText=Manually add an event to the timeline.
+AddManualEvent.postArtifactFailed=Failed to post artifact to blackboard.
+AddManualEvent.text=Add Event
+AddManualEvent.validation.datetime=Invalid datetime
+AddManualEvent.validation.description=Description is required.
+AddManualEvent.validation.timezone=Invalid time zone
 # {0} - action accelerator keys 
 Back.longText=Back: {0}\nGo back to the last view settings.
 Back.text=Back

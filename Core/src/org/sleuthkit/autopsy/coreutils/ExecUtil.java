@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -116,12 +116,7 @@ public final class ExecUtil {
      * @throws IOException       if an I/O error occurs.
      */
     public static int execute(ProcessBuilder processBuilder) throws SecurityException, IOException {
-        return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, new ProcessTerminator() {
-            @Override
-            public boolean shouldTerminateProcess() {
-                return false;
-            }
-        });
+        return ExecUtil.execute(processBuilder, 30, TimeUnit.DAYS, () -> false);
     }
 
     /**
@@ -158,6 +153,29 @@ public final class ExecUtil {
      */
     public static int execute(ProcessBuilder processBuilder, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         Process process = processBuilder.start();
+        return waitForTermination(processBuilder.command().get(0), process, timeOut, units, terminator);
+    }
+
+    /**
+     * Wait for the given process to finish, using the given ProcessTerminator.
+     *
+     * @param command    The command that was used to start the process. Used
+     *                   only for logging purposes.
+     * @param process    The process to wait for.
+     * @param terminator The ProcessTerminator used to determine if the process
+     *                   should be killed.
+     *
+     * @returnthe exit value of the process
+     *
+     * @throws SecurityException if a security manager exists and vetoes any
+     *                           aspect of running the process.
+     * @throws IOException       if an I/o error occurs.
+     */
+    public static int waitForTermination(String command, Process process, ProcessTerminator terminator) throws SecurityException, IOException {
+        return ExecUtil.waitForTermination(command, process, ExecUtil.DEFAULT_TIMEOUT, ExecUtil.DEFAULT_TIMEOUT_UNITS, terminator);
+    }
+
+    private static int waitForTermination(String command, Process process, long timeOut, TimeUnit units, ProcessTerminator terminator) throws SecurityException, IOException {
         try {
             do {
                 process.waitFor(timeOut, units);
@@ -166,7 +184,7 @@ public final class ExecUtil {
                     try {
                         process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
                     } catch (InterruptedException exx) {
-                        Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", processBuilder.command().get(0)));
+                        Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", command));
                     }
                 }
             } while (process.isAlive());
@@ -177,9 +195,9 @@ public final class ExecUtil {
             try {
                 process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
             } catch (InterruptedException exx) {
-                Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", processBuilder.command().get(0)));
+                Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", command));
             }
-            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0)); // NON-NLS
+            Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", command); // NON-NLS
             Thread.currentThread().interrupt();
         }
         return process.exitValue();
@@ -208,18 +226,29 @@ public final class ExecUtil {
                 process.destroyForcibly();
             }
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error occurred when attempting to kill process: {0}", ex.getMessage()); // NON-NLS
+            Logger.getLogger(ExecUtil.class.getName()).log(Level.WARNING, "Error occurred when attempting to kill process: {0}", ex.getMessage()); // NON-NLS
         }
     }
 
     /**
      * EVERYTHING FOLLOWING THIS LINE IS DEPRECATED AND SLATED FOR REMOVAL
      */
+    @Deprecated
     private static final Logger logger = Logger.getLogger(ExecUtil.class.getName());
+
+    @Deprecated
     private Process proc = null;
+
+    @Deprecated
     private ExecUtil.StreamToStringRedirect errorStringRedirect = null;
+
+    @Deprecated
     private ExecUtil.StreamToStringRedirect outputStringRedirect = null;
+
+    @Deprecated
     private ExecUtil.StreamToWriterRedirect outputWriterRedirect = null;
+
+    @Deprecated
     private int exitValue = -100;
 
     /**

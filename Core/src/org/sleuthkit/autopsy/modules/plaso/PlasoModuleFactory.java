@@ -76,6 +76,17 @@ public class PlasoModuleFactory implements IngestModuleFactory {
         return false;
     }
 
+    /**
+     * This module typically takes a very long time and is therefore not enabled
+     * by default.
+     *
+     * @return False.
+     */
+    @Override
+    public boolean isEnabledByDefault() {
+        return false;
+    }
+
     @Override
     public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
         throw new UnsupportedOperationException();

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-18 Basis Technology Corp.
+ * Copyright 2014-19 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.actions.AddManualEvent;
 import org.sleuthkit.autopsy.timeline.ui.IntervalSelector;
 import org.sleuthkit.autopsy.timeline.ui.TimeLineChart;
 import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
@@ -276,9 +277,12 @@ final class DetailsChart extends Control implements TimeLineChart<DateTime> {
             contextMenu.hide();
         }
 
+        long selectedTimeMillis = getXAxis().getValueForDisplay(getXAxis().parentToLocal(mouseEvent.getX(), 0).getX()).getMillis();
+
         //make and assign a new context menu based on the given mouseEvent
         setContextMenu(ActionUtils.createContextMenu(Arrays.asList(
                 new PlaceMarkerAction(this, mouseEvent),
+                new AddManualEvent(controller, selectedTimeMillis),
                 ActionUtils.ACTION_SEPARATOR,
                 TimeLineChart.newZoomHistoyActionGroup(getController())
         )));

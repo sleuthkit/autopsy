@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,11 +26,15 @@ import com.google.common.eventbus.Subscribe;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -165,7 +169,7 @@ final public class DetailsViewModel {
                           + "  event_id, " //NON-NLS
                           + " hash_hit, " //NON-NLS
                           + " tagged, " //NON-NLS
-                          + " sub_type, base_type, "
+                          + " event_type_id, super_type_id, "
                           + " full_description, med_description, short_description " // NON-NLS
                           + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(activeFilter) // NON-NLS
                           + " WHERE time >= " + start + " AND time < " + end + " AND " + eventManager.getSQLWhere(activeFilter) // NON-NLS
@@ -205,7 +209,7 @@ final public class DetailsViewModel {
     private TimelineEvent eventHelper(ResultSet resultSet) throws SQLException, TskCoreException {
 
         //the event tyepe to use to get the description.
-        int eventTypeID = resultSet.getInt("sub_type");
+        int eventTypeID = resultSet.getInt("event_type_id");
         EventType eventType = eventManager.getEventType(eventTypeID).orElseThrow(()
                 -> new TskCoreException("Error mapping event type id " + eventTypeID + "to EventType."));//NON-NLS
 
@@ -216,12 +220,12 @@ final public class DetailsViewModel {
                 resultSet.getLong("artifact_id"), // NON-NLS
                 resultSet.getLong("time"), // NON-NLS
                 eventType,
-                eventType.getDescription(
-                        resultSet.getString("full_description"), // NON-NLS
-                        resultSet.getString("med_description"), // NON-NLS
-                        resultSet.getString("short_description")), // NON-NLS
+                resultSet.getString("full_description"), // NON-NLS
+                resultSet.getString("med_description"), // NON-NLS
+                resultSet.getString("short_description"), // NON-NLS
                 resultSet.getInt("hash_hit") != 0, //NON-NLS
                 resultSet.getInt("tagged") != 0);
+
     }
 
     /**
@@ -254,6 +258,8 @@ final public class DetailsViewModel {
                         .sorted(new DetailViewEvent.StartComparator())
                         .iterator();
                 EventCluster current = iterator.next();
+
+                //JM Todo: maybe we can collect all clusters to merge in one go, rather than piece by piece for performance.
                 while (iterator.hasNext()) {
                     EventCluster next = iterator.next();
                     Interval gap = current.getSpan().gap(next.getSpan());
@@ -286,4 +292,18 @@ final public class DetailsViewModel {
                 .collect(Collectors.toList());
     }
 
+    /** Make a sorted copy of the given set using the given comparator to sort
+     * it.
+     *
+     * @param <X>        The type of elements in the set.
+     * @param setA       The set of elements to copy into the new sorted set.
+     * @param comparator The comparator to sort the new set by.
+     *
+     * @return A sorted copy of the given set.
+     */
+    static <X> SortedSet<X> copyAsSortedSet(Collection<X> setA, Comparator<X> comparator) {
+        TreeSet<X> treeSet = new TreeSet<>(comparator);
+        treeSet.addAll(setA);
+        return treeSet;
+    }
 }
