@@ -22,8 +22,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
- *
- *
+ * Settings panel for the PlasoIngestModule.
  */
 public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
@@ -44,7 +43,7 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
 
         winRegCheckBox = new javax.swing.JCheckBox();
         peCheckBox = new javax.swing.JCheckBox();
-        jTextArea1 = new javax.swing.JTextArea();
+        plasoParserInfoTextArea = new javax.swing.JTextArea();
 
         org.openide.awt.Mnemonics.setLocalizedText(winRegCheckBox, org.openide.util.NbBundle.getMessage(PlasoModuleSettingsPanel.class, "PlasoModuleSettingsPanel.winRegCheckBox.text")); // NOI18N
         winRegCheckBox.addActionListener(new java.awt.event.ActionListener() {
@@ -60,14 +59,14 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
             }
         });
 
-        jTextArea1.setEditable(false);
-        jTextArea1.setBackground(new java.awt.Color(240, 240, 240));
-        jTextArea1.setColumns(20);
-        jTextArea1.setLineWrap(true);
-        jTextArea1.setRows(5);
-        jTextArea1.setText(org.openide.util.NbBundle.getMessage(PlasoModuleSettingsPanel.class, "PlasoModuleSettingsPanel.jTextArea1.text")); // NOI18N
-        jTextArea1.setWrapStyleWord(true);
-        jTextArea1.setBorder(null);
+        plasoParserInfoTextArea.setEditable(false);
+        plasoParserInfoTextArea.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
+        plasoParserInfoTextArea.setColumns(20);
+        plasoParserInfoTextArea.setLineWrap(true);
+        plasoParserInfoTextArea.setRows(5);
+        plasoParserInfoTextArea.setText(org.openide.util.NbBundle.getMessage(PlasoModuleSettingsPanel.class, "PlasoModuleSettingsPanel.plasoParserInfoTextArea.text")); // NOI18N
+        plasoParserInfoTextArea.setWrapStyleWord(true);
+        plasoParserInfoTextArea.setBorder(null);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -76,7 +75,7 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTextArea1)
+                    .addComponent(plasoParserInfoTextArea)
                     .addComponent(peCheckBox)
                     .addComponent(winRegCheckBox))
                 .addContainerGap())
@@ -85,7 +84,7 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTextArea1, javax.swing.GroupLayout.DEFAULT_SIZE, 117, Short.MAX_VALUE)
+                .addComponent(plasoParserInfoTextArea, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE)
                 .addGap(18, 18, 18)
                 .addComponent(winRegCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -109,8 +108,8 @@ public class PlasoModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextArea jTextArea1;
     private javax.swing.JCheckBox peCheckBox;
+    private javax.swing.JTextArea plasoParserInfoTextArea;
     private javax.swing.JCheckBox winRegCheckBox;
     // End of variables declaration//GEN-END:variables
 }
