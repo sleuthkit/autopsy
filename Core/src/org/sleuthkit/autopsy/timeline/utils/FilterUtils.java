@@ -80,7 +80,7 @@ public final class FilterUtils {
         }
 
         @Override
-        protected String getSQLWhere(TimelineManager manager) {
+        public String getSQLWhere(TimelineManager manager) {
             return " NOT " + super.getSQLWhere(manager);
         }
     }

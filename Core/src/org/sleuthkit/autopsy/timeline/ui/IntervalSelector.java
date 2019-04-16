@@ -293,8 +293,8 @@ public abstract class IntervalSelector<X> extends BorderPane {
         return getValueForDisplay(getBoundsInParent().getMinX());
     }
 
-    private X getValueForDisplay(final double display) {
-        return chart.getXAxis().getValueForDisplay(chart.getXAxis().parentToLocal(display, 0).getX());
+    private X getValueForDisplay(final double displayX) {
+        return chart.getXAxis().getValueForDisplay(chart.getXAxis().parentToLocal(displayX, 0).getX());
     }
 
     /**

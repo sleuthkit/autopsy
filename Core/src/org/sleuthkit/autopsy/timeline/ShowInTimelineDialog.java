@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -114,8 +115,6 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
 
     private final VBox contentRoot = new VBox();
 
-    private final TimeLineController controller;
-
     private final ValidationSupport validationSupport = new ValidationSupport();
 
     /**
@@ -127,8 +126,7 @@ final class ShowInTimelineDialog extends Dialog<ViewInTimelineRequestedEvent> {
      */
     @NbBundle.Messages({
         "ShowInTimelineDialog.amountValidator.message=The entered amount must only contain digits."})
-    private ShowInTimelineDialog(TimeLineController controller, List<Long> eventIDS) throws TskCoreException {
-        this.controller = controller;
+    private ShowInTimelineDialog(TimeLineController controller, Collection<Long> eventIDS) throws TskCoreException {
 
         //load dialog content fxml
         final String name = "nbres:/" + StringUtils.replace(ShowInTimelineDialog.class.getPackage().getName(), ".", "/") + "/ShowInTimelineDialog.fxml"; // NON-NLS

@@ -92,7 +92,7 @@ public class ListViewModel {
         TimelineDBUtils dbUtils = new TimelineDBUtils(sleuthkitCase);
         final String querySql = "SELECT full_description, time, file_obj_id, "
                                 + dbUtils.csvAggFunction("CAST(tsk_events.event_id AS VARCHAR)") + " AS eventIDs, "
-                                + dbUtils.csvAggFunction("CAST(sub_type AS VARCHAR)") + " AS eventTypes"
+                                + dbUtils.csvAggFunction("CAST(event_type_id AS VARCHAR)") + " AS eventTypes"
                                 + " FROM " + TimelineManager.getAugmentedEventsTablesSQL(filterState.getActiveFilter())
                                 + " WHERE time >= " + startTime + " AND time <" + endTime + " AND " + eventManager.getSQLWhere(filterState.getActiveFilter())
                                 + " GROUP BY time, full_description, file_obj_id ORDER BY time ASC, full_description";

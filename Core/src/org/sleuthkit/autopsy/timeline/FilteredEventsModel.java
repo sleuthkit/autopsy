@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
@@ -130,10 +131,21 @@ public final class FilteredEventsModel {
     private final LoadingCache<Long, TimelineEvent> idToEventCache;
     private final LoadingCache<ZoomState, Map<EventType, Long>> eventCountsCache;
     /** Map from datasource id to datasource name. */
-    private final ObservableMap<Long, DataSource> datasourcesMap = FXCollections.observableHashMap();
+    private final ObservableMap<Long, String> datasourcesMap = FXCollections.observableHashMap();
     private final ObservableSet< String> hashSets = FXCollections.observableSet();
     private final ObservableList<TagName> tagNames = FXCollections.observableArrayList();
     // end caches
+
+    /**
+     * Make a DataSourceFilter from an entry from the datasourcesMap.
+     *
+     * @param dataSourceEntry A map entry from datasource id to datasource name.
+     *
+     * @return A new DataSourceFilter for the given datsourcesMap entry.
+     */
+    private static DataSourceFilter newDataSourceFromMapEntry(Map.Entry<Long, String> dataSourceEntry) {
+        return new DataSourceFilter(dataSourceEntry.getValue(), dataSourceEntry.getKey());
+    }
 
     public FilteredEventsModel(Case autoCase, ReadOnlyObjectProperty<ZoomState> currentStateProperty) throws TskCoreException {
         this.autoCase = autoCase;
@@ -240,17 +252,10 @@ public final class FilteredEventsModel {
     synchronized private void populateFilterData() throws TskCoreException {
         SleuthkitCase skCase = autoCase.getSleuthkitCase();
         hashSets.addAll(eventManager.getHashSetNames());
-        Set<Long> dataSourceIDs = eventManager.getDataSourceIDs();
 
         //because there is no way to remove a datasource we only add to this map.
-        for (Long id : dataSourceIDs) {
-            try {
-                if (datasourcesMap.get(id) == null) {
-                    datasourcesMap.put(id, skCase.getDataSource(id));
-                }
-            } catch (TskDataException ex) {
-                throw new TskCoreException("Error looking up datasource for id " + id, ex);
-            }
+        for (DataSource ds : eventManager.getSleuthkitCase().getDataSources()) {
+            datasourcesMap.putIfAbsent(ds.getId(), ds.getName());
         }
 
         //should this only be tags applied to files or event bearing artifacts?
@@ -276,9 +281,7 @@ public final class FilteredEventsModel {
         }
 
         DataSourcesFilter dataSourcesFilter = rootFilterState.getDataSourcesFilterState().getFilter();
-        for (Map.Entry<Long, DataSource> entry : datasourcesMap.entrySet()) {
-            dataSourcesFilter.addSubFilter(new DataSourceFilter(entry.getValue().getName(), entry.getKey()));
-        }
+        datasourcesMap.entrySet().forEach(entry -> dataSourcesFilter.addSubFilter(newDataSourceFromMapEntry(entry)));
 
         HashHitsFilter hashSetsFilter = rootFilterState.getHashHitsFilterState().getFilter();
         for (String hashSet : hashSets) {
@@ -340,14 +343,14 @@ public final class FilteredEventsModel {
         return getZoomState().getTypeZoomLevel();
     }
 
-    /**
+    /** Get the default filter used at startup.
+     *
      * @return the default filter used at startup
      */
     public synchronized RootFilterState getDefaultFilter() {
         DataSourcesFilter dataSourcesFilter = new DataSourcesFilter();
         datasourcesMap.entrySet().forEach(dataSourceEntry
-                -> dataSourcesFilter.addSubFilter(new DataSourceFilter(dataSourceEntry.getValue().getName(), dataSourceEntry.getKey()))
-        );
+                -> dataSourcesFilter.addSubFilter(newDataSourceFromMapEntry(dataSourceEntry)));
 
         HashHitsFilter hashHitsFilter = new HashHitsFilter();
         hashSets.stream().map(HashSetFilter::new).forEach(hashHitsFilter::addSubFilter);
@@ -526,7 +529,7 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * Get a List of event IDs for the events that are derived from the given
+     * Get a Set of event IDs for the events that are derived from the given
      * file.
      *
      * @param file                    The AbstractFile to get derived event IDs
@@ -537,12 +540,12 @@ public final class FilteredEventsModel {
      *                                directly from this file (file system
      *                                timestamps).
      *
-     * @return A List of event IDs for the events that are derived from the
-     *         given file.
+     * @return A Set of event IDs for the events that are derived from the given
+     *         file.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException
      */
-    public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
+    public Set<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) throws TskCoreException {
         return eventManager.getEventIDsForFile(file, includeDerivedArtifacts);
     }
 
@@ -637,7 +640,7 @@ public final class FilteredEventsModel {
 
     synchronized public Set<Long> addTag(long objID, Long artifactID, Tag tag) throws TskCoreException {
         Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, true);
-        if (!updatedEventIDs.isEmpty()) {
+        if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
@@ -645,7 +648,7 @@ public final class FilteredEventsModel {
 
     synchronized public Set<Long> deleteTag(long objID, Long artifactID, long tagID, boolean tagged) throws TskCoreException {
         Set<Long> updatedEventIDs = eventManager.setEventsTagged(objID, artifactID, tagged);
-        if (!updatedEventIDs.isEmpty()) {
+        if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
@@ -656,7 +659,7 @@ public final class FilteredEventsModel {
         for (BlackboardArtifact artifact : artifacts) {
             updatedEventIDs.addAll(eventManager.setEventsHashed(artifact.getObjectID(), hasHashHit));
         }
-        if (!updatedEventIDs.isEmpty()) {
+        if (isNotEmpty(updatedEventIDs)) {
             invalidateCaches(updatedEventIDs);
         }
         return updatedEventIDs;
