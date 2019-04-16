@@ -31,12 +31,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.io.FileUtils;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -75,6 +78,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     
     private Case currentCase = null;
     private SleuthkitCase portableSkCase = null;
+    private final String caseName;
     private File caseFolder = null;
     private File copiedFilesFolder = null;
     
@@ -97,7 +101,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     private final Map<Long, BlackboardArtifact> oldArtifactIdToNewArtifact = new HashMap<>();
     
     public CreatePortableCaseModule() {
-        // Nothing to do here
+        caseName = Case.getCurrentCase().getDisplayName() + " (Portable)";
     }
 
     @NbBundle.Messages({
@@ -118,7 +122,19 @@ public class CreatePortableCaseModule implements GeneralReportModule {
 
     @Override
     public String getRelativeFilePath() {
-        return "";
+        return caseName;
+    }
+    
+    /**
+     * Convenience method for handling cancellation
+     * 
+     * @param progressPanel  The report progress panel
+     */
+    private void handleCancellation(ReportProgressPanel progressPanel) {
+        logger.log(Level.INFO, "Portable case creation canceled by user");
+        progressPanel.setIndeterminate(false);
+        progressPanel.complete(ReportProgressPanel.ReportStatus.CANCELED);
+        cleanup();
     }
     
     /**
@@ -162,6 +178,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         "CreatePortableCaseModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts",
         "# {0} - attribute type name",
         "CreatePortableCaseModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
+        "CreatePortableCaseModule.generateReport.compressingCase=Compressing case...",
     })
     @Override
     public void generateReport(String reportPath, ReportProgressPanel progressPanel) {
@@ -173,7 +190,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         cleanup();
         
         // Validate the input parameters
-        File outputDir = new File(configPanel.getOutputFolder());
+        File outputDir = new File(reportPath);
+        //File outputDir = new File(configPanel.getOutputFolder());
         if (! outputDir.exists()) {
             handleError("Output folder " + outputDir.toString() + " does not exist",
                     Bundle.CreatePortableCaseModule_generateReport_outputDirDoesNotExist(outputDir.toString()), null, progressPanel);
@@ -214,7 +232,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         // Check for cancellation 
         if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
-            cleanup();
+            handleCancellation(progressPanel);
             return;
         }
         
@@ -249,10 +267,17 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             for(TagName tagName:tagNames) {
                 // Check for cancellation 
                 if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    handleCancellation(progressPanel);
                     return;
                 }
                 progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_copyingFiles(tagName.getDisplayName()));
                 addFilesToPortableCase(tagName, progressPanel);
+                
+                // Check for cancellation 
+                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    handleCancellation(progressPanel);
+                    return;
+                }
             }
         } catch (TskCoreException ex) {
             handleError("Error copying tagged files", Bundle.CreatePortableCaseModule_generateReport_errorCopyingFiles(), ex, progressPanel);
@@ -264,16 +289,47 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             for(TagName tagName:tagNames) {
                 // Check for cancellation 
                 if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    handleCancellation(progressPanel);
                     return;
                 }
                 progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_copyingArtifacts(tagName.getDisplayName()));
                 addArtifactsToPortableCase(tagName, progressPanel);
+                
+                // Check for cancellation 
+                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    handleCancellation(progressPanel);
+                    return;
+                }
             }
         } catch (TskCoreException ex) {
             handleError("Error copying tagged artifacts", Bundle.CreatePortableCaseModule_generateReport_errorCopyingArtifacts(), ex, progressPanel);
             return;
-        }         
-
+        }
+        
+        // Check for cancellation 
+        if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+            handleCancellation(progressPanel);
+            return;
+        }
+        
+        // Compress the case (if desired)
+        if (configPanel.shouldCompress()) {
+            progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_compressingCase());
+            
+            boolean success = compressCase(progressPanel);
+            
+            // Check for cancellation 
+            if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                handleCancellation(progressPanel);
+                return;
+            }
+            
+            if (! success) {
+                // Errors have been handled already
+                return;
+            }
+        }
+        
         // Close the case connections and clear out the maps
         cleanup();
         
@@ -299,7 +355,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     private void createCase(File outputDir, ReportProgressPanel progressPanel) {
 
         // Create the case folder
-        String caseName = currentCase.getDisplayName() + " (Portable)";
         caseFolder = Paths.get(outputDir.toString(), caseName).toFile();
 
         if (caseFolder.exists()) {
@@ -715,14 +770,22 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         oldArtTypeIdToNewArtTypeId.clear();
         oldAttrTypeIdToNewAttrType.clear();
         oldArtifactIdToNewArtifact.clear();
+
+        closePortableCaseDatabase();
         
         currentCase = null;
+        caseFolder = null;
+        copiedFilesFolder = null;
+    }
+    
+    /**
+     * Close the portable case
+     */
+    private void closePortableCaseDatabase() {
         if (portableSkCase != null) {
             portableSkCase.close();
             portableSkCase = null;
         }
-        caseFolder = null;
-        copiedFilesFolder = null;
     }
 
     @Override
@@ -759,6 +822,144 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, "Failed to get maximum ID from result set", ex);
             }
+        }
+    }
+    
+    @NbBundle.Messages({
+        "CreatePortableCaseModule.compressCase.errorFinding7zip=Could not locate 7-Zip executable",
+        "# {0} - Temp folder path",
+        "CreatePortableCaseModule.compressCase.errorCreatingTempFolder=Could not create temporary folder {0}",
+        "CreatePortableCaseModule.compressCase.errorCompressingCase=Error compressing case",
+        "CreatePortableCaseModule.compressCase.canceled=Compression canceled by user",
+    }) 
+    private boolean compressCase(ReportProgressPanel progressPanel) {
+    
+        // Close the portable case database (we still need some of the variables that would be cleared by cleanup())
+        closePortableCaseDatabase();
+        
+        // Make a temporary folder for the compressed case
+        File tempZipFolder = Paths.get(currentCase.getTempDirectory(), "portableCase" + System.currentTimeMillis()).toFile();
+        if (! tempZipFolder.mkdir()) {
+            handleError("Error creating temporary folder " + tempZipFolder.toString(), 
+                    Bundle.CreatePortableCaseModule_compressCase_errorCreatingTempFolder(tempZipFolder.toString()), null, progressPanel);
+            return false;
+        }
+        
+        // Find 7-Zip
+        File sevenZipExe = locate7ZipExecutable();
+        if (sevenZipExe == null) {
+            handleError("Error finding 7-Zip exectuable", Bundle.CreatePortableCaseModule_compressCase_errorFinding7zip(), null, progressPanel);
+            return false;
+        }
+        
+        // Create the chunk option
+        String chunkOption = "";
+        if (configPanel.getChunkSize() != ChunkSize.NONE) {
+            chunkOption = "-v" + configPanel.getChunkSize().getSevenZipParam();
+        }
+        
+        File zipFile = Paths.get(tempZipFolder.getAbsolutePath(), caseName + ".zip").toFile();
+        ProcessBuilder procBuilder = new ProcessBuilder();
+        procBuilder.command(
+                sevenZipExe.getAbsolutePath(),
+                "a", 
+                zipFile.getAbsolutePath(),
+                caseFolder.getAbsolutePath(),
+                chunkOption
+        );
+        
+        try {
+            Process process = procBuilder.start();
+            
+            while (process.isAlive()) {
+                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    process.destroy();
+                    return false;
+                }
+                Thread.sleep(200);
+            }
+            int exitCode = process.exitValue();
+            if (exitCode != 0) {
+                handleError("Error compressing case", Bundle.CreatePortableCaseModule_compressCase_errorCompressingCase(), null, progressPanel);
+                return false;
+            }
+        } catch (IOException | InterruptedException ex) {
+            handleError("Error compressing case", Bundle.CreatePortableCaseModule_compressCase_errorCompressingCase(), ex, progressPanel);
+            return false;
+        }
+        
+        // Delete everything in the case folder then copy over the compressed file(s)
+        try {
+            FileUtils.cleanDirectory(caseFolder);
+            FileUtils.copyDirectory(tempZipFolder, caseFolder);
+            FileUtils.deleteDirectory(tempZipFolder);
+        } catch (IOException ex) {
+            handleError("Error compressing case", Bundle.CreatePortableCaseModule_compressCase_errorCompressingCase(), ex, progressPanel);
+            return false;
+        }
+     
+        return true;
+    }
+    
+    /**
+     * Locate the 7-Zip executable from the release folder.
+     *
+     * @return 7-Zip executable
+     */
+    private static File locate7ZipExecutable() {
+        if (!PlatformUtil.isWindowsOS()) {
+            return null;
+        }
+
+        String executableToFindName = Paths.get("7-Zip", "7z.exe").toString();
+        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, CreatePortableCaseModule.class.getPackage().getName(), false);
+        if (null == exeFile) {
+            return null;
+        }
+
+        if (!exeFile.canExecute()) {
+            return null;
+        }
+
+        return exeFile;
+    }
+    
+    /**
+     * Enum for storing the display name for each chunk type and the
+     * parameter needed for 7-Zip.
+     */
+    enum ChunkSize {
+        
+        NONE("Do not split", ""),
+        TWO_MB("2 MB", "2m"),
+        DVD("4.5 GB (DVD)", "4500m");
+                
+        
+        private final String displayName;
+        private final String sevenZipParam;
+
+        /**
+         * Create a chunk size object.
+         * 
+         * @param displayName
+         * @param sevenZipParam 
+         */
+        private ChunkSize(String displayName, String sevenZipParam) {
+            this.displayName = displayName;
+            this.sevenZipParam = sevenZipParam;
+        }
+        
+        String getDisplayName() {
+            return displayName;
+        }
+        
+        String getSevenZipParam() {
+            return sevenZipParam;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
         }
     }
 }

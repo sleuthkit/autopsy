@@ -21,14 +21,12 @@ package org.sleuthkit.autopsy.report;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JCheckBox;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -39,6 +37,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.report.CreatePortableCaseModule.ChunkSize;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -67,15 +67,23 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
         customizeComponents();
     }
     
+    @NbBundle.Messages({
+        "CreatePortableCasePanel.customizeComponents.nonWindows=Only available on Windows",
+    }) 
     private void customizeComponents() {
         populateTagNameComponents();
-        /*
-        try {
-            outputFolderTextField.setText(Case.getCurrentCaseThrows().getReportDirectory());
-        } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(CreatePortableCasePanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
-            JOptionPane.showMessageDialog(this, Bundle.CreatePortableCasePanel_error_noOpenCase(), Bundle.CreatePortableCasePanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
-        }*/
+        
+        if (!PlatformUtil.isWindowsOS()) {
+            errorLabel.setText(TOOL_TIP_TEXT_KEY);
+            compressCheckbox.setEnabled(false);
+        }
+        
+        for (ChunkSize chunkSize:ChunkSize.values()) {
+            chunkSizeComboBox.addItem(chunkSize);
+        }
+        chunkSizeComboBox.setSelectedItem(ChunkSize.NONE);
+        chunkSizeComboBox.setEnabled(false);
+        chunkSizeLabel.setEnabled(false);
     }
     
     private void populateTagNameComponents() {
@@ -131,15 +139,23 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
         }
         return selectedTagNames;
     }
-
+    
     /**
-     * Get the output folder
+     * Get the selected chunk size
      * 
-     * @return The output folder for the portable case
+     * @return the chunk size that was selected
      */
-    String getOutputFolder() {
-        return "";
-        //return outputFolderTextField.getText();
+    ChunkSize getChunkSize() {
+        return (ChunkSize) chunkSizeComboBox.getSelectedItem();
+    }
+    
+    /**
+     * Get whether the user selected to compress the case.
+     * 
+     * @return true if the case should be compressed; false otherwise
+     */
+    boolean shouldCompress() {
+        return compressCheckbox.isSelected();
     }
     
     // This class is a list model for the tag names JList component.
@@ -197,9 +213,10 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         tagNamesListBox = new javax.swing.JList<>();
         jLabel1 = new javax.swing.JLabel();
-        jComboBox1 = new javax.swing.JComboBox<>();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jLabel3 = new javax.swing.JLabel();
+        chunkSizeComboBox = new javax.swing.JComboBox<>();
+        compressCheckbox = new javax.swing.JCheckBox();
+        chunkSizeLabel = new javax.swing.JLabel();
+        errorLabel = new javax.swing.JLabel();
 
         org.openide.awt.Mnemonics.setLocalizedText(selectAllButton, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.selectAllButton.text")); // NOI18N
         selectAllButton.setMaximumSize(new java.awt.Dimension(99, 23));
@@ -222,21 +239,22 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.jLabel1.text")); // NOI18N
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Do not split" }));
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+        chunkSizeComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
+                chunkSizeComboBoxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox1, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.jCheckBox1.text")); // NOI18N
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(compressCheckbox, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.compressCheckbox.text")); // NOI18N
+        compressCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
+                compressCheckboxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel3, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.jLabel3.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(chunkSizeLabel, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.chunkSizeLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.errorLabel.text_1")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -246,7 +264,7 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jScrollPane1)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 448, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(deselectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -255,11 +273,13 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
                         .addComponent(jLabel1)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jCheckBox1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel3)
+                        .addComponent(compressCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 205, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(chunkSizeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(chunkSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -280,9 +300,11 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel3))
-                    .addComponent(jCheckBox1))
+                        .addComponent(chunkSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(chunkSizeLabel))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(compressCheckbox)
+                        .addComponent(errorLabel)))
                 .addGap(10, 10, 10))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -301,21 +323,23 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
         tagNamesListBox.repaint();
     }//GEN-LAST:event_deselectAllButtonActionPerformed
 
-    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jCheckBox1ActionPerformed
+    private void compressCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_compressCheckboxActionPerformed
+        chunkSizeComboBox.setEnabled(compressCheckbox.isSelected());
+        chunkSizeLabel.setEnabled(compressCheckbox.isSelected());
+    }//GEN-LAST:event_compressCheckboxActionPerformed
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+    private void chunkSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chunkSizeComboBoxActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jComboBox1ActionPerformed
+    }//GEN-LAST:event_chunkSizeComboBoxActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<ChunkSize> chunkSizeComboBox;
+    private javax.swing.JLabel chunkSizeLabel;
+    private javax.swing.JCheckBox compressCheckbox;
     private javax.swing.JButton deselectAllButton;
-    private javax.swing.JCheckBox jCheckBox1;
-    private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JLabel errorLabel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton selectAllButton;
     private javax.swing.JList<String> tagNamesListBox;
