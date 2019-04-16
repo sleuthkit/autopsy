@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
@@ -58,6 +59,15 @@ final class MessageNode extends BlackboardArtifactNode {
         setDisplayName(removeEndIgnoreCase.isEmpty() ? stripEnd : removeEndIgnoreCase);
     }
 
+    @Messages({
+        "MessageNode_Node_Property_Type=Type",
+        "MessageNode_Node_Property_From=From",
+        "MessageNode_Node_Property_To=To",
+        "MessageNode_Node_Property_Date=Date",
+        "MessageNode_Node_Property_Subject=Subject",
+        "MessageNode_Node_Property_Attms=Attachments"
+    })
+    
     @Override
     protected Sheet createSheet() {
         Sheet sheet = new Sheet();
@@ -68,7 +78,7 @@ final class MessageNode extends BlackboardArtifactNode {
             sheet.put(sheetSet);
         }
 
-        sheetSet.put(new NodeProperty<>("Type", "Type", "Type", getDisplayName())); //NON-NLS
+        sheetSet.put(new NodeProperty<>("Type", Bundle.MessageNode_Node_Property_Type(), "", getDisplayName())); //NON-NLS
 
         addScoreProperty(sheetSet, tags);
 
@@ -88,42 +98,42 @@ final class MessageNode extends BlackboardArtifactNode {
             //Consider refactoring this to reduce boilerplate
             switch (fromID) {
                 case TSK_EMAIL_MSG:
-                    sheetSet.put(new NodeProperty<>("From", "From", "From",
+                    sheetSet.put(new NodeProperty<>("From", Bundle.MessageNode_Node_Property_From(), "",
                             StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_FROM), " \t\n;"))); //NON-NLS
-                    sheetSet.put(new NodeProperty<>("To", "To", "To",
+                    sheetSet.put(new NodeProperty<>("To", Bundle.MessageNode_Node_Property_To(), "",
                             StringUtils.strip(getAttributeDisplayString(artifact, TSK_EMAIL_TO), " \t\n;"))); //NON-NLS
-                    sheetSet.put(new NodeProperty<>("Date", "Date", "Date",
+                    sheetSet.put(new NodeProperty<>("Date", Bundle.MessageNode_Node_Property_Date(), "",
                             getAttributeDisplayString(artifact, TSK_DATETIME_SENT))); //NON-NLS
-                    sheetSet.put(new NodeProperty<>("Subject", "Subject", "Subject",
+                    sheetSet.put(new NodeProperty<>("Subject", Bundle.MessageNode_Node_Property_Subject(), "",
                             getAttributeDisplayString(artifact, TSK_SUBJECT))); //NON-NLS
                     try {
-                        sheetSet.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount())); //NON-NLS
+                        sheetSet.put(new NodeProperty<>("Attms", Bundle.MessageNode_Node_Property_Attms(), "", artifact.getChildrenCount())); //NON-NLS
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex); //NON-NLS
                     }
 
                     break;
                 case TSK_MESSAGE:
-                    sheetSet.put(new NodeProperty<>("From", "From", "From",
+                    sheetSet.put(new NodeProperty<>("From", Bundle.MessageNode_Node_Property_From(), "",
                             getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM))); //NON-NLS
-                    sheetSet.put(new NodeProperty<>("To", "To", "To",
+                    sheetSet.put(new NodeProperty<>("To", Bundle.MessageNode_Node_Property_To(), "",
                             getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO))); //NON-NLS
-                    sheetSet.put(new NodeProperty<>("Date", "Date", "Date",
+                    sheetSet.put(new NodeProperty<>("Date", Bundle.MessageNode_Node_Property_Date(), "",
                             getAttributeDisplayString(artifact, TSK_DATETIME))); //NON-NLS
-                    sheetSet.put(new NodeProperty<>("Subject", "Subject", "Subject",
+                    sheetSet.put(new NodeProperty<>("Subject", Bundle.MessageNode_Node_Property_Subject(), "",
                             getAttributeDisplayString(artifact, TSK_SUBJECT))); //NON-NLS
                     try {
-                        sheetSet.put(new NodeProperty<>("Attms", "Attms", "Attms", artifact.getChildrenCount())); //NON-NLS
+                        sheetSet.put(new NodeProperty<>("Attms", Bundle.MessageNode_Node_Property_Attms(), "", artifact.getChildrenCount())); //NON-NLS
                     } catch (TskCoreException ex) {
                         logger.log(Level.WARNING, "Error loading attachment count for " + artifact, ex); //NON-NLS
                     }
                     break;
                 case TSK_CALLLOG:
-                    sheetSet.put(new NodeProperty<>("From", "From", "From",
+                    sheetSet.put(new NodeProperty<>("From", Bundle.MessageNode_Node_Property_From(), "",
                             getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_FROM))); //NON-NLS
-                    sheetSet.put(new NodeProperty<>("To", "To", "To",
+                    sheetSet.put(new NodeProperty<>("To", Bundle.MessageNode_Node_Property_To(), "",
                             getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_TO))); //NON-NLS
-                    sheetSet.put(new NodeProperty<>("Date", "Date", "Date",
+                    sheetSet.put(new NodeProperty<>("Date", Bundle.MessageNode_Node_Property_Date(), "",
                             getAttributeDisplayString(artifact, TSK_DATETIME_START))); //NON-NLS
                     break;
                 default:
