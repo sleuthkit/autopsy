@@ -1,3 +1,5 @@
+# {0} - file that events are from
+PlasoIngestModule_artifact_progress=Adding events to case: {0}
 PlasoIngestModule_bad_imageFile=Cannot find image file name and path
 PlasoIngestModule_completed=Plaso Processing Completed
 PlasoIngestModule_create_artifacts_cancelled=Cancelled Plaso Artifact Creation 

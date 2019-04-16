@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,15 +27,14 @@ import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
-  * An factory that creates data source ingest modules that runs plaso 
-  * against an image and saves the storage file to module output.
+ * A factory that creates data source ingest modules that run plaso against an
+ * image and saves the storage file to module output.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
 
 public class PlasoModuleFactory extends IngestModuleFactoryAdapter {
-    @NbBundle.Messages({
-        "PlasoModuleFactory_moduleName=Plaso"
-    })
+
+    @NbBundle.Messages({"PlasoModuleFactory_moduleName=Plaso"})
     static String getModuleName() {
         return Bundle.PlasoModuleFactory_moduleName();
     }
@@ -45,10 +44,7 @@ public class PlasoModuleFactory extends IngestModuleFactoryAdapter {
         return getModuleName();
     }
 
-    @NbBundle.Messages({
-        "PlasoModuleFactory_moduleDesc=Runs Plaso against a Data Source."
-    })
-
+    @NbBundle.Messages({"PlasoModuleFactory_moduleDesc=Runs Plaso against a Data Source."})
     @Override
     public String getModuleDescription() {
         return Bundle.PlasoModuleFactory_moduleDesc();
@@ -67,5 +63,16 @@ public class PlasoModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
         return new PlasoIngestModule();
+    }
+
+    /**
+     * This module typically takes a very long time and is there for not enabled
+     * by default.
+     *
+     * @return False.
+     */
+    @Override
+    public boolean isEnabledByDefault() {
+        return false;
     }
 }

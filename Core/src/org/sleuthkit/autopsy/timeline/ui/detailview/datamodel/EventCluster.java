@@ -21,11 +21,11 @@ package org.sleuthkit.autopsy.timeline.ui.detailview.datamodel;
 import com.google.common.collect.Sets;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import org.joda.time.Interval;
 import org.sleuthkit.autopsy.timeline.utils.IntervalUtils;
 import org.sleuthkit.datamodel.DescriptionLoD;
@@ -99,9 +99,9 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
         Interval spanningInterval = IntervalUtils.span(cluster1.span, cluster2.span);
 
-        Set<Long> idsUnion = Sets.union(cluster2.getEventIDs(), cluster2.getEventIDs());
-        Set<Long> hashHitsUnion = Sets.union(cluster2.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
-        Set<Long> taggedUnion = Sets.union(cluster2.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
+        Set<Long> idsUnion = Sets.union(cluster1.getEventIDs(), cluster2.getEventIDs());
+        Set<Long> hashHitsUnion = Sets.union(cluster1.getEventIDsWithHashHits(), cluster2.getEventIDsWithHashHits());
+        Set<Long> taggedUnion = Sets.union(cluster1.getEventIDsWithTags(), cluster2.getEventIDsWithTags());
 
         return new EventCluster(spanningInterval,
                 cluster1.getEventType(), idsUnion, hashHitsUnion, taggedUnion,
@@ -222,7 +222,7 @@ public class EventCluster implements MultiEvent<EventStripe> {
 
     @Override
     public SortedSet<EventCluster> getClusters() {
-        return new TreeSet<>(singleton(this));
+        return DetailsViewModel.copyAsSortedSet(singleton(this), Comparator.comparing(cluster -> true));
     }
 
     @Override

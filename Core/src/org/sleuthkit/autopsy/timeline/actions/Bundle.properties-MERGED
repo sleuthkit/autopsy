@@ -1,4 +1,7 @@
 AddManualEvent.createArtifactFailed=Failed to create artifact for event.
+# {0} - datasource name
+# {1} - datasource id
+AddManualEvent.EventCreationDialogPane.dataSourceStringConverter.template={0} (ID: {1})
 AddManualEvent.EventCreationDialogPane.initialize.dataSourcesError=Error getting datasources in case.
 AddManualEvent.longText=Manually add an event to the timeline.
 AddManualEvent.postArtifactFailed=Failed to post artifact to blackboard.
