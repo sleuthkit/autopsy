@@ -73,7 +73,6 @@ final class ContactNode extends BlackboardArtifactNode {
         }
 
         Sheet sheet = new Sheet();
-        List<Tag> tags = getAllTagsFromDatabase();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
             sheetSet = Sheet.createPropertiesSet();
