@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class MessageNode extends BlackboardArtifactNode {
 
-    private static final Logger logger = Logger.getLogger(RelationshipNode.class.getName());
+    private static final Logger logger = Logger.getLogger(MessageNode.class.getName());
 
     MessageNode(BlackboardArtifact artifact) {
         super(artifact);
