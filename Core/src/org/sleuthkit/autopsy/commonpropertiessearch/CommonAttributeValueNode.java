@@ -50,6 +50,7 @@ public class CommonAttributeValueNode extends DisplayableItemNode {
      * Create a Match node whose children will all have this object in common.
      *
      * @param data the common feature, and the children
+     * @param type the data type
      */
     public CommonAttributeValueNode(CommonAttributeValue data, CorrelationAttributeInstance.Type type) {
         super(Children.create(

@@ -80,6 +80,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     private final Logger logger = services.getLogger(EncryptionDetectionModuleFactory.getModuleName());
     private FileTypeDetector fileTypeDetector;
     private Blackboard blackboard;
+    private IngestJobContext context;
     private double calculatedEntropy;
 
     private final double minimumEntropy;
@@ -105,7 +106,9 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         try {
             validateSettings();
+	    this.context = context;
             blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
+
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModule.IngestModuleException("Failed to create file type detector", ex);
@@ -192,6 +195,10 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
      */
     private IngestModule.ProcessResult flagFile(AbstractFile file, BlackboardArtifact.ARTIFACT_TYPE artifactType, String comment) {
         try {
+            if (context.fileIngestIsCancelled()) {
+                return IngestModule.ProcessResult.OK;
+            }
+            
             BlackboardArtifact artifact = file.newArtifact(artifactType);
             artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                     EncryptionDetectionModuleFactory.getModuleName(), comment));
@@ -391,7 +398,7 @@ final class EncryptionDetectionFileIngestModule extends FileIngestModuleAdapter 
             /*
              * Qualify the entropy.
              */
-            calculatedEntropy = EncryptionDetectionTools.calculateEntropy(file);
+            calculatedEntropy = EncryptionDetectionTools.calculateEntropy(file, context);
             if (calculatedEntropy >= minimumEntropy) {
                 possiblyEncrypted = true;
             }

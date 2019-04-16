@@ -12,26 +12,7 @@ You will need:
 \section install_solr_install Installation
 
 \subsection install_solr_install_java JRE Installation
-1. Install the Java JRE if needed. You can test this by running _where java_ from the command line. If you see output like the yellow results below, you have a JRE.
-<br><br>
-\image html symlinkjava.PNG
-<br><br>   
-If you need the JRE, install it with the default settings.
-
-2. Create a Windows environment variable for your <i>JavaHome</i> with the path to your 64-bit version of the JRE. If you do not know the path, the correct _JavaHome_ path can be obtained by running the command _where java_ from the Windows command line. An example is shown below. Do not include the <i>"bin"</i> folder in the path you place into the _JavaHome_ variable. A correct example of the final result will look something like this:&nbsp;&nbsp;&nbsp;
-       <i>JavaHome="C:\Program Files\Java\jre1.8.0_111"</i>
-       <br><br>
-    \image html wherejava.PNG
-    <br><br>
-       <br><br>
-    Note that if you get something like the following when running the <i>"where java"</i> command, it is a symbolic link to the Java installation and you need to trace it to the proper folder as explained below.
-    <br><br>
-    \image html symlinkjava.PNG
-    <br><br>
-    To trace a symbolic link to the proper folder, use Windows Explorer to navigate to the path shown (<i>C:\\ProgramData\\Oracle\\Java\\javapath</i> for the example above), then right click on _java.exe_ and Click on _Properties_. You will see the path you should use in the _Location_ field, shown in the screenshot below. Do not include the <i>"bin"</i> folder in the path you place into the _JavaHome_ variable.
-    <br><br>
-    \image html javaproperties.PNG
-    <br><br>
+1. JREs are normally installed under "C:\Program Files\Java\jre(version)", so check there to see if you have one installed already. If not, get the installer from the link in the \ref install_solr_prereq and install it with the default settings.
 
 \subsection install_solr_install_solr Solr Installation
 

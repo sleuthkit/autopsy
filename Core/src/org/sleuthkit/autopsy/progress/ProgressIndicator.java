@@ -49,7 +49,7 @@ public interface ProgressIndicator {
      *
      * @param message The initial progress message.
      */
-    public void switchToIndeterminate(String message);
+    void switchToIndeterminate(String message);
 
     /**
      * Switches the progress indicator to determinate mode (the total number of
@@ -59,14 +59,14 @@ public interface ProgressIndicator {
      * @param workUnitsCompleted The number of work units completed so far.
      * @param totalWorkUnits     The total number of work units to be completed.
      */
-    public void switchToDeterminate(String message, int workUnitsCompleted, int totalWorkUnits);
+    void switchToDeterminate(String message, int workUnitsCompleted, int totalWorkUnits);
 
     /**
      * Updates the progress indicator with a progress message.
      *
      * @param message The progress message.
      */
-    public void progress(String message);
+    void progress(String message);
 
     /**
      * Updates the progress indicator with the number of work units completed so
@@ -75,7 +75,7 @@ public interface ProgressIndicator {
      *
      * @param workUnitsCompleted Number of work units completed so far.
      */
-    public void progress(int workUnitsCompleted);
+    void progress(int workUnitsCompleted);
 
     /**
      * Updates the progress indicator with a progress message and the number of
@@ -85,7 +85,24 @@ public interface ProgressIndicator {
      * @param message            The progress message.
      * @param workUnitsCompleted Number of work units completed so far.
      */
-    public void progress(String message, int workUnitsCompleted);
+    void progress(String message, int workUnitsCompleted);
+
+    /**
+     * If the progress indicator supports cancelling the underlying task, sets a
+     * cancelling message and causes the progress indicator to no longer accept
+     * updates unless start is called again.
+     *
+     * The default implementation assumes that cancelling the underlying task is
+     * not supported.
+     *
+     * @param cancellingMessage The cancelling messages.
+     */
+    default void setCancelling(String cancellingMessage) {
+        /*
+         * The default implementation assumes that cancelling the underlying
+         * task is not supported.
+         */
+    }
 
     /**
      * Finishes the progress indicator when the task is completed.
