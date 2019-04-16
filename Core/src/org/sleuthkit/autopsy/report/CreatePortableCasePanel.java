@@ -66,16 +66,15 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
         initComponents();
         customizeComponents();
     }
-    
-    @NbBundle.Messages({
-        "CreatePortableCasePanel.customizeComponents.nonWindows=Only available on Windows",
-    }) 
+
     private void customizeComponents() {
         populateTagNameComponents();
         
-        if (!PlatformUtil.isWindowsOS()) {
-            errorLabel.setText(TOOL_TIP_TEXT_KEY);
+        if ( ! PlatformUtil.isWindowsOS()) {
+            errorLabel.setVisible(true);
             compressCheckbox.setEnabled(false);
+        } else {
+            errorLabel.setVisible(false);
         }
         
         for (ChunkSize chunkSize:ChunkSize.values()) {
@@ -254,6 +253,7 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(chunkSizeLabel, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.chunkSizeLabel.text")); // NOI18N
 
+        errorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(errorLabel, org.openide.util.NbBundle.getMessage(CreatePortableCasePanel.class, "CreatePortableCasePanel.errorLabel.text_1")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -264,7 +264,7 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 448, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(deselectAllButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -275,7 +275,7 @@ class CreatePortableCasePanel extends javax.swing.JPanel {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(compressCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(errorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 205, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(errorLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(chunkSizeLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
