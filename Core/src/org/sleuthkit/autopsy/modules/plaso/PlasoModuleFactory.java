@@ -22,17 +22,19 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
+import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
+import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
- * A factory that creates data source ingest modules that run plaso against an
+ * A factory that creates data source ingest modules that run Plaso against an
  * image and saves the storage file to module output.
  */
 @ServiceProvider(service = IngestModuleFactory.class)
-
-public class PlasoModuleFactory extends IngestModuleFactoryAdapter {
+@NbBundle.Messages({"PlasoModuleFactory.ingestJobSettings.exception.msg=Expected settings argument to be instanceof PlasoModuleSettings"})
+public class PlasoModuleFactory implements IngestModuleFactory {
 
     @NbBundle.Messages({"PlasoModuleFactory_moduleName=Plaso"})
     static String getModuleName() {
@@ -61,12 +63,21 @@ public class PlasoModuleFactory extends IngestModuleFactoryAdapter {
     }
 
     @Override
-    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings ingestOptions) {
-        return new PlasoIngestModule();
+    public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
+        assert settings instanceof PlasoModuleSettings;
+        if (settings instanceof PlasoModuleSettings) {
+            return new PlasoIngestModule((PlasoModuleSettings) settings);
+        }
+        throw new IllegalArgumentException(Bundle.PlasoModuleFactory_ingestJobSettings_exception_msg());
+    }
+
+    @Override
+    public boolean hasGlobalSettingsPanel() {
+        return false;
     }
 
     /**
-     * This module typically takes a very long time and is there for not enabled
+     * This module typically takes a very long time and is therefore not enabled
      * by default.
      *
      * @return False.
@@ -74,5 +85,39 @@ public class PlasoModuleFactory extends IngestModuleFactoryAdapter {
     @Override
     public boolean isEnabledByDefault() {
         return false;
+    }
+
+    @Override
+    public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public IngestModuleIngestJobSettings getDefaultIngestJobSettings() {
+        return new PlasoModuleSettings();
+    }
+
+    @Override
+    public boolean hasIngestJobSettingsPanel() {
+        return true;
+    }
+
+    @Override
+    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
+        assert settings instanceof PlasoModuleSettings;
+        if (settings instanceof PlasoModuleSettings) {
+            return new PlasoModuleSettingsPanel((PlasoModuleSettings) settings);
+        }
+        throw new IllegalArgumentException(Bundle.PlasoModuleFactory_ingestJobSettings_exception_msg());
+    }
+
+    @Override
+    public boolean isFileIngestModuleFactory() {
+        return false;
+    }
+
+    @Override
+    public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
+        throw new UnsupportedOperationException();
     }
 }
