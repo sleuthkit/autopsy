@@ -22,25 +22,33 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * An object that converts data for a case directory lock coordination service
- * node to and from byte arrays.
+ * Case data stored in a case directory coordination service node.
  */
 public final class CaseNodeData {
 
-    private static final int CURRENT_VERSION = 1;
+    private static final int MAJOR_VERSION = 2;
+    private static final int MINOR_VERSION = 0;
+    private static final Logger logger = Logger.getLogger(CaseNodeData.class.getName());
 
     /*
-     * Version 0 fields.
+     * Version 0 fields. Note that version 0 node data was only written to the
+     * coordination service node if an auto ingest job error occurred.
      */
-    private final int version;
+    private int version;
     private boolean errorsOccurred;
 
     /*
@@ -53,28 +61,191 @@ public final class CaseNodeData {
     private String displayName;
     private short deletedItemFlags;
 
-    /**
-     * Gets the current version of the case directory lock coordination service
-     * node data.
-     *
-     * @return The version number.
+    /*
+     * Version 2 fields.
      */
-    public static int getCurrentVersion() {
-        return CaseNodeData.CURRENT_VERSION;
+    private int minorVersion;
+
+    /**
+     * Creates case node data from the metadata for a case and writes it to the
+     * appropriate case directory coordination service node, which must already
+     * exist.
+     *
+     * @param metadata The case metadata.
+     *
+     * @return The case node data that was written to the coordination service
+     *         node.
+     *
+     * @throws CaseNodeDataException If there is an error creating or writing
+     *                               the case node data.
+     * @throws InterruptedException  If the current thread is interrupted while
+     *                               waiting for the coordination service.
+     */
+    public static CaseNodeData createCaseNodeData(final CaseMetadata metadata) throws CaseNodeDataException, InterruptedException {
+        try {
+            final CaseNodeData nodeData = new CaseNodeData(metadata);
+            CoordinationService.getInstance().setNodeData(CoordinationService.CategoryNode.CASES, nodeData.getDirectory().toString(), nodeData.toArray());
+            return nodeData;
+
+        } catch (ParseException | IOException | CoordinationServiceException ex) {
+            throw new CaseNodeDataException(String.format("Error creating case node data for coordination service node with path %s", metadata.getCaseDirectory().toUpperCase()), ex); //NON-NLS
+        }
     }
 
     /**
-     * Uses a CaseMetadata object to construct an object that converts data for
-     * a case directory lock coordination service node to and from byte arrays.
+     * Reads case data from a case directory coordination service node. If the
+     * data is missing, corrupted, or from an older version of the software, an
+     * attempt is made to remedy the situation using the case metadata.
+     *
+     * @param nodePath The case directory coordination service node path.
+     *
+     * @return The case node data.
+     *
+     * @throws CaseNodeDataException If there is an error reading or writing the
+     *                               case node data.
+     * @throws InterruptedException  If the current thread is interrupted while
+     *                               waiting for the coordination service.
+     */
+    public static CaseNodeData readCaseNodeData(String nodePath) throws CaseNodeDataException, InterruptedException {
+        try {
+            CaseNodeData nodeData;
+            final byte[] nodeBytes = CoordinationService.getInstance().getNodeData(CoordinationService.CategoryNode.CASES, nodePath);
+            if (nodeBytes != null && nodeBytes.length > 0) {
+                try {
+                    nodeData = new CaseNodeData(nodeBytes);
+                } catch (IOException ex) {
+                    /*
+                     * The existing case node data is corrupted.
+                     */
+                    logger.log(Level.WARNING, String.format("Error reading node data for coordination service node with path %s, will attempt to replace it", nodePath.toUpperCase()), ex); //NON-NLS
+                    final CaseMetadata metadata = getCaseMetadata(nodePath);
+                    nodeData = createCaseNodeData(metadata);
+                    logger.log(Level.INFO, String.format("Replaced corrupt node data for coordination service node with path %s", nodePath.toUpperCase())); //NON-NLS
+                }
+            } else {
+                /*
+                 * The case node data is missing. Version 0 node data was only
+                 * written to the coordination service node if an auto ingest
+                 * job error occurred.
+                 */
+                logger.log(Level.INFO, String.format("Missing node data for coordination service node with path %s, will attempt to create it", nodePath.toUpperCase())); //NON-NLS
+                final CaseMetadata metadata = getCaseMetadata(nodePath);
+                nodeData = createCaseNodeData(metadata);
+                logger.log(Level.INFO, String.format("Created node data for coordination service node with path %s", nodePath.toUpperCase())); //NON-NLS
+            }
+            if (nodeData.getVersion() < CaseNodeData.MAJOR_VERSION) {
+                nodeData = upgradeCaseNodeData(nodePath, nodeData);
+            }
+            return nodeData;
+
+        } catch (CaseNodeDataException | CaseMetadataException | ParseException | IOException | CoordinationServiceException ex) {
+            throw new CaseNodeDataException(String.format("Error reading/writing node data coordination service node with path %s", nodePath.toUpperCase()), ex); //NON-NLS
+        }
+    }
+
+    /**
+     * Writes case data to a case directory coordination service node. Obtain
+     * the case data to be updated and written by calling createCaseNodeData()
+     * or readCaseNodeData().
+     *
+     * @param nodeData The case node data.
+     *
+     * @throws CaseNodeDataException If there is an error writing the case node
+     *                               data.
+     * @throws InterruptedException  If the current thread is interrupted while
+     *                               waiting for the coordination service.
+     */
+    public static void writeCaseNodeData(CaseNodeData nodeData) throws CaseNodeDataException, InterruptedException {
+        try {
+            CoordinationService.getInstance().setNodeData(CoordinationService.CategoryNode.CASES, nodeData.getDirectory().toString(), nodeData.toArray());
+
+        } catch (IOException | CoordinationServiceException ex) {
+            throw new CaseNodeDataException(String.format("Error writing node data coordination service node with path %s", nodeData.getDirectory().toString().toUpperCase()), ex); //NON-NLS
+        }
+    }
+
+    /**
+     * Upgrades older versions of node data to the current version and writes
+     * the data back to the case directory coordination service node.
+     *
+     * @param nodePath    The case directory coordination service node path.
+     * @param oldNodeData The outdated node data.
+     *
+     * @return The updated node data.
+     *
+     * @throws CaseNodeDataException If the case meta data file or case
+     *                               directory do not exist.
+     * @throws CaseMetadataException If the case metadata cannot be read.
+     */
+    private static CaseNodeData upgradeCaseNodeData(String nodePath, CaseNodeData oldNodeData) throws CaseNodeDataException, CaseMetadataException, ParseException, IOException, CoordinationServiceException, InterruptedException {
+        CaseNodeData nodeData;
+        switch (oldNodeData.getVersion()) {
+            case 0:
+                /*
+                 * Version 0 node data consisted of only the version number and
+                 * the errors occurred flag and was only written when an auto
+                 * ingest job error occurred. To upgrade from version 0, the
+                 * version 1 fields need to be set from the case metadata and
+                 * the errors occurred flag needs to be carried forward. Note
+                 * that the last accessed date gets advanced to now, since it is
+                 * otherwise unknown.
+                 */
+                final CaseMetadata metadata = getCaseMetadata(nodePath);
+                nodeData = new CaseNodeData(metadata);
+                nodeData.setErrorsOccurred(oldNodeData.getErrorsOccurred());
+                break;
+            case 1:
+                /*
+                 * Version 1 node data did not have a minor version number
+                 * field.
+                 */
+                oldNodeData.setMinorVersion(MINOR_VERSION);
+                nodeData = oldNodeData;
+                break;
+            default:
+                nodeData = oldNodeData;
+                break;
+        }
+        writeCaseNodeData(nodeData);
+        return nodeData;
+    }
+
+    /**
+     * Gets the metadata for a case.
+     *
+     * @param nodePath The case directory coordination service node path for the
+     *                 case.
+     *
+     * @return The case metadata.
+     *
+     * @throws CaseNodeDataException If the case metadata file or the case
+     *                               directory does not exist.
+     * @throws CaseMetadataException If the case metadata cannot be read.
+     */
+    private static CaseMetadata getCaseMetadata(String nodePath) throws CaseNodeDataException, CaseMetadataException {
+        final Path caseDirectoryPath = Paths.get(nodePath);
+        final File caseDirectory = caseDirectoryPath.toFile();
+        if (!caseDirectory.exists()) {
+            throw new CaseNodeDataException("Case directory does not exist"); // NON-NLS
+        }
+        final Path metadataFilePath = CaseMetadata.getCaseMetadataFilePath(caseDirectoryPath);
+        if (metadataFilePath == null) {
+            throw new CaseNodeDataException("Case meta data file does not exist"); // NON-NLS            
+        }
+        return new CaseMetadata(metadataFilePath);
+    }
+
+    /**
+     * Uses case metadata to construct the case data to store in a case
+     * directory coordination service node.
      *
      * @param metadata The case meta data.
      *
-     * @throws java.text.ParseException If there is an error parsing dates from
-     *                                  string representations of dates in the
-     *                                  meta data.
+     * @throws ParseException If there is an error parsing dates from string
+     *                        representations of dates in the meta data.
      */
-    public CaseNodeData(CaseMetadata metadata) throws ParseException {
-        this.version = CURRENT_VERSION;
+    private CaseNodeData(CaseMetadata metadata) throws ParseException {
+        this.version = MAJOR_VERSION;
         this.errorsOccurred = false;
         this.directory = Paths.get(metadata.getCaseDirectory());
         this.createDate = CaseMetadata.getDateFormat().parse(metadata.getCreatedDate());
@@ -82,51 +253,64 @@ public final class CaseNodeData {
         this.name = metadata.getCaseName();
         this.displayName = metadata.getCaseDisplayName();
         this.deletedItemFlags = 0;
+        this.minorVersion = MINOR_VERSION;
     }
 
     /**
-     * Uses coordination service node data to construct an object that converts
-     * data for a case directory lock coordination service node to and from byte
-     * arrays.
+     * Uses the raw bytes from a case directory coordination service node to
+     * construct a case node data object.
      *
      * @param nodeData The raw bytes received from the coordination service.
      *
      * @throws IOException If there is an error reading the node data.
      */
-    public CaseNodeData(byte[] nodeData) throws IOException {
+    private CaseNodeData(byte[] nodeData) throws IOException {
         if (nodeData == null || nodeData.length == 0) {
             throw new IOException(null == nodeData ? "Null node data byte array" : "Zero-length node data byte array");
         }
-        DataInputStream inputStream = new DataInputStream(new ByteArrayInputStream(nodeData));
-        this.version = inputStream.readInt();
-        if (this.version > 0) {
-            this.errorsOccurred = inputStream.readBoolean();
-        } else {
-            short legacyErrorsOccurred = inputStream.readByte();
-            this.errorsOccurred = (legacyErrorsOccurred < 0);
-        }
-        if (this.version > 0) {
-            this.directory = Paths.get(inputStream.readUTF());
-            this.createDate = new Date(inputStream.readLong());
-            this.lastAccessDate = new Date(inputStream.readLong());
-            this.name = inputStream.readUTF();
-            this.displayName = inputStream.readUTF();
-            this.deletedItemFlags = inputStream.readShort();
+        try (ByteArrayInputStream byteStream = new ByteArrayInputStream(nodeData); DataInputStream inputStream = new DataInputStream(byteStream)) {
+            this.version = inputStream.readInt();
+            if (this.version == 1) {
+                this.errorsOccurred = inputStream.readBoolean();
+            } else {
+                byte errorsOccurredByte = inputStream.readByte();
+                this.errorsOccurred = (errorsOccurredByte < 0);
+            }
+            if (this.version > 0) {
+                this.directory = Paths.get(inputStream.readUTF());
+                this.createDate = new Date(inputStream.readLong());
+                this.lastAccessDate = new Date(inputStream.readLong());
+                this.name = inputStream.readUTF();
+                this.displayName = inputStream.readUTF();
+                this.deletedItemFlags = inputStream.readShort();
+            }
+            if (this.version > 1) {
+                this.minorVersion = inputStream.readInt();
+            }
         }
     }
 
     /**
-     * Gets the node data version number of this node.
+     * Gets the version number of this node data.
      *
      * @return The version number.
      */
-    public int getVersion() {
+    private int getVersion() {
         return this.version;
     }
 
     /**
+     * Sets the minor version number of this node data.
+     *
+     * @param minorVersion The version number.
+     */
+    private void setMinorVersion(int minorVersion) {
+        this.minorVersion = minorVersion;
+    }
+
+    /**
      * Gets whether or not any errors occurred during the processing of any auto
-     * ingest job for the case represented by this node data.
+     * ingest job for the case.
      *
      * @return True or false.
      */
@@ -136,7 +320,7 @@ public final class CaseNodeData {
 
     /**
      * Sets whether or not any errors occurred during the processing of any auto
-     * ingest job for the case represented by this node data.
+     * ingest job for the case.
      *
      * @param errorsOccurred True or false.
      */
@@ -145,8 +329,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Gets the path of the case directory of the case represented by this node
-     * data.
+     * Gets the path of the case directory.
      *
      * @return The case directory path.
      */
@@ -155,17 +338,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Sets the path of the case directory of the case represented by this node
-     * data.
-     *
-     * @param caseDirectory The case directory path.
-     */
-    public void setDirectory(Path caseDirectory) {
-        this.directory = caseDirectory;
-    }
-
-    /**
-     * Gets the date the case represented by this node data was created.
+     * Gets the date the case was created.
      *
      * @return The create date.
      */
@@ -174,16 +347,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Sets the date the case represented by this node data was created.
-     *
-     * @param createDate The create date.
-     */
-    public void setCreateDate(Date createDate) {
-        this.createDate = new Date(createDate.getTime());
-    }
-
-    /**
-     * Gets the date the case represented by this node data last accessed.
+     * Gets the date the case was last accessed.
      *
      * @return The last access date.
      */
@@ -192,7 +356,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Sets the date the case represented by this node data was last accessed.
+     * Sets the date the case was last accessed.
      *
      * @param lastAccessDate The last access date.
      */
@@ -201,8 +365,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Gets the unique and immutable (user cannot change it) name of the case
-     * represented by this node data.
+     * Gets the unique and immutable name of the case.
      *
      * @return The case name.
      */
@@ -211,17 +374,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Sets the unique and immutable (user cannot change it) name of the case
-     * represented by this node data.
-     *
-     * @param name The case name.
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Gets the display name of the case represented by this node data.
+     * Gets the display name of the case.
      *
      * @return The case display name.
      */
@@ -230,7 +383,7 @@ public final class CaseNodeData {
     }
 
     /**
-     * Sets the display name of the case represented by this node data.
+     * Sets the display name of the case.
      *
      * @param displayName The case display name.
      */
@@ -239,39 +392,112 @@ public final class CaseNodeData {
     }
 
     /**
+     * Checks whether a given deleted item flag is set for the case.
+     *
+     * @param flag The flag to check.
+     *
+     * @return True or false.
+     */
+    public boolean isDeletedFlagSet(DeletedFlags flag) {
+        return (this.deletedItemFlags & flag.getValue()) == flag.getValue();
+    }
+
+    /**
+     * Sets a given deleted item flag.
+     *
+     * @param flag The flag to set.
+     */
+    public void setDeletedFlag(DeletedFlags flag) {
+        this.deletedItemFlags |= flag.getValue();
+    }
+
+    /**
      * Gets the node data as a byte array that can be sent to the coordination
      * service.
      *
      * @return The node data as a byte array.
      *
-     * @throws IOException If there is an error writing the node data.
+     * @throws IOException If there is an error writing the node data to the
+     *                     array.
      */
-    public byte[] toArray() throws IOException {
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        DataOutputStream outputStream = new DataOutputStream(byteStream);
-        outputStream.writeInt(this.version);
-        outputStream.writeBoolean(this.errorsOccurred);
-        outputStream.writeUTF(this.directory.toString());
-        outputStream.writeLong(this.createDate.getTime());
-        outputStream.writeLong(this.lastAccessDate.getTime());
-        outputStream.writeUTF(this.name);
-        outputStream.writeUTF(this.displayName);
-        outputStream.writeShort(this.deletedItemFlags);
-        outputStream.flush();
-        byteStream.flush();
-        return byteStream.toByteArray();
+    private byte[] toArray() throws IOException {
+        try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream(); DataOutputStream outputStream = new DataOutputStream(byteStream)) {
+            outputStream.writeInt(this.version);
+            outputStream.writeByte((byte) (this.errorsOccurred ? 0x80 : 0));
+            outputStream.writeUTF(this.directory.toString());
+            outputStream.writeLong(this.createDate.getTime());
+            outputStream.writeLong(this.lastAccessDate.getTime());
+            outputStream.writeUTF(this.name);
+            outputStream.writeUTF(this.displayName);
+            outputStream.writeShort(this.deletedItemFlags);
+            outputStream.writeInt(this.minorVersion);
+            outputStream.flush();
+            byteStream.flush();
+            return byteStream.toByteArray();
+        }
     }
 
-    public final static class InvalidDataException extends Exception {
+    /**
+     * Flags for the various components of a case that can be deleted.
+     */
+    public enum DeletedFlags {
+
+        TEXT_INDEX(1),
+        CASE_DB(2),
+        CASE_DIR(4),
+        DATA_SOURCES(8),
+        MANIFEST_FILE_NODES(16);
+
+        private final short value;
+
+        /**
+         * Constructs a flag for a case component that can be deleted.
+         *
+         * @param value
+         */
+        private DeletedFlags(int value) {
+            this.value = (short) value;
+        }
+
+        /**
+         * Gets the value of the flag.
+         *
+         * @return The value as a short.
+         */
+        private short getValue() {
+            return value;
+        }
+
+    }
+
+    /**
+     * Exception thrown when there is an error reading or writing case node
+     * data.
+     */
+    public static final class CaseNodeDataException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
-        private InvalidDataException(String message) {
+        /**
+         * Constructs an exception to throw when there is an error reading or
+         * writing case node data.
+         *
+         * @param message The exception message.
+         */
+        private CaseNodeDataException(String message) {
             super(message);
         }
 
-        private InvalidDataException(String message, Throwable cause) {
+        /**
+         * Constructs an exception to throw when there is an error reading or
+         * writing case node data.
+         *
+         * @param message The exception message.
+         * @param cause   The cause of the exception.
+         */
+        private CaseNodeDataException(String message, Throwable cause) {
             super(message, cause);
         }
     }
+
 }

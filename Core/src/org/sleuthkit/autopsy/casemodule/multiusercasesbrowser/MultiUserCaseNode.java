@@ -25,8 +25,10 @@ import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData.DeletedFlags;
 import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrowserCustomizer.Column;
 import org.sleuthkit.autopsy.datamodel.NodeProperty;
 
@@ -75,6 +77,21 @@ final class MultiUserCaseNode extends AbstractNode {
                 case LAST_ACCESS_DATE:
                     sheetSet.put(new NodeProperty<>(propName, propName, propName, caseNodeData.getLastAccessDate()));
                     break;
+                case MANIFEST_FILE_ZNODES_DELETE_STATUS:
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, isDeleted(DeletedFlags.MANIFEST_FILE_NODES)));
+                    break;
+                case DATA_SOURCES_DELETE_STATUS:
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, isDeleted(DeletedFlags.DATA_SOURCES)));
+                    break;
+                case TEXT_INDEX_DELETE_STATUS:
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, isDeleted(DeletedFlags.TEXT_INDEX)));
+                    break;
+                case CASE_DB_DELETE_STATUS:
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, isDeleted(DeletedFlags.CASE_DB)));
+                    break;
+                case CASE_DIR_DELETE_STATUS:
+                    sheetSet.put(new NodeProperty<>(propName, propName, propName, isDeleted(DeletedFlags.CASE_DIR)));
+                    break;
                 default:
                     break;
             }
@@ -93,6 +110,22 @@ final class MultiUserCaseNode extends AbstractNode {
     @Override
     public Action getPreferredAction() {
         return customizer.getPreferredAction(caseNodeData);
+    }
+
+    /**
+     * Interprets the deletion status of part of a case.
+     *
+     * @param flag         The coordination service node data deleted items flag
+     *                     to interpret.
+     *
+     * @return A string stating "True" or "False."
+     */
+    @NbBundle.Messages({
+        "MultiUserCaseNode.columnValue.true=True",
+        "MultiUserCaseNode.column.createTime=False",
+    })    
+    private String isDeleted(CaseNodeData.DeletedFlags flag) {
+        return caseNodeData.isDeletedFlagSet(flag) ? "True" : "False";
     }
 
 }

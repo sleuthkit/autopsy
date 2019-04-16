@@ -19,150 +19,76 @@
 package org.sleuthkit.autopsy.centralrepository.contentviewer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
+import org.apache.commons.io.FilenameUtils;
 
 /**
- * Model for cells in the files section of the other occurrences data content viewer
+ * Model for cells in the files section of the other occurrences data content
+ * viewer
  */
 public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
+    private final List<String> nodeKeys = new ArrayList<>();
+    private final Map<String, List<OtherOccurrenceNodeData>> nodeMap = new HashMap<>();
 
-    @Messages({"OtherOccurrencesFilesTableModel.device=Device",
-        "OtherOccurrencesFilesTableModel.dataSource=Data Source",
-        "OtherOccurrencesFilesTableModel.path=Path",
-        "OtherOccurrencesFilesTableModel.attribute=Matched Attribute",
-        "OtherOccurrencesFilesTableModel.value=Attribute Value",
-        "OtherOccurrencesFilesTableModel.known=Known",
-        "OtherOccurrencesFilesTableModel.comment=Comment",
-        "OtherOccurrencesFilesTableModel.noData=No Data.",})
-    enum TableColumns {
-        // Ordering here determines displayed column order in Content Viewer.
-        // If order is changed, update the CellRenderer to ensure correct row coloring.
-        ATTRIBUTE(Bundle.OtherOccurrencesFilesTableModel_attribute(), 75),
-        VALUE(Bundle.OtherOccurrencesFilesTableModel_value(), 190),
-        KNOWN(Bundle.OtherOccurrencesFilesTableModel_known(), 25),
-        FILE_PATH(Bundle.OtherOccurrencesFilesTableModel_path(), 470),
-        COMMENT(Bundle.OtherOccurrencesFilesTableModel_comment(), 190);
-        
-        private final String columnName;
-        private final int columnWidth;
-
-        TableColumns(String columnName, int columnWidth) {
-            this.columnName = columnName;
-            this.columnWidth = columnWidth;
-        }
-
-        public String columnName() {
-            return columnName;
-        }
-
-        public int columnWidth() {
-            return columnWidth;
-        }
-    };
-
-    private final List<OtherOccurrenceNodeData> nodeDataList = new ArrayList<>();
-
+    /**
+     * Create a table model for displaying file names
+     */
     OtherOccurrencesFilesTableModel() {
-        
+        // This constructor is intentionally empty.
     }
 
     @Override
     public int getColumnCount() {
-        return TableColumns.values().length;
-    }
-
-    /**
-     * Get the preferred width that has been configured for this column.
-     *
-     * A value of 0 means that no preferred width has been defined for this
-     * column.
-     *
-     * @param colIdx Column index
-     *
-     * @return preferred column width >= 0
-     */
-    public int getColumnPreferredWidth(int colIdx) {
-        return TableColumns.values()[colIdx].columnWidth();
+        return 1;
     }
 
     @Override
     public int getRowCount() {
-        return nodeDataList.size();
+        return nodeKeys.size();
     }
 
+    @Messages({"OtherOccurrencesFilesTableModel.fileName=File Name",
+        "OtherOccurrencesFilesTableModel.noData=No Data."})
     @Override
     public String getColumnName(int colIdx) {
-        return TableColumns.values()[colIdx].columnName();
+        return Bundle.OtherOccurrencesFilesTableModel_fileName();
     }
 
     @Override
     public Object getValueAt(int rowIdx, int colIdx) {
-        if (0 == nodeDataList.size()) {
+        //if anything would prevent this from working we will consider it no data for the sake of simplicity
+        if (nodeMap.isEmpty() || nodeKeys.isEmpty() || rowIdx < 0
+                || rowIdx >= nodeKeys.size() || nodeKeys.get(rowIdx) == null
+                || nodeMap.get(nodeKeys.get(rowIdx)) == null
+                || nodeMap.get(nodeKeys.get(rowIdx)).isEmpty()) {
             return Bundle.OtherOccurrencesFilesTableModel_noData();
         }
-
-        OtherOccurrenceNodeData nodeData = nodeDataList.get(rowIdx);
-        TableColumns columnId = TableColumns.values()[colIdx];
-        if (nodeData instanceof OtherOccurrenceNodeMessageData) {
-            return mapNodeMessageData((OtherOccurrenceNodeMessageData) nodeData, columnId);
-        }
-        return mapNodeInstanceData((OtherOccurrenceNodeInstanceData) nodeData, columnId);
+        return FilenameUtils.getName(((OtherOccurrenceNodeInstanceData) nodeMap.get(nodeKeys.get(rowIdx)).get(0)).getFilePath());
     }
 
     /**
-     * Map a column ID to the value in that cell for node message data.
+     * Get a list of OtherOccurrenceNodeData that exist for the file which
+     * corresponds to the Index
      *
-     * @param nodeData The node message data.
-     * @param columnId The ID of the cell column.
+     * @param rowIdx the index of the file to get data for
      *
-     * @return The value in the cell.
+     * @return a list of OtherOccurrenceNodeData for the specified index or an
+     *         empty list if no data was found
      */
-    private Object mapNodeMessageData(OtherOccurrenceNodeMessageData nodeData, TableColumns columnId) {
-        if (columnId == TableColumns.ATTRIBUTE) {
-            return nodeData.getDisplayMessage();
+    List<OtherOccurrenceNodeData> getListOfNodesForFile(int rowIdx) {
+        //if anything would prevent this from working return an empty list
+        if (nodeMap.isEmpty() || nodeKeys.isEmpty() || rowIdx < 0
+                || rowIdx >= nodeKeys.size() || nodeKeys.get(rowIdx) == null
+                || nodeMap.get(nodeKeys.get(rowIdx)) == null) {
+            return new ArrayList<>();
         }
-        return "";
-    }
-
-    /**
-     * Map a column ID to the value in that cell for node instance data.
-     *
-     * @param nodeData The node instance data.
-     * @param columnId The ID of the cell column.
-     *
-     * @return The value in the cell.
-     */
-    private Object mapNodeInstanceData(OtherOccurrenceNodeInstanceData nodeData, TableColumns columnId) {
-        String value = Bundle.OtherOccurrencesFilesTableModel_noData();
-
-        switch (columnId) {
-            case FILE_PATH:
-                value = nodeData.getFilePath();
-                break;
-            case ATTRIBUTE:
-                value = nodeData.getType();
-                break;
-            case VALUE:
-                value = nodeData.getValue();
-                break;
-            case KNOWN:
-                value = nodeData.getKnown().getName();
-                break;
-            case COMMENT:
-                value = nodeData.getComment();
-                break;
-            default: //Use default "No data" value.
-                break;
-        }
-        return value;
-    }
-
-    Object getRow(int rowIdx) {
-        return nodeDataList.get(rowIdx);
+        return nodeMap.get(nodeKeys.get(rowIdx));
     }
 
     @Override
@@ -176,15 +102,27 @@ public class OtherOccurrencesFilesTableModel extends AbstractTableModel {
      * @param newNodeData data to add to the table
      */
     void addNodeData(OtherOccurrenceNodeData newNodeData) {
-        nodeDataList.add(newNodeData);
+        String newNodeKey = createNodeKey((OtherOccurrenceNodeInstanceData) newNodeData);//FilenameUtils.getName(((OtherOccurrenceNodeInstanceData)newNodeData).getFilePath());
+        List<OtherOccurrenceNodeData> nodeList = nodeMap.get(newNodeKey);
+        if (nodeList == null) {
+            nodeKeys.add(newNodeKey);
+            nodeList = new ArrayList<>();
+        }
+        nodeList.add(newNodeData);
+        nodeMap.put(newNodeKey, nodeList);
         fireTableDataChanged();
+    }
+
+    private String createNodeKey(OtherOccurrenceNodeInstanceData nodeData) {
+        return nodeData.getCaseName() + nodeData.getDataSourceName() + nodeData.getDeviceID() + nodeData.getFilePath();
     }
 
     /**
      * Clear the node data table.
      */
     void clearTable() {
-        nodeDataList.clear();
+        nodeKeys.clear();
+        nodeMap.clear();
         fireTableDataChanged();
     }
 

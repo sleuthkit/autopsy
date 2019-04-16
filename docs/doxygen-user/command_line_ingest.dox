@@ -1,0 +1,49 @@
+/*! \page command_line_ingest_page Command Line Ingest
+
+\section command_line_ingest_overview Overview
+
+The Command Line Ingest feature allows you to process a \ref ds_page "data source" with Autopsy from the command line. Autopsy will automatically create a case with the settings you specify and will generate a \ref report_case_uco report.
+
+\section command_line_ingest_config Configuration
+
+Go to Tools->Options and then select the "Command Line Ingest" tab. 
+
+\image html command_line_ingest_options.png
+
+First, enter the output folder for the cases. Next, use the button to open the ingest module settings. Here you can configure the \ref ingest_page settings that will be used when running from the command line. 
+
+\section command_line_ingest_run Running Autopsy
+
+In a command prompt, navigate to the Autopsy bin folder. This is normally located at "C:\Program Files\Autopsy-version\bin".
+
+\image html command_line_ingest_bin_dir.png
+
+Now run autopsy with the following parameters, substituting the path to your data source and your desired case name. Both \ref ds_img "disk images" and \ref ds_log "logical files" are supported. Note that the case name must be unique for each run.
+
+\verbatim
+autopsy64.exe --inputPath=(data source path) --caseName=(case name) --runFromCommandLine=true
+\endverbatim
+
+In the example below, we're going to process a disk image with path "R:\work\images\xp-sp3-v4.E01" and name the case "xpCase".
+
+\image html command_line_ingest_command_entry.png
+
+You'll start seeing output in the command prompt and the Autopsy UI will open. In the middle of the UI you'll see the following dialog:
+
+\image html command_line_ingest_dialog.png
+
+Once Autopsy finishes processing you'll be back at the command window. Press enter to return to the command prompt.
+
+\image html command_line_ingest_console_output.png
+
+\section command_line_ingest_results Viewing Results
+
+You can open the case created on the command line like any other Autopsy case. Simply go to "Open Case" and then browse to the output folder you set up in the \ref command_line_ingest_config section and look for the folder starting with your case name. It will have a timestamp appended to the name you specified.
+
+\image html command_line_ingest_open_case.png
+
+If you are only interested in the \ref report_case_uco report then you don't need to open Autopsy. The report can be found in the case folder under "Reports\CASE-UCO" and then an automatically generated data source name containing the ID and timestamp.
+
+\image html command_line_ingest_report.png
+
+*/

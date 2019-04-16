@@ -50,14 +50,6 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
-                    <code-name-base>org.netbeans.swing.outline</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <specification-version>1.34.1</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
                     <code-name-base>org.openide.awt</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -141,9 +133,107 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
+                <package>com.ctc.wstx.api</package>
+                <package>com.ctc.wstx.cfg</package>
+                <package>com.ctc.wstx.compat</package>
+                <package>com.ctc.wstx.dom</package>
+                <package>com.ctc.wstx.dtd</package>
+                <package>com.ctc.wstx.ent</package>
+                <package>com.ctc.wstx.evt</package>
+                <package>com.ctc.wstx.exc</package>
+                <package>com.ctc.wstx.io</package>
+                <package>com.ctc.wstx.msv</package>
+                <package>com.ctc.wstx.sax</package>
+                <package>com.ctc.wstx.sr</package>
+                <package>com.ctc.wstx.stax</package>
+                <package>com.ctc.wstx.sw</package>
+                <package>com.ctc.wstx.util</package>
                 <package>org.apache.commons.logging.impl</package>
+                <package>org.apache.http</package>
+                <package>org.apache.http.annotation</package>
+                <package>org.apache.http.auth</package>
+                <package>org.apache.http.auth.params</package>
+                <package>org.apache.http.client</package>
+                <package>org.apache.http.client.config</package>
+                <package>org.apache.http.client.entity</package>
+                <package>org.apache.http.client.methods</package>
+                <package>org.apache.http.client.params</package>
+                <package>org.apache.http.client.protocol</package>
+                <package>org.apache.http.client.utils</package>
+                <package>org.apache.http.concurrent</package>
+                <package>org.apache.http.config</package>
+                <package>org.apache.http.conn</package>
+                <package>org.apache.http.conn.params</package>
+                <package>org.apache.http.conn.routing</package>
+                <package>org.apache.http.conn.scheme</package>
+                <package>org.apache.http.conn.socket</package>
+                <package>org.apache.http.conn.ssl</package>
+                <package>org.apache.http.conn.util</package>
+                <package>org.apache.http.cookie</package>
+                <package>org.apache.http.cookie.params</package>
+                <package>org.apache.http.entity</package>
+                <package>org.apache.http.entity.mime</package>
+                <package>org.apache.http.entity.mime.content</package>
+                <package>org.apache.http.impl</package>
+                <package>org.apache.http.impl.auth</package>
+                <package>org.apache.http.impl.bootstrap</package>
+                <package>org.apache.http.impl.client</package>
+                <package>org.apache.http.impl.conn</package>
+                <package>org.apache.http.impl.conn.tsccm</package>
+                <package>org.apache.http.impl.cookie</package>
+                <package>org.apache.http.impl.entity</package>
+                <package>org.apache.http.impl.execchain</package>
+                <package>org.apache.http.impl.io</package>
+                <package>org.apache.http.impl.pool</package>
+                <package>org.apache.http.io</package>
+                <package>org.apache.http.message</package>
+                <package>org.apache.http.params</package>
+                <package>org.apache.http.pool</package>
+                <package>org.apache.http.protocol</package>
+                <package>org.apache.http.ssl</package>
+                <package>org.apache.http.util</package>
+                <package>org.apache.jute</package>
+                <package>org.apache.jute.compiler</package>
+                <package>org.apache.jute.compiler.generated</package>
+                <package>org.apache.solr.client.solrj</package>
+                <package>org.apache.solr.client.solrj.beans</package>
+                <package>org.apache.solr.client.solrj.impl</package>
+                <package>org.apache.solr.client.solrj.request</package>
+                <package>org.apache.solr.client.solrj.response</package>
+                <package>org.apache.solr.client.solrj.util</package>
+                <package>org.apache.solr.common</package>
+                <package>org.apache.solr.common.cloud</package>
+                <package>org.apache.solr.common.luke</package>
+                <package>org.apache.solr.common.params</package>
+                <package>org.apache.solr.common.util</package>
                 <package>org.apache.tika.parser.txt</package>
+                <package>org.apache.zookeeper</package>
+                <package>org.apache.zookeeper.client</package>
+                <package>org.apache.zookeeper.common</package>
+                <package>org.apache.zookeeper.data</package>
+                <package>org.apache.zookeeper.jmx</package>
+                <package>org.apache.zookeeper.proto</package>
+                <package>org.apache.zookeeper.server</package>
+                <package>org.apache.zookeeper.server.auth</package>
+                <package>org.apache.zookeeper.server.persistence</package>
+                <package>org.apache.zookeeper.server.quorum</package>
+                <package>org.apache.zookeeper.server.quorum.flexible</package>
+                <package>org.apache.zookeeper.server.upgrade</package>
+                <package>org.apache.zookeeper.server.util</package>
+                <package>org.apache.zookeeper.txn</package>
+                <package>org.apache.zookeeper.version</package>
+                <package>org.apache.zookeeper.version.util</package>
+                <package>org.codehaus.stax2</package>
+                <package>org.codehaus.stax2.evt</package>
+                <package>org.codehaus.stax2.io</package>
+                <package>org.codehaus.stax2.ri</package>
+                <package>org.codehaus.stax2.validation</package>
+                <package>org.noggit</package>
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
+                <package>org.slf4j</package>
+                <package>org.slf4j.event</package>
+                <package>org.slf4j.helpers</package>
+                <package>org.slf4j.spi</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-validator-1.5.1-sources.jar</runtime-relative-path>
@@ -416,6 +506,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jmatio-1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jmatio-1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/wstx-asl-3.2.7.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\wstx-asl-3.2.7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-csv-1.0.jar</runtime-relative-path>

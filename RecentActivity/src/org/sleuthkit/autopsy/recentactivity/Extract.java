@@ -179,7 +179,7 @@ abstract class Extract {
     protected List<HashMap<String, Object>> dbConnect(String path, String query) {
 
         String connectionString = "jdbc:sqlite:" + path; //NON-NLS
-        try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
+        try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString);
                 ResultSet temprs = tempdbconnect.executeQry(query);) {
             return this.resultSetToArrayList(temprs);
         } catch (SQLException ex) {
@@ -384,6 +384,7 @@ abstract class Extract {
      * @param accessTime  Time the download occurred
      * @param domain      Domain of the URL
      * @param programName Name of the module creating the attribute
+     *
      * @return A collection of attributes of a downloaded file
      */
     protected Collection<BlackboardAttribute> createDownloadAttributes(String path, Long pathID, String url, Long accessTime, String domain, String programName) {
@@ -418,11 +419,12 @@ abstract class Extract {
 
         return bbattributes;
     }
-    
+
     /**
      * Creates a list of the attributes for source of a downloaded file
      *
      * @param url source URL of the downloaded file
+     *
      * @return A collection of attributes for source of a downloaded file
      */
     protected Collection<BlackboardAttribute> createDownloadSourceAttributes(String url) {

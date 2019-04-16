@@ -31,23 +31,28 @@ import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrows
  */
 final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
 
-    private final DeleteCaseInputDirectoriesAction deleteCaseInputAction;
-    private final DeleteCasesForReprocessingAction deleteCaseOutputAction;
-    private final DeleteCasesAction deleteCaseAction;
+    private final DeleteCaseAction deleteCaseAction;
+    private final DeleteCaseInputAction deleteCaseInputAction;
+    private final DeleteCaseOutputAction deleteCaseOutputAction;
+    private final DeleteCaseInputAndOutputAction deleteCaseInputAndOutputAction;
 
     /**
      * Constructs a customizer for the multi-user case browser panel used in the
      * administrative dashboard for auto ingest cases to present a tabular view
      * of the multi-user cases known to the coordination service.
+     *
+     * @param executor An executor for tasks for actions that do work in the
+     *                 background.
      */
     CasesDashboardCustomizer() {
         /*
          * These actions are shared by all nodes in order to support multiple
          * selection.
          */
-        deleteCaseInputAction = new DeleteCaseInputDirectoriesAction();
-        deleteCaseOutputAction = new DeleteCasesForReprocessingAction();
-        deleteCaseAction = new DeleteCasesAction();
+        deleteCaseAction = new DeleteCaseAction();
+        deleteCaseInputAction = new DeleteCaseInputAction();
+        deleteCaseOutputAction = new DeleteCaseOutputAction();
+        deleteCaseInputAndOutputAction = new DeleteCaseInputAndOutputAction();
     }
 
     @Override
@@ -56,6 +61,13 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         properties.add(Column.CREATE_DATE);
         properties.add(Column.LAST_ACCESS_DATE);
         properties.add(Column.DIRECTORY);
+        properties.add(Column.MANIFEST_FILE_ZNODES_DELETE_STATUS);
+        if (AutoIngestDashboard.extendedFeaturesAreEnabled()) {
+            properties.add(Column.DATA_SOURCES_DELETE_STATUS);
+        }
+        properties.add(Column.TEXT_INDEX_DELETE_STATUS);
+        properties.add(Column.CASE_DB_DELETE_STATUS);
+        properties.add(Column.CASE_DIR_DELETE_STATUS);
         return properties;
     }
 
@@ -76,10 +88,13 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         List<Action> actions = new ArrayList<>();
         actions.add(new OpenCaseAction(nodeData));
         actions.add(new OpenAutoIngestLogAction(nodeData));
-        actions.add(deleteCaseInputAction);
-        actions.add(deleteCaseOutputAction);
-        actions.add(deleteCaseAction);
-        actions.add(new ShowCaseDeletionStatusAction(nodeData));
+        if (AutoIngestDashboard.extendedFeaturesAreEnabled()) {
+            actions.add(deleteCaseInputAction);
+            actions.add(deleteCaseOutputAction);
+            actions.add(deleteCaseInputAndOutputAction);
+        } else {
+            actions.add(deleteCaseAction);
+        }
         return actions;
     }
 
