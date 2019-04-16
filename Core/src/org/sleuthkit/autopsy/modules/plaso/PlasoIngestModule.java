@@ -95,12 +95,14 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         this.settings = settings;
     }
 
-    @NbBundle.Messages({"PlasoIngestModule.error.running=Error running Plaso, see log file."})
+    @NbBundle.Messages({"PlasoIngestModule.error.running=Error running Plaso, see log file.",
+        "PlasoIngestModule.executable.not.found=Plaso Executable Not Found.",
+        "PlasoIngestModule.requires.windows=Plaso module requires windows."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
         if (false == PlatformUtil.isWindowsOS()) {
-            throw new IngestModuleException("Plaso module requires windows.");
+            throw new IngestModuleException(Bundle.PlasoIngestModule_requires_windows());
         }
 
         try {
@@ -108,8 +110,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             psortExecutable = locateExecutable(PSORT_EXECUTABLE);
         } catch (FileNotFoundException exception) {
             logger.log(Level.WARNING, "Plaso executable not found.", exception); //NON-NLS
-            MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
-            throw new IngestModuleException("Plaso Executable Not Found.", exception); //NON-NLS
+            throw new IngestModuleException(Bundle.PlasoIngestModule_executable_not_found(), exception);
         }
     }
 
@@ -138,7 +139,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             return ProcessResult.OK;
         }
         image = (Image) dataSource;
-        
+
         String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z").format(System.currentTimeMillis());//NON-NLS
         Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime);
         try {
