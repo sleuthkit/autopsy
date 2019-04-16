@@ -33,6 +33,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import static java.util.Objects.nonNull;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -43,7 +44,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
@@ -67,7 +67,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.timeline.EventType;
 
 /**
- * Data source ingest module that runs plaso against the image
+ * Data source ingest module that runs Plaso against the image.
  */
 public class PlasoIngestModule implements DataSourceIngestModule {
 
@@ -79,15 +79,17 @@ public class PlasoIngestModule implements DataSourceIngestModule {
     private static final String PLASO32 = "plaso-20180818-win32";//NON-NLS
     private static final String LOG2TIMELINE_EXECUTABLE = "Log2timeline.exe";//NON-NLS
     private static final String PSORT_EXECUTABLE = "psort.exe";//NON-NLS
-    private static final String COOKIE = "cookie";
+    private static final String COOKIE = "cookie";//NON-NLS
+    private static final int LOG2TIMELINE_WORKERS = 2;
 
     private File log2TimeLineExecutable;
     private File psortExecutable;
 
-    private IngestJobContext context;
     private final PlasoModuleSettings settings;
+    private IngestJobContext context;
     private Case currentCase;
     private FileManager fileManager;
+
     private Image image;
     private AbstractFile previousFile = null; // cache used when looking up files in Autopsy DB
 
@@ -95,12 +97,14 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         this.settings = settings;
     }
 
-    @NbBundle.Messages({"PlasoIngestModule.error.running=Error running Plaso, see log file.",
+    @NbBundle.Messages({
         "PlasoIngestModule.executable.not.found=Plaso Executable Not Found.",
-        "PlasoIngestModule.requires.windows=Plaso module requires windows."})
+        "PlasoIngestModule.requires.windows=Plaso module requires windows.",
+        "PlasoIngestModule.dataSource.not.an.image=Datasource is not an Image."})
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         this.context = context;
+
         if (false == PlatformUtil.isWindowsOS()) {
             throw new IngestModuleException(Bundle.PlasoIngestModule_requires_windows());
         }
@@ -112,85 +116,76 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             logger.log(Level.WARNING, "Plaso executable not found.", exception); //NON-NLS
             throw new IngestModuleException(Bundle.PlasoIngestModule_executable_not_found(), exception);
         }
+
+        Content dataSource = context.getDataSource();
+        if (!(dataSource instanceof Image)) {
+            throw new IngestModuleException(Bundle.PlasoIngestModule_dataSource_not_an_image());
+        }
+        image = (Image) dataSource;
     }
 
     @NbBundle.Messages({
         "PlasoIngestModule.error.running.log2timeline=Error running log2timeline, see log file.",
         "PlasoIngestModule.error.running.psort=Error running Psort, see log file.",
+        "PlasoIngestModule.error.creating.output.dir=Error creating Plaso module output directory.",
+        "PlasoIngestModule.starting.log2timeline=Starting Log2timeline",
+        "PlasoIngestModule.running.psort=Running Psort",
         "PlasoIngestModule.log2timeline.cancelled=Log2timeline run was canceled",
         "PlasoIngestModule.psort.cancelled=psort run was canceled",
         "PlasoIngestModule.bad.imageFile=Cannot find image file name and path",
-        "PlasoIngestModule.dataSource.not.an.image=Datasource is not an Image.",
-        "PlasoIngestModule.starting.log2timeline=Starting Log2timeline",
-        "PlasoIngestModule.starting.psort=Starting Psort",
         "PlasoIngestModule.completed=Plaso Processing Completed",
-        "PlasoIngestModule.error.creating.output.dir=Error creating Plaso module output directory.",
         "PlasoIngestModule.has.run=Plaso Plugin has been run."})
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress statusHelper) {
+        assert dataSource.equals(image);
+
         statusHelper.switchToDeterminate(100);
         currentCase = Case.getCurrentCase();
         fileManager = currentCase.getServices().getFileManager();
 
-        //TODO: why don't we do this check in the starup method?
-        if (!(dataSource instanceof Image)) {
-            logger.log(Level.SEVERE, Bundle.PlasoIngestModule_dataSource_not_an_image());
-            MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
-            return ProcessResult.OK;
-        }
-        image = (Image) dataSource;
-
-        String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z").format(System.currentTimeMillis());//NON-NLS
+        String currentTime = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss z", Locale.US).format(System.currentTimeMillis());//NON-NLS
         Path moduleOutputPath = Paths.get(currentCase.getModuleDirectory(), PLASO, currentTime);
         try {
             Files.createDirectories(moduleOutputPath);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Error creating Plaso module output directory.", ex); //NON-NLS
-            MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_creating_output_dir());
             return ProcessResult.ERROR;
         }
 
+        // Run log2timeline
         logger.log(Level.INFO, "Starting Plaso Run.");//NON-NLS
         statusHelper.progress(Bundle.PlasoIngestModule_starting_log2timeline(), 0);
         ProcessBuilder log2TimeLineCommand = buildLog2TimeLineCommand(moduleOutputPath, image);
         try {
-            // Run log2timeline
             Process log2TimeLineProcess = log2TimeLineCommand.start();
-
             try (BufferedReader log2TimeLineOutpout = new BufferedReader(new InputStreamReader(log2TimeLineProcess.getInputStream()))) {
                 L2TStatusProcessor statusReader = new L2TStatusProcessor(log2TimeLineOutpout, statusHelper, moduleOutputPath);
                 new Thread(statusReader, "log2timeline status reader").start();  //NON-NLS
-
                 ExecUtil.waitForTermination(LOG2TIMELINE_EXECUTABLE, log2TimeLineProcess, new DataSourceIngestModuleProcessTerminator(context));
                 statusReader.cancel();
             }
 
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, "Log2timeline run was canceled"); //NON-NLS
-                MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_log2timeline_cancelled());
                 return ProcessResult.OK;
             }
-
             if (Files.notExists(moduleOutputPath.resolve(PLASO))) {
                 logger.log(Level.WARNING, "Error running log2timeline: there was no storage file."); //NON-NLS
-                MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_log2timeline());
                 return ProcessResult.ERROR;
             }
 
             // sort the output
-            statusHelper.progress(Bundle.PlasoIngestModule_starting_psort(), 33);
+            statusHelper.progress(Bundle.PlasoIngestModule_running_psort(), 33);
             ProcessBuilder psortCommand = buildPsortCommand(moduleOutputPath);
             ExecUtil.execute(psortCommand, new DataSourceIngestModuleProcessTerminator(context));
 
             if (context.dataSourceIngestIsCancelled()) {
                 logger.log(Level.INFO, "psort run was canceled"); //NON-NLS
-                MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_psort_cancelled());
                 return ProcessResult.OK;
             }
             Path plasoFile = moduleOutputPath.resolve("plasodb.db3");  //NON-NLS
             if (Files.notExists(plasoFile)) {
                 logger.log(Level.SEVERE, "Error running Psort: there was no sqlite db file."); //NON-NLS
-                MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running_psort());
                 return ProcessResult.ERROR;
             }
 
@@ -198,8 +193,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
             createPlasoArtifacts(plasoFile.toString(), statusHelper);
 
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, Bundle.PlasoIngestModule_error_running(), ex);//NON-NLS
-            MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_error_running());
+            logger.log(Level.SEVERE, "Error running Plaso.", ex);//NON-NLS
             return ProcessResult.ERROR;
         }
 
@@ -226,22 +220,19 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 "--hashers", "none", //NON-NLS
                 "--parsers", "\"" + parsersString + "\"",//NON-NLS
                 "--no_dependencies_check", //NON-NLS
+                "--workers", String.valueOf(LOG2TIMELINE_WORKERS),//NON-NLS
                 moduleOutputPath.resolve(PLASO).toString(),
                 image.getPaths()[0]
         );
-        processBuilder.redirectError(new File(moduleOutputPath + File.separator + "log2timeline_err.txt"));  //NON-NLS
-
+        processBuilder.redirectError(moduleOutputPath.resolve("log2timeline_err.txt").toFile());  //NON-NLS
         return processBuilder;
     }
 
     static private ProcessBuilder buildProcessWithRunAsInvoker(String... commandLine) {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-        /*
-         * Add an environment variable to force log2timeline/psort to run with
-         * the same permissions Autopsy uses.
-         */
+        /* Add an environment variable to force log2timeline/psort to run with
+         * the same permissions Autopsy uses. */
         processBuilder.environment().put("__COMPAT_LAYER", "RunAsInvoker"); //NON-NLS
-
         return processBuilder;
     }
 
@@ -253,9 +244,8 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 moduleOutputPath.resolve(PLASO).toString()
         );
 
-        processBuilder.redirectOutput(moduleOutputPath.resolve("psort_output.txt").toFile());
+        processBuilder.redirectOutput(moduleOutputPath.resolve("psort_output.txt").toFile()); //NON-NLS
         processBuilder.redirectError(moduleOutputPath.resolve("psort_err.txt").toFile());  //NON-NLS
-
         return processBuilder;
     }
 
@@ -274,33 +264,29 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         "PlasoIngestModule.exception.posting.artifact=Exception Posting artifact.",
         "PlasoIngestModule.event.datetime=Event Date Time",
         "PlasoIngestModule.event.description=Event Description",
-        "PlasoIngestModule.exception.adding.artifact=Exception Adding Artifact",
-        "PlasoIngestModule.exception.database.error=Error while trying to read into a sqlite db.",
-        "PlasoIngestModule.error.posting.artifact=Error Posting Artifact  ",
         "PlasoIngestModule.create.artifacts.cancelled=Cancelled Plaso Artifact Creation ",
         "# {0} - file that events are from",
         "PlasoIngestModule.artifact.progress=Adding events to case: {0}"})
     private void createPlasoArtifacts(String plasoDb, DataSourceIngestModuleProgress statusHelper) {
         Blackboard blackboard = currentCase.getSleuthkitCase().getBlackboard();
 
-        String sqlStatement = "SELECT substr(filename,1) AS filename, "
-                              + "   strftime('%s', datetime) AS epoch_date,"
+        String sqlStatement = "SELECT substr(filename,1) AS  filename, "
+                              + "   strftime('%s', datetime) AS epoch_date, "
                               + "   description, "
                               + "   source, "
                               + "   type, "
                               + "   sourcetype "
                               + " FROM log2timeline "
-                              + " WHERE source NOT IN ('FILE',"
-                              + "                      'WEBHIST') " // bad dates and duplicates with what we have.
-                              + "   AND sourcetype NOT IN ('UNKNOWN',"
-                              + "                          'PE Import Time');";    // lots of bad dates //NON-NLS
+                              + " WHERE source NOT IN ('FILE', "
+                              + "                       'WEBHIST') " // bad dates and duplicates with what we have.
+                              + "   AND sourcetype NOT IN ('UNKNOWN', "
+                              + "                          'PE Import Time');"; // lots of bad dates //NON-NLS
+
         try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + plasoDb); //NON-NLS
                 ResultSet resultSet = tempdbconnect.executeQry(sqlStatement)) {
-
             while (resultSet.next()) {
                 if (context.dataSourceIngestIsCancelled()) {
                     logger.log(Level.INFO, "Cancelled Plaso Artifact Creation."); //NON-NLS
-                    MessageNotifyUtil.Message.info(Bundle.PlasoIngestModule_create_artifacts_cancelled());
                     return;
                 }
 
@@ -308,7 +294,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 statusHelper.progress(Bundle.PlasoIngestModule_artifact_progress(currentFileName), 66);
                 Content resolvedFile = getAbstractFile(currentFileName);
                 if (resolvedFile == null) {
-                    logger.log(Level.INFO, "File " + currentFileName + " from Plaso output not found in case.  Associating it with the data source instead.");//NON-NLS
+                    logger.log(Level.INFO, "File {0} from Plaso output not found in case.  Associating it with the data source instead.", currentFileName);//NON-NLS
                     resolvedFile = image;
                 }
 
@@ -332,18 +318,17 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                          * this new artifact */
                         blackboard.postArtifact(bbart, MODULE_NAME);
                     } catch (BlackboardException ex) {
-                        logger.log(Level.SEVERE, Bundle.PlasoIngestModule_exception_posting_artifact(), ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Error Posting Artifact.", ex);//NON-NLS
                     }
                 } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, Bundle.PlasoIngestModule_exception_adding_artifact(), ex);
+                    logger.log(Level.SEVERE, "Exception Adding Artifact.", ex);//NON-NLS
                 }
             }
         } catch (SQLException ex) {
-            logger.log(Level.SEVERE, Bundle.PlasoIngestModule_exception_database_error(), ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error while trying to read into a sqlite db.", ex);//NON-NLS
         }
     }
 
-    @NbBundle.Messages({"PlasoIngestModule_exception_find_file=Exception finding file."})
     private AbstractFile getAbstractFile(String file) {
 
         Path path = Paths.get(file);
@@ -354,6 +339,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         }
 
         // check the cached file
+        //TODO: would we reduce 'cache misses' if we retrieved the events sorted by file?  Is that overhead worth it?
         if (previousFile != null
             && previousFile.getName().equalsIgnoreCase(fileName)
             && previousFile.getParentPath().equalsIgnoreCase(filePath)) {
@@ -362,7 +348,7 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         }
         try {
             List<AbstractFile> abstractFiles = fileManager.findFiles(fileName, filePath);
-            if (abstractFiles.size() == 1) {
+            if (abstractFiles.size() == 1) {// TODO: why do we bother with this check.  also we don't cache the file...
                 return abstractFiles.get(0);
             }
             for (AbstractFile resolvedFile : abstractFiles) {
@@ -374,24 +360,38 @@ public class PlasoIngestModule implements DataSourceIngestModule {
                 }
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, Bundle.PlasoIngestModule_exception_find_file(), ex);
+            logger.log(Level.SEVERE, "Exception finding file.", ex);
         }
         return null;
     }
 
-    private long findEventSubtype(String plasoFileName, ResultSet row) throws SQLException {
-        switch (row.getString("source")) {//NON-NLS
-            case "WEBHIST":        //These shouldn't actually be present, but keeping the logic just in case some slip through.
-                return (plasoFileName.toLowerCase().contains(COOKIE) || row.getString("type").toLowerCase().contains(COOKIE))
-                        ? EventType.WEB_COOKIE.getTypeID()
-                        : EventType.WEB_HISTORY.getTypeID();
-            case "EVT"://NON-NLS
-            case "LOG"://NON-NLS
+    /**
+     * Determine the event_type_id of the event from the plaso information.
+     *
+     * @param fileName The name of the file this event is from.
+     * @param row      The row returned from the log2timeline table of th eplaso
+     *                 output.
+     *
+     * @return the event_type_id of the EventType of the given event.
+     *
+     * @throws SQLException
+     */
+    private long findEventSubtype(String fileName, ResultSet row) throws SQLException {
+        switch (row.getString("source")) {
+            case "WEBHIST":  //These shouldn't actually be present, but keeping the logic just in case...
+                if (fileName.toLowerCase().contains(COOKIE)
+                    || row.getString("type").toLowerCase().contains(COOKIE)) {//NON-NLS
+                    return EventType.WEB_COOKIE.getTypeID();
+                } else {
+                    return EventType.WEB_HISTORY.getTypeID();
+                }
+            case "EVT":
+            case "LOG":
                 return EventType.LOG_ENTRY.getTypeID();
-            case "REG"://NON-NLS
+            case "REG":
                 switch (row.getString("sourcetype").toLowerCase()) {//NON-NLS
-                    case "unknown : usb entries"://NON-NLS
-                    case "unknown : usbstor entries"://NON-NLS
+                    case "unknown : usb entries":
+                    case "unknown : usbstor entries":
                         return EventType.DEVICES_ATTACHED.getTypeID();
                     default:
                         return EventType.REGISTRY.getTypeID();
@@ -422,12 +422,12 @@ public class PlasoIngestModule implements DataSourceIngestModule {
         @Override
         public void run() {
             try (BufferedWriter writer = Files.newBufferedWriter(outputPath.resolve("log2timeline_output.txt"));) {//NON-NLS
-                String line;
-                while (cancelled == false
-                       && nonNull(line = log2TimeLineOutpout.readLine())) {
+                String line = log2TimeLineOutpout.readLine();
+                while (cancelled == false && nonNull(line)) {
                     statusHelper.progress(line);
                     writer.write(line);
                     writer.newLine();
+                    line = log2TimeLineOutpout.readLine();
                 }
                 writer.flush();
             } catch (IOException ex) {
