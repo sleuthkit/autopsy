@@ -50,7 +50,7 @@ You can also add additional data sources to the portable case if you wish. The c
 
 \section portable_case_inside Inside a Portable Case
 
-A portable case is a folder, just like any other Autopsy case. It contains a SQLite database (just like a normal Autopsy case) with rows for only the items that the user selected to be in the portable case.  For example, if a user tagged a file and included that in the Portable Case, the database will have a row for the tag, a row for the file, a row for the file system the file was in, a row for the volume system, a row for the image etc. Everything assocated with the tag is in there and you should see those items in Autopsy. 
+A portable case is a folder, just like any other Autopsy case. It contains a SQLite database (just like a normal Autopsy case) with rows for only the items that the user selected to be in the portable case.  For example, if a user tagged a file and included that in the portable case, the database will have a row for the tag, a row for the file, a row for the file system the file was in, a row for the volume system, a row for the image etc. Everything assocated with the tag is in there and you should see those items in Autopsy. 
 
 A copy of any tagged file is made into the case folder and the SQLite database will refer to it.  This allows you to examine the file contents without the original data source. 
 
