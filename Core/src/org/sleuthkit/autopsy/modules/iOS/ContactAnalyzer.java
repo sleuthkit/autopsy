@@ -35,12 +35,12 @@ import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -74,8 +74,8 @@ final class ContactAnalyzer {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
- 
-        blackboard = openCase.getServices().getBlackboard();
+
+        blackboard = openCase.getSleuthkitCase().getBlackboard();
         List<AbstractFile> absFiles;
         try {
             SleuthkitCase skCase = openCase.getSleuthkitCase();
@@ -112,7 +112,7 @@ final class ContactAnalyzer {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
-        
+
         Case currentCase;
         try {
             currentCase = Case.getCurrentCaseThrows();
@@ -120,7 +120,7 @@ final class ContactAnalyzer {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return;
         }
-        
+
         Statement statement = null;
         try {
             Class.forName("org.sqlite.JDBC"); //NON-NLS //load JDBC driver
@@ -174,8 +174,12 @@ final class ContactAnalyzer {
 
                     bba.addAttributes(attributes);
                     try {
-                        // index the artifact for keyword search
-                        blackboard.indexArtifact(bba);
+                        /*
+                         * post the artifact which will index the artifact for
+                         * keyword search, and fire an event to notify UI of
+                         * this new artifact
+                         */
+                        blackboard.postArtifact(bba, moduleName);
                     } catch (Blackboard.BlackboardException ex) {
                         logger.log(Level.SEVERE, "Unable to index blackboard artifact " + bba.getArtifactID(), ex); //NON-NLS
                         MessageNotifyUtil.Notify.error(

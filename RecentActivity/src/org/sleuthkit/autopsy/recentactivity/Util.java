@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
- * Copyright 2012-2018 Basis Technology Corp.
- * 
+ *
+ * Copyright 2012-2019 Basis Technology Corp.
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,9 @@
  */
 package org.sleuthkit.autopsy.recentactivity;
 
-import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -35,25 +32,27 @@ import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
-import java.util.StringTokenizer;
+import java.util.Objects;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.collections4.CollectionUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.SQLiteDBConnect;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
- * @author Alex
+ *
  */
 class Util {
 
-    private static Logger logger = Logger.getLogger(Util.class.getName());
+    private static final Logger logger = Logger.getLogger(Util.class.getName());
 
     private Util() {
     }
@@ -71,32 +70,19 @@ class Util {
     }
 
     public static String readFile(String path) throws IOException {
-        FileInputStream stream = new FileInputStream(new File(path));
-        try {
+        try (FileInputStream stream = new FileInputStream(new File(path))) {
             FileChannel fc = stream.getChannel();
             MappedByteBuffer bb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
             /*
              * Instead of using default, pass in a decoder.
              */
             return Charset.defaultCharset().decode(bb).toString();
-        } finally {
-            stream.close();
         }
     }
 
     public static String getFileName(String value) {
-        String filename = "";
-        String filematch = "^([a-zA-Z]\\:)(\\\\[^\\\\/:*?<>\"|]*(?<!\\[ \\]))*(\\.[a-zA-Z]{2,6})$"; //NON-NLS
-
-        Pattern p = Pattern.compile(filematch, Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.COMMENTS);
-        Matcher m = p.matcher(value);
-        if (m.find()) {
-            filename = m.group(1);
-
-        }
         int lastPos = value.lastIndexOf('\\');
-        filename = (lastPos < 0) ? value : value.substring(lastPos + 1);
-        return filename.toString();
+        return (lastPos < 0) ? value : value.substring(lastPos + 1);
     }
 
     public static String getPath(String txt) {
@@ -138,7 +124,7 @@ class Util {
             logger.log(Level.WARNING, "Error fetching 'index.data' files for Internet Explorer history."); //NON-NLS
         }
 
-        if (files == null || files.isEmpty()) {
+        if (CollectionUtils.isEmpty(files)) {
             return -1;
         }
         return files.get(0).getId();
@@ -146,37 +132,17 @@ class Util {
 
     public static boolean checkColumn(String column, String tablename, String connection) {
         String query = "PRAGMA table_info(" + tablename + ")"; //NON-NLS
-        boolean found = false;
-        ResultSet temprs;
-        SQLiteDBConnect tempdbconnect = null;
-        try {
-            tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection); //NON-NLS
-            temprs = tempdbconnect.executeQry(query);
+
+        try (SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection); //NON-NLS
+                ResultSet temprs = tempdbconnect.executeQry(query);) {
             while (temprs.next()) {
-                if (temprs.getString("name") == null ? column == null : temprs.getString("name").equals(column)) { //NON-NLS
-                    found = true;
+                if (Objects.equals(temprs.getString("name"), column)) { //NON-NLS
+                    return true;
                 }
             }
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex); //NON-NLS
         }
-        finally{
-            if (tempdbconnect != null) {
-                tempdbconnect.closeConnection();
-            }
-        }
-        return found;
-    }
-
-    public static ResultSet runQuery(String query, String connection) {
-        ResultSet results = null;
-        try {
-            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection); //NON-NLS
-            results = tempdbconnect.executeQry(query);
-            tempdbconnect.closeConnection();
-        } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error while trying to run sql query: " + query + " : " + connection, ex); //NON-NLS
-        }
-        return results;
+        return false;
     }
 }

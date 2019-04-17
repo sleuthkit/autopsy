@@ -173,6 +173,10 @@ public final class AutopsyEventPublisher {
                     stopRemotePublisher();
                     ++tryCount;
                 }
+                catch(RuntimeException ex) {
+                    logger.log(Level.SEVERE, String.format("Runtime exception in attempting to publish %s using channel %s", event.getPropertyName(), currentChannelName), ex); //NON-NLS
+                    break;
+                }
             }
         }
     }

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.commonpropertiessearch;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +31,7 @@ import java.util.stream.Stream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -147,7 +149,7 @@ public abstract class AbstractCommonAttributeSearcher {
         }
         return instanceCollatedCommonFiles;
     }
-
+ 
     /*
      * The set of the MIME types that will be checked for extension mismatches
      * when checkType is ONLY_MEDIA. ".jpg", ".jpeg", ".png", ".psd", ".nef",
@@ -211,6 +213,7 @@ public abstract class AbstractCommonAttributeSearcher {
             "application/vnd.oasis.opendocument.text" //NON-NLS
     ).collect(Collectors.toSet());
 
+ 
     /**
      * @return the filterByMedia
      */
@@ -237,5 +240,17 @@ public abstract class AbstractCommonAttributeSearcher {
      */
     void setFilterByDoc(boolean filterByDoc) {
         this.filterByDoc = filterByDoc;
+    }
+    
+    
+    Set<String> getMimeTypesToFilterOn() {
+        Set<String> mimeTypesToFilterOn = new HashSet<>();
+        if (isFilterByMedia()) {
+            mimeTypesToFilterOn.addAll(FileTypeUtils.FileTypeCategory.VISUAL.getMediaTypes());
+        }
+        if (isFilterByDoc()) {
+            mimeTypesToFilterOn.addAll(FileTypeUtils.FileTypeCategory.DOCUMENTS.getMediaTypes());
+        }
+        return mimeTypesToFilterOn;
     }
 }

@@ -1,0 +1,194 @@
+# Linux specific /proc artifacts.
+
+name: LinuxASLREnabled
+doc: Kernel ASLR state.
+sources:
+- type: FILE
+  attributes: {paths: ['/proc/sys/kernel/randomize_va_space']}
+labels: [System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/sysctl/kernel.txt']
+---
+name: LinuxIgnoreICMPBroadcasts
+doc: Whether the system ignores ICMP pings.
+sources:
+- type: FILE
+  attributes: {paths: ['/proc/sys/net/ipv4/icmp_echo_ignore_broadcasts']}
+labels: [Network, System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt']
+---
+name: LinuxKernelBootloader
+doc: Bootloader state acquired from the kernel.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/proc/sys/kernel/bootloader_type'
+      - '/proc/sys/kernel/bootloader_version'
+labels: [System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/sysctl/kernel.txt']
+---
+name: LinuxKernelModuleRestrictions
+doc: Module loading controls.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/proc/sys/kernel/kexec_load_disabled'
+      - '/proc/sys/kernel/modules_disabled'
+labels: [System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/sysctl/kernel.txt']
+---
+name: LinuxKernelModuleTaintStatus
+doc: Taint state of loaded modules (binary blobs, unsigned modules etc).
+sources:
+- type: FILE
+  attributes: {paths: ['/proc/sys/kernel/tainted']}
+labels: [System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/sysctl/kernel.txt']
+---
+name: LinuxNetworkIpForwardingState
+doc: IP forwarding states.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/proc/sys/net/ipv*/conf/*/forwarding'
+      - '/proc/sys/net/ipv4/conf/*/mc_forwarding'
+      - '/proc/sys/net/ipv4/ip_forward'
+labels: [Network, System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt']
+---
+name: LinuxNetworkPathFilteringSettings
+doc: States that determine how the system responds to route manipulation.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/proc/sys/net/ipv*/conf/*/accept_source_route'
+      - '/proc/sys/net/ipv4/conf/*/rp_filter'
+      - '/proc/sys/net/ipv4/conf/*/log_martians'
+labels: [Network, System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt']
+---
+name: LinuxNetworkRedirectState
+doc: Redirect send/receive states.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/proc/sys/net/ipv*/conf/*/accept_redirects'
+      - '/proc/sys/net/ipv4/conf/*/secure_redirects'
+      - '/proc/sys/net/ipv4/conf/*/send_redirects'
+labels: [Network, System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt']
+---
+name: LinuxProcArp
+doc: ARP table via /proc/net/arp.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/proc/net/arp'
+labels: [Network]
+supported_os: [Linux]
+---
+name: LinuxProcMounts
+doc: Current mounted filesystems.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/proc/mounts'
+labels: [System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/filesystems/proc.txt']
+---
+name: LinuxProcSysHardeningSettings
+doc: Linux sysctl settings obtained from /proc/sys.
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+      - 'LinuxASLREnabled'
+      - 'LinuxIgnoreICMPBroadcasts'
+      - 'LinuxKernelBootloader'
+      - 'LinuxKernelModuleTaintStatus'
+      - 'LinuxKernelModuleRestrictions'
+      - 'LinuxNetworkIpForwardingState'
+      - 'LinuxNetworkPathFilteringSettings'
+      - 'LinuxNetworkRedirectState'
+      - 'LinuxRestrictedDmesgReadPrivileges'
+      - 'LinuxRestrictedKernelPointerReadPrivileges'
+      - 'LinuxSecureSuidCoreDumps'
+      - 'LinuxSecureFsLinks'
+      - 'LinuxSyncookieState'
+labels: [System]
+supported_os: [Linux]
+---
+name: LinuxRestrictedDmesgReadPrivileges
+doc: Restrict whether non-privileged users can read dmesg.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/proc/sys/kernel/dmesg_restrict'
+labels: [System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/sysctl/kernel.txt']
+---
+name: LinuxRestrictedKernelPointerReadPrivileges
+doc: Memory address obfuscation settings.
+sources:
+- type: FILE
+  attributes: {paths: ['/proc/sys/kernel/kptr_restrict']}
+labels: [System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/sysctl/kernel.txt']
+---
+name: LinuxSecureFsLinks
+doc: Security controls to restrict operations on links in world writable directories.
+sources:
+- type: FILE
+  attributes:
+    paths:
+      - '/proc/sys/fs/protected_hardlinks'
+      - '/proc/sys/fs/protected_symlinks'
+labels: [System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/sysctl/fs.txt']
+---
+name: LinuxSecureSuidCoreDumps
+doc: Security controls for suid core dumps.
+sources:
+- type: FILE
+  attributes: {paths: ['/proc/sys/fs/suid_dumpable']}
+labels: [System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/sysctl/fs.txt']
+---
+name: LinuxSyncookieState
+doc: Whether the system uses syncookies.
+sources:
+- type: FILE
+  attributes: {paths: ['/proc/sys/net/ipv4/tcp_syncookies']}
+labels: [Network, System]
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt']
+---
+name: LinuxSysctlCmd
+doc: Linux output of systctl -a.
+sources:
+- type: COMMAND
+  attributes:
+    args: ["-a"]
+    cmd: /sbin/sysctl
+supported_os: [Linux]
+urls: ['https://www.kernel.org/doc/Documentation/sysctl']

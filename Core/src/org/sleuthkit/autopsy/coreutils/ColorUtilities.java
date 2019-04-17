@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-8 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,9 +21,9 @@ package org.sleuthkit.autopsy.coreutils;
 import javafx.scene.paint.Color;
 
 /**
- *
+ * Utilities for dealing with colors.
  */
-public class ColorUtilities {
+final public class ColorUtilities {
 
     private ColorUtilities() {
     }

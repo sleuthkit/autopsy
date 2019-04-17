@@ -50,6 +50,7 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHS
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_TL_EVENT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DOWNLOAD_SOURCE;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -146,8 +147,8 @@ public class ExtractedContent implements AutopsyVisitableItem {
             return filePath + "gps-search.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_PROG_RUN.getTypeID()) {
             return filePath + "installed.png"; //NON-NLS
-        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID() || 
-                typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()) {
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED.getTypeID()
+                   || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED.getTypeID()) {
             return filePath + "encrypted-file.png"; //NON-NLS
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
             return filePath + "mismatch-16.png"; //NON-NLS
@@ -237,6 +238,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
             doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_ACCOUNT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DATA_SOURCE_USAGE));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_TL_EVENT));
             doNotShow.add(new BlackboardArtifact.Type(TSK_DOWNLOAD_SOURCE) );
         }
 
@@ -265,7 +267,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                      */
                 }
             } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                       || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                 /**
                  * This is a stop gap measure until a different way of handling
                  * the closing of cases is worked out. Currently, remote events
@@ -461,7 +463,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                          */
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+                           || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                     /**
                      * Checking for a current case is a stop gap measure until a
                      * different way of handling the closing of cases is worked

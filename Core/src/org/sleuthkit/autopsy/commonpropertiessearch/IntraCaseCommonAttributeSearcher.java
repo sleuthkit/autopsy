@@ -23,9 +23,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -44,8 +44,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @SuppressWarnings("PMD.AbstractNaming")
 public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAttributeSearcher {
-
-    private static final String FILTER_BY_MIME_TYPES_WHERE_CLAUSE = " and mime_type in (%s)"; //NON-NLS // where %s is csv list of mime_types to filter on
 
     private final Map<Long, String> dataSourceIdToNameMap;
 
@@ -158,25 +156,14 @@ public abstract class IntraCaseCommonAttributeSearcher extends AbstractCommonAtt
      *         to filter on were given.
      */
     String determineMimeTypeFilter() {
-
-        Set<String> mimeTypesToFilterOn = new HashSet<>();
-        String mimeTypeString = "";
-        if (isFilterByMedia()) {
-            mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
+        Set<String> mimeTypesToFilterOn = getMimeTypesToFilterOn();
+        if (mimeTypesToFilterOn.isEmpty()) {
+            return "";
+        } else {
+            String mimeTypeString = mimeTypesToFilterOn.stream()
+                    .map(mimeType -> "'" + mimeType + "'")
+                    .collect(Collectors.joining(","));
+            return String.format(" and mime_type in (%s)", new Object[]{mimeTypeString});
         }
-        if (isFilterByDoc()) {
-            mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
-        }
-        StringBuilder mimeTypeFilter = new StringBuilder(mimeTypesToFilterOn.size());
-        if (!mimeTypesToFilterOn.isEmpty()) {
-            for (String mimeType : mimeTypesToFilterOn) {
-                mimeTypeFilter.append(SINGLE_QUOTE).append(mimeType).append(SINGLE_QUTOE_COMMA);
-            }
-            mimeTypeString = mimeTypeFilter.toString().substring(0, mimeTypeFilter.length() - 1);
-            mimeTypeString = String.format(FILTER_BY_MIME_TYPES_WHERE_CLAUSE, new Object[]{mimeTypeString});
-        }
-        return mimeTypeString;
     }
-    static final String SINGLE_QUTOE_COMMA = "',";
-    static final String SINGLE_QUOTE = "'";
 }

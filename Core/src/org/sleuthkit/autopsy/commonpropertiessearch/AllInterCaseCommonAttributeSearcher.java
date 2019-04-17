@@ -20,16 +20,14 @@
 package org.sleuthkit.autopsy.commonpropertiessearch;
 
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance.Type;
-import static org.sleuthkit.autopsy.commonpropertiessearch.AbstractCommonAttributeSearcher.MEDIA_PICS_VIDEO_MIME_TYPES;
 
 /**
  * Algorithm which finds files anywhere in the Central Repo which also occur in
@@ -56,13 +54,7 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     @Override
     public CommonAttributeCountSearchResults findMatchesByCount() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
-        Set<String> mimeTypesToFilterOn = new HashSet<>();
-        if (isFilterByMedia()) {
-            mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
-        }
-        if (isFilterByDoc()) {
-            mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
-        }
+        Set<String> mimeTypesToFilterOn = getMimeTypesToFilterOn();
         Map<Integer, CommonAttributeValueList> interCaseCommonFiles = eamDbAttrInst.findInterCaseValuesByCount(Case.getCurrentCase(), mimeTypesToFilterOn);
         return new CommonAttributeCountSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType);
     }
@@ -70,13 +62,7 @@ public class AllInterCaseCommonAttributeSearcher extends InterCaseCommonAttribut
     @Override
     public CommonAttributeCaseSearchResults findMatchesByCase() throws TskCoreException, NoCurrentCaseException, SQLException, EamDbException {
         InterCaseSearchResultsProcessor eamDbAttrInst = new InterCaseSearchResultsProcessor(corAttrType);
-        Set<String> mimeTypesToFilterOn = new HashSet<>();
-        if (isFilterByMedia()) {
-            mimeTypesToFilterOn.addAll(MEDIA_PICS_VIDEO_MIME_TYPES);
-        }
-        if (isFilterByDoc()) {
-            mimeTypesToFilterOn.addAll(TEXT_FILES_MIME_TYPES);
-        }
+        Set<String> mimeTypesToFilterOn = getMimeTypesToFilterOn();
         Map<String, Map<String, CommonAttributeValueList>> interCaseCommonFiles = eamDbAttrInst.findInterCaseValuesByCase(Case.getCurrentCase(), mimeTypesToFilterOn);
         return new CommonAttributeCaseSearchResults(interCaseCommonFiles, this.frequencyPercentageThreshold, this.corAttrType);
     }
