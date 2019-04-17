@@ -501,11 +501,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected List<BlackboardArtifact> makeKeys() {
             if (skCase != null) {
                 try {
-                    List<BlackboardArtifact> arts = 
-                            Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true) ?
-                            blackboard.getArtifacts(type.getTypeID(), datasourceObjId) :
-                            skCase.getBlackboardArtifacts(type.getTypeID());
-                    return arts;
+                    return Objects.equals(CasePreferences.getGroupItemsInTreeByDataSource(), true)
+                            ? blackboard.getArtifacts(type.getTypeID(), datasourceObjId)
+                            : skCase.getBlackboardArtifacts(type.getTypeID());
                 } catch (TskException ex) {
                     Logger.getLogger(ArtifactFactory.class.getName()).log(Level.SEVERE, "Couldn't get blackboard artifacts from database", ex); //NON-NLS
                 }
