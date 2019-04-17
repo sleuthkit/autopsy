@@ -46,7 +46,7 @@ Portable cases generally behave like any other Autopsy case. You can run ingest,
 
 This may cause warning or error messages when using ingest modules that run on the full image, such as the \ref data_source_integrity_page. You will also not be able to view the data sources in the content viewer.
 
-You can also add additonal data sources to the portable case if you wish. The case will no longer be portable, but if desired you could generate a new portable case that will include tagged files and results from the new data sources as well as the original case. 
+You can also add additional data sources to the portable case if you wish. The case will no longer be portable, but if desired you could generate a new portable case that will include tagged files and results from the new data sources as well as the original case. 
 
 \section portable_case_inside Inside a Portable Case
 
@@ -54,6 +54,6 @@ A portable case is a folder, just like any other Autopsy case. It contains a SQL
 
 A copy of any tagged file is made into the case folder and the SQLite database will refer to it.  This allows you to examine the file contents without the original data source. 
 
-Because a Portable Case is really just a subset of the original case, nearly all other Autopsy operations work as normal. 
+Because a portable case is really just a subset of the original case, nearly all other Autopsy operations work as normal. 
 
 */
