@@ -1,5 +1,49 @@
 ---------------- VERSION 4.10.0  --------------
 New Features:
+- Users can create portable cases, which allow a subset of case data to 
+be shared with another user.
+- Ingest of a data source and subsequent generation of a CASE/UCO report can be 
+driven by command line arguments.
+- Video playback is now supported for significantly more video formats and the
+viewer has additional controls.
+- Users can rotate and zoom in on pictures displayed in the Application content 
+viewer for image files.
+- Added parsers for Microsoft Edge web browser data, Safari web browser data,
+Chrome cache files, Chrome auto fill data, Chrome login data, Firefox form 
+history data, and zone identifiers.  
+- Developers of custom data source processor and ingest modules can now use a 
+new file type that allows them to create files from a range of bytes in a data 
+source.
+- HTML rendering support has been added to the Application and Message content 
+viewers.
+- Users can view file contents in an external hex editor.  
+- Added support for parsing vCards (virtual cards).
+- Case notes are included in the HTML report.
+- Hashes can optionally be entered when adding a disk image data source to a 
+case.
+- Data sources are now listed in the data sources tree in alphabetical order.
+- Added a new window displaying summary data for a case and its data sources.
+- Operating systems are detected and saved in the results.
+- Android media cards are detected and recorded using data source usage 
+artifacts.
+- Operating system account artifacts now have additional attributes extracted 
+from Windows registry files: number of logins, creation date, and last login.
+- Acquisition details are now stored and displayed for multiple data source 
+types.
+- Users can now choose tabs or commas as the delimiter for a files report.
+
+Bug Fixes:
+- Decreased the time required to execute inter-case common properties searches 
+of the Central Repository.
+- The presentation of intra-case common property search results was revised to 
+group results in a more helpful way.
+- The Other Occurrences content viewer layout was reorganized to make viewing 
+the data easier.
+- Assorted small bug fixes are included.
+
+
+---------------- VERSION 4.10.0  --------------
+New Features:
 - Users can now view information on all cases/data sources in the Central 
 Repository.
 - SSID, MAC address, IMEI, IMSI, and ICCID properties can now be added to the 
