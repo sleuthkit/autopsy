@@ -32,15 +32,15 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
 
 /**
- * The binary cookie reader encapsulates all the knowledge of how to read the mac
- * .binarycookie files into one class.
+ * The binary cookie reader encapsulates all the knowledge of how to read the
+ * mac .binarycookie files into one class.
  *
  * The binarycookie file has a header which describes how many pages of cookies
  * and where they are located. Each cookie page has a header and a list of
  * cookies.
  *
  */
-public final class BinaryCookieReader implements Iterable<Cookie> {
+final class BinaryCookieReader implements Iterable<Cookie> {
 
     private static final int MAGIC_SIZE = 4;
     private static final int SIZEOF_INT_BYTES = 4;
@@ -56,8 +56,8 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
     private static final Logger LOG = Logger.getLogger(BinaryCookieReader.class.getName());
 
     /**
-     * The binary cookie reader encapsulates all the knowledge of how to read the mac
-     * .binarycookie files into one class.
+     * The binary cookie reader encapsulates all the knowledge of how to read
+     * the mac .binarycookie files into one class.
      *
      */
     private BinaryCookieReader(File cookieFile, int[] pageSizeArray) {
@@ -96,7 +96,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
                 for (int cnt = 0; cnt < pageCount; cnt++) {
                     sizeArray[cnt] = dataStream.readInt();
                 }
-                
+
                 LOG.log(Level.INFO, "No cookies found in {0}", cookieFile.getName()); //NON-NLS
             }
 
@@ -130,16 +130,16 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
          * The cookiePageIterator iterates the binarycookie file by page.
          */
         CookiePageIterator() {
-            if(pageSizeArray == null || pageSizeArray.length == 0) {
+            if (pageSizeArray == null || pageSizeArray.length == 0) {
                 return;
             }
-            
+
             try {
                 dataStream = new DataInputStream(new FileInputStream(cookieFile));
                 // skip to the first page
                 dataStream.skipBytes((2 * SIZEOF_INT_BYTES) + (pageSizeArray.length * SIZEOF_INT_BYTES));
             } catch (IOException ex) {
-                
+
                 String errorMessage = String.format("An error occurred creating an input stream for %s", cookieFile.getName());
                 LOG.log(Level.WARNING, errorMessage, ex); //NON-NLS
                 closeStream(); // Just incase the error was from skip
@@ -147,7 +147,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
         }
 
         /**
-         * Returns true if there are more cookies in the binarycookie file.  
+         * Returns true if there are more cookies in the binarycookie file.
          *
          * @return True if there are more cookies
          */
@@ -157,7 +157,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
             if (dataStream == null) {
                 return false;
             }
-            
+
             if (currentIterator == null || !currentIterator.hasNext()) {
                 try {
 
@@ -360,7 +360,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
          * @return Cookie expiration date in milliseconds with java epoch
          */
         public final Long getExpirationDate() {
-            return ((long)expirationDate) + MAC_EPOC_FIX;
+            return ((long) expirationDate) + MAC_EPOC_FIX;
         }
 
         /**
@@ -370,7 +370,7 @@ public final class BinaryCookieReader implements Iterable<Cookie> {
          * @return Cookie creation date in milliseconds with java epoch
          */
         public final Long getCreationDate() {
-            return ((long)creationDate) + MAC_EPOC_FIX;
+            return ((long) creationDate) + MAC_EPOC_FIX;
         }
 
         /**
