@@ -170,15 +170,20 @@ abstract class Extract {
         ResultSet temprs;
         List<HashMap<String, Object>> list;
         String connectionString = "jdbc:sqlite:" + path; //NON-NLS
+        SQLiteDBConnect tempdbconnect = null;
         try {
-            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
+            tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", connectionString); //NON-NLS
             temprs = tempdbconnect.executeQry(query);
             list = this.resultSetToArrayList(temprs);
-            tempdbconnect.closeConnection();
         } catch (SQLException ex) {
             logger.log(Level.SEVERE, "Error while trying to read into a sqlite db." + connectionString, ex); //NON-NLS
             errorMessages.add(NbBundle.getMessage(this.getClass(), "Extract.dbConn.errMsg.failedToQueryDb", getName()));
             return Collections.<HashMap<String, Object>>emptyList();
+        }
+        finally {
+            if (tempdbconnect != null) {
+                tempdbconnect.closeConnection();
+            }
         }
         return list;
     }

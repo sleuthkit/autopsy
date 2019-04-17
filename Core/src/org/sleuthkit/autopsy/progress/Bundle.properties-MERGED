@@ -3,3 +3,4 @@
 # and open the template in the editor.
 
 ProgressPanel.progressMessage.text=Message
+TaskCanceller.progress.cancellingMessage=Cancelling...

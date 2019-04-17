@@ -514,7 +514,7 @@ public final class DrawableDB {
     private boolean initializeDBSchema() {
         dbWriteLock();
         try {
-            boolean existingDB = true;
+            boolean drawableDbTablesExist = true;
                                   
             if (isClosed()) {
                 logger.log(Level.SEVERE, "The drawables database is closed"); //NON-NLS
@@ -533,11 +533,11 @@ public final class DrawableDB {
              */
             try (Statement stmt = con.createStatement()) {
                 
-                // Check if the database is a new or existing database
-                existingDB = doesTableExist("datasources");
+                // Check if the database is new or an existing database
+                drawableDbTablesExist = doesTableExist("drawable_files");
                 if (false == doesTableExist(IG_DB_INFO_TABLE)) {
                     try {
-                         VersionNumber ig_creation_schema_version = existingDB 
+                         VersionNumber ig_creation_schema_version = drawableDbTablesExist 
                                                     ? IG_STARTING_SCHEMA_VERSION
                                                     : IG_SCHEMA_VERSION;
                          
@@ -651,7 +651,8 @@ public final class DrawableDB {
             String autogenKeyType = (DbType.POSTGRESQL == tskCase.getDatabaseType()) ? "BIGSERIAL" : "INTEGER";
             
             try {
-                    VersionNumber ig_creation_schema_version = existingDB 
+                    boolean caseDbTablesExist = tskCase.getCaseDbAccessManager().tableExists(GROUPS_TABLENAME);
+                    VersionNumber ig_creation_schema_version = caseDbTablesExist 
                             ? IG_STARTING_SCHEMA_VERSION
                             : IG_SCHEMA_VERSION;
                                                     
@@ -935,13 +936,14 @@ public final class DrawableDB {
      */
     private VersionNumber upgradeCaseDbIgSchema1dot0TO1dot1(VersionNumber currVersion, CaseDbTransaction caseDbTransaction ) throws TskCoreException  {
         
-        if (currVersion.getMajor() != 1 || 
-            currVersion.getMinor() != 0) {  
+        // Upgrade if current version is 1.0
+        // or 1.1 - a bug in versioning alllowed some databases to be versioned as 1.1 without the actual corresponding upgrade.  This allows such databases to be fixed, if needed.
+        if (!(currVersion.getMajor() == 1 && 
+             (currVersion.getMinor() == 0 || currVersion.getMinor() == 1))) {
             return currVersion;
         }
                 
-        // 1.0 -> 1.1 upgrade
-        // Add a 'isAnalyzed' column to groups table in CaseDB
+        // Add a 'is_analyzed' column to groups table in CaseDB
         String alterSQL = " ADD COLUMN is_analyzed integer DEFAULT 1 "; //NON-NLS
         if (false == tskCase.getCaseDbAccessManager().columnExists(GROUPS_TABLENAME, "is_analyzed", caseDbTransaction )) {
             tskCase.getCaseDbAccessManager().alterTable(GROUPS_TABLENAME, alterSQL, caseDbTransaction);

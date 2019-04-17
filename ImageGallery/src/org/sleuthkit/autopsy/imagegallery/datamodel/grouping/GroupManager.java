@@ -700,7 +700,7 @@ public class GroupManager {
             try {
                 DrawableFile file = getDrawableDB().getFileFromID(fileId);
                 String pathVal = file.getDrawablePath();
-                GroupKey<?> pathGroupKey = new GroupKey(DrawableAttribute.PATH,pathVal, file.getDataSource());
+                GroupKey<?> pathGroupKey = new GroupKey<>(DrawableAttribute.PATH,pathVal, file.getDataSource());
                 
                 updateCurrentPathGroup(pathGroupKey);
             } catch (TskCoreException | TskDataException ex) {
@@ -712,7 +712,6 @@ public class GroupManager {
             for (GroupKey<?> gk : groupsForFile) {
                 // see if a group has been created yet for the key
                 DrawableGroup g = getGroupForKey(gk);
- 
                 addFileToGroup(g, gk, fileId);
             }
         }
@@ -816,8 +815,10 @@ public class GroupManager {
                         controller.getCategoryManager().registerListener(group);
                         groupMap.put(groupKey, group);
                     }
-
-                    if (analyzedGroups.contains(group) == false) {
+                    
+                    // Add to analyzedGroups only if it's the same group type as the one in view
+                    if ((analyzedGroups.contains(group) == false) && 
+                        (getGroupBy() == group.getGroupKey().getAttribute())) {
                         // Add to analyzedGroups only if this is the grouping being viewed.
                         if (getGroupBy() == group.getGroupKey().getAttribute()) {
                             analyzedGroups.add(group);

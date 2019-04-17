@@ -100,6 +100,11 @@ final class ExtractZoneIdentifier extends Extract {
         Collection<BlackboardArtifact> downloadArtifacts = new ArrayList<>();
 
         for (AbstractFile zoneFile : zoneFiles) {
+            
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+            
             try {
                 processZoneFile(context, dataSource, zoneFile, sourceArtifacts, downloadArtifacts, knownPathIDs);
             } catch (TskCoreException ex) {
@@ -292,7 +297,7 @@ final class ExtractZoneIdentifier extends Extract {
 
     /**
      * Wrapper class for information in the :ZoneIdentifier file. The
-     * Zone.Identifier file has a simple format of <i>key<i>=<i>value<i>. There
+     * Zone.Identifier file has a simple format of \<i\>key\<i\>=\<i\>value\<i\>. There
      * are four known keys: ZoneId, ReferrerUrl, HostUrl, and
      * LastWriterPackageFamilyName. Not all browsers will put all values in the
      * file, in fact most will only supply the ZoneId. Only Edge supplies the

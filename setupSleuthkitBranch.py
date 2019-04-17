@@ -44,7 +44,7 @@ def gitSleuthkitCheckout(branch, branchOwner):
     if (passed == 0):
         sys.exit() #exit if successful
     else:
-        print("Branch: " + branch + " does not exist for owner: " + branchOwner)
+        print("Branch: " + branch + " does not exist for github user: " + gitHubUser)
 
 def parseXML(xmlFile):
     '''

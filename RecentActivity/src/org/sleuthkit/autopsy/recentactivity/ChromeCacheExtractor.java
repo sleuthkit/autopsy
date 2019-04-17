@@ -261,7 +261,12 @@ final class ChromeCacheExtractor {
             indexFiles = findCacheIndexFiles(); 
             
             // Process each of the caches
-            for (AbstractFile indexFile: indexFiles) {       
+            for (AbstractFile indexFile: indexFiles) {  
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    return;
+                }
+                
                 processCacheIndexFile(indexFile);
             }
         
@@ -325,6 +330,12 @@ final class ChromeCacheExtractor {
 
         // Process each address in the table
         for (int i = 0; i <  indexHdr.getTableLen(); i++) {
+            
+            if (context.dataSourceIngestIsCancelled()) {
+                cleanup();
+                return;
+            }
+            
             CacheAddress addr = new CacheAddress(indexFileROBuffer.getInt() & UINT32_MASK, cachePath);
             if (addr.isInitialized()) {
                 progressBar.progress( NbBundle.getMessage(this.getClass(),
@@ -338,6 +349,11 @@ final class ChromeCacheExtractor {
                    logger.log(Level.SEVERE, String.format("Failed to get cache entry at address %s", addr), ex); //NON-NLS
                 } 
             }  
+        }
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            cleanup();
+            return;
         }
 
         derivedFiles.forEach((derived) -> {

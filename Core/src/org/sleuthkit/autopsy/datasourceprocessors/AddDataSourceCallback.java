@@ -47,6 +47,7 @@ public class AddDataSourceCallback extends DataSourceProcessorCallback {
      * @param caseForJob The case for the current job.
      * @param dataSourceInfo The data source
      * @param taskId The task id to associate with ingest job events.
+     * @param lock   The DSP lock
      */
     public AddDataSourceCallback(Case caseForJob, AutoIngestDataSource dataSourceInfo, UUID taskId, Object lock) {
         this.caseForJob = caseForJob;
