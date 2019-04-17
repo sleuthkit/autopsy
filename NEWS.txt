@@ -1,44 +1,47 @@
----------------- VERSION 4.10.0  --------------
+---------------- VERSION 4.11.0  --------------
 New Features:
-- Users can create portable cases, which allow a subset of case data to 
-be shared with another user.
-- Ingest of a data source and subsequent generation of a CASE/UCO report can be 
-driven by command line arguments.
-- Video playback is now supported for significantly more video formats and the
-viewer has additional controls.
-- Users can rotate and zoom in on pictures displayed in the Application content 
-viewer for image files.
-- Added parsers for Microsoft Edge web browser data, Safari web browser data,
-Chrome cache files, Chrome auto fill data, Chrome login data, Firefox form 
-history data, and zone identifiers.  
-- Developers of custom data source processor and ingest modules can now use a 
-new file type that allows them to create files from a range of bytes in a data 
-source.
-- HTML rendering support has been added to the Application and Message content 
-viewers.
-- Users can view file contents in an external hex editor.  
+
+Adding Data: 
+- Hashes can optionally be entered when adding a disk image data source to a case.
+- Acquisition details can be stored when the data source is added. 
+
+
+Ingest Modules:
+- Added support for Microsoft Edge browser (cookies, history, and bookmarks)
+- Added support for Safari web browser (downloads, cookies, history, and bookmarks)
+- Expanded Chrome browser support to include cache parsing and form/auto fill. 
+- Expanded Firefox browser support to extract form/auto fill fields.
+- Parse Zone.Identifier files to identify the source of files.
+- Added a TSK_SOURCE artifact to downloaded files to  help users trace back to where it came from. 
 - Added support for parsing vCards (virtual cards).
-- Case notes are included in the HTML report.
-- Hashes can optionally be entered when adding a disk image data source to a 
-case.
+- Extract more information about Windows user accounts (number of logins, creation date, and last login)
+- Detect more operating system types, which get saved as a TSK_OS_INFO artifact. 
+- Detect Android media cards, which gets saved as a TSK_DATA_SOURCE_USAGE artifact. 
+
+
+UI:
+- The Application content viewer now displays HTML files.
+- Video playback now uses gstreamer on 64-bit systems, which supports more video formats.
+- Pictures can be rotated and zoomed in the Application content viewer.
+- The Other Occurrences content viewer layout was reorganized to make viewing the data easier.
+- New "Data Source Summary" panel shows high-level statistics and details about the data sources in the case. 
 - Data sources are now listed in the data sources tree in alphabetical order.
-- Added a new window displaying summary data for a case and its data sources.
-- Operating systems are detected and saved in the results.
-- Android media cards are detected and recorded using data source usage 
-artifacts.
-- Operating system account artifacts now have additional attributes extracted 
-from Windows registry files: number of logins, creation date, and last login.
-- Acquisition details are now stored and displayed for multiple data source 
-types.
+- The presentation of finding common properties within a case was revised to group results in a more helpful way.
+
+
+Report / Export: 
+- Portable Cases can be created based on tagged data.  These cases contain a subset of the case data and can be opened anywhere. 
 - Users can now choose tabs or commas as the delimiter for a files report.
+- Case notes are included in the HTML report.
+
+
+Other:
+- Added a new file type that allows module writers to specify a file based on its byte range. 
+- Data sources can be analyzed and have a CASE/UCO report generated using only the command line. 
+
 
 Bug Fixes:
-- Decreased the time required to execute inter-case common properties searches 
-of the Central Repository.
-- The presentation of intra-case common property search results was revised to 
-group results in a more helpful way.
-- The Other Occurrences content viewer layout was reorganized to make viewing 
-the data easier.
+- Decreased the time required to execute inter-case common properties searches of the Central Repository.
 - Assorted small bug fixes are included.
 
 
