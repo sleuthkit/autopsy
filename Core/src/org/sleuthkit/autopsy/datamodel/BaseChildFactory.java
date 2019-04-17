@@ -66,7 +66,6 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     @Override
     protected void removeNotify() {
         onRemove();
-        pagingSupport.destroy();
     }
 
     /**
@@ -179,18 +178,13 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
         void initialize() {
             if (pageSize > 0) {
                 // Only configure an EventBus if paging functionality is enabled.
-                bus = new EventBus(nodeName);
-                nodeNameToEventBusMap.put(bus.identifier(), bus);
+                if (nodeNameToEventBusMap.containsKey(nodeName)) {
+                    bus = nodeNameToEventBusMap.get(nodeName);
+                } else {
+                    bus = new EventBus(nodeName);
+                    nodeNameToEventBusMap.put(bus.identifier(), bus);
+                }
                 bus.register(this);
-            }
-        }
-
-        void destroy() {
-            if (bus != null) {
-                nodeNameToEventBusMap.remove(bus.identifier());
-                bus.unregister(this);
-                bus.post(new PagingDestroyedEvent());
-                bus = null;
             }
         }
 
@@ -200,7 +194,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
          * @return List of keys.
          */
         List<T> getCurrentPage() {
-            if (pages.isEmpty()) {
+            if (!pages.isEmpty()) {
                 return pages.get(currentPage - 1);
             }
 
