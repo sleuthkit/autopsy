@@ -35,18 +35,20 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
  * Visualation for the messages of the currently selected accounts.
  */
 @ServiceProvider(service = RelationshipsViewer.class)
-public class MessagesViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider{
+public final class MessagesViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
 
     private final ExplorerManager tableEM;
     private final Outline outline;
     private final ModifiableProxyLookup proxyLookup;
     private final PropertyChangeListener focusPropertyListener;
+    private final MessagesChildNodeFactory nodeFactory;
 
     @Messages({
         "MessageViewer_tabTitle=Messages",
@@ -58,18 +60,19 @@ public class MessagesViewer extends JPanel implements RelationshipsViewer, Explo
     })
 
     /**
-     * Creates new form MessagesViewer
+     * Visualation for the messages of the currently selected accounts.
      */
     public MessagesViewer() {
         tableEM = new ExplorerManager();
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
+        nodeFactory = new MessagesChildNodeFactory(null);
 
         // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
         // explaination of focusPropertyListener
         focusPropertyListener = (final PropertyChangeEvent focusEvent) -> {
             if (focusEvent.getPropertyName().equalsIgnoreCase("focusOwner")) {
                 final Component newFocusOwner = (Component) focusEvent.getNewValue();
-                
+
                 if (newFocusOwner == null) {
                     return;
                 }
@@ -79,10 +82,10 @@ public class MessagesViewer extends JPanel implements RelationshipsViewer, Explo
                 } else if (isDescendingFrom(newFocusOwner, MessagesViewer.this)) {
                     //... or if it is within the Results table.
                     proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
-                    
+
                 }
             }
-        } ;
+        };
 
         initComponents();
 
@@ -92,11 +95,12 @@ public class MessagesViewer extends JPanel implements RelationshipsViewer, Explo
                 "To", Bundle.MessageViewer_columnHeader_To(),
                 "Date", Bundle.MessageViewer_columnHeader_Date(),
                 "Subject", Bundle.MessageViewer_columnHeader_Subject(),
-                "Attms", Bundle.MessageViewer_columnHeader_Attms()
+                "Attms", Bundle.MessageViewer_columnHeader_Attms(),
+                "Type", "Type"
         );
         outline.setRootVisible(false);
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Type");
 
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
@@ -107,6 +111,8 @@ public class MessagesViewer extends JPanel implements RelationshipsViewer, Explo
                 }
             }
         });
+        
+         tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(nodeFactory, true)), getExplorerManager()), true));
     }
 
     @Override
@@ -121,7 +127,8 @@ public class MessagesViewer extends JPanel implements RelationshipsViewer, Explo
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        tableEM.setRootContext(new DataResultFilterNode(new AbstractNode(Children.create(new MessagesChildNodeFactory(info), true)), getExplorerManager()));
+//        tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(new MessagesChildNodeFactory(info), true)), getExplorerManager()), true));
+        nodeFactory.refresh(info);
     }
 
     @Override

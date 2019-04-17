@@ -27,29 +27,27 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT;
 import org.sleuthkit.datamodel.CommunicationsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * ChildFactory that creates createKeys and nodes from a given selectionInfo for
- * only emails, call logs and messages.
- *
+ * ChildFactory for ContactNodes.
  */
-final class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact> {
-
+final class ContactsChildNodeFactory extends ChildFactory<BlackboardArtifact>{
     private static final Logger logger = Logger.getLogger(MessagesChildNodeFactory.class.getName());
 
     private SelectionInfo selectionInfo;
 
     /**
-     * Construct a new MessageChildNodeFactory from the currently selectionInfo
+     * Construct a new ContactsChildNodeFactory from the currently selectionInfo
      *
      * @param selectionInfo SelectionInfo object for the currently selected
      *                      accounts
      */
-    MessagesChildNodeFactory(SelectionInfo selectionInfo) {
-        this.selectionInfo = selectionInfo;
+    ContactsChildNodeFactory(SelectionInfo selectionInfo) {
+        this.selectionInfo = selectionInfo;    
     }
     
     /**
@@ -63,11 +61,9 @@ final class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact> {
     }
 
     /**
-     * Creates a list of Keys (BlackboardArtifact) for only messages for the
+     * Creates a list of Keys (BlackboardArtifact) for only contacts of the
      * currently selected accounts
-     *
      * @param list List of BlackboardArtifact to populate
-     *
      * @return True on success
      */
     @Override
@@ -94,9 +90,7 @@ final class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact> {
                 BlackboardArtifact bba = (BlackboardArtifact) content;
                 BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(bba.getArtifactTypeID());
 
-                if (fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG
-                        || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG
-                        || fromID == BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE) {
+                if (fromID == TSK_CONTACT) {
                     list.add(bba);
                 }
             });
@@ -110,6 +104,6 @@ final class MessagesChildNodeFactory extends ChildFactory<BlackboardArtifact> {
 
     @Override
     protected Node createNodeForKey(BlackboardArtifact key) {
-        return new MessageNode(key);
+        return new ContactNode(key);
     }
 }

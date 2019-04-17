@@ -19,34 +19,45 @@
 package org.sleuthkit.autopsy.communications;
 
 import java.util.Set;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
-
 
 /**
  * Class to wrap the details of the current selection from the AccountBrowser or
  * VisualizationPane
- * 
  */
-public class SelectionInfo {
-        
-        static final private Logger logger = Logger.getLogger(SelectionInfo.class.getName());
+public final class SelectionInfo {
 
-        private final Set<AccountDeviceInstance> accountDeviceInstances;
-        private final CommunicationsFilter communicationFilter;
-        
-        SelectionInfo(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter communicationFilter) {
-           this.accountDeviceInstances = accountDeviceInstances;
-           this.communicationFilter = communicationFilter;
-        }
-        
-        public Set<AccountDeviceInstance> getAccountDevicesInstances(){
-            return accountDeviceInstances;
-        }
-        
-        public CommunicationsFilter getCommunicationsFilter() {
-            return communicationFilter;
-        }
-    
+    private final Set<AccountDeviceInstance> accountDeviceInstances;
+    private final CommunicationsFilter communicationFilter;
+
+    /**
+     * Wraps the details of the currently selected accounts.
+     *
+     * @param accountDeviceInstances Selected accountDecivedInstances
+     * @param communicationFilter    Currently selected communications filters
+     */
+    SelectionInfo(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter communicationFilter) {
+        this.accountDeviceInstances = accountDeviceInstances;
+        this.communicationFilter = communicationFilter;
+    }
+
+    /**
+     * Returns the currently selected accountDeviceInstances
+     *
+     * @return Set of AccountDeviceInstance
+     */
+    public Set<AccountDeviceInstance> getAccountDevicesInstances() {
+        return accountDeviceInstances;
+    }
+
+    /**
+     * Returns the currently selected communications filters.
+     *
+     * @return Instance of CommunicationsFilter
+     */
+    public CommunicationsFilter getCommunicationsFilter() {
+        return communicationFilter;
+    }
+
 }

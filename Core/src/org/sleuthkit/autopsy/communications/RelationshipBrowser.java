@@ -23,12 +23,12 @@ import org.openide.util.Lookup;
 
 /**
  * Displays the Relationship information for the currently selected accounts.
- * 
+ *
  */
-public class RelationshipBrowser extends JPanel {
+final class RelationshipBrowser extends JPanel {
 
     private SelectionInfo currentSelection;
-    
+
     /**
      * Creates new form RelationshipBrowser
      */
@@ -39,16 +39,16 @@ public class RelationshipBrowser extends JPanel {
             tabPane.add(viewer.getDisplayName(), viewer.getPanel());
         });
     }
-    
+
     /**
-     * Sets the value of currentSelection and passes the SelectionInfo onto 
-     * the currently selected\visible tab.
-     * 
+     * Sets the value of currentSelection and passes the SelectionInfo onto the
+     * currently selected\visible tab.
+     *
      * @param info Currently selected account nodes
      */
     public void setSelectionInfo(SelectionInfo info) {
         currentSelection = info;
-        ((RelationshipsViewer)tabPane.getSelectedComponent()).setSelectionInfo(info);
+        ((RelationshipsViewer) tabPane.getSelectedComponent()).setSelectionInfo(info);
     }
 
     /**
@@ -81,7 +81,7 @@ public class RelationshipBrowser extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tabPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneStateChanged
-       ((RelationshipsViewer)tabPane.getSelectedComponent()).setSelectionInfo(currentSelection);
+        ((RelationshipsViewer) tabPane.getSelectedComponent()).setSelectionInfo(currentSelection);
     }//GEN-LAST:event_tabPaneStateChanged
 
 
