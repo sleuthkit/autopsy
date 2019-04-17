@@ -19,25 +19,61 @@
 package org.sleuthkit.autopsy.communications;
 
 import javax.swing.JPanel;
+import javax.swing.ListSelectionModel;
+import org.netbeans.swing.outline.DefaultOutlineModel;
+import org.netbeans.swing.outline.Outline;
+import org.openide.explorer.ExplorerManager;
+import org.openide.explorer.ExplorerUtils;
+import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
+import org.openide.util.Lookup;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
- * Visualation for Contacts
- * 
+ * Visualation for the messages of the currently selected accounts.
  */
 @ServiceProvider(service=RelationshipsViewer.class)
-public class MessagesViewer extends JPanel implements RelationshipsViewer{
+public class MessagesViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
 
+    private final ExplorerManager tableEM = new ExplorerManager();
+    private final Lookup lookup;
+    private final Outline outline;
+    
+    @Messages({
+        "MessageViewer_tabTitle=Messages",
+        "MessageViewer_columnHeader_From=From",
+        "MessageViewer_columnHeader_To=To",
+        "MessageViewer_columnHeader_Date=Date",
+        "MessageViewer_columnHeader_Subject=Subject",
+        "MessageViewer_columnHeader_Attms=Attachments"
+    })
+    
     /**
      * Creates new form MessagesViewer
      */
     public MessagesViewer() {
         initComponents();
+        
+        outline = outlineView.getOutline();
+        outlineView.setPropertyColumns(
+                "From", Bundle.MessageViewer_columnHeader_From(),
+                "To", Bundle.MessageViewer_columnHeader_To(),
+                "Date", Bundle.MessageViewer_columnHeader_Date(),
+                "Subject", Bundle.MessageViewer_columnHeader_Subject(),
+                "Attms", Bundle.MessageViewer_columnHeader_Attms()
+                
+        );
+        outline.setRootVisible(false);
+        outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.AccountNode_accountName());
+        
+        lookup = ExplorerUtils.createLookup(tableEM, getActionMap());
     }
     
     @Override
     public String getDisplayName() {
-        return "Messages";
+        return Bundle.MessageViewer_tabTitle();
     }
     
     @Override
@@ -47,7 +83,17 @@ public class MessagesViewer extends JPanel implements RelationshipsViewer{
     
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        testLabel.setText(info.getString());
+        tableEM.setRootContext(new AbstractNode(Children.create(new MessagesChildNodeFactory(info), true)));
+    }
+    
+     @Override
+    public ExplorerManager getExplorerManager() {
+        return tableEM;
+    }
+    
+    @Override
+    public Lookup getLookup() {
+        return lookup;
     }
 
     /**
@@ -59,30 +105,24 @@ public class MessagesViewer extends JPanel implements RelationshipsViewer{
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        testLabel = new javax.swing.JLabel();
-
-        org.openide.awt.Mnemonics.setLocalizedText(testLabel, org.openide.util.NbBundle.getMessage(MessagesViewer.class, "MessagesViewer.testLabel.text")); // NOI18N
+        outlineView = new org.openide.explorer.view.OutlineView();
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(testLabel)
-                .addContainerGap(294, Short.MAX_VALUE))
+            .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 480, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(testLabel)
-                .addContainerGap(264, Short.MAX_VALUE))
+                .addComponent(outlineView, javax.swing.GroupLayout.PREFERRED_SIZE, 475, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 16, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel testLabel;
+    private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 }

@@ -47,7 +47,7 @@ public class ContactsViewer extends JPanel implements RelationshipsViewer{
     
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        testLabel.setText(info.getString());
+        
     }
 
     /**
