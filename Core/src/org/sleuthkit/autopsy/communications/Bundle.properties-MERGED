@@ -51,6 +51,7 @@ PinAccountsAction.singularText=Add Selected Account to Visualization
 refreshText=Refresh Results
 ResetAndPinAccountsAction.pluralText=Visualize Only Selected Accounts
 ResetAndPinAccountsAction.singularText=Visualize Only Selected Account
+ThumbnailViewer_Name=Thumbnails
 UnpinAccountsAction.pluralText=Remove Selected Accounts
 UnpinAccountsAction.singularText=Remove Selected Account
 VisalizationPanel.paintingError=Problem painting visualization.

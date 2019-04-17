@@ -30,6 +30,7 @@ final class RelationshipBrowser extends JPanel {
     
     private final MessagesViewer messagesViewer;
     private final ContactsViewer contactsViewer;
+    private final ThumbnailViewer thumbnailViewer;
 
     /**
      * Creates new form RelationshipBrowser
@@ -39,9 +40,11 @@ final class RelationshipBrowser extends JPanel {
         
         messagesViewer = new MessagesViewer();
         contactsViewer = new ContactsViewer();
+        thumbnailViewer = new ThumbnailViewer();
         
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
+        tabPane.add(thumbnailViewer.getDisplayName(), thumbnailViewer);
     }
 
     /**
