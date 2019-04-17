@@ -27,6 +27,8 @@ import org.openide.util.Lookup;
  */
 public class RelationshipBrowser extends JPanel {
 
+    private SelectionInfo currentSelection;
+    
     /**
      * Creates new form RelationshipBrowser
      */
@@ -38,11 +40,15 @@ public class RelationshipBrowser extends JPanel {
         });
     }
     
+    /**
+     * Sets the value of currentSelection and passes the SelectionInfo onto 
+     * the currently selected\visible tab.
+     * 
+     * @param info Currently selected account nodes
+     */
     public void setSelectionInfo(SelectionInfo info) {
+        currentSelection = info;
         ((RelationshipsViewer)tabPane.getSelectedComponent()).setSelectionInfo(info);
-        
-        // TODO If we only pass the info to the currently selected tab, we 
-        // need to do something when the tab changes
     }
 
     /**
@@ -56,6 +62,12 @@ public class RelationshipBrowser extends JPanel {
 
         tabPane = new javax.swing.JTabbedPane();
 
+        tabPane.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                tabPaneStateChanged(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -67,6 +79,10 @@ public class RelationshipBrowser extends JPanel {
             .addComponent(tabPane, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void tabPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneStateChanged
+       ((RelationshipsViewer)tabPane.getSelectedComponent()).setSelectionInfo(currentSelection);
+    }//GEN-LAST:event_tabPaneStateChanged
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
