@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.openide.nodes.Sheet;
@@ -30,12 +31,14 @@ import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTA
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL;
 import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -59,7 +62,12 @@ final class ContactNode extends BlackboardArtifactNode {
     ContactNode(BlackboardArtifact artifact) {
         super(artifact);
 
-        setDisplayName(getAttributeDisplayString(artifact, TSK_NAME));
+        String name = getAttributeDisplayString(artifact, TSK_NAME);
+        if(name == null || name.trim().isEmpty()) {
+            // VCards use TSK_NAME_PERSON instead of TSK_NAME
+            name = getAttributeDisplayString(artifact, TSK_NAME_PERSON);
+        }
+        setDisplayName(name);
     }
 
     @Override
@@ -76,19 +84,15 @@ final class ContactNode extends BlackboardArtifactNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
+        
+        try {
+            for (BlackboardAttribute bba : artifact.getAttributes()) {
+                sheetSet.put(new NodeProperty<>(bba.getAttributeType().getTypeName(), bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+            }
 
-        sheetSet.put(new NodeProperty<>("email", Bundle.ContactNode_Email(), "",
-                getAttributeDisplayString(artifact, TSK_EMAIL))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("phone", Bundle.ContactNode_Phone(), "",
-                getAttributeDisplayString(artifact, TSK_PHONE_NUMBER))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("mobile", Bundle.ContactNode_Mobile_Number(), "",
-                getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_MOBILE))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("home", Bundle.ContactNode_Home_Number(), "",
-                getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_HOME))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("office", Bundle.ContactNode_Office_Number(), "",
-                getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_OFFICE))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("url", Bundle.ContactNode_URL(), "",
-                getAttributeDisplayString(artifact, TSK_URL))); //NON-NLS
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting attribute values.", ex); //NON-NLS
+        }
 
         return sheet;
     }
