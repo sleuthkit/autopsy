@@ -8,11 +8,13 @@ Sometimes you need to make a quick decision about a system or systems and don't 
 
 There are many features of Autopsy that can come into play in a triage situation. Some help you process the files most likely to be relevant earlier, and others allow you to continue analyzing the data after disconnecting from the target system.
 
-\subsection triage_prioritization Prioritization/Filtering
+\subsection triage_prioritization Prioritization
 
 The goal is to find the most important files first when there is limited time to analyze a system. Autopsy always runs on the user folders first (if present), since in many situations they are the most likely folders to contain data of interest.
 
 \image html triage/pipelineFolders.png
+
+\subsection triage_file_filter File Filters
 
 For a particular scenario, you may know specific file types that you are interested in. For example, if you are only concerned with finding images, you could save time by not analyzing any non-image files. This will allow a system to be processed far faster than if you analyzed every file.
 
@@ -22,9 +24,17 @@ File filters allow you to limit which types of files will be processed. The \ref
 
 \image html triage/fileFilter.png
 
-Another way to speed up analysis is to only run some of the ingest modules. For example, if we're only interested in images, there may be no point in running the \ref keyword_search_page or the \ref encryption_page. You can manually select and configure the modules you want to run each time, but since many sessions are similar it may be easier to set up an ingest profile. An ingest profile allows you to store which file filter you want to run, which ingest modules should be enabled, and your configuration for each ingest module. See the \ref ingest_profiles section of the \ref ingest_page page for information on how to set up and use an ingest profile.
+\subsection triage_profile Ingest Profiles
+
+Another way to speed up analysis is to only run some of the ingest modules. For example, if we're only interested in images, there may be no point in running the \ref keyword_search_page or the \ref encryption_page. You can manually select and configure the modules you want to run each time, but since many sessions are similar it may be easier to set up an ingest profile. An ingest profile allows you to store which file filter you want to run, which ingest modules should be enabled, and your configuration for each ingest module.
 
 \image html triage/ingestProfile.png
+
+Once you have at least one ingest profile configured, a new screen will appear before the normal ingest module configuration panel. If you choose your user-defined profile, that ingest module configuration panel will be skipped entirely and the ingest modules from that profile will be run on the data source.
+
+\image html triage/profileSelect.png
+
+See the \ref ingest_profiles section of the \ref ingest_page page for additional information on how to set up and use an ingest profile.
 
 \subsection triage_no_image Running on Live Systems and Devices
 
@@ -33,10 +43,12 @@ In a triage situation, there is generally not time to make a full image of the s
 <ul>
 <li> Devices such as USB drives can be analyzed as local disks without needing to create an image file. See the \ref ds_local section for more details.
 <li> A live triage drive can be created that will allow you to run Autopsy from a USB drive on a live system. All case data will be saved to the USB drive with minimal changes to the system being analyzed. See \ref live_triage_page for more details.
-<li> Whatever Paladin is
+<li> The target computer can be booted from a trusted Linux or Windows USB and Autopsy can be run from it. <a href="https://sumuri.com/software/paladin/">Paladin</a> includes Autopsy in its bootable Linux USB and a Windows FE image can be created as well. 
 </ul>
 
-With any of these methods there is still the problem that your Autopsy case won't be very useful after you disconnect from the drive. To solve this problem you can choose to make a "sparse VHD" as Autopsy is processing the device. This is a file format used by Microsoft Virtual Machines that is readable by Windows and other forensic tools. Instead of copying each sector of sequentially, sparse VHDs allow us to copy sectors in any order. This lets us copy each sector as Autopsy reads it, so the sparse VHD will contain all of the files that have been processed so far. We will also have the data associated with volumes and file systems since Autopsy has to process those in the course of analyzing the system.
+\subsubsection triage_vhd Making a Sparse Image
+
+With any of the above methods for analyzing live systems and devices there is still the problem that your Autopsy case won't be very useful after you disconnect from the drive. To solve this problem you can choose to make a "sparse VHD" as Autopsy is processing the device. This is a file format used by Microsoft Virtual Machines that is readable by Windows and other forensic tools. Instead of copying each sector of sequentially, sparse VHDs allow us to copy sectors in any order. This lets us copy each sector as Autopsy reads it, so the sparse VHD will contain all of the files that have been processed so far. We will also have the data associated with volumes and file systems since Autopsy has to process those in the course of analyzing the system.
 
 To create a sparse VHD, check the box for "Make a VHD image..." when selecting the disk to analyze.
 
