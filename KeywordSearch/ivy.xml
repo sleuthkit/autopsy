@@ -24,7 +24,11 @@
         <!-- Exclude the version of cxf-rt-rs-client from Tika 1.20, one of its depedencies breaks Ivy -->
         <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.20">
             <exclude module="cxf-rt-rs-client"/>
+            <exclude module="cleartk-ml"/>
         </dependency>
+        
+        <dependency conf="autopsy->*" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.3.0"/>
+        <dependency conf="autopsy->*" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/>
         
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
         <dependency conf="autopsy->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>
@@ -41,9 +45,6 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
         
-        <!-- Travis is trying to pull down cleartk-ml-4.0.0 which doesn't exist. 
-        Overriding to 2.0.0 (latest version) works.-->
-        <override  org="org.cleartk" module="cleartk-ml" rev="2.0.0"/>
         <override org="commons-io" module="commons-io" rev="2.3"/>
         <override org="org.apache.httpcomponents" module="httpclient" rev="4.3.1"/>
         <override org="org.apache.httpcomponents" module="httpcore" rev="4.3"/>
