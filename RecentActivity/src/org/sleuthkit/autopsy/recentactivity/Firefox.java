@@ -153,6 +153,11 @@ class Firefox extends Extract {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile historyFile : historyFiles) {
+            
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+            
             if (historyFile.getSize() == 0) {
                 continue;
             }
@@ -184,6 +189,11 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, HISTORY_QUERY);
             logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    return;
+                }
+                
                 String url = result.get("url").toString();
                 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -277,6 +287,11 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, BOOKMARK_QUERY);
             logger.log(Level.INFO, "{0} - Now getting bookmarks from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    break;
+                }
+                
                 String url = result.get("url").toString();
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -376,6 +391,11 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, query);
             logger.log(Level.INFO, "{0} - Now getting cookies from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    break;
+                }
+                
                 String host = result.get("host").toString();
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -487,6 +507,11 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(temps, DOWNLOAD_QUERY);
             logger.log(Level.INFO, "{0}- Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    break;
+                }
+                
                 String source = result.get("source").toString();
 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -621,6 +646,11 @@ class Firefox extends Extract {
 
             logger.log(Level.INFO, "{0} - Now getting downloads from {1} with {2} artifacts identified.", new Object[]{moduleName, temps, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    break;
+                }
+                
                 String url = result.get("url").toString();
                 
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
@@ -764,6 +794,11 @@ class Firefox extends Extract {
             List<HashMap<String, Object>> tempList = this.dbConnect(tempFilePath, formHistoryQuery);
             logger.log(Level.INFO, "{0} - Now getting history from {1} with {2} artifacts identified.", new Object[]{moduleName, tempFilePath, tempList.size()}); //NON-NLS
             for (HashMap<String, Object> result : tempList) {
+                
+                if (context.dataSourceIngestIsCancelled()) {
+                    break;
+                }
+                
                 Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
                 
                 String fieldName = ((result.get("fieldname").toString() != null) ? result.get("fieldname").toString() : "");

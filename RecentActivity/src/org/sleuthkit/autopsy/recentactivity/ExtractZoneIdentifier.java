@@ -100,6 +100,11 @@ final class ExtractZoneIdentifier extends Extract {
         Collection<BlackboardArtifact> downloadArtifacts = new ArrayList<>();
 
         for (AbstractFile zoneFile : zoneFiles) {
+            
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+            
             try {
                 processZoneFile(context, dataSource, zoneFile, sourceArtifacts, downloadArtifacts, knownPathIDs);
             } catch (TskCoreException ex) {
