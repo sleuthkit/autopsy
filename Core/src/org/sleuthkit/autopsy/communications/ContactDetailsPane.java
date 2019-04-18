@@ -34,6 +34,8 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
     public ContactDetailsPane() {
         initComponents();
         this.setEnabled(false);
+        
+        nameLabel.setText("");
     }
 
     /**

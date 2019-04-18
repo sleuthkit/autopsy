@@ -364,6 +364,9 @@ class ExtractIE extends Extract {
                 bbartifacts.addAll(parsePascoOutput(indexFile, filename).stream()
                         .filter(bbart -> bbart.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID())
                         .collect(Collectors.toList()));
+                if (context.dataSourceIngestIsCancelled()) {
+                    return;
+                }
                 foundHistory = true;
 
                 //Delete index<n>.dat file since it was succcessfully by Pasco
@@ -465,6 +468,11 @@ class ExtractIE extends Extract {
             return bbartifacts;
         }
         while (fileScanner.hasNext()) {
+            
+            if (context.dataSourceIngestIsCancelled()) {
+                return bbartifacts;
+            }
+            
             String line = fileScanner.nextLine();
             if (!line.startsWith("URL")) {   //NON-NLS
                 continue;
@@ -565,7 +573,7 @@ class ExtractIE extends Extract {
                 this.indexArtifact(bbart);
                 bbartifacts.add(bbart);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard.", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error writing Internet Explorer web history artifact to the blackboard. Pasco results will be incomplete", ex); //NON-NLS
             }
         }
         fileScanner.close();
