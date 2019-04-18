@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -63,7 +65,7 @@ final class ContactNode extends BlackboardArtifactNode {
         super(artifact);
 
         String name = getAttributeDisplayString(artifact, TSK_NAME);
-        if(name == null || name.trim().isEmpty()) {
+        if (name == null || name.trim().isEmpty()) {
             // VCards use TSK_NAME_PERSON instead of TSK_NAME
             name = getAttributeDisplayString(artifact, TSK_NAME_PERSON);
         }
@@ -84,10 +86,57 @@ final class ContactNode extends BlackboardArtifactNode {
             sheetSet = Sheet.createPropertiesSet();
             sheet.put(sheetSet);
         }
-        
+
+        // Sorting the attributes by type so that the duplicates can be removed
+        // and they can be grouped by type for display.
         try {
+            HashMap<String, BlackboardAttribute> phoneNumList = new HashMap<>();
+            HashMap<String, BlackboardAttribute> emailList = new HashMap<>();
+            HashMap<String, BlackboardAttribute> nameList = new HashMap<>();
+            HashMap<String, BlackboardAttribute> otherList = new HashMap<>();
             for (BlackboardAttribute bba : artifact.getAttributes()) {
-                sheetSet.put(new NodeProperty<>(bba.getAttributeType().getTypeName(), bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                if (bba.getAttributeType().getTypeName().contains("TSK_PHONE")) {
+                    phoneNumList.put(bba.getDisplayString(), bba);
+                } else if (bba.getAttributeType().getTypeName().contains("TSK_EMAIL")) {
+                    emailList.put(bba.getDisplayString(), bba);
+                } else if (bba.getAttributeType().getTypeName().contains("TSK_NAME")) {
+                    nameList.put(bba.getDisplayString(), bba);
+                } else {
+                    otherList.put(bba.getDisplayString(), bba);
+                }
+            }
+            String propertyID = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getLabel();
+            int count = 0;
+            for (BlackboardAttribute bba : nameList.values()) {
+                if (count++ > 0) {
+                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                } else {
+                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                }
+            }
+
+            propertyID = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel();
+            count = 0;
+            for (BlackboardAttribute bba : phoneNumList.values()) {
+                if (count++ > 0) {
+                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                } else {
+                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                }
+            }
+
+            propertyID = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getLabel();
+            count = 0;
+            for (BlackboardAttribute bba : emailList.values()) {
+                if (count++ > 0) {
+                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                } else {
+                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                }
+            }
+
+            for (BlackboardAttribute bba1 : otherList.values()) {
+                sheetSet.put(new NodeProperty<>(bba1.getAttributeType().getTypeName(), bba1.getAttributeType().getDisplayName(), "", bba1.getDisplayString()));
             }
 
         } catch (TskCoreException ex) {
