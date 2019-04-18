@@ -18,29 +18,46 @@
  */
 package org.sleuthkit.autopsy.communications;
 
-import java.util.Date;
-
+import java.util.Set;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
+import org.sleuthkit.datamodel.CommunicationsFilter;
 
 /**
  * Class to wrap the details of the current selection from the AccountBrowser or
  * VisualizationPane
- * 
  */
-public class SelectionInfo {
-        
-        private final String displayString;
-        
-        SelectionInfo() {
-           displayString = (new Date()).toString();
-        }
-        
-        /**
-         * Temporary function for testing data flow
-         * 
-         * @return A String representing the time the object was created
-         */
-        public String getString() {
-            return displayString;
-        }
-    
+public final class SelectionInfo {
+
+    private final Set<AccountDeviceInstance> accountDeviceInstances;
+    private final CommunicationsFilter communicationFilter;
+
+    /**
+     * Wraps the details of the currently selected accounts.
+     *
+     * @param accountDeviceInstances Selected accountDecivedInstances
+     * @param communicationFilter    Currently selected communications filters
+     */
+    SelectionInfo(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter communicationFilter) {
+        this.accountDeviceInstances = accountDeviceInstances;
+        this.communicationFilter = communicationFilter;
+    }
+
+    /**
+     * Returns the currently selected accountDeviceInstances
+     *
+     * @return Set of AccountDeviceInstance
+     */
+    public Set<AccountDeviceInstance> getAccountDevicesInstances() {
+        return accountDeviceInstances;
+    }
+
+    /**
+     * Returns the currently selected communications filters.
+     *
+     * @return Instance of CommunicationsFilter
+     */
+    public CommunicationsFilter getCommunicationsFilter() {
+        return communicationFilter;
+    }
+
 }
