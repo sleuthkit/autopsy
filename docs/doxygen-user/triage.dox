@@ -2,7 +2,7 @@
 
 \section triage_overview Overview
 
-Intro here.
+Sometimes you need to make a quick decision about a system or systems and don't have the time or resources to make full images. For example, during a knock and talk you want to know if there is notable data on their system. Or you are at a location with many systems and want to know which should be analyzed first. Autopsy has features that will allow you to quickly find the data of interest without making full images of the devices. Those features will be described below, followed by some example scenarios that show how to put everything together.
 
 \section triage_features Triage-related Features
 
