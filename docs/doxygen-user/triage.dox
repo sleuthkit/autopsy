@@ -12,19 +12,19 @@ There are many features of Autopsy that can come into play in a triage situation
 
 The goal is to find the most important files first when there is limited time to analyze a system. Autopsy always runs on the user folders first (if present), since in many situations they are the most likely folders to contain data of interest.
 
-\image html triage\pipelineFolders.png
+\image html triage/pipelineFolders.png
 
 For a particular scenario, you may know specific file types that you are interested in. For example, if you are only concerned with finding images, you could save time by not analyzing any non-image files. This will allow a system to be processed far faster than if you analyzed every file.
 
-\image html triage\fileFilterImage.png
+\image html triage/fileFilterImage.png
 
 File filters allow you to limit which types of files will be processed. The \ref file_filters section of \ref ingest_page page shows how to create a file filter. You can filter on file name/extension, path, or how recently the file was modified. Once saved, your new file filter can be selected when configuring ingest modules.
 
-\image html triage\fileFilter.png
+\image html triage/fileFilter.png
 
 Another way to speed up analysis is to only run some of the ingest modules. For example, if we're only interested in images, there may be no point in running the \ref keyword_search_page or the \ref encryption_page. You can manually select and configure the modules you want to run each time, but since many sessions are similar it may be easier to set up an ingest profile. An ingest profile allows you to store which file filter you want to run, which ingest modules should be enabled, and your configuration for each ingest module. See the \ref ingest_profiles section of the \ref ingest_page page for information on how to set up and use an ingest profile.
 
-\image html triage\ingestProfile.png
+\image html triage/ingestProfile.png
 
 \subsection triage_no_image Running on Live Systems and Devices
 
