@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2012-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,6 +46,7 @@ import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
+import org.openide.explorer.view.BeanTreeView;
 import org.openide.explorer.view.Visualizer;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
@@ -128,7 +128,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         getTree().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         //Hook into the JTree and pre-expand the Views Node and Results node when a user
         //expands an item in the tree that makes these nodes visible.
-        getTree().addTreeExpansionListener(new TreeExpansionListener() {
+        ((ExpansionBeanTreeView )getTree()).addTreeExpansionListener(new TreeExpansionListener() {
             @Override
             public void treeExpanded(TreeExpansionEvent event) {
                 //Bail immediately if we are not in the Group By view.
@@ -192,7 +192,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * @param rootChildren Children node containing Results node and Views node.
      */
     private void preExpandNodes(Children rootChildren) {
-        ExpansionBeanTreeView tree = getTree();
+        BeanTreeView tree = getTree();
 
         Node results = rootChildren.findChild(ResultsNode.NAME);
         if (!Objects.isNull(results)) {
@@ -930,8 +930,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      *
      * @return tree the BeanTreeView
      */
-    public ExpansionBeanTreeView getTree() {
-        return (ExpansionBeanTreeView) this.treeView;
+    BeanTreeView getTree() {
+        return (BeanTreeView) this.treeView;
     }
 
     /**

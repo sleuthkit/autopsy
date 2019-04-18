@@ -584,7 +584,6 @@ public class CreatePortableCaseModule implements GeneralReportModule {
      * Returns the object ID for the given content object in the portable case.
      * 
      * @param content The content object to copy into the portable case
-     * @param trans   The current transaction
      * 
      * @return the new object ID for this content
      * 

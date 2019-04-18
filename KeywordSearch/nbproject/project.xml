@@ -50,14 +50,6 @@
                     </run-dependency>
                 </dependency>
                 <dependency>
-                    <code-name-base>org.netbeans.swing.outline</code-name-base>
-                    <build-prerequisite/>
-                    <compile-dependency/>
-                    <run-dependency>
-                        <specification-version>1.34.1</specification-version>
-                    </run-dependency>
-                </dependency>
-                <dependency>
                     <code-name-base>org.openide.awt</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -127,7 +119,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.14</specification-version>
+                        <specification-version>10.15</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -141,9 +133,107 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
+                <package>com.ctc.wstx.api</package>
+                <package>com.ctc.wstx.cfg</package>
+                <package>com.ctc.wstx.compat</package>
+                <package>com.ctc.wstx.dom</package>
+                <package>com.ctc.wstx.dtd</package>
+                <package>com.ctc.wstx.ent</package>
+                <package>com.ctc.wstx.evt</package>
+                <package>com.ctc.wstx.exc</package>
+                <package>com.ctc.wstx.io</package>
+                <package>com.ctc.wstx.msv</package>
+                <package>com.ctc.wstx.sax</package>
+                <package>com.ctc.wstx.sr</package>
+                <package>com.ctc.wstx.stax</package>
+                <package>com.ctc.wstx.sw</package>
+                <package>com.ctc.wstx.util</package>
                 <package>org.apache.commons.logging.impl</package>
+                <package>org.apache.http</package>
+                <package>org.apache.http.annotation</package>
+                <package>org.apache.http.auth</package>
+                <package>org.apache.http.auth.params</package>
+                <package>org.apache.http.client</package>
+                <package>org.apache.http.client.config</package>
+                <package>org.apache.http.client.entity</package>
+                <package>org.apache.http.client.methods</package>
+                <package>org.apache.http.client.params</package>
+                <package>org.apache.http.client.protocol</package>
+                <package>org.apache.http.client.utils</package>
+                <package>org.apache.http.concurrent</package>
+                <package>org.apache.http.config</package>
+                <package>org.apache.http.conn</package>
+                <package>org.apache.http.conn.params</package>
+                <package>org.apache.http.conn.routing</package>
+                <package>org.apache.http.conn.scheme</package>
+                <package>org.apache.http.conn.socket</package>
+                <package>org.apache.http.conn.ssl</package>
+                <package>org.apache.http.conn.util</package>
+                <package>org.apache.http.cookie</package>
+                <package>org.apache.http.cookie.params</package>
+                <package>org.apache.http.entity</package>
+                <package>org.apache.http.entity.mime</package>
+                <package>org.apache.http.entity.mime.content</package>
+                <package>org.apache.http.impl</package>
+                <package>org.apache.http.impl.auth</package>
+                <package>org.apache.http.impl.bootstrap</package>
+                <package>org.apache.http.impl.client</package>
+                <package>org.apache.http.impl.conn</package>
+                <package>org.apache.http.impl.conn.tsccm</package>
+                <package>org.apache.http.impl.cookie</package>
+                <package>org.apache.http.impl.entity</package>
+                <package>org.apache.http.impl.execchain</package>
+                <package>org.apache.http.impl.io</package>
+                <package>org.apache.http.impl.pool</package>
+                <package>org.apache.http.io</package>
+                <package>org.apache.http.message</package>
+                <package>org.apache.http.params</package>
+                <package>org.apache.http.pool</package>
+                <package>org.apache.http.protocol</package>
+                <package>org.apache.http.ssl</package>
+                <package>org.apache.http.util</package>
+                <package>org.apache.jute</package>
+                <package>org.apache.jute.compiler</package>
+                <package>org.apache.jute.compiler.generated</package>
+                <package>org.apache.solr.client.solrj</package>
+                <package>org.apache.solr.client.solrj.beans</package>
+                <package>org.apache.solr.client.solrj.impl</package>
+                <package>org.apache.solr.client.solrj.request</package>
+                <package>org.apache.solr.client.solrj.response</package>
+                <package>org.apache.solr.client.solrj.util</package>
+                <package>org.apache.solr.common</package>
+                <package>org.apache.solr.common.cloud</package>
+                <package>org.apache.solr.common.luke</package>
+                <package>org.apache.solr.common.params</package>
+                <package>org.apache.solr.common.util</package>
                 <package>org.apache.tika.parser.txt</package>
+                <package>org.apache.zookeeper</package>
+                <package>org.apache.zookeeper.client</package>
+                <package>org.apache.zookeeper.common</package>
+                <package>org.apache.zookeeper.data</package>
+                <package>org.apache.zookeeper.jmx</package>
+                <package>org.apache.zookeeper.proto</package>
+                <package>org.apache.zookeeper.server</package>
+                <package>org.apache.zookeeper.server.auth</package>
+                <package>org.apache.zookeeper.server.persistence</package>
+                <package>org.apache.zookeeper.server.quorum</package>
+                <package>org.apache.zookeeper.server.quorum.flexible</package>
+                <package>org.apache.zookeeper.server.upgrade</package>
+                <package>org.apache.zookeeper.server.util</package>
+                <package>org.apache.zookeeper.txn</package>
+                <package>org.apache.zookeeper.version</package>
+                <package>org.apache.zookeeper.version.util</package>
+                <package>org.codehaus.stax2</package>
+                <package>org.codehaus.stax2.evt</package>
+                <package>org.codehaus.stax2.io</package>
+                <package>org.codehaus.stax2.ri</package>
+                <package>org.codehaus.stax2.validation</package>
+                <package>org.noggit</package>
                 <package>org.sleuthkit.autopsy.keywordsearch</package>
+                <package>org.slf4j</package>
+                <package>org.slf4j.event</package>
+                <package>org.slf4j.helpers</package>
+                <package>org.slf4j.spi</package>
             </public-packages>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-validator-1.5.1-sources.jar</runtime-relative-path>
@@ -152,10 +242,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-digester-1.8.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-digester-1.8.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jericho-html-3.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/cdm-4.5.5.jar</runtime-relative-path>
@@ -210,16 +296,8 @@
                 <binary-origin>release/modules/ext/poi-scratchpad-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/json-simple-1.1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/json-simple-1.1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/c3p0-0.9.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/c3p0-0.9.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-ooxml-4.0.1.jar</runtime-relative-path>
@@ -236,10 +314,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/tika-parsers-1.20.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/tika-parsers-1.20.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sqlwrapper-0.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlwrapper-0.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/log4j-1.2.17.jar</runtime-relative-path>
@@ -338,12 +412,120 @@
                 <binary-origin>release/modules/ext/poi-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpmime-4.3.1.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpmime-4.3.1.jar</binary-origin>
+                <runtime-relative-path>ext/jna-4.1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jna-4.1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpcore-4.3.jar</runtime-relative-path>
-                <binary-origin>release\modules\ext\httpcore-4.3.jar</binary-origin>
+                <runtime-relative-path>ext/qdox-1.12.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/qdox-1.12.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bcpkix-jdk15on-1.54.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcpkix-jdk15on-1.54.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bzip2-0.9.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bzip2-0.9.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/grib-4.5.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/grib-4.5.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackson-core-2.9.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackson-core-2.9.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/uimaj-core-2.5.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/uimaj-core-2.5.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jmatio-1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jmatio-1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/wstx-asl-3.2.7.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\wstx-asl-3.2.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-csv-1.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-csv-1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.5.1-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.5.1-javadoc.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/lucene-sandbox-4.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/lucene-sandbox-4.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jericho-html-3.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jericho-html-3.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jsr-275-0.9.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jsr-275-0.9.3.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpcore-4.4.7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpcore-4.4.7.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/bcmail-jdk15on-1.54.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/bcmail-jdk15on-1.54.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/asm-all-3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/asm-all-3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/icu4j-3.8.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/icu4j-3.8.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/curvesapi-1.04.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curvesapi-1.04.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sis-referencing-0.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sis-referencing-0.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/ctakes-core-res-3.2.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/ctakes-core-res-3.2.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/lucene-core-4.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/lucene-core-4.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/asm-5.0.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/asm-5.0.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/org.osgi.core-4.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/org.osgi.core-4.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/c3p0-0.9.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/c3p0-0.9.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sqlwrapper-0.0.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sqlwrapper-0.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/jackcess-encrypt-2.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/jackcess-encrypt-2.1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpmime-4.3.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\httpmime-4.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jcip-annotations-1.0.jar</runtime-relative-path>
@@ -358,16 +540,8 @@
                 <binary-origin>release/modules/ext/sqlite-jdbc-3.25.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/bzip2-0.9.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/bzip2-0.9.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/cleartk-util-2.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/cleartk-util-2.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/grib-4.5.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/grib-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jdom-1.0.jar</runtime-relative-path>
@@ -388,10 +562,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-exec-1.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-exec-1.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-validator-1.5.1-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-validator-1.5.1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-tika-0.8.jar</runtime-relative-path>
