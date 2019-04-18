@@ -23,37 +23,37 @@ The admin panel is enabled by creating the file "admin" in the user config direc
 
 For an installed copy of Autopsy, the file will go under \c "C:\Users\<user name>\AppData\Roaming\Autopsy\config". 
 
-\image html AutoIngest\admin_file.png
+\image html AutoIngest/admin_file.png
 
 \section auto_ingest_admin_jobs_panel Auto Ingest Jobs Panel
 
 With the admin file in place, the user can right-click on jobs in each of the tables of the jobs panel to perform different actions. In the Pending Jobs table, the context menu allows cases and individual jobs to be prioritized.
 
-\image html AutoIngest\admin_jobs_panel.png
+\image html AutoIngest/admin_jobs_panel.png
 
 In the Running Jobs tables, the ingest progress can be viewed and the current job can be cancelled. Note that cancellation can take some time.
 
-\image html AutoIngest\admin_jobs_cancel.png
+\image html AutoIngest/admin_jobs_cancel.png
 
 In the Completed Jobs table, the user can reprocess a job (generally useful when a job had errors), delete a case (if no other machines are using it) and view the case log.
 
-\image html AutoIngest\admin_jobs_completed.png
+\image html AutoIngest/admin_jobs_completed.png
 
 \section auto_ingest_admin_nodes_panel Auto Ingest Nodes Panel
 
 The Nodes panel displays the status of every online auto ingest node. Additionally, an admin can pause or resume a node, or shut down a node entirely (i.e., exit the Autopsy app).
 
-\image html AutoIngest\admin_nodes_panel.png
+\image html AutoIngest/admin_nodes_panel.png
 
 \section auto_ingest_admin_cases_panel Cases Panel
 
 The Cases panel shows information about each auto ingest case - the name, creation and last accessed times, the case directory, and flags for which parts of the case have been deleted.
 
-\image html AutoIngest\cases_panel.png
+\image html AutoIngest/cases_panel.png
 
 If you right-click on a case, you can open it, see the log, delete the case, or view properties of the case. 
 
-\image html AutoIngest\cases_context_menu.png
+\image html AutoIngest/cases_context_menu.png
 
 Note that you can select multiple cases at once to delete. If you choose to delete a case (or cases), you'll see the following confirmation dialog:
 
@@ -63,11 +63,11 @@ Note that you can select multiple cases at once to delete. If you choose to dele
 
 The health monitor shows timing stats and the general state of the system. The Health Monitor is accessed from the Auto Ingest Nodes panel. To enable health monitoring, click on the Health Monitor button to get the following screen and then press the "Enable monitor" button.
 
-\image html AutoIngest\health_monitor_disabled.png
+\image html AutoIngest/health_monitor_disabled.png
 
 This will enable the health monitor metrics on every node (both auto ingest nodes and examiner nodes) that is using this PostgreSQL server. Once enabled, the monitor will display the collected metrics.
 
-\image html AutoIngest\health_monitor.png
+\image html AutoIngest/health_monitor.png
 
 By default, the graphs will show all metrics collected in the last day. 
 
@@ -86,6 +86,6 @@ The User Metrics section shows open cases and logged on nodes. For the open case
 
 The Auto Ingest Metrics can be accessed the Auto Ingest Nodes panel and shows data about the jobs completed in a selected time frame.
 
-\image html AutoIngest\metrics.png
+\image html AutoIngest/metrics.png
 
 */
