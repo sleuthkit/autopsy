@@ -1041,7 +1041,7 @@ public class PortableCaseReportModule implements ReportModule {
         
         void updateInterestingItems(boolean saveInterestingFiles, boolean saveInterestingResults) {
             this.saveInterestingFiles = saveInterestingFiles;
-            this.saveInterestingResults = saveInterestingFiles;
+            this.saveInterestingResults = saveInterestingResults;
         }
         
         void updateTagNames(List<TagName> tagNames) {
