@@ -24,7 +24,7 @@ import org.openide.explorer.view.BeanTreeView;
 /**
  * Adds the ability to listen to user-driven JTree expansion events. 
  */
-class ExpansionBeanTreeView extends BeanTreeView {
+final class ExpansionBeanTreeView extends BeanTreeView {
     public void addTreeExpansionListener(TreeExpansionListener listener) {
         this.tree.addTreeExpansionListener(listener);
     }

@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 AutoUpdate-Show-In-Client: true
 OpenIDE-Module: org.sleuthkit.autopsy.keywordsearch/6
-OpenIDE-Module-Implementation-Version: 20
+OpenIDE-Module-Implementation-Version: 21
 OpenIDE-Module-Install: org/sleuthkit/autopsy/keywordsearch/Installer.class
 OpenIDE-Module-Layer: org/sleuthkit/autopsy/keywordsearch/layer.xml
 OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/keywordsearch/Bundle.properties

@@ -31,7 +31,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  * with a keyword. This feature was added to support an initial implementation
  * of account number search and may be removed in the future.
  */
-class Keyword {
+public class Keyword {
 
     private String searchTerm;
     private boolean isLiteral;
@@ -123,7 +123,7 @@ class Keyword {
      *
      * @return The search term.
      */
-    String getSearchTerm() {
+    public String getSearchTerm() {
         return searchTerm;
     }
 
@@ -133,7 +133,7 @@ class Keyword {
      *
      * @return True or false.
      */
-    boolean searchTermIsLiteral() {
+    public boolean searchTermIsLiteral() {
         return isLiteral;
     }
 
@@ -144,7 +144,7 @@ class Keyword {
      *
      * @return True or false.
      */
-    boolean searchTermIsWholeWord() {
+    public boolean searchTermIsWholeWord() {
         return isWholeWord;
     }
 

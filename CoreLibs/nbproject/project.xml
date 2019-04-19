@@ -243,6 +243,7 @@
                 <package>org.apache.commons.io.input</package>
                 <package>org.apache.commons.io.monitor</package>
                 <package>org.apache.commons.io.output</package>
+                <package>org.apache.commons.io.serialization</package>
                 <package>org.apache.commons.lang</package>
                 <package>org.apache.commons.lang.builder</package>
                 <package>org.apache.commons.lang.enums</package>
