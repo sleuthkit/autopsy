@@ -1,44 +1,41 @@
-CreatePortableCaseModule.compressCase.canceled=Compression canceled by user
-CreatePortableCaseModule.compressCase.errorCompressingCase=Error compressing case
-# {0} - Temp folder path
-CreatePortableCaseModule.compressCase.errorCreatingTempFolder=Could not create temporary folder {0}
-CreatePortableCaseModule.compressCase.errorFinding7zip=Could not locate 7-Zip executable
-# {0} - File name
-CreatePortableCaseModule.copyContentToPortableCase.copyingFile=Copying file {0}
-# {0} - case folder
-CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists
-CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case
-# {0} - folder
-CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}
-CreatePortableCaseModule.createCase.errorStoringMaxIds=Error storing maximum database IDs
-CreatePortableCaseModule.generateReport.caseClosed=Current case has been closed
-CreatePortableCaseModule.generateReport.compressingCase=Compressing case...
-# {0} - tag name
-CreatePortableCaseModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...
-# {0} - tag name
-CreatePortableCaseModule.generateReport.copyingFiles=Copying files tagged as {0}...
-CreatePortableCaseModule.generateReport.copyingTags=Copying tags...
-CreatePortableCaseModule.generateReport.creatingCase=Creating portable case database...
-CreatePortableCaseModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
-CreatePortableCaseModule.generateReport.errorCopyingFiles=Error copying tagged files
-CreatePortableCaseModule.generateReport.errorCopyingTags=Error copying tags
-# {0} - attribute type name
-CreatePortableCaseModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
-CreatePortableCaseModule.generateReport.noTagsSelected=No tags selected for export.
-# {0} - output folder
-CreatePortableCaseModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
-# {0} - output folder
-CreatePortableCaseModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder
-CreatePortableCaseModule.generateReport.verifying=Verifying selected parameters...
-CreatePortableCaseModule.getDescription.description=Copies selected tagged items to a new single-user case that will work anywhere
-CreatePortableCaseModule.getName.name=Portable Case
-CreatePortableCasePanel.error.errorLoadingTags=Error loading tags
-CreatePortableCasePanel.error.errorTitle=Error getting tag names for case
-CreatePortableCasePanel.error.noOpenCase=There is no case open
 OpenIDE-Module-Name=Report
 CTL_ReportWizardAction=Run Report
 ArtifactSelectionDialog.titleLabel.text=Select which artifacts you would like to report on:
 ArtifactSelectionDialog.okButton.text=OK
+PortableCaseReportModule.compressCase.canceled=Compression canceled by user
+PortableCaseReportModule.compressCase.errorCompressingCase=Error compressing case
+# {0} - Temp folder path
+PortableCaseReportModule.compressCase.errorCreatingTempFolder=Could not create temporary folder {0}
+PortableCaseReportModule.compressCase.errorFinding7zip=Could not locate 7-Zip executable
+# {0} - File name
+PortableCaseReportModule.copyContentToPortableCase.copyingFile=Copying file {0}
+# {0} - case folder
+PortableCaseReportModule.createCase.caseDirExists=Case folder {0} already exists
+PortableCaseReportModule.createCase.errorCreatingCase=Error creating case
+# {0} - folder
+PortableCaseReportModule.createCase.errorCreatingFolder=Error creating folder {0}
+PortableCaseReportModule.createCase.errorStoringMaxIds=Error storing maximum database IDs
+PortableCaseReportModule.generateReport.caseClosed=Current case has been closed
+PortableCaseReportModule.generateReport.compressingCase=Compressing case...
+# {0} - tag name
+PortableCaseReportModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...
+# {0} - tag name
+PortableCaseReportModule.generateReport.copyingFiles=Copying files tagged as {0}...
+PortableCaseReportModule.generateReport.copyingTags=Copying tags...
+PortableCaseReportModule.generateReport.creatingCase=Creating portable case database...
+PortableCaseReportModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
+PortableCaseReportModule.generateReport.errorCopyingFiles=Error copying tagged files
+PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags
+# {0} - attribute type name
+PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
+PortableCaseReportModule.generateReport.noTagsSelected=No tags selected for export.
+# {0} - output folder
+PortableCaseReportModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
+# {0} - output folder
+PortableCaseReportModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder
+PortableCaseReportModule.generateReport.verifying=Verifying selected parameters...
+PortableCaseReportModule.getDescription.description=Copies selected tagged items to a new single-user case that will work anywhere
+PortableCaseReportModule.getName.name=Portable Case
 ReportExcel.exceptionMessage.dataTooLarge=Value is too long to fit into an Excel cell. 
 ReportExcel.exceptionMessage.errorText=Error showing data into an Excel cell.
 ReportExcel.writeSummary.caseName=Case Name:
@@ -315,4 +312,14 @@ CreatePortableCasePanel.jLabel2.text=Select output folder:
 CreatePortableCasePanel.compressCheckbox.text=Compress case
 CreatePortableCasePanel.chunkSizeLabel.text=Split into chunks of size:
 CreatePortableCasePanel.errorLabel.text_1=Windows only
+ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings
+ReportWizardPortableCaseOptionsVisualPanel.selectAllButton.text=Select All
+ReportWizardPortableCaseOptionsVisualPanel.errorLabel.text=Windows only
+ReportWizardPortableCaseOptionsVisualPanel.chunkSizeLabel.text=Split into chunks of size:
+ReportWizardPortableCaseOptionsVisualPanel.compressCheckbox.text=Compress case
+ReportWizardPortableCaseOptionsVisualPanel.deselectAllButton.text=Deselect All
+ReportWizardPortableCaseOptionsVisualPanel.resultsLabel.text=Export results:
+ReportWizardPortableCaseOptionsVisualPanel.tagLabel.text=Export files tagged as:
+ReportWizardPortableCaseOptionsVisualPanel.interestingFilesCheckbox.text=Interesting Files
+ReportWizardPortableCaseOptionsVisualPanel.interestingResultsCheckbox.text=Interesting Results
 TableReportGenerator.StatusColumn.Header=Review Status

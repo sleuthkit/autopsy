@@ -34,6 +34,7 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
     private ReportWizardPanel1 firstPanel;
     private ReportWizardPanel2 tableConfigPanel;
     private ReportWizardFileOptionsPanel fileConfigPanel;
+    private ReportWizardPortableCaseOptionsPanel portableCaseConfigPanel;
 
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
 
@@ -49,16 +50,22 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
     // be configured.
     private WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
     private String[] fileConfigIndex;
+    // Panels that should be shown if only Portable Case report modules should
+    // be configured.
+    private WizardDescriptor.Panel<WizardDescriptor>[] portableCaseConfigPanels;
+    private String[] portableCaseConfigIndex;
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     ReportWizardIterator() {
         firstPanel = new ReportWizardPanel1();
         tableConfigPanel = new ReportWizardPanel2();
         fileConfigPanel = new ReportWizardFileOptionsPanel();
+        portableCaseConfigPanel = new ReportWizardPortableCaseOptionsPanel();
 
-        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel};
+        allConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel, fileConfigPanel, portableCaseConfigPanel};
         tableConfigPanels = new WizardDescriptor.Panel[]{firstPanel, tableConfigPanel};
         fileConfigPanels = new WizardDescriptor.Panel[]{firstPanel, fileConfigPanel};
+        portableCaseConfigPanels = new WizardDescriptor.Panel[]{firstPanel, portableCaseConfigPanel};
     }
 
     private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
@@ -82,6 +89,7 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
             allConfigIndex = steps;
             tableConfigIndex = new String[]{steps[0], steps[1]};
             fileConfigIndex = new String[]{steps[0], steps[2]};
+            portableCaseConfigIndex = new String[]{steps[0], steps[3]};
         }
         return panels;
     }
@@ -93,13 +101,17 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
      * @param moreConfig  true if a GeneralReportModule was selected
      * @param tableConfig true if a TReportModule was selected
      */
-    private void enableConfigPanels(boolean generalModule, boolean tableModule) {
+    private void enableConfigPanels(boolean generalModule, boolean tableModule, boolean portableCaseModule) {
         if (generalModule) {
             // General Module selected, no additional panels
         } else if (tableModule) {
             // Table Module selected, need Artifact Configuration Panel
             // (ReportWizardPanel2)
             panels = Arrays.asList(tableConfigPanels);
+        } else if (portableCaseModule) {
+            // Portable Case Module selected, need Portable Case Configuration Panel
+            // (ReportWizardPortableCaseOptionsPanel)
+            panels = Arrays.asList(portableCaseConfigPanels);
         } else {
             // File Module selected, need File Report Configuration Panel
             // (ReportWizardFileOptionsPanel)
@@ -135,11 +147,12 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
 
         if (index == 0) {
             // Update path through configuration panels
-            boolean generalModule, tableModule;
+            boolean generalModule, tableModule, portableModule;
             // These preferences are set in ReportWizardPanel1.storeSettings()
             generalModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("generalModule", true); //NON-NLS
             tableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("tableModule", true); //NON-NLS
-            enableConfigPanels(generalModule, tableModule);
+            portableModule = NbPreferences.forModule(ReportWizardPanel1.class).getBoolean("portableCaseModule", true); //NON-NLS
+            enableConfigPanels(generalModule, tableModule, portableModule);
         }
 
         index++;
