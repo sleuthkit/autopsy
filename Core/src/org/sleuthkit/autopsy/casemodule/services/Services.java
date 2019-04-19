@@ -2,7 +2,7 @@
  *
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
@@ -35,7 +35,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public class Services implements Closeable {
 
-    private final List<Closeable> servicesList = new ArrayList<>();
+    private final List<Closeable> services = new ArrayList<>();
     private final FileManager fileManager;
     private final TagsManager tagsManager;
     private final KeywordSearchService keywordSearchService;
@@ -49,19 +49,19 @@ public class Services implements Closeable {
      */
     public Services(SleuthkitCase caseDb) {
         fileManager = new FileManager(caseDb);
-        servicesList.add(fileManager);
+        services.add(fileManager);
 
         tagsManager = new TagsManager(caseDb);
-        servicesList.add(tagsManager);
+        services.add(tagsManager);
 
         //This lookup fails in the functional test code. See JIRA-4571 for details.
         //For the time being, the closing of this service at line 108 will be made
         //null safe so that the functional tests run with no issues.
         keywordSearchService = Lookup.getDefault().lookup(KeywordSearchService.class);
-        servicesList.add(keywordSearchService);
+        services.add(keywordSearchService);
 
         blackboard = new Blackboard(caseDb);
-        servicesList.add(blackboard);
+        services.add(blackboard);
     }
 
     /**
@@ -95,10 +95,7 @@ public class Services implements Closeable {
      * Gets the blackboard service for the current case.
      *
      * @return The blackboard service for the current case.
-     *
-     * @deprecated Use SleuthkitCase.getBlackboard() instead.
      */
-    @Deprecated
     public Blackboard getBlackboard() {
         return blackboard;
     }
@@ -110,7 +107,7 @@ public class Services implements Closeable {
      */
     @Override
     public void close() throws IOException {
-        for (Closeable service : servicesList) {
+        for (Closeable service : services) {
             if(service != null) {
                  service.close();
              }

@@ -23,7 +23,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import static java.lang.Boolean.FALSE;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -35,40 +34,35 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeNormalizationException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME;
+import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.coreutils.ThreadUtils;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Listen for ingest events and update entries in the Central Repository
  * database accordingly
  */
-@NbBundle.Messages({"IngestEventsListener.ingestmodule.name=Correlation Engine"})
 public class IngestEventsListener {
 
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttributeInstance.class.getName());
-    private static final String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
 
     final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
     private static int correlationModuleInstanceCount;
@@ -195,20 +189,44 @@ public class IngestEventsListener {
     }
 
     @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
-        "IngestEventsListener.prevCaseComment.text=Previous Case: "})
+        "IngestEventsListener.prevCaseComment.text=Previous Case: ",
+        "IngestEventsListener.ingestmodule.name=Correlation Engine"})
     static private void postCorrelatedBadArtifactToBlackboard(BlackboardArtifact bbArtifact, List<String> caseDisplayNames) {
 
-        Collection<BlackboardAttribute> attributes = Arrays.asList(
-                new BlackboardAttribute(
-                        TSK_SET_NAME, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevTaggedSet_text()),
-                new BlackboardAttribute(
-                        TSK_COMMENT, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(","))),
-                new BlackboardAttribute(
-                        TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
-                        bbArtifact.getArtifactID()));
-        postArtifactToBlackboard(bbArtifact, attributes);
+        try {
+            String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
+
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
+                    Bundle.IngestEventsListener_prevTaggedSet_text()));
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
+                    Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", ""))));
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
+
+            SleuthkitCase tskCase = bbArtifact.getSleuthkitCase();
+            AbstractFile abstractFile = tskCase.getAbstractFileById(bbArtifact.getObjectID());
+            org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
+            // Create artifact if it doesn't already exist.
+            if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT, attributes)) {
+                BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+                tifArtifact.addAttributes(attributes);
+
+                try {
+                    // index the artifact for keyword search
+                    Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+                    blackboard.indexArtifact(tifArtifact);
+                } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
+                    LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
+                }
+
+                // fire event to notify UI of this new artifact
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
+        } catch (IllegalStateException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to create BlackboardAttribute.", ex); // NON-NLS
+        }
     }
 
     /**
@@ -222,32 +240,34 @@ public class IngestEventsListener {
         "# {1} - count",
         "IngestEventsListener.prevCount.text=Number of previous {0}: {1}"})
     static private void postCorrelatedPreviousArtifactToBlackboard(BlackboardArtifact bbArtifact) {
-        Collection<BlackboardAttribute> attributes = Arrays.asList(
-                new BlackboardAttribute(
-                        TSK_SET_NAME, MODULE_NAME,
-                        Bundle.IngestEventsListener_prevExists_text()),
-                new BlackboardAttribute(
-                        TSK_ASSOCIATED_ARTIFACT, MODULE_NAME,
-                        bbArtifact.getArtifactID()));
-        postArtifactToBlackboard(bbArtifact, attributes);
-    }
 
-    private static void postArtifactToBlackboard(BlackboardArtifact bbArtifact, Collection<BlackboardAttribute> attributes) {
         try {
+            String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
+
+            Collection<BlackboardAttribute> attributes = new ArrayList<>();
+            BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
+                    Bundle.IngestEventsListener_prevExists_text());
+            attributes.add(att);
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
+
             SleuthkitCase tskCase = bbArtifact.getSleuthkitCase();
-            AbstractFile abstractFile = tskCase.getAbstractFileById(bbArtifact.getObjectID());
-            Blackboard blackboard = tskCase.getBlackboard();
+            AbstractFile abstractFile = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
+            org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
             // Create artifact if it doesn't already exist.
-            if (!blackboard.artifactExists(abstractFile, TSK_INTERESTING_ARTIFACT_HIT, attributes)) {
-                BlackboardArtifact tifArtifact = abstractFile.newArtifact(TSK_INTERESTING_ARTIFACT_HIT);
+            if (!tskBlackboard.artifactExists(abstractFile, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT, attributes)) {
+                BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
                 tifArtifact.addAttributes(attributes);
 
                 try {
                     // index the artifact for keyword search
-                    blackboard.postArtifact(tifArtifact, MODULE_NAME);
-                } catch (Blackboard.BlackboardException ex) {
+                    Blackboard blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
+                    blackboard.indexArtifact(tifArtifact);
+                } catch (Blackboard.BlackboardException | NoCurrentCaseException ex) {
                     LOGGER.log(Level.SEVERE, "Unable to index blackboard artifact " + tifArtifact.getArtifactID(), ex); //NON-NLS
                 }
+
+                // fire event to notify UI of this new artifact
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Failed to create BlackboardArtifact.", ex); // NON-NLS
@@ -420,8 +440,8 @@ public class IngestEventsListener {
         private final boolean createCorrelationAttributes;
 
         private DataAddedTask(EamDb db, PropertyChangeEvent evt, boolean flagNotableItemsEnabled, boolean flagPreviousItemsEnabled, boolean createCorrelationAttributes) {
-            this.dbManager = db;
-            this.event = evt;
+            dbManager = db;
+            event = evt;
             this.flagNotableItemsEnabled = flagNotableItemsEnabled;
             this.flagPreviousItemsEnabled = flagPreviousItemsEnabled;
             this.createCorrelationAttributes = createCorrelationAttributes;
@@ -463,7 +483,7 @@ public class IngestEventsListener {
                                 }
                             }
                             if (flagPreviousItemsEnabled
-                                && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.USBID_TYPE_ID
+                                    && (eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.USBID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.ICCID_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMEI_TYPE_ID
                                     || eamArtifact.getCorrelationType().getId() == CorrelationAttributeInstance.IMSI_TYPE_ID

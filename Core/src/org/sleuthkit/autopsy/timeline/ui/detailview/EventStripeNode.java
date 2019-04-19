@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-18 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.detailview;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
-import java.util.Set;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -29,17 +29,18 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.configureActionButton;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
  * Node used in DetailsChart to represent an EventStripe.
  */
 final public class EventStripeNode extends MultiEventNodeBase<EventStripe, EventCluster, EventClusterNode> {
+
+    private static final Logger LOGGER = Logger.getLogger(EventStripeNode.class.getName());
 
     /**
      * The button to expand hide stripes with this description, created lazily.
@@ -53,7 +54,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
      * @param eventStripe the EventStripe represented by this node
      * @param parentNode  the EventClusterNode that is the parent of this node.
      */
-    EventStripeNode(DetailsChartLane<?> chartLane, EventStripe eventStripe, EventClusterNode parentNode) throws TskCoreException {
+    EventStripeNode(DetailsChartLane<?> chartLane, EventStripe eventStripe, EventClusterNode parentNode) {
         super(chartLane, eventStripe, parentNode);
 
         //setup description label
@@ -105,7 +106,7 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     @Override
-    protected void installActionButtons() {
+    void installActionButtons() {
         super.installActionButtons();
         if (chartLane.quickHideFiltersEnabled() && hideButton == null) {
             hideButton = ActionUtils.createButton(newHideAction(), ActionUtils.ActionTextBehavior.HIDE);
@@ -116,12 +117,11 @@ final public class EventStripeNode extends MultiEventNodeBase<EventStripe, Event
     }
 
     @Override
-    protected EventNodeBase<?> createChildNode(EventCluster cluster) throws TskCoreException {
-        Set<Long> eventIDs = cluster.getEventIDs();
+    EventNodeBase<?> createChildNode(EventCluster cluster) {
+        ImmutableSet<Long> eventIDs = cluster.getEventIDs();
         if (eventIDs.size() == 1) {
-            TimelineEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs));
-            SingleDetailsViewEvent singleDetailEvent = new SingleDetailsViewEvent(singleEvent).withParent(cluster);
-            return new SingleEventNode(getChartLane(), singleDetailEvent, this);
+            SingleEvent singleEvent = getController().getEventsModel().getEventById(Iterables.getOnlyElement(eventIDs)).withParent(cluster);
+            return new SingleEventNode(getChartLane(), singleEvent, this);
         } else {
             return new EventClusterNode(getChartLane(), cluster, this);
         }

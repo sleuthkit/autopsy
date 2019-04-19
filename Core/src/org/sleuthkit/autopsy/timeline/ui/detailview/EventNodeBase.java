@@ -2,7 +2,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016-19 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,27 +70,25 @@ import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 import org.sleuthkit.autopsy.timeline.events.TagsAddedEvent;
 import org.sleuthkit.autopsy.timeline.events.TagsDeletedEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
-import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getColor;
-import static org.sleuthkit.autopsy.timeline.ui.EventTypeUtils.getImagePath;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.EventNodeBase.show;
 import static org.sleuthkit.autopsy.timeline.ui.detailview.MultiEventNodeBase.CORNER_RADII_3;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
+import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventType;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
 
 /**
  *
  */
-public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackPane implements ContextMenuProvider {
+public abstract class EventNodeBase<Type extends TimeLineEvent> extends StackPane implements ContextMenuProvider {
 
     private static final Logger LOGGER = Logger.getLogger(EventNodeBase.class.getName());
 
@@ -144,7 +142,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
 
         sleuthkitCase = chartLane.getController().getAutopsyCase().getSleuthkitCase();
         eventsModel = chartLane.getController().getEventsModel();
-        eventTypeImageView.setImage(new Image(getImagePath(getEventType())));
+        eventTypeImageView.setImage(getEventType().getFXImage());
 
         if (tlEvent.getEventIDsWithHashHits().isEmpty()) {
             show(hashIV, false);
@@ -155,9 +153,9 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
         }
 
         if (chartLane.getController().getEventsModel().getEventTypeZoom() == EventTypeZoomLevel.SUB_TYPE) {
-            evtColor = getColor(getEventType());
+            evtColor = getEventType().getColor();
         } else {
-            evtColor = getColor(getEventType().getBaseType());
+            evtColor = getEventType().getBaseType().getColor();
         }
         SELECTION_BORDER = new Border(new BorderStroke(evtColor.darker().desaturate(), BorderStrokeStyle.SOLID, CORNER_RADII_3, new BorderWidths(2)));
 
@@ -173,7 +171,6 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
             showHoverControls(true);
             toFront();
         });
-
         setOnMouseExited(mouseExited -> {
             showHoverControls(false);
             if (parentNode != null) {
@@ -221,7 +218,6 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
         setBorder(applied ? SELECTION_BORDER : null);
     }
 
-    @Override
     protected void layoutChildren() {
         super.layoutChildren();
     }
@@ -241,7 +237,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
 
     final void showHoverControls(final boolean showControls) {
         Effect dropShadow = dropShadowMap.computeIfAbsent(getEventType(),
-                eventType -> new DropShadow(-10, getColor(eventType)));
+                eventType -> new DropShadow(-10, eventType.getColor()));
         setEffect(showControls ? dropShadow : null);
         installTooltip();
         enableTooltip(showControls);
@@ -298,8 +294,8 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
                     if (tlEvent.getEventIDsWithHashHits().isEmpty() == false) {
                         try {
                             //TODO:push this to DB
-                            for (TimelineEvent tle : eventsModel.getEventsById(tlEvent.getEventIDsWithHashHits())) {
-                                Set<String> hashSetNames = sleuthkitCase.getContentById(tle.getFileObjID()).getHashSetNames();
+                            for (SingleEvent tle : eventsModel.getEventsById(tlEvent.getEventIDsWithHashHits())) {
+                                Set<String> hashSetNames = sleuthkitCase.getAbstractFileById(tle.getFileID()).getHashSetNames();
                                 for (String hashSetName : hashSetNames) {
                                     hashSetCounts.merge(hashSetName, 1L, Long::sum);
                                 }
@@ -323,12 +319,12 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
                     return Bundle.EventNodeBase_tooltip_text(getEventIDs().size(), getEventType(), getDescription(),
                             TimeLineController.getZonedFormatter().print(getStartMillis()),
                             TimeLineController.getZonedFormatter().print(getEndMillis() + 1000))
-                           + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
-                           + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
+                            + (hashSetCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_hashSetHits(hashSetCountsString))
+                            + (tagCountsString.isEmpty() ? "" : Bundle.EventNodeBase_toolTip_tags(tagCountsString));
                 }
 
                 @Override
-                protected void done() {
+                protected void succeeded() {
                     super.succeeded();
                     try {
                         tooltip.setText(get());
@@ -467,8 +463,8 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
 
     void showFullDescription(final int size) {
         countLabel.setText((size == 1) ? "" : " (" + size + ")"); // NON-NLS
-        String description = getParentNode().map(pNode
-                -> "    ..." + StringUtils.substringAfter(getEvent().getDescription(), parentNode.getDescription()))
+        String description = getParentNode().map(pNode ->
+                "    ..." + StringUtils.substringAfter(getEvent().getDescription(), parentNode.getDescription()))
                 .orElseGet(getEvent()::getDescription);
 
         descrLabel.setText(description);
@@ -500,7 +496,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
     private static class PinEventAction extends Action {
 
         @NbBundle.Messages({"PinEventAction.text=Pin"})
-        PinEventAction(TimeLineController controller, DetailViewEvent event) {
+        PinEventAction(TimeLineController controller, TimeLineEvent event) {
             super(Bundle.PinEventAction_text());
             setEventHandler(actionEvent -> controller.pinEvent(event));
             setGraphic(new ImageView(PIN));
@@ -510,7 +506,7 @@ public abstract class EventNodeBase<Type extends DetailViewEvent> extends StackP
     private static class UnPinEventAction extends Action {
 
         @NbBundle.Messages({"UnPinEventAction.text=Unpin"})
-        UnPinEventAction(TimeLineController controller, DetailViewEvent event) {
+        UnPinEventAction(TimeLineController controller, TimeLineEvent event) {
             super(Bundle.UnPinEventAction_text());
             setEventHandler(actionEvent -> controller.unPinEvent(event));
             setGraphic(new ImageView(UNPIN));

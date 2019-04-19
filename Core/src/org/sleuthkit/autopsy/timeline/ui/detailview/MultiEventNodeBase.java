@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-18 Basis Technology Corp.
+ * Copyright 2015-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,16 +35,18 @@ import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
 import org.joda.time.DateTime;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.MultiEvent;
-import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.datamodel.MultiEvent;
+import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 
 /**
- * Base class for nodes that represent multiple events in the Details View.
+ *
  */
 @NbBundle.Messages({"EventBundleNodeBase.toolTip.loading=loading..."})
-abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, ParentType extends MultiEvent<BundleType>, ParentNodeType extends MultiEventNodeBase<
+public abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, ParentType extends MultiEvent<BundleType>, ParentNodeType extends MultiEventNodeBase<
         ParentType, BundleType, ?>> extends EventNodeBase<BundleType> {
+
+    private static final Logger LOGGER = Logger.getLogger(MultiEventNodeBase.class.getName());
 
     static final CornerRadii CORNER_RADII_3 = new CornerRadii(3);
     static final CornerRadii CORNER_RADII_1 = new CornerRadii(1);
@@ -58,6 +60,8 @@ abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, Pa
         super(event, parentNode, chartLane);
         setDescriptionLOD(event.getDescriptionLoD());
 
+      
+
         setAlignment(Pos.TOP_LEFT);
         setMaxWidth(USE_PREF_SIZE);
         infoHBox.setMaxWidth(USE_PREF_SIZE);
@@ -69,8 +73,8 @@ abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, Pa
          * interesect with another node, forcing it down.
          */
         heightProperty().addListener(heightProp -> chartLane.requestLayout());
-        Platform.runLater(()
-                -> setLayoutX(chartLane.getXAxis().getDisplayPosition(new DateTime(event.getStartMillis())) - getLayoutXCompensation())
+        Platform.runLater(() ->
+                setLayoutX(chartLane.getXAxis().getDisplayPosition(new DateTime(event.getStartMillis())) - getLayoutXCompensation())
         );
 
         //initialize info hbox
@@ -95,17 +99,15 @@ abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, Pa
         descLOD.set(descriptionLoD);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
     public List<EventNodeBase<?>> getSubNodes() {
         return subNodes;
     }
 
-    @Override
     final String getDescription() {
         return getEvent().getDescription();
     }
 
-    @Override
     final Set<Long> getEventIDs() {
         return getEvent().getEventIDs();
     }
@@ -121,8 +123,7 @@ abstract class MultiEventNodeBase< BundleType extends MultiEvent<ParentType>, Pa
         super.layoutChildren();
     }
 
-    abstract EventNodeBase<?> createChildNode(ParentType rawChild) throws TskCoreException;
+    abstract EventNodeBase<?> createChildNode(ParentType rawChild);
 
-    @Override
     abstract EventHandler<MouseEvent> getDoubleClickHandler();
 }

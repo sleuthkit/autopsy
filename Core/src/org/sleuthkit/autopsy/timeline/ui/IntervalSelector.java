@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-18 Basis Technology Corp.
+ * Copyright 2014-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.timeline.ui;
 
-import java.util.logging.Level;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -37,16 +37,13 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import org.controlsfx.control.Notifications;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.control.action.ActionUtils;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Visually represents a 'selected' time range, and allows mouse interactions
@@ -58,8 +55,6 @@ import org.sleuthkit.datamodel.TskCoreException;
  * methods to handle formating and date 'lookup' of the generic x-axis type
  */
 public abstract class IntervalSelector<X> extends BorderPane {
-
-    private static final Logger logger = Logger.getLogger(IntervalSelector.class.getName());
 
     private static final Image CLEAR_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/cross-script.png", 16, 16, true, true, true); //NON-NLS
     private static final Image ZOOM_TO_INTERVAL_ICON = new Image("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-fit.png", 16, 16, true, true, true); //NON-NLS
@@ -121,8 +116,8 @@ public abstract class IntervalSelector<X> extends BorderPane {
         zoomButton.visibleProperty().bind(showingControls);
         zoomButton.managedProperty().bind(showingControls);
 
-        widthProperty().addListener(observable -> {
-            updateStartAndEnd();
+        widthProperty().addListener(o -> {
+            IntervalSelector.this.updateStartAndEnd();
             if (startLabel.getWidth() + zoomButton.getWidth() + endLabel.getWidth() > getWidth() - 10) {
                 this.setCenter(zoomButton);
                 bottomBorder.setCenter(new Rectangle(10, 10, Color.TRANSPARENT));
@@ -131,7 +126,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
             }
             BorderPane.setAlignment(zoomButton, Pos.BOTTOM_CENTER);
         });
-        layoutXProperty().addListener(observable -> this.updateStartAndEnd());
+        layoutXProperty().addListener(o -> this.updateStartAndEnd());
         updateStartAndEnd();
 
         setOnMouseMoved(mouseMove -> {
@@ -165,24 +160,24 @@ public abstract class IntervalSelector<X> extends BorderPane {
 
         setOnMouseReleased((MouseEvent mouseRelease) -> {
             isDragging.set(false);
-            mouseRelease.consume();
+            mouseRelease.consume();;
         });
 
         setOnMouseDragged(mouseDrag -> {
             isDragging.set(true);
-            double deltaX = mouseDrag.getScreenX() - startDragX;
+            double dX = mouseDrag.getScreenX() - startDragX;
             switch (dragPosition) {
                 case CENTER:
-                    setLayoutX(startLeft + deltaX);
+                    setLayoutX(startLeft + dX);
                     break;
                 case LEFT:
-                    if (deltaX > startWidth) {
+                    if (dX > startWidth) {
                         startDragX = mouseDrag.getScreenX();
                         startWidth = 0;
                         dragPosition = DragPosition.RIGHT;
                     } else {
-                        setLayoutX(startLeft + deltaX);
-                        setPrefWidth(startWidth - deltaX);
+                        setLayoutX(startLeft + dX);
+                        setPrefWidth(startWidth - dX);
                         autosize();
                     }
                     break;
@@ -193,7 +188,7 @@ public abstract class IntervalSelector<X> extends BorderPane {
                         startDragX = mouseDrag.getScreenX();
                         startWidth = 0;
                     } else {
-                        setPrefWidth(startWidth + deltaX);
+                        setPrefWidth(startWidth + dX);
                         autosize();
                     }
                     break;
@@ -218,31 +213,22 @@ public abstract class IntervalSelector<X> extends BorderPane {
         return getParent().sceneToLocal(new Point2D(mouseEvent.getSceneX(), mouseEvent.getSceneY()));
     }
 
-    @NbBundle.Messages({
-        "IntervalSelector.zoomToSelectedInterval.errorMessage=Error zooming in to the selected interval."})
     private void zoomToSelectedInterval() {
         //convert to DateTimes, using max/min if null(off axis)
         DateTime start = parseDateTime(getSpanStart());
         DateTime end = parseDateTime(getSpanEnd());
-        Interval interval = adjustInterval(start.isBefore(end) ? new Interval(start, end) : new Interval(end, start));
-        try {
-            controller.pushTimeRange(interval);
-        } catch (TskCoreException ex) {
-            Notifications.create().owner(getScene().getWindow())
-                    .text(Bundle.IntervalSelector_zoomToSelectedInterval_errorMessage())
-                    .showError();
-            logger.log(Level.SEVERE, "Error zooming in to the selected interval.");
-        }
+        Interval i = adjustInterval(start.isBefore(end) ? new Interval(start, end) : new Interval(end, start));
+        controller.pushTimeRange(i);
     }
 
     /**
      *
-     * @param interval the interval represented by this selector
+     * @param i the interval represented by this selector
      *
      * @return a modified version of {@code i} adjusted to suite the needs of
      *         the concrete implementation
      */
-    protected abstract Interval adjustInterval(Interval interval);
+    protected abstract Interval adjustInterval(Interval i);
 
     /**
      * format a string representation of the given x-axis value to use in the
@@ -293,8 +279,8 @@ public abstract class IntervalSelector<X> extends BorderPane {
         return getValueForDisplay(getBoundsInParent().getMinX());
     }
 
-    private X getValueForDisplay(final double displayX) {
-        return chart.getXAxis().getValueForDisplay(chart.getXAxis().parentToLocal(displayX, 0).getX());
+    private X getValueForDisplay(final double display) {
+        return chart.getXAxis().getValueForDisplay(chart.getXAxis().parentToLocal(display, 0).getX());
     }
 
     /**
@@ -314,7 +300,9 @@ public abstract class IntervalSelector<X> extends BorderPane {
         ZoomToSelectedIntervalAction() {
             super(Bundle.IntervalSelector_ZoomAction_name());
             setGraphic(new ImageView(ZOOM_TO_INTERVAL_ICON));
-            setEventHandler(actionEvent -> zoomToSelectedInterval());
+            setEventHandler((ActionEvent t) -> {
+                zoomToSelectedInterval();
+            });
         }
     }
 
@@ -325,13 +313,15 @@ public abstract class IntervalSelector<X> extends BorderPane {
             super("");
             setLongText(Bundle.IntervalSelector_ClearSelectedIntervalAction_tooltTipText());
             setGraphic(new ImageView(CLEAR_INTERVAL_ICON));
-            setEventHandler(ationEvent -> chart.clearIntervalSelector());
+            setEventHandler((ActionEvent t) -> {
+                chart.clearIntervalSelector();
+            });
         }
     }
 
     public interface IntervalSelectorProvider<X> {
 
-        TimeLineController getController();
+        public TimeLineController getController();
 
         IntervalSelector<? extends X> getIntervalSelector();
 
@@ -351,6 +341,6 @@ public abstract class IntervalSelector<X> extends BorderPane {
          */
         void clearIntervalSelector();
 
-        Axis<X> getXAxis();
+        public Axis<X> getXAxis();
     }
 }

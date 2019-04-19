@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-18 Basis Technology Corp.
+ * Copyright 2014-15 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,19 +28,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
-import org.sleuthkit.autopsy.timeline.ui.EventTypeUtils;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
-import org.sleuthkit.datamodel.timeline.TimelineFilter.EventTypeFilter;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
+import org.sleuthkit.autopsy.timeline.filters.TextFilter;
+import org.sleuthkit.autopsy.timeline.filters.TypeFilter;
+import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
  * A TreeTableCell that shows an icon and color corresponding to the represented
  * filter
  */
-final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
+final class LegendCell extends TreeTableCell<AbstractFilter, AbstractFilter> {
 
     private static final Color CLEAR = Color.rgb(0, 0, 0, 0);
 
@@ -57,7 +56,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
 
     @Override
     @NbBundle.Messages("Timeline.ui.filtering.promptText=enter filter string")
-    public void updateItem(FilterState<?> item, boolean empty) {
+    public void updateItem(AbstractFilter item, boolean empty) {
         super.updateItem(item, empty);
         if (item == null) {
             Platform.runLater(() -> {
@@ -66,9 +65,9 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
             });
         } else {
 
-            //TODO: make some subclasses rather than use this if else chain.
-            if (item.getFilter() instanceof EventTypeFilter) {
-                EventTypeFilter filter = (EventTypeFilter) item.getFilter();
+            //TODO: have the filter return an appropriate node, rather than use instanceof
+            if (item instanceof TypeFilter) {
+                TypeFilter filter = (TypeFilter) item;
                 Rectangle rect = new Rectangle(20, 20);
 
                 rect.setArcHeight(5);
@@ -80,7 +79,7 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                 });
 
                 HBox hBox = new HBox(new Rectangle(filter.getEventType().getZoomLevel().ordinal() * 10, 5, CLEAR),
-                        new ImageView(EventTypeUtils.getImagePath(filter.getEventType())), rect
+                        new ImageView(((TypeFilter) item).getFXImage()), rect
                 );
                 hBox.setAlignment(Pos.CENTER);
                 Platform.runLater(() -> {
@@ -88,12 +87,14 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
                     setContentDisplay(ContentDisplay.CENTER);
                 });
 
-            } else if (item.getFilter() instanceof TextFilter) {
-                TextFilter filter = (TextFilter) item.getFilter();
+            } else if (item instanceof TextFilter) {
+                TextFilter f = (TextFilter) item;
                 TextField textField = new TextField();
                 textField.setPromptText(Bundle.Timeline_ui_filtering_promptText());
-                textField.textProperty().bindBidirectional(filter.textProperty());
-                Platform.runLater(() -> setGraphic(textField));
+                textField.textProperty().bindBidirectional(f.textProperty());
+                Platform.runLater(() -> {
+                    setGraphic(textField);
+                });
 
             } else {
                 Platform.runLater(() -> {
@@ -104,12 +105,12 @@ final class LegendCell extends TreeTableCell<FilterState<?>, FilterState<?>> {
         }
     }
 
-    private void setLegendColor(EventTypeFilter filter, Rectangle rect, EventTypeZoomLevel eventTypeZoom) {
+    private void setLegendColor(TypeFilter filter, Rectangle rect, EventTypeZoomLevel eventTypeZoom) {
         //only show legend color if filter is of the same zoomlevel as requested in filteredEvents
         if (eventTypeZoom.equals(filter.getEventType().getZoomLevel())) {
             Platform.runLater(() -> {
-                rect.setStroke(EventTypeUtils.getColor(filter.getEventType().getSuperType()));
-                rect.setFill(EventTypeUtils.getColor(filter.getEventType()));
+                rect.setStroke(filter.getEventType().getSuperType().getColor());
+                rect.setFill(filter.getColor());
             });
         } else {
             Platform.runLater(() -> {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016-2019 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.collections.FXCollections;
@@ -51,15 +52,14 @@ import static javafx.scene.layout.Region.USE_PREF_SIZE;
 import org.joda.time.DateTime;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
+import org.sleuthkit.autopsy.timeline.datamodel.EventCluster;
+import org.sleuthkit.autopsy.timeline.datamodel.EventStripe;
+import org.sleuthkit.autopsy.timeline.datamodel.SingleEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.filters.AbstractFilter;
+import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventCluster;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.EventStripe;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.SingleDetailsViewEvent;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.DescriptionFilter;
-import org.sleuthkit.autopsy.timeline.ui.filtering.datamodel.FilterState;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * One "lane" of a the details view, contains all the core logic and layout
@@ -70,7 +70,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * addDataItem(javafx.scene.chart.XYChart.Data) and
  * removeDataItem(javafx.scene.chart.XYChart.Data) to add and remove data.
  */
-abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateTime, Y> implements ContextMenuProvider {
+abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTime, Y> implements ContextMenuProvider {
 
     private static final String STYLE_SHEET = GuideLine.class.getResource("EventsDetailsChart.css").toExternalForm(); //NON-NLS
 
@@ -95,14 +95,10 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)//at start of layout pass
     private Set<String> activeQuickHidefilters = new HashSet<>();
 
-    /** listener that triggers chart layout pass */
-    final InvalidationListener layoutInvalidationListener = observable -> layoutPlotChildren();
-
     boolean quickHideFiltersEnabled() {
         return useQuickHideFilters;
     }
 
-    @Override
     public void clearContextMenu() {
         parentChart.clearContextMenu();
     }
@@ -112,11 +108,11 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         return parentChart.getContextMenu(clickEvent);
     }
 
-    EventNodeBase<?> createNode(DetailsChartLane<?> chart, DetailViewEvent event) throws TskCoreException {
+    EventNodeBase<?> createNode(DetailsChartLane<?> chart, TimeLineEvent event) {
         if (event.getEventIDs().size() == 1) {
-            return new SingleEventNode(this, new SingleDetailsViewEvent(controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs()))), null);
-        } else if (event instanceof SingleDetailsViewEvent) {
-            return new SingleEventNode(chart, (SingleDetailsViewEvent) event, null);
+            return new SingleEventNode(this, controller.getEventsModel().getEventById(Iterables.getOnlyElement(event.getEventIDs())), null);
+        } else if (event instanceof SingleEvent) {
+            return new SingleEventNode(chart, (SingleEvent) event, null);
         } else if (event instanceof EventCluster) {
             return new EventClusterNode(chart, (EventCluster) event, null);
         } else {
@@ -130,8 +126,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         if (useQuickHideFilters) {
             //These don't change during a layout pass and are expensive to compute per node.  So we do it once at the start
             activeQuickHidefilters = getController().getQuickHideFilters().stream()
-                    .filter(FilterState<DescriptionFilter>::isActive)
-                    .map(FilterState<DescriptionFilter>::getFilter)
+                    .filter(AbstractFilter::isActive)
                     .map(DescriptionFilter::getDescription)
                     .collect(Collectors.toSet());
         }
@@ -150,7 +145,6 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         setCursor(null);
     }
 
-    @Override
     public TimeLineController getController() {
         return controller;
     }
@@ -158,6 +152,12 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
     public ObservableList<EventNodeBase<?>> getSelectedNodes() {
         return selectedNodes;
     }
+    /**
+     * listener that triggers chart layout pass
+     */
+    final InvalidationListener layoutInvalidationListener = (Observable o) -> {
+        layoutPlotChildren();
+    };
 
     public ReadOnlyDoubleProperty maxVScrollProperty() {
         return maxY.getReadOnlyProperty();
@@ -176,7 +176,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
         this.useQuickHideFilters = useQuickHideFilters;
 
         //add a dummy series or the chart is never rendered
-        setData(FXCollections.observableList(Arrays.asList(new Series<>())));
+        setData(FXCollections.observableList(Arrays.asList(new Series<DateTime, Y>())));
 
         Tooltip.install(this, AbstractTimelineChart.getDefaultTooltip());
 
@@ -308,7 +308,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
      *
      * @param event
      */
-    void addEvent(Y event) throws TskCoreException {
+    void addEvent(Y event) {
         EventNodeBase<?> eventNode = createNode(this, event);
         eventMap.put(event, eventNode);
         Platform.runLater(() -> {
@@ -346,13 +346,13 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
      * @return all the nodes that pass the given predicate
      */
     synchronized Iterable<EventNodeBase<?>> getAllNodes() {
-        return getNodes(dummy -> true);
+        return getNodes((x) -> true);
     }
 
     /**
      * @return all the nodes that pass the given predicate
      */
-    private synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> predicate) {
+    synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> p) {
         //use this recursive function to flatten the tree of nodes into an single stream.
         Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener
                 = new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
@@ -366,7 +366,7 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
 
         return sortedNodes.stream()
                 .flatMap(stripeFlattener)
-                .filter(predicate).collect(Collectors.toList());
+                .filter(p).collect(Collectors.toList());
     }
 
     /**
@@ -380,9 +380,11 @@ abstract class DetailsChartLane<Y extends DetailViewEvent> extends XYChart<DateT
      * @param maxXatY a map from y ranges to the max x within that range. NOTE:
      *                This map will be updated to include the node in question.
      * @param xLeft   the left x-cord of the node to position
-     * @param xRight  the right x-cord of the node to position
+     * @param xRight  the left x-cord of the node to position
      *
      * @return the y position for the node in question.
+     *
+     *
      */
     double computeYTop(double yMin, double h, TreeRangeMap<Double, Double> maxXatY, double xLeft, double xRight) {
         double yTop = yMin;

@@ -28,13 +28,12 @@ import javafx.concurrent.Task;
 import javafx.scene.Node;
 import org.joda.time.Interval;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
+import org.sleuthkit.autopsy.timeline.datamodel.CombinedEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.events.ViewInTimelineRequestedEvent;
 import org.sleuthkit.autopsy.timeline.ui.AbstractTimeLineView;
-import org.sleuthkit.autopsy.timeline.ui.listvew.datamodel.CombinedEvent;
-import org.sleuthkit.autopsy.timeline.ui.listvew.datamodel.ListViewModel;
 
 /**
  * An AbstractTimeLineView that uses a TableView to display events.
@@ -42,7 +41,6 @@ import org.sleuthkit.autopsy.timeline.ui.listvew.datamodel.ListViewModel;
 public class ListViewPane extends AbstractTimeLineView {
 
     private final ListTimeline listTimeline;
-    private final ListViewModel listViewModel;
 
     /**
      * Constructor
@@ -51,7 +49,7 @@ public class ListViewPane extends AbstractTimeLineView {
      */
     public ListViewPane(TimeLineController controller) {
         super(controller);
-        listViewModel = new ListViewModel(getEventsModel());
+
         listTimeline = new ListTimeline(controller);
 
         //initialize chart;
@@ -130,7 +128,7 @@ public class ListViewPane extends AbstractTimeLineView {
 
             //get the combined events to be displayed
             updateMessage(Bundle.ListViewPane_loggedTask_queryDb());
-            List<CombinedEvent> combinedEvents = listViewModel.getCombinedEvents();
+            List<CombinedEvent> combinedEvents = eventsModel.getCombinedEvents();
 
             updateMessage(Bundle.ListViewPane_loggedTask_updateUI());
             Platform.runLater(() -> {

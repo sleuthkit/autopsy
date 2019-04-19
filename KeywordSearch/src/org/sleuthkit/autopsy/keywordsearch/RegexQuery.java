@@ -547,7 +547,7 @@ final class RegexQuery implements KeywordSearchQuery {
     }
 
     /**
-     * Adds a keyword hit artifact for a given keyword hit.
+     * Posts a keyword hit artifact to the blackboard for a given keyword hit.
      *
      * @param content      The text source object for the hit.
      * @param foundKeyword The keyword that was found by the search, this may be
@@ -563,7 +563,7 @@ final class RegexQuery implements KeywordSearchQuery {
      *         creating it.
      */
     @Override
-    public BlackboardArtifact createKeywordHitArtifact(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact postKeywordHitToBlackboard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (content == null) {

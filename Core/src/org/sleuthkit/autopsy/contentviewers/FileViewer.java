@@ -33,8 +33,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
- * Content viewer that incorporates file type-specific viewers, such as ones
- * for pictures, video, etc.
+ * Generic Application content viewer
  */
 @ServiceProvider(service = DataContentViewer.class, position = 3)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
@@ -74,7 +73,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
 
         initComponents();
 
-        //LOGGER.log(Level.INFO, "Created ApplicationContentViewer instance: {0}", this); //NON-NLS
+        LOGGER.log(Level.INFO, "Created ApplicationContentViewer instance: {0}", this); //NON-NLS
     }
 
     /**
@@ -120,7 +119,7 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
 
         String mimeType = file.getMIMEType();
         if (Strings.isNullOrEmpty(mimeType)) {
-            // LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", file.getName()); //NON-NLS
+            LOGGER.log(Level.INFO, "Mimetype not known for file: {0}", file.getName()); //NON-NLS
             try {
                 FileTypeDetector fileTypeDetector = new FileTypeDetector();
                 mimeType = fileTypeDetector.getMIMEType(file);
@@ -133,16 +132,18 @@ public class FileViewer extends javax.swing.JPanel implements DataContentViewer 
         if (mimeType.equalsIgnoreCase("application/octet-stream")) {
             return;
         } 
+        else {
+            FileTypeViewer viewer = getSupportingViewer(mimeType);
+            if (viewer != null) {
+                lastViewer = viewer;
 
-        FileTypeViewer viewer = getSupportingViewer(mimeType);
-        if (viewer != null) {
-            lastViewer = viewer;
-
-            viewer.setFile(file);
-            this.removeAll();
-            this.add(viewer.getComponent());
-            this.repaint();
-        }       
+                viewer.setFile(file);
+                this.removeAll();
+                this.add(viewer.getComponent());
+                this.repaint();
+            }
+        }
+       
     }
 
     @Override

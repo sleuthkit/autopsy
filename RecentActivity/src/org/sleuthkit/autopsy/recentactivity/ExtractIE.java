@@ -23,6 +23,9 @@
 package org.sleuthkit.autopsy.recentactivity;
 
 import java.io.BufferedReader;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -31,27 +34,29 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Scanner;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import java.util.Collection;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.*;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 
 /**
  * Extracts activity from Internet Explorer browser, as well as recent documents
@@ -60,6 +65,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 class ExtractIE extends Extract {
 
     private static final Logger logger = Logger.getLogger(ExtractIE.class.getName());
+    private final IngestServices services = IngestServices.getInstance();
     private final String moduleTempResultsDir;
     private String PASCO_LIB_PATH;
     private final String JAVA_PATH;
@@ -67,7 +73,7 @@ class ExtractIE extends Extract {
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     private Content dataSource;
     private IngestJobContext context;
-
+    
     @Messages({
         "Progress_Message_IE_History=IE History",
         "Progress_Message_IE_Bookmarks=IE Bookmarks",
@@ -75,7 +81,8 @@ class ExtractIE extends Extract {
         "Progress_Message_IE_Downloads=IE Downloads",
         "Progress_Message_IE_FormHistory=IE Form History",
         "Progress_Message_IE_AutoFill=IE Auto Fill",
-        "Progress_Message_IE_Logins=IE Logins",})
+        "Progress_Message_IE_Logins=IE Logins",
+    })
 
     ExtractIE() throws NoCurrentCaseException {
         moduleName = NbBundle.getMessage(ExtractIE.class, "ExtractIE.moduleName.text");
@@ -88,31 +95,30 @@ class ExtractIE extends Extract {
         this.dataSource = dataSource;
         this.context = context;
         dataFound = false;
-
+        
         progressBar.progress(Bundle.Progress_Message_IE_Bookmarks());
         this.getBookmark();
-
+        
         progressBar.progress(Bundle.Progress_Message_IE_Cookies());
         this.getCookie();
-
+        
         progressBar.progress(Bundle.Progress_Message_IE_History());
         this.getHistory();
-
     }
 
     /**
      * Finds the files storing bookmarks and creates artifacts
      */
-    @Messages({"ExtractIE.getBookmark.errMsg.errGettingBookmarks=Error getting Internet Explorer Bookmarks.",
-        "ExtractIE.getBookmark.errMsg.errPostingBookmarks=Error posting Internet Explorer Bookmark artifacts."
-    })
     private void getBookmark() {
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> favoritesFiles;
         try {
             favoritesFiles = fileManager.findFiles(dataSource, "%.url", "Favorites"); //NON-NLS
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error fetching 'url' files for Internet Explorer bookmarks.", ex); //NON-NLS
-            this.addErrorMessage(Bundle.ExtractIE_getBookmark_errMsg_errGettingBookmarks());
+            this.addErrorMessage(
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.getBookmark.errMsg.errGettingBookmarks",
+                            this.getName()));
             return;
         }
 
@@ -142,7 +148,7 @@ class ExtractIE extends Extract {
 
             Collection<BlackboardAttribute> bbattributes = new ArrayList<>();
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_URL,
-                    RecentActivityExtracterModuleFactory.getModuleName(), url));
+                   RecentActivityExtracterModuleFactory.getModuleName(), url));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_TITLE,
                     RecentActivityExtracterModuleFactory.getModuleName(), name));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED,
@@ -160,12 +166,9 @@ class ExtractIE extends Extract {
                 bbartifacts.add(bbart);
             }
         }
-        try {
-            blackboard.postArtifacts(bbartifacts, moduleName);
-        } catch (Blackboard.BlackboardException ex) {
-            this.addErrorMessage(Bundle.ExtractIE_getBookmark_errMsg_errPostingBookmarks());
-            logger.log(Level.SEVERE, "Exception thrown while posting IE bookmark artifact.", ex); //NON-NLS
-        }
+        services.fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
     }
 
     private String getURLFromIEBookmarkFile(AbstractFile fav) {
@@ -206,10 +209,8 @@ class ExtractIE extends Extract {
     /**
      * Finds files that store cookies and adds artifacts for them.
      */
-    @Messages({
-        "ExtractIE.getCookie.errMsg.errPostingCookies=Error posting Internet Explorer Cookie artifacts."
-    })
     private void getCookie() {
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> cookiesFiles;
         try {
             cookiesFiles = fileManager.findFiles(dataSource, "%.txt", "Cookies"); //NON-NLS
@@ -276,20 +277,14 @@ class ExtractIE extends Extract {
                 bbartifacts.add(bbart);
             }
         }
-        try {
-            blackboard.postArtifacts(bbartifacts, moduleName);
-        } catch (Blackboard.BlackboardException ex) {
-            this.addErrorMessage(Bundle.ExtractIE_getCookie_errMsg_errPostingCookies());
-            logger.log(Level.SEVERE, "Exception thrown while posting IE cookie artifact.", ex); //NON-NLS
-        }
+        services.fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
     }
 
     /**
      * Locates index.dat files, runs Pasco on them, and creates artifacts.
      */
-    @Messages({
-        "ExtractIE.getHistory.errMsg.errPostingHistory=Error posting Internet Explorer History artifacts."
-    })
     private void getHistory() {
         logger.log(Level.INFO, "Pasco results path: {0}", moduleTempResultsDir); //NON-NLS
         boolean foundHistory = false;
@@ -306,12 +301,13 @@ class ExtractIE extends Extract {
         logger.log(Level.INFO, "Pasco2 home: {0}", pascoHome); //NON-NLS
 
         PASCO_LIB_PATH = pascoHome + File.separator + "pasco2.jar" + File.pathSeparator //NON-NLS
-                         + pascoHome + File.separator + "*";
+                + pascoHome + File.separator + "*";
 
         File resultsDir = new File(moduleTempResultsDir);
         resultsDir.mkdirs();
 
         // get index.dat files
+        org.sleuthkit.autopsy.casemodule.services.FileManager fileManager = currentCase.getServices().getFileManager();
         List<AbstractFile> indexFiles;
         try {
             indexFiles = fileManager.findFiles(dataSource, "index.dat"); //NON-NLS
@@ -383,12 +379,9 @@ class ExtractIE extends Extract {
         }
 
         if (foundHistory) {
-            try {
-                blackboard.postArtifacts(bbartifacts, moduleName);
-            } catch (Blackboard.BlackboardException ex) {
-                this.addErrorMessage(Bundle.ExtractIE_getHistory_errMsg_errPostingHistory());
-                logger.log(Level.SEVERE, "Exception thrown while posting IE cookie artifact.", ex); //NON-NLS
-            }
+            services.fireModuleDataEvent(new ModuleDataEvent(
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
         }
     }
 
@@ -504,12 +497,12 @@ class ExtractIE extends Extract {
              */
             if (lineBuff[1].contains("@")) {
                 String url[] = lineBuff[1].split("@", 2);
-
+                
                 /*
                  * Verify the left portion of the URL is valid.
                  */
                 domain = extractDomain(url[0]);
-
+                
                 if (domain != null && domain.isEmpty() == false) {
                     /*
                      * Use the entire input for the URL.
@@ -562,7 +555,7 @@ class ExtractIE extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED,
                         RecentActivityExtracterModuleFactory.getModuleName(), ftime));
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_REFERRER,
-                        RecentActivityExtracterModuleFactory.getModuleName(), ""));
+                       RecentActivityExtracterModuleFactory.getModuleName(), ""));
                 // @@@ NOte that other browser modules are adding TITLE in hre for the title
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         RecentActivityExtracterModuleFactory.getModuleName(),
@@ -586,27 +579,27 @@ class ExtractIE extends Extract {
         fileScanner.close();
         return bbartifacts;
     }
-
+    
     /**
      * Extract the domain from the supplied URL. This method does additional
      * checks to detect invalid URLs.
-     *
+     * 
      * @param url The URL from which to extract the domain.
-     *
+     * 
      * @return The domain.
      */
     private String extractDomain(String url) {
         if (url == null || url.isEmpty()) {
             return url;
         }
-
+        
         if (url.toLowerCase().startsWith(RESOURCE_URL_PREFIX)) {
             /*
              * Ignore URLs that begin with the matched text.
              */
             return null;
         }
-
+        
         return NetworkUtils.extractDomain(url);
     }
 }
