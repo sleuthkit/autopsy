@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,6 +52,8 @@ public class KeywordListsManager extends Observable {
 
     /**
      * Gets the singleton instance of the keyword lists manager.
+     * 
+     * @return an instance of KeywordListsManager.
      */
     public static synchronized KeywordListsManager getInstance() {
         if (instance == null) {
@@ -71,6 +73,17 @@ public class KeywordListsManager extends Observable {
             names.add(list.getName());
         }
         return names;
+    }
+    
+     /**
+     * Get keyword list by name.
+     *
+     * @param name id of the list
+     *
+     * @return keyword list representation, null if no list by that name
+     */
+    public KeywordList getList(String name) {
+        return XmlKeywordSearchList.getCurrent().getList(name);
     }
     
     /**
