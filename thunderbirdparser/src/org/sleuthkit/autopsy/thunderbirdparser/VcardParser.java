@@ -42,17 +42,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.AccountFileInstance;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -69,16 +70,14 @@ import org.sleuthkit.datamodel.TskException;
  * appropriate artifacts.
  */
 final class VcardParser {
-
     private static final String VCARD_HEADER = "BEGIN:VCARD";
     private static final long MIN_FILE_SIZE = 22;
-
+    
     private static final String PHOTO_TYPE_BMP = "bmp";
     private static final String PHOTO_TYPE_GIF = "gif";
     private static final String PHOTO_TYPE_JPEG = "jpeg";
     private static final String PHOTO_TYPE_PNG = "png";
     private static final Map<String, String> photoTypeExtensions;
-
     static {
         photoTypeExtensions = new HashMap<>();
         photoTypeExtensions.put(PHOTO_TYPE_BMP, ".bmp");
@@ -86,16 +85,16 @@ final class VcardParser {
         photoTypeExtensions.put(PHOTO_TYPE_JPEG, ".jpg");
         photoTypeExtensions.put(PHOTO_TYPE_PNG, ".png");
     }
-
+    
     private static final Logger logger = Logger.getLogger(VcardParser.class.getName());
-
+    
     private final IngestServices services = IngestServices.getInstance();
     private final FileManager fileManager;
     private final IngestJobContext context;
     private final Blackboard blackboard;
     private final Case currentCase;
     private final SleuthkitCase tskCase;
-
+    
     /**
      * Create a VcardParser object.
      */
@@ -103,15 +102,15 @@ final class VcardParser {
         this.context = context;
         this.currentCase = currentCase;
         tskCase = currentCase.getSleuthkitCase();
-        blackboard = currentCase.getSleuthkitCase().getBlackboard();
+        blackboard = currentCase.getServices().getBlackboard();
         fileManager = currentCase.getServices().getFileManager();
     }
 
     /**
      * Is the supplied content a vCard file?
-     *
+     * 
      * @param content The content to check.
-     *
+     * 
      * @return True if the supplied content is a vCard file; otherwise false.
      */
     static boolean isVcardFile(Content content) {
@@ -128,17 +127,17 @@ final class VcardParser {
             logger.log(Level.WARNING, String.format("Exception while detecting if the file '%s' (id=%d) is a vCard file.",
                     content.getName(), content.getId())); //NON-NLS
         }
-
+        
         return false;
     }
-
+    
     /**
      * Parse the VCard file and compile its data in a VCard object. The
      * corresponding artifacts will be created.
-     *
+     * 
      * @param vcardFile    The VCard file to be parsed.
      * @param abstractFile The abstract file with which to associate artifacts.
-     *
+     * 
      * @throws IOException            If there is an issue parsing the VCard
      *                                file.
      * @throws NoCurrentCaseException If there is no open case.
@@ -147,22 +146,24 @@ final class VcardParser {
         VCard vcard = Ezvcard.parse(vcardFile).first();
         addContactArtifact(vcard, abstractFile);
     }
-
+    
+    
+    
     /**
      * Add a blackboard artifact for the given contact.
      *
      * @param vcard        The VCard that contains the contact information.
      * @param abstractFile The file associated with the data.
-     *
+     * 
      * @throws NoCurrentCaseException if there is no open case.
-     *
+     * 
      * @return The generated contact artifact.
      */
     @NbBundle.Messages({"VcardParser.addContactArtifact.indexError=Failed to index the contact artifact for keyword search."})
     private BlackboardArtifact addContactArtifact(VCard vcard, AbstractFile abstractFile) throws NoCurrentCaseException {
         List<BlackboardAttribute> attributes = new ArrayList<>();
         List<AccountFileInstance> accountInstances = new ArrayList<>();
-
+        
         extractPhotos(vcard, abstractFile);
        
         String name = "";
@@ -193,30 +194,30 @@ final class VcardParser {
             }
         }
         ThunderbirdMboxFileIngestModule.addArtifactAttribute(name, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON, attributes);
-
+        
         for (Telephone telephone : vcard.getTelephoneNumbers()) {
             addPhoneAttributes(telephone, abstractFile, attributes);
             addPhoneAccountInstances(telephone, abstractFile, accountInstances);
         }
-
+        
         for (Email email : vcard.getEmails()) {
             addEmailAttributes(email, abstractFile, attributes);
             addEmailAccountInstances(email, abstractFile, accountInstances);
         }
-
+        
         for (Url url : vcard.getUrls()) {
             ThunderbirdMboxFileIngestModule.addArtifactAttribute(url.getValue(), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL, attributes);
         }
-
+        
         for (Organization organization : vcard.getOrganizations()) {
             List<String> values = organization.getValues();
             if (values.isEmpty() == false) {
                 ThunderbirdMboxFileIngestModule.addArtifactAttribute(values.get(0), BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ORGANIZATION, attributes);
             }
         }
-
+        
         AccountFileInstance deviceAccountInstance = addDeviceAccountInstance(abstractFile);
-
+   
         BlackboardArtifact artifact = null;
         org.sleuthkit.datamodel.Blackboard tskBlackboard = tskCase.getBlackboard();
         try {
@@ -226,7 +227,7 @@ final class VcardParser {
                 artifact.addAttributes(attributes);
                 List<BlackboardArtifact> blackboardArtifacts = new ArrayList<>();
                 blackboardArtifacts.add(artifact);
-
+                
                 // Add account relationships.
                 if (deviceAccountInstance != null) {
                     try {
@@ -237,15 +238,19 @@ final class VcardParser {
                                 abstractFile.getName(), abstractFile.getId(), deviceAccountInstance.getAccount().getAccountID()), ex); //NON-NLS
                     }
                 }
-
-                // Post the artifact to the blackboard eventually indexing it for keyword search.
+                
+                // Index the artifact for keyword search.
                 try {
-                    blackboard.postArtifact(artifact, EmailParserModuleFactory.getModuleName());
+                    blackboard.indexArtifact(artifact);
                 } catch (Blackboard.BlackboardException ex) {
                     logger.log(Level.SEVERE, "Unable to index blackboard artifact " + artifact.getArtifactID(), ex); //NON-NLS
                     MessageNotifyUtil.Notify.error(Bundle.VcardParser_addContactArtifact_indexError(), artifact.getDisplayName());
                 }
-
+                
+                // Fire event to notify UI of this new artifact.
+                IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                        EmailParserModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT,
+                        blackboardArtifacts));
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Failed to create contact artifact for vCard file '%s' (id=%d).",
@@ -254,13 +259,13 @@ final class VcardParser {
 
         return artifact;
     }
-
+    
     /**
      * Extract photos from a given VCard and add them as derived files.
-     *
+     * 
      * @param vcard        The VCard from which to extract the photos.
      * @param abstractFile The file associated with the data.
-     *
+     * 
      * @throws NoCurrentCaseException if there is no open case.
      */
     private void extractPhotos(VCard vcard, AbstractFile abstractFile) throws NoCurrentCaseException {
@@ -271,7 +276,7 @@ final class VcardParser {
             if (new File(outputPath).exists()) {
                 List<Photo> vcardPhotos = vcard.getPhotos();
                 List<AbstractFile> derivedFilesCreated = new ArrayList<>();
-                for (int i = 0; i < vcardPhotos.size(); i++) {
+                for (int i=0; i < vcardPhotos.size(); i++) {
                     Photo photo = vcardPhotos.get(i);
 
                     if (photo.getUrl() != null) {
@@ -309,7 +314,8 @@ final class VcardParser {
                     services.fireModuleContentEvent(new ModuleContentEvent(abstractFile));
                     context.addFilesToJob(derivedFilesCreated);
                 }
-            } else {
+            }
+            else {
                 logger.log(Level.INFO, String.format("Skipping photo extraction for file '%s' (id=%d), because it has already been processed.",
                         abstractFile.getName(), abstractFile.getId())); //NON-NLS
             }
@@ -317,7 +323,7 @@ final class VcardParser {
             logger.log(Level.WARNING, String.format("Could not create extraction folder for '%s' (id=%d).", parentFileName, abstractFile.getId()));
         }
     }
-
+    
     /**
      * Writes image to the module output location.
      *
@@ -330,7 +336,7 @@ final class VcardParser {
         FileOutputStream outputStream = new FileOutputStream(outputFile);
         outputStream.write(data);
     }
-
+    
     /**
      * Creates a unique name for a file by concatenating the file name and the
      * file object id.
@@ -342,7 +348,7 @@ final class VcardParser {
     private String getUniqueName(AbstractFile file) {
         return file.getName() + "_" + file.getId();
     }
-
+    
     /**
      * Gets the relative path to the file. The path is relative to the case
      * folder.
@@ -356,13 +362,13 @@ final class VcardParser {
         // Used explicit FWD slashes to maintain DB consistency across operating systems.
         return Paths.get(getRelModuleOutputPath(), parentFileName, fileName).toString();
     }
-
+    
     /**
      * Gets path to the output folder for file extraction. If the path does not
      * exist, it is created.
      *
      * @param parentFileName Name of the abstract file being processed.
-     *
+     * 
      * @throws NoCurrentCaseException if there is no open case.
      *
      * @return Path to the file extraction folder for a given abstract file.
@@ -375,12 +381,11 @@ final class VcardParser {
         }
         return outputFolderPath;
     }
-
+    
     /**
      * Generate phone attributes for a given VCard Telephone object.
-     *
-     * @param telephone    The VCard Telephone from which to generate
-     *                     attributes.
+     * 
+     * @param telephone    The VCard Telephone from which to generate attributes.
      * @param abstractFile The VCard file.
      * @param attributes   The Collection to which generated attributes will be
      *                     added.
@@ -398,12 +403,13 @@ final class VcardParser {
         } else {
             for (TelephoneType type : telephoneTypes) {
                 /*
-                 * Unfortunately, if the types are lower-case, they don't get
-                 * separated correctly into individual TelephoneTypes by
-                 * ez-vcard. Therefore, we must read them manually ourselves.
+                 * Unfortunately, if the types are lower-case, they don't
+                 * get separated correctly into individual TelephoneTypes by
+                 * ez-vcard. Therefore, we must read them manually
+                 * ourselves.
                  */
                 List<String> splitTelephoneTypes = Arrays.asList(
-                        type.getValue().toUpperCase().replaceAll("\\s+", "").split(","));
+                        type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
 
                 for (String splitType : splitTelephoneTypes) {
                     String attributeTypeName = "TSK_PHONE_" + splitType;
@@ -425,10 +431,10 @@ final class VcardParser {
             }
         }
     }
-
+    
     /**
      * Generate e-mail attributes for a given VCard Email object.
-     *
+     * 
      * @param email        The VCard Email from which to generate attributes.
      * @param abstractFile The VCard file.
      * @param attributes   The Collection to which generated attributes will be
@@ -447,12 +453,13 @@ final class VcardParser {
         } else {
             for (EmailType type : emailTypes) {
                 /*
-                 * Unfortunately, if the types are lower-case, they don't get
-                 * separated correctly into individual EmailTypes by ez-vcard.
-                 * Therefore, we must read them manually ourselves.
+                 * Unfortunately, if the types are lower-case, they don't
+                 * get separated correctly into individual EmailTypes by
+                 * ez-vcard. Therefore, we must read them manually
+                 * ourselves.
                  */
                 List<String> splitEmailTypes = Arrays.asList(
-                        type.getValue().toUpperCase().replaceAll("\\s+", "").split(","));
+                        type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
 
                 for (String splitType : splitEmailTypes) {
                     String attributeTypeName = "TSK_EMAIL_" + splitType;
@@ -460,8 +467,8 @@ final class VcardParser {
                         BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
                         if (attributeType == null) {
                             // Add this attribute type to the case database.
-                            attributeType = tskCase.addArtifactAttributeType(attributeTypeName,
-                                    BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING,
+                            attributeType = tskCase.addArtifactAttributeType(attributeTypeName, 
+                                    BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, 
                                     String.format("Email (%s)", StringUtils.capitalize(splitType.toLowerCase())));
                         }
                         ThunderbirdMboxFileIngestModule.addArtifactAttribute(email.getValue(), attributeType, attributes);
@@ -474,10 +481,10 @@ final class VcardParser {
             }
         }
     }
-
+    
     /**
      * Generate account instances for a given VCard Telephone object.
-     *
+     * 
      * @param telephone        The VCard Telephone from which to generate
      *                         account instances.
      * @param abstractFile     The VCard file.
@@ -495,16 +502,17 @@ final class VcardParser {
             AccountFileInstance phoneAccountInstance = tskCase.getCommunicationsManager().createAccountFileInstance(Account.Type.PHONE,
                     telephoneText, EmailParserModuleFactory.getModuleName(), abstractFile);
             accountInstances.add(phoneAccountInstance);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, String.format(
-                    "Failed to create account for phone number '%s' (content='%s'; id=%d).",
-                    telephoneText, abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
+        }
+        catch(TskCoreException ex) {
+             logger.log(Level.WARNING, String.format(
+                     "Failed to create account for phone number '%s' (content='%s'; id=%d).",
+                     telephoneText, abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
         }
     }
-
+    
     /**
      * Generate account instances for a given VCard Email object.
-     *
+     * 
      * @param telephone        The VCard Email from which to generate account
      *                         instances.
      * @param abstractFile     The VCard file.
@@ -522,18 +530,19 @@ final class VcardParser {
             AccountFileInstance emailAccountInstance = tskCase.getCommunicationsManager().createAccountFileInstance(Account.Type.EMAIL,
                     emailValue, EmailParserModuleFactory.getModuleName(), abstractFile);
             accountInstances.add(emailAccountInstance);
-        } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, String.format(
-                    "Failed to create account for e-mail address '%s' (content='%s'; id=%d).",
-                    emailValue, abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
+        }
+        catch(TskCoreException ex) {
+             logger.log(Level.WARNING, String.format(
+                     "Failed to create account for e-mail address '%s' (content='%s'; id=%d).",
+                     emailValue, abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
         }
     }
-
+    
     /**
      * Generate device account instance for a given file.
-     *
+     * 
      * @param abstractFile The VCard file.
-     *
+     * 
      * @return The generated device account instance.
      */
     private AccountFileInstance addDeviceAccountInstance(AbstractFile abstractFile) {
@@ -546,16 +555,18 @@ final class VcardParser {
             deviceId = dataSource.getDeviceId();
             deviceAccountInstance = tskCase.getCommunicationsManager().createAccountFileInstance(Account.Type.DEVICE,
                     deviceId, EmailParserModuleFactory.getModuleName(), abstractFile);
-        } catch (TskCoreException ex) {
+        }
+        catch (TskCoreException ex) {
             logger.log(Level.WARNING, String.format(
                     "Failed to create device account for '%s' (content='%s'; id=%d).",
                     deviceId, abstractFile.getName(), abstractFile.getId()), ex); //NON-NLS
-        } catch (TskDataException ex) {
+        }
+        catch (TskDataException ex) {
             logger.log(Level.WARNING, String.format(
                     "Failed to get the data source from the case database (id=%d).",
                     abstractFile.getId()), ex); //NON-NLS
         }
-
+        
         return deviceAccountInstance;
     }
 }

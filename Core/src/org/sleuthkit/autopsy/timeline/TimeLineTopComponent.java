@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.timeline;
 
-import com.google.common.collect.ImmutableList;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
@@ -59,6 +58,7 @@ import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
@@ -164,9 +164,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
          */
         @Override
         public void invalidated(Observable observable) {
-            // make a copy because this list gets updated as the user navigates around
-            // and causes concurrent access exceptions
-            List<Long> selectedEventIDs = ImmutableList.copyOf(controller.getSelectedEventIDs());
+            List<Long> selectedEventIDs = controller.getSelectedEventIDs();
 
             //depending on the active view mode, we either update the dataResultPanel, or update the contentViewerPanel directly.
             switch (controller.getViewMode()) {
@@ -197,6 +195,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                                 contentViewerPanel.setNode(null);
                             }
                         });
+                    } catch (NoCurrentCaseException ex) {
+                        //Since the case is closed, the user probably doesn't care about this, just log it as a precaution.
+                        logger.log(Level.SEVERE, "There was no case open to lookup the Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                     } catch (TskCoreException ex) {
                         logger.log(Level.SEVERE, "Failed to lookup Sleuthkit object backing a SingleEvent.", ex); // NON-NLS
                         Platform.runLater(() -> {
@@ -281,7 +282,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         Platform.runLater(this::initFXComponents);
 
         //set up listeners 
-        TimeLineController.timeZoneProperty().addListener(timeZone -> dataResultPanel.setPath(getResultViewerSummaryString()));
+        TimeLineController.getTimeZone().addListener(timeZone -> dataResultPanel.setPath(getResultViewerSummaryString()));
         controller.getSelectedEventIDs().addListener(selectedEventsListener);
 
         //Listen to ViewMode and adjust GUI componenets as needed.

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.hashdatabase;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -29,6 +30,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.healthmonitor.HealthMonitor;
@@ -37,9 +39,9 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Blackboard;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -100,7 +102,7 @@ public class HashDbIngestModule implements FileIngestModule {
      * object is used to configure the module.
      *
      * @param settings The module settings.
-     *
+     * 
      * @throws NoCurrentCaseException If there is no open case.
      */
     HashDbIngestModule(HashLookupModuleSettings settings) throws NoCurrentCaseException {
@@ -168,7 +170,7 @@ public class HashDbIngestModule implements FileIngestModule {
     @Override
     public ProcessResult process(AbstractFile file) {
         try {
-            blackboard = Case.getCurrentCaseThrows().getSleuthkitCase().getBlackboard();
+            blackboard = Case.getCurrentCaseThrows().getServices().getBlackboard();
         } catch (NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Exception while getting open case.", ex); //NON-NLS
             return ProcessResult.ERROR;
@@ -176,7 +178,7 @@ public class HashDbIngestModule implements FileIngestModule {
 
         // Skip unallocated space files.
         if ((file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-             || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
+                || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
             return ProcessResult.OK;
         }
 
@@ -354,11 +356,8 @@ public class HashDbIngestModule implements FileIngestModule {
             badFile.addAttributes(attributes);
 
             try {
-                /*
-                 * post the artifact which will index the artifact for keyword
-                 * search, and fire an event to notify UI of this new artifact
-                 */
-                blackboard.postArtifact(badFile, moduleName);
+                // index the artifact for keyword search
+                blackboard.indexArtifact(badFile);
             } catch (Blackboard.BlackboardException ex) {
                 logger.log(Level.SEVERE, "Unable to index blackboard artifact " + badFile.getArtifactID(), ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(
@@ -401,6 +400,7 @@ public class HashDbIngestModule implements FileIngestModule {
                         abstractFile.getName() + md5Hash,
                         badFile));
             }
+            services.fireModuleDataEvent(new ModuleDataEvent(moduleName, ARTIFACT_TYPE.TSK_HASHSET_HIT, Collections.singletonList(badFile)));
         } catch (TskException ex) {
             logger.log(Level.WARNING, "Error creating blackboard artifact", ex); //NON-NLS
         }
@@ -414,7 +414,7 @@ public class HashDbIngestModule implements FileIngestModule {
      * @param knownHashSets    The list of hash sets for "known" files.
      */
     private static synchronized void postSummary(long jobId,
-                                                 List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
+            List<HashDb> knownBadHashSets, List<HashDb> knownHashSets) {
         IngestJobTotals jobTotals = getTotalsForIngestJobs(jobId);
         totalsForIngestJobs.remove(jobId);
 

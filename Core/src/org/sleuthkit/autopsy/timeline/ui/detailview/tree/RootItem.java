@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import javafx.scene.control.TreeItem;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
-import org.sleuthkit.autopsy.timeline.ui.detailview.datamodel.DetailViewEvent;
-import org.sleuthkit.datamodel.timeline.EventType;
+import org.sleuthkit.autopsy.timeline.datamodel.TimeLineEvent;
+import org.sleuthkit.autopsy.timeline.datamodel.eventtype.EventType;
 
 /**
  * TreeItem for the root of all the events in the EventsTree.
@@ -43,7 +43,7 @@ class RootItem extends EventsTreeItem {
      * @param comparator the initial comparator used to sort the children of
      *                   this tree item
      */
-    RootItem(Comparator<TreeItem<DetailViewEvent>> comparator) {
+    RootItem(Comparator<TreeItem<TimeLineEvent>> comparator) {
         super(comparator);
     }
 
@@ -53,7 +53,7 @@ class RootItem extends EventsTreeItem {
      * @param event event to add
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    public void insert(DetailViewEvent event) {
+    public void insert(TimeLineEvent event) {
         insert(getTreePath(event));
     }
 
@@ -62,14 +62,14 @@ class RootItem extends EventsTreeItem {
      *
      * @param event the event to remove
      */
-    void remove(DetailViewEvent event) {
+    void remove(TimeLineEvent event) {
         remove(getTreePath(event));
     }
 
     @Override
-    void sort(Comparator<TreeItem<DetailViewEvent>> comp, Boolean recursive) {
+    void sort(Comparator<TreeItem<TimeLineEvent>> comp, Boolean recursive) {
         setComparator(comp);
-        childMap.values().forEach(treeItem -> treeItem.sort(comp, true));
+        childMap.values().forEach(ti -> ti.sort(comp, true));
     }
 
     @Override
@@ -83,8 +83,8 @@ class RootItem extends EventsTreeItem {
     }
 
     @Override
-    void remove(List<DetailViewEvent> path) {
-        DetailViewEvent event = path.get(0);
+    void remove(List<TimeLineEvent> path) {
+        TimeLineEvent event = path.get(0);
         BaseTypeTreeItem typeTreeItem = childMap.get(event.getEventType().getBaseType());
 
         //remove the path from the child
@@ -100,8 +100,8 @@ class RootItem extends EventsTreeItem {
     }
 
     @Override
-    void insert(List<DetailViewEvent> path) {
-        DetailViewEvent event = path.get(0);
+    void insert(List<TimeLineEvent> path) {
+        TimeLineEvent event = path.get(0);
         BaseTypeTreeItem treeItem = childMap.computeIfAbsent(event.getEventType().getBaseType(),
                 baseType -> configureNewTreeItem(new BaseTypeTreeItem(event, getComparator()))
         );

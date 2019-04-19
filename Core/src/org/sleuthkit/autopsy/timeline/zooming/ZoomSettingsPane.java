@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-18 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,8 @@
  */
 package org.sleuthkit.autopsy.timeline.zooming;
 
-import java.lang.reflect.InvocationTargetException;
+import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.BooleanBinding;
@@ -30,17 +29,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TitledPane;
 import javafx.util.StringConverter;
-import org.controlsfx.control.Notifications;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.FXMLConstructor;
-import org.sleuthkit.autopsy.timeline.FilteredEventsModel;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.ViewMode;
-import org.sleuthkit.autopsy.timeline.utils.RangeDivision;
-import org.sleuthkit.datamodel.DescriptionLoD;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
+import org.sleuthkit.autopsy.timeline.datamodel.FilteredEventsModel;
+import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 
 /**
  * A Panel that acts as a view for a given
@@ -49,8 +43,6 @@ import org.sleuthkit.datamodel.timeline.EventTypeZoomLevel;
  * and description level of detail).
  */
 public class ZoomSettingsPane extends TitledPane {
-
-    private static final Logger logger = Logger.getLogger(ZoomSettingsPane.class.getName());
 
     @FXML
     private Label zoomLabel;
@@ -125,8 +117,8 @@ public class ZoomSettingsPane extends TitledPane {
                 controller::pushTimeUnit,
                 filteredEvents.timeRangeProperty(),
                 TimeUnits.class,
-                //for the purposes of this slider we want the TimeUnit one bigger than RangeDivision indicates
-                modelTimeRange -> RangeDivision.getRangeDivision(modelTimeRange, TimeLineController.getJodaTimeZone()).getPeriodSize().ordinal() - 1,
+                //for the purposes of this slider we want the TimeUnit one bigger than RangeDivisionInfo indicates
+                modelTimeRange -> RangeDivisionInfo.getRangeDivisionInfo(modelTimeRange).getPeriodSize().ordinal() - 1,
                 index -> index + 1);  //compensate for the -1 above when mapping to the Enum whose displayName will be shown at index
         timeUnitLabel.setText(Bundle.ZoomSettingsPane_timeUnitLabel_text());
 
@@ -174,11 +166,9 @@ public class ZoomSettingsPane extends TitledPane {
      *                            lineup exactly with the Enum value indices to
      *                            use as tick Labels.
      */
-    @NbBundle.Messages({"ZoomSettingsPane.sliderChange.errorText=Error responding to slider value change."})
-
-    private <DriverType, EnumType extends Enum<EnumType>> void configureSliderListeners(
+    private static <DriverType, EnumType extends Enum<EnumType> & DisplayNameProvider> void configureSliderListeners(
             Slider slider,
-            CheckedConsumer<EnumType> sliderValueConsumer,
+            Consumer<EnumType> sliderValueConsumer,
             ReadOnlyObjectProperty<DriverType> modelProperty,
             Class<EnumType> enumClass,
             Function<DriverType, Integer> driverValueMapper,
@@ -193,14 +183,7 @@ public class ZoomSettingsPane extends TitledPane {
             if (slider.isValueChanging() == false) {
                 //convert slider value to EnumType and pass to consumer
                 EnumType sliderValueAsEnum = enumClass.getEnumConstants()[Math.round((float) slider.getValue())];
-                try {
-                    sliderValueConsumer.accept(sliderValueAsEnum);
-                } catch (TskCoreException exception) {
-                    logger.log(Level.SEVERE, "Error responding to slider value change.", exception);
-                    Notifications.create().owner(getScene().getWindow())
-                            .text(Bundle.ZoomSettingsPane_sliderChange_errorText())
-                            .showError();
-                }
+                sliderValueConsumer.accept(sliderValueAsEnum);
             }
         };
         //attach listener
@@ -229,13 +212,13 @@ public class ZoomSettingsPane extends TitledPane {
 
     /**
      * StringConverter for the tick Labels of a Slider that is "backed" by an
-     * Enum. Narrows the Slider's Double value to an Integer and then uses that
-     * as the index of the Enum value whose displayName will be shown as the
-     * tick Label
+     * Enum that extends DisplayNameProvider. Narrows the Slider's Double value
+     * to an Integer and then uses that as the index of the Enum value whose
+     * displayName will be shown as the tick Label
      *
      * @param <EnumType> The type of Enum that this converter works with.
      */
-    static private class EnumSliderLabelFormatter<EnumType extends Enum<EnumType>> extends StringConverter<Double> {
+    static private class EnumSliderLabelFormatter<EnumType extends Enum<EnumType> & DisplayNameProvider> extends StringConverter<Double> {
 
         /**
          * A Type token for the class of Enum that this converter works with.
@@ -248,41 +231,20 @@ public class ZoomSettingsPane extends TitledPane {
          */
         private final Function<Integer, Integer> indexAdjsuter;
 
-        EnumSliderLabelFormatter(Class<EnumType> enumClass, Function<Integer, Integer> indexMapper) {
-            this.clazz = enumClass;
+        EnumSliderLabelFormatter(Class<EnumType> clazz, Function<Integer, Integer> indexMapper) {
+            this.clazz = clazz;
             this.indexAdjsuter = indexMapper;
         }
 
         @Override
         public String toString(Double dbl) {
-            /* Get the displayName of the EnumType whose index is the given dbl
-             * after it has been narrowed and then adjusted. At one point there
-             * was an interface, DisplayNameProvider, but that was inappropriate
-             * to put in TSK only to support these sliders, so now we use
-             * reflection instead.
-             */
-            EnumType enumConstant = clazz.getEnumConstants()[indexAdjsuter.apply(dbl.intValue())];
-            try {
-                return (String) clazz.getMethod("getDisplayName", (Class<?>[]) null).invoke(enumConstant, (Object[]) null);
-            } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-                return enumConstant.toString();
-            }
+            //get the displayName of the EnumType whose index is the given dbl after it has been narrowed and then adjusted
+            return clazz.getEnumConstants()[indexAdjsuter.apply(dbl.intValue())].getDisplayName();
         }
 
         @Override
         public Double fromString(String string) {
             throw new UnsupportedOperationException("This method should not be used. This EnumSliderLabelFormatter is being used in an unintended way.");
         }
-    }
-
-    /**
-     * Functional interface for a consumer that throws a TskCoreException.
-     *
-     * @param <T>
-     */
-    @FunctionalInterface
-    private interface CheckedConsumer<T> {
-
-        void accept(T input) throws TskCoreException;
     }
 }

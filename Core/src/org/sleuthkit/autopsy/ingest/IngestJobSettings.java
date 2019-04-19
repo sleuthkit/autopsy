@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2019 Basis Technology Corp.
+ * Copyright 2014-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
@@ -312,10 +311,11 @@ public final class IngestJobSettings {
          * Get the ingest module factories discovered by the ingest module
          * loader.
          */
+        List<IngestModuleFactory> moduleFactories = new ArrayList<>();
         List<IngestModuleFactory> allModuleFactories = IngestModuleFactoryLoader.getIngestModuleFactories();
+        HashSet<String> loadedModuleNames = new HashSet<>();
 
         // Add modules that are going to be used for this ingest depending on type.
-        List<IngestModuleFactory> moduleFactories = new ArrayList<>();
         for (IngestModuleFactory moduleFactory : allModuleFactories) {
             if (this.ingestType.equals(IngestType.ALL_MODULES)) {
                 moduleFactories.add(moduleFactory);
@@ -326,21 +326,15 @@ public final class IngestJobSettings {
             }
         }
 
-        /**
-         * Make set of module names, and a set of names of modules that are
-         * enabled by default.
-         */
-        Set<String> defaultEnabledModuleNames = new HashSet<>();
-        Set<String> loadedModuleNames = new HashSet<>();
         for (IngestModuleFactory moduleFactory : moduleFactories) {
             loadedModuleNames.add(moduleFactory.getModuleDisplayName());
-            if (moduleFactory.isEnabledByDefault()) {
-                defaultEnabledModuleNames.add(moduleFactory.getModuleDisplayName());
-            }
         }
 
-        /** Get the enabled/disabled ingest modules settings for this context. */
-        HashSet<String> enabledModuleNames = getModulesNames(executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(defaultEnabledModuleNames));
+        /**
+         * Get the enabled/disabled ingest modules settings for this context. By
+         * default, all loaded modules are enabled.
+         */
+        HashSet<String> enabledModuleNames = getModulesNames(executionContext, IngestJobSettings.ENABLED_MODULES_PROPERTY, makeCsvList(loadedModuleNames));
         HashSet<String> disabledModuleNames = getModulesNames(executionContext, IngestJobSettings.DISABLED_MODULES_PROPERTY, ""); //NON-NLS
 
         /**
@@ -377,17 +371,11 @@ public final class IngestJobSettings {
             } else if (disabledModuleNames.contains(moduleName)) {
                 moduleTemplate.setEnabled(false);
             } else {
-                /**
-                 * The module factory was loaded, but the module name does not
-                 * appear in the enabled/disabled module settings. Treat the
-                 * module as a new module and use its default enabled state.
-                 */
-                moduleTemplate.setEnabled(moduleFactory.isEnabledByDefault());
-                if (moduleFactory.isEnabledByDefault()) {
-                    enabledModuleNames.add(moduleName);
-                } else {
-                    disabledModuleNames.add(moduleName);
-                }
+                // The module factory was loaded, but the module name does not
+                // appear in the enabled/disabled module settings. Treat the
+                // module as a new module and enable it by default.
+                moduleTemplate.setEnabled(true);
+                enabledModuleNames.add(moduleName);
             }
             this.moduleTemplates.add(moduleTemplate);
         }
@@ -527,7 +515,7 @@ public final class IngestJobSettings {
      * @return The file path.
      */
     private String getModuleSettingsFilePath(IngestModuleFactory factory) {
-        String fileName = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
+        String fileName =  FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + IngestJobSettings.MODULE_SETTINGS_FILE_EXT;
         Path path = Paths.get(this.moduleSettingsFolderPath, fileName);
         return path.toAbsolutePath().toString();
     }
@@ -588,7 +576,15 @@ public final class IngestJobSettings {
         if (collection == null || collection.isEmpty()) {
             return "";
         }
-        return String.join(", ", collection);
+
+        ArrayList<String> list = new ArrayList<>();
+        list.addAll(collection);
+        StringBuilder csvList = new StringBuilder();
+        for (int i = 0; i < list.size() - 1; ++i) {
+            csvList.append(list.get(i)).append(", ");
+        }
+        csvList.append(list.get(list.size() - 1));
+        return csvList.toString();
     }
 
     /**
