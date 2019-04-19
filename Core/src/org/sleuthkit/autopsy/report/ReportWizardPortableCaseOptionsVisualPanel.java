@@ -82,21 +82,26 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         chunkSizeLabel.setEnabled(false);
         options.updateCompression(false, ChunkSize.NONE);
 
-        interestingFilesCheckbox.setEnabled(false);
-        interestingResultsCheckbox.setEnabled(false);
+        interestingFilesCheckbox.setSelected(false);
+        interestingResultsCheckbox.setSelected(false);
         options.updateInterestingItems(false, false);
     }
     
+    @NbBundle.Messages({
+        "ReportWizardPortableCaseOptionsVisualPanel.error.errorTitle=Error getting tag names for case",
+        "ReportWizardPortableCaseOptionsVisualPanel.error.noOpenCase=There is no case open",
+        "ReportWizardPortableCaseOptionsVisualPanel.error.errorLoadingTags=Error loading tags",  
+    })
     private void populateTagNameComponents() {
         // Get the tag names in use for the current case.
         try {
             tagNames = Case.getCurrentCaseThrows().getServices().getTagsManager().getTagNamesInUse();
         } catch (TskCoreException ex) {
             Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex);
-            JOptionPane.showMessageDialog(this, Bundle.CreatePortableCasePanel_error_errorLoadingTags(), Bundle.CreatePortableCasePanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.ReportWizardPortableCaseOptionsVisualPanel_error_errorLoadingTags(), Bundle.ReportWizardPortableCaseOptionsVisualPanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
         } catch (NoCurrentCaseException ex) {
             Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
-            JOptionPane.showMessageDialog(this, Bundle.CreatePortableCasePanel_error_noOpenCase(), Bundle.CreatePortableCasePanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Bundle.ReportWizardPortableCaseOptionsVisualPanel_error_noOpenCase(), Bundle.ReportWizardPortableCaseOptionsVisualPanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
         }
 
         // Mark the tag names as unselected. Note that tagNameSelections is a

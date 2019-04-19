@@ -25,10 +25,13 @@ PortableCaseReportModule.generateReport.copyingTags=Copying tags...
 PortableCaseReportModule.generateReport.creatingCase=Creating portable case database...
 PortableCaseReportModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts
 PortableCaseReportModule.generateReport.errorCopyingFiles=Error copying tagged files
+PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files
+PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results
 PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags
 # {0} - attribute type name
 PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}
-PortableCaseReportModule.generateReport.noTagsSelected=No tags selected for export.
+PortableCaseReportModule.generateReport.interestingItemError=Error loading intersting items
+PortableCaseReportModule.generateReport.noContentToCopy=No interesteing files, results, or tagged items to copy
 # {0} - output folder
 PortableCaseReportModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist
 # {0} - output folder
@@ -312,6 +315,9 @@ CreatePortableCasePanel.jLabel2.text=Select output folder:
 CreatePortableCasePanel.compressCheckbox.text=Compress case
 CreatePortableCasePanel.chunkSizeLabel.text=Split into chunks of size:
 CreatePortableCasePanel.errorLabel.text_1=Windows only
+ReportWizardPortableCaseOptionsVisualPanel.error.errorLoadingTags=Error loading tags
+ReportWizardPortableCaseOptionsVisualPanel.error.errorTitle=Error getting tag names for case
+ReportWizardPortableCaseOptionsVisualPanel.error.noOpenCase=There is no case open
 ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings
 ReportWizardPortableCaseOptionsVisualPanel.selectAllButton.text=Select All
 ReportWizardPortableCaseOptionsVisualPanel.errorLabel.text=Windows only
