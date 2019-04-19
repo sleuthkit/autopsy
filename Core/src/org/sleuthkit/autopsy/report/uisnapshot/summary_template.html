@@ -1,0 +1,55 @@
+<html>
+    <head>
+        <title>Case Summary</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <link rel="stylesheet" type="text/css" href="summary.css" />
+        <link rel="icon" type="image/ico" href="favicon.ico" />
+    </head>
+    <body>
+        <div id="wrapper">
+            <h1>{{reportBranding.getReportTitle}}: {{reportName}}{{#ingestRunning}}<span>Warning, this report was run before ingest services completed!</span>{{/ingestRunning}}</h1>
+
+            <p class="subheadding">Report generated on {{generationDateTime}}</p>
+            <div class="title">
+                {{#reportBranding.getAgencyLogoPath}}
+                <div class="left">
+                    <img src="{{agencyLogoFileName}}" />
+                </div>
+                <div class="right">
+                    {{/reportBranding.getAgencyLogoPath}}
+                    {{^reportBranding.getAgencyLogoPath}}
+                    <div class="left">
+                        {{/reportBranding.getAgencyLogoPath}}
+                        <table>
+                            <tr><td>Case:</td><td>{{currentCase.getName}}</td></tr>
+                            <tr><td>Case Number:</td><td><i>{{currentCase.getCaseNumber}}{{^currentCase.getCaseNumber}}No case number{{/currentCase.getCaseNumber}}</i></td></tr>
+                            <tr><td>Examiner:</td><td><i>{{currentCase.getExaminer}}{{^currentCase.getExaminer}}No examiner{{/currentCase.getExaminer}}</i></td></tr>
+                            <tr><td>Number of Images:</td><td>{{currentCase.getDataSources.size}}</td></tr>
+                        </table>
+                    </div>
+                    <div class="clear"></div>
+                </div>
+                <h2>Image Information:</h2><div class="info">
+                    {{#currentCase.getDataSources}}
+                    <p>{{getName}}</p>
+                    {{#getTimeZone}}
+                    <table>
+                        <tr><td>Timezone:</td><td>{{getTimeZone}}</td></tr>
+                        {{#getPaths}}
+                        <tr><td>Path:</td><td>{{toString}}</td></tr>
+                        {{/getPaths}}
+                    </table>
+                    {{/getTimeZone}}
+                    {{/currentCase.getDataSources}}
+                </div>
+                {{#reportBranding.getGeneratorLogoPath}}
+                <div class="left">
+                    <img src="generator_logo.png" />
+                </div>
+                {{/reportBranding.getGeneratorLogoPath}}
+                <div class="clear"></div>
+                {{#reportBranding.getReportFooter}}
+                <p class="subheadding">{{toString}}</p>
+                {{/reportBranding.getReportFooter}}
+            </div>
+    </body></html>

@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -126,14 +127,10 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
         }
         Image img = (Image) dataSource;
 
-        // Make sure the image size we have is not zero
+        // Get the image size. Log a warning if it is zero.
         long size = img.getSize();
         if (size == 0) {
             logger.log(Level.WARNING, "Size of image {0} was 0 when queried.", imgName); //NON-NLS
-            services.postMessage(IngestMessage.createMessage(MessageType.ERROR, DataSourceIntegrityModuleFactory.getModuleName(),
-                    NbBundle.getMessage(this.getClass(),
-                            "DataSourceIntegrityIngestModule.process.errGetSizeOfImg",
-                            imgName)));
         }
         
         // Determine which mode we're in. 
@@ -300,6 +297,8 @@ public class DataSourceIntegrityIngestModule implements DataSourceIngestModule {
                     BlackboardArtifact verificationFailedArtifact = Case.getCurrentCase().getSleuthkitCase().newBlackboardArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED, img.getId());
                     verificationFailedArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT,
                         DataSourceIntegrityModuleFactory.getModuleName(), artifactComment));
+                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(DataSourceIntegrityModuleFactory.getModuleName(),
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_VERIFICATION_FAILED));
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error creating verification failed artifact", ex);
                 }

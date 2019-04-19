@@ -297,16 +297,7 @@ final class CentralRepoIngestModule implements FileIngestModule {
         } catch (EamDbException ex) {
             throw new IngestModuleException("Unable to get case from central repository database ", ex);
         }
-        if (eamCase == null) {
-            // ensure we have this case defined in the EAM DB
-            try {
-                eamCase = centralRepoDb.newCase(autopsyCase);
-            } catch (EamDbException ex) {
-                logger.log(Level.SEVERE, "Error creating new case in ingest module start up.", ex); // NON-NLS
-                throw new IngestModuleException("Error creating new case in ingest module start up.", ex); // NON-NLS
-            }
-        }
-
+      
         try {
             eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
         } catch (EamDbException ex) {

@@ -36,7 +36,7 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>10</release-version>
-                        <specification-version>10.14</specification-version>
+                        <specification-version>10.15</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -45,11 +45,15 @@
                     <compile-dependency/>
                     <run-dependency>
                         <release-version>6</release-version>
-                        <specification-version>6.5</specification-version>
+                        <specification-version>6.6</specification-version>
                     </run-dependency>
                 </dependency>
             </module-dependencies>
             <public-packages/>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-lang3-3.8.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-lang3-3.8.1.jar</binary-origin>
+            </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-core-0.8.0-SNAPSHOT.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-core-0.8.0-SNAPSHOT.jar</binary-origin>
@@ -65,6 +69,14 @@
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-mbox-iterator-0.8.0-SNAPSHOT.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-mbox-iterator-0.8.0-SNAPSHOT.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/ez-vcard-0.10.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/ez-vcard-0.10.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/vinnie-2.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/vinnie-2.0.2.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

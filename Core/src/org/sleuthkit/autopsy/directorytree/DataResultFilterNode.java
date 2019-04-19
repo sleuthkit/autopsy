@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,18 +54,18 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
-import org.sleuthkit.autopsy.commonfilesearch.InstanceCountNode;
-import org.sleuthkit.autopsy.commonfilesearch.InstanceCaseNode;
-import org.sleuthkit.autopsy.commonfilesearch.InstanceDataSourceNode;
-import org.sleuthkit.autopsy.commonfilesearch.CommonAttributeValueNode;
-import org.sleuthkit.autopsy.commonfilesearch.CentralRepoCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCountNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.InstanceCaseNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.InstanceDataSourceNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.CommonAttributeValueNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.CentralRepoCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
-import org.sleuthkit.autopsy.commonfilesearch.CaseDBCommonAttributeInstanceNode;
+import org.sleuthkit.autopsy.commonpropertiessearch.CaseDBCommonAttributeInstanceNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import static org.sleuthkit.autopsy.directorytree.Bundle.DataResultFilterNode_viewSourceArtifact_text;
 import org.sleuthkit.autopsy.modules.embeddedfileextractor.ExtractArchiveWithPasswordAction;
@@ -432,19 +432,23 @@ public class DataResultFilterNode extends FilterNode {
                 actionsList.addAll(DataModelActionsFactory.getActions(c, false));
             }
             if (n != null) {
+                final Collection<AbstractFile> selectedFilesList
+                        = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(new NewWindowViewAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), n));
-                actionsList.add(new ExternalViewerAction(
-                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), n));
+                if (selectedFilesList.size() == 1) {
+                    actionsList.add(new ExternalViewerAction(
+                            NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), n));
+                } else {
+                    actionsList.add(ExternalViewerShortcutAction.getInstance());
+                }
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(ExtractAction.getInstance());
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(AddContentTagAction.getInstance());
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
 
-                final Collection<AbstractFile> selectedFilesList
-                        = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
                 if (selectedFilesList.size() == 1) {
                     actionsList.add(DeleteFileContentTagAction.getInstance());
                 }

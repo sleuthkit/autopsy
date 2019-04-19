@@ -1,0 +1,12 @@
+MultiUserCaseBrowserCustomizer.column.caseDbDeleteStatus=Case Database Deleted
+MultiUserCaseBrowserCustomizer.column.caseDirDeleteStatus=Case Directory Deleted
+MultiUserCaseBrowserCustomizer.column.createTime=Create Time
+MultiUserCaseBrowserCustomizer.column.dataSourcesDeleteStatus=Data Sources Deleted
+MultiUserCaseBrowserCustomizer.column.directory=Directory
+MultiUserCaseBrowserCustomizer.column.displayName=Name
+MultiUserCaseBrowserCustomizer.column.lastAccessTime=Last Access Time
+MultiUserCaseBrowserCustomizer.column.manifestFileZNodesDeleteStatus=Manifest Znodes Deleted
+MultiUserCaseBrowserCustomizer.column.textIndexDeleteStatus=Text Index Deleted
+MultiUserCaseNode.column.createTime=False
+MultiUserCaseNode.columnValue.true=True
+MultiUserCasesBrowserPanel.waitNode.message=Please Wait...

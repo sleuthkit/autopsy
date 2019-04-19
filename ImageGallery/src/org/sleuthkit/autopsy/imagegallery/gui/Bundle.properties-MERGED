@@ -1,0 +1,20 @@
+StatuBar.toolTip=Some data may be out of date.  Enable Image Gallery in Tools | Options | Image /Video Gallery , after ingest is complete to update the Image Gallery data.
+StatusBar.bgTaskLabel.text=Regrouping
+StatusBar.fileUpdateTaskLabel.text=\ File Update Tasks
+SummaryTablePane.catColumn=Category
+SummaryTablePane.countColumn=\# Files
+Toolbar.ascRadio=Ascending
+Toolbar.categoryImageViewLabel=Categorize Group's Files:
+Toolbar.descRadio=Descending
+Toolbar.getDataSources.errMessage=Unable to get datasources for current case.
+Toolbar.groupByLabel=Group By:
+Toolbar.nonPathGroupingWarning.content=Proceed with regrouping?
+Toolbar.nonPathGroupingWarning.header=Grouping by attributes other than path does not support the data source filter.\nFiles and groups from all data sources will be shown.
+Toolbar.nonPathGroupingWarning.title=Image Gallery
+Toolbar.sortByLabel=Sort By:
+Toolbar.sortHelp=The sort direction (ascending/descending) affects the queue of unseen groups that Image Gallery maintains, but changes to this queue aren't apparent until the "Next Unseen Group" button is pressed.
+Toolbar.sortHelpTitle=Group Sorting
+Toolbar.tagImageViewLabel=Tag Group's Files:
+Toolbar.thumbnailSizeLabel=Thumbnail Size (px):
+# {0} - exception type
+VideoPlayer.errNotice={0}\nSee the logs for details.

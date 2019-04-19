@@ -1,0 +1,5 @@
+description, duration=4.0
+pause, playback_time=0.0
+wait, duration=1.0
+edit-clip, playback_time=0.0, clip-name="uriclip0", position=3.0, edit-mode="edit_trim", edge="edge_end"
+play, playback_time=0.0

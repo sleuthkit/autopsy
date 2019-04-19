@@ -16,10 +16,19 @@
         <delete dir="${ext.dir}"/>
     </target>
     
-    <target name="get-thirdparty-jars" description="get third-party jar dependencies"> 
-        <mkdir dir="${ext.dir}"/>
-        <copy file="${thirdparty.dir}/sqlite-jdbc/sqlite-jdbc-3.7.8-SNAPSHOT.jar" todir="${ext.dir}" />
+    <target name="compile" depends="projectized-common.compile">
+        <antcall target="copy-bundle" />
     </target>
- 
-    <target name="init" depends="get-thirdparty-jars,harness.init" />
+
+    <target name="copy-bundle">
+        <!-- the externalized strings in 'src' are in both the java files as annotations and in the Bundle.property files.
+          The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
+          in and used as a basis for translation efforts -->
+        <copy todir="src">
+            <fileset dir="build/classes">
+                <include name="**/Bundle.properties"/>
+            </fileset>
+            <globmapper from="*" to="*-MERGED"/>
+        </copy>
+    </target>
 </project>

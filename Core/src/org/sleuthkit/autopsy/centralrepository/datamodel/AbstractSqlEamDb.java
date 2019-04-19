@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2018 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +62,7 @@ abstract class AbstractSqlEamDb implements EamDb {
     static final String SCHEMA_MINOR_VERSION_KEY = "SCHEMA_MINOR_VERSION";
     static final String CREATION_SCHEMA_MAJOR_VERSION_KEY = "CREATION_SCHEMA_MAJOR_VERSION";
     static final String CREATION_SCHEMA_MINOR_VERSION_KEY = "CREATION_SCHEMA_MINOR_VERSION";
-    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 2);
+    static final CaseDbSchemaVersionNumber SOFTWARE_CR_DB_SCHEMA_VERSION = new CaseDbSchemaVersionNumber(1, 3);
 
     protected final List<CorrelationAttributeInstance.Type> defaultCorrelationTypes;
 
@@ -104,6 +105,11 @@ abstract class AbstractSqlEamDb implements EamDb {
             bulkArtifacts.put(EamDbUtil.correlationTypeToInstanceTableName(type), new ArrayList<>());
         });
     }
+
+    /**
+     * Setup and create a connection to the selected database implementation
+     */
+    protected abstract Connection connect(boolean foreignKeys) throws EamDbException;
 
     /**
      * Setup and create a connection to the selected database implementation
@@ -241,6 +247,10 @@ abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public synchronized CorrelationCase newCase(CorrelationCase eamCase) throws EamDbException {
+
+        if (eamCase.getCaseUUID() == null) {
+            throw new EamDbException("Case UUID is null");
+        }
 
         // check if there is already an existing CorrelationCase for this Case
         CorrelationCase cRCase = getCaseByUUID(eamCase.getCaseUUID());
@@ -610,15 +620,23 @@ abstract class AbstractSqlEamDb implements EamDb {
     public CorrelationDataSource newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
         if (eamDataSource.getCaseID() == -1) {
             throw new EamDbException("Case ID is -1");
-        } else if (eamDataSource.getID() != -1) {
+        }
+        if (eamDataSource.getDeviceID() == null) {
+            throw new EamDbException("Device ID is null");
+        }
+        if (eamDataSource.getName() == null) {
+            throw new EamDbException("Name is null");
+        }
+        if (eamDataSource.getID() != -1) {
             // This data source is already in the central repo
             return eamDataSource;
         }
+
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
-
-        String sql = "INSERT INTO data_sources(device_id, case_id, name, datasource_obj_id) VALUES (?, ?, ?, ?) "
+        //The conflict clause exists in case multiple nodes are trying to add the data source because it did not exist at the same time
+        String sql = "INSERT INTO data_sources(device_id, case_id, name, datasource_obj_id, md5, sha1, sha256) VALUES (?, ?, ?, ?, ?, ?, ?) "
                 + getConflictClause();
         ResultSet resultSet = null;
         try {
@@ -628,19 +646,52 @@ abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setInt(2, eamDataSource.getCaseID());
             preparedStatement.setString(3, eamDataSource.getName());
             preparedStatement.setLong(4, eamDataSource.getDataSourceObjectID());
+            preparedStatement.setString(5, eamDataSource.getMd5());
+            preparedStatement.setString(6, eamDataSource.getSha1());
+            preparedStatement.setString(7, eamDataSource.getSha256());
 
             preparedStatement.executeUpdate();
             resultSet = preparedStatement.getGeneratedKeys();
             if (!resultSet.next()) {
-                throw new EamDbException(String.format("Failed to INSERT data source %s in central repo", eamDataSource.getName()));
+                /*
+                 * If nothing was inserted, then return the data source that
+                 * exists in the Central Repository.
+                 *
+                 * This is expected to occur with PostgreSQL Central Repository
+                 * databases.
+                 */
+                try {
+                    return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
+                            eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
+                            () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
+                } catch (CacheLoader.InvalidCacheLoadException | ExecutionException getException) {
+                    throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo:", eamDataSource.getName()), getException);
+                }
+            } else {
+                //if a new data source was added to the central repository update the caches to include it and return it
+                int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
+                CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID(), eamDataSource.getMd5(), eamDataSource.getSha1(), eamDataSource.getSha256());
+                dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(dataSource.getCaseID(), dataSource.getDataSourceObjectID()), dataSource);
+                dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
+                return dataSource;
             }
-            int dataSourceId = resultSet.getInt(1); //last_insert_rowid()
-            CorrelationDataSource dataSource = new CorrelationDataSource(eamDataSource.getCaseID(), dataSourceId, eamDataSource.getDeviceID(), eamDataSource.getName(), eamDataSource.getDataSourceObjectID());
-            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(dataSource.getCaseID(), dataSource.getDataSourceObjectID()), dataSource);
-            dataSourceCacheById.put(getDataSourceByIdCacheKey(dataSource.getCaseID(), dataSource.getID()), dataSource);
-            return dataSource;
-        } catch (SQLException ex) {
-            throw new EamDbException("Error inserting new data source.", ex); // NON-NLS
+
+        } catch (SQLException insertException) {
+            /*
+             * If an exception was thrown causing us to not return a new data
+             * source, attempt to get an existing data source with the same case
+             * ID and data source object ID.
+             *
+             * This exception block is expected to occur with SQLite Central
+             * Repository databases.
+             */
+            try {
+                return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(
+                        eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()),
+                        () -> getDataSourceFromCr(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()));
+            } catch (CacheLoader.InvalidCacheLoadException | ExecutionException getException) {
+                throw new EamDbException(String.format("Unable to to INSERT or get data source %s in central repo, insert failed due to Exception: %s", eamDataSource.getName(), insertException.getMessage()), getException);
+            }
         } finally {
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeStatement(preparedStatement);
@@ -666,7 +717,7 @@ abstract class AbstractSqlEamDb implements EamDb {
             throw new EamDbException("Correlation case is null");
         }
         try {
-            return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(correlationCase.getID(), dataSourceObjectId), () -> getDataSourceFromCr(correlationCase, dataSourceObjectId));
+            return dataSourceCacheByDsObjectId.get(getDataSourceByDSObjectIdCacheKey(correlationCase.getID(), dataSourceObjectId), () -> getDataSourceFromCr(correlationCase.getID(), dataSourceObjectId));
         } catch (CacheLoader.InvalidCacheLoadException ignored) {
             //lambda valueloader returned a null value and cache can not store null values this is normal if the dataSource does not exist in the central repo yet
             return null;
@@ -679,15 +730,15 @@ abstract class AbstractSqlEamDb implements EamDb {
      * Gets the Data Source details based on data source device ID from the
      * central repository.
      *
-     * @param correlationCase    the current CorrelationCase used for ensuring
-     *                           uniqueness of DataSource
-     * @param dataSourceDeviceId the object id of the data source
+     * @param correlationCaseId  the current CorrelationCase id used for
+     *                           ensuring uniqueness of DataSource
+     * @param dataSourceObjectId the object id of the data source
      *
      * @return The data source
      *
      * @throws EamDbException
      */
-    private CorrelationDataSource getDataSourceFromCr(CorrelationCase correlationCase, Long dataSourceObjectId) throws EamDbException {
+    private CorrelationDataSource getDataSourceFromCr(int correlationCaseId, Long dataSourceObjectId) throws EamDbException {
         Connection conn = connect();
 
         CorrelationDataSource eamDataSourceResult = null;
@@ -699,13 +750,13 @@ abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setLong(1, dataSourceObjectId);
-            preparedStatement.setInt(2, correlationCase.getID());
+            preparedStatement.setInt(2, correlationCaseId);
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
             }
             if (eamDataSourceResult != null) {
-                dataSourceCacheById.put(getDataSourceByIdCacheKey(correlationCase.getID(), eamDataSourceResult.getID()), eamDataSourceResult);
+                dataSourceCacheById.put(getDataSourceByIdCacheKey(correlationCaseId, eamDataSourceResult.getID()), eamDataSourceResult);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting data source.", ex); // NON-NLS
@@ -817,6 +868,118 @@ abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Updates the MD5 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceMd5Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        updateDataSourceStringValue(eamDataSource, "md5", eamDataSource.getMd5());
+    }
+
+    /**
+     * Updates the SHA-1 hash value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha1Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        updateDataSourceStringValue(eamDataSource, "sha1", eamDataSource.getSha1());
+    }
+
+    /**
+     * Updates the SHA-256 hash value in an existing data source in the
+     * database.
+     *
+     * @param eamDataSource The data source to update
+     */
+    @Override
+    public void updateDataSourceSha256Hash(CorrelationDataSource eamDataSource) throws EamDbException {
+        updateDataSourceStringValue(eamDataSource, "sha256", eamDataSource.getSha256());
+    }
+
+    /**
+     * Updates the specified value in an existing data source in the database.
+     *
+     * @param eamDataSource The data source to update
+     * @param column        The name of the column to be updated
+     * @param value         The value to assign to the specified column
+     */
+    private void updateDataSourceStringValue(CorrelationDataSource eamDataSource, String column, String value) throws EamDbException {
+        if (eamDataSource == null) {
+            throw new EamDbException("Correlation data source is null");
+        }
+
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+        String sql = "UPDATE data_sources "
+                + "SET " + column + "=? "
+                + "WHERE id=?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+
+            preparedStatement.setString(1, value);
+            preparedStatement.setInt(2, eamDataSource.getID());
+
+            preparedStatement.executeUpdate();
+            //update the case in the cache
+            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getDataSourceObjectID()), eamDataSource);
+            dataSourceCacheById.put(getDataSourceByIdCacheKey(eamDataSource.getCaseID(), eamDataSource.getID()), eamDataSource);
+        } catch (SQLException ex) {
+            throw new EamDbException(String.format("Error updating data source (obj_id=%d).", eamDataSource.getDataSourceObjectID()), ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    /**
+     * Changes the name of a data source in the DB
+     *
+     * @param eamDataSource The data source
+     * @param newName       The new name
+     *
+     * @throws EamDbException
+     */
+    @Override
+    public void updateDataSourceName(CorrelationDataSource eamDataSource, String newName) throws EamDbException {
+
+        Connection conn = connect();
+
+        PreparedStatement preparedStatement = null;
+
+        String sql = "UPDATE data_sources SET name = ? WHERE id = ?";
+
+        try {
+            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, newName);
+            preparedStatement.setInt(2, eamDataSource.getID());
+            preparedStatement.executeUpdate();
+
+            CorrelationDataSource updatedDataSource = new CorrelationDataSource(
+                    eamDataSource.getCaseID(),
+                    eamDataSource.getID(),
+                    eamDataSource.getDeviceID(),
+                    newName,
+                    eamDataSource.getDataSourceObjectID(),
+                    eamDataSource.getMd5(),
+                    eamDataSource.getSha1(),
+                    eamDataSource.getSha256());
+
+            dataSourceCacheByDsObjectId.put(getDataSourceByDSObjectIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getDataSourceObjectID()), updatedDataSource);
+            dataSourceCacheById.put(getDataSourceByIdCacheKey(updatedDataSource.getCaseID(), updatedDataSource.getID()), updatedDataSource);
+        } catch (SQLException ex) {
+            throw new EamDbException("Error updating name of data source with ID " + eamDataSource.getDataSourceObjectID()
+                    + " to " + newName, ex); // NON-NLS
+        } finally {
+            EamDbUtil.closeStatement(preparedStatement);
+            EamDbUtil.closeConnection(conn);
+        }
+    }
+
+    /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
      * Data Source first.
      *
@@ -895,30 +1058,61 @@ abstract class AbstractSqlEamDb implements EamDb {
         }
     }
 
-    /**
-     * Retrieves eamArtifact instances from the database that are associated
-     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
-     *
-     * @param aType The type of the artifact
-     * @param value The correlation value
-     *
-     * @return List of artifact instances for a given type/value
-     *
-     * @throws EamDbException
-     */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttributeInstance.Type aType, String value) throws EamDbException, CorrelationAttributeNormalizationException {
+        if (value == null) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances for null value");
+        }
+        return getArtifactInstancesByTypeValues(aType, Arrays.asList(value));
+    }
 
-        String normalizedValue = CorrelationAttributeNormalizer.normalize(aType, value);
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValues(CorrelationAttributeInstance.Type aType, List<String> values) throws EamDbException, CorrelationAttributeNormalizationException {
+        if (aType == null) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances for null type");
+        }
+        if (values == null || values.isEmpty()) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified values");
+        }
+        return getArtifactInstances(prepareGetInstancesSql(aType, values), aType);
+    }
 
-        Connection conn = connect();
+    @Override
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValuesAndCases(CorrelationAttributeInstance.Type aType, List<String> values, List<Integer> caseIds) throws EamDbException, CorrelationAttributeNormalizationException {
+        if (aType == null) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances for null type");
+        }
+        if (values == null || values.isEmpty()) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified values");
+        }
+        if (caseIds == null || caseIds.isEmpty()) {
+            throw new CorrelationAttributeNormalizationException("Cannot get artifact instances without specified cases");
+        }
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
+        String sql
+                = " and "
+                + tableName
+                + ".case_id in ('";
+        StringBuilder inValuesBuilder = new StringBuilder(prepareGetInstancesSql(aType, values));
+        inValuesBuilder.append(sql);
+        inValuesBuilder.append(caseIds.stream().map(String::valueOf).collect(Collectors.joining("', '")));
+        inValuesBuilder.append("')");
+        return getArtifactInstances(inValuesBuilder.toString(), aType);
+    }
 
-        List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
-
-        CorrelationAttributeInstance artifactInstance;
-        PreparedStatement preparedStatement = null;
-        ResultSet resultSet = null;
-
+    /**
+     * Get the select statement for retrieving correlation attribute instances
+     * from the CR for a given type with values matching the specified values
+     *
+     * @param aType  The type of the artifact
+     * @param values The list of correlation values to get
+     *               CorrelationAttributeInstances for
+     *
+     * @return the select statement as a String
+     *
+     * @throws CorrelationAttributeNormalizationException
+     */
+    private String prepareGetInstancesSql(CorrelationAttributeInstance.Type aType, List<String> values) throws CorrelationAttributeNormalizationException {
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
                 = "SELECT "
@@ -928,7 +1122,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".value,"
                 + tableName
                 + ".file_obj_id,"
-                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -936,11 +1130,42 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + " LEFT JOIN data_sources ON "
                 + tableName
                 + ".data_source_id=data_sources.id"
-                + " WHERE value=?";
+                + " WHERE value IN (";
+        StringBuilder inValuesBuilder = new StringBuilder(sql);
+        for (String value : values) {
+            if (value != null) {
+                inValuesBuilder.append("'");
+                inValuesBuilder.append(CorrelationAttributeNormalizer.normalize(aType, value));
+                inValuesBuilder.append("',");
+            }
+        }
+        inValuesBuilder.deleteCharAt(inValuesBuilder.length() - 1); //delete last comma
+        inValuesBuilder.append(")");
+        return inValuesBuilder.toString();
+    }
 
+    /**
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValues of the given eamArtifact.
+     *
+     * @param aType  The type of the artifact
+     * @param values The list of correlation values to get
+     *               CorrelationAttributeInstances for
+     *
+     * @return List of artifact instances for a given type with the specified
+     *         values
+     *
+     * @throws CorrelationAttributeNormalizationException
+     * @throws EamDbException
+     */
+    private List<CorrelationAttributeInstance> getArtifactInstances(String sql, CorrelationAttributeInstance.Type aType) throws CorrelationAttributeNormalizationException, EamDbException {
+        Connection conn = connect();
+        List<CorrelationAttributeInstance> artifactInstances = new ArrayList<>();
+        CorrelationAttributeInstance artifactInstance;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, normalizedValue);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet, aType);
@@ -953,7 +1178,6 @@ abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
-
         return artifactInstances;
     }
 
@@ -993,7 +1217,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".value,"
                 + tableName
                 + ".file_obj_id,"
-                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
+                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -1671,9 +1895,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 // in the database, but we don't expect the user to be tagging large numbers
                 // of items (that didn't have the CE ingest module run on them) at once.
                 CorrelationCase correlationCaseWithId = getCaseByUUID(eamArtifact.getCorrelationCase().getCaseUUID());
-                if (null == correlationCaseWithId) {
-                    correlationCaseWithId = newCase(eamArtifact.getCorrelationCase());
-                }
                 if (null == getDataSource(correlationCaseWithId, eamArtifact.getCorrelationDataSource().getDataSourceObjectID())) {
                     newDataSource(eamArtifact.getCorrelationDataSource());
                 }
@@ -1721,7 +1942,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                 + ".value, "
                 + tableName
                 + ".file_obj_id,"
-                + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id FROM "
+                + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -1778,7 +1999,7 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
-                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, file_obj_id, data_sources.datasource_obj_id FROM "
+                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, file_obj_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
@@ -3061,7 +3282,10 @@ abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("id"),
                 resultSet.getString("device_id"),
                 resultSet.getString("name"),
-                resultSet.getLong("datasource_obj_id")
+                resultSet.getLong("datasource_obj_id"),
+                resultSet.getString("md5"),
+                resultSet.getString("sha1"),
+                resultSet.getString("sha256")
         );
 
         return eamDataSource;
@@ -3102,7 +3326,9 @@ abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getString("value"),
                 resultSet.getInt("id"),
                 new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
-                new CorrelationDataSource(resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name"), resultSet.getLong("datasource_obj_id")),
+                new CorrelationDataSource(
+                        resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name"),
+                        resultSet.getLong("datasource_obj_id"), resultSet.getString("md5"), resultSet.getString("sha1"), resultSet.getString("sha256")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
@@ -3179,12 +3405,13 @@ abstract class AbstractSqlEamDb implements EamDb {
         Statement statement = null;
         PreparedStatement preparedStatement = null;
         Connection conn = null;
+        EamDbPlatformEnum selectedPlatform = null;
         try {
 
-            conn = connect();
+            conn = connect(false);
             conn.setAutoCommit(false);
             statement = conn.createStatement();
-
+            selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
             int minorVersion = 0;
             String minorVersionStr = null;
             resultSet = statement.executeQuery("SELECT value FROM db_info WHERE name='" + AbstractSqlEamDb.SCHEMA_MINOR_VERSION_KEY + "'");
@@ -3237,8 +3464,6 @@ abstract class AbstractSqlEamDb implements EamDb {
                 logger.log(Level.INFO, "Central Repository is of newer version than software creates");
                 return;
             }
-
-            EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
 
             /*
              * Update to 1.1
@@ -3423,7 +3648,36 @@ abstract class AbstractSqlEamDb implements EamDb {
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MAJOR_VERSION_KEY + "','" + creationMajorVer + "')");
                 statement.execute("INSERT INTO db_info (name, value) VALUES ('" + AbstractSqlEamDb.CREATION_SCHEMA_MINOR_VERSION_KEY + "','" + creationMinorVer + "')");
             }
+            /*
+             * Update to 1.3
+             */
+            if (dbSchemaVersion.compareTo(new CaseDbSchemaVersionNumber(1, 3)) < 0) {
+                switch (selectedPlatform) {
+                    case POSTGRESQL:
+                        statement.execute("ALTER TABLE data_sources DROP CONSTRAINT datasource_unique");
+                        //unique constraint for upgraded data_sources table is purposefully different than new data_sources table
+                        statement.execute("ALTER TABLE data_sources ADD CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id)");
 
+                        break;
+                    case SQLITE:
+                        statement.execute("DROP INDEX IF EXISTS data_sources_name");
+                        statement.execute("DROP INDEX IF EXISTS data_sources_object_id");
+                        statement.execute("ALTER TABLE data_sources RENAME TO old_data_sources");
+                        //unique constraint for upgraded data_sources table is purposefully different than new data_sources table
+                        statement.execute("CREATE TABLE IF NOT EXISTS data_sources (id integer primary key autoincrement NOT NULL,"
+                                + "case_id integer NOT NULL,device_id text NOT NULL,name text NOT NULL,datasource_obj_id integer,"
+                                + "md5 text DEFAULT NULL,sha1 text DEFAULT NULL,sha256 text DEFAULT NULL,"
+                                + "foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,"
+                                + "CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name, datasource_obj_id))");
+                        statement.execute(SqliteEamDbSettings.getAddDataSourcesNameIndexStatement());
+                        statement.execute(SqliteEamDbSettings.getAddDataSourcesObjectIdIndexStatement());
+                        statement.execute("INSERT INTO data_sources SELECT * FROM old_data_sources");
+                        statement.execute("DROP TABLE old_data_sources");
+                        break;
+                    default:
+                        throw new EamDbException("Currently selected database platform \"" + selectedPlatform.name() + "\" can not be upgraded.");
+                }
+            }
             updateSchemaVersion(conn);
             conn.commit();
             logger.log(Level.INFO, String.format("Central Repository schema updated to version %s", SOFTWARE_CR_DB_SCHEMA_VERSION));

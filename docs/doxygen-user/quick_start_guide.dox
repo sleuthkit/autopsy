@@ -1,28 +1,36 @@
 /*! \page quick_start_guide Quick Start Guide
 
-\section s1 Adding a Data Source (image, local disk, logical files)
+\section s1 Cases and Data Sources
 
-Data sources are added to a <strong>case</strong>. A case can have a single data source or it can have multiple data sources. Currently, a single report is generated for an entire case, so if you need to report on individual data sources, then you should use one data source per case. If there are many drives/phones/other data sources for one investigation, then your case should have multiple data sources.
+Autopsy organizes data by <strong>case</strong>.  Each case can have one or more <strong>data sources</strong>, which can be a disk image, a set of logical files, a USB-connected device, etc.  
 
-\subsection s2 Creating a Case
+Cases can either be single-user or multi-user.  Multi-user cases allow several examiners to review the data at the same time and collaborate, but require some additional open source servers to be configured. 
+
+When you have several data sources and are deciding about creating creating a case, consider:
+- You can have only one case open at a time
+- Reports are generated at a case-level
+- The application can slow down when there are many large data sources in the same case
+
+\subsection s1a Creating a Case
 To create a case, use either the "Create New Case" option on the Welcome screen or from the "Case" menu. This will start the <strong>New Case Wizard</strong>. You will need to supply it with the name of the case and a directory to store the case results into. You can optionally provide case numbers and reviewer names.
 
-\subsection s3 Adding a Data Source
+\subsection s1b Adding a Data Source
 The next step is to add an input data source to the case. The <strong>Add Data Source Wizard</strong> will start automatically after the case is created or you can manually start it from the &quot;Case&quot; menu or toolbar. You will need to choose the type of input data source to add (image, local disk, or logical files and folders).  Next, supply it with the location of the source to add. 
         
 
 - For a disk image, browse to the first file in the set (Autopsy will find the rest of the files). Autopsy currently supports E01 and raw (dd) files.
-- For local disk, select one of the detected disks. Autopsy will add the current view of the disk to the case (i.e. snapshot of the meta-data). However, the individual file content (not meta-data) does get updated with the changes made to the disk. Note, you may need run Autopsy as an Administrator to detect all disks.
+- For local disk, select one of the detected disks. Autopsy will add the current view of the disk to the case (i.e. snapshot of the meta-data). However, the individual file content (not meta-data) does get updated with the changes made to the disk.  You can optionally create a copy of all data read from the local disk to a VHD file, which can be useful for triage situations.  Note, you may need run Autopsy as an Administrator to detect all disks.
 - For logical files (a single file or folder of files), use the "Add" button to add one or more files or folders on your system to the case.  Folders will be recursively added to the case.
 
-There are a couple of options in the wizard that will allow you to make the ingest process faster. These typically deal with deleted files. It will take longer if unallocated space is analyzed and the entire drive is searched for deleted files. In some scenarios, these recovery steps must be performed and in other scenarios these steps are not needed and instead fast results on the allocated files are needed. Use these options to control how long the analysis will take.
         
-Autopsy will start to analyze these data sources and add them to the case and the internal database.  While it is doing that, it will prompt you to configure the Ingest Modules.
+After supplying the needed data, Autopsy will quickly review the data sources and add minimal metadata to the case databases so that it can schedule the files for analysis. While it is doing that, it will prompt you to configure the Ingest Modules.
 
 
-\subsection s4 Ingest Modules
+\subsection s1c Ingest Modules
 
-You will next be prompted to configure the Ingest Modules. Ingest modules will run in the background and perform specific tasks. The Ingest Modules analyze files in a prioritized order so that files in a user's directory are analyzed before files in other folders. Ingest modules can be developed by third-parties. The standard ingest modules included with Autopsy are:
+Ingest modules are responsible for analyzing the data source contents and will run in the background. The Ingest Modules analyze files in a prioritized order so that files in a user's directory are analyzed before files in other folders. Ingest modules can be developed by third-parties. 
+
+The standard ingest modules included with Autopsy are:
 
 - <strong>\subpage recent_activity_page</strong> extracts user activity as saved by web browsers and the OS.  Also runs Regripper on the registry hive. 
 - <strong>\subpage hash_db_page</strong> uses hash sets to ignore known files from the NIST NSRL and flag known bad files. Use the "Advanced" button to add and configure the hash sets to use during this process. You will get updates on known bad file hits as the ingest occurs.  You can later add hash sets via the Tools -&gt; Options menu in the main UI.  You can download an index of the NIST NSRL from http://sourceforge.net/projects/autopsy/files/NSRL/
@@ -36,7 +44,7 @@ You will next be prompted to configure the Ingest Modules. Ingest modules will r
 - <strong>\subpage android_analyzer_page</strong> allows you to parse common items from Android devices.  Places artifacts into the BlackBoard.
 - <strong>\subpage interesting_files_identifier_page</strong> searches for files and directories based on user-specified rules in Tools, Options, Interesting Files. It works as a "File Alerting Module". It generates messages in the inbox when specified files are found.
 - <strong>\subpage photorec_carver_page</strong> carves files from unallocated space and sends them through the file processing chain.
-- <strong>\subpage cr_ingest_module</strong> adds file hashes and other extracted properties to a central repository.
+- <strong>\subpage cr_ingest_module</strong> adds file hashes and other extracted properties to a central repository for future correlation and to flag previously notable files.
 - <strong>\subpage encryption_page</strong> looks for encrypted files.
 - <strong>\subpage vm_extractor_page</strong> extracts data from virtual machine files
 
@@ -44,7 +52,9 @@ When you select a module, you will have the option to change its settings.  For 
 
 While ingest modules are running in the background, you will see a progress bar in the lower right. You can use the GUI to review incoming results and perform other tasks while ingesting at the same time.
 
-\section s1a Analysis Basics
+\section s2 Analysis Basics
+
+After the ingest modules start to analyze the data source, you'll see the main analysis interface.  You can choose to search for specific items, browse to specific folders, or review ingest module results. 
 
 \image html screenshot.PNG
 
@@ -53,7 +63,7 @@ You will start all of your analysis techniques from the tree on the left.
 - The Data Sources root node shows all data in the case.
  - The individual image nodes show the file system structure of the disk images or local disks in the case.
  - The LogicalFileSet nodes show the logical files in the case.
-- The Views node shows the same data from a file type or timeline perspective.
+- The Views node shows the same data from a different perspective, such as organized by file type. 
 - The Results node shows the output from the ingest modules.
 
 When you select a node from the tree on the left, a list of files will be shown in the upper right.  You can use the Thumbnail view in the upper right to view the pictures. When you select a file from the upper right, its contents will be shown in the lower right. You can use the tabs in the lower right to view the text of the file, an image, or the hex data.
@@ -66,23 +76,23 @@ The tree on the left as well as the table on the right have a \ref ui_quick_sear
 
 You can tag (bookmark) arbitrary files so that you can more quickly find them later or so that you can include them specifically in a report.
 
-\subsection s2a Ingest Inbox
 
-As you are going through the results in the tree, the ingest modules are running in the background.
-The results are shown in the tree as soon as the ingest modules find them and report them.
+\section s3 Other Analysis Interfaces
 
-The Ingest Inbox receives messages from the ingest modules as they find results.
-You can open the inbox to see what has been recently found.
-It keeps track of what messages you have read.
+In addition to the 3-panel UI with the tree on the left, there are other interfaces that are more specialized. 
 
-The intended use of this inbox is that you can focus on some data for a while and then check back on the inbox at a time that is convenient for them.
-You can then see what else was found while you were focused on the previous task.
-You may learn that a known bad file was found or that a file was found with a relevant keyword and then decide to focus on that for a while.
+\subsection s3a Timeline
 
-When you select a message, you can then jump to the Results tree where more details can be found or jump to the file's location in the filesystem.
+The timeline feature can be opened from the "Tools" menu or the toolbar.  This will show you file system and other events organized by time using various display techniques.  See the \subpage timeline_page section for more details. 
 
-\subsection s2b Timeline
-There is a basic timeline view that you can access via the "Tools", "Make Timeline" feature. This will take a few minutes to create the timeline for analysis.  Its features are still in development.
+
+\subsection s3b Image Gallery
+
+The Image Gallery focuses on showing the pictures and videos from the data source organized by folder. It will show you files as soon as they have been hashed and EXIF data extracted.  You can open it from the "Tools" menu.  See the \subpage image_gallery_page section for more details. 
+
+\subsection s3c Communications
+
+The Communications interface focuses on showing which accounts were communicated with the most and what messages were sent. It allows you to focus on certain relationships or communications within a certain date rage.  You can open it from the "Tools" menu.  See the \subpage communications_page section for more details. 
 
 
 \section s5 Example Use Cases
@@ -110,16 +120,14 @@ If you want to see all images and video on the disk image, then go to the &quot;
 Select either &quot;Images&quot; or &quot;Videos&quot;.
 You can use the thumbnail option in the upper right to view thumbnails of all images.
 
-<strong>Note</strong>: We are working on making this more efficient when there are lots of images. We are also working on the feature to display video thumbnails.
 
 You can select an image or video from the upper right and view the video or image in the lower right. Video will be played with sound.
 
 \section s6 Reporting
 
-A final report can be generated that will include all analysis results.
-Use the &quot;Generate Report&quot; button to create this.
-It will create an HTML or XLS report in the Reports folder of the case folder.
-If you forgot the location of your case folder, you can determine it using the &quot;Case Properties&quot; option in the &quot;Case&quot; menu.
-There is also an option to export report files to a separate folder outside of the case folder. 
+A final report can be generated that will include all analysis results using the &quot;Generate Report&quot; toolbar button. Reports can be generated in HTML, XLS, KML, and other formats. 
+
+You can later find your generated reports by going to the tree and opening the Reports node at the bottom. 
+ 
 
 */

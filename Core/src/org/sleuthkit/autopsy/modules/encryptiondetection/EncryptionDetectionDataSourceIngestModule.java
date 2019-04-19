@@ -52,6 +52,7 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
     private Blackboard blackboard;
     private double calculatedEntropy;
     private final double minimumEntropy;
+    private IngestJobContext context;
 
     /**
      * Create an EncryptionDetectionDataSourceIngestModule object that will
@@ -67,27 +68,54 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
     public void startUp(IngestJobContext context) throws IngestModule.IngestModuleException {
         validateSettings();
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        this.context = context;
     }
 
     @Messages({
         "EncryptionDetectionDataSourceIngestModule.artifactComment.bitlocker=Bitlocker encryption detected.",
-        "EncryptionDetectionDataSourceIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f)."
+        "EncryptionDetectionDataSourceIngestModule.artifactComment.suspected=Suspected encryption due to high entropy (%f).",
+        "EncryptionDetectionDataSourceIngestModule.processing.message=Checking image for encryption."
     })
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
         try {
             if (dataSource instanceof Image) {
+                
+                if (((Image) dataSource).getPaths().length == 0) {
+                    logger.log(Level.SEVERE, String.format("Unable to process data source '%s' - image has no paths", dataSource.getName()));
+                    return IngestModule.ProcessResult.ERROR;
+                }
+                 
                 List<VolumeSystem> volumeSystems = ((Image) dataSource).getVolumeSystems();
+                progressBar.switchToDeterminate(volumeSystems.size());
+                int numVolSystemsChecked = 0;
+                progressBar.progress(Bundle.EncryptionDetectionDataSourceIngestModule_processing_message(), 0);
                 for (VolumeSystem volumeSystem : volumeSystems) {
+                    
+                    if (context.dataSourceIngestIsCancelled()) {
+                        return ProcessResult.OK;
+                    }
+                    
                     for (Volume volume : volumeSystem.getVolumes()) {
+                        
+                        if (context.dataSourceIngestIsCancelled()) {
+                            return ProcessResult.OK;
+                        }
                         if (BitlockerDetection.isBitlockerVolume(volume)) {
                             return flagVolume(volume, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED, Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_bitlocker());
+                        }
+                        
+                        if (context.dataSourceIngestIsCancelled()) {
+                            return ProcessResult.OK;
                         }
                         if (isVolumeEncrypted(volume)) {
                             return flagVolume(volume, BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_SUSPECTED, String.format(Bundle.EncryptionDetectionDataSourceIngestModule_artifactComment_suspected(), calculatedEntropy));
                         }
                     }
+                    // Update progress bar
+                    numVolSystemsChecked++;
+                    progressBar.progress(Bundle.EncryptionDetectionDataSourceIngestModule_processing_message(), numVolSystemsChecked);
                 }
             }
         } catch (ReadContentInputStream.ReadContentInputStreamException ex) {
@@ -124,6 +152,11 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
      *         there was a problem.
      */
     private IngestModule.ProcessResult flagVolume(Volume volume, BlackboardArtifact.ARTIFACT_TYPE artifactType, String comment) {
+        
+        if (context.dataSourceIngestIsCancelled()) {
+            return ProcessResult.OK;
+        }
+        
         try {
             BlackboardArtifact artifact = volume.newArtifact(artifactType);
             artifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, EncryptionDetectionModuleFactory.getModuleName(), comment));
@@ -183,7 +216,7 @@ final class EncryptionDetectionDataSourceIngestModule implements DataSourceInges
          * http://www.forensicswiki.org/wiki/TrueCrypt#Detection
          */
         if (volume.getFileSystems().isEmpty()) {
-            calculatedEntropy = EncryptionDetectionTools.calculateEntropy(volume);
+            calculatedEntropy = EncryptionDetectionTools.calculateEntropy(volume, context);
             if (calculatedEntropy >= minimumEntropy) {
                 return true;
             }

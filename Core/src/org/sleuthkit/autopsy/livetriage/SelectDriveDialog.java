@@ -24,6 +24,7 @@ import java.util.concurrent.CancellationException;
 import java.util.logging.Level;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.util.Collections;
 import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -388,10 +389,14 @@ class SelectDriveDialog extends javax.swing.JDialog {
                         loadingDisks = false;
                         disks = new ArrayList<>();
                         disks.addAll(partitions);
+                        
                         if (disks.size() > 0) {
                             diskTable.setEnabled(true);
                             diskTable.clearSelection();
+                            
+                            Collections.sort(disks, (LocalDisk disk1, LocalDisk disk2) -> disk1.getName().compareToIgnoreCase(disk2.getName()));
                         }
+                        
                         ready = true;
                     }
                 }

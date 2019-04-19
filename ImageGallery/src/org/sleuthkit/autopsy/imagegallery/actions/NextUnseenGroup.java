@@ -88,7 +88,7 @@ public class NextUnseenGroup extends Action {
                 if (group.isPresent()) {
                     // NOTE: We need to wait for current group to be marked as seen because the 'advance' 
                     // method grabs the top of the unseen list
-                    groupManager.markGroupSeen(group.get(), true)
+                    groupManager.markGroupSeen(group.get())
                         .addListener(this::advanceToNextUnseenGroup, MoreExecutors.newDirectExecutorService());
                     return;
                 }

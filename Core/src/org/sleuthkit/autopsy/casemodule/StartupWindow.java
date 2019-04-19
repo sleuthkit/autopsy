@@ -43,6 +43,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     }
 
     private void init() {
+
         setSize(DIMENSIONS);
         welcomeWindow = new CueBannerPanel();
         welcomeWindow.setCloseButtonActionListener(new ActionListener() {
@@ -58,7 +59,9 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
 
     @Override
     public void open() {
-        welcomeWindow.refresh();
+        if (welcomeWindow != null) {
+            welcomeWindow.refresh();
+        }
         setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         setVisible(true);
     }

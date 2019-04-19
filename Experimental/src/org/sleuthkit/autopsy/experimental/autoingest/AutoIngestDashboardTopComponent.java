@@ -77,10 +77,11 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                     AutoIngestDashboard dashboard = AutoIngestDashboard.createDashboard();
                     tc.add(dashboard);
                     dashboard.setSize(dashboard.getPreferredSize());
-                    //if the user has administrator access enabled open the Node Status top component as well
+                    //if the user has administrator access enabled open the Node Status and cases top components as well
                     if (AutoIngestDashboard.isAdminAutoIngestDashboard()) {
                         EventQueue.invokeLater(() -> {  
                             AinStatusDashboardTopComponent.openTopComponent(dashboard.getMonitor());
+                            CasesDashboardTopComponent.openTopComponent();
                         });          
                     }
                     tc.open();

@@ -43,7 +43,7 @@ public final class CasePreferences {
     
     private static final Logger logger = Logger.getLogger(CasePreferences.class.getName());
     
-    private static Boolean groupItemsInTreeByDataSource = null;
+    private static Boolean groupItemsInTreeByDataSource = false;
     
     /**
      * Prevent instantiation.
@@ -109,11 +109,11 @@ public final class CasePreferences {
                         default:
                             logger.log(Level.WARNING, String.format("Unexpected value '%s' for key '%s'. Using 'null' instead.",
                                     groupByDataSourceValue, KEY_GROUP_BY_DATA_SOURCE));
-                            groupItemsInTreeByDataSource = null;
+                            groupItemsInTreeByDataSource = false;
                             break;
                     }
                 } else {
-                    groupItemsInTreeByDataSource = null;
+                    groupItemsInTreeByDataSource = false;
                 }
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error reading settings file", ex);
@@ -125,7 +125,7 @@ public final class CasePreferences {
      * Reset all values to their default states.
      */
     private static void clear() {
-        groupItemsInTreeByDataSource = null;
+        groupItemsInTreeByDataSource = false;
     }
 
     /**

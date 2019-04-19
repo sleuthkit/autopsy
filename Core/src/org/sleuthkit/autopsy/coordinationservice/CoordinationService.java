@@ -114,7 +114,16 @@ public final class CoordinationService {
             }
             try {
                 instance = new CoordinationService(rootNode);
-            } catch (IOException | InterruptedException | KeeperException | CoordinationServiceException ex) {
+            } catch (IOException | KeeperException | CoordinationServiceException ex) {
+                throw new CoordinationServiceException("Failed to create coordination service", ex);
+            } catch (InterruptedException ex) {
+                /*
+                 * The interrupted exception should be propagated to support
+                 * task cancellation. To avoid a public API change here, restore
+                 * the interrupted flag and then throw the InterruptedException
+                 * in its wrapper.
+                 */
+                Thread.currentThread().interrupt();
                 throw new CoordinationServiceException("Failed to create coordination service", ex);
             }
         }
@@ -358,21 +367,53 @@ public final class CoordinationService {
     }
 
     /**
+     * Deletes a specified node.
+     *
+     * @param category The desired category in the namespace.
+     * @param nodePath The node to be deleted.
+     *
+     * @throws CoordinationServiceException   If there is an error deleting the
+     *                                        node.
+     * @throws java.lang.InterruptedException If a thread interrupt occurs while
+     *                                        blocked waiting for the operation
+     *                                        to complete.
+     */
+    public void deleteNode(CategoryNode category, String nodePath) throws CoordinationServiceException, InterruptedException {
+        String fullNodePath = getFullyQualifiedNodePath(category, nodePath);
+        try {
+            curator.delete().forPath(fullNodePath);
+        } catch (Exception ex) {
+            if (ex instanceof InterruptedException) {
+                throw (InterruptedException) ex;
+            } else {
+                throw new CoordinationServiceException(String.format("Failed to delete node %s", fullNodePath), ex);
+            }
+        }
+    }
+
+    /**
      * Gets a list of the child nodes of a category in the namespace.
      *
      * @param category The desired category in the namespace.
      *
      * @return A list of child node names.
      *
-     * @throws CoordinationServiceException If there is an error getting the
-     *                                      node list.
+     * @throws CoordinationServiceException   If there is an error getting the
+     *                                        node list.
+     * @throws java.lang.InterruptedException If a thread interrupt occurs while
+     *                                        blocked waiting for the operation
+     *                                        to complete.
      */
-    public List<String> getNodeList(CategoryNode category) throws CoordinationServiceException {
+    public List<String> getNodeList(CategoryNode category) throws CoordinationServiceException, InterruptedException {
         try {
             List<String> list = curator.getChildren().forPath(categoryNodeToPath.get(category.getDisplayName()));
             return list;
         } catch (Exception ex) {
-            throw new CoordinationServiceException(String.format("Failed to get node list for %s", category.getDisplayName()), ex);
+            if (ex instanceof InterruptedException) {
+                throw (InterruptedException) ex;
+            } else {
+                throw new CoordinationServiceException(String.format("Failed to get node list for %s", category.getDisplayName()), ex);
+            }
         }
     }
 
@@ -386,9 +427,9 @@ public final class CoordinationService {
      */
     private String getFullyQualifiedNodePath(CategoryNode category, String nodePath) {
         // nodePath on Unix systems starts with a "/" and ZooKeeper doesn't like two slashes in a row
-        if(nodePath.startsWith("/")){
+        if (nodePath.startsWith("/")) {
             return categoryNodeToPath.get(category.getDisplayName()) + nodePath.toUpperCase();
-        }else{
+        } else {
             return categoryNodeToPath.get(category.getDisplayName()) + "/" + nodePath.toUpperCase();
         }
     }

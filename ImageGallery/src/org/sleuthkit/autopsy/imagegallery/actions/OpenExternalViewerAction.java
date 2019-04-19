@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,9 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 import java.awt.event.ActionEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javax.swing.SwingUtilities;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
@@ -33,10 +36,11 @@ import org.sleuthkit.autopsy.imagegallery.datamodel.DrawableFile;
  * appropriate text and graphic
  */
 @NbBundle.Messages({"MediaViewImagePanel.externalViewerButton.text=Open in External Viewer",
-        "OpenExternalViewerAction.displayName=External Viewer"})
+    "OpenExternalViewerAction.displayName=External Viewer"})
 public class OpenExternalViewerAction extends Action {
 
     private static final Image EXTERNAL = new Image(OpenExternalViewerAction.class.getResource("/org/sleuthkit/autopsy/imagegallery/images/external.png").toExternalForm()); //NON-NLS
+    public static final KeyCombination EXTERNAL_VIEWER_SHORTCUT = new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN);
     private static final ActionEvent ACTION_EVENT = new ActionEvent(OpenExternalViewerAction.class, ActionEvent.ACTION_PERFORMED, ""); //Swing ActionEvent //NOI18N
 
     public OpenExternalViewerAction(DrawableFile file) {
@@ -49,9 +53,12 @@ public class OpenExternalViewerAction extends Action {
         ExternalViewerAction externalViewerAction = new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file.getAbstractFile()));
 
         setLongText(Bundle.MediaViewImagePanel_externalViewerButton_text());
-        setEventHandler(actionEvent -> //fx ActionEvent
+        setEventHandler(actionEvent
+                -> //fx ActionEvent
                 SwingUtilities.invokeLater(() -> externalViewerAction.actionPerformed(ACTION_EVENT))
         );
         setGraphic(new ImageView(EXTERNAL));
+        setAccelerator(EXTERNAL_VIEWER_SHORTCUT);
     }
+
 }

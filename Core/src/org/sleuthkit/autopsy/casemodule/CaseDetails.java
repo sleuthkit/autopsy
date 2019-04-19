@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.io.Serializable;
+
 /**
  * Wrapper to contain the modifiable details of a case, such as case display
  * name, case number, and examiner related fields.
  */
-public final class CaseDetails {
+public final class CaseDetails implements Serializable {
 
     private final String caseDisplayName;
     private final String caseNumber;
@@ -48,13 +50,13 @@ public final class CaseDetails {
 
     /**
      * Create a case details object with the specified values.
-     * 
+     *
      * @param displayName the display name of the case
-     * @param number the case number
-     * @param exName the examiner name
-     * @param exPhone the examiner phone number
-     * @param exEmail the examiner email address
-     * @param notes  the case notes
+     * @param number      the case number
+     * @param exName      the examiner name
+     * @param exPhone     the examiner phone number
+     * @param exEmail     the examiner email address
+     * @param notes       the case notes
      */
     public CaseDetails(String displayName, String number, String exName, String exPhone, String exEmail, String notes) {
         caseDisplayName = displayName;
@@ -63,7 +65,7 @@ public final class CaseDetails {
         examinerPhone = exPhone;
         examinerEmail = exEmail;
         caseNotes = notes;
-    }
+    }    
 
     /**
      * Get the case display name
@@ -113,7 +115,7 @@ public final class CaseDetails {
     /**
      * Get the case notes
      *
-     * @return notes - the note asssociated with the case
+     * @return notes - the note associated with the case
      */
     public String getCaseNotes() {
         return caseNotes;

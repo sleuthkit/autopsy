@@ -40,6 +40,24 @@
             <fileset dir="${thirdparty.dir}/Tesseract-OCR"/>
         </copy>
             
+        <!--Copy GStreamer to release-->
+        <copy todir="${basedir}/release/gstreamer" >
+            <fileset dir="${thirdparty.dir}/gstreamer"/>
+        </copy>
+
+        <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
+        have it stored in a ZIP file. We'll extract it in place and remove
+        the ZIP file afterward. -->
+        <property name="gstreamer-base-path" value="${basedir}/release/gstreamer/1.0/" />
+
+        <unzip src="${gstreamer-base-path}/x86_64/lib/gstreamer-1.0/libgstlibav.zip"
+               dest="${gstreamer-base-path}/x86_64/lib/gstreamer-1.0/"/>
+        <delete file="${gstreamer-base-path}/x86_64/lib/gstreamer-1.0/libgstlibav.zip" />
+
+        <unzip src="${gstreamer-base-path}/x86/lib/gstreamer-1.0/libgstlibav.zip"
+               dest="${gstreamer-base-path}/x86/lib/gstreamer-1.0/"/>
+        <delete file="${gstreamer-base-path}/x86/lib/gstreamer-1.0/libgstlibav.zip" />
+
         <!--Copy other jars-->
         <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
@@ -65,8 +83,8 @@
         <property environment="env"/>
         <copy file="${env.TSK_HOME}/bindings/java/dist/sleuthkit-postgresql-${TSK_VERSION}.jar" 
               tofile="${ext.dir}/sleuthkit-postgresql-${TSK_VERSION}.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar"
-              tofile="${ext.dir}/sqlite-jdbc-3.8.11.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.25.2.jar"
+              tofile="${ext.dir}/sqlite-jdbc-3.25.2.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 
               tofile="${ext.dir}/postgresql-9.4.1211.jre7.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"
@@ -125,6 +143,22 @@
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
         <delete dir="${basedir}/release/"/>
+    </target>
+    
+    <target name="compile" depends="projectized-common.compile">
+        <antcall target="copy-bundle" />
+    </target>
+
+    <target name="copy-bundle">
+        <!-- the externalized strings in 'src' are in both the java files as annotations and in the Bundle.property files.
+          The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
+          in and used as a basis for translation efforts -->
+        <copy todir="src">
+            <fileset dir="build/classes">
+                <include name="**/Bundle.properties"/>
+            </fileset>
+            <globmapper from="*" to="*-MERGED"/>
+        </copy>
     </target>
     
 </project>

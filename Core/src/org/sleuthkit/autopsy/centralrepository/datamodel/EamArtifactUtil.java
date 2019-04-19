@@ -133,6 +133,9 @@ public class EamArtifactUtil {
                 } else if (artifactTypeID == ARTIFACT_TYPE.TSK_SIM_ATTACHED.getTypeID()) {  
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IMSI, CorrelationAttributeInstance.IMSI_TYPE_ID);
                     addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ICCID, CorrelationAttributeInstance.ICCID_TYPE_ID);
+                } else if (artifactTypeID == ARTIFACT_TYPE.TSK_WEB_FORM_ADDRESS.getTypeID()) {
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER, CorrelationAttributeInstance.PHONE_TYPE_ID);
+                    addCorrelationAttributeToList(eamArtifacts, artifactForInstance, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, CorrelationAttributeInstance.EMAIL_TYPE_ID);
                 }
             }
         } catch (EamDbException ex) {
@@ -200,9 +203,6 @@ public class EamArtifactUtil {
 
             // make an instance for the BB source file
             CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-            if (null == correlationCase) {
-                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
-            }
             return new CorrelationAttributeInstance(
                     correlationType,
                     value,
@@ -322,9 +322,6 @@ public class EamArtifactUtil {
             CorrelationAttributeInstance.Type filesType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttributeInstance.FILES_TYPE_ID);
 
             CorrelationCase correlationCase = EamDb.getInstance().getCase(Case.getCurrentCaseThrows());
-            if (null == correlationCase) {
-                correlationCase = EamDb.getInstance().newCase(Case.getCurrentCaseThrows());
-            }
             return new CorrelationAttributeInstance(
                     filesType,
                     af.getMd5Hash(),
@@ -368,6 +365,7 @@ public class EamArtifactUtil {
             case CARVED:
             case DERIVED:
             case LOCAL:
+            case LAYOUT_FILE:
                 return true;
             case FS:
                 return file.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC);
