@@ -44,7 +44,7 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
      * @param nodes List of nodes to set
      */
     public void setNode(Node[] nodes) {
-        if (nodes != null) {
+        if (nodes != null && nodes.length > 0) {
             nameLabel.setText(nodes[0].getDisplayName());
         } else {
             nameLabel.setText("");

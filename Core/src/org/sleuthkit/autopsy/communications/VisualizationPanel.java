@@ -98,7 +98,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.Notifications;
 import org.jdesktop.layout.GroupLayout;
 import org.jdesktop.layout.LayoutStyle;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
