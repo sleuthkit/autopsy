@@ -69,7 +69,7 @@ final class DataSourceSummaryDialog extends javax.swing.JDialog implements Obser
                 DataSource selectedDataSource = dataSourcesPanel.getSelectedDataSource();
                 countsPanel.updateCountsTableData(selectedDataSource);
                 detailsPanel.updateDetailsPanelData(selectedDataSource);
-                ingestHistoryPanel.updateIngestHistoryData(selectedDataSource);
+                ingestHistoryPanel.setDataSource(selectedDataSource);
                 this.repaint();
             }
         });

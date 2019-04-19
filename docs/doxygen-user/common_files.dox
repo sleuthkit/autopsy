@@ -54,7 +54,7 @@ You can choose to hide matches that appear with a high frequency in the Central 
 
 Each search displays its results in a new tab. The title of the tab will include the search parameters.
 
-\subsection common_properties_sort_by_count Sort by number of occurrences
+\subsection common_properties_sort_by_count Sort by number of data sources
 
 \image html common_properties_result.png
 

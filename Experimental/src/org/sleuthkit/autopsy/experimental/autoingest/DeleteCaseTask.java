@@ -62,7 +62,6 @@ final class DeleteCaseTask implements Runnable {
 
     private static final int MANIFEST_FILE_LOCKING_TIMEOUT_MINS = 5;
     private static final int MANIFEST_DELETE_TRIES = 3;
-    private static final String NO_NODE_ERROR_MSG_FRAGMENT = "KeeperErrorCode = NoNode";
     private static final Logger logger = AutoIngestDashboardLogger.getLogger();
     private final CaseNodeData caseNodeData;
     private final DeleteOptions deleteOption;
@@ -703,7 +702,7 @@ final class DeleteCaseTask implements Runnable {
             try {
                 coordinationService.deleteNode(CategoryNode.CASES, resourcesNodePath);
             } catch (CoordinationServiceException ex) {
-                if (!isNoNodeException(ex)) {
+                if (!DeleteCaseUtils.isNoNodeException(ex)) {
                     logger.log(Level.SEVERE, String.format("Error deleting case resources znode for %s", caseNodeData.getDisplayName()), ex);
                 }
             }
@@ -725,7 +724,7 @@ final class DeleteCaseTask implements Runnable {
             try {
                 coordinationService.deleteNode(CategoryNode.CASES, logFilePath);
             } catch (CoordinationServiceException ex) {
-                if (!isNoNodeException(ex)) {
+                if (!DeleteCaseUtils.isNoNodeException(ex)) {
                     logger.log(Level.SEVERE, String.format("Error deleting case auto ingest job log znode for %s", caseNodeData.getDisplayName()), ex);
                 }
             }
@@ -782,24 +781,6 @@ final class DeleteCaseTask implements Runnable {
                 logger.log(Level.SEVERE, String.format("Error deleting case name lock node for %s", caseNodeData.getDisplayName()), ex);
             }
         }
-    }
-
-    /**
-     * Examines a coordination service exception to try to determine if it is a
-     * no node exception.
-     *
-     * @param ex A coordination service exception.
-     *
-     * @return True or false.
-     */
-    private boolean isNoNodeException(CoordinationServiceException ex) {
-        boolean isNodeNodeEx = false;
-        Throwable cause = ex.getCause();
-        if (cause != null) {
-            String causeMessage = cause.getMessage();
-            isNodeNodeEx = causeMessage.contains(NO_NODE_ERROR_MSG_FRAGMENT);
-        }
-        return isNodeNodeEx;
     }
 
     /**

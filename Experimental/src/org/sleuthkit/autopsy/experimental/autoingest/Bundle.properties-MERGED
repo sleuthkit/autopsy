@@ -204,6 +204,18 @@ DeleteCaseTask.progress.parsingManifest=Parsing manifest file {0}...
 # {0} - manifest file path
 DeleteCaseTask.progress.releasingManifestLock=Releasing lock on the manifest file {0}...
 DeleteCaseTask.progress.startMessage=Starting deletion...
+DeleteOrphanCaseNodesAction.progressDisplayName=Cleanup Case Znodes
+DeleteOrphanCaseNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service
+# {0} - node path
+DeleteOrphanCaseNodesTask.progress.deletingOrphanedCaseNode=Deleting orphaned case znode {0}
+DeleteOrphanCaseNodesTask.progress.gettingCaseNodesListing=Querying coordination service for case znodes
+DeleteOrphanCaseNodesTask.progress.startMessage=Starting orphaned case znode cleanup
+DeleteOrphanManifestNodesAction.progressDisplayName=Cleanup Manifest File Znodes
+DeleteOrphanManifestNodesTask.progress.connectingToCoordSvc=Connecting to the coordination service
+# {0} - node path
+DeleteOrphanManifestNodesTask.progress.deletingOrphanedManifestNode=Deleting orphaned manifest file znode {0}
+DeleteOrphanManifestNodesTask.progress.gettingManifestNodes=Querying the coordination service for manifest file znodes
+DeleteOrphanManifestNodesTask.progress.startMessage=Starting orphaned manifest file znode cleanup
 HINT_CasesDashboardTopComponent=This is an adminstrative dashboard for multi-user cases
 OpenAutoIngestLogAction.deletedLogErrorMsg=The case auto ingest log has been deleted.
 OpenAutoIngestLogAction.logOpenFailedErrorMsg=Failed to open case auto ingest log. See application log for details.
@@ -440,3 +452,5 @@ AinStatusDashboard.nodeStatusTableTitle.text=Auto Ingest Nodes
 AinStatusDashboard.healthMonitorButton.text=Health Monitor
 CasesDashboardTopComponent.refreshButton.text=Refresh
 AutoIngestCasesDeletionDialog.jLabel1.text=Progress
+CasesDashboardTopComponent.deleteOrphanCaseNodesButton.text=Delete Orphan Case Znodes
+CasesDashboardTopComponent.deleteOrphanManifestNodesButton.text=Delete Orphan Manifest Znodes 

@@ -311,6 +311,10 @@ final class ExtractEdge extends Extract {
         }
 
         for (File file : historyFiles) {
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+            
             Scanner fileScanner;
             try {
                 fileScanner = new Scanner(new FileInputStream(file.toString()));
@@ -324,6 +328,10 @@ final class ExtractEdge extends Extract {
             try {
                 List<String> headers = null;
                 while (fileScanner.hasNext()) {
+                    if (context.dataSourceIngestIsCancelled()) {
+                        return;
+                    }
+                    
                     String line = fileScanner.nextLine();
                     if (headers == null) {
                         headers = Arrays.asList(line.toLowerCase().split(","));
@@ -413,6 +421,10 @@ final class ExtractEdge extends Extract {
         }
 
         for (File file : containerFiles) {
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+            
             Scanner fileScanner;
             try {
                 fileScanner = new Scanner(new FileInputStream(file.toString()));
@@ -426,6 +438,10 @@ final class ExtractEdge extends Extract {
             try {
                 List<String> headers = null;
                 while (fileScanner.hasNext()) {
+                    if (context.dataSourceIngestIsCancelled()) {
+                        return;
+                    }
+                    
                     String line = fileScanner.nextLine();
                     if (headers == null) {
                         headers = Arrays.asList(line.toLowerCase().split(","));
@@ -468,6 +484,10 @@ final class ExtractEdge extends Extract {
         }
 
         for (File file : downloadFiles) {
+            if (context.dataSourceIngestIsCancelled()) {
+                return;
+            }
+            
             Scanner fileScanner;
             try {
                 fileScanner = new Scanner(new FileInputStream(file.toString()));
@@ -480,6 +500,10 @@ final class ExtractEdge extends Extract {
             try {
                 List<String> headers = null;
                 while (fileScanner.hasNext()) {
+                    if (context.dataSourceIngestIsCancelled()) {
+                        return;
+                    }
+                    
                     String line = fileScanner.nextLine();
                     if (headers == null) {
                         headers = Arrays.asList(line.toLowerCase().split(","));
