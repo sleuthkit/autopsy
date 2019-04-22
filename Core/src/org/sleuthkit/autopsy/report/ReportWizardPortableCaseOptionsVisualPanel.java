@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -82,9 +83,15 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         chunkSizeLabel.setEnabled(false);
         options.updateCompression(false, ChunkSize.NONE);
 
-        interestingFilesCheckbox.setSelected(false);
-        interestingResultsCheckbox.setSelected(false);
+        //interestingFilesCheckbox.setSelected(false);
+        //interestingResultsCheckbox.setSelected(false);
         options.updateInterestingItems(false, false);
+        
+        
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.X_AXIS));
+        listPanel.add(new PortableCaseTagsListPanel(wizPanel, options));
+        listPanel.add(new PortableCaseTagsListPanel(wizPanel, options));
+        
     }
     
     @NbBundle.Messages({
@@ -150,7 +157,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
     }
     
     private void updateInterestingItems() {
-        options.updateInterestingItems(interestingFilesCheckbox.isSelected(), interestingResultsCheckbox.isSelected());
+        //options.updateInterestingItems(interestingFilesCheckbox.isSelected(), interestingResultsCheckbox.isSelected());
         wizPanel.setFinish(options.isValid());
     }
     
@@ -240,8 +247,8 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        selectAllButton = new javax.swing.JButton();
-        deselectAllButton = new javax.swing.JButton();
+        tagsSelectAllButton = new javax.swing.JButton();
+        tagsDeselectAllButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tagNamesListBox = new javax.swing.JList<>();
         tagLabel = new javax.swing.JLabel();
@@ -250,23 +257,22 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         chunkSizeLabel = new javax.swing.JLabel();
         errorLabel = new javax.swing.JLabel();
         resultsLabel = new javax.swing.JLabel();
-        interestingFilesCheckbox = new javax.swing.JCheckBox();
-        interestingResultsCheckbox = new javax.swing.JCheckBox();
+        listPanel = new javax.swing.JPanel();
 
-        org.openide.awt.Mnemonics.setLocalizedText(selectAllButton, org.openide.util.NbBundle.getMessage(ReportWizardPortableCaseOptionsVisualPanel.class, "ReportWizardPortableCaseOptionsVisualPanel.selectAllButton.text")); // NOI18N
-        selectAllButton.setMaximumSize(new java.awt.Dimension(99, 23));
-        selectAllButton.setMinimumSize(new java.awt.Dimension(99, 23));
-        selectAllButton.setPreferredSize(new java.awt.Dimension(99, 23));
-        selectAllButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(tagsSelectAllButton, org.openide.util.NbBundle.getMessage(ReportWizardPortableCaseOptionsVisualPanel.class, "ReportWizardPortableCaseOptionsVisualPanel.tagsSelectAllButton.text")); // NOI18N
+        tagsSelectAllButton.setMaximumSize(new java.awt.Dimension(99, 23));
+        tagsSelectAllButton.setMinimumSize(new java.awt.Dimension(99, 23));
+        tagsSelectAllButton.setPreferredSize(new java.awt.Dimension(99, 23));
+        tagsSelectAllButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                selectAllButtonActionPerformed(evt);
+                tagsSelectAllButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(deselectAllButton, org.openide.util.NbBundle.getMessage(ReportWizardPortableCaseOptionsVisualPanel.class, "ReportWizardPortableCaseOptionsVisualPanel.deselectAllButton.text")); // NOI18N
-        deselectAllButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(tagsDeselectAllButton, org.openide.util.NbBundle.getMessage(ReportWizardPortableCaseOptionsVisualPanel.class, "ReportWizardPortableCaseOptionsVisualPanel.tagsDeselectAllButton.text")); // NOI18N
+        tagsDeselectAllButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deselectAllButtonActionPerformed(evt);
+                tagsDeselectAllButtonActionPerformed(evt);
             }
         });
 
@@ -294,19 +300,16 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(resultsLabel, org.openide.util.NbBundle.getMessage(ReportWizardPortableCaseOptionsVisualPanel.class, "ReportWizardPortableCaseOptionsVisualPanel.resultsLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(interestingFilesCheckbox, org.openide.util.NbBundle.getMessage(ReportWizardPortableCaseOptionsVisualPanel.class, "ReportWizardPortableCaseOptionsVisualPanel.interestingFilesCheckbox.text")); // NOI18N
-        interestingFilesCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                interestingFilesCheckboxActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(interestingResultsCheckbox, org.openide.util.NbBundle.getMessage(ReportWizardPortableCaseOptionsVisualPanel.class, "ReportWizardPortableCaseOptionsVisualPanel.interestingResultsCheckbox.text")); // NOI18N
-        interestingResultsCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                interestingResultsCheckboxActionPerformed(evt);
-            }
-        });
+        javax.swing.GroupLayout listPanelLayout = new javax.swing.GroupLayout(listPanel);
+        listPanel.setLayout(listPanelLayout);
+        listPanelLayout.setHorizontalGroup(
+            listPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        listPanelLayout.setVerticalGroup(
+            listPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -316,33 +319,29 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addComponent(interestingFilesCheckbox)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(listPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(tagsSelectAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(tagsDeselectAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(16, 16, 16))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                            .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(compressCheckbox)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(errorLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 62, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(chunkSizeLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(chunkSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addComponent(jScrollPane1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(deselectAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(selectAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGap(10, 10, 10)
-                                        .addComponent(interestingResultsCheckbox))
-                                    .addComponent(tagLabel)
-                                    .addComponent(resultsLabel))
+                                    .addComponent(resultsLabel)
+                                    .addComponent(tagLabel))
                                 .addGap(0, 0, Short.MAX_VALUE)))
                         .addContainerGap())))
         );
@@ -352,28 +351,24 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
                 .addGap(6, 6, 6)
                 .addComponent(resultsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(interestingFilesCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(interestingResultsCheckbox)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tagLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(selectAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(deselectAllButton)
-                        .addGap(0, 75, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(compressCheckbox)
+                            .addComponent(errorLabel)
+                            .addComponent(chunkSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(chunkSizeLabel)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(tagsSelectAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(tagsDeselectAllButton)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(chunkSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(chunkSizeLabel))
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(compressCheckbox)
-                        .addComponent(errorLabel)))
-                .addGap(10, 10, 10))
+                .addComponent(listPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -386,25 +381,25 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 256, Short.MAX_VALUE)
+            .addGap(0, 259, Short.MAX_VALUE)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void selectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAllButtonActionPerformed
+    private void tagsSelectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tagsSelectAllButtonActionPerformed
         for (TagName tagName : tagNames) {
             tagNameSelections.put(tagName.getDisplayName(), Boolean.TRUE);
         }
         tagNamesListBox.repaint();
-    }//GEN-LAST:event_selectAllButtonActionPerformed
+    }//GEN-LAST:event_tagsSelectAllButtonActionPerformed
 
-    private void deselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deselectAllButtonActionPerformed
+    private void tagsDeselectAllButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tagsDeselectAllButtonActionPerformed
         for (TagName tagName : tagNames) {
             tagNameSelections.put(tagName.getDisplayName(), Boolean.FALSE);
         }
         tagNamesListBox.repaint();
-    }//GEN-LAST:event_deselectAllButtonActionPerformed
+    }//GEN-LAST:event_tagsDeselectAllButtonActionPerformed
 
     private void chunkSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chunkSizeComboBoxActionPerformed
         updateCompression();
@@ -416,28 +411,19 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         updateCompression();
     }//GEN-LAST:event_compressCheckboxActionPerformed
 
-    private void interestingFilesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interestingFilesCheckboxActionPerformed
-        updateInterestingItems();
-    }//GEN-LAST:event_interestingFilesCheckboxActionPerformed
-
-    private void interestingResultsCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interestingResultsCheckboxActionPerformed
-        updateInterestingItems();
-    }//GEN-LAST:event_interestingResultsCheckboxActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<ChunkSize> chunkSizeComboBox;
     private javax.swing.JLabel chunkSizeLabel;
     private javax.swing.JCheckBox compressCheckbox;
-    private javax.swing.JButton deselectAllButton;
     private javax.swing.JLabel errorLabel;
-    private javax.swing.JCheckBox interestingFilesCheckbox;
-    private javax.swing.JCheckBox interestingResultsCheckbox;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPanel listPanel;
     private javax.swing.JLabel resultsLabel;
-    private javax.swing.JButton selectAllButton;
     private javax.swing.JLabel tagLabel;
     private javax.swing.JList<String> tagNamesListBox;
+    private javax.swing.JButton tagsDeselectAllButton;
+    private javax.swing.JButton tagsSelectAllButton;
     // End of variables declaration//GEN-END:variables
 }
