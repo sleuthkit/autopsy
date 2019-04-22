@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2016-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.DataSource;
 
 /**
- * Panel for displaying ingest job history.
+ * Panel for displaying ingest job history for a data source.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public final class IngestJobInfoPanel extends javax.swing.JPanel {
@@ -79,11 +79,11 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Update the data source which ingest jobs are being displayed for
+     * Changes the data source for which ingest jobs are being displayed.
      *
-     * @param selectedDataSource the data source to display ingest jobs for
+     * @param selectedDataSource The data source.
      */
-    public void updateIngestHistoryData(DataSource selectedDataSource) {
+    public void setDataSource(DataSource selectedDataSource) {
         this.selectedDataSource = selectedDataSource;
         ingestJobsForSelectedDataSource.clear();
         if (selectedDataSource != null) {
@@ -109,7 +109,7 @@ public final class IngestJobInfoPanel extends javax.swing.JPanel {
         try {
             SleuthkitCase skCase = Case.getCurrentCaseThrows().getSleuthkitCase();
             this.ingestJobs = skCase.getIngestJobs();
-            updateIngestHistoryData(selectedDataSource);
+            setDataSource(selectedDataSource);
         } catch (TskCoreException | NoCurrentCaseException ex) {
             logger.log(Level.SEVERE, "Failed to load ingest jobs.", ex);
             JOptionPane.showMessageDialog(this, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);

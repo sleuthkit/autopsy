@@ -100,11 +100,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] nodes = tableEM.getSelectedNodes();
-
-                if (nodes != null && nodes.length > 0) {
-                    contactPane.setEnabled(true);
-                    contactPane.setNode(nodes);
-                }
+                contactPane.setNode(nodes);
             }
         });
         
