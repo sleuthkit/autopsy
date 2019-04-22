@@ -44,11 +44,5 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="slf4j-log4j12" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
-        
-        <override org="commons-io" module="commons-io" rev="2.3"/>
-        <override org="org.apache.httpcomponents" module="httpclient" rev="4.3.1"/>
-        <override org="org.apache.httpcomponents" module="httpcore" rev="4.3"/>
-        <override org="org.apache.httpcomponents" module="httpmime" rev="4.3.1"/>
-       
     </dependencies>
 </ivy-module>
