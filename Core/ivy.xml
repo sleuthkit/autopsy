@@ -45,7 +45,6 @@
          
         <dependency conf="core->default" org="commons-validator" name="commons-validator" rev="1.6"/>
         <dependency conf="core->default" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
-             
         <override org="jakarta.ws.rs" module="jakarta.ws.rs-api" rev="2.1.5"/>     
     </dependencies>
 </ivy-module>
