@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.prefs.PreferenceChangeEvent;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -108,8 +109,8 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     }
 
     /**
-     * Event used to let subscribers know that the user has
-     * navigated to a different page.
+     * Event used to let subscribers know that the user has navigated to a
+     * different page.
      */
     public static class PageChangeEvent {
 
@@ -125,8 +126,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     }
 
     /**
-     * Event used to let subscribers know that the number of
-     * pages has changed.
+     * Event used to let subscribers know that the number of pages has changed.
      */
     public static class PageCountChangeEvent {
 
@@ -142,10 +142,19 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     }
 
     /**
-     * Event used to let subscribers know that paging is no
-     * longer required.
+     * Event used to let subscribers know that the page size has changed.
      */
-    public static class PagingDestroyedEvent {
+    public static class PageSizeChangeEvent {
+
+        private final int pageSize;
+
+        public PageSizeChangeEvent(int newPageSize) {
+            pageSize = newPageSize;
+        }
+
+        public int getPageSize() {
+            return pageSize;
+        }
     }
 
     /**
@@ -155,7 +164,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     class PagingSupport {
 
         private final String nodeName;
-        private final int pageSize;
+        private int pageSize;
         private int currentPage;
         private List<List<T>> pages;
         private EventBus bus;
@@ -169,23 +178,32 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
          *                 an EventBus.
          */
         PagingSupport(String nodeName) {
+            currentPage = 1;
             pageSize = UserPreferences.getResultsTablePageSize();
-            this.currentPage = 1;
             pages = new ArrayList<>();
             this.nodeName = nodeName;
         }
 
         void initialize() {
-            if (pageSize > 0) {
-                // Only configure an EventBus if paging functionality is enabled.
-                if (nodeNameToEventBusMap.containsKey(nodeName)) {
-                    bus = nodeNameToEventBusMap.get(nodeName);
-                } else {
-                    bus = new EventBus(nodeName);
-                    nodeNameToEventBusMap.put(bus.identifier(), bus);
+            /**
+             * Set up a change listener so we know when the user changes the
+             * page size.
+             */
+            UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
+                switch (evt.getKey()) {
+                    case UserPreferences.RESULTS_TABLE_PAGE_SIZE:
+                        pageSize = UserPreferences.getResultsTablePageSize();
+                        break;
                 }
-                bus.register(this);
+            });
+
+            if (nodeNameToEventBusMap.containsKey(nodeName)) {
+                bus = nodeNameToEventBusMap.get(nodeName);
+            } else {
+                bus = new EventBus(nodeName);
+                nodeNameToEventBusMap.put(bus.identifier(), bus);
             }
+            bus.register(this);
         }
 
         /**
@@ -220,13 +238,38 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
             }
         }
 
+        /**
+         * Receives page change events from UI components and triggers a refresh
+         * in the child factory.
+         *
+         * @param event
+         */
         @Subscribe
         private void subscribeToPageChange(PageChangeEvent event) {
-            // Receives page change events from UI components and
-            // triggers a refresh in the child factory.
             if (event != null) {
                 currentPage = event.getPageNumber();
                 isPageChangeEvent = true;
+                refresh(true);
+            }
+        }
+
+        /**
+         * Receives page size change events from UI components and triggers a
+         * refresh in the child factory if necessary.
+         *
+         * @param event
+         */
+        @Subscribe
+        private void subscribeToPageSizeChange(PageSizeChangeEvent event) {
+            if (event != null) {
+                int newPageSize = event.getPageSize();
+                if (pageSize == newPageSize) {
+                    // No change...nothing to do.
+                    return;
+                }
+
+                pageSize = newPageSize;
+                currentPage = 1;
                 refresh(true);
             }
         }
