@@ -148,8 +148,9 @@ class Util {
         String query = "PRAGMA table_info(" + tablename + ")"; //NON-NLS
         boolean found = false;
         ResultSet temprs;
+        SQLiteDBConnect tempdbconnect = null;
         try {
-            SQLiteDBConnect tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection); //NON-NLS
+            tempdbconnect = new SQLiteDBConnect("org.sqlite.JDBC", "jdbc:sqlite:" + connection); //NON-NLS
             temprs = tempdbconnect.executeQry(query);
             while (temprs.next()) {
                 if (temprs.getString("name") == null ? column == null : temprs.getString("name").equals(column)) { //NON-NLS
@@ -158,6 +159,11 @@ class Util {
             }
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error while trying to get columns from sqlite db." + connection, ex); //NON-NLS
+        }
+        finally{
+            if (tempdbconnect != null) {
+                tempdbconnect.closeConnection();
+            }
         }
         return found;
     }

@@ -243,6 +243,7 @@
                 <package>org.apache.commons.io.input</package>
                 <package>org.apache.commons.io.monitor</package>
                 <package>org.apache.commons.io.output</package>
+                <package>org.apache.commons.io.serialization</package>
                 <package>org.apache.commons.lang</package>
                 <package>org.apache.commons.lang.builder</package>
                 <package>org.apache.commons.lang.enums</package>
@@ -589,23 +590,16 @@
                 <package>org.dom4j.xpath</package>
                 <package>org.dom4j.xpp</package>
                 <package>org.freedesktop.gstreamer</package>
-                <package>org.freedesktop.gstreamer.controller</package>
+                <package>org.freedesktop.gstreamer.device</package>
                 <package>org.freedesktop.gstreamer.elements</package>
-                <package>org.freedesktop.gstreamer.elements.good</package>
                 <package>org.freedesktop.gstreamer.event</package>
-                <package>org.freedesktop.gstreamer.example</package>
                 <package>org.freedesktop.gstreamer.glib</package>
                 <package>org.freedesktop.gstreamer.interfaces</package>
-                <package>org.freedesktop.gstreamer.io</package>
                 <package>org.freedesktop.gstreamer.lowlevel</package>
                 <package>org.freedesktop.gstreamer.lowlevel.annotations</package>
-                <package>org.freedesktop.gstreamer.media</package>
-                <package>org.freedesktop.gstreamer.media.event</package>
                 <package>org.freedesktop.gstreamer.message</package>
                 <package>org.freedesktop.gstreamer.query</package>
-                <package>org.freedesktop.gstreamer.swing</package>
-                <package>org.freedesktop.gstreamer.swt</package>
-                <package>org.freedesktop.gstreamer.swt.overlay</package>
+                <package>org.freedesktop.gstreamer.webrtc</package>
                 <package>org.hyperic.jni</package>
                 <package>org.hyperic.sigar</package>
                 <package>org.hyperic.sigar.cmd</package>
@@ -706,6 +700,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/logkit-1.0.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/logkit-1.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/gst1-java-core-1.0.0.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\gst1-java-core-1.0.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-jpeg-3.2.jar</runtime-relative-path>
@@ -966,10 +964,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/common-lang-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/common-lang-3.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/gst1-java-core-0.9.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gst1-java-core-0.9.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dd-plist-1.20.jar</runtime-relative-path>

@@ -28,6 +28,7 @@ import com.dd.plist.PropertyListParser;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +50,6 @@ import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.autopsy.recentactivity.BinaryCookieReader.Cookie;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.xml.sax.SAXException;
@@ -121,7 +121,7 @@ final class ExtractSafari extends Extract {
 
         } catch (IOException | TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Getting_History());
-            LOG.log(Level.SEVERE, "Exception thrown while processing history file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while processing history file.", ex); //NON-NLS
         }
 
         progressBar.progress(Bundle.Progress_Message_Safari_Bookmarks());
@@ -129,7 +129,7 @@ final class ExtractSafari extends Extract {
             processBookmarkPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
-            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Bookmarks file.", ex); //NON-NLS
         }
         
         progressBar.progress(Bundle.Progress_Message_Safari_Downloads());
@@ -137,15 +137,15 @@ final class ExtractSafari extends Extract {
             processDownloadsPList(dataSource, context);
         } catch (IOException | TskCoreException | SAXException | PropertyListFormatException | ParseException | ParserConfigurationException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Bookmark());
-            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Download.plist file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while parsing Safari Download.plist file.", ex); //NON-NLS
         }
 
         progressBar.progress(Bundle.Progress_Message_Safari_Cookies());
         try {
             processBinaryCookieFile(dataSource, context);
-        } catch (IOException | TskCoreException ex) {
+        } catch (TskCoreException ex) {
             this.addErrorMessage(Bundle.ExtractSafari_Error_Parsing_Cookies());
-            LOG.log(Level.SEVERE, "Exception thrown while processing Safari cookies file: {0}", ex); //NON-NLS
+            LOG.log(Level.SEVERE, "Exception thrown while processing Safari cookies file.", ex); //NON-NLS
         }
     }
 
@@ -246,7 +246,7 @@ final class ExtractSafari extends Extract {
      * @throws TskCoreException
      * @throws IOException
      */
-    private void processBinaryCookieFile(Content dataSource, IngestJobContext context) throws TskCoreException, IOException {
+    private void processBinaryCookieFile(Content dataSource, IngestJobContext context) throws TskCoreException {
         FileManager fileManager = getCurrentCase().getServices().getFileManager();
 
         List<AbstractFile> files = fileManager.findFiles(dataSource, COOKIE_FILE_NAME, COOKIE_FOLDER);
@@ -261,7 +261,11 @@ final class ExtractSafari extends Extract {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
             }
-            getCookies(context, file);
+            try {
+                getCookies(context, file);
+            } catch (IOException ex) {
+                LOG.log(Level.WARNING, String.format("Failed to get cookies from file %s", Paths.get(file.getUniquePath(), file.getName()).toString()), ex); 
+            }   
         }
     }
 
@@ -287,7 +291,7 @@ final class ExtractSafari extends Extract {
         }
 
         try {
-            Collection<BlackboardArtifact> bbartifacts = getHistoryArtifacts(historyFile, tempHistoryFile.toPath());
+            Collection<BlackboardArtifact> bbartifacts = getHistoryArtifacts(historyFile, tempHistoryFile.toPath(), context);
             if (!bbartifacts.isEmpty()) {
                 services.fireModuleDataEvent(new ModuleDataEvent(
                         RecentActivityExtracterModuleFactory.getModuleName(),
@@ -319,7 +323,7 @@ final class ExtractSafari extends Extract {
         File tempFile = createTemporaryFile(context, file);
 
         try {
-            Collection<BlackboardArtifact> bbartifacts = getBookmarkArtifacts(file, tempFile);
+            Collection<BlackboardArtifact> bbartifacts = getBookmarkArtifacts(file, tempFile, context);
             if (!bbartifacts.isEmpty()) {
                 services.fireModuleDataEvent(new ModuleDataEvent(
                         RecentActivityExtracterModuleFactory.getModuleName(),
@@ -385,7 +389,7 @@ final class ExtractSafari extends Extract {
         try {
             tempFile = createTemporaryFile(context, file);
 
-            Collection<BlackboardArtifact> bbartifacts = getCookieArtifacts(file, tempFile);
+            Collection<BlackboardArtifact> bbartifacts = getCookieArtifacts(file, tempFile, context);
 
             if (!bbartifacts.isEmpty()) {
                 services.fireModuleDataEvent(new ModuleDataEvent(
@@ -409,7 +413,7 @@ final class ExtractSafari extends Extract {
      * history artifacts
      * @throws TskCoreException
      */
-    private Collection<BlackboardArtifact> getHistoryArtifacts(AbstractFile origFile, Path tempFilePath) throws TskCoreException {
+    private Collection<BlackboardArtifact> getHistoryArtifacts(AbstractFile origFile, Path tempFilePath, IngestJobContext context) throws TskCoreException {
         List<HashMap<String, Object>> historyList = this.dbConnect(tempFilePath.toString(), HISTORY_QUERY);
 
         if (historyList == null || historyList.isEmpty()) {
@@ -418,6 +422,10 @@ final class ExtractSafari extends Extract {
 
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (HashMap<String, Object> row : historyList) {
+            if (context.dataSourceIngestIsCancelled()) {
+                return bbartifacts;
+            }
+            
             String url = row.get(HEAD_URL).toString();
             String title = row.get(HEAD_TITLE).toString();
             Long time = (Double.valueOf(row.get(HEAD_TIME).toString())).longValue();
@@ -444,13 +452,13 @@ final class ExtractSafari extends Extract {
      * @throws SAXException
      * @throws TskCoreException
      */
-    private Collection<BlackboardArtifact> getBookmarkArtifacts(AbstractFile origFile, File tempFile) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException, TskCoreException {
+    private Collection<BlackboardArtifact> getBookmarkArtifacts(AbstractFile origFile, File tempFile, IngestJobContext context) throws IOException, PropertyListFormatException, ParseException, ParserConfigurationException, SAXException, TskCoreException {
         Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
 
         try {
             NSDictionary root = (NSDictionary) PropertyListParser.parse(tempFile);
 
-            parseBookmarkDictionary(bbartifacts, origFile, root);
+            parseBookmarkDictionary(bbartifacts, origFile, root, context);
         } catch (PropertyListFormatException ex) {
             PropertyListFormatException plfe = new PropertyListFormatException(origFile.getName() + ": " + ex.getMessage());
             plfe.setStackTrace(ex.getStackTrace());
@@ -542,7 +550,7 @@ final class ExtractSafari extends Extract {
      * @throws TskCoreException
      * @throws IOException
      */
-    private Collection<BlackboardArtifact> getCookieArtifacts(AbstractFile origFile, File tempFile) throws TskCoreException, IOException {
+    private Collection<BlackboardArtifact> getCookieArtifacts(AbstractFile origFile, File tempFile, IngestJobContext context) throws TskCoreException, IOException {
         Collection<BlackboardArtifact> bbartifacts = null;
         BinaryCookieReader reader = BinaryCookieReader.initalizeReader(tempFile);
 
@@ -551,6 +559,10 @@ final class ExtractSafari extends Extract {
 
             Iterator<Cookie> iter = reader.iterator();
             while (iter.hasNext()) {
+                if (context.dataSourceIngestIsCancelled()) {
+                    return bbartifacts;
+                }
+                
                 Cookie cookie = iter.next();
 
                 BlackboardArtifact bbart = origFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE);
@@ -571,13 +583,18 @@ final class ExtractSafari extends Extract {
      * @param root NSDictionary object to parse
      * @throws TskCoreException
      */
-    private void parseBookmarkDictionary(Collection<BlackboardArtifact> bbartifacts, AbstractFile origFile, NSDictionary root) throws TskCoreException {
+    private void parseBookmarkDictionary(Collection<BlackboardArtifact> bbartifacts, AbstractFile origFile, NSDictionary root, IngestJobContext context) throws TskCoreException {
+
+        if (context.dataSourceIngestIsCancelled()) {
+            return;
+        }
+
         if (root.containsKey(PLIST_KEY_CHILDREN)) {
             NSArray children = (NSArray) root.objectForKey(PLIST_KEY_CHILDREN);
 
             if (children != null) {
                 for (NSObject obj : children.getArray()) {
-                    parseBookmarkDictionary(bbartifacts, origFile, (NSDictionary) obj);
+                    parseBookmarkDictionary(bbartifacts, origFile, (NSDictionary) obj, context);
                 }
             }
         } else if (root.containsKey(PLIST_KEY_URL)) {

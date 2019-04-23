@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.progress.ProgressIndicator;
  * deleted even though the coordination service nodes for the auto ingest jobs
  * are deleted.
  */
-final class DeleteCaseOutputAction extends DeleteCaseAction {
+final class DeleteCaseOutputAction extends DeleteCaseComponentsAction {
 
     private static final long serialVersionUID = 1L;
 

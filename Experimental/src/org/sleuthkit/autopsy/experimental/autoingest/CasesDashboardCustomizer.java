@@ -31,9 +31,10 @@ import org.sleuthkit.autopsy.casemodule.multiusercasesbrowser.MultiUserCaseBrows
  */
 final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
 
+    private final DeleteCaseAction deleteCaseAction;
     private final DeleteCaseInputAction deleteCaseInputAction;
     private final DeleteCaseOutputAction deleteCaseOutputAction;
-    private final DeleteCaseInputAndOutputAction deleteCaseAction;
+    private final DeleteCaseInputAndOutputAction deleteCaseInputAndOutputAction;
 
     /**
      * Constructs a customizer for the multi-user case browser panel used in the
@@ -48,9 +49,10 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
          * These actions are shared by all nodes in order to support multiple
          * selection.
          */
+        deleteCaseAction = new DeleteCaseAction();
         deleteCaseInputAction = new DeleteCaseInputAction();
         deleteCaseOutputAction = new DeleteCaseOutputAction();
-        deleteCaseAction = new DeleteCaseInputAndOutputAction();
+        deleteCaseInputAndOutputAction = new DeleteCaseInputAndOutputAction();
     }
 
     @Override
@@ -60,7 +62,9 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         properties.add(Column.LAST_ACCESS_DATE);
         properties.add(Column.DIRECTORY);
         properties.add(Column.MANIFEST_FILE_ZNODES_DELETE_STATUS);
-        properties.add(Column.DATA_SOURCES_DELETE_STATUS);
+        if (AutoIngestDashboard.extendedFeaturesAreEnabled()) {
+            properties.add(Column.DATA_SOURCES_DELETE_STATUS);
+        }
         properties.add(Column.TEXT_INDEX_DELETE_STATUS);
         properties.add(Column.CASE_DB_DELETE_STATUS);
         properties.add(Column.CASE_DIR_DELETE_STATUS);
@@ -84,9 +88,13 @@ final class CasesDashboardCustomizer implements MultiUserCaseBrowserCustomizer {
         List<Action> actions = new ArrayList<>();
         actions.add(new OpenCaseAction(nodeData));
         actions.add(new OpenAutoIngestLogAction(nodeData));
-        actions.add(deleteCaseInputAction);
-        actions.add(deleteCaseOutputAction);
-        actions.add(deleteCaseAction);
+        if (AutoIngestDashboard.extendedFeaturesAreEnabled()) {
+            actions.add(deleteCaseInputAction);
+            actions.add(deleteCaseOutputAction);
+            actions.add(deleteCaseInputAndOutputAction);
+        } else {
+            actions.add(deleteCaseAction);
+        }
         return actions;
     }
 

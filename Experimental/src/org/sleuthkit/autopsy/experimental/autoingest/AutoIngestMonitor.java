@@ -354,7 +354,10 @@ final class AutoIngestMonitor extends Observable implements PropertyChangeListen
                         case COMPLETED:
                             newJobsSnapshot.addOrReplaceCompletedJob(job);
                             break;
-                        case DELETED: // No longer used, retained for legacy jobs only.
+                        case DELETED:
+                            /*
+                             * Ignore jobs marked as deleted.
+                             */
                             break;
                         default:
                             LOGGER.log(Level.SEVERE, "Unknown AutoIngestJobData.ProcessingStatus");
