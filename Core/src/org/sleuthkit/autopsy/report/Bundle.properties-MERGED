@@ -2,9 +2,9 @@ OpenIDE-Module-Name=Report
 CTL_ReportWizardAction=Run Report
 ArtifactSelectionDialog.titleLabel.text=Select which artifacts you would like to report on:
 ArtifactSelectionDialog.okButton.text=OK
-PortableCaseListPanel.jButton1.text=Select All
-PortableCaseListPanel.jButton2.text=Deselect All
-PortableCaseListPanel.jLabel1.text=jLabel1
+PortableCaseInterestingItemsListPanel.error.errorLoadingTags=Error loading interesting item set names
+PortableCaseInterestingItemsListPanel.error.errorTitle=Error getting intesting item set names for case
+PortableCaseInterestingItemsListPanel.error.noOpenCase=There is no case open
 PortableCaseReportModule.compressCase.canceled=Compression canceled by user
 PortableCaseReportModule.compressCase.errorCompressingCase=Error compressing case
 # {0} - Temp folder path
@@ -99,7 +99,7 @@ FileReportDataTypes.path.text=Full Path
 FileReportText.getName.text=Files - Text
 FileReportText.getDesc.text=A tab delimited text file containing information about individual files in the case.
 ReportBodyFile.progress.querying=Querying files...
-ReportBodyFile.ingestWarning.text=Warning, this report was run before ingest services completed!
+ReportBodyFile.ingestWarning.text=Warning, this report was run before ingest services completed\!
 ReportBodyFile.progress.loading=Loading files...
 ReportBodyFile.progress.processing=Now processing {0}...
 ReportBodyFile.getName.text=TSK Body File
@@ -241,13 +241,13 @@ ReportHTML.getName.text=HTML Report
 ReportHTML.getDesc.text=A report about results and tagged items in HTML format.
 ReportHTML.writeIndex.title=for case {0}
 ReportHTML.writeIndex.noFrames.msg=Your browser is not compatible with our frame setup.
-ReportHTML.writeIndex.noFrames.seeNav=Please see <a href="content\nav.html">the navigation page</a> for artifact links,
-ReportHTML.writeIndex.seeSum=and <a href="contentsummary.html">the summary page</a> for a case summary.
+ReportHTML.writeIndex.noFrames.seeNav=Please see <a href\="content\nav.html">the navigation page</a> for artifact links,
+ReportHTML.writeIndex.seeSum=and <a href\="content\summary.html">the summary page</a> for a case summary.
 ReportHTML.writeNav.title=Report Navigation
 ReportHTML.writeNav.h1=Report Navigation
 ReportHTML.writeNav.summary=Case Summary
 ReportHTML.writeSum.title=Case Summary
-ReportHTML.writeSum.warningMsg=<span>Warning, this report was run before ingest services completed!</span>
+ReportHTML.writeSum.warningMsg=<span>Warning, this report was run before ingest services completed\!</span>
 #
 # autopsy/test/scripts/regression.py._html_report_diff() uses reportGenOn.text, caseName, caseNum, 
 # examiner as a regex signature to skip report.html and summary.html
@@ -321,15 +321,8 @@ CreatePortableCasePanel.jLabel2.text=Select output folder:
 CreatePortableCasePanel.compressCheckbox.text=Compress case
 CreatePortableCasePanel.chunkSizeLabel.text=Split into chunks of size:
 CreatePortableCasePanel.errorLabel.text_1=Windows only
-ReportWizardPortableCaseOptionsVisualPanel.error.errorLoadingTags=Error loading tags
-ReportWizardPortableCaseOptionsVisualPanel.error.errorTitle=Error getting tag names for case
-ReportWizardPortableCaseOptionsVisualPanel.error.noOpenCase=There is no case open
 ReportWizardPortableCaseOptionsVisualPanel.errorLabel.text=Windows only
-ReportWizardPortableCaseOptionsVisualPanel.chunkSizeLabel.text=Split into chunks of size:
-ReportWizardPortableCaseOptionsVisualPanel.compressCheckbox.text=Compress case
-ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings
-ReportWizardPortableCaseOptionsVisualPanel.resultsLabel.text=Export results:
-ReportWizardPortableCaseOptionsVisualPanel.tagLabel.text=Export files tagged as:
+ReportWizardPortableCaseOptionsVisualPanel.compressCheckbox.text=Package case into chunks of size: 
 NewJPanel.jLabel1.text=Choose Portable Case settings
 NewJPanel.jButton1.text=Select All
 NewJPanel.jButton2.text=Deselect All
@@ -339,9 +332,11 @@ NewJPanel.jButton3.text=Select All
 NewJPanel.jLabel3.text=Export selected interesting item sets:
 NewJPanel.jCheckBox1.text=Package case
 NewJPanel.jLabel4.text=Split into chunks of size:
-ReportWizardPortableCaseOptionsVisualPanel.tagsSelectAllButton.text=Select All
-ReportWizardPortableCaseOptionsVisualPanel.tagsDeselectAllButton.text=Deselect All
-PortableCaseTagsListPanel.jLabel1.text=jLabel1
-PortableCaseTagsListPanel.selectButton.text=Select All
 PortableCaseTagsListPanel.deselectButton.text=Deselect All
+PortableCaseTagsListPanel.selectButton.text=Select All
+PortableCaseTagsListPanel.jLabel1.text=Include the following tags:
+PortableCaseInterestingItemsListPanel.jLabel1.text=Include Interesting Items from these sets:
+PortableCaseInterestingItemsListPanel.selectButton.text=Select All
+PortableCaseInterestingItemsListPanel.deselectButton.text=Deselect All
+ReportWizardPortableCaseOptionsVisualPanel.getName.title=Choose Portable Case settings
 TableReportGenerator.StatusColumn.Header=Review Status

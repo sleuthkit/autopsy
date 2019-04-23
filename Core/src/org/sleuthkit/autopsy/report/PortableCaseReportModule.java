@@ -217,19 +217,8 @@ public class PortableCaseReportModule implements ReportModule {
         
         // Check that there will be something to copy
         List<TagName> tagNames = options.getSelectedTagNames();
-        List<BlackboardArtifact> interestingFiles;
-        List<BlackboardArtifact> interestingResults;
-        try {
-            interestingFiles = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            interestingResults = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
-        } catch (TskCoreException ex) {
-            handleError("Error loading interesting items", 
-                    Bundle.PortableCaseReportModule_generateReport_interestingItemError(), ex, progressPanel); // NON-NLS
-            return;
-        }
-        if (tagNames.isEmpty() &&
-            ((!options.shouldSaveInterestingFiles()) || interestingFiles.isEmpty()) &&
-            ((!options.shouldSaveInterestingResults()) || interestingResults.isEmpty())) {   
+        List<String> setNames = options.getSelectedSetNames();
+        if (tagNames.isEmpty() && setNames.isEmpty()) {  
             handleError("No content to copy", 
                     Bundle.PortableCaseReportModule_generateReport_noContentToCopy(), null, progressPanel); // NON-NLS
             return;
@@ -320,9 +309,10 @@ public class PortableCaseReportModule implements ReportModule {
             return;
         }
         
-        // Copy interesting files (if selected)
-        if (options.shouldSaveInterestingFiles()) {
+        // Copy interesting files and results
+        if (! setNames.isEmpty()) {
             try {
+                List<BlackboardArtifact> interestingFiles = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
                 for (BlackboardArtifact art:interestingFiles) {
                     // Check for cancellation 
                     if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
@@ -330,24 +320,28 @@ public class PortableCaseReportModule implements ReportModule {
                         return;
                     }
                     
-                    copyContentToPortableCase(art, progressPanel);
+                    BlackboardAttribute setAttr = art.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                    if (setNames.contains(setAttr.getValueString())) {
+                        copyContentToPortableCase(art, progressPanel);
+                    }
                 }
             } catch (TskCoreException ex) {
                 handleError("Error copying interesting files", Bundle.PortableCaseReportModule_generateReport_errorCopyingInterestingFiles(), ex, progressPanel); // NON-NLS
                 return;
             }
-        }
-        
-        // Copy interesting results (if selected)
-        if (options.shouldSaveInterestingResults()) {
+
             try {
+                List<BlackboardArtifact> interestingResults = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
                 for (BlackboardArtifact art:interestingResults) {
                     // Check for cancellation 
                     if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
                         handleCancellation(progressPanel);
                         return;
                     }
-                    copyContentToPortableCase(art, progressPanel);
+                    BlackboardAttribute setAttr = art.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                    if (setNames.contains(setAttr.getValueString())) {
+                        copyContentToPortableCase(art, progressPanel);
+                    }
                 }
             } catch (TskCoreException ex) {
                 handleError("Error copying interesting results", Bundle.PortableCaseReportModule_generateReport_errorCopyingInterestingResults(), ex, progressPanel); // NON-NLS
@@ -1017,31 +1011,27 @@ public class PortableCaseReportModule implements ReportModule {
      */
     static class PortableCaseOptions {
         
-        private boolean saveInterestingFiles;
-        private boolean saveInterestingResults;
         private final List<TagName> tagNames = new ArrayList<>();
+        private final List<String> setNames = new ArrayList<>();
         private boolean compress;
         private ChunkSize chunkSize;
         
-        PortableCaseOptions(boolean saveInterestingFiles, boolean saveInterestingResults, List<TagName> tagNames,
+        PortableCaseOptions(List<String> setNames, List<TagName> tagNames,
                 boolean compress, ChunkSize chunkSize) {
-            this.saveInterestingFiles = saveInterestingFiles;
-            this.saveInterestingResults = saveInterestingFiles;
+            this.setNames.addAll(setNames);
             this.tagNames.addAll(tagNames);
             this.compress = compress;
             this.chunkSize = chunkSize;
         }
         
         PortableCaseOptions() {
-            this.saveInterestingFiles = false;
-            this.saveInterestingResults = false;
             this.compress = false;
             this.chunkSize = ChunkSize.NONE;
         }
         
-        void updateInterestingItems(boolean saveInterestingFiles, boolean saveInterestingResults) {
-            this.saveInterestingFiles = saveInterestingFiles;
-            this.saveInterestingResults = saveInterestingResults;
+        void updateSetNames(List<String> setNames) {
+            this.setNames.clear();
+            this.setNames.addAll(setNames);
         }
         
         void updateTagNames(List<TagName> tagNames) {
@@ -1054,17 +1044,12 @@ public class PortableCaseReportModule implements ReportModule {
             this.chunkSize = chunkSize;
         }
         
-        
         boolean isValid() {
-            return (saveInterestingFiles || saveInterestingResults || ( ! tagNames.isEmpty()));
+            return (( !setNames.isEmpty()) || ( ! tagNames.isEmpty()));
         }
         
-        boolean shouldSaveInterestingFiles() {
-            return saveInterestingFiles;
-        }
-        
-        boolean shouldSaveInterestingResults() {
-            return saveInterestingResults;
+        List<String> getSelectedSetNames() {
+            return new ArrayList<>(setNames);
         }
         
         List<TagName> getSelectedTagNames() {

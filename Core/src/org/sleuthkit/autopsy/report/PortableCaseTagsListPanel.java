@@ -38,13 +38,14 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
     private final TagsNamesListCellRenderer tagsNamesRenderer = new TagsNamesListCellRenderer();
     
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
-    private final PortableCaseReportModule.PortableCaseOptions options = new PortableCaseReportModule.PortableCaseOptions();
+    private final PortableCaseReportModule.PortableCaseOptions options;
     
     /**
      * Creates new form PortableCaseListPanel
      */
     PortableCaseTagsListPanel(ReportWizardPortableCaseOptionsPanel wizPanel, PortableCaseReportModule.PortableCaseOptions options) {
         this.wizPanel = wizPanel;
+        this.options = options;
         initComponents();
         customizeComponents();
     }
@@ -109,6 +110,7 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
 
         @Override
         public String getElementAt(int index) {
+            System.out.println("## getElementAt(" + index + ") : " + tagNames.get(index).getDisplayName());
             return tagNames.get(index).getDisplayName();
         }
 
@@ -133,7 +135,9 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
                 setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
-                setText(value);
+                String newVal = value + " 123";
+                System.out.println("## setting text for index  " + index + " to " + newVal);
+                setText(newVal);
                 return this;
             }
             return new JLabel();
@@ -198,7 +202,7 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 215, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -215,7 +219,7 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 178, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(selectButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -254,7 +258,6 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JButton selectButton;
     private javax.swing.JList<String> tagNamesListBox;
     // End of variables declaration//GEN-END:variables
