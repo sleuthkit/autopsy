@@ -42,6 +42,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     private final Map<String, Boolean> setNameSelections = new LinkedHashMap<>();
     private final SetNamesListModel setNamesListModel = new SetNamesListModel();
     private final SetNamesListCellRenderer setNamesRenderer = new SetNamesListCellRenderer();
+    private Map<String, Long> setCounts;
     
     private final ReportWizardPortableCaseOptionsPanel wizPanel;
     private final PortableCaseReportModule.PortableCaseOptions options;
@@ -70,13 +71,17 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             String innerSelect = "SELECT (value_text) AS set_name FROM blackboard_attributes WHERE (artifact_type_id = '" + 
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() + "' OR artifact_type_id = '" +
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() + "') AND attribute_type_id = '" + 
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME + "'";
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "'";
             
             // Get the count of each SET_NAME
             String query = "set_name, count(1) AS set_count FROM (" + innerSelect + ") set_names GROUP BY set_name";
             
             GetInterestingItemSetNamesCallback callback = new GetInterestingItemSetNamesCallback();
             Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(query, callback);
+            setCounts = callback.getSetCountMap();
+            setNames.addAll(setCounts.keySet());
+            
+            /*
             List<BlackboardArtifact> interestingItems = Case.getCurrentCaseThrows().getSleuthkitCase()
                     .getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             interestingItems.addAll(Case.getCurrentCaseThrows().getSleuthkitCase()
@@ -89,7 +94,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
                     ( !setNames.contains(setAttr.getValueString()))){
                     setNames.add(setAttr.getValueString());
                 }
-            }
+            }*/
         } catch (TskCoreException ex) {
             Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get interesting item set names", ex);
             JOptionPane.showMessageDialog(this, Bundle.PortableCaseInterestingItemsListPanel_error_errorLoadingTags(), Bundle.PortableCaseInterestingItemsListPanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
@@ -191,7 +196,8 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     static class GetInterestingItemSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
         private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(GetInterestingItemSetNamesCallback.class.getName());
-
+        private final Map<String, Long> setCounts = new HashMap<>();
+        
         @Override
         public void process(ResultSet rs) {
             try {
@@ -201,6 +207,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
                         Long setCount = rs.getLong("set_count");
                         String setName = rs.getString("set_name");
 
+                        setCounts.put(setName, setCount);
                         System.out.println("### Set: " + setName + "    Count: " + setCount);
                         
                     } catch (SQLException ex) {
@@ -211,7 +218,11 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             } catch (SQLException ex) {
                 logger.log(Level.WARNING, "Failed to get next result for values by datasource", ex);
             }
-        }    
+        }   
+        
+        Map<String, Long> getSetCountMap() {
+            return setCounts;
+        }
     }
 
     /**

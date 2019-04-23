@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.progress.ProgressIndicator;
  * may need to be directed to reclaim space, but the option to restore the
  * directories without having the jobs be reprocessed is retained.
  */
-final class DeleteCaseInputAction extends DeleteCaseAction {
+final class DeleteCaseInputAction extends DeleteCaseComponentsAction {
 
     private static final long serialVersionUID = 1L;
 

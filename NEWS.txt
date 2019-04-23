@@ -1,3 +1,50 @@
+---------------- VERSION 4.11.0  --------------
+New Features:
+
+Adding Data: 
+- Hashes can optionally be entered when adding a disk image data source to a case.
+- Acquisition details can be stored when the data source is added. 
+
+
+Ingest Modules:
+- Added support for Microsoft Edge browser (cookies, history, and bookmarks)
+- Added support for Safari web browser (downloads, cookies, history, and bookmarks)
+- Expanded Chrome browser support to include cache parsing and form/auto fill. 
+- Expanded Firefox browser support to extract form/auto fill fields.
+- Parse Zone.Identifier files to identify the source of files.
+- Added a TSK_SOURCE artifact to downloaded files to  help users trace back to where it came from. 
+- Added support for parsing vCards (virtual cards).
+- Extract more information about Windows user accounts (number of logins, creation date, and last login)
+- Detect more operating system types, which get saved as a TSK_OS_INFO artifact. 
+- Detect Android media cards, which gets saved as a TSK_DATA_SOURCE_USAGE artifact. 
+
+
+UI:
+- The Application content viewer now displays HTML files.
+- Video playback now uses gstreamer on 64-bit systems, which supports more video formats.
+- Pictures can be rotated and zoomed in the Application content viewer.
+- The Other Occurrences content viewer layout was reorganized to make viewing the data easier.
+- New "Data Source Summary" panel shows high-level statistics and details about the data sources in the case. 
+- Data sources are now listed in the data sources tree in alphabetical order.
+- The presentation of finding common properties within a case was revised to group results in a more helpful way.
+
+
+Report / Export: 
+- Portable Cases can be created based on tagged data.  These cases contain a subset of the case data and can be opened anywhere. 
+- Users can now choose tabs or commas as the delimiter for a files report.
+- Case notes are included in the HTML report.
+
+
+Other:
+- Added a new file type that allows module writers to specify a file based on its byte range. 
+- Data sources can be analyzed and have a CASE/UCO report generated using only the command line. 
+
+
+Bug Fixes:
+- Decreased the time required to execute inter-case common properties searches of the Central Repository.
+- Assorted small bug fixes are included.
+
+
 ---------------- VERSION 4.10.0  --------------
 New Features:
 - Users can now view information on all cases/data sources in the Central 
