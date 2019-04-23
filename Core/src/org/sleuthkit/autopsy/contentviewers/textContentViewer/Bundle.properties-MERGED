@@ -1,4 +1,3 @@
-
 StringsTextViewer.totalPageLabel.text_1=100
 StringsTextViewer.languageLabel.toolTipText=
 StringsTextViewer.languageLabel.text=Script:
@@ -13,3 +12,9 @@ StringsTextViewer.selectAllMenuItem.text=Select All
 StringsTextViewer.currentPageLabel.text_1=1
 StringsTextViewer.copyMenuItem.text=Copy
 StringsTextViewer.ofLabel.text_1=of
+StringsTextViewer.goToPageTextField.msgDlg=Please enter a valid page number between 1 and {0}
+StringsTextViewer.goToPageTextField.err=Invalid page number
+StringsTextViewer.setDataView.errorText=(offset {0}-{1} could not be read)
+StringsTextViewer.setDataView.errorNoText=(offset {0}-{1} contains no text)
+StringsTextViewer.title=Strings
+StringsTextViewer.toolTip=Displays ASCII and Unicode strings extracted from the file.
