@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.3" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+<Form version="1.4" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="1"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -23,9 +23,9 @@
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <Component id="thumbnailViewer" min="-2" pref="443" max="-2" attributes="0"/>
+              <Component id="thumbnailViewer" max="32767" attributes="0"/>
               <EmptySpace type="separate" max="32767" attributes="0"/>
-              <Component id="contentViewer" min="-2" pref="532" max="-2" attributes="0"/>
+              <Component id="contentViewer" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -37,6 +37,9 @@
       </AuxValues>
     </Component>
     <Component class="org.sleuthkit.autopsy.contentviewers.MessageContentViewer" name="contentViewer">
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new MessageDataContent()"/>
+      </AuxValues>
     </Component>
   </SubComponents>
 </Form>
