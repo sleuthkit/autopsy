@@ -22,7 +22,7 @@ import java.awt.Component;
 import org.openide.nodes.Node;
 
 /**
- * Interface that DataContentViewer modules must implement. These modules
+ * Interface that TextViewers for the TextContentViewer must implement. These modules
  * analyze an individual file that the user has selected and display results in
  * some form of JPanel. We find it easiest to use the NetBeans IDE to first make
  * a "JPanel Form" class and then have it implement DataContentViewer. This

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers.textContentViewer;
 
 import java.awt.Component;
 import java.awt.Cursor;
@@ -31,6 +31,7 @@ import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
+import org.sleuthkit.autopsy.corecomponents.DataContentViewerUtility;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -220,11 +221,11 @@ public class StringsTextViewer extends javax.swing.JPanel implements TextViewer 
                 .addComponent(goToPageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(33, 33, 33)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 101, Short.MAX_VALUE)
                 .addComponent(languageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -257,9 +258,41 @@ public class StringsTextViewer extends javax.swing.JPanel implements TextViewer 
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void languageComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_languageComboActionPerformed
+
+        if (dataSource != null) {
+            setDataView(dataSource, currentOffset);
+        }
+    }//GEN-LAST:event_languageComboActionPerformed
+
+    private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
+        String pageNumberStr = goToPageTextField.getText();
+        int pageNumber;
+        int maxPage = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
+        try {
+            pageNumber = Integer.parseInt(pageNumberStr);
+        } catch (NumberFormatException ex) {
+            pageNumber = maxPage + 1;
+        }
+        if (pageNumber > maxPage || pageNumber < 1) {
+            JOptionPane.showMessageDialog(this,
+                NbBundle.getMessage(this.getClass(),
+                    "DataContentViewerString.goToPageTextField.msgDlg",
+                    maxPage),
+                NbBundle.getMessage(this.getClass(),
+                    "DataContentViewerString.goToPageTextField.err"),
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        currentOffset = (pageNumber - 1) * PAGE_LENGTH;
+        currentPage = pageNumber;
+        currentPageLabel.setText(Integer.toString(currentPage));
+        setDataView(dataSource, currentOffset);
+    }//GEN-LAST:event_goToPageTextFieldActionPerformed
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
         //@@@ this is part of the code dealing with the data viewer. could be copied/removed to implement the scrollbar
@@ -276,38 +309,6 @@ public class StringsTextViewer extends javax.swing.JPanel implements TextViewer 
         currentPageLabel.setText(Integer.toString(currentPage));
         setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_nextPageButtonActionPerformed
-
-    private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
-        String pageNumberStr = goToPageTextField.getText();
-        int pageNumber;
-        int maxPage = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
-        try {
-            pageNumber = Integer.parseInt(pageNumberStr);
-        } catch (NumberFormatException ex) {
-            pageNumber = maxPage + 1;
-        }
-        if (pageNumber > maxPage || pageNumber < 1) {
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "DataContentViewerString.goToPageTextField.msgDlg",
-                            maxPage),
-                    NbBundle.getMessage(this.getClass(),
-                            "DataContentViewerString.goToPageTextField.err"),
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        currentOffset = (pageNumber - 1) * PAGE_LENGTH;
-        currentPage = pageNumber;
-        currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset);
-    }//GEN-LAST:event_goToPageTextFieldActionPerformed
-
-    private void languageComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_languageComboActionPerformed
-
-        if (dataSource != null) {
-            setDataView(dataSource, currentOffset);
-        }
-    }//GEN-LAST:event_languageComboActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuItem copyMenuItem;
