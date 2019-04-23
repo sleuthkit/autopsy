@@ -28,9 +28,17 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class TextContentViewer implements DataContentViewer {
 
     private static final Logger logger = Logger.getLogger(TextContentViewer.class.getName());
-    private TextContentViewerPanel panel = new TextContentViewerPanel(true);
+    private final TextContentViewerPanel panel;
     private volatile Node currentNode = null;
 
+    public TextContentViewer(){
+        this(true);
+    }
+    
+    private TextContentViewer(boolean isMain){
+       panel = new TextContentViewerPanel(isMain);
+    }
+    
     @Override
     public void setNode(Node selectedNode) {
         currentNode = selectedNode;
@@ -50,7 +58,7 @@ public class TextContentViewer implements DataContentViewer {
 
     @Override
     public DataContentViewer createInstance() {
-        return new TextContentViewer();
+        return new TextContentViewer(false);
     }
 
     @Override

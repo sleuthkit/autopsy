@@ -56,7 +56,7 @@ public class StringsTextViewer extends javax.swing.JPanel implements TextViewer 
     private static final Logger logger = Logger.getLogger(StringsTextViewer.class.getName());
 
     /**
-     * Creates new form DataContentViewerString
+     * Creates new form StringsTextViewer
      */
     public StringsTextViewer() {
         initComponents();
@@ -281,10 +281,10 @@ public class StringsTextViewer extends javax.swing.JPanel implements TextViewer 
         if (pageNumber > maxPage || pageNumber < 1) {
             JOptionPane.showMessageDialog(this,
                 NbBundle.getMessage(this.getClass(),
-                    "DataContentViewerString.goToPageTextField.msgDlg",
+                    "StringsTextViewer.goToPageTextField.msgDlg",
                     maxPage),
                 NbBundle.getMessage(this.getClass(),
-                    "DataContentViewerString.goToPageTextField.err"),
+                    "StringsTextViewer.goToPageTextField.err"),
                 JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -366,11 +366,11 @@ public class StringsTextViewer extends javax.swing.JPanel implements TextViewer 
             text = res.getText();
             if (text.trim().isEmpty()) {
                 text = NbBundle.getMessage(this.getClass(),
-                        "DataContentViewerString.setDataView.errorNoText", currentOffset,
+                        "StringsTextViewer.setDataView.errorNoText", currentOffset,
                         currentOffset + PAGE_LENGTH);
             }
         } else {
-            text = NbBundle.getMessage(this.getClass(), "DataContentViewerString.setDataView.errorText", currentOffset,
+            text = NbBundle.getMessage(this.getClass(), "StringsTextViewer.setDataView.errorText", currentOffset,
                     currentOffset + PAGE_LENGTH);
         }
 
@@ -464,12 +464,12 @@ public class StringsTextViewer extends javax.swing.JPanel implements TextViewer 
 
     @Override
     public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerString.title");
+        return NbBundle.getMessage(this.getClass(), "StringsTextViewer.title");
     }
 
     @Override
     public String getToolTip() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerString.toolTip");
+        return NbBundle.getMessage(this.getClass(), "StringsTextViewer.toolTip");
     }
 
     @Override

@@ -73,6 +73,15 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
         }
     }
 
+    /**
+     * Deterime wether the content viewer which displays this panel isSupported.
+     * This panel is supported if any of the TextViewer's displayed in it are
+     * supported.
+     * 
+     * @param node
+     *
+     * @return
+     */
     boolean isSupported(Node node) {
         for (UpdateWrapper textViewer : textViewers) {
             if (textViewer.isSupported(node)) {
@@ -82,6 +91,15 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
         return false;
     }
 
+    /**
+     * Determine the isPreffered score for the content viewer which is
+     * displaying this panel. Score is depenedent on the score of the supported
+     * TextViewers which exist.
+     *
+     * @param node
+     *
+     * @return
+     */
     int isPreffered(Node node) {
         int max = 1;
         for (UpdateWrapper textViewer : textViewers) {
