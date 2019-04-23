@@ -180,9 +180,9 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(outlineView, javax.swing.GroupLayout.PREFERRED_SIZE, 190, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(contentViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 778, Short.MAX_VALUE))
+                .addComponent(contentViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
