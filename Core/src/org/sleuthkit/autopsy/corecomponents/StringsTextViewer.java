@@ -30,7 +30,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -41,9 +41,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Viewer displays strings extracted from contents.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 2)
+@ServiceProvider(service = TextViewer.class, position = 1)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class DataContentViewerString extends javax.swing.JPanel implements DataContentViewer {
+public class StringsTextViewer extends javax.swing.JPanel implements TextViewer {
 
     private static long currentOffset = 0;
     private static final long PAGE_LENGTH = 16384;
@@ -52,12 +52,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     private Content dataSource;
     //string extract utility
     private final StringExtract stringExtract = new StringExtract();
-    private static final Logger logger = Logger.getLogger(DataContentViewerString.class.getName());
+    private static final Logger logger = Logger.getLogger(StringsTextViewer.class.getName());
 
     /**
      * Creates new form DataContentViewerString
      */
-    public DataContentViewerString() {
+    public StringsTextViewer() {
         initComponents();
         customizeComponents();
         this.resetComponent();
@@ -115,10 +115,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         languageCombo = new javax.swing.JComboBox<>();
         languageLabel = new javax.swing.JLabel();
 
-        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.copyMenuItem.text")); // NOI18N
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
 
-        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.selectAllMenuItem.text")); // NOI18N
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
         setMinimumSize(new java.awt.Dimension(5, 5));
@@ -134,20 +134,20 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
-        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.totalPageLabel.text_1")); // NOI18N
+        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.totalPageLabel.text_1")); // NOI18N
 
-        ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.ofLabel.text_1")); // NOI18N
+        ofLabel.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.ofLabel.text_1")); // NOI18N
 
-        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.currentPageLabel.text_1")); // NOI18N
+        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.currentPageLabel.text_1")); // NOI18N
         currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
         currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
 
-        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.pageLabel.text_1")); // NOI18N
+        pageLabel.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.pageLabel.text_1")); // NOI18N
         pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
         pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
 
         nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-        nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.nextPageButton.text")); // NOI18N
+        nextPageButton.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.nextPageButton.text")); // NOI18N
         nextPageButton.setBorderPainted(false);
         nextPageButton.setContentAreaFilled(false);
         nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
@@ -160,12 +160,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             }
         });
 
-        pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.pageLabel2.text")); // NOI18N
+        pageLabel2.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.pageLabel2.text")); // NOI18N
         pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
         pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
 
         prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-        prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.prevPageButton.text")); // NOI18N
+        prevPageButton.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.prevPageButton.text")); // NOI18N
         prevPageButton.setBorderPainted(false);
         prevPageButton.setContentAreaFilled(false);
         prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
@@ -178,24 +178,24 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             }
         });
 
-        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.goToPageLabel.text")); // NOI18N
+        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.goToPageLabel.text")); // NOI18N
 
-        goToPageTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.goToPageTextField.text")); // NOI18N
+        goToPageTextField.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.goToPageTextField.text")); // NOI18N
         goToPageTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 goToPageTextFieldActionPerformed(evt);
             }
         });
 
-        languageCombo.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageCombo.toolTipText")); // NOI18N
+        languageCombo.setToolTipText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.languageCombo.toolTipText")); // NOI18N
         languageCombo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 languageComboActionPerformed(evt);
             }
         });
 
-        languageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageLabel.text")); // NOI18N
-        languageLabel.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageLabel.toolTipText")); // NOI18N
+        languageLabel.setText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.languageLabel.text")); // NOI18N
+        languageLabel.setToolTipText(org.openide.util.NbBundle.getMessage(StringsTextViewer.class, "StringsTextViewer.languageLabel.toolTipText")); // NOI18N
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -472,8 +472,8 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
     }
 
     @Override
-    public DataContentViewer createInstance() {
-        return new DataContentViewerString();
+    public TextViewer createInstance() {
+        return new StringsTextViewer();
     }
 
     @Override

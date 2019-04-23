@@ -27,7 +27,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.corecomponents.DataContentTopComponent;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerHex;
-import org.sleuthkit.autopsy.corecomponents.DataContentViewerString;
+import org.sleuthkit.autopsy.corecomponents.StringsTextViewer;
 
 /**
  * The actions to change between the "Hex View" and "String View".
@@ -80,7 +80,7 @@ class ChangeViewAction extends AbstractAction implements Presenter.Popup {
 //            stringWin.requestActive(); // set it to become the active top component
 
             for (int i = 0; i < totalTabs; i++) {
-                if (dctc.getTabPanels().getComponentAt(i) instanceof DataContentViewerString) {
+                if (dctc.getTabPanels().getComponentAt(i) instanceof StringsTextViewer) {
                     dctc.getTabPanels().setSelectedIndex(i);
                 }
             }

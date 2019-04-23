@@ -32,7 +32,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearch.AdHocSearchChildFactory.AdHocQueryResult;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -50,10 +50,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * A content viewer that displays the indexed text associated with a file or an
  * artifact, possibly marked up with HTML to highlight keyword hits.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 4)
-public class ExtractedContentViewer implements DataContentViewer {
+@ServiceProvider(service = TextViewer.class, position = 2)
+public class ExtractedTextViewer implements TextViewer {
 
-    private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
+    private static final Logger logger = Logger.getLogger(ExtractedTextViewer.class.getName());
 
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
     private static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
@@ -67,7 +67,7 @@ public class ExtractedContentViewer implements DataContentViewer {
      * with a file or an artifact, possibly marked up with HTML to highlight
      * keyword hits.
      */
-    public ExtractedContentViewer() {
+    public ExtractedTextViewer() {
     }
 
     /**
@@ -265,8 +265,8 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public DataContentViewer createInstance() {
-        return new ExtractedContentViewer();
+    public TextViewer createInstance() {
+        return new ExtractedTextViewer();
     }
 
     @Override
@@ -545,7 +545,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
             //scroll to current selection
-            ExtractedContentViewer.this.scrollToCurrentHit();
+            ExtractedTextViewer.this.scrollToCurrentHit();
 
             //update controls if needed
             if (!currentSource.hasNextPage()) {
@@ -578,7 +578,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
             //scroll to current selection
-            ExtractedContentViewer.this.scrollToCurrentHit();
+            ExtractedTextViewer.this.scrollToCurrentHit();
 
             //update controls if needed
             if (!currentSource.hasPreviousPage()) {
