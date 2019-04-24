@@ -32,7 +32,7 @@ public class StringsTextViewer implements TextViewer {
 
     private StringsContentPanel panel;
 
-   @Override
+    @Override
     public void setNode(Node selectedNode) {
         if ((selectedNode == null) || (!isSupported(selectedNode))) {
             resetComponent();

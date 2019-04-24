@@ -377,7 +377,7 @@ public class ExtractedTextViewer implements TextViewer {
             //The presence of an AdHocQueryResult indicates that this is a Keyword Hit and has a high preference for this content viewer
             return 7;
         }
-        
+
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         if (artifact == null) {
             return 4;
@@ -522,7 +522,6 @@ public class ExtractedTextViewer implements TextViewer {
             }
 
             panel.updateControls(currentSource);
-            panel.updateSearchControls(currentSource);
         }
     }
 

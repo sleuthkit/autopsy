@@ -107,7 +107,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                                     float min = layoutPool.getMinimumSpan(axis);
                                     // Don't include insets, Box.getXXXSpan will include them. 
                                     requirements.minimum = (int) min;
-                                    requirements.preferred = Math.max(r.minimum, (int) pref);
+                                    requirements.preferred = Math.max(requirements.minimum, (int) pref);
                                     requirements.maximum = Integer.MAX_VALUE;
                                     requirements.alignment = 0.5f;
                                     return requirements;
@@ -148,10 +148,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        extractedScrollPane = new javax.swing.JScrollPane();
         extractedTextPane = new javax.swing.JTextPane();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jPanel1 = new javax.swing.JPanel();
+        controlScrollPane = new javax.swing.JScrollPane();
+        controlPanel = new javax.swing.JPanel();
         sourceComboBox = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
         pageOfLabel = new javax.swing.JLabel();
@@ -179,22 +179,22 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         setPreferredSize(new java.awt.Dimension(100, 58));
 
-        jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(640, 29));
+        extractedScrollPane.setBackground(new java.awt.Color(255, 255, 255));
+        extractedScrollPane.setPreferredSize(new java.awt.Dimension(640, 29));
 
         extractedTextPane.setEditable(false);
         extractedTextPane.setAutoscrolls(false);
         extractedTextPane.setInheritsPopupMenu(true);
         extractedTextPane.setMaximumSize(new java.awt.Dimension(2000, 2000));
         extractedTextPane.setPreferredSize(new java.awt.Dimension(600, 29));
-        jScrollPane1.setViewportView(extractedTextPane);
+        extractedScrollPane.setViewportView(extractedTextPane);
 
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        jScrollPane2.setPreferredSize(new java.awt.Dimension(600, 100));
+        controlScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        controlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        controlScrollPane.setPreferredSize(new java.awt.Dimension(600, 100));
 
-        jPanel1.setMinimumSize(new java.awt.Dimension(0, 0));
-        jPanel1.setPreferredSize(new java.awt.Dimension(600, 81));
+        controlPanel.setMinimumSize(new java.awt.Dimension(0, 0));
+        controlPanel.setPreferredSize(new java.awt.Dimension(600, 81));
 
         sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.IndexedText>());
         sourceComboBox.setMaximumSize(new java.awt.Dimension(150, 32767));
@@ -276,11 +276,11 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
+        controlPanel.setLayout(controlPanelLayout);
+        controlPanelLayout.setHorizontalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(hitLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -319,10 +319,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+        controlPanelLayout.setVerticalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(hitPreviousButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1)
                     .addComponent(hitNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -344,27 +344,30 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 .addGap(0, 0, 0))
         );
 
-        jPanel1Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
+        controlPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
 
-        jScrollPane2.setViewportView(jPanel1);
+        controlScrollPane.setViewportView(controlPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
+            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
+            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(controlScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
+                .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel controlPanel;
+    private javax.swing.JScrollPane controlScrollPane;
     private javax.swing.JMenuItem copyMenuItem;
+    private javax.swing.JScrollPane extractedScrollPane;
     private javax.swing.JTextPane extractedTextPane;
     private javax.swing.JLabel hitButtonsLabel;
     private javax.swing.JLabel hitCountLabel;
@@ -374,9 +377,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JButton hitPreviousButton;
     private javax.swing.JLabel hitTotalLabel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel pageButtonsLabel;
@@ -566,6 +566,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * @param source the selected source
      */
     void updateControls(IndexedText source) {
+        sourceComboBox.setEnabled(source != null);
         updatePageControls(source);
         updateSearchControls(source);
     }
