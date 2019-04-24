@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.coreutils.TextUtil;
 class ExtractedContentPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
+    private static final long serialVersionUID = 1L;
     private String contentName;
 
     ExtractedContentPanel() {
@@ -65,6 +66,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
          * http://java-sl.com/tip_html_letter_wrap.html.
          */
         HTMLEditorKit editorKit = new HTMLEditorKit() {
+            private static final long serialVersionUID = 1L;
+
             @Override
             public ViewFactory getViewFactory() {
 
@@ -96,17 +99,18 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                             return new ParagraphView(e) {
                                 @Override
                                 protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
-                                    if (r == null) {
-                                        r = new SizeRequirements();
+                                    SizeRequirements requirements = r;
+                                    if (requirements == null) {
+                                        requirements = new SizeRequirements();
                                     }
                                     float pref = layoutPool.getPreferredSpan(axis);
                                     float min = layoutPool.getMinimumSpan(axis);
                                     // Don't include insets, Box.getXXXSpan will include them. 
-                                    r.minimum = (int) min;
-                                    r.preferred = Math.max(r.minimum, (int) pref);
-                                    r.maximum = Integer.MAX_VALUE;
-                                    r.alignment = 0.5f;
-                                    return r;
+                                    requirements.minimum = (int) min;
+                                    requirements.preferred = Math.max(r.minimum, (int) pref);
+                                    requirements.maximum = Integer.MAX_VALUE;
+                                    requirements.alignment = 0.5f;
+                                    return requirements;
                                 }
                             };
                         }
@@ -399,7 +403,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * @param sources     A list of IndexedText that have different 'views' of
      *                    the content.
      */
-    void setSources(String contentName, List<IndexedText> sources) {
+    final void setSources(String contentName, List<IndexedText> sources) {
         this.contentName = contentName;
         setPanelText(null, false);
 
@@ -420,16 +424,16 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     private void setPanelText(String text, boolean detectDirection) {
-        text = StringUtils.defaultString(text);
+        String safeText = StringUtils.defaultString(text);
 
         if (detectDirection) {
             //detect text direction using first 1024 chars and set it
             //get first up to 1024 chars, strip <pre> tag and unescape html to get the string on which to detect
-            final int len = text.length();
+            final int len = safeText.length();
             final int prefixLen = "<pre>".length(); //NON-NLS
             if (len > prefixLen) {
                 final int maxOrientChars = Math.min(len, 1024);
-                final String orientDetectText = EscapeUtil.unEscapeHtml(text.substring(prefixLen, maxOrientChars));
+                final String orientDetectText = EscapeUtil.unEscapeHtml(safeText.substring(prefixLen, maxOrientChars));
                 ComponentOrientation direction = TextUtil.getTextDirection(orientDetectText);
                 //logger.log(Level.INFO, "ORIENTATION LEFT TO RIGHT: " + direction.isLeftToRight());
                 extractedTextPane.applyComponentOrientation(direction);
@@ -440,7 +444,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             extractedTextPane.applyComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         }
 
-        extractedTextPane.setText(text);
+        extractedTextPane.setText(safeText);
         extractedTextPane.setCaretPosition(0);
     }
 
