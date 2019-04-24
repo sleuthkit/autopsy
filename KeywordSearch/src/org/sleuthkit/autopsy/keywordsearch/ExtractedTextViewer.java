@@ -284,10 +284,10 @@ public class ExtractedTextViewer implements TextViewer {
 
     @Override
     public void resetComponent() {
-
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
+        panel.updateControls(currentSource);
     }
 
     @Override

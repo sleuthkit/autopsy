@@ -591,7 +591,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         int totalPages = source.getNumberPages();
         updateTotalPageslDisplay(totalPages);
 
-        if (totalPages == 1) {
+        if (totalPages < 2) {
             enableNextPageControl(false);
             enablePrevPageControl(false);
         } else {
