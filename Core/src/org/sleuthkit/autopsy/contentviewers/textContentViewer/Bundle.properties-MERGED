@@ -18,3 +18,5 @@ StringsTextViewer.setDataView.errorText=(offset {0}-{1} could not be read)
 StringsTextViewer.setDataView.errorNoText=(offset {0}-{1} contains no text)
 StringsTextViewer.title=Strings
 StringsTextViewer.toolTip=Displays ASCII and Unicode strings extracted from the file.
+TextContentViewer.title=Text
+TextContentViewer.tooltip=Displays text associated with the selected item

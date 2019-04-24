@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.contentviewers.textContentViewer;
 
 import java.awt.Component;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -31,14 +32,14 @@ public class TextContentViewer implements DataContentViewer {
     private final TextContentViewerPanel panel;
     private volatile Node currentNode = null;
 
-    public TextContentViewer(){
+    public TextContentViewer() {
         this(true);
     }
-    
-    private TextContentViewer(boolean isMain){
-       panel = new TextContentViewerPanel(isMain);
+
+    private TextContentViewer(boolean isMain) {
+        panel = new TextContentViewerPanel(isMain);
     }
-    
+
     @Override
     public void setNode(Node selectedNode) {
         currentNode = selectedNode;
@@ -46,14 +47,16 @@ public class TextContentViewer implements DataContentViewer {
 
     }
 
+    @Messages({"TextContentViewer.title=Text"})
     @Override
     public String getTitle() {
-        return "Text";
+        return Bundle.TextContentViewer_title();
     }
 
+    @Messages({"TextContentViewer.tooltip=Displays text associated with the selected item"})
     @Override
     public String getToolTip() {
-        return "this is the text viewer";
+        return Bundle.TextContentViewer_tooltip();
     }
 
     @Override
