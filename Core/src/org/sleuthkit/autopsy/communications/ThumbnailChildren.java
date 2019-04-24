@@ -45,7 +45,7 @@ public class ThumbnailChildren extends Children.Keys<AbstractFile> {
     private final Set<AbstractFile> thumbnails;
     
     /*
-     * Creates the list of thumbnails from the given list of BlackboardArtifacts
+     * Creates the list of thumbnails from the given list of BlackboardArtifacts.
      */
     ThumbnailChildren(Set<BlackboardArtifact> artifacts) {
         super(false);
