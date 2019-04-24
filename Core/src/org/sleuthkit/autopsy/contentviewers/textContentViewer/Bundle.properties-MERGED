@@ -20,3 +20,4 @@ StringsTextViewer.title=Strings
 StringsTextViewer.toolTip=Displays ASCII and Unicode strings extracted from the file.
 TextContentViewer.title=Text
 TextContentViewer.tooltip=Displays text associated with the selected item
+TextContentViewerPanel.defaultName=Text

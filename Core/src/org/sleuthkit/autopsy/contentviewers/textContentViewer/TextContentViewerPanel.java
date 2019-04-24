@@ -78,7 +78,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
      * Deterime wether the content viewer which displays this panel isSupported.
      * This panel is supported if any of the TextViewer's displayed in it are
      * supported.
-     * 
+     *
      * @param node
      *
      * @return

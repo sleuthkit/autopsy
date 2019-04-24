@@ -70,6 +70,7 @@ public class TextContentViewer implements DataContentViewer {
     @Override
     public void resetComponent() {
         currentNode = null;
+        panel.setupTabs(currentNode);
     }
 
     @Override
