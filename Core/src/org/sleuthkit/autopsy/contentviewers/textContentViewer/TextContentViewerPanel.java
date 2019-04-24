@@ -29,6 +29,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
@@ -110,20 +111,20 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
         return max;
     }
 
+    @Messages({"TextContentViewerPanel.defaultName=Text"})
     @Override
     public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
 
-            String defaultName = "Text Viewer";
+            String defaultName = Bundle.TextContentViewerPanel_defaultName();
             // set the file path
             if (selectedNode == null) {
                 setName(defaultName);
             } else {
                 Content content = selectedNode.getLookup().lookup(Content.class);
                 if (content != null) {
-                    //String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
                     String path = defaultName;
                     try {
                         path = content.getUniquePath();

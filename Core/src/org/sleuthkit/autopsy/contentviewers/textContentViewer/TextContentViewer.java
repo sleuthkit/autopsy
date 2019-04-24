@@ -23,12 +23,10 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 @ServiceProvider(service = DataContentViewer.class, position = 2)
 public class TextContentViewer implements DataContentViewer {
 
-    private static final Logger logger = Logger.getLogger(TextContentViewer.class.getName());
     private final TextContentViewerPanel panel;
     private volatile Node currentNode = null;
 
