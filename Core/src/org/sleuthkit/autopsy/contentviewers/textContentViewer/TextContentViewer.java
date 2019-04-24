@@ -26,53 +26,53 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 
 @ServiceProvider(service = DataContentViewer.class, position = 2)
 public class TextContentViewer implements DataContentViewer {
-
+    
     private final TextContentViewerPanel panel;
     private volatile Node currentNode = null;
-
+    
     public TextContentViewer() {
         this(true);
     }
-
+    
     private TextContentViewer(boolean isMain) {
         panel = new TextContentViewerPanel(isMain);
     }
-
+    
     @Override
     public void setNode(Node selectedNode) {
         currentNode = selectedNode;
         panel.setNode(currentNode);
-
+        
     }
-
+    
     @Messages({"TextContentViewer.title=Text"})
     @Override
     public String getTitle() {
         return Bundle.TextContentViewer_title();
     }
-
+    
     @Messages({"TextContentViewer.tooltip=Displays text associated with the selected item"})
     @Override
     public String getToolTip() {
         return Bundle.TextContentViewer_tooltip();
     }
-
+    
     @Override
     public DataContentViewer createInstance() {
         return new TextContentViewer(false);
     }
-
+    
     @Override
     public Component getComponent() {
         return panel;
     }
-
+    
     @Override
     public void resetComponent() {
         currentNode = null;
         panel.setupTabs(currentNode);
     }
-
+    
     @Override
     public boolean isSupported(Node node) {
         //if any of the subvewiers are supported then this is supported
@@ -81,11 +81,11 @@ public class TextContentViewer implements DataContentViewer {
         }
         return panel.isSupported(node);
     }
-
+    
     @Override
     public int isPreferred(Node node) {
         //return max of supported TextViewers isPreferred methods
         return panel.isPreffered(node);
     }
-
+    
 }

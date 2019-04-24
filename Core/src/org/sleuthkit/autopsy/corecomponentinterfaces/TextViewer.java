@@ -22,11 +22,12 @@ import java.awt.Component;
 import org.openide.nodes.Node;
 
 /**
- * Interface that TextViewers for the TextContentViewer must implement. These modules
- * analyze an individual file that the user has selected and display results in
- * some form of JPanel. We find it easiest to use the NetBeans IDE to first make
- * a "JPanel Form" class and then have it implement DataContentViewer. This
- * allows you to easily use the UI builder for the layout.
+ * Interface that TextViewers for the TextContentViewer must implement. These
+ * modules analyze an individual file that the user has selected and display
+ * results in some form of JPanel. We find it easiest to use the NetBeans IDE to
+ * first make a "JPanel Form" class and then have it implement
+ * DataContentViewer. This allows you to easily use the UI builder for the
+ * layout.
  *
  * DataContentViewer panels should handle their own vertical scrolling, the
  * horizontal scrolling when under their panel's preferred size will be handled

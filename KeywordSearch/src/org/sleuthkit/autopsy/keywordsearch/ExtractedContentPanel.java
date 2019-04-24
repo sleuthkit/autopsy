@@ -410,7 +410,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         sourceComboBox.removeAllItems();
         sources.forEach(sourceComboBox::addItem);
         if (false == sources.isEmpty()) {
+            sourceComboBox.setEnabled(true);
             sourceComboBox.setSelectedIndex(0);
+        } else {
+            sourceComboBox.setEnabled(false);
         }
     }
 
@@ -566,7 +569,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * @param source the selected source
      */
     void updateControls(IndexedText source) {
-        sourceComboBox.setEnabled(source != null);
         updatePageControls(source);
         updateSearchControls(source);
     }
