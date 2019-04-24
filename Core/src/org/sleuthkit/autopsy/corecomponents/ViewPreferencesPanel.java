@@ -290,6 +290,7 @@ public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
         });
 
         org.openide.awt.Mnemonics.setLocalizedText(maxResultsLabel, org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.text")); // NOI18N
+        maxResultsLabel.setToolTipText(org.openide.util.NbBundle.getMessage(ViewPreferencesPanel.class, "ViewPreferencesPanel.maxResultsLabel.toolTipText")); // NOI18N
 
         maxResultsSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, 50000, 10000));
         maxResultsSpinner.addChangeListener(new javax.swing.event.ChangeListener() {

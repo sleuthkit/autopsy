@@ -339,7 +339,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                          * change page the old children nodes will be removed
                          * and new ones added.
                          */
-                        setCursor(null);
+                        SwingUtilities.invokeLater(() -> {
+                            setCursor(null);
+                        });
                     }
 
                     @Override

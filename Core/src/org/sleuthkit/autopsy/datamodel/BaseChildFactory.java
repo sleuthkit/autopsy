@@ -43,6 +43,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
     private final Predicate<T> filter;
     private boolean isPageChangeEvent;
+    private boolean isPageSizeChangeEvent;
 
     private final PagingSupport pagingSupport;
 
@@ -56,6 +57,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
         pagingSupport = new PagingSupport(nodeName);
         pagingSupport.initialize();
         isPageChangeEvent = false;
+        isPageSizeChangeEvent = false;
         filter = new KnownAndSlackFilter<>();
     }
 
@@ -89,9 +91,12 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
     @Override
     protected boolean createKeys(List<T> toPopulate) {
-        // For page chage events we simply return the previously calculated
-        // keys, otherwise we make a new set of keys.
-        if (!isPageChangeEvent) {
+        /**
+         * For page change events and page size change events we simply return
+         * the previously calculated set of keys, otherwise we make a new set of
+         * keys.
+         */
+        if (!isPageChangeEvent && !isPageSizeChangeEvent) {
             List<T> allKeys = makeKeys();
 
             // Filter keys
@@ -102,8 +107,9 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
         toPopulate.addAll(pagingSupport.getCurrentPage());
 
-        // Reset page change event flag
+        // Reset page change and page size change event flags
         isPageChangeEvent = false;
+        isPageSizeChangeEvent = false;
 
         return true;
     }
@@ -269,7 +275,10 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
                 }
 
                 pageSize = newPageSize;
+                splitKeysIntoPages(pages.stream().flatMap(List::stream).collect(Collectors.toList()));
+
                 currentPage = 1;
+                isPageSizeChangeEvent = true;
                 refresh(true);
             }
         }
