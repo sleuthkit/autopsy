@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.prefs.PreferenceChangeEvent;
+import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -196,10 +197,8 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
              * page size.
              */
             UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
-                switch (evt.getKey()) {
-                    case UserPreferences.RESULTS_TABLE_PAGE_SIZE:
-                        pageSize = UserPreferences.getResultsTablePageSize();
-                        break;
+                if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
+                    pageSize = UserPreferences.getResultsTablePageSize();
                 }
             });
 

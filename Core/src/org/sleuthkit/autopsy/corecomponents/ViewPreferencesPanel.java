@@ -35,6 +35,7 @@ import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 /**
  * Panel for configuring view preferences.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 public class ViewPreferencesPanel extends JPanel implements OptionsPanel {
 
     private final boolean immediateUpdates;

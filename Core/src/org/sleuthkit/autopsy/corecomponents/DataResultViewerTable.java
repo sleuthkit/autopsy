@@ -219,18 +219,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * size
          */
         UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
-            switch (evt.getKey()) {
-                case UserPreferences.RESULTS_TABLE_PAGE_SIZE:
-                    this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-                    /**
-                     * If multiple nodes have been viewed we have to notify all
-                     * of them about the change in page size.
-                     */
-                    nodeNameToPagingSupportMap.values().forEach((ps) -> {
-                        ps.postPageSizeChangeEvent();
-                    });
-                    break;
+            if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
+                DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                /**
+                 * If multiple nodes have been viewed we have to notify all of
+                 * them about the change in page size.
+                 */
+                nodeNameToPagingSupportMap.values().forEach((ps) -> {
+                    ps.postPageSizeChangeEvent();
+                });
             }
         });
     }
@@ -346,18 +343,24 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                     @Override
                     public void childrenRemoved(NodeMemberEvent nme) {
+                        SwingUtilities.invokeLater(() -> {
+                            setCursor(null);
+                        });
                     }
 
                     @Override
                     public void childrenReordered(NodeReorderEvent nre) {
+                        // No-op
                     }
 
                     @Override
                     public void nodeDestroyed(NodeEvent ne) {
+                        // No-op
                     }
 
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
+                        // No-op
                     }
                 });
 
@@ -792,7 +795,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         void registerWithEventBus(EventBus bus) {
-            if (eb == bus) {
+            if (eb != null && eb.equals(bus)) {
                 return;
             }
 
@@ -901,6 +904,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             repaint();
         }
 
+        @NbBundle.Messages({"# {0} - currentPage", "# {1} - totalPages",
+            "DataResultViewerTable.pageNumbers.curOfTotal={0} of {1}"})
         private void updateControls() {
             if (totalPages == 0) {
                 pagePrevButton.setEnabled(false);
@@ -909,11 +914,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 gotoPageTextField.setText("");
                 gotoPageTextField.setEnabled(false);
             } else {
-                pageNumLabel.setText(NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
-                        Integer.toString(currentPage), Integer.toString(totalPages)));
+                pageNumLabel.setText(Bundle.DataResultViewerTable_pageNumbers_curOfTotal(Integer.toString(currentPage), Integer.toString(totalPages)));
 
-                pageNextButton.setEnabled(!(currentPage == totalPages));
-                pagePrevButton.setEnabled(!(currentPage == 1));
+                pageNextButton.setEnabled(currentPage != totalPages);
+                pagePrevButton.setEnabled(currentPage != 1);
                 gotoPageTextField.setEnabled(true);
                 gotoPageTextField.setText("");
             }
