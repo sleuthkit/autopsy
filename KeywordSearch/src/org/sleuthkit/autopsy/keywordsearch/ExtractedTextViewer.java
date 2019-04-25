@@ -554,7 +554,7 @@ public class ExtractedTextViewer implements TextViewer {
             panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
             //scroll to current selection
-            ExtractedTextViewer.this.scrollToCurrentHit();
+            scrollToCurrentHit();
 
             //update controls if needed
             if (!currentSource.hasNextPage()) {
