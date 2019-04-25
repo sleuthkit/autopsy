@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers.textContentViewer;
+package org.sleuthkit.autopsy.contentviewers.textcontentviewer;
 
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
@@ -30,6 +30,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.contentviewers.textContentViewer.Bundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
@@ -204,6 +205,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+        //does nothing
     }
 
     @Override
@@ -258,6 +260,9 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
     private javax.swing.JTabbedPane textViewerTabbedPane;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Class to assist in keeping track of which TextViewers need to be updated
+     */
     private static class UpdateWrapper {
 
         private final TextViewer wrapped;

@@ -63,11 +63,12 @@ public class ExtractedTextViewer implements TextViewer {
     private IndexedText currentSource = null;
 
     /**
-     * Constructs a text viewer that displays the indexed text associated
-     * with a file or an artifact, possibly marked up with HTML to highlight
-     * keyword hits.
+     * Constructs a text viewer that displays the indexed text associated with a
+     * file or an artifact, possibly marked up with HTML to highlight keyword
+     * hits.
      */
     public ExtractedTextViewer() {
+        // This constructor is intentionally empty.
     }
 
     /**
@@ -88,7 +89,7 @@ public class ExtractedTextViewer implements TextViewer {
          * This deals with the known bug with an unknown cause where setNode is
          * sometimes called twice for the same node.
          */
-        if (node == currentNode) {
+        if (node.equals(currentNode)) {
             return;
         } else {
             currentNode = node;
@@ -435,6 +436,9 @@ public class ExtractedTextViewer implements TextViewer {
         }
     }
 
+    /**
+     * Listener to select the next match found in the text
+     */
     private class NextFindActionListener implements ActionListener {
 
         @Override
@@ -475,6 +479,9 @@ public class ExtractedTextViewer implements TextViewer {
         }
     }
 
+    /**
+     * Listener to select the previous match found in the text
+     */
     private class PrevFindActionListener implements ActionListener {
 
         @Override
@@ -510,6 +517,9 @@ public class ExtractedTextViewer implements TextViewer {
         }
     }
 
+    /**
+     * Listener to update the text displayed based on the source changing
+     */
     private class SourceChangeActionListener implements ActionListener {
 
         @Override
@@ -577,7 +587,7 @@ public class ExtractedTextViewer implements TextViewer {
             panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
             //scroll to current selection
-            ExtractedTextViewer.this.scrollToCurrentHit();
+            scrollToCurrentHit();
 
             //update controls if needed
             if (!currentSource.hasPreviousPage()) {
@@ -592,6 +602,9 @@ public class ExtractedTextViewer implements TextViewer {
         }
     }
 
+    /**
+     * Listener to go to the next page of the text
+     */
     private class NextPageActionListener implements ActionListener {
 
         @Override
@@ -600,6 +613,9 @@ public class ExtractedTextViewer implements TextViewer {
         }
     }
 
+    /**
+     * Listener to go to the previous page of the text
+     */
     private class PrevPageActionListener implements ActionListener {
 
         @Override
