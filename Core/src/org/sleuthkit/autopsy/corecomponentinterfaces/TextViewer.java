@@ -24,14 +24,11 @@ import org.openide.nodes.Node;
 /**
  * Interface that TextViewers for the TextContentViewer must implement. These
  * modules analyze an individual file that the user has selected and display
- * results in some form of JPanel. We find it easiest to use the NetBeans IDE to
- * first make a "JPanel Form" class and then have it implement
- * DataContentViewer. This allows you to easily use the UI builder for the
- * layout.
+ * results in some form of JPanel.
  *
- * DataContentViewer panels should handle their own vertical scrolling, the
- * horizontal scrolling when under their panel's preferred size will be handled
- * by the DataContentPanel which contains them.
+ * TextViewer panels should handle their own vertical scrolling, the horizontal
+ * scrolling when under their panel's preferred size will be handled by the
+ * TextContentViewerPanel which contains them.
  */
 public interface TextViewer {
 
@@ -39,31 +36,34 @@ public interface TextViewer {
      * Autopsy will call this when this panel is focused with the file that
      * should be analyzed. When called with null, must clear all references to
      * previous nodes.
-     * @param selectedNode
+     *
+     * @param selectedNode the node which is used to determine what is displayed
+     *                     in this viewer
      */
     public void setNode(Node selectedNode);
 
     /**
      * Returns the title of this viewer to display in the tab.
-     * @return 
+     *
+     * @return the title of TextViewer
      */
     public String getTitle();
 
     /**
      * Returns a short description of this viewer to use as a tool tip for its
      * tab.
-     * @return 
+     *
+     * @return the tooltip for this TextViewer
      */
     public String getToolTip();
 
     /**
      * Create and return a new instance of your viewer. The reason that this is
      * needed is because the specific viewer modules will be found via NetBeans
-     * Lookup and the type will only be DataContentViewer. This method is used
-     * to get an instance of your specific type.
+     * Lookup and the type will only be TextViewer. This method is used to get
+     * an instance of your specific type.
      *
-     * @return 
-     * @returns A new instance of the viewer
+     * @return A new instance of the viewer
      */
     public TextViewer createInstance();
 
@@ -71,7 +71,8 @@ public interface TextViewer {
      * Return the Swing Component to display. Implementations of this method
      * that extend JPanel and do a 'return this;'. Otherwise return an internal
      * instance of the JPanel.
-     * @return 
+     *
+     * @return the component which is displayed for this viewer
      */
     public Component getComponent();
 
@@ -102,21 +103,15 @@ public interface TextViewer {
      * artifact and its associated file.
      *
      * Level 7 - Based on the artifact, if any, in the selected node and
-     * specific to an artifact type or types. Current content viewers that can
-     * return level 7 are the Messages tab (only supported for email and SMS)
-     * and the Indexed Text tab when the selected node is a Keyword Search hit.
+     * specific to an artifact type or types. The current text viewer that can
+     * return level 7 is the Indexed Text tab when the selected node is a
+     * Keyword Search hit.
      *
      * Level 6 - Based on the artifact, if any, in the selected node but not
-     * restricted to particular types. The current content viewer that can
-     * return level 6 is the Results tab. It returns this level for most
-     * artifact types, unless the associated file is assumed to be of greater
-     * interest (for example, a Hash Set Hit will not be level 6 because the
-     * file itself is of greater interest).
+     * restricted to particular types.
      *
      * Level 5 - Based on the file in the selected node and very specific to the
-     * file type. The current content viewer that will return level 5 is the
-     * Application tab, which supports media files (such as images) and certain
-     * types of databases.
+     * file type.
      *
      * Level 4 - Based on the file in the selected node but fairly general.
      * Currently this is the level returned by the Indexed Text tab if Keyword
@@ -124,13 +119,12 @@ public interface TextViewer {
      * Card account). This is the default tab for most files.
      *
      * Level 3 - Based on the artifact, if any, in the selected node where the
-     * artifact is thought to be of less interest than the associated file. This
-     * level is returned by the Results tab for artifacts like Hash Set Hits.
+     * artifact is thought to be of less interest than the associated file.
      *
-     * Level 1 - Very general and should always be available. The Hex, Strings,
-     * and Metadata tabs are all this level
+     * Level 1 - Very general and should always be available. The Strings tabs
+     * is this this level
      *
-     * Level 0 - For cases where the content viewer should never be displayed by
+     * Level 0 - For cases where the text viewer should never be displayed by
      * default.
      *
      * @param node Node to check for preference
