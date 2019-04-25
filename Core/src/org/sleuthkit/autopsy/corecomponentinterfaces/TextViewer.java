@@ -39,17 +39,20 @@ public interface TextViewer {
      * Autopsy will call this when this panel is focused with the file that
      * should be analyzed. When called with null, must clear all references to
      * previous nodes.
+     * @param selectedNode
      */
     public void setNode(Node selectedNode);
 
     /**
      * Returns the title of this viewer to display in the tab.
+     * @return 
      */
     public String getTitle();
 
     /**
      * Returns a short description of this viewer to use as a tool tip for its
      * tab.
+     * @return 
      */
     public String getToolTip();
 
@@ -59,6 +62,7 @@ public interface TextViewer {
      * Lookup and the type will only be DataContentViewer. This method is used
      * to get an instance of your specific type.
      *
+     * @return 
      * @returns A new instance of the viewer
      */
     public TextViewer createInstance();
@@ -67,6 +71,7 @@ public interface TextViewer {
      * Return the Swing Component to display. Implementations of this method
      * that extend JPanel and do a 'return this;'. Otherwise return an internal
      * instance of the JPanel.
+     * @return 
      */
     public Component getComponent();
 
