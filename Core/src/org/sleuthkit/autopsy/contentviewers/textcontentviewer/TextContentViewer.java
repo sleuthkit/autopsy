@@ -22,7 +22,6 @@ import java.awt.Component;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.contentviewers.textContentViewer.Bundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 
 /**
