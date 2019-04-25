@@ -40,7 +40,7 @@ PortableCaseReportModule.generateReport.outputDirDoesNotExist=Output folder {0} 
 # {0} - output folder
 PortableCaseReportModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder
 PortableCaseReportModule.generateReport.verifying=Verifying selected parameters...
-PortableCaseReportModule.getDescription.description=Copies selected tagged items to a new single-user case that will work anywhere
+PortableCaseReportModule.getDescription.description=Copies selected items to a new single-user case that can be easily shared
 PortableCaseReportModule.getName.name=Portable Case
 PortableCaseTagsListPanel.error.errorLoadingTags=Error loading tags
 PortableCaseTagsListPanel.error.errorTitle=Error getting tag names for case

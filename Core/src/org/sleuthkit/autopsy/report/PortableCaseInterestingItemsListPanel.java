@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.report;
 
@@ -34,7 +47,7 @@ import org.sleuthkit.datamodel.CaseDbAccessManager;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * The subpanel showing the interesting item sets
  */
 class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
 
@@ -71,35 +84,20 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
             String innerSelect = "SELECT (value_text) AS set_name FROM blackboard_attributes WHERE (artifact_type_id = '" + 
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID() + "' OR artifact_type_id = '" +
                     BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() + "') AND attribute_type_id = '" + 
-                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "'";
+                    BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + "'"; // NON-NLS
             
             // Get the count of each SET_NAME
-            String query = "set_name, count(1) AS set_count FROM (" + innerSelect + ") set_names GROUP BY set_name";
+            String query = "set_name, count(1) AS set_count FROM (" + innerSelect + ") set_names GROUP BY set_name"; // NON-NLS
             
             GetInterestingItemSetNamesCallback callback = new GetInterestingItemSetNamesCallback();
             Case.getCurrentCaseThrows().getSleuthkitCase().getCaseDbAccessManager().select(query, callback);
             setCounts = callback.getSetCountMap();
             setNames.addAll(setCounts.keySet());
-            
-            /*
-            List<BlackboardArtifact> interestingItems = Case.getCurrentCaseThrows().getSleuthkitCase()
-                    .getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            interestingItems.addAll(Case.getCurrentCaseThrows().getSleuthkitCase()
-                    .getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
-            for(BlackboardArtifact art:interestingItems) {
-                BlackboardAttribute setAttr = art.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
-                if ((setAttr != null) &&
-                    (setAttr.getValueString() != null) &&
-                    ( !setAttr.getValueString().isEmpty()) &&
-                    ( !setNames.contains(setAttr.getValueString()))){
-                    setNames.add(setAttr.getValueString());
-                }
-            }*/
         } catch (TskCoreException ex) {
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get interesting item set names", ex);
+            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Failed to get interesting item set names", ex); // NON-NLS
             JOptionPane.showMessageDialog(this, Bundle.PortableCaseInterestingItemsListPanel_error_errorLoadingTags(), Bundle.PortableCaseInterestingItemsListPanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
         } catch (NoCurrentCaseException ex) {
-            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex);
+            Logger.getLogger(ReportWizardPortableCaseOptionsVisualPanel.class.getName()).log(Level.SEVERE, "Exception while getting open case.", ex); // NON-NLS
             JOptionPane.showMessageDialog(this, Bundle.PortableCaseInterestingItemsListPanel_error_noOpenCase(), Bundle.PortableCaseInterestingItemsListPanel_error_errorTitle(), JOptionPane.ERROR_MESSAGE);
         }
         Collections.sort(setNames);
@@ -132,6 +130,9 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         });
     }
     
+    /**
+     * Save the current selections and enabled/disable the finish button as needed.
+     */
     private void updateSetNameList() {
         options.updateSetNames(getSelectedSetNames());
         wizPanel.setFinish(options.isValid());
@@ -171,7 +172,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
                 setFont(list.getFont());
                 setBackground(list.getBackground());
                 setForeground(list.getForeground());
-                setText(value);
+                setText(value + " (" + setCounts.get(value) + ")"); // NON-NLS
                 return this;
             }
             return new JLabel();
@@ -193,7 +194,10 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         return selectedSetNames;
     }    
     
-    static class GetInterestingItemSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
+    /**
+     * Processes the result sets from the interesting item set name query.
+     */
+    private static class GetInterestingItemSetNamesCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
         private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(GetInterestingItemSetNamesCallback.class.getName());
         private final Map<String, Long> setCounts = new HashMap<>();
@@ -201,25 +205,27 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         @Override
         public void process(ResultSet rs) {
             try {
-                System.out.println("## In GetInterestingItemSetNamesCallback");
                 while (rs.next()) {
                     try {
-                        Long setCount = rs.getLong("set_count");
-                        String setName = rs.getString("set_name");
+                        Long setCount = rs.getLong("set_count"); // NON-NLS
+                        String setName = rs.getString("set_name"); // NON-NLS
 
                         setCounts.put(setName, setCount);
-                        System.out.println("### Set: " + setName + "    Count: " + setCount);
                         
                     } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "Unable to get data_source_obj_id or value from result set", ex);
+                        logger.log(Level.WARNING, "Unable to get data_source_obj_id or value from result set", ex); // NON-NLS
                     }
                 }
-                System.out.println("## Done processing result set");
             } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Failed to get next result for values by datasource", ex);
+                logger.log(Level.WARNING, "Failed to get next result for values by datasource", ex); // NON-NLS
             }
         }   
         
+        /**
+         * Gets the counts for each interesting items set
+         * 
+         * @return A map from each set name to the number of items in it
+         */
         Map<String, Long> getSetCountMap() {
             return setCounts;
         }
@@ -308,6 +314,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         for (String setName : setNames) {
             setNameSelections.put(setName, Boolean.FALSE);
         }
+        updateSetNameList();
         setNamesListBox.repaint();
     }//GEN-LAST:event_deselectButtonActionPerformed
 
@@ -315,6 +322,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         for (String setName : setNames) {
             setNameSelections.put(setName, Boolean.TRUE);
         }
+        updateSetNameList();
         setNamesListBox.repaint();
     }//GEN-LAST:event_selectButtonActionPerformed
 

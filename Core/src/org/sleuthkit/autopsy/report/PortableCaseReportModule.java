@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import org.openide.util.lookup.ServiceProvider;
-import javax.swing.JPanel;
 import java.util.logging.Level;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
@@ -112,7 +112,7 @@ public class PortableCaseReportModule implements ReportModule {
     }
 
     @NbBundle.Messages({
-        "PortableCaseReportModule.getDescription.description=Copies selected tagged items to a new single-user case that will work anywhere"
+        "PortableCaseReportModule.getDescription.description=Copies selected items to a new single-user case that can be easily shared"
     })
     @Override
     public String getDescription() {
@@ -901,11 +901,12 @@ public class PortableCaseReportModule implements ReportModule {
             chunkOption = "-v" + options.getChunkSize().getSevenZipParam();
         }
         
-        File zipFile = Paths.get(tempZipFolder.getAbsolutePath(), caseName + ".zip").toFile(); // NON-NLS
+        File zipFile = Paths.get(tempZipFolder.getAbsolutePath(), caseName + ".pkg").toFile(); // NON-NLS
         ProcessBuilder procBuilder = new ProcessBuilder();
         procBuilder.command(
                 sevenZipExe.getAbsolutePath(),
-                "a", 
+                "a",     // Add to archive
+                "-tzip", // Type needs to be expicitly set since we're using a custom extension
                 zipFile.getAbsolutePath(),
                 caseFolder.getAbsolutePath(),
                 chunkOption
@@ -923,7 +924,16 @@ public class PortableCaseReportModule implements ReportModule {
             }
             int exitCode = process.exitValue();
             if (exitCode != 0) {
-                handleError("Error compressing case", Bundle.PortableCaseReportModule_compressCase_errorCompressingCase(), null, progressPanel); // NON-NLS
+                // Save any errors so they can be logged
+                StringBuilder sb = new StringBuilder();
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        sb.append(line).append(System.getProperty("line.separator")); // NON-NLS
+                    }
+                }
+                
+                handleError("Error compressing case\n7-Zip output: " + sb.toString(), Bundle.PortableCaseReportModule_compressCase_errorCompressingCase(), null, progressPanel); // NON-NLS
                 return false;
             }
         } catch (IOException | InterruptedException ex) {

@@ -53,7 +53,7 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <Component id="listPanel" max="32767" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="compressCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="chunkSizeComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -103,7 +103,7 @@
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="222" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="217" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>

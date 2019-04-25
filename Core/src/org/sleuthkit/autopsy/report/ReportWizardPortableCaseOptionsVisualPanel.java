@@ -57,11 +57,9 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         chunkSizeComboBox.setEnabled(false);
         options.updateCompression(false, ChunkSize.NONE);        
         
-        //listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.X_AXIS));
         listPanel.setLayout(new GridLayout(1,2));
         listPanel.add(new PortableCaseTagsListPanel(wizPanel, options));
         listPanel.add(new PortableCaseInterestingItemsListPanel(wizPanel, options));
-        
     }
     
     @NbBundle.Messages({
@@ -81,6 +79,9 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         return (ChunkSize) chunkSizeComboBox.getSelectedItem();
     }
     
+    /**
+     * Update the selected compression options and enable/disable the finish button
+     */
     private void updateCompression() {
         options.updateCompression(compressCheckbox.isSelected(), getChunkSize());
         wizPanel.setFinish(options.isValid());
@@ -89,7 +90,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
     /**
      * Get the user-selected settings.
      *
-     * @return
+     * @return the current settings
      */
     PortableCaseOptions getPortableCaseReportOptions() {
         return options;
@@ -134,7 +135,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
         );
         listPanelLayout.setVerticalGroup(
             listPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 222, Short.MAX_VALUE)
+            .addGap(0, 217, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -155,7 +156,7 @@ class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(listPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(compressCheckbox)
                     .addComponent(chunkSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
