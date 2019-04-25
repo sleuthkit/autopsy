@@ -901,12 +901,11 @@ public class PortableCaseReportModule implements ReportModule {
             chunkOption = "-v" + options.getChunkSize().getSevenZipParam();
         }
         
-        File zipFile = Paths.get(tempZipFolder.getAbsolutePath(), caseName + ".pkg").toFile(); // NON-NLS
+        File zipFile = Paths.get(tempZipFolder.getAbsolutePath(), caseName + ".zip").toFile(); // NON-NLS
         ProcessBuilder procBuilder = new ProcessBuilder();
         procBuilder.command(
                 sevenZipExe.getAbsolutePath(),
                 "a",     // Add to archive
-                "-tzip", // Type needs to be expicitly set since we're using a custom extension
                 zipFile.getAbsolutePath(),
                 caseFolder.getAbsolutePath(),
                 chunkOption
