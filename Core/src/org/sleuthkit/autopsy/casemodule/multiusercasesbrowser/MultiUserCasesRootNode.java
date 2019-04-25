@@ -25,7 +25,7 @@ import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeData;
-import org.sleuthkit.autopsy.casemodule.multiusercases.MultiUserCaseNodeDataCollector;
+import org.sleuthkit.autopsy.casemodule.multiusercases.CaseNodeDataCollector;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -63,9 +63,9 @@ final class MultiUserCasesRootNode extends AbstractNode {
         @Override
         protected boolean createKeys(List<CaseNodeData> keys) {
             try {
-                List<CaseNodeData> caseNodeData = MultiUserCaseNodeDataCollector.getNodeData();
+                List<CaseNodeData> caseNodeData = CaseNodeDataCollector.getNodeData();
                 keys.addAll(caseNodeData);
-            } catch (CoordinationService.CoordinationServiceException ex) {
+            } catch (CoordinationService.CoordinationServiceException | InterruptedException ex) {
                 logger.log(Level.SEVERE, "Failed to get case node data from coodination service", ex);
             }
             return true;

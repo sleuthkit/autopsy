@@ -54,11 +54,13 @@ Autopsy supports disk images in the following formats:
 
 To add a disk image:
 
--# Choose "Disk Image or VM File" from the data source types.
--# Browse to the first file in the disk image. You need to specify only the first file and Autopsy will find the rest.  
--# Choose the timezone that the disk image came from.  This is most important for when adding FAT file systems because it does not store timezone information and Autopsy will not know how to normalize to UTC.
--# Choose to perform orphan file finding on FAT file systems.  This can be a time intensive process because it will require that Autopsy look at each sector in the device.  
--# Optionally choose the sector size. The Auto Detect mode will work correctly on the majority of images, but if adding the data source fails you may want to try the other sector sizes.
+<ol>
+<li>Choose "Disk Image or VM File" from the data source types.
+<li>Browse to the first file in the disk image. You need to specify only the first file and Autopsy will find the rest.  <li>Choose to perform orphan file finding on FAT file systems.  This can be a time intensive process because it will require that Autopsy look at each sector in the device.  
+<li>Choose the timezone that the disk image came from.  This is most important for when adding FAT file systems because it does not store timezone information and Autopsy will not know how to normalize to UTC.
+<li>Optionally choose the sector size. The Auto Detect mode will work correctly on the majority of images, but if adding the data source fails you may want to try the other sector sizes.
+<li>Optionally enter one or more hashes for the image. These will be saved under the image metadata and can be verified using the \ref data_source_integrity_page.
+</ol>
 
 \section ds_local Adding a Local Disk
 

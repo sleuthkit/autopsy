@@ -41,6 +41,8 @@ public class DataSourceProcessorUtility {
      * AutoIngestDataSourceProcessor interface are used.
      *
      * @param dataSourcePath Full path to the data source
+     * @param processorCandidates Possible DSPs that can handle the data source
+     * 
      * @return Hash map of all DSPs that can process the data source along with
      * their confidence score
      * @throws

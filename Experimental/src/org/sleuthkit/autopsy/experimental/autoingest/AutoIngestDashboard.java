@@ -51,8 +51,10 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestNodeRefreshEvents
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 final class AutoIngestDashboard extends JPanel implements Observer {
 
-    private final static String ADMIN_ACCESS_FILE_NAME = "_aiaa"; // NON-NLS
+    private final static String ADMIN_ACCESS_FILE_NAME = "admin"; // NON-NLS
     private final static String ADMIN_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_ACCESS_FILE_NAME).toString();
+    private final static String ADMIN_EXT_ACCESS_FILE_NAME = "adminext"; // NON-NLS
+    private final static String ADMIN_EXT_ACCESS_FILE_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), ADMIN_EXT_ACCESS_FILE_NAME).toString();
     private final static String AID_REFRESH_THREAD_NAME = "AID-refresh-jobs-%d";
     private final static int AID_REFRESH_INTERVAL_SECS = 30;
     private final static int AID_DELAY_BEFORE_FIRST_REFRESH = 0;
@@ -277,8 +279,8 @@ final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /**
-     * Reloads the table models using a RefreshChildrenEvent and refreshes the JTables
-     * that use the models.
+     * Reloads the table models using a RefreshChildrenEvent and refreshes the
+     * JTables that use the models.
      *
      */
     void refreshTables() {
@@ -318,9 +320,24 @@ final class AutoIngestDashboard extends JPanel implements Observer {
 
     }
 
+    /**
+     * Determines whether or not system adminstrator features of the dashboard
+     * are enabled.
+     *
+     * @return True or false.
+     */
     static boolean isAdminAutoIngestDashboard() {
-        File f = new File(ADMIN_ACCESS_FILE_PATH);
-        return f.exists();
+        return new File(ADMIN_ACCESS_FILE_PATH).exists() || new File(ADMIN_EXT_ACCESS_FILE_PATH).exists();
+    }
+
+    /**
+     * Determines whether the extended system administrator features of the
+     * cases dashboard are enabled.
+     *
+     * @return True or false.
+     */
+    static boolean extendedFeaturesAreEnabled() {
+        return new File(ADMIN_EXT_ACCESS_FILE_PATH).exists();
     }
 
     /**
