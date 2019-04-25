@@ -37,6 +37,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
+/**
+ * A TextContentViewerPanel which displays the content of the TextContentViewer
+ * and its TextViewers
+ */
 public class TextContentViewerPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
 
     private static final Logger logger = Logger.getLogger(TextContentViewerPanel.class.getName());
@@ -81,7 +85,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
      *
      * @param node
      *
-     * @return
+     * @return true if any of the TextViewers are supported, false otherwise
      */
     boolean isSupported(Node node) {
         for (UpdateWrapper textViewer : textViewers) {
@@ -99,7 +103,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
      *
      * @param node
      *
-     * @return
+     * @return the greatest isPreffered value of the supported TextViewers
      */
     int isPreffered(Node node) {
         int max = 1;

@@ -47,7 +47,7 @@ import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A content viewer that displays the indexed text associated with a file or an
+ * A text viewer that displays the indexed text associated with a file or an
  * artifact, possibly marked up with HTML to highlight keyword hits.
  */
 @ServiceProvider(service = TextViewer.class, position = 2)
@@ -63,7 +63,7 @@ public class ExtractedTextViewer implements TextViewer {
     private IndexedText currentSource = null;
 
     /**
-     * Constructs a content viewer that displays the indexed text associated
+     * Constructs a text viewer that displays the indexed text associated
      * with a file or an artifact, possibly marked up with HTML to highlight
      * keyword hits.
      */
@@ -71,7 +71,7 @@ public class ExtractedTextViewer implements TextViewer {
     }
 
     /**
-     * Sets the node displayed by the content viewer.
+     * Sets the node displayed by the text viewer.
      *
      * @param node The node to display
      */

@@ -438,7 +438,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 final int maxOrientChars = Math.min(len, 1024);
                 final String orientDetectText = EscapeUtil.unEscapeHtml(safeText.substring(prefixLen, maxOrientChars));
                 ComponentOrientation direction = TextUtil.getTextDirection(orientDetectText);
-                //logger.log(Level.INFO, "ORIENTATION LEFT TO RIGHT: " + direction.isLeftToRight());
                 extractedTextPane.applyComponentOrientation(direction);
             } else {
                 extractedTextPane.applyComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
@@ -456,6 +455,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Update the value displayed as the current match
      *
      * @param current, current hit to update the display with
      */
@@ -468,6 +468,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Update the value dispalyed for the total number of matches
      *
      * @param total total number of hits to update the display with
      */
@@ -480,6 +481,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Update the value displayed for the current page
      *
      * @param current, current page to update the display with
      */
@@ -488,10 +490,11 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Update the value displayed for the total pages
      *
      * @param total total number of pages to update the display with
      */
-    void updateTotalPageslDisplay(int total) {
+    void updateTotalPagesDisplay(int total) {
         pageTotalLabel.setText(Integer.toString(total));
     }
 
@@ -583,13 +586,13 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             enableNextPageControl(false);
             enablePrevPageControl(false);
             updateCurrentPageDisplay(0);
-            updateTotalPageslDisplay(0);
+            updateTotalPagesDisplay(0);
             return;
         }
 
         updateCurrentPageDisplay(source.getCurrentPage());
         int totalPages = source.getNumberPages();
-        updateTotalPageslDisplay(totalPages);
+        updateTotalPagesDisplay(totalPages);
 
         if (totalPages < 2) {
             enableNextPageControl(false);
@@ -688,14 +691,12 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 } else {
                     setPanelText("", false);
                 }
-
             } catch (InterruptedException | CancellationException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error getting marked up text", ex); //NON-NLS
                 setPanelText(Bundle.IndexedText_errorMessage_errorGettingText(), true);
             }
 
             updateControls(source);
-
             scrollToCurrentHit(source);
         }
     }

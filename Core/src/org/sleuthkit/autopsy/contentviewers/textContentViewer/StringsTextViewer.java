@@ -27,6 +27,9 @@ import org.sleuthkit.autopsy.corecomponents.DataContentViewerUtility;
 import org.sleuthkit.autopsy.datamodel.StringContent;
 import org.sleuthkit.datamodel.Content;
 
+/**
+ * A text viewer that displays the strings extracted from contents.
+ */
 @ServiceProvider(service = TextViewer.class, position = 1)
 public class StringsTextViewer implements TextViewer {
 
