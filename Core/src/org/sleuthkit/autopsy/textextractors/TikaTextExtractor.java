@@ -58,6 +58,7 @@ import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -118,7 +119,8 @@ final class TikaTextExtractor implements TextExtractor {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
-    private static final java.util.logging.Logger tikaLogger = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
+    private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
+    private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
 
     private final ThreadFactory tikaThreadFactory
             = new ThreadFactoryBuilder().setNameFormat("tika-reader-%d").build();
@@ -242,7 +244,9 @@ final class TikaTextExtractor implements TextExtractor {
         } catch (InitReaderException ex) {
             throw ex;
         } catch (Exception ex) {
-            tikaLogger.log(Level.WARNING, "Exception: Unable to Tika parse the "
+            AUTOPSY_LOGGER.log(Level.WARNING, String.format("Error with file [id=%d] %s, see Tika log for details...",
+                    content.getId(), content.getName()));
+            TIKA_LOGGER.log(Level.WARNING, "Exception: Unable to Tika parse the "
                     + "content" + content.getId() + ": " + content.getName(),
                     ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(),
