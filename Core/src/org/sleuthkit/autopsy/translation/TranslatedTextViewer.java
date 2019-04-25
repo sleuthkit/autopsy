@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch.translation;
+package org.sleuthkit.autopsy.translation;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -38,7 +38,6 @@ import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
-import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -46,23 +45,16 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.DataContentViewerUtility;
 import org.sleuthkit.autopsy.coreutils.ExecUtil.ProcessTerminator;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearch;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchModuleException;
-import org.sleuthkit.autopsy.keywordsearch.NoOpenCoreException;
-import org.sleuthkit.autopsy.keywordsearch.Server;
 import org.sleuthkit.autopsy.textextractors.TextExtractor;
 import org.sleuthkit.autopsy.textextractors.TextExtractorFactory;
 import org.sleuthkit.autopsy.textextractors.configs.ImageConfig;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TranslationException;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 import java.util.List;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.keywordsearch.translation.TranslationContentPanel.DisplayDropdownOptions;
+import org.sleuthkit.autopsy.translation.TranslationContentPanel.DisplayDropdownOptions;
 
 /**
  * A TextViewer that displays machine translation of text.
@@ -93,9 +85,6 @@ public final class TranslatedTextViewer implements TextViewer {
 
         if (source instanceof AbstractFile) {
             boolean isImage = ((AbstractFile) source).getMIMEType().toLowerCase().startsWith("image/");
-            if (isTextInSolr(getDocumentId(node)) && !isImage) {
-                panel.removeDisplayTextOptions(DisplayDropdownOptions.ORIGINAL_TEXT.toString());
-            }
             if (isImage) {
                 panel.enableOCRSelection(OCR_ENABLED);
                 panel.addLanguagePackNames(INSTALLED_LANGUAGE_PACKS);
@@ -159,68 +148,6 @@ public final class TranslatedTextViewer implements TextViewer {
         return 0;
     }
 
-    private Long getDocumentId(Node node) {
-        /**
-         * If the node is a Blackboard artifact node for anything other than a
-         * keyword hit, the document ID for the text extracted from the artifact
-         * (the concatenation of its attributes) is the artifact ID, a large,
-         * negative integer. If it is a keyword hit, see if there is an
-         * associated artifact. If there is, get the associated artifact's ID
-         * and return it.
-         */
-        BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-        if (null != artifact) {
-            if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                return artifact.getArtifactID();
-            } else {
-                try {
-                    // Get the associated artifact attribute and return its value as the ID
-                    BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
-                    if (null != attribute) {
-                        return attribute.getValueLong();
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
-                }
-            }
-        }
-
-        /*
-         * For keyword search hit artifact nodes and all other nodes, the
-         * document ID for the extracted text is the ID of the associated
-         * content, if any, unless there is an associated artifact, which is
-         * handled above.
-         */
-        Content content = DataContentViewerUtility.getDefaultContent(node);
-        if (content != null) {
-            return content.getId();
-        }
-
-        /*
-         * No extracted text, return an invalid docuemnt ID.
-         */
-        return 0L;
-    }
-
-    /**
-     * Determines if the Content associated with this node has been indexed by
-     * Solr.
-     *
-     * @param docId unique id of underlying Content source
-     *
-     * @return Flag indicating presence in Solr index
-     *
-     * @throws NoOpenCoreException
-     */
-    private boolean isTextInSolr(long docId) {
-        try {
-            Server server = KeywordSearch.getServer();
-            return server.queryIsIndexed(docId);
-        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            return false;
-        }
-    }
-
     /**
      * Fetches file text and performs translation.
      */
@@ -243,7 +170,7 @@ public final class TranslatedTextViewer implements TextViewer {
             if (dropdownSelection.equals(DisplayDropdownOptions.ORIGINAL_TEXT.toString())) {
                 try {
                     return getFileText(node);
-                } catch (IOException | NoOpenCoreException | KeywordSearchModuleException ex) {
+                } catch (IOException ex) {
                     return Bundle.TranslatedContentViewer_errorMsg();
                 } catch (TextExtractor.InitReaderException ex) {
                     return Bundle.TranslatedContentViewer_errorExtractingText();
@@ -251,7 +178,7 @@ public final class TranslatedTextViewer implements TextViewer {
             } else {
                 try {
                     return translate(getFileText(node));
-                } catch (IOException | KeywordSearchModuleException | NoOpenCoreException ex) {
+                } catch (IOException ex) {
                     return Bundle.TranslatedContentViewer_errorMsg();
                 } catch (TextExtractor.InitReaderException ex) {
                     return Bundle.TranslatedContentViewer_errorExtractingText();
@@ -342,8 +269,7 @@ public final class TranslatedTextViewer implements TextViewer {
          * @throws KeywordSearchModuleException
          */
         private String getFileText(Node node) throws IOException,
-                InterruptedException, TextExtractor.InitReaderException,
-                NoOpenCoreException, KeywordSearchModuleException {
+                InterruptedException, TextExtractor.InitReaderException {
 
             AbstractFile source = (AbstractFile) DataContentViewerUtility.getDefaultContent(node);
             boolean isImage = false;
@@ -354,14 +280,10 @@ public final class TranslatedTextViewer implements TextViewer {
 
             updateExtractionLoadingMessage(isImage);
 
-            long docId = getDocumentId(node);
-
             String result;
 
             if (isImage) {
                 result = extractText(source, OCR_ENABLED);
-            } else if (isTextInSolr(docId)) {
-                result = getSolrText(docId);
             } else {
                 result = extractText(source, OCR_DISABLED);
             }
@@ -452,46 +374,6 @@ public final class TranslatedTextViewer implements TextViewer {
                 //Fall-back onto the strings extractor
                 return TextExtractorFactory.getStringsExtractor(file, context).getReader();
             }
-        }
-
-        /**
-         * Fetches text from Solr matching a given document id
-         *
-         * @return Indexed text
-         *
-         * @throws NoOpenCoreException
-         * @throws InterruptedException
-         * @throws KeywordSearchModuleException
-         */
-        private String getSolrText(long docId) throws NoOpenCoreException, InterruptedException,
-                KeywordSearchModuleException {
-            Server server = KeywordSearch.getServer();
-            int numChunks = server.queryNumFileChunks(docId);
-            StringBuilder textBuilder = new StringBuilder();
-
-            //bytesRead can be an int so long as the max file size
-            //is sufficiently small
-            int bytesRead = 0;
-            for (int i = 1; i <= numChunks; i++) {
-                if (this.isCancelled()) {
-                    throw new InterruptedException();
-                }
-                String fileChunk = server.getSolrContent(docId, i);
-
-                if (fileChunk != null) {
-                    //Short-circuit the read if its greater than our max
-                    //translatable size
-                    int bytesLeft = MAX_SIZE_1MB - bytesRead;
-
-                    if (bytesLeft < fileChunk.length()) {
-                        textBuilder.append(fileChunk, 0, bytesLeft);
-                        return textBuilder.toString();
-                    }
-                    textBuilder.append(fileChunk);
-                    bytesRead += fileChunk.length();
-                }
-            }
-            return textBuilder.toString();
         }
     }
 

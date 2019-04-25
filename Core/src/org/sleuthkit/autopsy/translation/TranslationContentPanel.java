@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.keywordsearch.translation;
+package org.sleuthkit.autopsy.translation;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableBiMap;
@@ -302,7 +302,7 @@ public class TranslationContentPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(ocrLabel, org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.ocrLabel.text")); // NOI18N
         ocrLabel.setEnabled(false);
 
-        warningLabel2MB.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/translation/warning16.png"))); // NOI18N
+        warningLabel2MB.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(warningLabel2MB, org.openide.util.NbBundle.getMessage(TranslationContentPanel.class, "TranslationContentPanel.warningLabel2MB.text")); // NOI18N
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
