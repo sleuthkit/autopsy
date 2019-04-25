@@ -27,6 +27,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -367,7 +368,7 @@ public class StringsContentPanel extends javax.swing.JPanel {
             stringExtract.setEnabledScript(selScript);
             StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
             text = res.getText();
-            if (text.trim().isEmpty()) {
+            if (StringUtils.isBlank(text)) {
                 text = NbBundle.getMessage(this.getClass(),
                         "StringsTextViewer.setDataView.errorNoText", currentOffset,
                         currentOffset + PAGE_LENGTH);

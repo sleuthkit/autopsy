@@ -205,6 +205,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+        //does nothing
     }
 
     @Override
@@ -259,6 +260,9 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
     private javax.swing.JTabbedPane textViewerTabbedPane;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Class to assist in keeping track of which TextViewers need to be updated
+     */
     private static class UpdateWrapper {
 
         private final TextViewer wrapped;
