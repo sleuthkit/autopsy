@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers.textContentViewer;
+package org.sleuthkit.autopsy.contentviewers.textcontentviewer;
 
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
@@ -30,6 +30,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.contentviewers.textContentViewer.Bundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;

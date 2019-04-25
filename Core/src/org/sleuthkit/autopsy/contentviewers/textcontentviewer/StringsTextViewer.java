@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers.textContentViewer;
+package org.sleuthkit.autopsy.contentviewers.textcontentviewer;
 
 import java.awt.Component;
 import org.openide.nodes.Node;
