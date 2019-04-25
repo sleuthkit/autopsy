@@ -236,10 +236,6 @@
                 <package>org.slf4j.spi</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-validator-1.5.1-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-validator-1.5.1-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-dom-0.8.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-dom-0.8.1.jar</binary-origin>
             </class-path-extension>
@@ -444,10 +440,6 @@
                 <binary-origin>release/modules/ext/fontbox-2.0.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/lucene-analyzers-common-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/lucene-analyzers-common-4.0.0.jar</binary-origin>
             </class-path-extension>
@@ -516,10 +508,6 @@
                 <binary-origin>release/modules/ext/commons-csv-1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-validator-1.5.1-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-validator-1.5.1-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/lucene-sandbox-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/lucene-sandbox-4.0.0.jar</binary-origin>
             </class-path-extension>
@@ -544,16 +532,8 @@
                 <binary-origin>release/modules/ext/bcmail-jdk15on-1.54.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/asm-all-3.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/asm-all-3.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/tika-parsers-1.17-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-parsers-1.17-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/icu4j-3.8.jar</runtime-relative-path>
@@ -604,20 +584,12 @@
                 <binary-origin>release/modules/ext/c3p0-0.9.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/tika-parsers-1.17-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/tika-parsers-1.17-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/sqlwrapper-0.0.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sqlwrapper-0.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jackcess-encrypt-2.1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jackcess-encrypt-2.1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.3-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jericho-html-3.3-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/udunits-4.5.5.jar</runtime-relative-path>
@@ -670,10 +642,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/javax.annotation-api-1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javax.annotation-api-1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.3-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jericho-html-3.3-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/juniversalchardet-1.0.3.jar</runtime-relative-path>

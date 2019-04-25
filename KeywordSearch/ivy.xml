@@ -3,7 +3,7 @@
     <info organisation="org.sleuthkit.autopsy" module="keywordsearch"/>
     <configurations >
         <!-- module dependencies -->
-        <conf name="autopsy"/>
+        <conf name="keywordsearch"/>
         
         <!-- Solr server dependencies -->
         <conf name="solr-libs"/>
@@ -19,17 +19,17 @@
         <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->
         
         <!-- Autopsy -->
-        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
-        <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
-        <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
-        <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.17"/>
+        <dependency conf="keywordsearch->*, !javadoc" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
+        <dependency conf="keywordsearch->*, !javadoc" org="commons-lang" name="commons-lang" rev="2.4"/>
+        <dependency conf="keywordsearch->*, !javadoc" org="commons-validator" name="commons-validator" rev="1.5.1"/>
+        <dependency conf="keywordsearch->*, !javadoc" org="org.apache.tika" name="tika-parsers" rev="1.17"/>
 
         <!-- metadata-extractor is required by Tika but it depends on version 2.6.2 which suffers
         from an XMP library issue. -->
-        <dependency conf="autopsy->*" org="com.drewnoakes" name="metadata-extractor" rev="2.7.2" />
+        <dependency conf="keywordsearch->*, !javadoc" org="com.drewnoakes" name="metadata-extractor" rev="2.7.2" />
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
-        <dependency conf="autopsy->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>
-        <dependency conf="autopsy->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
+        <dependency conf="keywordsearch->*, !javadoc" org="com.ibm.icu" name="icu4j" rev="3.8"/>
+        <dependency conf="keywordsearch->*, !javadoc" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         
         <!-- Jetty -->
         <dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="8.1.16.v20140903"/>
