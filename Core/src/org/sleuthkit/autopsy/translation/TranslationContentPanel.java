@@ -102,7 +102,7 @@ public class TranslationContentPanel extends javax.swing.JPanel {
         ocrDropdown.removeAllItems();
     }
 
-    void enableOCRSelection(boolean enabled) {
+    final void enableOCRSelection(boolean enabled) {
         ocrLabel.setEnabled(enabled);
         ocrDropdown.setEnabled(enabled);
     }

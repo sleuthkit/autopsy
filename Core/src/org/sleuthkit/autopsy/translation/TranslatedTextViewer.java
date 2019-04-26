@@ -62,9 +62,9 @@ import org.sleuthkit.autopsy.translation.TranslationContentPanel.DisplayDropdown
 @ServiceProvider(service = TextViewer.class, position = 4)
 public final class TranslatedTextViewer implements TextViewer {
 
-    private static final Logger logger = Logger.getLogger(TranslatedTextViewer.class.getName());
     private static final boolean OCR_ENABLED = true;
     private static final boolean OCR_DISABLED = false;
+    private static final int MAX_SIZE_1MB = 1024000;
     private static final List<String> INSTALLED_LANGUAGE_PACKS = PlatformUtil.getOcrLanguagePacks();
     private final TranslationContentPanel panel = new TranslationContentPanel();
 
@@ -73,7 +73,6 @@ public final class TranslatedTextViewer implements TextViewer {
     private final ThreadFactory translationThreadFactory
             = new ThreadFactoryBuilder().setNameFormat("translation-content-viewer-%d").build();
     private final ExecutorService executorService = Executors.newSingleThreadExecutor(translationThreadFactory);
-    private final int MAX_SIZE_1MB = 1024000;
 
     @Override
     public void setNode(final Node node) {
@@ -209,14 +208,14 @@ public final class TranslatedTextViewer implements TextViewer {
                 String result = get();
                 int len = result.length();
 
-                int maxOrientChars = Math.min(len, 1024);
-                String orientDetectSubstring = result.substring(0, maxOrientChars);
+                int maxOrientChars = Math.min(len, 1024);   
                 if (this.isCancelled()) {
                     throw new InterruptedException();
                 }
+                String orientDetectSubstring = result.substring(0, maxOrientChars);
                 ComponentOrientation orientation = TextUtil.getTextDirection(orientDetectSubstring);
                 panel.display(result, orientation, Font.PLAIN);
-            } catch (InterruptedException | ExecutionException | CancellationException ex) {
+            } catch (InterruptedException | ExecutionException | CancellationException ignored) {
                 //InterruptedException & CancellationException - User cancelled, no error.
             }
         }
