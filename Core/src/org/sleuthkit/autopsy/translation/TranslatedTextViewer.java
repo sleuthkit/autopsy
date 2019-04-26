@@ -36,7 +36,6 @@ import java.util.concurrent.ThreadFactory;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import javax.swing.SwingWorker;
 import org.openide.util.Lookup;
@@ -205,13 +204,12 @@ public final class TranslatedTextViewer implements TextViewer {
         @Override
         public void done() {
             try {
-                String result = get();
-                int len = result.length();
-
-                int maxOrientChars = Math.min(len, 1024);   
+                String result = get();          
                 if (this.isCancelled()) {
                     throw new InterruptedException();
                 }
+                int len = result.length();
+                int maxOrientChars = Math.min(len, 1024);
                 String orientDetectSubstring = result.substring(0, maxOrientChars);
                 ComponentOrientation orientation = TextUtil.getTextDirection(orientDetectSubstring);
                 panel.display(result, orientation, Font.PLAIN);
