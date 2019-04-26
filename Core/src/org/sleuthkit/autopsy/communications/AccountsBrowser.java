@@ -35,6 +35,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
+import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -60,7 +61,6 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
     private final Outline outline;
 
-    private final ExplorerManager messageBrowserEM = new ExplorerManager();
     private final ExplorerManager accountsTableEM = new ExplorerManager();
     
     final RelationshipBrowser relationshipBrowser;
@@ -69,7 +69,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
      * This lookup proxies the selection lookup of both he accounts table and
      * the messages table.
      */
-    private final Lookup lookup;
+    private final ProxyLookup proxyLookup;
 
     public AccountsBrowser() {
         initComponents();
@@ -106,7 +106,8 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
             }
         });
         
-        lookup = ExplorerUtils.createLookup(accountsTableEM, getActionMap());
+        proxyLookup = new ProxyLookup(relationshipBrowser.getLookup(),
+                        ExplorerUtils.createLookup(accountsTableEM, getActionMap()));
     }
 
     private void setColumnWidths() {
@@ -178,6 +179,6 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
 
     @Override
     public Lookup getLookup() {
-        return lookup;
+        return proxyLookup;
     }
 }

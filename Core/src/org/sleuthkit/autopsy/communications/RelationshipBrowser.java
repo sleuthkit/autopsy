@@ -18,33 +18,42 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.awt.Component;
 import javax.swing.JPanel;
+import org.openide.util.Lookup;
+import org.openide.util.lookup.ProxyLookup;
 
 /**
  * Displays the Relationship information for the currently selected accounts.
  *
  */
-final class RelationshipBrowser extends JPanel {
+final class RelationshipBrowser extends JPanel implements Lookup.Provider {
 
     private SelectionInfo currentSelection;
     
     private final MessagesViewer messagesViewer;
     private final ContactsViewer contactsViewer;
-    private final ThumbnailViewer thumbnailViewer;
+    private final ThumbnailViewer thumbnailsViewer;
+    
+    private final ModifiableProxyLookup proxyLookup;
 
     /**
      * Creates new form RelationshipBrowser
      */
     public RelationshipBrowser() {
-        initComponents();
-        
         messagesViewer = new MessagesViewer();
         contactsViewer = new ContactsViewer();
-        thumbnailViewer = new ThumbnailViewer();
+        thumbnailsViewer = new ThumbnailViewer();
+        
+        proxyLookup = new ModifiableProxyLookup(messagesViewer.getLookup());
+        
+         initComponents();
         
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
-        tabPane.add(thumbnailViewer.getDisplayName(), thumbnailViewer);
+        tabPane.add(thumbnailsViewer.getDisplayName(), thumbnailsViewer);
+        
+        
     }
 
     /**
@@ -99,6 +108,12 @@ final class RelationshipBrowser extends JPanel {
         if(currentSelection != null) {
             ((RelationshipsViewer) tabPane.getSelectedComponent()).setSelectionInfo(currentSelection);
         }
+        
+        Component selectedComponent = tabPane.getSelectedComponent();
+        if(selectedComponent instanceof Lookup.Provider) {
+            Lookup lookup = ((Lookup.Provider)selectedComponent).getLookup();
+            proxyLookup.setNewLookups(lookup);
+        }
     }//GEN-LAST:event_tabPaneStateChanged
 
 
@@ -106,4 +121,9 @@ final class RelationshipBrowser extends JPanel {
     private javax.swing.JScrollPane scrollPane;
     private javax.swing.JTabbedPane tabPane;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public Lookup getLookup() {
+        return proxyLookup;
+    }
 }

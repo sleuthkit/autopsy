@@ -58,7 +58,7 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
     private final ModifiableProxyLookup proxyLookup;
 
     @Messages({
-        "ThumbnailViewer_Name=Thumbnails"
+        "ThumbnailViewer_Name=Media"
     })
     /**
      * Creates new form ThumbnailViewer
@@ -93,6 +93,8 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
                 handleNodeSelectionChange();
             }
         });
+        
+        thumbnailViewer.resetComponent();
     }
 
     @Override
@@ -121,7 +123,11 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
             });
 
         } catch (TskCoreException | NoCurrentCaseException ex) {
-
+            logger.log(Level.WARNING, "Unable to update selection." , ex);
+        }
+        
+        if(artifactList.size() == 0) {
+            thumbnailViewer.resetComponent();
         }
 
         thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new ThumbnailChildren(artifactList)), tableEM), true));
