@@ -21,7 +21,9 @@ package org.sleuthkit.autopsy.communications;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import java.util.Collection;
+import org.sleuthkit.autopsy.communications.FiltersPanel.DateControlState;
 import org.sleuthkit.datamodel.CommunicationsFilter;
+import org.sleuthkit.autopsy.communications.StateManager.CommunicationsState;
 
 /**
  * Provide the singleton EventBus.
@@ -37,20 +39,38 @@ final class CVTEvents {
     private CVTEvents() {
     }
 
+    /**
+     * Invoked when a change from the FiltersPanel occures.
+     */
     static final class FilterChangeEvent {
 
         private final CommunicationsFilter newFilter;
+        private final DateControlState startControlState;
+        private final DateControlState endControlState;
 
         CommunicationsFilter getNewFilter() {
             return newFilter;
         }
+        
+        DateControlState getStartControlState() {
+            return startControlState;
+        }
+        
+        DateControlState getEndControlState() {
+            return endControlState;
+        }
 
-        FilterChangeEvent(CommunicationsFilter newFilter) {
+        FilterChangeEvent(CommunicationsFilter newFilter, DateControlState startControlState, DateControlState endControlState) {
             this.newFilter = newFilter;
+            this.startControlState = startControlState;
+            this.endControlState = endControlState;
         }
 
     }
 
+    /**
+     * Invoked when a change in the pinned accounts occures.
+     */
     static final class PinAccountsEvent {
 
         private final ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances;
@@ -70,6 +90,9 @@ final class CVTEvents {
         }
     }
 
+    /**
+     * Invoked when a change in the unpinned accounts occures.
+     */
     static final class UnpinAccountsEvent {
 
         private final ImmutableSet<AccountDeviceInstanceKey> accountDeviceInstances;
@@ -80,6 +103,36 @@ final class CVTEvents {
 
          UnpinAccountsEvent(Collection<? extends AccountDeviceInstanceKey> accountDeviceInstances) {
             this.accountDeviceInstances = ImmutableSet.copyOf(accountDeviceInstances);
+        }
+    }
+    
+    /**
+    * Invoked when there is a change in the state of the window.
+    */
+    static final class StateChangeEvent {
+        private final CommunicationsState newState;
+        
+        StateChangeEvent(CommunicationsState newState) {
+            this.newState = newState;
+        }
+        
+        public CommunicationsState getCommunicationsState(){
+            return newState;
+        }
+    }
+    
+    /**
+    * Invoked when change in the link analysis graph scale occures.
+    */
+    static final class ScaleChangeEvent {
+        private final double scaleValue;
+        
+        ScaleChangeEvent(double scaleValue) {
+            this.scaleValue = scaleValue;
+        }
+        
+        public double getZoomValue(){
+            return scaleValue;
         }
     }
 }
