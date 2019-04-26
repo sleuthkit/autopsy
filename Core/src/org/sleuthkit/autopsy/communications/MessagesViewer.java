@@ -109,6 +109,9 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
                 if (nodes != null && nodes.length > 0) {
                     contentViewer.setNode(nodes[0]);
                 }
+                else {
+                    contentViewer.setNode(null);
+                }
             }
         });
         
@@ -127,7 +130,6 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-//        tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(new MessagesChildNodeFactory(info), true)), getExplorerManager()), true));
         nodeFactory.refresh(info);
     }
 

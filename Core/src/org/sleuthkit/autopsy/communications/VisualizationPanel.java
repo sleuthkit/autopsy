@@ -55,7 +55,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,11 +62,11 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -99,12 +98,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.Notifications;
 import org.jdesktop.layout.GroupLayout;
 import org.jdesktop.layout.LayoutStyle;
-import org.openide.explorer.ExplorerManager;
-import org.openide.explorer.ExplorerUtils;
-import org.openide.nodes.Node;
-import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
-import org.openide.util.lookup.ProxyLookup;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
@@ -113,9 +107,9 @@ import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
+import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;
 import org.sleuthkit.datamodel.CommunicationsManager;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 /**
  * A panel that goes in the Visualize tab of the Communications Visualization
@@ -128,7 +122,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * actions to work correctly.
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-final public class VisualizationPanel extends JPanel implements Lookup.Provider {
+final public class VisualizationPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(VisualizationPanel.class.getName());
@@ -141,9 +135,6 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
     @NbBundle.Messages("VisualizationPanel.cancelButton.text=Cancel")
     private static final String CANCEL = Bundle.VisualizationPanel_cancelButton_text();
 
-    private final ExplorerManager vizEM = new ExplorerManager();
-    private final ExplorerManager gacEM = new ExplorerManager();
-    private final ProxyLookup proxyLookup;
     private Frame windowAncestor;
 
     private CommunicationsManager commsManager;
@@ -162,6 +153,8 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
     private final Map<NamedGraphLayout, JButton> layoutButtons = new HashMap<>();
     private NamedGraphLayout currentLayout;
+    
+    private final RelationshipBrowser relationshipBrowser;
 
     @NbBundle.Messages("VisalizationPanel.paintingError=Problem painting visualization.")
     public VisualizationPanel() {
@@ -224,13 +217,9 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         final GraphMouseListener graphMouseListener = new GraphMouseListener();
         graphComponent.getGraphControl().addMouseWheelListener(graphMouseListener);
         graphComponent.getGraphControl().addMouseListener(graphMouseListener);
-
-        final MessageBrowser messageBrowser = new MessageBrowser(vizEM, gacEM);
-        splitPane.setRightComponent(messageBrowser);
-        proxyLookup = new ProxyLookup(
-                ExplorerUtils.createLookup(vizEM, getActionMap()),
-                messageBrowser.getLookup()
-        );
+        
+        relationshipBrowser = new RelationshipBrowser();
+        splitPane.setRightComponent(relationshipBrowser);
 
         //feed selection to explorermanager
         graph.getSelectionModel().addListener(mxEvent.CHANGE, new SelectionListener());
@@ -259,12 +248,7 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
 
         applyLayout(fastOrganicLayout);
     }
-
-    @Override
-    public Lookup getLookup() {
-        return proxyLookup;
-    }
-
+    
     @Subscribe
     void handle(LockedVertexModel.VertexLockEvent event) {
         final Set<mxCell> vertices = event.getVertices();
@@ -884,40 +868,25 @@ final public class VisualizationPanel extends JPanel implements Lookup.Provider 
         @Override
         public void invoke(Object sender, mxEventObject evt) {
             Object[] selectionCells = graph.getSelectionCells();
-            Node rootNode = Node.EMPTY;
-            Node[] selectedNodes = new Node[0];
             if (selectionCells.length > 0) {
                 mxICell[] selectedCells = Arrays.asList(selectionCells).toArray(new mxCell[selectionCells.length]);
-                HashSet<Content> relationshipSources = new HashSet<>();
-                HashSet<AccountDeviceInstanceKey> adis = new HashSet<>();
+                HashSet<AccountDeviceInstance> deviceInstances = new HashSet<>();
                 for (mxICell cell : selectedCells) {
                     if (cell.isEdge()) {
                         mxICell source = (mxICell) graph.getModel().getTerminal(cell, true);
-                        AccountDeviceInstanceKey account1 = (AccountDeviceInstanceKey) source.getValue();
                         mxICell target = (mxICell) graph.getModel().getTerminal(cell, false);
-                        AccountDeviceInstanceKey account2 = (AccountDeviceInstanceKey) target.getValue();
-                        try {
-                            final List<Content> relationshipSources1 = commsManager.getRelationshipSources(
-                                    account1.getAccountDeviceInstance(),
-                                    account2.getAccountDeviceInstance(),
-                                    currentFilter);
-                            relationshipSources.addAll(relationshipSources1);
-                        } catch (TskCoreException tskCoreException) {
-                            logger.log(Level.SEVERE, " Error getting relationsips....", tskCoreException);
-                        }
+
+                        deviceInstances.add(((AccountDeviceInstanceKey) source.getValue()).getAccountDeviceInstance());
+                        deviceInstances.add(((AccountDeviceInstanceKey) target.getValue()).getAccountDeviceInstance());
+
                     } else if (cell.isVertex()) {
-                        adis.add((AccountDeviceInstanceKey) cell.getValue());
+                        deviceInstances.add(((AccountDeviceInstanceKey) cell.getValue()).getAccountDeviceInstance());
                     }
                 }
 
-                rootNode = SelectionNode.createFromAccountsAndRelationships(relationshipSources, adis, currentFilter, commsManager);
-                selectedNodes = new Node[]{rootNode};
-            }
-            vizEM.setRootContext(rootNode);
-            try {
-                vizEM.setSelectedNodes(selectedNodes);
-            } catch (PropertyVetoException ex) {
-                logger.log(Level.SEVERE, "Selection vetoed.", ex);
+                relationshipBrowser.setSelectionInfo(new SelectionInfo(deviceInstances, currentFilter));
+            } else {
+                relationshipBrowser.setSelectionInfo(new SelectionInfo(Collections.EMPTY_SET, currentFilter));
             }
         }
     }

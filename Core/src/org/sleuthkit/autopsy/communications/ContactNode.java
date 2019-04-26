@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.communications;
 
+import java.util.HashMap;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.openide.nodes.Sheet;
@@ -28,13 +29,8 @@ import org.sleuthkit.autopsy.datamodel.NodeProperty;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_HOME;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_MOBILE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_OFFICE;
-import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_URL;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON;
 import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -45,7 +41,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 final class ContactNode extends BlackboardArtifactNode {
 
-    private static final Logger logger = Logger.getLogger(RelationshipNode.class.getName());
+    private static final Logger logger = Logger.getLogger(ContactNode.class.getName());
 
     @Messages({
         "ContactNode_Name=Name",
@@ -59,7 +55,12 @@ final class ContactNode extends BlackboardArtifactNode {
     ContactNode(BlackboardArtifact artifact) {
         super(artifact);
 
-        setDisplayName(getAttributeDisplayString(artifact, TSK_NAME));
+        String name = getAttributeDisplayString(artifact, TSK_NAME);
+        if (name == null || name.trim().isEmpty()) {
+            // VCards use TSK_NAME_PERSON instead of TSK_NAME
+            name = getAttributeDisplayString(artifact, TSK_NAME_PERSON);
+        }
+        setDisplayName(name);
     }
 
     @Override
@@ -77,18 +78,61 @@ final class ContactNode extends BlackboardArtifactNode {
             sheet.put(sheetSet);
         }
 
-        sheetSet.put(new NodeProperty<>("email", Bundle.ContactNode_Email(), "",
-                getAttributeDisplayString(artifact, TSK_EMAIL))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("phone", Bundle.ContactNode_Phone(), "",
-                getAttributeDisplayString(artifact, TSK_PHONE_NUMBER))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("mobile", Bundle.ContactNode_Mobile_Number(), "",
-                getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_MOBILE))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("home", Bundle.ContactNode_Home_Number(), "",
-                getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_HOME))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("office", Bundle.ContactNode_Office_Number(), "",
-                getAttributeDisplayString(artifact, TSK_PHONE_NUMBER_OFFICE))); //NON-NLS
-        sheetSet.put(new NodeProperty<>("url", Bundle.ContactNode_URL(), "",
-                getAttributeDisplayString(artifact, TSK_URL))); //NON-NLS
+        // Sorting the attributes by type so that the duplicates can be removed
+        // and they can be grouped by type for display.
+        try {
+            HashMap<String, BlackboardAttribute> phoneNumList = new HashMap<>();
+            HashMap<String, BlackboardAttribute> emailList = new HashMap<>();
+            HashMap<String, BlackboardAttribute> nameList = new HashMap<>();
+            HashMap<String, BlackboardAttribute> otherList = new HashMap<>();
+            for (BlackboardAttribute bba : artifact.getAttributes()) {
+                if (bba.getAttributeType().getTypeName().contains("TSK_PHONE")) {
+                    phoneNumList.put(bba.getDisplayString(), bba);
+                } else if (bba.getAttributeType().getTypeName().contains("TSK_EMAIL")) {
+                    emailList.put(bba.getDisplayString(), bba);
+                } else if (bba.getAttributeType().getTypeName().contains("TSK_NAME")) {
+                    nameList.put(bba.getDisplayString(), bba);
+                } else {
+                    otherList.put(bba.getDisplayString(), bba);
+                }
+            }
+            String propertyID = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getLabel();
+            int count = 0;
+            for (BlackboardAttribute bba : nameList.values()) {
+                if (count++ > 0) {
+                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                } else {
+                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                }
+            }
+
+            propertyID = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel();
+            count = 0;
+            for (BlackboardAttribute bba : phoneNumList.values()) {
+                if (count++ > 0) {
+                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                } else {
+                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                }
+            }
+
+            propertyID = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getLabel();
+            count = 0;
+            for (BlackboardAttribute bba : emailList.values()) {
+                if (count++ > 0) {
+                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                } else {
+                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+                }
+            }
+
+            for (BlackboardAttribute bba1 : otherList.values()) {
+                sheetSet.put(new NodeProperty<>(bba1.getAttributeType().getTypeName(), bba1.getAttributeType().getDisplayName(), "", bba1.getDisplayString()));
+            }
+
+        } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Error getting attribute values.", ex); //NON-NLS
+        }
 
         return sheet;
     }

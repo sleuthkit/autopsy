@@ -37,6 +37,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
  * Visualization for contact nodes.
@@ -89,8 +90,8 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
 
         outline = outlineView.getOutline();
         outlineView.setPropertyColumns(
-                "email", Bundle.ContactsViewer_columnHeader_Email(),
-                "phone", Bundle.ContactsViewer_columnHeader_Phone()
+                "TSK_EMAIL", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getDisplayName(),
+                "TSK_PHONE_NUMBER", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getDisplayName()
         );
         outline.setRootVisible(false);
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -99,11 +100,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] nodes = tableEM.getSelectedNodes();
-
-                if (nodes != null && nodes.length > 0) {
-                    contactPane.setEnabled(true);
-                    contactPane.setNode(nodes);
-                }
+                contactPane.setNode(nodes);
             }
         });
         

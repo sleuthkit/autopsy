@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.communications;
 
 import javax.swing.JPanel;
-import org.openide.util.Lookup;
 
 /**
  * Displays the Relationship information for the currently selected accounts.
@@ -28,16 +27,21 @@ import org.openide.util.Lookup;
 final class RelationshipBrowser extends JPanel {
 
     private SelectionInfo currentSelection;
+    
+    private final MessagesViewer messagesViewer;
+    private final ContactsViewer contactsViewer;
 
     /**
      * Creates new form RelationshipBrowser
      */
     public RelationshipBrowser() {
         initComponents();
-
-        Lookup.getDefault().lookupAll(RelationshipsViewer.class).forEach((viewer) -> {
-            tabPane.add(viewer.getDisplayName(), viewer.getPanel());
-        });
+        
+        messagesViewer = new MessagesViewer();
+        contactsViewer = new ContactsViewer();
+        
+        tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
+        tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
     }
 
     /**
@@ -81,7 +85,9 @@ final class RelationshipBrowser extends JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tabPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneStateChanged
-        ((RelationshipsViewer) tabPane.getSelectedComponent()).setSelectionInfo(currentSelection);
+        if(currentSelection != null) {
+            ((RelationshipsViewer) tabPane.getSelectedComponent()).setSelectionInfo(currentSelection);
+        }
     }//GEN-LAST:event_tabPaneStateChanged
 
 
