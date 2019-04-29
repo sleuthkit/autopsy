@@ -19,17 +19,17 @@
         <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->
         
         <!-- Autopsy -->
-        <dependency conf="keywordsearch->*, !javadoc" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
-        <dependency conf="keywordsearch->*, !javadoc" org="commons-lang" name="commons-lang" rev="2.4"/>
-        <dependency conf="keywordsearch->*, !javadoc" org="commons-validator" name="commons-validator" rev="1.5.1"/>
-        <dependency conf="keywordsearch->*, !javadoc" org="org.apache.tika" name="tika-parsers" rev="1.17"/>
+        <dependency conf="keywordsearch->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
+        <dependency conf="keywordsearch->*" org="commons-lang" name="commons-lang" rev="2.4"/>
+        <dependency conf="keywordsearch->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
+        <dependency conf="keywordsearch->*" org="org.apache.tika" name="tika-parsers" rev="1.17"/>
 
         <!-- metadata-extractor is required by Tika but it depends on version 2.6.2 which suffers
         from an XMP library issue. -->
-        <dependency conf="keywordsearch->*, !javadoc" org="com.drewnoakes" name="metadata-extractor" rev="2.7.2" />
+        <dependency conf="keywordsearch->*" org="com.drewnoakes" name="metadata-extractor" rev="2.7.2" />
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
-        <dependency conf="keywordsearch->*, !javadoc" org="com.ibm.icu" name="icu4j" rev="3.8"/>
-        <dependency conf="keywordsearch->*, !javadoc" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
+        <dependency conf="keywordsearch->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>
+        <dependency conf="keywordsearch->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         
         <!-- Jetty -->
         <dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="8.1.16.v20140903"/>
@@ -42,6 +42,7 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
         
+        <exclude org="*" ext="*" type="javadoc"/>
         <!-- Tika 1.14 seems to declare a (transitive?) dependency on cleartk-util 3.2.2, but the most recent
         version available is 2.0.0  Overriding the version worked-->
         <override  org="org.cleartk" module="cleartk-util" rev="2.0.0"/>
