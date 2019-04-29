@@ -983,9 +983,7 @@ class PortableCaseReportModule implements ReportModule {
     enum ChunkSize {
         
         NONE("Do not split", ""), // NON-NLS
-        TWO_MB("2 MB", "2m"), // NON-NLS
         DVD("4.5 GB (DVD)", "4500m"); // NON-NLS
-                
         
         private final String displayName;
         private final String sevenZipParam;
