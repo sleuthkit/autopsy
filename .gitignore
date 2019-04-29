@@ -85,5 +85,3 @@ hs_err_pid*.log
 *.img
 *.vhd
 *.E01
-/Core/.jacocoverage/
-/Core/jacoco*
