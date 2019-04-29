@@ -191,9 +191,9 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
 
         desc1Label = new javax.swing.JLabel();
         desc2Label = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
+        caseLabel = new javax.swing.JLabel();
         caseTextField = new javax.swing.JTextField();
-        jLabel8 = new javax.swing.JLabel();
+        extractLabel = new javax.swing.JLabel();
         outputTextField = new javax.swing.JTextField();
         outputSelectButton = new javax.swing.JButton();
         caseSelectButton = new javax.swing.JButton();
@@ -208,11 +208,11 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(desc2Label, org.openide.util.NbBundle.getMessage(UnpackagePortableCaseDialog.class, "UnpackagePortableCaseDialog.desc2Label.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel7, org.openide.util.NbBundle.getMessage(UnpackagePortableCaseDialog.class, "UnpackagePortableCaseDialog.jLabel7.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(caseLabel, org.openide.util.NbBundle.getMessage(UnpackagePortableCaseDialog.class, "UnpackagePortableCaseDialog.caseLabel.text")); // NOI18N
 
         caseTextField.setText(org.openide.util.NbBundle.getMessage(UnpackagePortableCaseDialog.class, "UnpackagePortableCaseDialog.caseTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel8, org.openide.util.NbBundle.getMessage(UnpackagePortableCaseDialog.class, "UnpackagePortableCaseDialog.jLabel8.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(extractLabel, org.openide.util.NbBundle.getMessage(UnpackagePortableCaseDialog.class, "UnpackagePortableCaseDialog.extractLabel.text")); // NOI18N
 
         outputTextField.setText(org.openide.util.NbBundle.getMessage(UnpackagePortableCaseDialog.class, "UnpackagePortableCaseDialog.outputTextField.text")); // NOI18N
 
@@ -261,20 +261,19 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
                         .addComponent(caseTextField)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(caseSelectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(jLabel7)
-                            .addGap(18, 18, 18)
-                            .addComponent(caseErrorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGroup(layout.createSequentialGroup()
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(desc1Label)
-                                .addComponent(desc2Label)
-                                .addGroup(layout.createSequentialGroup()
-                                    .addComponent(jLabel8)
-                                    .addGap(18, 18, 18)
-                                    .addComponent(outputErrorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 361, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGap(0, 0, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(caseLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(caseErrorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(desc1Label)
+                            .addComponent(desc2Label)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(extractLabel)
+                                .addGap(18, 18, 18)
+                                .addComponent(outputErrorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 361, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(outputTextField)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -295,7 +294,7 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
                 .addComponent(desc2Label)
                 .addGap(13, 13, 13)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7)
+                    .addComponent(caseLabel)
                     .addComponent(caseErrorLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -303,7 +302,7 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
                     .addComponent(caseSelectButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel8)
+                    .addComponent(extractLabel)
                     .addComponent(outputErrorLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -358,13 +357,13 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel caseErrorLabel;
+    private javax.swing.JLabel caseLabel;
     private javax.swing.JButton caseSelectButton;
     private javax.swing.JTextField caseTextField;
     private javax.swing.JLabel desc1Label;
     private javax.swing.JLabel desc2Label;
     private javax.swing.JButton exitButton;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel extractLabel;
     private javax.swing.JLabel outputErrorLabel;
     private javax.swing.JButton outputSelectButton;
     private javax.swing.JTextField outputTextField;

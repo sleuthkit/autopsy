@@ -243,13 +243,13 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tagNamesListBox = new javax.swing.JList<>();
-        jLabel1 = new javax.swing.JLabel();
+        descLabel = new javax.swing.JLabel();
         selectButton = new javax.swing.JButton();
         deselectButton = new javax.swing.JButton();
 
         jScrollPane1.setViewportView(tagNamesListBox);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(PortableCaseTagsListPanel.class, "PortableCaseTagsListPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(PortableCaseTagsListPanel.class, "PortableCaseTagsListPanel.descLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(selectButton, org.openide.util.NbBundle.getMessage(PortableCaseTagsListPanel.class, "PortableCaseTagsListPanel.selectButton.text")); // NOI18N
         selectButton.setMaximumSize(new java.awt.Dimension(87, 23));
@@ -277,7 +277,7 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 215, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1)
+                            .addComponent(descLabel)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(selectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -289,7 +289,7 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
+                .addComponent(descLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 178, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -328,8 +328,8 @@ class PortableCaseTagsListPanel extends javax.swing.JPanel {
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel descLabel;
     private javax.swing.JButton deselectButton;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton selectButton;
