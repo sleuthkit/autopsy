@@ -220,7 +220,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
             if (evt.getKey().equals(UserPreferences.RESULTS_TABLE_PAGE_SIZE)) {
-                DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 /**
                  * If multiple nodes have been viewed we have to notify all of
                  * them about the change in page size.

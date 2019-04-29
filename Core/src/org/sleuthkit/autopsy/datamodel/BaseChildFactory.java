@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.prefs.PreferenceChangeEvent;
-import java.util.prefs.PreferenceChangeListener;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
 import org.sleuthkit.autopsy.core.UserPreferences;
