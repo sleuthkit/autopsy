@@ -113,8 +113,10 @@ public class GroupManager {
      */
     @GuardedBy("this") //NOPMD
     private GroupKey<?> currentPathGroup = null;
+    
     /**
-     * list of all analyzed groups
+     * list of all analyzed groups - i.e. groups that are ready to be shown to user.  
+     * These are groups under the selected groupBy attribute.
      */
     @GuardedBy("this") //NOPMD
     private final ObservableList<DrawableGroup> analyzedGroups = FXCollections.observableArrayList();
@@ -122,6 +124,7 @@ public class GroupManager {
 
     /**
      * list of unseen groups
+     * These are groups under the selected groupBy attribute.
      */
     @GuardedBy("this") //NOPMD
     private final ObservableList<DrawableGroup> unSeenGroups = FXCollections.observableArrayList();
@@ -154,12 +157,12 @@ public class GroupManager {
     private final GroupingService regrouper;
 
     @SuppressWarnings("ReturnOfCollectionOrArrayField")
-    public ObservableList<DrawableGroup> getAnalyzedGroups() {
+    public ObservableList<DrawableGroup> getAnalyzedGroupsForCurrentGroupBy() {
         return unmodifiableAnalyzedGroups;
     }
 
     @SuppressWarnings("ReturnOfCollectionOrArrayField")
-    public ObservableList<DrawableGroup> getUnSeenGroups() {
+    public ObservableList<DrawableGroup> getUnSeenGroupsForCurrentGroupBy() {
         return unmodifiableUnSeenGroups;
     }
 
@@ -172,38 +175,6 @@ public class GroupManager {
         this.controller = controller;
         this.regrouper = new GroupingService();
         regrouper.setExecutor(exec);
-    }
-
-    /**
-     * Using the current groupBy set for this manager, find groupkeys for all
-     * the groups the given file is a part of
-     *
-     * @param file
-     *
-     *
-     * @return A a set of GroupKeys representing the group(s) the given file is
-     *         a part of.
-     */
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    synchronized public Set<GroupKey<?>> getGroupKeysForCurrentGroupBy(DrawableFile file) throws TskCoreException, TskDataException {
-        Set<GroupKey<?>> resultSet = new HashSet<>();
-        for (Comparable<?> val : getGroupBy().getValue(file)) {
-
-            if (getGroupBy() == DrawableAttribute.PATH) {
-                // verify this file is in a data source being displayed
-                if ((getDataSource() == null) || (file.getDataSource().equals(getDataSource()))) {
-                    resultSet.add(new GroupKey(getGroupBy(), val, file.getDataSource()));
-                }
-            } else if (getGroupBy() == DrawableAttribute.TAGS) {
-                //don't show groups for the categories when grouped by tags.
-                if (CategoryManager.isNotCategoryTagName((TagName) val)) {
-                    resultSet.add(new GroupKey(getGroupBy(), val, getDataSource()));
-                }
-            } else {
-                resultSet.add(new GroupKey(getGroupBy(), val, getDataSource()));
-            }
-        }
-        return resultSet;
     }
 
     /**
@@ -235,26 +206,7 @@ public class GroupManager {
         }
         return resultSet;
     }
-    
-    /**
-     * Using the current grouping paramaters set for this manager, find
-     * GroupKeys for all the Groups the given file is a part of.
-     *
-     * @param fileID The Id of the file to get group keys for.
-     *
-     * @return A set of GroupKeys representing the group(s) the given file is a
-     *         part of
-     */
-    synchronized public Set<GroupKey<?>> getGroupKeysForCurrentGroupBy(Long fileID) {
-        try {
-            DrawableFile file = getDrawableDB().getFileFromID(fileID);
-            return getGroupKeysForCurrentGroupBy(file);
-
-        } catch (TskCoreException | TskDataException ex) {
-            logger.log(Level.SEVERE, "Failed to get group keys for file with ID " + fileID, ex); //NON-NLS
-        }
-        return Collections.emptySet();
-    }
+   
 
      /**
      *
@@ -352,11 +304,13 @@ public class GroupManager {
             try {
                 
                 getDrawableDB().markGroupUnseen(group.getGroupKey());
-                // only update and reshuffle if its new results
-                if (group.isSeen() != false) {
+                // only update and reshuffle if its new results        
+                if (group.isSeen() == true) {
                     group.setSeen(false);
-                    updateUnSeenGroups(group);
-                }
+                } 
+                // The group may already be in 'unseen' state, e.g. when new files are added, 
+                // but not be on the unseenGroupsList yet.
+                updateUnSeenGroups(group);
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Error setting group: %s to unseen.", group.getGroupKey().getValue().toString()), ex); //NON-NLS
             }
@@ -370,12 +324,13 @@ public class GroupManager {
      * @param group
      */
     synchronized private void updateUnSeenGroups(DrawableGroup group) {
-        if (group.isSeen()) {
-            unSeenGroups.removeAll(group);
-        } else if (unSeenGroups.contains(group) == false) {
-            unSeenGroups.add(group);
-        }
-        sortUnseenGroups();
+            if (group.isSeen()) {
+                unSeenGroups.removeAll(group);
+            } else if (unSeenGroups.contains(group) == false &&  
+                       getGroupBy() == group.getGroupKey().getAttribute()) {
+                        unSeenGroups.add(group);
+            }
+            sortUnseenGroups();
     }
 
     /**
@@ -707,7 +662,7 @@ public class GroupManager {
                 Exceptions.printStackTrace(ex);
             }   
                     
-            // Update the current groups (if it is visible)
+            // Update all the groups that this file belongs to
             Set<GroupKey<?>> groupsForFile = getAllGroupKeysForFile(fileId);
             for (GroupKey<?> gk : groupsForFile) {
                 // see if a group has been created yet for the key
@@ -816,14 +771,11 @@ public class GroupManager {
                         groupMap.put(groupKey, group);
                     }
                     
-                    // Add to analyzedGroups only if it's the same group type as the one in view
+                    // Add to analyzedGroups only if it's the a group with the selected groupBy attribute
                     if ((analyzedGroups.contains(group) == false) && 
                         (getGroupBy() == group.getGroupKey().getAttribute())) {
-                        // Add to analyzedGroups only if this is the grouping being viewed.
-                        if (getGroupBy() == group.getGroupKey().getAttribute()) {
                             analyzedGroups.add(group);
                             sortAnalyzedGroups();
-                        }
                     }
                     updateUnSeenGroups(group);
 
