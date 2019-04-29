@@ -49,6 +49,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * The subpanel showing the interesting item sets
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
 
     private List<String> setNames;

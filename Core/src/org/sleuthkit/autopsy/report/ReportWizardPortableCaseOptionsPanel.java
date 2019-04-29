@@ -34,7 +34,7 @@ class ReportWizardPortableCaseOptionsPanel implements WizardDescriptor.Finishabl
 
     private WizardDescriptor wiz;
     private ReportWizardPortableCaseOptionsVisualPanel component;
-    private JButton finishButton;
+    private final JButton finishButton;
 
     ReportWizardPortableCaseOptionsPanel() {
         finishButton = new JButton(
@@ -46,13 +46,15 @@ class ReportWizardPortableCaseOptionsPanel implements WizardDescriptor.Finishabl
             public void actionPerformed(ActionEvent e) {
                 wiz.doFinishClick();
             }
-        ;
-    }
-
-    );
+        });
     }
     
-    public void setFinish(boolean enable) {
+    /**
+     * Set whether the finish button is enabled
+     * 
+     * @param enable true if the finish button should be enabled
+     */
+    void setFinish(boolean enable) {
         finishButton.setEnabled(enable);
     }
 

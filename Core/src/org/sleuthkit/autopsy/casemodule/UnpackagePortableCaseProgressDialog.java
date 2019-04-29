@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.casemodule;
 
@@ -25,8 +38,9 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ * Dialog to display the unpackaging progress and allow cancellation.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements PropertyChangeListener {
 
     private UnpackageWorker worker;
@@ -47,8 +61,15 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
         cancelButton.setEnabled(true);
         okButton.setEnabled(false);
         progressBar.setIndeterminate(true);
+        resultLabel.setText(""); // NON-NLS
     }
     
+    /**
+     * Unpackage the case
+     * 
+     * @param packagedCase  The compressed case
+     * @param outputFolder  The output folder
+     */
     void unpackageCase(String packagedCase, String outputFolder) {
         
         worker = new UnpackageWorker(packagedCase, outputFolder);
@@ -86,6 +107,9 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
         }
     }
     
+    /**
+     * Swing worker to do the decompression.
+     */
     private class UnpackageWorker extends SwingWorker<Void, Void> {
         
         private final String packagedCase;
@@ -171,10 +195,19 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             }
         }
         
+        /**
+         * Save the error that should be displayed to the user
+         * 
+         * @param errorStr Error to be displayed in the UI
+         */
         private synchronized void setDisplayError(String errorStr) {
             lastError = errorStr;
         }
         
+        /**
+         * Gets the error to display to the user
+         * @return Error to be displayed in the UI
+         */
         private synchronized String getDisplayError() {
             return lastError;
         }
@@ -246,29 +279,26 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, 409, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(resultLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cancelButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(resultLabel)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(cancelButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(31, 31, 31)
+                .addContainerGap()
                 .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cancelButton)
-                    .addComponent(okButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultLabel)
-                .addContainerGap(206, Short.MAX_VALUE))
+                    .addComponent(okButton)
+                    .addComponent(resultLabel))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();

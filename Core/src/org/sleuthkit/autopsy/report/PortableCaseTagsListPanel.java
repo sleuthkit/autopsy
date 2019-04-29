@@ -47,6 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * The subpanel showing the tags in use.
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class PortableCaseTagsListPanel extends javax.swing.JPanel {
 
     private List<TagName> tagNames;

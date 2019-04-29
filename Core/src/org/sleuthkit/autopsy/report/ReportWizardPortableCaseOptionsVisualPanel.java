@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.report.PortableCaseReportModule.PortableCaseOptions
 /**
  * The UI portion of the Portable Case config panel
  */
+@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class ReportWizardPortableCaseOptionsVisualPanel extends javax.swing.JPanel {
 
     private final ReportWizardPortableCaseOptionsPanel wizPanel;

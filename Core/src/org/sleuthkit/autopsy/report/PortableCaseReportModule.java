@@ -64,7 +64,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * Creates a portable case from tagged files
  */
-public class PortableCaseReportModule implements ReportModule {
+class PortableCaseReportModule implements ReportModule {
     private static final Logger logger = Logger.getLogger(PortableCaseReportModule.class.getName());
     private static final String FILE_FOLDER_NAME = "PortableCaseFiles";  // NON-NLS
     private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";  // NON-NLS
@@ -99,7 +99,7 @@ public class PortableCaseReportModule implements ReportModule {
     // Map of old artifact ID to new artifact
     private final Map<Long, BlackboardArtifact> oldArtifactIdToNewArtifact = new HashMap<>();
     
-    public PortableCaseReportModule() {
+    PortableCaseReportModule() {
         caseName = Case.getCurrentCase().getDisplayName() + " (Portable)"; // NON-NLS
     }
 

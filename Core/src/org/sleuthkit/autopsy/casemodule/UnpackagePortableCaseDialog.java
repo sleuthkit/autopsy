@@ -1,11 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
+import java.nio.file.Paths;
 import javax.swing.JFileChooser;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -13,7 +27,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.openide.util.NbBundle;
 
 /**
- *
+ * Dialog for unpackaging a portable case
  */
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
 class UnpackagePortableCaseDialog extends javax.swing.JDialog {
@@ -27,9 +41,10 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
      */
     @NbBundle.Messages({
         "UnpackagePortableCaseDialog.UnpackagePortableCaseDialog.extensions=Portable case package (.zip, .zip.001)",
+        "UnpackagePortableCaseDialog.title.text=Unpackage Portable Case",
     }) 
-    UnpackagePortableCaseDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    UnpackagePortableCaseDialog(java.awt.Frame parent) {
+        super(parent, Bundle.UnpackagePortableCaseDialog_title_text(), true);
         initComponents();
         
         FileNameExtensionFilter pkgFilter = new FileNameExtensionFilter(
@@ -82,11 +97,17 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
         
     }
     
+    /**
+     * Check whether the input and output paths are valid.
+     */
     @NbBundle.Messages({
         "UnpackagePortableCaseDialog.validatePaths.caseNotFound=File does not exist",
         "UnpackagePortableCaseDialog.validatePaths.caseIsNotFile=Selected path is not a file",
         "UnpackagePortableCaseDialog.validatePaths.folderNotFound=Folder does not exist",
         "UnpackagePortableCaseDialog.validatePaths.notAFolder=Output location is not a directory",
+        "# {0} - case folder",
+        "UnpackagePortableCaseDialog.validatePaths.caseFolderExists=Folder {0} already exists",
+        "UnpackagePortableCaseDialog.validatePaths.badExtension=File extension must be .zip or .zip.001",
     })
     private void validatePaths() {
         boolean isValid = true;
@@ -105,13 +126,22 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
             } else if (! portableCasePackage.isFile()) {
                 caseErrorLabel.setText(Bundle.UnpackagePortableCaseDialog_validatePaths_caseIsNotFile());
                 isValid = false;
-            } else {
-                caseErrorLabel.setText(""); // NON-NLS
+            }else {
+                // Do a final check that if the exension is ".001" it is preceeded by ".zip"
+                if (portableCasePackage.getAbsolutePath().endsWith(".001")) { // NON-NLS
+                    if (portableCasePackage.getAbsolutePath().endsWith(".zip.001")) {
+                        caseErrorLabel.setText(""); // NON-NLS
+                    } else {
+                        caseErrorLabel.setText(Bundle.UnpackagePortableCaseDialog_validatePaths_badExtension());
+                        isValid = false;
+                    }
+                } else {
+                    caseErrorLabel.setText(""); // NON-NLS
+                }
             }
         }
         
         // Now test the output folder
-        // First test the case package
         if (outputTextField.getText().isEmpty()) {
             outputErrorLabel.setText(""); // NON-NLS
             isValid = false;
@@ -123,7 +153,27 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
                 outputErrorLabel.setText(Bundle.UnpackagePortableCaseDialog_validatePaths_notAFolder());
                 isValid = false;
             } else {
-                outputErrorLabel.setText(""); // NON-NLS
+                // Check if the expected output folder exists if we are in a potentially valid state
+                if (isValid) {
+                    String caseFolderName = portableCasePackage.getName();
+                    if (caseFolderName.endsWith(".zip.001")) { // NON-NLS
+                        caseFolderName = caseFolderName.substring(0, caseFolderName.length() - 8);
+                    } else if (caseFolderName.endsWith(".zip")) { // NON-NLS
+                        caseFolderName = caseFolderName.substring(0, caseFolderName.length() - 4);
+                    }
+                    
+                    File expectedCaseFolder = Paths.get(outputDir.toString(), caseFolderName).toFile();
+                    if (expectedCaseFolder.exists()) {
+                        String pathToDisplay = expectedCaseFolder.toString();
+                        if (pathToDisplay.length() > 40) {
+                            pathToDisplay = "\"..." + pathToDisplay.substring(pathToDisplay.length() - 38) + "\""; // NON-NLS
+                        }
+                        outputErrorLabel.setText(Bundle.UnpackagePortableCaseDialog_validatePaths_caseFolderExists(pathToDisplay));
+                        isValid = false;
+                    } else {
+                         outputErrorLabel.setText(""); // NON-NLS
+                    }
+                }
             }
         }
         
@@ -211,22 +261,20 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
                         .addComponent(caseTextField)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(caseSelectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(desc1Label)
-                            .addComponent(desc2Label)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel7)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(caseErrorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel8)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(outputErrorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                                .addGap(112, 112, 112)))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel7)
+                            .addGap(18, 18, 18)
+                            .addComponent(caseErrorLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(desc1Label)
+                                .addComponent(desc2Label)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(jLabel8)
+                                    .addGap(18, 18, 18)
+                                    .addComponent(outputErrorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 361, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGap(0, 0, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(outputTextField)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -272,6 +320,9 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void outputSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_outputSelectButtonActionPerformed
+        if (! outputTextField.getText().isEmpty()) {
+            outputFileChooser.setCurrentDirectory(new File(outputTextField.getText()));
+        }
         int returnVal = outputFileChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             outputTextField.setText(outputFileChooser.getSelectedFile().getAbsolutePath());
@@ -279,18 +330,17 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_outputSelectButtonActionPerformed
 
     private void caseSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_caseSelectButtonActionPerformed
+        if (! caseTextField.getText().isEmpty()) {
+            caseFileChooser.setCurrentDirectory(new File(caseTextField.getText()));
+        }
         int returnVal = caseFileChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             caseTextField.setText(caseFileChooser.getSelectedFile().getAbsolutePath());
             
-            // If the output folder field is empty, auto-fill it with the case folder
-            if (outputTextField.getText().isEmpty() &&
-                caseTextField.getText() != null && (! caseTextField.getText().isEmpty())) {
-                
-                File tempCase = new File(caseTextField.getText());
-                if (tempCase.exists()) {
-                    outputTextField.setText(tempCase.getParent());
-                }
+            // Auto-fill the output field with the case folder
+            File tempCase = new File(caseTextField.getText());
+            if (tempCase.exists()) {
+                outputTextField.setText(tempCase.getParent());
             }
         }
     }//GEN-LAST:event_caseSelectButtonActionPerformed
@@ -302,6 +352,7 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
     private void unpackageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unpackageButtonActionPerformed
         UnpackagePortableCaseProgressDialog dialog = new UnpackagePortableCaseProgressDialog();
         dialog.unpackageCase(caseTextField.getText(), outputTextField.getText());
+        validatePaths(); // The output folder now exists so we need to disable the unpackage button
     }//GEN-LAST:event_unpackageButtonActionPerformed
 
 

@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.event.ActionEvent;
-import java.beans.PropertyChangeEvent;
-import java.util.EnumSet;
 import javax.swing.Action;
 import javax.swing.JFrame;
 import org.openide.awt.ActionID;
@@ -29,21 +26,18 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
 
 @ActionID(category = "Case", id = "org.sleuthkit.autopsy.casemodule.UnpackagePortableCaseAction")
 @ActionRegistration(displayName = "#CTL_UnpackagePortableCaseAction", lazy = false)
 @Messages({"CTL_UnpackagePortableCaseAction=Unpackage Portable Case"})
 /**
- * DataSourceSummaryAction action for the Case menu to activate a
- * ViewSummaryInformationAction selecting the first data source.
+ * Unpackage Portable Case action for the Case menu to allow the user to
+ * decompress a portable case.
  */
 public class UnpackagePortableCaseAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     */
     UnpackagePortableCaseAction() {
         putValue(Action.NAME, Bundle.CTL_UnpackagePortableCaseAction());
         this.setEnabled(true);
@@ -52,7 +46,7 @@ public class UnpackagePortableCaseAction extends CallableSystemAction {
     @Override
     public void performAction() {
         JFrame parentFrame = (JFrame) WindowManager.getDefault().getMainWindow();
-        UnpackagePortableCaseDialog dialog = new UnpackagePortableCaseDialog(parentFrame, true);
+        UnpackagePortableCaseDialog dialog = new UnpackagePortableCaseDialog(parentFrame);
         dialog.setLocationRelativeTo(parentFrame);
         dialog.setVisible(true);
     }
