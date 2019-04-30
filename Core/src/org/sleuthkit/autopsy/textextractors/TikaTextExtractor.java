@@ -120,6 +120,16 @@ final class TikaTextExtractor implements TextExtractor {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
+    //Tika should ignore types with embedded files that can be handled by the unpacking modules
+    private static final List<String> EMBEDDED_FILE_MIME_TYPES
+            = ImmutableList.of("application/msword", //NON-NLS
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", //NON-NLS
+                    "application/vnd.ms-powerpoint", //NON-NLS
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation", //NON-NLS
+                    "application/vnd.ms-excel", //NON-NLS
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", //NON-NLS
+                    "application/pdf"); //NON-NLS
+
     private static final java.util.logging.Logger TIKA_LOGGER = java.util.logging.Logger.getLogger("Tika"); //NON-NLS
     private static final Logger AUTOPSY_LOGGER = Logger.getLogger(TikaTextExtractor.class.getName());
 
@@ -137,7 +147,7 @@ final class TikaTextExtractor implements TextExtractor {
     private static final File TESSERACT_PATH = locateTesseractExecutable();
     private String languagePacks = formatLanguagePacks(PlatformUtil.getOcrLanguagePacks());
     private static final String TESSERACT_OUTPUT_FILE_NAME = "tess_output"; //NON-NLS
-    
+
     private ProcessTerminator processTerminator;
 
     private static final List<String> TIKA_SUPPORTED_TYPES
@@ -152,8 +162,8 @@ final class TikaTextExtractor implements TextExtractor {
 
     /**
      * If Tesseract has been installed and is set to be used through
-     * configuration, then ocr is enabled. OCR can only currently be run on
-     * 64 bit Windows OS.
+     * configuration, then ocr is enabled. OCR can only currently be run on 64
+     * bit Windows OS.
      *
      * @return Flag indicating if OCR is set to be used.
      */
@@ -178,10 +188,14 @@ final class TikaTextExtractor implements TextExtractor {
         InputStream stream = null;
 
         ParseContext parseContext = new ParseContext();
-        
-        //Disable appending embedded file text to output 
+
+        //Disable appending embedded file text to output for EFE supported types
         //JIRA-4975
-        parseContext.set(Parser.class, new EmptyParser());
+        if(content instanceof AbstractFile && EMBEDDED_FILE_MIME_TYPES.contains(((AbstractFile)content).getMIMEType())) {
+            parseContext.set(Parser.class, new EmptyParser());
+        } else {
+            parseContext.set(Parser.class, parser);
+        }
 
         if (ocrEnabled() && content instanceof AbstractFile) {
             AbstractFile file = ((AbstractFile) content);
@@ -205,7 +219,7 @@ final class TikaTextExtractor implements TextExtractor {
                 TesseractOCRConfig ocrConfig = new TesseractOCRConfig();
                 String tesseractFolder = TESSERACT_PATH.getParent();
                 ocrConfig.setTesseractPath(tesseractFolder);
-                
+
                 ocrConfig.setLanguage(languagePacks);
                 ocrConfig.setTessdataPath(PlatformUtil.getOcrLanguagePacksPath());
                 parseContext.set(TesseractOCRConfig.class, ocrConfig);
@@ -277,7 +291,7 @@ final class TikaTextExtractor implements TextExtractor {
         File outputFile = null;
         try {
             String tempDirectory = Case.getCurrentCaseThrows().getTempDirectory();
-            
+
             //Appending file id makes the name unique
             String tempFileName = FileUtil.escapeFileName(file.getId() + file.getName());
             inputFile = Paths.get(tempDirectory, tempFileName).toFile();
@@ -318,7 +332,7 @@ final class TikaTextExtractor implements TextExtractor {
             }
         }
     }
-    
+
     /**
      * Wraps the creation of a TikaReader into a Future so that it can be
      * cancelled.
@@ -430,11 +444,11 @@ final class TikaTextExtractor implements TextExtractor {
      */
     @Override
     public boolean isSupported() {
-        if(!(content instanceof AbstractFile)) {
+        if (!(content instanceof AbstractFile)) {
             return false;
         }
-        
-        String detectedType = ((AbstractFile)content).getMIMEType();
+
+        String detectedType = ((AbstractFile) content).getMIMEType();
         if (detectedType == null
                 || BINARY_MIME_TYPES.contains(detectedType) //any binary unstructured blobs (string extraction will be used)
                 || ARCHIVE_MIME_TYPES.contains(detectedType)
@@ -443,7 +457,7 @@ final class TikaTextExtractor implements TextExtractor {
                 ) {
             return false;
         }
-        
+
         return TIKA_SUPPORTED_TYPES.contains(detectedType);
     }
 
@@ -493,11 +507,11 @@ final class TikaTextExtractor implements TextExtractor {
         if (context != null) {
             ImageConfig configInstance = context.lookup(ImageConfig.class);
             if (configInstance != null) {
-                if(Objects.nonNull(configInstance.getOCREnabled())) {
+                if (Objects.nonNull(configInstance.getOCREnabled())) {
                     this.tesseractOCREnabled = configInstance.getOCREnabled();
                 }
-                
-                if(Objects.nonNull(configInstance.getOCRLanguages())) {
+
+                if (Objects.nonNull(configInstance.getOCRLanguages())) {
                     this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
                 }
             }
