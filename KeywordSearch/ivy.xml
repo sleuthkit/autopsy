@@ -45,6 +45,6 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
         
-        <override org="org.cleartk" module="cleartk-util" rev="2.0.0"/>            
+        <override org="org.cleartk" module="cleartk-util" rev="2.0.0"/>
     </dependencies>
 </ivy-module>
