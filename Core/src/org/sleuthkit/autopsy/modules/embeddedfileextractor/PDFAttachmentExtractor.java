@@ -61,15 +61,16 @@ final class PDFAttachmentExtractor {
     }
 
     /**
-     * The public endpoint 
+     * Extracts PDF attachments from a given input and writes them to the supplied
+     * output directory.
      * 
-     * @param input
-     * @param parentID
-     * @param outputDir
-     * @return
+     * @param input Input PDF to extract attachments from
+     * @param parentID ID for unique extraction names
+     * @param outputDir Directory to write attachments
+     * @return Map containing file name -> location on disk
      * @throws IOException
      * @throws SAXException
-     * @throws TikaException
+     * @throws TikaException 
      */
     public Map<String, Path> extract(InputStream input, long parentID, Path outputDir) throws IOException, SAXException, TikaException {
         ExtractionPreconditions.checkArgument(Files.exists(outputDir), 

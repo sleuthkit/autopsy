@@ -78,7 +78,7 @@ class DocumentEmbeddedContentExtractor {
 
     private final FileManager fileManager;
     private final IngestServices services;
-    private static final Logger LOGGER = Logger.getLogger(EmbeddedDocumentExtractor.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DocumentEmbeddedContentExtractor.class.getName());
     private final IngestJobContext context;
     private String parentFileName;
     private final String UNKNOWN_IMAGE_NAME_PREFIX = "image_"; //NON-NLS
