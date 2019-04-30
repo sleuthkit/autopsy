@@ -70,6 +70,24 @@
                 <package>com.google.gson.internal.bind.util</package>
                 <package>com.google.gson.reflect</package>
                 <package>com.google.gson.stream</package>
+                <package>com.microsoft.schemas.compatibility</package>
+                <package>com.microsoft.schemas.compatibility.impl</package>
+                <package>com.microsoft.schemas.office.excel</package>
+                <package>com.microsoft.schemas.office.excel.impl</package>
+                <package>com.microsoft.schemas.office.office</package>
+                <package>com.microsoft.schemas.office.office.impl</package>
+                <package>com.microsoft.schemas.office.visio.x2012.main</package>
+                <package>com.microsoft.schemas.office.visio.x2012.main.impl</package>
+                <package>com.microsoft.schemas.office.x2006.digsig</package>
+                <package>com.microsoft.schemas.office.x2006.digsig.impl</package>
+                <package>com.microsoft.schemas.office.x2006.encryption</package>
+                <package>com.microsoft.schemas.office.x2006.encryption.impl</package>
+                <package>com.microsoft.schemas.office.x2006.keyEncryptor.certificate</package>
+                <package>com.microsoft.schemas.office.x2006.keyEncryptor.certificate.impl</package>
+                <package>com.microsoft.schemas.office.x2006.keyEncryptor.password</package>
+                <package>com.microsoft.schemas.office.x2006.keyEncryptor.password.impl</package>
+                <package>com.microsoft.schemas.vml</package>
+                <package>com.microsoft.schemas.vml.impl</package>
                 <package>com.sun.activation.registries</package>
                 <package>com.sun.activation.viewers</package>
                 <package>com.sun.jna</package>
@@ -232,10 +250,59 @@
                 <package>org.apache.avalon.framework.thread</package>
                 <package>org.apache.commons.codec</package>
                 <package>org.apache.commons.codec.binary</package>
+                <package>org.apache.commons.codec.cli</package>
                 <package>org.apache.commons.codec.digest</package>
                 <package>org.apache.commons.codec.language</package>
+                <package>org.apache.commons.codec.language.bm</package>
                 <package>org.apache.commons.codec.net</package>
                 <package>org.apache.commons.collections4</package>
+                <package>org.apache.commons.collections4.bag</package>
+                <package>org.apache.commons.collections4.bidimap</package>
+                <package>org.apache.commons.collections4.collection</package>
+                <package>org.apache.commons.collections4.comparators</package>
+                <package>org.apache.commons.collections4.functors</package>
+                <package>org.apache.commons.collections4.iterators</package>
+                <package>org.apache.commons.collections4.keyvalue</package>
+                <package>org.apache.commons.collections4.list</package>
+                <package>org.apache.commons.collections4.map</package>
+                <package>org.apache.commons.collections4.multimap</package>
+                <package>org.apache.commons.collections4.multiset</package>
+                <package>org.apache.commons.collections4.properties</package>
+                <package>org.apache.commons.collections4.queue</package>
+                <package>org.apache.commons.collections4.sequence</package>
+                <package>org.apache.commons.collections4.set</package>
+                <package>org.apache.commons.collections4.splitmap</package>
+                <package>org.apache.commons.collections4.trie</package>
+                <package>org.apache.commons.collections4.trie.analyzer</package>
+                <package>org.apache.commons.compress</package>
+                <package>org.apache.commons.compress.archivers</package>
+                <package>org.apache.commons.compress.archivers.ar</package>
+                <package>org.apache.commons.compress.archivers.arj</package>
+                <package>org.apache.commons.compress.archivers.cpio</package>
+                <package>org.apache.commons.compress.archivers.dump</package>
+                <package>org.apache.commons.compress.archivers.examples</package>
+                <package>org.apache.commons.compress.archivers.jar</package>
+                <package>org.apache.commons.compress.archivers.sevenz</package>
+                <package>org.apache.commons.compress.archivers.tar</package>
+                <package>org.apache.commons.compress.archivers.zip</package>
+                <package>org.apache.commons.compress.changes</package>
+                <package>org.apache.commons.compress.compressors</package>
+                <package>org.apache.commons.compress.compressors.brotli</package>
+                <package>org.apache.commons.compress.compressors.bzip2</package>
+                <package>org.apache.commons.compress.compressors.deflate</package>
+                <package>org.apache.commons.compress.compressors.deflate64</package>
+                <package>org.apache.commons.compress.compressors.gzip</package>
+                <package>org.apache.commons.compress.compressors.lz4</package>
+                <package>org.apache.commons.compress.compressors.lz77support</package>
+                <package>org.apache.commons.compress.compressors.lzma</package>
+                <package>org.apache.commons.compress.compressors.lzw</package>
+                <package>org.apache.commons.compress.compressors.pack200</package>
+                <package>org.apache.commons.compress.compressors.snappy</package>
+                <package>org.apache.commons.compress.compressors.xz</package>
+                <package>org.apache.commons.compress.compressors.z</package>
+                <package>org.apache.commons.compress.compressors.zstandard</package>
+                <package>org.apache.commons.compress.parallel</package>
+                <package>org.apache.commons.compress.utils</package>
                 <package>org.apache.commons.csv</package>
                 <package>org.apache.commons.io</package>
                 <package>org.apache.commons.io.comparator</package>
@@ -304,8 +371,8 @@
                 <package>org.apache.poi.common.usermodel</package>
                 <package>org.apache.poi.common.usermodel.fonts</package>
                 <package>org.apache.poi.ddf</package>
-                <package>org.apache.poi.dev</package>
                 <package>org.apache.poi.extractor</package>
+                <package>org.apache.poi.extractor.ole2</package>
                 <package>org.apache.poi.hdgf</package>
                 <package>org.apache.poi.hdgf.chunks</package>
                 <package>org.apache.poi.hdgf.dev</package>
@@ -374,6 +441,9 @@
                 <package>org.apache.poi.hwpf.model.types</package>
                 <package>org.apache.poi.hwpf.sprm</package>
                 <package>org.apache.poi.hwpf.usermodel</package>
+                <package>org.apache.poi.ooxml</package>
+                <package>org.apache.poi.ooxml.extractor</package>
+                <package>org.apache.poi.ooxml.util</package>
                 <package>org.apache.poi.openxml4j.exceptions</package>
                 <package>org.apache.poi.openxml4j.opc</package>
                 <package>org.apache.poi.openxml4j.opc.internal</package>
@@ -401,6 +471,7 @@
                 <package>org.apache.poi.sl.draw</package>
                 <package>org.apache.poi.sl.draw.binding</package>
                 <package>org.apache.poi.sl.draw.geom</package>
+                <package>org.apache.poi.sl.extractor</package>
                 <package>org.apache.poi.sl.image</package>
                 <package>org.apache.poi.sl.usermodel</package>
                 <package>org.apache.poi.ss</package>
@@ -424,6 +495,9 @@
                 <package>org.apache.poi.ss.util.cellwalk</package>
                 <package>org.apache.poi.util</package>
                 <package>org.apache.poi.wp.usermodel</package>
+                <package>org.apache.poi.xddf.usermodel</package>
+                <package>org.apache.poi.xddf.usermodel.chart</package>
+                <package>org.apache.poi.xddf.usermodel.text</package>
                 <package>org.apache.poi.xdgf.exceptions</package>
                 <package>org.apache.poi.xdgf.extractor</package>
                 <package>org.apache.poi.xdgf.geom</package>
@@ -440,7 +514,6 @@
                 <package>org.apache.poi.xslf.util</package>
                 <package>org.apache.poi.xssf</package>
                 <package>org.apache.poi.xssf.binary</package>
-                <package>org.apache.poi.xssf.dev</package>
                 <package>org.apache.poi.xssf.eventusermodel</package>
                 <package>org.apache.poi.xssf.extractor</package>
                 <package>org.apache.poi.xssf.model</package>
@@ -530,9 +603,6 @@
                 <package>org.apache.xmlbeans.impl.jam.provider</package>
                 <package>org.apache.xmlbeans.impl.jam.visitor</package>
                 <package>org.apache.xmlbeans.impl.jam.xml</package>
-                <package>org.apache.xmlbeans.impl.piccolo.io</package>
-                <package>org.apache.xmlbeans.impl.piccolo.util</package>
-                <package>org.apache.xmlbeans.impl.piccolo.xml</package>
                 <package>org.apache.xmlbeans.impl.regex</package>
                 <package>org.apache.xmlbeans.impl.richParser</package>
                 <package>org.apache.xmlbeans.impl.schema</package>
@@ -554,6 +624,7 @@
                 <package>org.apache.xmlbeans.impl.xb.xsdownload.impl</package>
                 <package>org.apache.xmlbeans.impl.xb.xsdschema</package>
                 <package>org.apache.xmlbeans.impl.xb.xsdschema.impl</package>
+                <package>org.apache.xmlbeans.impl.xpathgen</package>
                 <package>org.apache.xmlbeans.impl.xsd2inst</package>
                 <package>org.apache.xmlbeans.soap</package>
                 <package>org.apache.xmlbeans.xml.stream</package>
@@ -589,6 +660,8 @@
                 <package>org.dom4j.util</package>
                 <package>org.dom4j.xpath</package>
                 <package>org.dom4j.xpp</package>
+                <package>org.etsi.uri.x01903.v13</package>
+                <package>org.etsi.uri.x01903.v13.impl</package>
                 <package>org.freedesktop.gstreamer</package>
                 <package>org.freedesktop.gstreamer.device</package>
                 <package>org.freedesktop.gstreamer.elements</package>
@@ -668,6 +741,8 @@
                 <package>org.slf4j.helpers</package>
                 <package>org.slf4j.impl</package>
                 <package>org.slf4j.spi</package>
+                <package>org.w3.x2000.x09.xmldsig</package>
+                <package>org.w3.x2000.x09.xmldsig.impl</package>
                 <package>org.w3c.dom</package>
                 <package>org.w3c.dom.css</package>
                 <package>org.w3c.dom.events</package>
@@ -680,6 +755,8 @@
                 <package>org.xml.sax.ext</package>
                 <package>org.xml.sax.helpers</package>
                 <package>repackage</package>
+                <package>schemaorg_apache_xmlbeans.system.s8C3F193EE11A2F798ACF65489B9E6078</package>
+                <package>schemaorg_apache_xmlbeans.system.sD023D6490046BA0250A839A9AD24C443</package>
                 <package>schemaorg_apache_xmlbeans.system.sXMLCONFIG</package>
                 <package>schemaorg_apache_xmlbeans.system.sXMLLANG</package>
                 <package>schemaorg_apache_xmlbeans.system.sXMLSCHEMA</package>
@@ -758,12 +835,12 @@
                 <binary-origin>release/modules/ext/imgscalr-lib-4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/xmlbeans-2.6.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/xmlbeans-2.6.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/common-io-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/common-io-3.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/xmlbeans-3.0.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/xmlbeans-3.0.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.0-sources.jar</runtime-relative-path>
@@ -794,16 +871,24 @@
                 <binary-origin>release/modules/ext/joda-time-2.4-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/poi-scratchpad-4.0.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\poi-scratchpad-4.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/imageio-psd-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-psd-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/stax-api-1.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/stax-api-1.0.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/servlet-api-2.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/servlet-api-2.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-ooxml-4.0.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\poi-ooxml-4.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-codec-1.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pcx-3.2.jar</runtime-relative-path>
@@ -854,20 +939,20 @@
                 <binary-origin>release/modules/ext/joda-time-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-collections4-4.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-collections4-4.1.jar</binary-origin>
+                <runtime-relative-path>ext/commons-compress-1.18.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-compress-1.18.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-1.1.2-javadoc.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-logging-1.1.2-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-codec-1.10.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-codec-1.10.jar</binary-origin>
+                <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/opencv-248.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/gson-2.8.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/gson-2.8.1.jar</binary-origin>
+                <runtime-relative-path>ext/gson-2.8.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/gson-2.8.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/opencv-248.jar</runtime-relative-path>
@@ -882,20 +967,12 @@
                 <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-3.17.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-3.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-schemas-3.17.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-schemas-3.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-3.17.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-scratchpad-3.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-io-2.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-io-2.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-collections4-4.2.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-collections4-4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
@@ -922,10 +999,6 @@
                 <binary-origin>release/modules/ext/ant-1.8.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-excelant-3.17.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-excelant-3.17.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/javassist-3.12.1.GA.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javassist-3.12.1.GA.jar</binary-origin>
             </class-path-extension>
@@ -934,12 +1007,16 @@
                 <binary-origin>release/modules/ext/imageio-core-3.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.1.2.jar</binary-origin>
+                <runtime-relative-path>ext/poi-4.0.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\poi-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-3.17.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-3.17.jar</binary-origin>
+                <runtime-relative-path>ext/poi-excelant-4.0.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\poi-excelant-4.0.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
@@ -956,6 +1033,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/common-image-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/common-image-3.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/poi-ooxml-schemas-4.0.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\poi-ooxml-schemas-4.0.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pict-3.2.jar</runtime-relative-path>

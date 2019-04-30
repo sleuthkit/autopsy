@@ -62,7 +62,9 @@ The following topics are available here:
   - \subpage windows_authentication
  - \subpage multiuser_sec_page
  - \subpage multiuser_page
-- \subpage live_triage_page
+- Triage
+ - \subpage triage_page
+ - \subpage live_triage_page
 - \subpage advanced_page
 - \subpage experimental_page
 - \subpage command_line_ingest_page

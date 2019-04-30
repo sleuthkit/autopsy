@@ -58,7 +58,6 @@ CVTTopComponent.browseVisualizeTabPane.AccessibleContext.accessibleName=Visualiz
 CVTTopComponent.vizPanel.TabConstraints.tabTitle_1=Visualize
 VisualizationPanel.fitGraphButton.text=
 VisualizationPanel.jTextArea1.text=Right-click an account in the Browse Accounts table, and select 'Visualize' to begin.
-VisualizationPanel.jLabel1.text=Layouts:
 # {0} -  layout name
 VisualizationPanel.layoutFail.text={0} layout failed. Try a different layout.
 # {0} - layout name
@@ -77,12 +76,24 @@ VisualizationPanel.zoomInButton.toolTipText=Zoom in
 VisualizationPanel.zoomInButton.text=
 VisualizationPanel.zoomOutButton.toolTipText=Zoom out
 VisualizationPanel.zoomOutButton.text=
+<<<<<<< HEAD
+VisualizationPanel.fastOrganicLayoutButton.text=Redraw
+VisualizationPanel.clearVizButton.text_1=Clear
+VisualizationPanel.backButton.text_1=
+VisualizationPanel.forwardButton.text=
+=======
 VisualizationPanel.circleLayoutButton.text=Circle
 VisualizationPanel.organicLayoutButton.text=Organic
-VisualizationPanel.fastOrganicLayoutButton.text=Fast Organic
+VisualizationPanel.fastOrganicLayoutButton.text=
 VisualizationPanel.hierarchyLayoutButton.text=Hierarchical
-VisualizationPanel.clearVizButton.text_1=Clear Viz.
+VisualizationPanel.clearVizButton.text_1=
 VisualizationPanel.snapshotButton.text_1=Snapshot Report
+>>>>>>> develop
+VisualizationPanel.clearVizButton.actionCommand=
+VisualizationPanel.backButton.toolTipText=Click to go back
+VisualizationPanel.forwardButton.toolTipText=Click to go forward
+VisualizationPanel.fastOrganicLayoutButton.toolTipText=Click to redraw the chart
+VisualizationPanel.clearVizButton.toolTipText=Click to clear the chart
 VisualizationPanel_action_dialogs_title=Communications
 VisualizationPanel_action_name_text=Snapshot Report
 VisualizationPanel_module_name=Communications
