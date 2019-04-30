@@ -193,7 +193,7 @@ final class VcardParser {
                 }
             }
         }
-        ThunderbirdMboxFileIngestModule.addArtifactAttribute(name, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME_PERSON, attributes);
+        ThunderbirdMboxFileIngestModule.addArtifactAttribute(name, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, attributes);
         
         for (Telephone telephone : vcard.getTelephoneNumbers()) {
             addPhoneAttributes(telephone, abstractFile, attributes);
@@ -412,7 +412,7 @@ final class VcardParser {
                         type.getValue().toUpperCase().replaceAll("\\s+","").split(","));
 
                 for (String splitType : splitTelephoneTypes) {
-                    String attributeTypeName = "TSK_PHONE_" + splitType;
+                    String attributeTypeName = "TSK_PHONE_NUMBER_" + splitType;
                     try {
                         BlackboardAttribute.Type attributeType = tskCase.getAttributeType(attributeTypeName);
                         if (attributeType == null) {
