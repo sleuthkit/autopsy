@@ -38,17 +38,12 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Factory for creating thumbnail children nodes.
- *
- * Given the current way that DataResultViewerThumbnail works this class must
- * extend Children.Keys not ChildFactory. When a ChildFactory is used
- * the addNotify function in ThumbnailChildNode ends up wtih a list containing
- * just the wait node and the thumbanils never appear.
  */
 final class ThumbnailChildren extends Children.Keys<AbstractFile> {
 
     private static final Logger logger = Logger.getLogger(ThumbnailChildren.class.getName());
 
-    private final Set<AbstractFile> thumbnails;
+    private final Set<BlackboardArtifact> artifacts;
 
     /*
      * Creates the list of thumbnails from the given list of
@@ -59,7 +54,22 @@ final class ThumbnailChildren extends Children.Keys<AbstractFile> {
      */
     ThumbnailChildren(Set<BlackboardArtifact> artifacts) {
         super(false);
-        thumbnails = new TreeSet<>((AbstractFile file1, AbstractFile file2) -> {
+        
+        this.artifacts = artifacts;
+        
+       
+    }
+
+    @Override
+    protected Node[] createNodes(AbstractFile t) {
+        return new Node[]{new ThumbnailNode(t)};
+    }
+
+    @Override
+    protected void addNotify() {
+        super.addNotify();
+        
+        Set<AbstractFile> thumbnails = new TreeSet<>((AbstractFile file1, AbstractFile file2) -> {
             int result = Long.compare(file1.getSize(), file2.getSize());
             if (result == 0) {
                 result = file1.getName().compareTo(file2.getName());
@@ -71,7 +81,7 @@ final class ThumbnailChildren extends Children.Keys<AbstractFile> {
         artifacts.forEach((bba) -> {
             try {
                 for (Content childContent : bba.getChildren()) {
-                    if (childContent instanceof AbstractFile && ImageUtils.thumbnailSupported((AbstractFile) childContent)) {
+                    if (childContent instanceof AbstractFile) {
                         thumbnails.add((AbstractFile) childContent);
                     }
                 }
@@ -79,16 +89,7 @@ final class ThumbnailChildren extends Children.Keys<AbstractFile> {
                 logger.log(Level.WARNING, "Unable to get children from artifact.", ex); //NON-NLS
             }
         });
-    }
-
-    @Override
-    protected Node[] createNodes(AbstractFile t) {
-        return new Node[]{new ThumbnailNode(t)};
-    }
-
-    @Override
-    protected void addNotify() {
-        super.addNotify();
+        
         setKeys(thumbnails);
     }
 
