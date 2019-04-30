@@ -50,14 +50,14 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataSourceBrowser.class.getName());
+    private static final int COUNT_COLUMN_WIDTH = 25;
+    private static final int USAGE_COLUMN_WIDTH = 120;
+    private static final int DATA_SOURCE_COLUMN_WIDTH = 325;
     private final Outline outline;
     private final org.openide.explorer.view.OutlineView outlineView;
     private final ExplorerManager explorerManager;
     private final List<DataSourceSummary> dataSourceSummaryList;
     private final RightAlignedTableCellRenderer rightAlignedRenderer = new RightAlignedTableCellRenderer();
-    private final int COUNT_COLUMN_WIDTH = 25;
-    private final int USAGE_COLUMN_WIDTH = 120;
-    private final int DATA_SOURCE_COLUMN_WIDTH = 325;
 
     /**
      * Creates new form DataSourceBrowser
