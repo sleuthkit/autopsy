@@ -55,7 +55,9 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
     private final ExplorerManager explorerManager;
     private final List<DataSourceSummary> dataSourceSummaryList;
     private final RightAlignedTableCellRenderer rightAlignedRenderer = new RightAlignedTableCellRenderer();
-
+    private final int COUNT_COLUMN_WIDTH = 25;
+    private final int USAGE_COLUMN_WIDTH = 120;
+    private final int DATA_SOURCE_COLUMN_WIDTH = 325;
     /**
      * Creates new form DataSourceBrowser
      */
@@ -84,6 +86,13 @@ final class DataSourceBrowser extends javax.swing.JPanel implements ExplorerMana
                     || column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_results_header())
                     || column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_tags_header())) {
                 column.setCellRenderer(rightAlignedRenderer);
+                column.setPreferredWidth(COUNT_COLUMN_WIDTH);
+            }
+            else if (column.getHeaderValue().toString().equals(Bundle.DataSourceSummaryNode_column_type_header())) {
+                column.setPreferredWidth(USAGE_COLUMN_WIDTH);
+            }
+            else {
+                column.setPreferredWidth(DATA_SOURCE_COLUMN_WIDTH);
             }
         }
         this.setVisible(true);
