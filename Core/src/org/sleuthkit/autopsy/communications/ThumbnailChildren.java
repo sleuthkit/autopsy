@@ -40,7 +40,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Factory for creating thumbnail children nodes.
  *
  * Given the current way that DataResultViewerThumbnail works this class must
- * extend Children.Keys not ChildNodeFactory. When a ChildNodeFactory is used
+ * extend Children.Keys not ChildFactory. When a ChildFactory is used
  * the addNotify function in ThumbnailChildNode ends up wtih a list containing
  * just the wait node and the thumbanils never appear.
  */
