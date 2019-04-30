@@ -9,8 +9,8 @@
         <!-- for ingest -->
         <dependency conf="corelibs->*" org="org.reflections" name="reflections" rev="0.9.8"/>
         
-        <dependency conf="corelibs->*" org="com.google.code.gson" name="gson" rev="2.8.5"/>      
-        <dependency conf="corelibs->*" org="com.apple" name="AppleJavaExtensions" rev="1.4"/>
+        <dependency org="com.google.code.gson" name="gson" rev="2.8.5"/>      
+        <dependency org="com.apple" name="AppleJavaExtensions" rev="1.4"/>
         
         <!-- for viewers -->
         <dependency conf="corelibs->*" org="org.freedesktop.gstreamer" name="gst1-java-core" rev="1.0.0"/>
@@ -21,7 +21,7 @@
         <dependency conf="corelibs->*" org="com.github.lgooddatepicker" name="LGoodDatePicker" rev="10.3.1"/>
         
         <!-- commmon -->
-        <dependency conf="corelibs->*" org="com.google.guava" name="guava" rev="19.0"/>
+        <dependency org="com.google.guava" name="guava" rev="19.0"/>
         <dependency conf="corelibs->*" org="org.apache.commons" name="commons-lang3" rev="3.0"/>
         <dependency conf="corelibs->*" org="org.apache.commons" name="commons-csv" rev="1.4"/>
     
