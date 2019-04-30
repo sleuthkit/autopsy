@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,13 +35,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.poi.hwpf.usermodel.Picture;
 import org.apache.poi.hslf.usermodel.HSLFPictureData;
 import org.apache.poi.hslf.usermodel.HSLFSlideShow;
-import org.apache.poi.hssf.record.RecordInputStream.LeftoverDataException;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.model.PicturesTable;
 import org.apache.poi.sl.usermodel.PictureData.PictureType;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.util.RecordFormatException;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.exception.TikaException;
@@ -72,13 +72,13 @@ import org.xml.sax.SAXException;
 
 /**
  * Extracts embedded content (e.g. images, audio, video) from Microsoft Office
- * documents (both original and OOXML forms).
+ * documents (both original and OOXML forms) and PDF documents.
  */
-class MSOfficeEmbeddedContentExtractor {
+class DocumentEmbeddedContentExtractor {
 
     private final FileManager fileManager;
     private final IngestServices services;
-    private static final Logger LOGGER = Logger.getLogger(MSOfficeEmbeddedContentExtractor.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(EmbeddedDocumentExtractor.class.getName());
     private final IngestJobContext context;
     private String parentFileName;
     private final String UNKNOWN_IMAGE_NAME_PREFIX = "image_"; //NON-NLS
@@ -101,7 +101,8 @@ class MSOfficeEmbeddedContentExtractor {
         PPT("application/vnd.ms-powerpoint"), //NON-NLS
         PPTX("application/vnd.openxmlformats-officedocument.presentationml.presentation"), //NON-NLS
         XLS("application/vnd.ms-excel"), //NON-NLS
-        XLSX("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); //NON-NLS
+        XLSX("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"), //NON-NLS
+        PDF("application/pdf"); //NON-NLS
 
         private final String mimeType;
 
@@ -116,7 +117,7 @@ class MSOfficeEmbeddedContentExtractor {
     }
     private SupportedExtractionFormats abstractFileExtractionFormat;
 
-    MSOfficeEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws NoCurrentCaseException {
+    DocumentEmbeddedContentExtractor(IngestJobContext context, FileTypeDetector fileTypeDetector, String moduleDirRelative, String moduleDirAbsolute) throws NoCurrentCaseException {
 
         this.fileManager = Case.getCurrentCaseThrows().getServices().getFileManager();
         this.services = IngestServices.getInstance();
@@ -189,6 +190,9 @@ class MSOfficeEmbeddedContentExtractor {
                 break;
             case XLS:
                 listOfExtractedImages = extractImagesFromXls(abstractFile);
+                break;
+            case PDF:
+                listOfExtractedImages = extractEmbeddedContentFromPDF(abstractFile);
                 break;
             default:
                 break;
@@ -469,6 +473,37 @@ class MSOfficeEmbeddedContentExtractor {
         }
         return listOfExtractedImages;
 
+    }
+    
+    /**
+     * 
+     * @param abstractFile
+     * @return 
+     */
+    private List<ExtractedFile> extractEmbeddedContentFromPDF(AbstractFile abstractFile) {
+        PDFAttachmentExtractor pdfExtractor = new PDFAttachmentExtractor(parser);
+        try {
+            Path outputDirectory = Paths.get(getOutputFolderPath(parentFileName));
+            //Get map of attachment name -> location disk.
+            Map<String, Path> extractedAttachments = pdfExtractor.extract(
+                    new ReadContentInputStream(abstractFile), abstractFile.getId(),
+                    outputDirectory);
+            
+            //Convert output to hook into the existing logic for creating derived files
+            List<ExtractedFile> extractedFiles = new ArrayList<>();
+            extractedAttachments.entrySet().forEach((pathEntry) -> {
+                String fileName = pathEntry.getKey();
+                Path writeLocation = pathEntry.getValue();
+                extractedFiles.add(new ExtractedFile(fileName,
+                        getFileRelativePath(writeLocation.getFileName().toString()), 
+                        writeLocation.toFile().length()));
+            });
+            
+            return extractedFiles;
+        } catch (IOException | SAXException | TikaException ex) {
+            LOGGER.log(Level.WARNING, "Error attempting to extract attachments from PDFs", ex); //NON-NLS
+        }
+        return Collections.emptyList();
     }
 
     /**

@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParsingReader;
@@ -177,7 +178,10 @@ final class TikaTextExtractor implements TextExtractor {
         InputStream stream = null;
 
         ParseContext parseContext = new ParseContext();
-        parseContext.set(Parser.class, parser);
+        
+        //Disable appending embedded file text to output 
+        //JIRA-4975
+        parseContext.set(Parser.class, new EmptyParser());
 
         if (ocrEnabled() && content instanceof AbstractFile) {
             AbstractFile file = ((AbstractFile) content);
