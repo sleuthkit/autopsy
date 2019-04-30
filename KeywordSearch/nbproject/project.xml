@@ -236,10 +236,6 @@
                 <package>org.slf4j.spi</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/apache-mime4j-dom-0.8.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/apache-mime4j-dom-0.8.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-digester-1.8.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-digester-1.8.1.jar</binary-origin>
             </class-path-extension>
@@ -388,14 +384,6 @@
                 <binary-origin>release/modules/ext/jericho-html-3.3-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/lucene-analyzers-common-4.0.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/lucene-analyzers-common-4.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/javax.ws.rs-api-2.0.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/javax.ws.rs-api-2.0.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang-2.6.jar</binary-origin>
             </class-path-extension>
@@ -518,62 +506,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/jackcess-encrypt-2.1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jackcess-encrypt-2.1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/uimaj-document-annotation-2.5.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/uimaj-document-annotation-2.5.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/woodstox-core-asl-4.4.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/woodstox-core-asl-4.4.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/org.apache.felix.scr.generator-1.1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/org.apache.felix.scr.generator-1.1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/pdfbox-2.0.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/pdfbox-2.0.8.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/cxf-rt-transports-http-3.0.16.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/cxf-rt-transports-http-3.0.16.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/slf4j-api-1.7.24.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/slf4j-api-1.7.24.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sis-netcdf-0.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sis-netcdf-0.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/javax.annotation-api-1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/javax.annotation-api-1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/juniversalchardet-1.0.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/juniversalchardet-1.0.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/org.apache.felix.scr.annotations-1.6.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/org.apache.felix.scr.annotations-1.6.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/cxf-core-3.0.16.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/cxf-core-3.0.16.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/opennlp-tools-1.5.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/opennlp-tools-1.5.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/rome-utils-1.5.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/rome-utils-1.5.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sis-storage-0.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sis-storage-0.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/httpmime-4.5.6.jar</runtime-relative-path>
