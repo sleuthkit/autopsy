@@ -3,7 +3,7 @@
     <info organisation="org.sleuthkit.autopsy" module="keywordsearch"/>
     <configurations >
         <!-- module dependencies -->
-        <conf name="keywordsearch"/>
+        <conf name="autopsy"/>
         
         <!-- Solr server dependencies -->
         <conf name="solr-libs"/>
@@ -18,19 +18,21 @@
         <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->
         
         <!-- Autopsy -->
-        <dependency conf="keywordsearch->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
-        <dependency conf="keywordsearch->*" org="commons-lang" name="commons-lang" rev="2.4"/>
-        <dependency conf="keywordsearch->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
+        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
+        <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
+        <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
         <!-- Exclude the version of cxf-rt-rs-client from Tika 1.20, one of its depedencies breaks Ivy -->
-        <dependency conf="keywordsearch->*" org="org.apache.tika" name="tika-parsers" rev="1.20">
+        <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.20">
             <exclude module="cxf-rt-rs-client"/>
             <exclude module="cleartk-ml"/>
-        </dependency>  
-        <dependency conf="keywordsearch->*" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.3.0"/>
-        <dependency conf="keywordsearch->*" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/>
+        </dependency>
+        
+        <dependency conf="autopsy->*" org="org.apache.cxf" name="cxf-rt-rs-client" rev="3.3.0"/>
+        <dependency conf="autopsy->*" org="org.cleartk" name="cleartk-ml" rev="2.0.0"/>
+        
         <!-- icu4j for pdfbox bidirectional text support, needs to be defined explicitely (it is optional) -->
-        <dependency conf="keywordsearch->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>
-        <dependency conf="keywordsearch->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
+        <dependency conf="autopsy->*" org="com.ibm.icu" name="icu4j" rev="3.8"/>
+        <dependency conf="autopsy->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         
         <!-- Jetty -->
         <dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="8.1.16.v20140903"/>
@@ -42,7 +44,5 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="slf4j-log4j12" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
-        
-        <exclude org="*" ext="*" type="javadoc"/>   
     </dependencies>
 </ivy-module>
