@@ -93,7 +93,7 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             cancelButton.setEnabled(false);
             okButton.setEnabled(true);
             
-            if (worker.getSuccess()) {
+            if (worker.isSuccess()) {
                 progressBar.setIndeterminate(false);
                 progressBar.setValue(progressBar.getMaximum());
                 resultLabel.setText(Bundle.UnpackagePortableCaseProgressDialog_propertyChange_success());
@@ -212,7 +212,7 @@ class UnpackagePortableCaseProgressDialog extends javax.swing.JDialog implements
             return lastError;
         }
         
-        private boolean getSuccess() {
+        private boolean isSuccess() {
             return success.get();
         }
         

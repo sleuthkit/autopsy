@@ -31,29 +31,28 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
 
     private int index;
 
-    private ReportWizardPanel1 firstPanel;
-    private ReportWizardPanel2 tableConfigPanel;
-    private ReportWizardFileOptionsPanel fileConfigPanel;
-    private ReportWizardPortableCaseOptionsPanel portableCaseConfigPanel;
+    private final ReportWizardPanel1 firstPanel;
+    private final ReportWizardPanel2 tableConfigPanel;
+    private final ReportWizardFileOptionsPanel fileConfigPanel;
+    private final ReportWizardPortableCaseOptionsPanel portableCaseConfigPanel;
 
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
 
     // Panels that should be shown if both Table and File report modules should
     // be configured.
-    private WizardDescriptor.Panel<WizardDescriptor>[] allConfigPanels;
-    private String[] allConfigIndex;
+    private final WizardDescriptor.Panel<WizardDescriptor>[] allConfigPanels;
+
     // Panels that should be shown if only Table report modules should
     // be configured.
-    private WizardDescriptor.Panel<WizardDescriptor>[] tableConfigPanels;
-    private String[] tableConfigIndex;
+    private final WizardDescriptor.Panel<WizardDescriptor>[] tableConfigPanels;
+
     // Panels that should be shown if only File report modules should
     // be configured.
-    private WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
-    private String[] fileConfigIndex;
+    private final WizardDescriptor.Panel<WizardDescriptor>[] fileConfigPanels;
+
     // Panels that should be shown if only Portable Case report modules should
     // be configured.
-    private WizardDescriptor.Panel<WizardDescriptor>[] portableCaseConfigPanels;
-    private String[] portableCaseConfigIndex;
+    private final WizardDescriptor.Panel<WizardDescriptor>[] portableCaseConfigPanels;
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     ReportWizardIterator() {
@@ -85,11 +84,6 @@ final class ReportWizardIterator implements WizardDescriptor.Iterator<WizardDesc
                     jc.putClientProperty(WizardDescriptor.PROP_CONTENT_NUMBERED, true);
                 }
             }
-
-            allConfigIndex = steps;
-            tableConfigIndex = new String[]{steps[0], steps[1]};
-            fileConfigIndex = new String[]{steps[0], steps[2]};
-            portableCaseConfigIndex = new String[]{steps[0], steps[3]};
         }
         return panels;
     }

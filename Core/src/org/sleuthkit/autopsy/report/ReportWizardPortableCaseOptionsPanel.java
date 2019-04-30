@@ -94,10 +94,12 @@ class ReportWizardPortableCaseOptionsPanel implements WizardDescriptor.Finishabl
 
     @Override
     public void addChangeListener(ChangeListener cl) {
+        // Nothing to do
     }
 
     @Override
     public void removeChangeListener(ChangeListener cl) {
+        // Nothing to do
     }
 
 }

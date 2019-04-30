@@ -139,7 +139,9 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
         wizPanel.setFinish(options.isValid());
     }    
 
-    // This class is a list model for the tag names JList component.
+    /**
+     * This class is a list model for the tag names JList component.
+     */
     private class SetNamesListModel implements ListModel<String> {
 
         @Override
@@ -154,14 +156,18 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
 
         @Override
         public void addListDataListener(ListDataListener l) {
+            // Nothing to do
         }
 
         @Override
         public void removeListDataListener(ListDataListener l) {
+            // Nothing to do
         }
     }
 
-    // This class renders the items in the tag names JList component as JCheckbox components.
+    /**
+     * This class renders the items in the tag names JList component as JCheckbox components.
+     */
     private class SetNamesListCellRenderer extends JCheckBox implements ListCellRenderer<String> {
         private static final long serialVersionUID = 1L;
 
