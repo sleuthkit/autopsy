@@ -476,9 +476,10 @@ class DocumentEmbeddedContentExtractor {
     }
     
     /**
+     * Extracts embedded attachments from PDF files.
      * 
-     * @param abstractFile
-     * @return 
+     * @param abstractFile Input PDF file
+     * @return List of extracted files to be made into derived file instances.
      */
     private List<ExtractedFile> extractEmbeddedContentFromPDF(AbstractFile abstractFile) {
         PDFAttachmentExtractor pdfExtractor = new PDFAttachmentExtractor(parser);
