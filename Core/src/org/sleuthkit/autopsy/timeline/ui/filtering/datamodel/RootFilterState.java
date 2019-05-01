@@ -255,12 +255,18 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
 
     @Override
     public void setDisabled(Boolean act) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        /*
+         * A RootFitlerState is always enabled, so disabling it is overridden as
+         * a no-op.
+         */
     }
 
     @Override
     public void setSelected(Boolean act) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        /*
+         * A RootFitlerState is always enabled, so enabling it is overridden as
+         * a no-op.
+         */
     }
 
     @Override

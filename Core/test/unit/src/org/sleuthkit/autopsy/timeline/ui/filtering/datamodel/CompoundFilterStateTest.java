@@ -253,7 +253,7 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
         assertThat(instance.getSubFilterStates().get(2).getFilter(), is(BMP_FILTER));
         assertThat(instance.getSubFilterStates().get(3).getFilter(), is(GIF_FILTER));
 
-        //pre-ecxisting filters should have been selected when instance was selected.
+        //pre-existing filters should have been selected when instance was selected.
         assertThat(instance.getSubFilterStates().get(0).isSelected(), is(true));
         assertThat(instance.getSubFilterStates().get(1).isSelected(), is(true));
         assertThat(instance.getSubFilterStates().get(2).isSelected(), is(true));
@@ -272,15 +272,15 @@ public class CompoundFilterStateTest extends FilterStateTestAbstract<  CompoundF
     public void testCopyOf() {
         super.testCopyOf();
         System.out.println(this.getClass().getSimpleName() + " - copyOf");
-        
+
         instance.setSelected(Boolean.TRUE);
         instance.getSubFilterStates().get(0).setSelected(Boolean.TRUE);
         instance.getSubFilterStates().get(1).setSelected(Boolean.FALSE);
-        
+
         CompoundFilterState<TimelineFilter, CompoundFilter<TimelineFilter>> copyOf = instance.copyOf();
-        
+
         assertEquals(instance, copyOf);
-        
+
         assertThat(copyOf.isSelected(), is(true));
         assertThat(copyOf.isDisabled(), is(false));
         assertThat(copyOf.getSubFilterStates().get(0).isSelected(), is(true));
