@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import java.util.Set;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
@@ -39,7 +40,8 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
 
-/**
+/** A FilterState for RootFilters. Provides named access to the sub
+ * filterstates.
  */
 public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFilter> {
 
@@ -54,7 +56,7 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
     private static final BooleanProperty ALWAYS_TRUE = new SimpleBooleanProperty(true);
     private final static BooleanProperty ALWAYS_FALSE = new SimpleBooleanProperty(false);
 
-    private final Set<   FilterState< ? extends TimelineFilter>> namedFilterStates = new HashSet<>();
+    private final Set<FilterState<? extends TimelineFilter>> namedFilterStates = new HashSet<>();
 
     public RootFilterState(RootFilter delegate) {
         this(delegate,
@@ -173,7 +175,6 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
 
     @Override
     public ObservableList<FilterState<? extends TimelineFilter>> getSubFilterStates() {
-
         ImmutableMap<FilterState<? extends TimelineFilter>, Integer> filterOrder
                 = ImmutableMap.<FilterState<? extends TimelineFilter>, Integer>builder()
                         .put(knownFilterState, 0)
@@ -187,7 +188,6 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
 
         return super.getSubFilterStates().sorted((state1, state2)
                 -> Integer.compare(filterOrder.getOrDefault(state1, Integer.MAX_VALUE), filterOrder.getOrDefault(state2, Integer.MAX_VALUE)));
-
     }
 
     @Override
@@ -203,14 +203,11 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         }
 
         final RootFilterState other = (RootFilterState) obj;
-        if (!Objects.equals(this.getFilter(), other.getFilter())) {
+        if (false == Objects.equals(this.getFilter(), other.getFilter())) {
             return false;
         }
 
-        if (!Objects.equals(this.getSubFilterStates(), other.getSubFilterStates())) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.getSubFilterStates(), other.getSubFilterStates());
     }
 
     @Override
@@ -228,9 +225,10 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
         return ALWAYS_FALSE;
     }
 
+    @NbBundle.Messages("RootFilterState.displayName=Root")
     @Override
     public String getDisplayName() {
-        return "Root";
+        return Bundle.RootFilterState_displayName();
     }
 
     @Override
@@ -281,6 +279,6 @@ public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFil
                + "\nfileTypesFilterState=" + fileTypesFilterState + ","
                + "\nsubFilterStates=" + getSubFilterStates() + ","
                + "\nnamedFilterStates=" + namedFilterStates + ","
-               + "\ndelegate=" + getFilter() + '}';
+               + "\ndelegate=" + getFilter() + '}'; //NON-NLS
     }
 }
