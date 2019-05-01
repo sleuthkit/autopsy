@@ -99,10 +99,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
         if (!isPageChangeEvent && !isPageSizeChangeEvent) {
             List<T> allKeys = makeKeys();
 
-            // Filter keys
-            allKeys.stream().filter(filter).collect(Collectors.toList());
-
-            pagingSupport.splitKeysIntoPages(allKeys);
+            pagingSupport.splitKeysIntoPages(allKeys.stream().filter(filter).collect(Collectors.toList()));
         }
 
         toPopulate.addAll(pagingSupport.getCurrentPage());
