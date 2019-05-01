@@ -236,10 +236,6 @@
                 <package>org.slf4j.spi</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-validator-1.5.1-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-validator-1.5.1-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/commons-digester-1.8.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-digester-1.8.1.jar</binary-origin>
             </class-path-extension>
@@ -274,10 +270,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-logging-api-1.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-logging-api-1.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/quartz-2.2.0.jar</runtime-relative-path>
@@ -344,10 +336,6 @@
                 <binary-origin>release/modules/ext/log4j-1.2.17.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.3-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jericho-html-3.3-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/udunits-4.5.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/udunits-4.5.5.jar</binary-origin>
             </class-path-extension>
@@ -402,14 +390,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/lucene-queries-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/lucene-queries-4.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/jericho-html-3.3-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jericho-html-3.3-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/juniversalchardet-1.0.3.jar</runtime-relative-path>
@@ -482,10 +462,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-exec-1.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-exec-1.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-validator-1.5.1-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-validator-1.5.1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/vorbis-java-tika-0.8.jar</runtime-relative-path>
