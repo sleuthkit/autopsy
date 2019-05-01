@@ -134,7 +134,7 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
     }
 
     @Subscribe
-    public void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
+    void handleFilterEvent(CVTEvents.FilterChangeEvent filterChangeEvent) {
         try {
             final CommunicationsManager commsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
             accountsTableEM.setRootContext(new AbstractNode(Children.create(new AccountDeviceInstanceNodeFactory(commsManager, filterChangeEvent.getNewFilter()), true)));
@@ -143,6 +143,19 @@ public final class AccountsBrowser extends JPanel implements ExplorerManager.Pro
         } catch (NoCurrentCaseException ex) { //NOPMD empty catch clause
             //Case is closed, do nothig.
         }
+    }
+    
+    @Subscribe
+    void historyChange(CVTEvents.StateChangeEvent event) {
+        try {
+            final CommunicationsManager commsManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
+            accountsTableEM.setRootContext(new AbstractNode(Children.create(new AccountDeviceInstanceNodeFactory(commsManager, event.getCommunicationsState().getCommunicationsFilter()), true)));
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "There was an error getting the CommunicationsManager for the current case.", ex);
+        } catch (NoCurrentCaseException ex) { //NOPMD empty catch clause
+            //Case is closed, do nothig.
+        }
+
     }
 
     /**
