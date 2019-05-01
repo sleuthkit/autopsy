@@ -8,7 +8,7 @@ If enabled, the File Exporter will run after each \ref auto_ingest_page job and 
 
 After enabling the file exporter, the first thing to do is set two output folders. The "Files Folder" is the base directory for all exported files, and the "Reports Folder" is the base directory for reports (lists of every file exported for each data source). If possible, it is best to use UNC paths.
 
-\image html AutoIngest\file_exporter_main.png
+\image html AutoIngest/file_exporter_main.png
 
 Next you'll make rules for the files you want to export. Each rule must have a name and at least one condition set. If more than one condition is set, then all conditions must be true to export the file. When you're done setting up your rule, press the "Save" button to save it. You'll see the new rule in the list on the left side.
 
@@ -20,13 +20,13 @@ You'll need to run at the \ref hash_db_page and \ref file_type_identification_pa
 
 The first condition is based on MIME type. To enable it, check the box before "MIME Type", then select a MIME type from the list and choose whether you want to match it or not match it. Multiple MIME types can not be selected at this time. The following shows a rule that will match all PNG images.
 
-\image html AutoIngest\file_export_png.png
+\image html AutoIngest/file_export_png.png
 
 \subsection file_exporter_size File Size
 
 The second condition is based on file size. You can choose a file size (using the list on the right to change the units) and then select whether files should be larger, smaller, equal to, or not equal to that size. The following shows a rule that will match plain text files that are over 1kB.
 
-\image html AutoIngest\file_export_size.png
+\image html AutoIngest/file_export_size.png
 
 \subsection file_exporter_attributes Attributes
 
@@ -34,25 +34,25 @@ The third condition is based on blackboard artifacts and attributes, which is ho
 
 To make an attribute condition, select the artifact type and then the attribute type that you are interested in. On the next line you can enter a value and set what relation you want the attribute to have to it (equals, not equals, greater/less than). Not all options will make sense with all data types. Then use the "Add Attribute" button to add it to the attribute list. If you make a mistake, use the "Delete Attribute" button to erase it. The following shows a rule that will export any files that had a keyword hit for the word "bomb" in them.
 
-\image html AutoIngest\file_export_keyword.png
+\image html AutoIngest/file_export_keyword.png
 
 It's possible to do more general matching on the artifacts. Suppose you wanted to export all files that the \ref encryption_page flagged as "Encryption Suspected". These files will have a TSK_ENCRYPTION_SUSPECTED artifact with a single "TSK_COMMENT" attribute that contains the entropy calculated for the file. In this case we can use the "not equals" operator on a string that we wouldn't expect to see in the TSK_COMMENT field to effectively change the condition to "has an associated TSK_ENCRYPTION_SUSPECTED artifact."
  
-\image html AutoIngest\file_export_encrypton.png
+\image html AutoIngest/file_export_encrypton.png
 
 \section file_export_output Output
 
 The exported files are found under the files folder that was specified in the \ref file_export_setup step and then organized at the top layer by the device ID of the data source. 
 
-\image html AutoIngest\file_export_dir_structure.png
+\image html AutoIngest/file_export_dir_structure.png
 
 Exported files are named with their hash and stored in subfolders based on parts of that hash, to prevent any single folder from becoming very large.
 
-\image html AutoIngest\file_export_file_loc.png
+\image html AutoIngest/file_export_file_loc.png
 
 The report files are also found in subfolders under the device ID and then the rule name. 
 
-\image html AutoIngest\file_export_json_loc.png
+\image html AutoIngest/file_export_json_loc.png
 
 This json file will contain information about the file, and any associated artifact that was part of the rule's conditions.
 \verbatim
