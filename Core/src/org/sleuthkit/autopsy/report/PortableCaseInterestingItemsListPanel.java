@@ -140,7 +140,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     }    
 
     /**
-     * This class is a list model for the tag names JList component.
+     * This class is a list model for the set names JList component.
      */
     private class SetNamesListModel implements ListModel<String> {
 
@@ -166,7 +166,7 @@ class PortableCaseInterestingItemsListPanel extends javax.swing.JPanel {
     }
 
     /**
-     * This class renders the items in the tag names JList component as JCheckbox components.
+     * This class renders the items in the set names JList component as JCheckbox components.
      */
     private class SetNamesListCellRenderer extends JCheckBox implements ListCellRenderer<String> {
         private static final long serialVersionUID = 1L;

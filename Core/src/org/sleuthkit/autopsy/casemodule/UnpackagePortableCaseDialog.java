@@ -34,7 +34,7 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
 
     private final String[] PORTABLE_CASE_EXTENSIONS = new String[]{"zip", "001"}; //NON-NLS
     private final JFileChooser caseFileChooser;
-    private final JFileChooser outputFileChooser;
+    private final JFileChooser outputFolderChooser;
     
     /**
      * Creates new form UnpackagePortableCaseDialog
@@ -52,8 +52,8 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
         caseFileChooser = new JFileChooser();
         caseFileChooser.setFileFilter(pkgFilter);
         
-        outputFileChooser = new JFileChooser();
-        outputFileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        outputFolderChooser = new JFileChooser();
+        outputFolderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         
         caseErrorLabel.setText(""); // NON-NLS
         outputErrorLabel.setText(""); // NON-NLS
@@ -320,11 +320,11 @@ class UnpackagePortableCaseDialog extends javax.swing.JDialog {
 
     private void outputSelectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_outputSelectButtonActionPerformed
         if (! outputTextField.getText().isEmpty()) {
-            outputFileChooser.setCurrentDirectory(new File(outputTextField.getText()));
+            outputFolderChooser.setCurrentDirectory(new File(outputTextField.getText()));
         }
-        int returnVal = outputFileChooser.showOpenDialog(this);
+        int returnVal = outputFolderChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            outputTextField.setText(outputFileChooser.getSelectedFile().getAbsolutePath());
+            outputTextField.setText(outputFolderChooser.getSelectedFile().getAbsolutePath());
         }
     }//GEN-LAST:event_outputSelectButtonActionPerformed
 
