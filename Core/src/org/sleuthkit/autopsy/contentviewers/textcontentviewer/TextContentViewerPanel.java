@@ -133,7 +133,7 @@ public class TextContentViewerPanel extends javax.swing.JPanel implements DataCo
                     try {
                         path = content.getUniquePath();
                     } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for {0}", content); //NON-NLS
+                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for " + content.toString(), ex); //NON-NLS
                     }
                     setName(path);
                 } else {
