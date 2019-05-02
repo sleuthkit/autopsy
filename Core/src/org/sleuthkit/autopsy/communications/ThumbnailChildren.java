@@ -27,6 +27,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -43,11 +44,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  * the addNotify function in ThumbnailChildNode ends up wtih a list containing
  * just the wait node and the thumbanils never appear.
  */
-final class AttachementsChildren extends Children.Keys<AbstractFile> {
+final class ThumbnailChildren extends Children.Keys<AbstractFile> {
 
-    private static final Logger logger = Logger.getLogger(AttachementsChildren.class.getName());
+    private static final Logger logger = Logger.getLogger(ThumbnailChildren.class.getName());
 
-    private final Set<BlackboardArtifact> artifacts;
+    private final Set<AbstractFile> thumbnails;
 
     /*
      * Creates the list of thumbnails from the given list of
@@ -56,21 +57,9 @@ final class AttachementsChildren extends Children.Keys<AbstractFile> {
      * The thumbnails will be initialls sorted by size, then name so that they
      * appear sorted by size by default.
      */
-    AttachementsChildren(Set<BlackboardArtifact> artifacts) {
+    ThumbnailChildren(Set<BlackboardArtifact> artifacts) {
         super(false);
-        this.artifacts = artifacts;
-    }
-
-    @Override
-    protected Node[] createNodes(AbstractFile t) {
-        return new Node[]{new AttachmentNode(t)};
-    }
-
-    @Override
-    protected void addNotify() {
-        super.addNotify();
-
-        Set<AbstractFile> attachments = new TreeSet<>((AbstractFile file1, AbstractFile file2) -> {
+        thumbnails = new TreeSet<>((AbstractFile file1, AbstractFile file2) -> {
             int result = Long.compare(file1.getSize(), file2.getSize());
             if (result == 0) {
                 result = file1.getName().compareTo(file2.getName());
@@ -82,24 +71,33 @@ final class AttachementsChildren extends Children.Keys<AbstractFile> {
         artifacts.forEach((bba) -> {
             try {
                 for (Content childContent : bba.getChildren()) {
-                    if (childContent instanceof AbstractFile) {
-                        attachments.add((AbstractFile) childContent);
+                    if (childContent instanceof AbstractFile && ImageUtils.thumbnailSupported((AbstractFile) childContent)) {
+                        thumbnails.add((AbstractFile) childContent);
                     }
                 }
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Unable to get children from artifact.", ex); //NON-NLS
             }
         });
+    }
 
-        setKeys(attachments);
+    @Override
+    protected Node[] createNodes(AbstractFile t) {
+        return new Node[]{new ThumbnailNode(t)};
+    }
+
+    @Override
+    protected void addNotify() {
+        super.addNotify();
+        setKeys(thumbnails);
     }
 
     /**
-     * A node for representing a attachememt.
+     * A node for representing a thumbnail.
      */
-    static class AttachmentNode extends FileNode {
+    static class ThumbnailNode extends FileNode {
 
-        AttachmentNode(AbstractFile file) {
+        ThumbnailNode(AbstractFile file) {
             super(file, false);
         }
 

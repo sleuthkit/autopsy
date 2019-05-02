@@ -46,11 +46,11 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *  This panel is a RelationshipsViewer panel
+ *
  */
-public class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
+public class ThumbnailViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
 
-    private static final Logger logger = Logger.getLogger(MediaViewer.class.getName());
+    private static final Logger logger = Logger.getLogger(ThumbnailChildren.class.getName());
 
     private final ExplorerManager tableEM = new ExplorerManager();
     private final PropertyChangeListener focusPropertyListener;
@@ -63,7 +63,7 @@ public class MediaViewer extends JPanel implements RelationshipsViewer, Explorer
     /**
      * Creates new form ThumbnailViewer
      */
-    public MediaViewer() {
+    public ThumbnailViewer() {
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
 
         // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
@@ -78,7 +78,7 @@ public class MediaViewer extends JPanel implements RelationshipsViewer, Explorer
                 if (isDescendingFrom(newFocusOwner, contentViewer)) {
                     //if the focus owner is within the MessageContentViewer (the attachments table)
                     proxyLookup.setNewLookups(createLookup(((MessageDataContent) contentViewer).getExplorerManager(), getActionMap()));
-                } else if (isDescendingFrom(newFocusOwner, MediaViewer.this)) {
+                } else if (isDescendingFrom(newFocusOwner, ThumbnailViewer.this)) {
                     //... or if it is within the Results table.
                     proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
 
@@ -130,7 +130,7 @@ public class MediaViewer extends JPanel implements RelationshipsViewer, Explorer
             thumbnailViewer.resetComponent();
         }
 
-        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachementsChildren(artifactList)), tableEM), true));
+        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new ThumbnailChildren(artifactList)), tableEM), true));
     }
 
     @Override
