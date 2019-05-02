@@ -102,6 +102,9 @@ final class DeleteOrphanManifestNodesTask implements Runnable {
                         return;
                     }
 
+                    /*
+                     * Back to looking for orphans...
+                     */
                     progress.progress(Bundle.DeleteOrphanManifestNodesTask_progress_lookingForOrphanedManifestFileZnodes());
                     logger.log(Level.INFO, Bundle.DeleteOrphanManifestNodesTask_progress_lookingForOrphanedManifestFileZnodes());
                 }
