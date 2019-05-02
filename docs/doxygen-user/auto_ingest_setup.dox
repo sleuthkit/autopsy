@@ -24,7 +24,7 @@ Follow the instructions on the \ref install_multiuser_page page to set up the ne
 
 While Examiner nodes only require multi-user cases to be set up, the auto ingest nodes need additional configuration. To start, go to the "Auto Ingest" tab on the Options menu and select the "Auto Ingest mode" radio button. If you haven't saved your multi-user settings there will be a warning message displayed here - if you see it, go back to the "Multi-User" tab and make sure you've entered all the required fields and then hit the "Apply" button. 
 
-\image html AutoIngest\auto_ingest_mode_setup.png
+\image html AutoIngest/auto_ingest_mode_setup.png
 
 \subsection auto_ingest_config_folders Folder Configuration
 
@@ -33,13 +33,13 @@ The first thing to do is to set two folder locations. The shared images folder i
 \subsection auto_ingest_config_ingest_settings Ingest Module Settings
 The "Ingest Module Settings" button is used to configure the \ref ingest_page you want to run during auto-ingest. One note is that on auto-ingest nodes, we recommend that you configure the Keyword Search module to not perform periodic keyword searches.  When a user is in front of the computer, this feature exists to provide frequent updates, but it is not needed on this node. To configure this, choose the Keyword Search item in the Options window.  Select the "General" tab and choose the option for no periodic search.
 
-\image html AutoIngest\no_periodic_searches.png
+\image html AutoIngest/no_periodic_searches.png
 
 \subsection auto_ingest_advanced_settings Advanced Settings
 
 The "Advanced Settings" button will bring up the automated ingest job settings. As expressed in the warning statement, care must be used when making changes on this panel.
 
-\image html AutoIngest\advanced_settings.png
+\image html AutoIngest/advanced_settings.png
 
 The Automated Ingest Job Settings section contains the following options:
 <dl>
@@ -70,7 +70,7 @@ When using multiple auto ingest nodes, configuration can be centralized and shar
 On the computer that is going to be the configuration master automated ingest node, follow the configuration steps described in above to configure the node.
 If you would like every automated ingest node to share the configuration settings, check the first checkbox in the Shared Configuration section of the Auto Ingest settings panel. Next select a folder to store the shared configuration in. This folder must be a path to a network share that the other machines in the system will have access to. Use a UNC path if possible. Next, check the "Use this node as a master node that can upload settings" checkbox which should enable the "Save & Upload Config" button. If this does not happen, look for a red error message explaining what settings are missing.
 
-\image html AutoIngest\master_node.png
+\image html AutoIngest/master_node.png
 
 After saving and uploading the configuration, hit the "Save" button to exit the Options panel.
 
@@ -98,7 +98,7 @@ On an auto ingest node, we also strongly recommend that you configure the system
 Disabling the error messages is done by setting the following registry key to "1", as shown in the screenshot below.
 \verbatim HKCU\Software\Microsoft\Windows\Windows Error Reporting\DontShowUI\endverbatim
 
-\image html AutoIngest\error_suppression.png
+\image html AutoIngest/error_suppression.png
 
 
 */
