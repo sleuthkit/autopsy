@@ -74,7 +74,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final boolean fxInited;
 
     private JFXPanel fxPanel;
-    private Group imageGroup = new Group();
+    private Group imageGroup;
     private ImageTaggingTool tagger;
     private ImageView fxImageView;
     private ScrollPane scrollPane;
@@ -121,6 +121,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
+                imageGroup = new Group();
                 imageGroup.getChildren().add(fxImageView);
                 scrollPane = new ScrollPane(imageGroup); // scrolls and sizes imageview
                 scrollPane.getStyleClass().add("bg"); //NOI18N
