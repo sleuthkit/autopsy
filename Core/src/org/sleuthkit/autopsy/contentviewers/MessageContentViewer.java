@@ -561,7 +561,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, numberOfAttachments > 0);
         msgbodyTabbedPane.setTitleAt(ATTM_TAB_INDEX, "Attachments (" + numberOfAttachments + ")");
         drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
-                new AttachmentsChildren(attachments)), null), true));
+                new AttachmentsChildren(attachments))), true));
     }
 
     private static String wrapInHtmlBody(String htmlText) {
