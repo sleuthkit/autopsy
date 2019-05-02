@@ -46,11 +46,11 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- *
+ *  A Panel that shows the media (thumbnails) for the selected account.
  */
-public class ThumbnailViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
+final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
 
-    private static final Logger logger = Logger.getLogger(ThumbnailChildren.class.getName());
+    private static final Logger logger = Logger.getLogger(MediaViewer.class.getName());
 
     private final ExplorerManager tableEM = new ExplorerManager();
     private final PropertyChangeListener focusPropertyListener;
@@ -58,12 +58,12 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
     private final ModifiableProxyLookup proxyLookup;
 
     @Messages({
-        "ThumbnailViewer_Name=Media"
+        "MediaViewer_Name=Media"
     })
     /**
      * Creates new form ThumbnailViewer
      */
-    public ThumbnailViewer() {
+    public MediaViewer() {
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
 
         // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
@@ -78,7 +78,7 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
                 if (isDescendingFrom(newFocusOwner, contentViewer)) {
                     //if the focus owner is within the MessageContentViewer (the attachments table)
                     proxyLookup.setNewLookups(createLookup(((MessageDataContent) contentViewer).getExplorerManager(), getActionMap()));
-                } else if (isDescendingFrom(newFocusOwner, ThumbnailViewer.this)) {
+                } else if (isDescendingFrom(newFocusOwner, MediaViewer.this)) {
                     //... or if it is within the Results table.
                     proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
 
@@ -99,7 +99,7 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
 
     @Override
     public String getDisplayName() {
-        return Bundle.ThumbnailViewer_Name();
+        return Bundle.MediaViewer_Name();
     }
 
     @Override
@@ -130,7 +130,7 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
             thumbnailViewer.resetComponent();
         }
 
-        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new ThumbnailChildren(artifactList)), tableEM), true, this.getClass().getName()));
+        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentsChildren(artifactList)), tableEM), true, this.getClass().getName()));
     }
 
     @Override
@@ -195,6 +195,7 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
         separator = new javax.swing.JSeparator();
 
         thumbnailViewer.setMinimumSize(new java.awt.Dimension(350, 102));
+        thumbnailViewer.setPreferredSize(new java.awt.Dimension(450, 400));
 
         contentViewer.setPreferredSize(new java.awt.Dimension(450, 400));
 

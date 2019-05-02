@@ -27,7 +27,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -39,9 +38,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Factory for creating thumbnail children nodes.
  */
-final class ThumbnailChildren extends Children.Keys<AbstractFile> {
+final class AttachmentsChildren extends Children.Keys<AbstractFile> {
 
-    private static final Logger logger = Logger.getLogger(ThumbnailChildren.class.getName());
+    private static final Logger logger = Logger.getLogger(AttachmentsChildren.class.getName());
 
     private final Set<BlackboardArtifact> artifacts;
 
@@ -52,7 +51,7 @@ final class ThumbnailChildren extends Children.Keys<AbstractFile> {
      * The thumbnails will be initialls sorted by size, then name so that they
      * appear sorted by size by default.
      */
-    ThumbnailChildren(Set<BlackboardArtifact> artifacts) {
+    AttachmentsChildren(Set<BlackboardArtifact> artifacts) {
         super(false);
         
         this.artifacts = artifacts;
@@ -62,7 +61,7 @@ final class ThumbnailChildren extends Children.Keys<AbstractFile> {
 
     @Override
     protected Node[] createNodes(AbstractFile t) {
-        return new Node[]{new ThumbnailNode(t)};
+        return new Node[]{new AttachementNode(t)};
     }
 
     @Override
@@ -96,9 +95,9 @@ final class ThumbnailChildren extends Children.Keys<AbstractFile> {
     /**
      * A node for representing a thumbnail.
      */
-    static class ThumbnailNode extends FileNode {
+    static class AttachementNode extends FileNode {
 
-        ThumbnailNode(AbstractFile file) {
+        AttachementNode(AbstractFile file) {
             super(file, false);
         }
 
