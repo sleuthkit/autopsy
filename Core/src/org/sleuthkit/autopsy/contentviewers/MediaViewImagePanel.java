@@ -49,6 +49,10 @@ import javax.swing.JPanel;
 import org.controlsfx.control.MaskerPane;
 import org.openide.util.NbBundle;
 import org.python.google.common.collect.Lists;
+import javafx.scene.Group;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -70,18 +74,20 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private final boolean fxInited;
 
     private JFXPanel fxPanel;
+    private Group imageGroup = new Group();
+    private ImageTaggingTool tagger;
     private ImageView fxImageView;
     private ScrollPane scrollPane;
     private final ProgressBar progressBar = new ProgressBar();
     private final MaskerPane maskerPane = new MaskerPane();
-    
+
     private double zoomRatio;
     private double rotation; // Can be 0, 90, 180, and 270.
-    
+
     private static final double[] ZOOM_STEPS = {
         0.0625, 0.125, 0.25, 0.375, 0.5, 0.75,
         1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10};
-    
+
     private static final double MIN_ZOOM_RATIO = 0.0625; // 6.25%
     private static final double MAX_ZOOM_RATIO = 10.0; // 1000%
 
@@ -115,11 +121,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
                 // build jfx ui (we could do this in FXML?)
                 fxImageView = new ImageView();  // will hold image
-                scrollPane = new ScrollPane(fxImageView); // scrolls and sizes imageview
+                imageGroup.getChildren().add(fxImageView);
+                scrollPane = new ScrollPane(imageGroup); // scrolls and sizes imageview
                 scrollPane.getStyleClass().add("bg"); //NOI18N
                 scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
                 scrollPane.setHbarPolicy(ScrollBarPolicy.AS_NEEDED);
-                
+
                 fxPanel = new JFXPanel(); // bridge jfx-swing
                 Scene scene = new Scene(scrollPane); //root of jfx tree
                 scene.getStylesheets().add(MediaViewImagePanel.class.getResource("MediaViewImagePanel.css").toExternalForm()); //NOI18N
@@ -146,9 +153,10 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         Platform.runLater(() -> {
             fxImageView.setViewport(new Rectangle2D(0, 0, 0, 0));
             fxImageView.setImage(null);
-            
+            tagger.defaultSettings();
+
             scrollPane.setContent(null);
-            scrollPane.setContent(fxImageView);
+            scrollPane.setContent(imageGroup);
         });
     }
 
@@ -160,7 +168,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                  * TODO: why is the name passed into the action constructor? it
                  * means we duplicate this string all over the place -jm
                  */ new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
-                .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent 
+                        .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent 
         );
 
         final VBox errorNode = new VBox(10, new Label(errorMessage), externalViewerButton);
@@ -199,8 +207,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                     if (nonNull(fxImage)) {
                         // We have a non-null image, so let's show it.
                         fxImageView.setImage(fxImage);
+                        imageGroup.getChildren().remove(tagger);
+                        tagger = new ImageTaggingTool(fxImageView, Color.IVORY);
+                        imageGroup.getChildren().add(tagger);
                         resetView();
-                        scrollPane.setContent(fxImageView);
+                        scrollPane.setContent(imageGroup);
                     } else {
                         showErrorNode(Bundle.MediaViewImagePanel_errorLabel_text(), file);
                     }
@@ -410,7 +421,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
         // Find the next zoom step.
-        for (int i=0; i < ZOOM_STEPS.length; i++) {
+        for (int i = 0; i < ZOOM_STEPS.length; i++) {
             if (zoomRatio < ZOOM_STEPS[i]) {
                 zoomRatio = ZOOM_STEPS[i];
                 break;
@@ -421,7 +432,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
 
     private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
         // Find the next zoom step.
-        for (int i=ZOOM_STEPS.length-1; i >= 0; i--) {
+        for (int i = ZOOM_STEPS.length - 1; i >= 0; i--) {
             if (zoomRatio > ZOOM_STEPS[i]) {
                 zoomRatio = ZOOM_STEPS[i];
                 break;
@@ -450,12 +461,12 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
     private javax.swing.JButton zoomResetButton;
     private javax.swing.JTextField zoomTextField;
     // End of variables declaration//GEN-END:variables
-    
+
     /**
      * Reset the zoom and rotation values to their defaults. The zoom level gets
      * defaulted to the current size of the panel. The rotation will be set to
      * zero.
-     * 
+     *
      * Note: This method will make a call to 'updateView()' after the values
      * have been reset.
      */
@@ -464,28 +475,28 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         if (image == null) {
             return;
         }
-        
+
         double imageWidth = image.getWidth();
         double imageHeight = image.getHeight();
         double scrollPaneWidth = fxPanel.getWidth();
         double scrollPaneHeight = fxPanel.getHeight();
         double zoomRatioWidth = scrollPaneWidth / imageWidth;
         double zoomRatioHeight = scrollPaneHeight / imageHeight;
-        
+
         // Use the smallest ratio size to fit the entire image in the view area.
         zoomRatio = zoomRatioWidth < zoomRatioHeight ? zoomRatioWidth : zoomRatioHeight;
-        
+
         rotation = 0;
-        
+
         scrollPane.setHvalue(0);
         scrollPane.setVvalue(0);
-        
+
         updateView();
     }
-    
+
     /**
      * Update the image to use the current zoom and rotation values.
-     * 
+     *
      * Note: For zoom levels less than 100%, special accomodations are made in
      * order to keep the image fully visible. This is because the viewport size
      * change occurs before any transforms execute, thus chopping off part of
@@ -498,39 +509,39 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         if (image == null) {
             return;
         }
-        
+
         // Image dimensions
         double imageWidth = image.getWidth();
         double imageHeight = image.getHeight();
-        
+
         // Image dimensions with zooming applied
         double adjustedImageWidth = imageWidth * zoomRatio;
         double adjustedImageHeight = imageHeight * zoomRatio;
-        
+
         // ImageView viewport dimensions
         double viewportWidth;
         double viewportHeight;
-        
+
         // Panel dimensions
         double panelWidth = fxPanel.getWidth();
         double panelHeight = fxPanel.getHeight();
-        
+
         // Coordinates to center the image on the panel
         double centerOffsetX = (panelWidth / 2) - (imageWidth / 2);
         double centerOffsetY = (panelHeight / 2) - (imageHeight / 2);
-        
+
         // Coordinates to keep the image inside the left/top boundaries
         double leftOffsetX;
         double topOffsetY;
-        
+
         // Scroll bar positions
         double scrollX = scrollPane.getHvalue();
         double scrollY = scrollPane.getVvalue();
-        
+
         // Scroll bar position boundaries (work-around for viewport size bug)
         double maxScrollX;
         double maxScrollY;
-        
+
         // Set viewport size and translation offsets.
         if ((rotation % 180) == 0) {
             // Rotation is 0 or 180.
@@ -549,7 +560,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             maxScrollX = (adjustedImageHeight - panelWidth) / (imageWidth - panelWidth);
             maxScrollY = (adjustedImageWidth - panelHeight) / (imageHeight - panelHeight);
         }
-            
+
         // Work around bug that truncates image if dimensions are too small.
         if (viewportWidth < imageWidth) {
             viewportWidth = imageWidth;
@@ -563,7 +574,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 scrollY = maxScrollY;
             }
         }
-        
+
         // Update the viewport size.
         fxImageView.setViewport(new Rectangle2D(
                 0, 0, viewportWidth, viewportHeight));
@@ -589,9 +600,9 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         // Add the transforms in reverse order of intended execution.
         // Note: They MUST be added in this order to ensure translate is
         // executed last.
-        fxImageView.getTransforms().clear();
-        fxImageView.getTransforms().addAll(translate, rotate, scale);
-        
+        imageGroup.getTransforms().clear();
+        imageGroup.getTransforms().addAll(translate, rotate, scale);
+
         // Adjust scroll bar positions for view changes.
         if (viewportWidth > fxPanel.getWidth()) {
             scrollPane.setHvalue(scrollX);
@@ -599,11 +610,103 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         if (viewportHeight > fxPanel.getHeight()) {
             scrollPane.setVvalue(scrollY);
         }
-        
+
         // Update all image controls to reflect the current values.
         zoomOutButton.setEnabled(zoomRatio > MIN_ZOOM_RATIO);
         zoomInButton.setEnabled(zoomRatio < MAX_ZOOM_RATIO);
         rotationTextField.setText((int) rotation + "°");
         zoomTextField.setText((Math.round(zoomRatio * 100.0)) + "%");
+    }
+
+    /**
+     * Enables users to 'tag' a region of an image by clicking and dragging a
+     * rectangle overtop.
+     */
+    class ImageTaggingTool extends Rectangle {
+
+        private final double imageWidth;
+        private final double imageHeight;
+        private final double imageOriginX;
+        private final double imageOriginY;
+
+        //Origin of the drag event.
+        private double rectangleOriginX;
+        private double rectangleOriginY;
+
+        /**
+         * Adds tagging support to an image, where the 'tag' rectangle will be
+         * the specified color.
+         *
+         * @param image Image to tag
+         * @param color Color of the 'tag' rectangle
+         */
+        private ImageTaggingTool(ImageView image, Color color) {
+            defaultSettings();
+
+            imageWidth = image.getImage().getWidth();
+            imageHeight = image.getImage().getHeight();
+            imageOriginX = image.getX();
+            imageOriginY = image.getY();
+
+            setStroke(color);
+            setFill(color.deriveColor(0.5, 0, 1, 0.2));
+            //Set the stroke width to the min of the height and width, so that
+            //border of the rectangle is visible on skinny images.
+            setStrokeWidth(Math.min(imageWidth, imageHeight) / 200.0);
+            setVisible(false);
+
+            //Create a rectangle by left clicking on the image
+            image.setOnMousePressed((MouseEvent event) -> {
+                if (event.isSecondaryButtonDown()) {
+                    return;
+                }
+
+                //Reset box on new click.
+                defaultSettings();
+
+                rectangleOriginX = event.getX();
+                rectangleOriginY = event.getY();
+
+                setX(rectangleOriginX);
+                setY(rectangleOriginY);
+            });
+
+            //Adjust the rectangle by dragging the left mouse button
+            image.setOnMouseDragged((MouseEvent event) -> {
+                if (event.isSecondaryButtonDown()) {
+                    return;
+                }
+
+                /**
+                 * Ensure the rectangle is contained within image boundaries
+                 */
+                double newX = Math.min(Math.max(event.getX(), imageOriginX), imageWidth);
+                double newY = Math.min(Math.max(event.getY(), imageOriginY), imageHeight);
+
+                setVisible(true);
+                double offsetX = newX - rectangleOriginX;
+                if (offsetX < 0) {
+                    setX(newX);
+                }
+                setWidth(Math.abs(offsetX));
+
+                double offsetY = newY - rectangleOriginY;
+                if (offsetY < 0) {
+                    setY(newY);
+                }
+                setHeight(Math.abs(offsetY));
+            });
+        }
+
+        /**
+         * Reset the rectangle to default dimensions.
+         */
+        public final void defaultSettings() {
+            setX(0);
+            setY(0);
+            setWidth(0);
+            setHeight(0);
+            setVisible(false);
+        }
     }
 }
