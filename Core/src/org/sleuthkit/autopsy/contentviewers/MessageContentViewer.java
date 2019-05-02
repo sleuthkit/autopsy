@@ -467,6 +467,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         htmlPanel.reset();
         textbodyTextArea.setText("");
         msgbodyTabbedPane.setEnabled(false);
+        drp.setNode(null);
     }
 
     @Override
@@ -561,7 +562,7 @@ public class MessageContentViewer extends javax.swing.JPanel implements DataCont
         msgbodyTabbedPane.setEnabledAt(ATTM_TAB_INDEX, numberOfAttachments > 0);
         msgbodyTabbedPane.setTitleAt(ATTM_TAB_INDEX, "Attachments (" + numberOfAttachments + ")");
         drp.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(
-                new AttachmentsChildren(attachments)), null), true));
+                new AttachmentsChildren(attachments)), drp.getExplorerManager()), true));
     }
 
     private static String wrapInHtmlBody(String htmlText) {

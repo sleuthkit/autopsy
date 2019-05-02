@@ -94,7 +94,6 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
                 "TSK_PHONE_NUMBER", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getDisplayName()
         );
         outline.setRootVisible(false);
-        outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.ContactsViewer_columnHeader_Name());
 
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {

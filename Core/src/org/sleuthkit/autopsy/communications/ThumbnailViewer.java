@@ -130,7 +130,7 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
             thumbnailViewer.resetComponent();
         }
 
-        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new ThumbnailChildren(artifactList)), tableEM), true));
+        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new ThumbnailChildren(artifactList)), tableEM), true, this.getClass().getName()));
     }
 
     @Override
@@ -164,7 +164,7 @@ public class ThumbnailViewer extends JPanel implements RelationshipsViewer, Expl
     private void handleNodeSelectionChange() {
         final Node[] nodes = tableEM.getSelectedNodes();
 
-        if (nodes != null && nodes.length > 0) {
+        if (nodes != null && nodes.length == 1) {
             AbstractContent thumbnail = nodes[0].getLookup().lookup(AbstractContent.class);
             if (thumbnail != null) {
                 try {
