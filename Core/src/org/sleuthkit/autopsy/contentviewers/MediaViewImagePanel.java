@@ -26,6 +26,10 @@ import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.embed.swing.JFXPanel;
@@ -53,6 +57,7 @@ import javafx.scene.Group;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.util.Duration;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.datamodel.FileNode;
@@ -209,7 +214,7 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                         // We have a non-null image, so let's show it.
                         fxImageView.setImage(fxImage);
                         imageGroup.getChildren().remove(tagger);
-                        tagger = new ImageTaggingTool(fxImageView, Color.IVORY);
+                        tagger = new ImageTaggingTool(fxImageView, Color.RED);
                         imageGroup.getChildren().add(tagger);
                         resetView();
                         scrollPane.setContent(imageGroup);
@@ -634,6 +639,11 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
         private double rectangleOriginX;
         private double rectangleOriginY;
 
+        //Rectangle lines should be 1.5% of the image. This level of thickness has
+        //a good balance between visual acuity and loss of selection at the borders
+        //of the image.
+        private double lineThicknessAsPercent = 1.5;
+
         /**
          * Adds tagging support to an image, where the 'tag' rectangle will be
          * the specified color.
@@ -650,10 +660,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
             imageOriginY = image.getY();
 
             setStroke(color);
-            setFill(color.deriveColor(0.5, 0, 1, 0.2));
-            //Set the stroke width to the min of the height and width, so that
-            //border of the rectangle is visible on skinny images.
-            setStrokeWidth(Math.min(imageWidth, imageHeight) / 200.0);
+            setFill(color.deriveColor(0, 0, 0, 0));
+
+            //Calculate how many pixels the stroke width should be to guarentee
+            //a consistent % of image consumed by the rectangle border.
+            double min = Math.min(imageWidth, imageHeight);
+            double lineThicknessPixels = min * lineThicknessAsPercent / 100.0;
+            setStrokeWidth(lineThicknessPixels);
             setVisible(false);
 
             //Create a rectangle by left clicking on the image
@@ -679,10 +692,13 @@ class MediaViewImagePanel extends JPanel implements MediaFileViewer.MediaViewPan
                 }
 
                 /**
-                 * Ensure the rectangle is contained within image boundaries
+                 * Ensure the rectangle is contained within image boundaries and
+                 * that the line thickness is kept within bounds.
                  */
-                double newX = Math.min(Math.max(event.getX(), imageOriginX), imageWidth);
-                double newY = Math.min(Math.max(event.getY(), imageOriginY), imageHeight);
+                double newX = Math.min(Math.max(event.getX(), imageOriginX)
+                        + lineThicknessPixels / 2, imageWidth - lineThicknessPixels / 2);
+                double newY = Math.min(Math.max(event.getY(), imageOriginY)
+                        + lineThicknessPixels / 2, imageHeight - lineThicknessPixels / 2);
 
                 setVisible(true);
                 double offsetX = newX - rectangleOriginX;
