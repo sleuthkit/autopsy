@@ -181,7 +181,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     /**
      * Create a list of the DataSourceProcessors which should exist as options
      * on this panel. The default Autopsy DataSourceProcessors will appear at
-     * the beggining of the list in the same order.
+     * the beginning of the list in the same order.
      *
      * @return dspList a list of DataSourceProcessors which can be chose in this
      *         panel
@@ -200,6 +200,9 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         dspList.add(LocalDiskDSProcessor.getType());
         dspList.add(LocalFilesDSProcessor.getType());
         dspList.add(RawDSProcessor.getType());
+        Foo foo = new Foo();
+        dspList.add(foo.bar());
+        dspList.add(LogicalImagerDSProcessor.getType());
         // now add any addtional DSPs that haven't already been added
         for (String dspType : datasourceProcessorsMap.keySet()) {
             if (!dspList.contains(dspType)) {
