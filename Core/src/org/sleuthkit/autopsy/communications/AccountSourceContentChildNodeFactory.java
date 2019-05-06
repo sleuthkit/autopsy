@@ -12,7 +12,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -89,7 +88,7 @@ final class AccountSourceContentChildNodeFactory extends ChildFactory<Content> {
                 setDisplayName(content.getName());
             }
             
-            setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon.png");
+            setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon.png"); //NON-NLS
         }
     }
 

@@ -45,7 +45,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         "SummaryViewer_TabTitle=Summary",
         "SummaryViewer_FileRefNameColumn_Title=Path",
         "SummaryViewer_CaseRefNameColumn_Title=Case Name",
-        "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Case References>"
+        "SummaryViewer_CentralRepository_Message=<Enable Central Resposity to see Case References>",
+        "SummaryViewer_Creation_Date_Title=Creation Date"
     })
 
     /**
@@ -63,7 +64,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
         outlineView = caseReferencesPanel.getOutlineView();
         outline = outlineView.getOutline();
-        outlineView.setPropertyColumns("creationDate", "Creation Date");
+        outlineView.setPropertyColumns("creationDate", Bundle.SummaryViewer_Creation_Date_Title()); //NON-NLS
 
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.SummaryViewer_CaseRefNameColumn_Title());

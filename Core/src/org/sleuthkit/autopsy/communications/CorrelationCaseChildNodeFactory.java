@@ -67,7 +67,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
         try {
             dbInstance = EamDb.getInstance();
         } catch (EamDbException ex) {
-            logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex);
+            logger.log(Level.SEVERE, "Unable to connect to the Central Repository database.", ex); //NON-NLS
             return false;
         }
 
@@ -84,7 +84,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
                     });
                 }
             } catch (EamDbException | CorrelationAttributeNormalizationException ex) {
-                logger.log(Level.WARNING, String.format("Unable to getArtifactInstance for accountID: %d", account.getAccountID()), ex);
+                logger.log(Level.WARNING, String.format("Unable to getArtifactInstance for accountID: %d", account.getAccountID()), ex); //NON-NLS
             }
         });
 
@@ -144,7 +144,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
             this.correlationCase = correlationCase;
 
             setDisplayName(correlationCase.getDisplayName());
-            setIconBaseWithExtension("org/sleuthkit/autopsy/images/briefcase.png");
+            setIconBaseWithExtension("org/sleuthkit/autopsy/images/briefcase.png"); //NON-NLS
         }
 
         @Override
@@ -157,7 +157,7 @@ final class CorrelationCaseChildNodeFactory extends ChildFactory<CorrelationCase
                 sheet.put(sheetSet);
             }
 
-            sheetSet.put(new NodeProperty<>("creationDate",
+            sheetSet.put(new NodeProperty<>("creationDate", //NON-NLS
                     correlationCase.getTitleCreationDate(),
                     correlationCase.getTitleCreationDate(),
                     correlationCase.getCreationDate()));
