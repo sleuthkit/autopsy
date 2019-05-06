@@ -666,6 +666,8 @@ public class ImageUtils {
         private final File cacheFile;
         private final boolean defaultOnFailure;
 
+        private long startTime = 0;
+         
         @NbBundle.Messages({"# {0} - file name",
             "GetOrGenerateThumbnailTask.loadingThumbnailFor=Loading thumbnail for {0}",
             "# {0} - file name",
@@ -678,6 +680,10 @@ public class ImageUtils {
             this.cacheFile = getCachedThumbnailLocation(file.getId());
         }
 
+        private double getDurationMilliSecs() {
+            return (System.nanoTime() - startTime)/ 1000000;
+        }
+                        
         @Override
         protected javafx.scene.image.Image call() throws Exception {
             if (isCancelled()) {
@@ -687,6 +693,9 @@ public class ImageUtils {
                 return readImage();
             }
 
+            startTime = System.nanoTime();
+            LOGGER.log(Level.INFO, "TNTIMING: GetThumbnailTask Entering for file  = " + file.getName() + " with obj id = " + file.getId());
+            
             // If a thumbnail file is already saved locally, just read that.
             if (cacheFile != null) {
                 synchronized (cacheFile) {
@@ -700,7 +709,9 @@ public class ImageUtils {
                                 return null;
                             }
                             if (nonNull(cachedThumbnail) && cachedThumbnail.getWidth() == iconSize) {
-                                return SwingFXUtils.toFXImage(cachedThumbnail, null);
+                                javafx.scene.image.Image image = SwingFXUtils.toFXImage(cachedThumbnail, null);
+                                LOGGER.log(Level.INFO, "TNTIMING: GetThumbnailTask returning CACHED thumbnail for file  = " + file.getName() + " with obj id = " + file.getId() + " which took a total of = " + this.getDurationMilliSecs()); //NON-NLS
+                                return image;
                             }
                         } catch (Exception ex) {
                             LOGGER.log(Level.WARNING, "ImageIO had a problem reading the cached thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
@@ -786,7 +797,9 @@ public class ImageUtils {
             if (isCancelled()) {
                 return null;
             }
-            return SwingFXUtils.toFXImage(thumbnail, null);
+            javafx.scene.image.Image image = SwingFXUtils.toFXImage(thumbnail, null);
+            LOGGER.log(Level.INFO, "TNTIMING: GetThumbnailTask GENERATED thumbnail for file  = " + file.getName() + " with obj id = " + file.getId() + " which took a total of = " + this.getDurationMilliSecs()); //NON-NLS
+            return image;
         }
 
         /**
@@ -797,12 +810,16 @@ public class ImageUtils {
         private void saveThumbnail(BufferedImage thumbnail) {
             imageSaver.execute(() -> {
                 try {
+                    LOGGER.log(Level.INFO, "TNTIMING: saveThumbnail SAVING thumbnail in cache file  = " + cacheFile.getName() ); //NON-NLS
+                    long startTime2 = System.nanoTime();
                     synchronized (cacheFile) {
                         Files.createParentDirs(cacheFile);
                         if (cacheFile.exists()) {
                             cacheFile.delete();
                         }
                         ImageIO.write(thumbnail, FORMAT, cacheFile);
+                        double durMilliSecs2 = (System.nanoTime() - startTime2)/ 1000000;
+                        LOGGER.log(Level.INFO, "TNTIMING: saveThumbnail SAVED thumbnail in cache file  = " + cacheFile.getName() + " which took a total of = " + durMilliSecs2); //NON-NLS
                     }
                 } catch (Exception ex) {
                     LOGGER.log(Level.WARNING, "Could not write thumbnail for {0}: " + ex.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS

@@ -331,8 +331,14 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
             ThumbnailLoadTask() {
                 super(new Callable<Image>() {  //Does not work as lambda expression in dependent projects in IDE
+                    private final Logger logger = Logger.getLogger(ThumbnailLoadTask.class.getName());
                     public Image call() {
-                        return ImageUtils.getThumbnail(content, thumbSize);
+                        long startTime = System.nanoTime();
+                        logger.log(Level.INFO, "TNTIMING: ThumbnailLoadTask STARTED for content = " + content.getName() + " with obj id = " + content.getId() ); //NON-NLS
+                        Image image = ImageUtils.getThumbnail(content, thumbSize);
+                        double durMilliSecs = (System.nanoTime() - startTime)/ 1000000;
+                        logger.log(Level.INFO, "TNTIMING: ThumbnailLoadTask DONE for content = " + content.getName() + " with obj id = " + content.getId() +  " took a total of = " + durMilliSecs); //NON-NLS
+                        return image;
                     }
                 });
                 //super(() -> ImageUtils.getThumbnail(content, thumbSize));
