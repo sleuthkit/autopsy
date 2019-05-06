@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.communications;
 import java.awt.Component;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
-import org.openide.util.lookup.ProxyLookup;
 
 /**
  * Displays the Relationship information for the currently selected accounts.
@@ -34,6 +33,7 @@ final class RelationshipBrowser extends JPanel implements Lookup.Provider {
     private final MessagesViewer messagesViewer;
     private final ContactsViewer contactsViewer;
     private final ThumbnailViewer thumbnailsViewer;
+    private final SummaryViewer summaryViewer;
     
     private final ModifiableProxyLookup proxyLookup;
 
@@ -44,11 +44,13 @@ final class RelationshipBrowser extends JPanel implements Lookup.Provider {
         messagesViewer = new MessagesViewer();
         contactsViewer = new ContactsViewer();
         thumbnailsViewer = new ThumbnailViewer();
+        summaryViewer = new SummaryViewer();
         
         proxyLookup = new ModifiableProxyLookup(messagesViewer.getLookup());
         
          initComponents();
         
+        tabPane.add(summaryViewer.getDisplayName(), summaryViewer);
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
         tabPane.add(thumbnailsViewer.getDisplayName(), thumbnailsViewer);
