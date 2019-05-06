@@ -19,39 +19,31 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.function.Predicate;
-import org.openide.util.Exceptions;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  * Predicate that can be used to filter known and/or slack files from
  * Content collections based on user preferences.
  */
-class KnownAndSlackFilter<T extends Content> implements Predicate<T> {
+abstract class KnownAndSlackFilterBase<T extends Content> implements Predicate<T> {
+    protected static boolean filterKnown;
+    protected static boolean filterSlack;
 
     @Override
     public boolean test(T t) {
         AbstractFile af = null;
 
-        if (t instanceof BlackboardArtifact) {
-            try {
-                af = ((BlackboardArtifact) (t)).getSleuthkitCase().getAbstractFileById(((BlackboardArtifact) t).getObjectID());
-            } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
-            }
-        } else if (t instanceof AbstractFile) {
+        if (t instanceof AbstractFile) {
             af = (AbstractFile) t;
         }
 
         if (af != null) {
-            if (af.getKnown() == TskData.FileKnown.KNOWN && UserPreferences.hideKnownFilesInViewsTree()) {
+            if (af.getKnown() == TskData.FileKnown.KNOWN && filterKnown) {
                 return false;
             }
-            if (af.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) && UserPreferences.hideSlackFilesInViewsTree()) {
+            if (af.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) && filterSlack) {
                 return false;
             }
         }

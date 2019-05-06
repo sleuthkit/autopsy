@@ -392,7 +392,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          *               data to display
          */
         private FileExtensionNodeChildren(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o, String nodeName) {
-            super(nodeName);
+            super(nodeName, new ViewsKnownAndSlackFilter<>());
             this.filter = filter;
             this.skCase = skCase;
             notifier = o;

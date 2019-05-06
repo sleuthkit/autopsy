@@ -377,7 +377,7 @@ public class FileSize implements AutopsyVisitableItem {
              *               added to case
              */
             FileSizeChildren(FileSizeFilter filter, SleuthkitCase skCase, Observable o, long dsObjId) {
-                super(filter.getName());
+                super(filter.getName(), new ViewsKnownAndSlackFilter<>());
                 this.skCase = skCase;
                 this.filter = filter;
                 this.notifier = o;

@@ -450,7 +450,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         private final String mimeType;
 
         private MediaSubTypeNodeChildren(String mimeType) {
-            super(mimeType);
+            super(mimeType, new ViewsKnownAndSlackFilter<>());
             addObserver(this);
             this.mimeType = mimeType;
         }

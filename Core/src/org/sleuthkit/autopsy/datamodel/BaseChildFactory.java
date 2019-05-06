@@ -41,7 +41,7 @@ import org.sleuthkit.datamodel.Content;
  */
 public abstract class BaseChildFactory<T extends Content> extends ChildFactory.Detachable<T> {
 
-    private final Predicate<T> filter;
+    private Predicate<T> filter;
     private boolean isPageChangeEvent;
     private boolean isPageSizeChangeEvent;
 
@@ -54,13 +54,19 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
     public static Map<String, EventBus> nodeNameToEventBusMap = new ConcurrentHashMap<>();
 
     public BaseChildFactory(String nodeName) {
+        /**
+         * Initialize a no-op filter that always returns true.
+         */
+        this(nodeName, x -> true);
+    }
+
+    public BaseChildFactory(String nodeName, Predicate<T> filter) {
         pagingSupport = new PagingSupport(nodeName);
         pagingSupport.initialize();
         isPageChangeEvent = false;
         isPageSizeChangeEvent = false;
-        filter = new KnownAndSlackFilter<>();
+        this.filter = filter;
     }
-
     @Override
     protected void addNotify() {
         onAdd();

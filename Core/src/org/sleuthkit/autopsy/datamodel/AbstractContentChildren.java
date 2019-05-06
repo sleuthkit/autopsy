@@ -31,7 +31,7 @@ abstract class AbstractContentChildren<T extends Content> extends BaseChildFacto
     private final CreateSleuthkitNodeVisitor createSleuthkitNodeVisitor = new CreateSleuthkitNodeVisitor();
 
     AbstractContentChildren(String nodeName) {
-        super(nodeName);
+        super(nodeName, new DataSourcesKnownAndSlackFilter<>());
     }
 
     @Override

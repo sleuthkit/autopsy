@@ -367,7 +367,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             private final long datasourceObjId;
 
             DeletedContentChildren(DeletedContent.DeletedContentFilter filter, SleuthkitCase skCase, Observable o, long datasourceObjId) {
-                super(filter.getName());
+                super(filter.getName(), new ViewsKnownAndSlackFilter<>());
                 this.skCase = skCase;
                 this.filter = filter;
                 this.notifier = o;
