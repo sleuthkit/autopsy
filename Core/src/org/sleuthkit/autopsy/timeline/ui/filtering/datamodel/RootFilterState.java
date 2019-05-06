@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,16 @@
  */
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanWrapper;
-import javafx.collections.FXCollections;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
-import static org.apache.commons.lang3.ObjectUtils.notEqual;
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.timeline.TimelineFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourceFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.DataSourcesFilter;
@@ -37,9 +40,10 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.HideKnownFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.RootFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TextFilter;
 
-/**
+/** A FilterState for RootFilters. Provides named access to the sub
+ * filterstates.
  */
-public class RootFilterState implements CompoundFilterState< TimelineFilter, RootFilter> {
+public class RootFilterState extends CompoundFilterState<TimelineFilter, RootFilter> {
 
     private final CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState;
     private final DefaultFilterState<HideKnownFilter> knownFilterState;
@@ -49,26 +53,24 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
     private final CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState;
     private final CompoundFilterState<TimelineFilter.FileTypeFilter, TimelineFilter.FileTypesFilter> fileTypesFilterState;
 
-    private static final ReadOnlyBooleanProperty ALWAYS_TRUE = new ReadOnlyBooleanWrapper(true).getReadOnlyProperty();
-    private final static ReadOnlyBooleanProperty ALWAYS_FALSE = new ReadOnlyBooleanWrapper(false).getReadOnlyProperty();
+    private static final BooleanProperty ALWAYS_TRUE = new SimpleBooleanProperty(true);
+    private final static BooleanProperty ALWAYS_FALSE = new SimpleBooleanProperty(false);
 
-    private final ObservableList<   FilterState< ? extends TimelineFilter>> subFilterStates = FXCollections.observableArrayList();
-    private final ObservableSet<   FilterState< ? extends TimelineFilter>> namedFilterStates = FXCollections.observableSet();
-    private final RootFilter delegate;
+    private final Set<FilterState<? extends TimelineFilter>> namedFilterStates = new HashSet<>();
 
     public RootFilterState(RootFilter delegate) {
         this(delegate,
-                new CompoundFilterStateImpl<>(delegate.getEventTypeFilter()),
+                new CompoundFilterState<>(delegate.getEventTypeFilter()),
                 new DefaultFilterState<>(delegate.getKnownFilter()),
                 new DefaultFilterState<>(delegate.getTextFilter()),
                 new TagsFilterState(delegate.getTagsFilter()),
-                new CompoundFilterStateImpl<>(delegate.getHashHitsFilter()),
-                new CompoundFilterStateImpl<>(delegate.getDataSourcesFilter()),
-                new CompoundFilterStateImpl<>(delegate.getFileTypesFilter())
+                new CompoundFilterState<>(delegate.getHashHitsFilter()),
+                new CompoundFilterState<>(delegate.getDataSourcesFilter()),
+                new CompoundFilterState<>(delegate.getFileTypesFilter())
         );
     }
 
-    private RootFilterState(RootFilter delegate,
+    private RootFilterState(RootFilter filter,
                             CompoundFilterState<EventTypeFilter, EventTypeFilter> eventTypeFilterState,
                             DefaultFilterState<HideKnownFilter> knownFilterState,
                             DefaultFilterState<TextFilter> textFilterState,
@@ -76,7 +78,7 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
                             CompoundFilterState<HashSetFilter, HashHitsFilter> hashHitsFilterState,
                             CompoundFilterState<DataSourceFilter, DataSourcesFilter> dataSourcesFilterState,
                             CompoundFilterState<FileTypeFilter, FileTypesFilter> fileTypesFilterState) {
-        this.delegate = delegate;
+        super(filter, Arrays.asList(eventTypeFilterState, knownFilterState, textFilterState, tagsFilterState, hashHitsFilterState, dataSourcesFilterState, fileTypesFilterState));
         this.eventTypeFilterState = eventTypeFilterState;
         this.knownFilterState = knownFilterState;
         this.textFilterState = textFilterState;
@@ -84,15 +86,8 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
         this.hashHitsFilterState = hashHitsFilterState;
         this.dataSourcesFilterState = dataSourcesFilterState;
         this.fileTypesFilterState = fileTypesFilterState;
-        subFilterStates.addAll(
-                knownFilterState,
-                textFilterState,
-                tagsFilterState,
-                hashHitsFilterState,
-                dataSourcesFilterState,
-                fileTypesFilterState,
-                eventTypeFilterState);
-        namedFilterStates.addAll(subFilterStates);
+
+        namedFilterStates.addAll(Arrays.asList(eventTypeFilterState, knownFilterState, textFilterState, tagsFilterState, hashHitsFilterState, dataSourcesFilterState, fileTypesFilterState));
     }
 
     /**
@@ -103,19 +98,10 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
      * @return A new RootFilter model that intersects the given filter with this
      *         one.
      */
-    public RootFilterState intersect(FilterState<? extends TimelineFilter> otherFilter) {
+    public RootFilterState intersect(FilterState< ? extends TimelineFilter> otherFilter) {
         RootFilterState copyOf = copyOf();
         copyOf.addSubFilterState(otherFilter);
         return copyOf;
-    }
-
-    public void addSubFilterState(FilterState<? extends TimelineFilter> newSubFilterState) {
-        if (subFilterStates.contains(newSubFilterState) == false) {
-            subFilterStates.add(newSubFilterState);
-        }
-        if (delegate.getSubFilters().contains(newSubFilterState.getFilter())) {
-            getFilter().getSubFilters().add(newSubFilterState.getFilter());
-        }
     }
 
     @Override
@@ -172,7 +158,7 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
                 eventTypeFilterState.getActiveFilter(),
                 dataSourcesFilterState.getActiveFilter(),
                 fileTypesFilterState.getActiveFilter(),
-                Lists.transform(subFilterStates, FilterState::getActiveFilter));
+                Lists.transform(getSubFilterStates(), FilterState::getActiveFilter));
     }
 
     @SuppressWarnings("rawtypes")
@@ -188,6 +174,23 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
     }
 
     @Override
+    public ObservableList<FilterState<? extends TimelineFilter>> getSubFilterStates() {
+        ImmutableMap<FilterState<? extends TimelineFilter>, Integer> filterOrder
+                = ImmutableMap.<FilterState<? extends TimelineFilter>, Integer>builder()
+                        .put(knownFilterState, 0)
+                        .put(textFilterState, 1)
+                        .put(tagsFilterState, 2)
+                        .put(hashHitsFilterState, 3)
+                        .put(dataSourcesFilterState, 4)
+                        .put(fileTypesFilterState, 5)
+                        .put(eventTypeFilterState, 6)
+                        .build();
+
+        return super.getSubFilterStates().sorted((state1, state2)
+                -> Integer.compare(filterOrder.getOrDefault(state1, Integer.MAX_VALUE), filterOrder.getOrDefault(state2, Integer.MAX_VALUE)));
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -199,19 +202,12 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
             return false;
         }
 
-        RootFilterState otherFilterState = (RootFilterState) obj;
-
-        RootFilter activeFilter = getActiveFilter();
-        RootFilter activeFilter1 = otherFilterState.getActiveFilter();
-
-        if (notEqual(activeFilter, activeFilter1)) {
+        final RootFilterState other = (RootFilterState) obj;
+        if (false == Objects.equals(this.getFilter(), other.getFilter())) {
             return false;
         }
 
-        RootFilter filter = getFilter();
-        RootFilter filter1 = otherFilterState.getFilter();
-
-        return filter.equals(filter1);
+        return Objects.equals(this.getSubFilterStates(), other.getSubFilterStates());
     }
 
     @Override
@@ -220,28 +216,19 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
     }
 
     @Override
-    public ObservableList<  FilterState< ? extends TimelineFilter>> getSubFilterStates() {
-        return subFilterStates;
-    }
-
-    @Override
-    public ReadOnlyBooleanProperty activeProperty() {
+    public BooleanProperty activeProperty() {
         return ALWAYS_TRUE;
     }
 
     @Override
-    public ReadOnlyBooleanProperty disabledProperty() {
+    public BooleanProperty disabledProperty() {
         return ALWAYS_FALSE;
     }
 
+    @NbBundle.Messages("RootFilterState.displayName=Root")
     @Override
     public String getDisplayName() {
-        return "Root";
-    }
-
-    @Override
-    public RootFilter getFilter() {
-        return delegate;
+        return Bundle.RootFilterState_displayName();
     }
 
     @Override
@@ -260,17 +247,38 @@ public class RootFilterState implements CompoundFilterState< TimelineFilter, Roo
     }
 
     @Override
-    public ReadOnlyBooleanProperty selectedProperty() {
+    public BooleanProperty selectedProperty() {
         return ALWAYS_TRUE;
     }
 
     @Override
     public void setDisabled(Boolean act) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        /*
+         * A RootFitlerState is always enabled, so disabling it is overridden as
+         * a no-op.
+         */
     }
 
     @Override
     public void setSelected(Boolean act) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        /*
+         * A RootFitlerState is always enabled, so enabling it is overridden as
+         * a no-op.
+         */
+    }
+
+    @Override
+    public String toString() {
+        return "RootFilterState{"
+               + "\neventTypeFilterState=" + eventTypeFilterState + ","
+               + "\nknownFilterState=" + knownFilterState + ","
+               + "\ntextFilterState=" + textFilterState + ","
+               + "\ntagsFilterState=" + tagsFilterState + ","
+               + "\nhashHitsFilterState=" + hashHitsFilterState + ","
+               + "\ndataSourcesFilterState=" + dataSourcesFilterState + ","
+               + "\nfileTypesFilterState=" + fileTypesFilterState + ","
+               + "\nsubFilterStates=" + getSubFilterStates() + ","
+               + "\nnamedFilterStates=" + namedFilterStates + ","
+               + "\ndelegate=" + getFilter() + '}'; //NON-NLS
     }
 }

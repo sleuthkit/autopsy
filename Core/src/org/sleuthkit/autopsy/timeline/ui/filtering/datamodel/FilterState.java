@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
 
 import javafx.beans.binding.BooleanExpression;
-import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.BooleanProperty;
 
 /**
  * The state of a filter: selected, disabled, active, etc.
@@ -40,13 +40,13 @@ public interface FilterState<FilterType> {
 
     boolean isActive();
 
-    ReadOnlyBooleanProperty disabledProperty();
+    BooleanProperty disabledProperty();
 
     boolean isDisabled();
 
     void setDisabled(Boolean act);
 
-    ReadOnlyBooleanProperty selectedProperty();
+    BooleanProperty selectedProperty();
 
     boolean isSelected();
 

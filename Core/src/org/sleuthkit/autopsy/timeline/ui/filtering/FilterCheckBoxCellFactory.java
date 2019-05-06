@@ -36,9 +36,11 @@ class FilterCheckBoxCellFactory< X extends FilterState< ?>> extends AbstractFXCe
     protected void configureCell(IndexedCell<? extends X> cell, X item, boolean empty, Supplier<X> supplier) {
         if (selectedProperty != null) {
             checkBox.selectedProperty().unbindBidirectional(selectedProperty);
+            selectedProperty = null;
         }
         if (disabledProperty != null) {
             checkBox.disableProperty().unbind();
+            disabledProperty = null;
         }
 
         if (item == null) {
@@ -48,7 +50,7 @@ class FilterCheckBoxCellFactory< X extends FilterState< ?>> extends AbstractFXCe
             disabledProperty = item.disabledProperty();
             checkBox.disableProperty().bind(disabledProperty);
             if (item.selectedProperty() instanceof Property<?>) {
-                selectedProperty = (Property<Boolean>) item.selectedProperty();
+                selectedProperty = item.selectedProperty();
                 checkBox.selectedProperty().bindBidirectional(selectedProperty);
             }
 

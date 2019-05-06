@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,11 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TagNameFilter;
 import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
 
 /**
+ * Specialization of CompoundFilterState for TagName/Tags-Filter.
  *
+ * Newly added subfilters made to be SELECTED when they are added.
  */
-public class TagsFilterState extends CompoundFilterStateImpl<TagNameFilter, TagsFilter> {
+public class TagsFilterState extends CompoundFilterState<TagNameFilter, TagsFilter> {
 
     public TagsFilterState(TagsFilter delegate) {
         super(delegate);
@@ -37,13 +39,13 @@ public class TagsFilterState extends CompoundFilterStateImpl<TagNameFilter, Tags
 
     }
 
-    public TagsFilterState(TagsFilter delegate, Collection<FilterState<TagNameFilter>> subFilterStates) {
+    public TagsFilterState(TagsFilter delegate, Collection<FilterState<? extends TagNameFilter>> subFilterStates) {
         super(delegate, subFilterStates);
         installSelectNewFiltersListener();
     }
 
     private void installSelectNewFiltersListener() {
-        getSubFilterStates().addListener((ListChangeListener.Change<? extends FilterState<TagNameFilter>> change) -> {
+        getSubFilterStates().addListener((ListChangeListener.Change<? extends FilterState<? extends TagNameFilter>> change) -> {
             while (change.next()) {
                 change.getAddedSubList().forEach(filterState -> filterState.setSelected(true));
             }

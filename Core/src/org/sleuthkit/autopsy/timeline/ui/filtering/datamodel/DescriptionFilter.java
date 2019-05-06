@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -70,10 +70,7 @@ public final class DescriptionFilter implements UIFilter {
         if (!Objects.equals(this.description, other.description)) {
             return false;
         }
-        if (this.descriptionLoD != other.descriptionLoD) {
-            return false;
-        }
-        return true;
+        return this.descriptionLoD == other.descriptionLoD;
     }
 
     @Override

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2019 Basis Technology Corp.
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.timeline.ui.filtering.datamodel;
-
-import java.util.function.Predicate;
-import org.sleuthkit.datamodel.timeline.TimelineEvent;
+package org.sleuthkit.datamodel;
 
 /**
- * A Filter over TimelineEvents that is applied in the UI, not the DB. *
+ * Version of TagName with a public constructor for use in testing.
  */
-public interface UIFilter extends Predicate<TimelineEvent> {
+public class PublicTagName extends TagName {
 
-    static UIFilter getAllPassFilter() {
-        return event -> true;
+    public PublicTagName(long id, String displayName, String description, HTML_COLOR color, TskData.FileKnown knownStatus) {
+        super(id, displayName, description, color, knownStatus);
+    }
+
+    @Override
+    public String toString() {
+        return "PublicTagName{" + getDisplayName() + '}'; //NON-NLS
     }
 }
