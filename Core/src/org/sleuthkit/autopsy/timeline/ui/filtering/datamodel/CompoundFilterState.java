@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -232,6 +232,5 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
     public String toString() {
         return "CompoundFilterState{ selected=" + isSelected() + ", disabled=" + isDisabled() + ", activeProp=" + isActive() + ",subFilterStates=" + subFilterStates + '}';
     }
-    
     
 }

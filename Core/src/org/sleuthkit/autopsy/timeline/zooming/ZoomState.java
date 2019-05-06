@@ -132,6 +132,6 @@ final public class ZoomState {
 
     @Override
     public String toString() {
-        return "ZoomState{" + "timeRange=" + timeRange + ", typeZoomLevel=" + typeZoomLevel + ", filter=" + filter + ", descrLOD=" + descrLOD + '}'; //NON-NLS
+        return "ZoomState{" + "timeRange=" + timeRange + ", typeZoomLevel=" + typeZoomLevel + ", filter=" + filter.getActiveFilter().toString() + ", descrLOD=" + descrLOD + '}'; //NON-NLS
     }
 }

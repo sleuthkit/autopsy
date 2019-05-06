@@ -1,5 +1,5 @@
 /*
- * Central Repository
+ * Autopsy Forensic Browser
  *
  * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -32,7 +32,7 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter.TagsFilter;
 /**
  * Test class for TagsFilterState
  */
-public class TagsFilterStateTest extends FilterStateTestAbstract<  TagsFilterState> {
+public class TagsFilterStateTest extends FilterStateTestAbstract<TagsFilterState> {
 
     private static final PublicTagName PUBLIC_TAG_NAME = new PublicTagName(1, "test", "test tag name", TagName.HTML_COLOR.NONE, TskData.FileKnown.KNOWN);
     private static final PublicTagName PUBLIC_TAG_NAME2 = new PublicTagName(2, "test2", "test2 tag name", TagName.HTML_COLOR.NONE, TskData.FileKnown.UNKNOWN);
@@ -66,16 +66,15 @@ public class TagsFilterStateTest extends FilterStateTestAbstract<  TagsFilterSta
                 = new DefaultFilterState<>(new TimelineFilter.TagNameFilter(PUBLIC_TAG_NAME3));
         assertThat(tagNameState.isSelected(), equalTo(false));
         instance.getSubFilterStates().add(tagNameState);
-                //filter is selected after adding to TagsFilterState.
+        //filter is selected after adding to TagsFilterState.
         assertThat(tagNameState.isSelected(), equalTo(true));
-
 
         //filter starts unselected
         DefaultFilterState<TimelineFilter.TagNameFilter> tagNameState2
-                = new DefaultFilterState<>(new TimelineFilter.TagNameFilter(PUBLIC_TAG_NAME4),false);
+                = new DefaultFilterState<>(new TimelineFilter.TagNameFilter(PUBLIC_TAG_NAME4), false);
         assertThat(tagNameState2.isSelected(), equalTo(false));
         instance.addSubFilterState(tagNameState2);
-                //filter is selected after adding to TagsFilterState.
+        //filter is selected after adding to TagsFilterState.
         assertThat(tagNameState2.isSelected(), equalTo(true));
     }
 
