@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         keywordsCategory = "Machine Translation")
 public class TranslationSettingsPanelController extends OptionsPanelController {
 
-    private TranslationSettingsPanel panel;
+    private TranslationOptionsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
     private static final Logger logger = Logger.getLogger(TranslationSettingsPanelController.class.getName());
@@ -59,7 +59,7 @@ public class TranslationSettingsPanelController extends OptionsPanelController {
 
     @Override
     public boolean isValid() {
-        return getPanel().valid();
+        return true;
     }
 
     @Override
@@ -95,9 +95,9 @@ public class TranslationSettingsPanelController extends OptionsPanelController {
          */
     }
 
-    private TranslationSettingsPanel getPanel() {
+    private TranslationOptionsPanel getPanel() {
         if (panel == null) {
-            panel = new TranslationSettingsPanel(this);
+            panel = new TranslationOptionsPanel(this);
         }
         return panel;
     }

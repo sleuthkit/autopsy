@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.texttranslation;
 
+import java.awt.Component;
+
 /**
  * Interface for creating text translators. Implementing classes will be picked
  * up and run by the Text Translation Service.
@@ -26,4 +28,7 @@ public interface TextTranslator {
 
     String translate(String input) throws TranslationException;
     
+    String getName();
+    
+    Component getComponent();
 }
