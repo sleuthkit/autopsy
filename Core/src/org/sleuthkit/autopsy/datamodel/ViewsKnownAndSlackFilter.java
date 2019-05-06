@@ -38,15 +38,15 @@ class ViewsKnownAndSlackFilter<T extends Content> extends KnownAndSlackFilterBas
          */
         UserPreferences.addChangeListener((PreferenceChangeEvent evt) -> {
             if (evt.getKey().equals(UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE)) {
-                filterKnown = UserPreferences.hideKnownFilesInDataSourcesTree();
+                filterKnown = UserPreferences.hideKnownFilesInViewsTree();
             } else if (evt.getKey().equals(UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE)) {
-                filterSlack = UserPreferences.hideSlackFilesInDataSourcesTree();
+                filterSlack = UserPreferences.hideSlackFilesInViewsTree();
             }
         });
     }
 
     ViewsKnownAndSlackFilter() {
-        filterKnown = UserPreferences.hideKnownFilesInDataSourcesTree();
-        filterSlack = UserPreferences.hideSlackFilesInDataSourcesTree();
+        filterKnown = UserPreferences.hideKnownFilesInViewsTree();
+        filterSlack = UserPreferences.hideSlackFilesInViewsTree();
     }
 }
