@@ -44,6 +44,11 @@
         <copy todir="${basedir}/release/gstreamer" >
             <fileset dir="${thirdparty.dir}/gstreamer"/>
         </copy>
+		
+		<!--Copy 7-Zip to release-->
+        <copy todir="${basedir}/release/7-Zip" >
+            <fileset dir="${thirdparty.dir}/7-Zip"/>
+        </copy>
 
         <!-- The 'libgstlibav.dll' file is too big to store on GitHub, so we
         have it stored in a ZIP file. We'll extract it in place and remove
