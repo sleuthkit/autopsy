@@ -30,7 +30,9 @@ import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,6 +44,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.tika.Tika;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
@@ -65,6 +68,9 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
@@ -233,9 +239,7 @@ final class TikaTextExtractor implements TextExtractor {
                         + "Tika returned empty reader for " + content);
             }
             pushbackReader.unread(read);
-            //concatenate parsed content and meta data into a single reader.
-            CharSource metaDataCharSource = getMetaDataCharSource(metadata);
-            return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
+            return new ReaderCharSource(pushbackReader).openStream();
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(),
                     "AbstractFileTikaTextExtract.index.tikaParseTimeout.text",
@@ -417,6 +421,32 @@ final class TikaTextExtractor implements TextExtractor {
                                 .map(key -> key + ": " + metadata.get(key))
                                 .collect(Collectors.joining("\n"))
                         ));
+    }
+    
+    /**
+     * Get the content metdata
+     * 
+     * @return Metadata name -> value
+     */
+    @Override
+    public Map<String, String> getMetadata() {
+        Map<String, String> metadataMap = new TreeMap<>();
+        try {
+            InputStream stream = new ReadContentInputStream(content);
+            ContentHandler doNothingContentHandler = new DefaultHandler();
+            Metadata mtdt = new Metadata();
+            parser.parse(stream, doNothingContentHandler, mtdt);
+            for(String mtdtKey : mtdt.names()) {
+                metadataMap.put(mtdtKey, mtdt.get(mtdtKey));
+            }
+        } catch (IOException | SAXException | TikaException ex) {
+            AUTOPSY_LOGGER.log(Level.WARNING, String.format("Error getting metadata for file [id=%d] %s, see Tika log for details...", //NON-NLS
+                    content.getId(), content.getName()));
+            TIKA_LOGGER.log(Level.WARNING, "Exception: Unable to get metadata for " //NON-NLS
+                    + "content" + content.getId() + ": " + content.getName(), ex); //NON-NLS
+        }
+        
+        return metadataMap;
     }
 
     /**

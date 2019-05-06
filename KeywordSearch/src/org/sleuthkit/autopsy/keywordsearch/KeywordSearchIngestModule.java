@@ -486,12 +486,19 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             try {
                 TextExtractor extractor = TextExtractorFactory.getExtractor(aFile, extractionContext);
                 Reader extractedTextReader = extractor.getReader();
+                Map<String, String> metadata = extractor.getMetadata();
+                Reader metadataReader = mapToReader(metadata);
                 //divide into chunks and index
                 return Ingester.getDefault().indexText(extractedTextReader, aFile.getId(), aFile.getName(), aFile, context);
             } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
                 //No text extractor found... run the default instead
                 return false;
             }
+        }
+        
+        //TO-DO, implement this.
+        private <K,V> Reader mapToReader(Map<K, V> input) {
+            return null;
         }
 
         /**
