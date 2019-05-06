@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
@@ -33,39 +33,39 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle.Messages;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * Visualation for the messages of the currently selected accounts.
+ * Visualization for contact nodes.
+ *
  */
 @ServiceProvider(service = RelationshipsViewer.class)
-public final class MessagesViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
+public final class ContactsViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
 
     private final ExplorerManager tableEM;
     private final Outline outline;
     private final ModifiableProxyLookup proxyLookup;
     private final PropertyChangeListener focusPropertyListener;
-    private final MessagesChildNodeFactory nodeFactory;
+    private final ContactsChildNodeFactory nodeFactory;
 
-    @Messages({
-        "MessageViewer_tabTitle=Messages",
-        "MessageViewer_columnHeader_From=From",
-        "MessageViewer_columnHeader_To=To",
-        "MessageViewer_columnHeader_Date=Date",
-        "MessageViewer_columnHeader_Subject=Subject",
-        "MessageViewer_columnHeader_Attms=Attachments"
-    })
+    @NbBundle.Messages({
+        "ContactsViewer_tabTitle=Contacts",
+        "ContactsViewer_columnHeader_Name=Name",
+        "ContactsViewer_columnHeader_Phone=Phone",
+        "ContactsViewer_columnHeader_Email=Email",})
 
     /**
-     * Visualation for the messages of the currently selected accounts.
+     * Visualization for contact nodes.
      */
-    public MessagesViewer() {
+    public ContactsViewer() {
         tableEM = new ExplorerManager();
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
-        nodeFactory = new MessagesChildNodeFactory(null);
+        nodeFactory = new ContactsChildNodeFactory(null);
 
         // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
         // explaination of focusPropertyListener
@@ -76,10 +76,10 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
                 if (newFocusOwner == null) {
                     return;
                 }
-                if (isDescendingFrom(newFocusOwner, contentViewer)) {
+                if (isDescendingFrom(newFocusOwner, contactPane)) {
                     //if the focus owner is within the MessageContentViewer (the attachments table)
-                    proxyLookup.setNewLookups(createLookup(((MessageDataContent) contentViewer).getExplorerManager(), getActionMap()));
-                } else if (isDescendingFrom(newFocusOwner, MessagesViewer.this)) {
+                    proxyLookup.setNewLookups(createLookup(contactPane.getExplorerManager(), getActionMap()));
+                } else if (isDescendingFrom(newFocusOwner, ContactsViewer.this)) {
                     //... or if it is within the Results table.
                     proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
 
@@ -91,36 +91,26 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
 
         outline = outlineView.getOutline();
         outlineView.setPropertyColumns(
-                "From", Bundle.MessageViewer_columnHeader_From(),
-                "To", Bundle.MessageViewer_columnHeader_To(),
-                "Date", Bundle.MessageViewer_columnHeader_Date(),
-                "Subject", Bundle.MessageViewer_columnHeader_Subject(),
-                "Attms", Bundle.MessageViewer_columnHeader_Attms(),
-                "Type", "Type"
+                "TSK_EMAIL", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getDisplayName(),
+                "TSK_PHONE_NUMBER", BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getDisplayName()
         );
         outline.setRootVisible(false);
         outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Type");
+        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.ContactsViewer_columnHeader_Name());
 
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] nodes = tableEM.getSelectedNodes();
-
-                if (nodes != null && nodes.length > 0) {
-                    contentViewer.setNode(nodes[0]);
-                }
-                else {
-                    contentViewer.setNode(null);
-                }
+                contactPane.setNode(nodes);
             }
         });
-        
-         tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(nodeFactory, true)), getExplorerManager()), true));
+
+        tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(nodeFactory, true)), getExplorerManager()), true));
     }
 
     @Override
     public String getDisplayName() {
-        return Bundle.MessageViewer_tabTitle();
+        return Bundle.ContactsViewer_tabTitle();
     }
 
     @Override
@@ -130,6 +120,9 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
+        contactPane.setNode(new Node[]{new AbstractNode(Children.LEAF)});
+        contactPane.setEnabled(false);
+
         nodeFactory.refresh(info);
     }
 
@@ -168,27 +161,27 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
     private void initComponents() {
 
         outlineView = new org.openide.explorer.view.OutlineView();
-        contentViewer = new MessageDataContent();
+        contactPane = new org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane();
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(contentViewer, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(contactPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(contentViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE))
+                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
+                .addGap(1, 1, 1)
+                .addComponent(contactPane, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.contentviewers.MessageContentViewer contentViewer;
+    private org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane contactPane;
     private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 }

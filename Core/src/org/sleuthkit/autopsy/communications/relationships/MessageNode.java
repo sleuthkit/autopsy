@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.communications.relationships;
 
 import java.util.List;
 import java.util.TimeZone;
@@ -43,6 +43,7 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.TSK_BLACKBOARD_ATTRIBU
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TimeUtilities;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.communications.Utils;
 
 /**
  * Wraps a BlackboardArtifact as an AbstractNode for use in an OutlookView

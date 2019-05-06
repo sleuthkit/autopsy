@@ -38,6 +38,8 @@ import org.openide.util.Lookup;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.communications.relationships.RelationshipBrowser;
+import org.sleuthkit.autopsy.communications.relationships.SelectionInfo;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AccountDeviceInstance;
 import org.sleuthkit.datamodel.CommunicationsFilter;

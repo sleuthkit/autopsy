@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.communications.relationships;
 
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.Node;
@@ -74,6 +74,7 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        messageContentViewer1 = new org.sleuthkit.autopsy.contentviewers.MessageContentViewer();
         nameLabel = new javax.swing.JLabel();
         propertySheet = new org.openide.explorer.propertysheet.PropertySheet();
 
@@ -108,6 +109,7 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private org.sleuthkit.autopsy.contentviewers.MessageContentViewer messageContentViewer1;
     private javax.swing.JLabel nameLabel;
     private org.openide.explorer.propertysheet.PropertySheet propertySheet;
     // End of variables declaration//GEN-END:variables

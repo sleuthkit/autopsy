@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.communications.relationships;
 
 import java.util.Set;
 import javax.swing.JPanel;
@@ -28,7 +28,7 @@ import org.openide.nodes.Children;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
-import org.sleuthkit.autopsy.communications.SelectionInfo.SelectionSummary;
+import org.sleuthkit.autopsy.communications.relationships.SelectionInfo.SelectionSummary;
 import org.sleuthkit.datamodel.Account;
 
 /**
@@ -68,7 +68,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
         outline.setRootVisible(false);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(Bundle.SummaryViewer_CaseRefNameColumn_Title());
-        
+
         clearControls();
     }
 
@@ -91,7 +91,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
             caseReferencesPanel.showOutlineView();
         }
 
-        // Request is that the SummaryViewer only show information if one 
+        // Request is that the SummaryViewer only show information if one
         // account is selected
         if (info.getAccounts().size() != 1) {
             setEnabled(false);
@@ -120,7 +120,7 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
 
     /**
      * Sets whether or not the text fields are enabled.
-     * 
+     *
      * @param enabled true if this component should be enabled, false otherwise
      */
     @Override
@@ -190,8 +190,8 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
         callLogsDataLabel = new javax.swing.JLabel();
         contactsDataLabel = new javax.swing.JLabel();
         emailDataLabel = new javax.swing.JLabel();
-        fileReferencesPanel = new org.sleuthkit.autopsy.communications.OutlineViewPanel();
-        caseReferencesPanel = new org.sleuthkit.autopsy.communications.OutlineViewPanel();
+        fileReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
+        caseReferencesPanel = new org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel();
 
         countsPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(SummaryViewer.class, "SummaryViewer.countsPanel.border.title"))); // NOI18N
 
@@ -299,13 +299,13 @@ public class SummaryViewer extends javax.swing.JPanel implements RelationshipsVi
     private javax.swing.JLabel attachmentsLabel;
     private javax.swing.JLabel callLogsDataLabel;
     private javax.swing.JLabel callLogsLabel;
-    private org.sleuthkit.autopsy.communications.OutlineViewPanel caseReferencesPanel;
+    private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel caseReferencesPanel;
     private javax.swing.JLabel contactsDataLabel;
     private javax.swing.JLabel contactsLabel;
     private javax.swing.JPanel countsPanel;
     private javax.swing.JLabel emailDataLabel;
     private javax.swing.JLabel emailLabel;
-    private org.sleuthkit.autopsy.communications.OutlineViewPanel fileReferencesPanel;
+    private org.sleuthkit.autopsy.communications.relationships.OutlineViewPanel fileReferencesPanel;
     private javax.swing.JLabel messagesDataLabel;
     private javax.swing.JLabel messagesLabel;
     // End of variables declaration//GEN-END:variables
