@@ -65,13 +65,14 @@ final class ContactNode extends BlackboardArtifactNode {
 
     @Override
     protected Sheet createSheet() {
+        Sheet sheet = super.createSheet();
+        
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (fromID != TSK_CONTACT) {
-            return super.createSheet();
+            return sheet;
         }
 
-        Sheet sheet = new Sheet();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
             sheetSet = Sheet.createPropertiesSet();
