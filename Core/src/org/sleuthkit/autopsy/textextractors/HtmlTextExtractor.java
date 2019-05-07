@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.Config;
@@ -86,6 +85,12 @@ final class HtmlTextExtractor implements TextExtractor {
                 && file.getSize() <= MAX_SIZE;
     }
 
+    /**
+     * Get the metadata as a key -> value map. HTML metadata will include
+     * scripts, links, images, comments, and misc attributes.
+     * 
+     * @return Map containing metadata key -> value pairs.
+     */
     @Override
     public Map<String, String> getMetadata() {
         Map<String, String> metadataMap = new HashMap<>();

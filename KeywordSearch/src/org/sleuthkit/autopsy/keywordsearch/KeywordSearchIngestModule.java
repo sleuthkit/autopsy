@@ -28,9 +28,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import org.apache.tika.metadata.Metadata;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -477,13 +474,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          *
          * @param aFile file to extract strings from, divide into chunks and
          * index
-         * @param detectedFormat mime-type detected, or null if none detected
          *
          * @return true if the file was text_ingested, false otherwise
          *
          * @throws IngesterException exception thrown if indexing failed
          */
-        private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
+        private boolean extractTextAndIndex(AbstractFile aFile) throws IngesterException {
             ImageConfig imageConfig = new ImageConfig();
             imageConfig.setOCREnabled(KeywordSearchSettings.getOcrOption());
             ProcessTerminator terminator = () -> context.fileIngestIsCancelled();
@@ -497,8 +493,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 try {
                     Map<String, String> metadata = extractor.getMetadata();
                     CharSource formattedMetadata = getMetaDataCharSource(metadata);
+                    //Append the metadata to end of the file text
                     finalReader = CharSource.concat(new CharSource() {
-                        //Wrap the TikaReader into a CharSource for concatenation
+                        //Wrap fileText reader for concatenation
                         @Override
                         public Reader openStream() throws IOException {
                             return fileText;
@@ -518,11 +515,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
 
         /**
-         * Format the
+         * Pretty print the text extractor metadata.
          *
-         * @param metadata The Metadata to wrap as a CharSource
+         * @param metadata The Metadata map to wrap as a CharSource
          *
-         * @return A CharSource for the given MetaData
+         * @return A CharSource for the given Metadata
          */
         private CharSource getMetaDataCharSource(Map<String, String> metadata) {
             return CharSource.wrap(new StringBuilder("\n\n------------------------------METADATA------------------------------\n\n")
@@ -633,7 +630,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     extractStringsAndIndex(aFile);
                     return;
                 }
-                if (!extractTextAndIndex(aFile, fileType)) {
+                if (!extractTextAndIndex(aFile)) {
                     // Text extractor not found for file. Extract string only.
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                 } else {

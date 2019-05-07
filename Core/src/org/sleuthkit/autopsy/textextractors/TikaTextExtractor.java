@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -409,7 +408,7 @@ final class TikaTextExtractor implements TextExtractor {
     /**
      * Get the content metdata
      * 
-     * @return Metadata name -> value
+     * @return Metadata as a name -> value map
      */
     @Override
     public Map<String, String> getMetadata() {
