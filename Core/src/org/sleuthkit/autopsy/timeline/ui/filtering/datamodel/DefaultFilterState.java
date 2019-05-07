@@ -35,6 +35,10 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
 
     private final FilterType filter;
 
+    private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
+    private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
+    private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
+
     /**
      * Selected = false, Disabled = false
      *
@@ -60,10 +64,6 @@ public class DefaultFilterState<FilterType extends TimelineFilter> implements Fi
         this.selected.set(selected);
         this.disabled.set(disabled);
     }
-
-    private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
-    private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
-    private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
 
     @Override
     public BooleanProperty selectedProperty() {
