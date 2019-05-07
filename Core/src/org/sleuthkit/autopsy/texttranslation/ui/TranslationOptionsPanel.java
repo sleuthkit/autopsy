@@ -102,7 +102,9 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
     }
 
     void store() {
+        //The current text translator name is saved to user preferences
         UserPreferences.setTextTranslatorName(currentSelection);
+        //The TextTranslationService updates the TextTranslator in use from user preferences
         TextTranslationService.getInstance().updateSelectedTranslator();
         if (currentSelection != null && !currentSelection.equals(Bundle.TranslationOptionsPanel_translationDisabled_text())) {
             try {
@@ -147,8 +149,8 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(translationServiceLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(translatorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 205, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 152, Short.MAX_VALUE))
+                        .addComponent(translatorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 214, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 162, Short.MAX_VALUE))
                     .addComponent(translationServicePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
