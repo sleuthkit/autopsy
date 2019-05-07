@@ -242,7 +242,7 @@ final class TikaTextExtractor implements TextExtractor {
             pushbackReader.unread(read);
             
             //Save the metadata if it has not been fetched already.
-            if (nonNull(metadataMap)) {
+            if (metadataMap == null) {
                 metadataMap = new HashMap<>();
                 for (String mtdtKey : metadata.names()) {
                     metadataMap.put(mtdtKey, metadata.get(mtdtKey));
