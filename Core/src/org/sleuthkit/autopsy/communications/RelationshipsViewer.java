@@ -19,11 +19,12 @@
 package org.sleuthkit.autopsy.communications;
 
 import javax.swing.JPanel;
+import org.openide.util.Lookup;
 
 /**
  * Interface for Controls wishing to appear in the RelationshipBrowser tabPane.
  */
-public interface RelationshipsViewer {
+public interface RelationshipsViewer extends Lookup.Provider {
 
     /**
      * Returns the value to be displayed on the "tab"

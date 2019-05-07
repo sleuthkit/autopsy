@@ -16,27 +16,53 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="outlineView" alignment="0" max="32767" attributes="0"/>
+          <Component id="thumbnailViewer" alignment="1" max="32767" attributes="0"/>
           <Component id="contentViewer" alignment="1" max="32767" attributes="0"/>
+          <Group type="102" alignment="0" attributes="0">
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="separator" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+          </Group>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
-              <Component id="outlineView" pref="300" max="32767" attributes="0"/>
+              <Component id="thumbnailViewer" pref="350" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="contentViewer" pref="500" max="32767" attributes="0"/>
+              <Component id="separator" min="-2" pref="2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="contentViewer" min="-2" pref="450" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="org.openide.explorer.view.OutlineView" name="outlineView">
+    <Component class="org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail" name="thumbnailViewer">
+      <Properties>
+        <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[350, 102]"/>
+        </Property>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[450, 400]"/>
+        </Property>
+      </Properties>
+      <AuxValues>
+        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail(tableEM)"/>
+      </AuxValues>
     </Component>
     <Component class="org.sleuthkit.autopsy.contentviewers.MessageContentViewer" name="contentViewer">
+      <Properties>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[450, 400]"/>
+        </Property>
+      </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new MessageDataContent()"/>
       </AuxValues>
+    </Component>
+    <Component class="javax.swing.JSeparator" name="separator">
     </Component>
   </SubComponents>
 </Form>
