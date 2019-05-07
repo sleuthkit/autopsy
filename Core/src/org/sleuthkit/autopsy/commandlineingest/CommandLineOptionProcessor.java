@@ -41,21 +41,19 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private static final Logger logger = Logger.getLogger(CommandLineOptionProcessor.class.getName());
     private final Option caseNameOption = Option.optionalArgument('1', "caseName");
     private final Option caseBaseDirOption = Option.optionalArgument('2', "caseBaseDir");
-    private final Option dataSourcePathOption = Option.optionalArgument('4', "dataSourcePath");    
-    private final Option runFromCommandLineOption = Option.optionalArgument('3', "runFromCommandLine");
-    private String pathToDataSource;
-    private String baseCaseName;
+    private final Option createCaseCommandOption = Option.optionalArgument('3', "createCase");
+    private final Option dataSourcePathOption = Option.optionalArgument('4', "dataSourcePath");
     private boolean runFromCommandLine = false;
-    
+
     private List<CommandLineCommand> commands = new ArrayList<>();
 
     @Override
     protected Set<Option> getOptions() {
         Set<Option> set = new HashSet<>();
+        set.add(createCaseCommandOption);
         set.add(caseNameOption);
         set.add(caseBaseDirOption);
         set.add(dataSourcePathOption);
-        set.add(runFromCommandLineOption);
         return set;
     }
 
@@ -63,125 +61,89 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     protected void process(Env env, Map<Option, String[]> values) throws CommandException {
         logger.log(Level.INFO, "Processing Autopsy command line options"); //NON-NLS
         System.out.println("Processing Autopsy command line options");
-        if (values.containsKey(caseNameOption) || values.containsKey(caseBaseDirOption) || values.containsKey(dataSourcePathOption) || values.containsKey(runFromCommandLineOption)) {
-            // parse input parameters
-            String inputPath = "C:\\TEST\\Inputs\\Small\\small2.img";
-            String inputCaseName;
-            String caseBaseDir;
-            String modeString;
-            String[] argDirs;
-            if (values.size() < 1) { // ELTODO
-                logger.log(Level.SEVERE, "Insufficient number of input arguments to run command line ingest");
-                System.out.println("Insufficient number of input arguments to run command line ingest");
-                this.runFromCommandLine = false;
+        runFromCommandLine = false;
+
+        // input arguments must contain at least one command
+        if (!values.containsKey(createCaseCommandOption) /* || OtherCommands */) {
+            // not running from command line
+            logger.log(Level.INFO, "No command line commands passed in as inputs. Not running from command line."); //NON-NLS
+            System.out.println("No command line commands passed in as inputs. Not running from command line.");
+            return;
+        }
+
+        // parse input parameters
+        String[] argDirs;
+        String inputCaseName = "";
+        if (values.containsKey(caseNameOption)) {
+            argDirs = values.get(caseNameOption);
+            if (argDirs.length < 1) {
+                logger.log(Level.SEVERE, "Missing argument 'caseName'");
+                System.out.println("Missing argument 'caseName'");
                 return;
-            } else {
-                if (values.containsKey(dataSourcePathOption)) {
-                    argDirs = values.get(dataSourcePathOption);
-                    if (argDirs.length < 1) {
-                        logger.log(Level.SEVERE, "Missing argument 'dataSourcePath'");
-                        System.out.println("Missing argument 'dataSourcePath'");
-                        this.runFromCommandLine = false;
-                        return;
-
-                    }
-                    inputPath = argDirs[0];
-                }
-
-                argDirs = values.get(caseNameOption);
-                if (argDirs.length < 1) {
-                    logger.log(Level.SEVERE, "Missing argument 'caseName'");
-                    System.out.println("Missing argument 'caseName'");
-                    this.runFromCommandLine = false;
-                    return;
-                }
-                inputCaseName = argDirs[0];
-                
-                argDirs = values.get(caseBaseDirOption);
-                if (argDirs.length < 1) {
-                    logger.log(Level.SEVERE, "Missing argument 'caseBaseDir'");
-                    System.out.println("Missing argument 'caseBaseDir'");
-                    this.runFromCommandLine = false;
-                    return;
-                }
-                caseBaseDir = argDirs[0];                
-                
-                argDirs = values.get(runFromCommandLineOption);
-                if (argDirs.length < 1) {
-                    logger.log(Level.SEVERE, "Missing argument 'runFromCommandLine'");
-                    System.out.println("Missing argument 'runFromCommandLine'");
-                    this.runFromCommandLine = false;
-                    return;
-                }
-                modeString = argDirs[0];
-
-                // verify inputs
-                if (modeString == null || modeString.isEmpty()) {
-                    this.runFromCommandLine = false;
-                    System.out.println("runFromCommandLine argument is empty");
-                    return;
-                }
-
-                if (modeString.equalsIgnoreCase("true")) {
-                    this.runFromCommandLine = true;
-                }
-
-                System.out.println("runFromCommandLine = " + this.runFromCommandLine);                
             }
+            inputCaseName = argDirs[0];
+        }
+
+        String caseBaseDir = "";
+        if (values.containsKey(caseBaseDirOption)) {
+            argDirs = values.get(caseBaseDirOption);
+            if (argDirs.length < 1) {
+                logger.log(Level.SEVERE, "Missing argument 'caseBaseDir'");
+                System.out.println("Missing argument 'caseBaseDir'");
+                return;
+            }
+            caseBaseDir = argDirs[0];
+        }
+
+        String inputPath = "";
+        if (values.containsKey(dataSourcePathOption)) {
+
+            argDirs = values.get(dataSourcePathOption);
+            if (argDirs.length < 1) {
+                logger.log(Level.SEVERE, "Missing argument 'dataSourcePath'");
+                System.out.println("Missing argument 'dataSourcePath'");
+                return;
+
+            }
+            inputPath = argDirs[0];
 
             // verify inputs
             if (inputPath == null || inputPath.isEmpty() || !(new File(inputPath).exists())) {
                 logger.log(Level.SEVERE, "Input file {0} doesn''t exist", inputPath);
                 System.out.println("Input file " + inputPath + " doesn't exist");
-                this.runFromCommandLine = false;
                 return;
             }
+        }
+
+        // Create commands in order in which they should be executed:
+        // First create the "CREATE_CASE" command, if present
+        if (values.containsKey(createCaseCommandOption)) {
 
             if (inputCaseName == null || inputCaseName.isEmpty()) {
-                logger.log(Level.SEVERE, "Case name argument is empty");
-                System.out.println("Case name argument is empty");
-                this.runFromCommandLine = false;
+                logger.log(Level.SEVERE, "'caseName' argument is empty");
+                System.out.println("'caseName' argument is empty");
+                runFromCommandLine = false;
                 return;
             }
 
-            // save the inputs
-            this.pathToDataSource = inputPath;
-            this.baseCaseName = inputCaseName;
-            logger.log(Level.INFO, "Input file = {0}", this.pathToDataSource); //NON-NLS
-            logger.log(Level.INFO, "Case name = {0}", this.baseCaseName); //NON-NLS
-            logger.log(Level.INFO, "runFromCommandLine = {0}", this.runFromCommandLine); //NON-NLS
-            System.out.println("Input file = " + this.pathToDataSource);
-            System.out.println("Case name = " + this.baseCaseName);
-            System.out.println("runFromCommandLine = " + this.runFromCommandLine);
-            
+            if (caseBaseDir == null || caseBaseDir.isEmpty() || !(new File(caseBaseDir).exists())) {
+                logger.log(Level.SEVERE, "'caseBaseDir' directory doesn't exist");
+                System.out.println("'caseBaseDir' directory doesn't exist");
+                runFromCommandLine = false;
+                return;
+            }
+
             CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.CREATE_CASE);
-            newCommand.addInputValue("caseName", inputCaseName);
-            newCommand.addInputValue("caseBaseDir", caseBaseDir);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASE_NAME.name(), inputCaseName);
+            newCommand.addInputValue(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name(), caseBaseDir);
             commands.add(newCommand);
-        } else {
-            System.out.println("Missing input arguments to run command line ingest");
-            logger.log(Level.SEVERE, "Missing input arguments to run command line ingest");
+            runFromCommandLine = true;
         }
+
+        // Add ADD_DATA_SOURCE command, if present
+        // Add RUN_INGEST command, if present
     }
 
-    /**
-     * Returns user specified path to data source
-     *
-     * @return the inputPath
-     */
-    String getPathToDataSource() {
-        return pathToDataSource;
-    }
-
-    /**
-     * Returns user specified case name
-     *
-     * @return the inputCaseName
-     */
-    String getBaseCaseName() {
-        return baseCaseName;
-    }
-    
     /**
      * Returns whether Autopsy should be running in command line mode or not.
      *
@@ -189,11 +151,11 @@ public class CommandLineOptionProcessor extends OptionProcessor {
      */
     public boolean isRunFromCommandLine() {
         return runFromCommandLine;
-    }    
+    }
 
     /**
      * Returns list of all commands passed in via command line.
-     * 
+     *
      * @return list of input commands
      */
     List<CommandLineCommand> getCommands() {

@@ -25,7 +25,7 @@ import java.util.Map;
  * Class that contains list of input parameters passed in via command line.
  */
 class CommandLineCommand {
-    
+ 
     /**
      * An enumeration of command types.
      */
@@ -35,14 +35,38 @@ class CommandLineCommand {
         RUN_INGEST;
     }
     
-    CommandType type;
-    Map<String, String> commands = new HashMap<>();
+    /**
+     * An enumeration of input types.
+     */
+    static enum InputType {        
+        CASE_NAME,
+        CASES_BASE_DIR_PATH,
+        CASE_FOLDER_DIR_PATH,
+        DATA_SOURCE_DIR_PATH;
+    }
+    
+    private CommandType type;
+    private Map<String, String> inputs = new HashMap<>();
     
     CommandLineCommand(CommandType type) {
         this.type = type;
     }
     
     void addInputValue(String inputName, String inputValue) {
-        commands.put(inputName, inputValue);
+        inputs.put(inputName, inputValue);
     }
+    
+    /**
+     * @return the inputs
+     */
+    public Map<String, String> getInputs() {
+        return inputs;
+    }
+
+    /**
+     * @return the type
+     */
+    public CommandType getType() {
+        return type;
+    }    
 }

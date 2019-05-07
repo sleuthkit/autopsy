@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Level;
 import org.netbeans.spi.sendopts.OptionProcessor;
 import org.openide.LifecycleManager;
@@ -65,7 +66,7 @@ import org.sleuthkit.datamodel.Content;
 public class CommandLineIngestManager {
 
     private static final Logger LOGGER = Logger.getLogger(CommandLineIngestManager.class.getName());
-    private Path rootOutputDirectory;
+    private Case caseForJob = null;
 
     public CommandLineIngestManager() {
     }
@@ -106,9 +107,7 @@ public class CommandLineIngestManager {
             try {
                 // read command line inputs
                 LOGGER.log(Level.INFO, "Autopsy is running from command line"); //NON-NLS
-                String dataSourcePath = "";
-                String baseCaseName = "";
-                List<CommandLineCommand> commands;
+                List<CommandLineCommand> commands = null;
 
                 // first look up all OptionProcessors and get input data from CommandLineOptionProcessor
                 Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
@@ -117,75 +116,45 @@ public class CommandLineIngestManager {
                     // find CommandLineOptionProcessor
                     OptionProcessor processor = optionsIterator.next();
                     if (processor instanceof CommandLineOptionProcessor) {
-                        // check if we are running from command line
-                        dataSourcePath = ((CommandLineOptionProcessor) processor).getPathToDataSource();
-                        baseCaseName = ((CommandLineOptionProcessor) processor).getBaseCaseName();
-                        
+                        // check if we are running from command line                       
                         commands = ((CommandLineOptionProcessor) processor).getCommands();
                     }
                 }
 
-                LOGGER.log(Level.INFO, "Data source path = {0}", dataSourcePath); //NON-NLS
-                LOGGER.log(Level.INFO, "Case name = {0}", baseCaseName); //NON-NLS
-                System.out.println("Data source path = " + dataSourcePath);
-                System.out.println("Case name = " + baseCaseName);
-
-                // verify inputs
-                if (dataSourcePath.isEmpty()) {
-                    LOGGER.log(Level.SEVERE, "Data source path not specified");
-                    System.out.println("Data source path not specified");
+                if (commands == null || commands.isEmpty()) {
+                    LOGGER.log(Level.SEVERE, "No command line commands specified");
+                    System.out.println("No command line commands specified");
                     return;
                 }
-
-                if (baseCaseName.isEmpty()) {
-                    LOGGER.log(Level.SEVERE, "Case name not specified");
-                    System.out.println("Case name not specified");
-                    return;
-                }
-
-                if (!(new File(dataSourcePath).exists())) {
-                    LOGGER.log(Level.SEVERE, "Data source file not found {0}", dataSourcePath);
-                    System.out.println("Data source file not found " + dataSourcePath);
-                    return;
-                }
-
-                // read options panel configuration
-                String rootOutputDir = UserPreferences.getCommandLineModeResultsFolder();
-                LOGGER.log(Level.INFO, "Output directory = {0}", rootOutputDir); //NON-NLS
-                System.out.println("Output directory = " + rootOutputDir);
-
-                if (rootOutputDir.isEmpty()) {
-                    LOGGER.log(Level.SEVERE, "Output directory not specified, please configure Command Line Options Panel (in Tools -> Options)");
-                    System.out.println("Output directory not specified, please configure Command Line Options Panel (in Tools -> Options)");
-                    return;
-                }
-
-                if (!(new File(rootOutputDir).exists())) {
-                    LOGGER.log(Level.SEVERE, "The output directory doesn't exist {0}", rootOutputDir);
-                    System.out.println("The output directory doesn't exist " + rootOutputDir);
-                    return;
-                }
-                rootOutputDirectory = Paths.get(rootOutputDir);
-
-                // open case
-                Case caseForJob;
+                
                 try {
-                    caseForJob = openCase(baseCaseName);
-                } catch (CaseActionException ex) {
-                    LOGGER.log(Level.SEVERE, "Error creating or opening case " + baseCaseName, ex);
-                    System.out.println("Error creating or opening case " + baseCaseName);
-                    return;
-                }
+                    // Commands are already stored in order in which they should be executed                
+                    for (CommandLineCommand command : commands) {
+                        CommandLineCommand.CommandType type = command.getType();
+                        switch (type) {
+                            case CREATE_CASE:
+                                try {
+                                    openCase(command);
+                                } catch (CaseActionException ex) {
+                                    String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_NAME.name());
+                                    LOGGER.log(Level.SEVERE, "Error creating or opening case " + baseCaseName, ex);
+                                    System.out.println("Error creating or opening case " + baseCaseName);
+                                    // Do not process any other commands
+                                    return;
+                                }
+                                break;
+                            case ADD_DATA_SOURCE:
+                                break;
+                            case RUN_INGEST:
+                                break;
+                            default:
+                                break;
+                        }
+                    }
 
-                if (caseForJob == null) {
-                    LOGGER.log(Level.SEVERE, "Error creating or opening case {0}", baseCaseName);
-                    System.out.println("Error creating or opening case " + baseCaseName);
-                    return;
-                }
-
-                AutoIngestDataSource dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
-                try {
+                    /* EL: will need this code for next stories
                     // run data source processor
+                    AutoIngestDataSource dataSource = new AutoIngestDataSource("", Paths.get(dataSourcePath));
                     runDataSourceProcessor(caseForJob, dataSource);
 
                     // run ingest manager
@@ -199,6 +168,7 @@ public class CommandLineIngestManager {
                 } catch (InterruptedException | AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException | AnalysisStartupException ex) {
                     LOGGER.log(Level.SEVERE, "Unable to ingest data source " + dataSourcePath + ". Exiting...", ex);
                     System.out.println("Unable to ingest data source " + dataSourcePath + ". Exiting...");
+                    */
                 } catch (Throwable ex) {
                     /*
                     * Unexpected runtime exceptions firewall. This task is designed to
@@ -206,8 +176,8 @@ public class CommandLineIngestManager {
                     * calling get() on the task's Future<Void>, so this ensures that
                     * such errors get logged.
                      */
-                    LOGGER.log(Level.SEVERE, "Unexpected error while ingesting data source " + dataSourcePath, ex);
-                    System.out.println("Unexpected error while ingesting data source " + dataSourcePath + ". Exiting...");
+                    LOGGER.log(Level.SEVERE, "Unexpected error", ex);
+                    System.out.println("Unexpected error. Exiting...");
 
                 } finally {
                     try {
@@ -239,17 +209,28 @@ public class CommandLineIngestManager {
             return content.getId();
         }
 
-        private Case openCase(String baseCaseName) throws CaseActionException {
+        /**
+         * Creates a new case using arguments passed in from command line
+         * CREATE_CASE command.
+         *
+         * @param command command line CREATE_CASE command
+         * @throws CaseActionException
+         */
+        private void openCase(CommandLineCommand command) throws CaseActionException {
 
-            LOGGER.log(Level.INFO, "Opening case {0}", baseCaseName);
+            Map<String, String> inputs = command.getInputs();
 
-            Path caseDirectoryPath = findCaseDirectory(rootOutputDirectory, baseCaseName);
+            String baseCaseName = inputs.get(CommandLineCommand.InputType.CASE_NAME.name());
+            String rootOutputDirectory = inputs.get(CommandLineCommand.InputType.CASES_BASE_DIR_PATH.name());
+            LOGGER.log(Level.INFO, "Opening case {0} in directory {1}", new Object[]{baseCaseName, rootOutputDirectory});
+
+            Path caseDirectoryPath = findCaseDirectory(Paths.get(rootOutputDirectory), baseCaseName);
             if (null != caseDirectoryPath) {
                 // found an existing case directory for same case name. the input case name must be unique. Exit.
                 LOGGER.log(Level.SEVERE, "Case {0} already exists. Case name must be unique. Exiting", baseCaseName);
                 throw new CaseActionException("Case " + baseCaseName + " already exists. Case name must be unique. Exiting");
             } else {
-                caseDirectoryPath = createCaseFolderPath(rootOutputDirectory, baseCaseName);
+                caseDirectoryPath = createCaseFolderPath(Paths.get(rootOutputDirectory), baseCaseName);
 
                 // Create the case directory
                 Case.createCaseDirectory(caseDirectoryPath.toString(), Case.CaseType.SINGLE_USER_CASE);
@@ -258,9 +239,8 @@ public class CommandLineIngestManager {
                 Case.createAsCurrentCase(Case.CaseType.SINGLE_USER_CASE, caseDirectoryPath.toString(), caseDetails);
             }
 
-            Case caseForJob = Case.getCurrentCase();
+            caseForJob = Case.getCurrentCase();
             LOGGER.log(Level.INFO, "Opened case {0}", caseForJob.getName());
-            return caseForJob;
         }
 
         /**
@@ -298,7 +278,7 @@ public class CommandLineIngestManager {
                 LOGGER.log(Level.SEVERE, "Unsupported data source {0}", dataSource.getPath());  // NON-NLS
                 return;
             }
-            
+
             DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             synchronized (ingestLock) {
                 // Try each DSP in decreasing order of confidence
