@@ -502,7 +502,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                         }
                     }, formattedMetadata).openStream();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, "Could not format extracted metadata for file %s [id=%d]", ex);
+                    logger.log(Level.WARNING, String.format("Could not format extracted metadata for file %s [id=%d]", 
+                            aFile.getName(), aFile.getId()), ex);
                     //Just send file text.
                     finalReader = fileText;
                 }

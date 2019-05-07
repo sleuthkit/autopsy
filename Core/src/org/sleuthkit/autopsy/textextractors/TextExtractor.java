@@ -65,9 +65,9 @@ public interface TextExtractor {
     }
     
     /**
-     * Retrieves content metdata.
+     * Retrieves content metadata, if any.
      * 
-     * @return Metadata key -> value 
+     * @return Metadata as key -> value map
      */
     default Map<String, String> getMetadata() {
         return Collections.emptyMap();

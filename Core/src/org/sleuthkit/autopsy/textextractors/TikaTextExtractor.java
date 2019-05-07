@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -406,7 +406,8 @@ final class TikaTextExtractor implements TextExtractor {
     }
     
     /**
-     * Get the content metdata
+     * Get the content metadata, if any. This requires a full parse by 
+     * Tika, but the content body will not be stored or further processed.
      * 
      * @return Metadata as a name -> value map
      */
