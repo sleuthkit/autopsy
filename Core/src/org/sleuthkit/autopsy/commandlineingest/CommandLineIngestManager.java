@@ -134,6 +134,8 @@ public class CommandLineIngestManager {
                         switch (type) {
                             case CREATE_CASE:
                                 try {
+                                    LOGGER.log(Level.INFO, "Processing create case command");
+                                    System.out.println("Processing create case command");
                                     openCase(command);
                                 } catch (CaseActionException ex) {
                                     String baseCaseName = command.getInputs().get(CommandLineCommand.InputType.CASE_NAME.name());

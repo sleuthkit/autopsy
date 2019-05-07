@@ -15,3 +15,4 @@ CommandLineIngestSettingsPanel.bnEditIngestSettings.toolTipText=Ingest job setti
 CommandLineIngestSettingsPanel.bnEditIngestSettings.text=Ingest Module Settings
 CommandLinePanel.jLabel1.text=Ingest is running from command line
 CommandLineStartupWindow.title.text=Running in Command Line Mode
+CommandLineIngestSettingsPanel.jLabelBaselineCOnfig.text=Configure Baseline Configuration for Command Line Ingest:
