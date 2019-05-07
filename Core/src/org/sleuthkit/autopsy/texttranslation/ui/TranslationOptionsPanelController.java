@@ -29,6 +29,9 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * Controller for the TranslationOptionsPanel
+ */
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Machine_Translation",
         iconBase = "org/sleuthkit/autopsy/images/translate32.png",
         position = 7,
@@ -95,6 +98,11 @@ public class TranslationOptionsPanelController extends OptionsPanelController {
          */
     }
 
+    /**
+     * Get the translation options panel
+     *
+     * @return
+     */
     private TranslationOptionsPanel getPanel() {
         if (panel == null) {
             panel = new TranslationOptionsPanel(this);
@@ -102,6 +110,9 @@ public class TranslationOptionsPanelController extends OptionsPanelController {
         return panel;
     }
 
+    /**
+     * Indicate that a setting has been changed in the options panel
+     */
     void changed() {
         if (!changed) {
             changed = true;

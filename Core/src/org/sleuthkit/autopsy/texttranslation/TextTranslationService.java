@@ -99,7 +99,7 @@ public final class TextTranslationService {
             }
         }
         throw new NoServiceProviderException(
-                "Could not find the specified TextTranslator service provider");
+                "Could not find the specified TextTranslator service provider: " + translatorName);
     }
 
     /**

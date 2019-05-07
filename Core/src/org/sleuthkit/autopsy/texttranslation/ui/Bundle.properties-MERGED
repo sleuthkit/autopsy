@@ -22,6 +22,6 @@ TranslationOptionsPanel.noTextTranslators.text=No text translators exist, transl
 TranslationOptionsPanel.noTextTranslatorSelected.text=No text translator selected, translation is disabled.
 TranslationOptionsPanel.textTranslatorsUnavailable.text=Unable to get selected text translator, translation is disabled.
 TranslationOptionsPanel.translationDisabled.text=Translation disabled
-TranslationOptionsPanel.translationServiceLabel.text=Translation Service:
+TranslationOptionsPanel.translationServiceLabel.text=Text translator:
 TranslationOptionsPanelController.moduleErr=Module Error
 TranslationOptionsPanelController.moduleErr.msg=A module caused an error listening to TranslationSettingsPanelController updates. See log to determine which module. Some data could be incomplete.

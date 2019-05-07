@@ -31,6 +31,9 @@ import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * Options panel to display translation options
+ */
 public class TranslationOptionsPanel extends javax.swing.JPanel {
 
     private final static Logger logger = Logger.getLogger(TranslationOptionsPanel.class.getName());
@@ -53,6 +56,10 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
         load();
     }
 
+    /**
+     * Private helper method to update the panel if the selected TextTranslator
+     * has changed
+     */
     private void updatePanel() {
         if (!currentSelection.equals(translatorComboBox.getSelectedItem().toString())) {
             loadSelectedPanelSettings();
@@ -60,6 +67,9 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
         }
     }
 
+    /**
+     * Load the settings for the selected TextTranslator's panel
+     */
     @Messages({"TranslationOptionsPanel.textTranslatorsUnavailable.text=Unable to get selected text translator, translation is disabled.",
         "TranslationOptionsPanel.noTextTranslatorSelected.text=No text translator selected, translation is disabled.",
         "TranslationOptionsPanel.noTextTranslators.text=No text translators exist, translation is disabled."})
@@ -93,6 +103,9 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
         repaint();
     }
 
+    /**
+     * Load settings from user preferences and update the UI
+     */
     final void load() {
         currentSelection = UserPreferences.getTextTranslatorName();
         if (currentSelection == null) {
@@ -101,6 +114,9 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
         loadSelectedPanelSettings();
     }
 
+    /**
+     * Save the current settings
+     */
     void store() {
         //The current text translator name is saved to user preferences
         UserPreferences.setTextTranslatorName(currentSelection);
