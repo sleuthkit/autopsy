@@ -62,6 +62,7 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
      */
     private void updatePanel() {
         if (!currentSelection.equals(translatorComboBox.getSelectedItem().toString())) {
+            currentSelection = translatorComboBox.getSelectedItem().toString();
             loadSelectedPanelSettings();
             controller.changed();
         }
@@ -85,7 +86,6 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
                     }
                 });
                 translationServicePanel.add(panel, BorderLayout.PAGE_START);
-                currentSelection = translatorComboBox.getSelectedItem().toString();
             } catch (NoServiceProviderException ex) {
                 logger.log(Level.WARNING, "Unable to get TextExtractor named: " + translatorComboBox.getSelectedItem().toString(), ex);
                 JLabel label = new JLabel(Bundle.TranslationOptionsPanel_textTranslatorsUnavailable_text());
