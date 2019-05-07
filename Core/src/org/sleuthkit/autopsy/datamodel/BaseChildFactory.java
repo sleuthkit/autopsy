@@ -177,7 +177,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * Class that supplies paging related functionality to the base child
      * factory class.
      */
-    class PagingSupport {
+    private class PagingSupport {
 
         private final String nodeName;
         private int pageSize;
