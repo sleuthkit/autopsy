@@ -22,6 +22,7 @@ import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.JLabel;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 
@@ -41,20 +42,27 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
             translatorComboBox.addItem(translator.getName());
         });
         translatorComboBox.setEnabled(translatorComboBox.getItemCount() > 0);
-        updatePanel();
+        load();
     }
 
     private void updatePanel() {
+        if (!currentSelection.equals(translatorComboBox.getSelectedItem().toString())) {
+            load();
+            controller.changed();
+        }
+    }
+
+    void load() {
         translationServicePanel.removeAll();
-        String selectedItem = translatorComboBox.getSelectedItem().toString();
-        if (translatorComboBox.getSelectedItem() != null && !currentSelection.equals(selectedItem)) {
+        if (translatorComboBox.getSelectedItem() != null) {
             try {
-                TextTranslationService.getInstance().setSelectedTranslator(translatorComboBox.getSelectedItem().toString());
+                String selectedItem = translatorComboBox.getSelectedItem().toString();
+                TextTranslationService.getInstance().setSelectedTranslator(selectedItem);
                 Component panel = TextTranslationService.getInstance().getSelectedTranslator().getComponent();
                 panel.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
-                       controller.changed();
+                        controller.changed();
                     }
                 });
                 translationServicePanel.add(panel);
@@ -69,13 +77,12 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
         repaint();
     }
 
-    void load() {
-        updatePanel();
-        controller.changed();
-    }
-
     void store() {
-
+        try {
+            TextTranslationService.getInstance().getSelectedTranslator().saveSettings();
+        } catch (NoServiceProviderException ex) {
+            System.out.println("CAn't save, " + ex.getMessage());
+        }
     }
 
     /**

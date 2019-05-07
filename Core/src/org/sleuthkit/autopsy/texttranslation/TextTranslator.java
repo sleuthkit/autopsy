@@ -31,4 +31,6 @@ public interface TextTranslator {
     String getName();
     
     Component getComponent();
+    
+    void saveSettings();
 }

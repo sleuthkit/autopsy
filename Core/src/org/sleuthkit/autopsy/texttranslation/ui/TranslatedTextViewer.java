@@ -204,7 +204,7 @@ public final class TranslatedTextViewer implements TextViewer {
         @Override
         public void done() {
             try {
-                String result = get();          
+                String result = get();
                 if (this.isCancelled()) {
                     throw new InterruptedException();
                 }
@@ -294,12 +294,15 @@ public final class TranslatedTextViewer implements TextViewer {
         /**
          * Fetches text from a file.
          *
-         * @param fileReader Reader instance containing file text
+         * @param source     the AbstractFile source to get a Reader for
+         * @param ocrEnabled true if OCR is enabled false otherwise
          *
          * @return Extracted Text
          *
          * @throws IOException
          * @throws InterruptedException
+         * @throws
+         * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
          */
         private String extractText(AbstractFile source, boolean ocrEnabled) throws IOException, InterruptedException, TextExtractor.InitReaderException {
             Reader textExtractor = getTextExtractor(source, ocrEnabled);
