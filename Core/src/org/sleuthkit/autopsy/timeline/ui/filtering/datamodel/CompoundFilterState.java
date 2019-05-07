@@ -195,10 +195,12 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
 
     @Override
     public int hashCode() {
-        int hash = 7;
+        int hash = super.hashCode();
         hash = 41 * hash + Objects.hashCode(this.subFilterStates);
         return hash;
     }
+
+   
 
     @Override
     public boolean equals(Object obj) {
@@ -222,10 +224,7 @@ public class CompoundFilterState<SubFilterType extends TimelineFilter, FilterTyp
         if (!Objects.equals(this.isDisabled(), other.isDisabled())) {
             return false;
         }
-        if (!Objects.equals(this.subFilterStates, other.subFilterStates)) {
-            return false;
-        }
-        return true;
+        return Objects.equals(this.subFilterStates, other.subFilterStates);
     }
 
     @Override
