@@ -417,8 +417,7 @@ final class TikaTextExtractor implements TextExtractor {
     }
 
     /**
-     * Get the content metadata, if any. This requires a full parse by Tika, but
-     * the content body will not be stored or further processed.
+     * Get the content metadata, if any.
      *
      * @return Metadata as a name -> value map
      */
