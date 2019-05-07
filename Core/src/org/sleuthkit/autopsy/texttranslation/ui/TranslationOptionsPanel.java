@@ -1,66 +1,81 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2019 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.texttranslation.ui;
 
+import java.awt.Component;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import javax.swing.JLabel;
 import org.sleuthkit.autopsy.texttranslation.NoServiceProviderException;
 import org.sleuthkit.autopsy.texttranslation.TextTranslationService;
 
-/**
- *
- * @author wschaefer
- */
 public class TranslationOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private final TranslationSettingsPanelController controller;
+    private final TranslationOptionsPanelController controller;
+    private String currentSelection = "";
 
     /**
      * Creates new form TranslationOptionsPanel
      */
-    public TranslationOptionsPanel(TranslationSettingsPanelController theController) {
+    public TranslationOptionsPanel(TranslationOptionsPanelController theController) {
         initComponents();
         controller = theController;
         TextTranslationService.getInstance().getTranslators().forEach((translator) -> {
-            jComboBox1.addItem(translator.getName());
+            translatorComboBox.addItem(translator.getName());
         });
-        jComboBox1.setEnabled(jComboBox1.getItemCount() > 0);
+        translatorComboBox.setEnabled(translatorComboBox.getItemCount() > 0);
         updatePanel();
     }
 
     private void updatePanel() {
-        System.out.println("Update panel");
-        jPanel1.removeAll();
-        if (jComboBox1.getSelectedItem() != null) {
+        translationServicePanel.removeAll();
+        String selectedItem = translatorComboBox.getSelectedItem().toString();
+        if (translatorComboBox.getSelectedItem() != null && !currentSelection.equals(selectedItem)) {
             try {
-                System.out.println("Item Selected");
-                TextTranslationService.getInstance().setSelectedTranslator(jComboBox1.getSelectedItem().toString());
-                jPanel1.add(TextTranslationService.getInstance().getSelectedTranslator().getComponent());
+                TextTranslationService.getInstance().setSelectedTranslator(translatorComboBox.getSelectedItem().toString());
+                Component panel = TextTranslationService.getInstance().getSelectedTranslator().getComponent();
+                panel.addPropertyChangeListener(new PropertyChangeListener() {
+                    @Override
+                    public void propertyChange(PropertyChangeEvent evt) {
+                       controller.changed();
+                    }
+                });
+                translationServicePanel.add(panel);
+                currentSelection = selectedItem;
             } catch (NoServiceProviderException ex) {
-                System.out.println(ex.getMessage());
-                jPanel1.add(new JLabel("No Text Translators available"));
+                translationServicePanel.add(new JLabel("No Text Translators available"));
             }
         } else {
-            jPanel1.add(new JLabel("No Translators selected"));
+            translationServicePanel.add(new JLabel("No Translators selected"));
         }
-
+        revalidate();
+        repaint();
     }
 
     void load() {
         updatePanel();
-        
-//        lbTestIpAddress.setIcon(null);
-//        tbOops.setText("");
-////        tbIpAddress.setText(getMachineTranslationIpAddress());
-//        handleButtons();
         controller.changed();
     }
 
     void store() {
-//        setMachineTranslationIpAddress(tbIpAddress.getText());
+
     }
 
     /**
@@ -72,19 +87,19 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jComboBox1 = new javax.swing.JComboBox<>();
-        jLabel1 = new javax.swing.JLabel();
-        jPanel1 = new javax.swing.JPanel();
+        translatorComboBox = new javax.swing.JComboBox<>();
+        translationServiceLabel = new javax.swing.JLabel();
+        translationServicePanel = new javax.swing.JPanel();
 
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+        translatorComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
+                translatorComboBoxActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(TranslationOptionsPanel.class, "TranslationOptionsPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(translationServiceLabel, org.openide.util.NbBundle.getMessage(TranslationOptionsPanel.class, "TranslationOptionsPanel.translationServiceLabel.text")); // NOI18N
 
-        jPanel1.setLayout(new java.awt.BorderLayout());
+        translationServicePanel.setLayout(new java.awt.BorderLayout());
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -94,11 +109,11 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addComponent(translationServiceLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 205, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(translatorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 205, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 152, Short.MAX_VALUE))
-                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(translationServicePanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -106,23 +121,23 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
+                    .addComponent(translatorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(translationServiceLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
+                .addComponent(translationServicePanel, javax.swing.GroupLayout.DEFAULT_SIZE, 222, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+    private void translatorComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_translatorComboBoxActionPerformed
         updatePanel();
-    }//GEN-LAST:event_jComboBox1ActionPerformed
+    }//GEN-LAST:event_translatorComboBoxActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
+    private javax.swing.JLabel translationServiceLabel;
+    private javax.swing.JPanel translationServicePanel;
+    private javax.swing.JComboBox<String> translatorComboBox;
     // End of variables declaration//GEN-END:variables
 
 }

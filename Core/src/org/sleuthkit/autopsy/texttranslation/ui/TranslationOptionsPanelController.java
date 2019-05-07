@@ -34,12 +34,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         position = 7,
         keywords = "#OptionsCategory_Keywords_Machine_Translation_Settings",
         keywordsCategory = "Machine Translation")
-public class TranslationSettingsPanelController extends OptionsPanelController {
+public class TranslationOptionsPanelController extends OptionsPanelController {
 
-    private TranslationOptionsPanel panel;
+    private static final Logger logger = Logger.getLogger(TranslationOptionsPanelController.class.getName());
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    private static final Logger logger = Logger.getLogger(TranslationSettingsPanelController.class.getName());
+    private TranslationOptionsPanel panel;
 
     @Override
     public void update() {
@@ -109,10 +109,10 @@ public class TranslationSettingsPanelController extends OptionsPanelController {
             try {
                 pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, false, true);
             } catch (Exception e) {
-                logger.log(Level.SEVERE, "TranslationSettingsPanelController listener threw exception", e); //NON-NLS
+                logger.log(Level.SEVERE, "TranslationOptionsPanelController listener threw exception", e); //NON-NLS
                 MessageNotifyUtil.Notify.show(
-                        NbBundle.getMessage(this.getClass(), "TranslationSettingsPanelController.moduleErr"),
-                        NbBundle.getMessage(this.getClass(), "TranslationSettingsPanelController.moduleErr.msg"),
+                        NbBundle.getMessage(this.getClass(), "TranslationOptionsPanelController.moduleErr"),
+                        NbBundle.getMessage(this.getClass(), "TranslationOptionsPanelController.moduleErr.msg"),
                         MessageNotifyUtil.MessageType.ERROR);
             }
         }
@@ -120,10 +120,10 @@ public class TranslationSettingsPanelController extends OptionsPanelController {
         try {
             pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "TranslationSettingsPanelController listener threw exception", e); //NON-NLS
+            logger.log(Level.SEVERE, "TranslationOptionsPanelController listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(
-                    NbBundle.getMessage(this.getClass(), "TranslationSettingsPanelController.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "TranslationSettingsPanelController.moduleErr.msg"),
+                    NbBundle.getMessage(this.getClass(), "TranslationOptionsPanelController.moduleErr"),
+                    NbBundle.getMessage(this.getClass(), "TranslationOptionsPanelController.moduleErr.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
     }

@@ -45,11 +45,8 @@ public final class TextTranslationService {
     }
 
     public void setSelectedTranslator(String translatorName) throws NoServiceProviderException {
-        System.out.println("Translator name: " + translatorName);
         for (TextTranslator translator : translators) {
-            System.out.println("Is it named: " + translator.getName());
             if (translator.getName().equals(translatorName)) {
-                System.out.println("THEY ARE EQUAL");
                 selectedTranslator = translator;
                 return;
             }
