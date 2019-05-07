@@ -66,9 +66,56 @@ public class DefaultFilterState<FilterType extends TimelineFilter> extends Abstr
     }
 
     @Override
-    public String toString() {
-       
+    public String toString() {       
         return "DefaultFilterState{" + "filter=" + getFilter() + ", selected=" + isSelected() + ", disabled=" + isDisabled() + ", activeProp=" + isActive() + '}';
+    }
+
+    @Override
+    public FilterType getActiveFilter() {
+        return isActive() ? getFilter() : null;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 37 * hash + Objects.hashCode(this.filter);
+        hash = 37 * hash + Objects.hashCode(this.selected);
+        hash = 37 * hash + Objects.hashCode(this.disabled);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final DefaultFilterState<?> other = (DefaultFilterState<?>) obj;
+        if (!Objects.equals(this.filter, other.filter)) {
+            return false;
+        }
+        if (!Objects.equals(this.isSelected(), other.isSelected())) {
+            return false;
+        }
+        if (!Objects.equals(this.isDisabled(), other.isDisabled())) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        activeProp.get();
+        return "DefaultFilterState{"
+               + " filter=" + filter
+               + ", selected=" + selected
+               + ", disabled=" + disabled
+               + ", activeProp=" + activeProp + '}'; //NON-NLS
     }
 
 }
