@@ -110,12 +110,6 @@
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.filebrowser.Bundle#CTL_FileBrowserAction"/>
                 <attr name="instanceCreate" methodvalue="org.openide.windows.TopComponent.openAction"/>
             </file>
-            <file name="org-sleuthkit-autopsy-filebrowser-ChangeViewAction.instance">
-                <attr name="delegate" newvalue="org.sleuthkit.autopsy.filebrowser.ChangeViewAction"/>
-                <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.filebrowser.Bundle#CTL_ChangeViewAction"/>
-                <attr name="instanceCreate" methodvalue="org.openide.awt.Actions.alwaysEnabled"/>
-                <attr name="noIconInMenu" boolvalue="false"/>
-            </file>
             <file name="org-sleuthkit-autopsy-filebrowser-DetailWindowAction.instance">
                 <attr name="component" methodvalue="org.sleuthkit.autopsy.filebrowser.DetailWindowTopComponent.findInstance"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.filebrowser.Bundle#CTL_DetailWindowAction"/>
