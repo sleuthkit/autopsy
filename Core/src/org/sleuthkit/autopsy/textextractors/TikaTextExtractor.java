@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.PushbackReader;
 import java.io.Reader;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -405,23 +405,6 @@ final class TikaTextExtractor implements TextExtractor {
 
         return exeFile;
     }
-
-    /**
-     * Gets a CharSource that wraps a formated representation of the given
-     * Metadata.
-     *
-     * @param metadata The Metadata to wrap as a CharSource
-     *
-     * @return A CharSource for the given MetaData
-     */
-    static private CharSource getMetaDataCharSource(Metadata metadata) {
-        return CharSource.wrap(
-                new StringBuilder("\n\n------------------------------METADATA------------------------------\n\n")
-                        .append(Stream.of(metadata.names()).sorted()
-                                .map(key -> key + ": " + metadata.get(key))
-                                .collect(Collectors.joining("\n"))
-                        ));
-    }
     
     /**
      * Get the content metdata
@@ -430,7 +413,7 @@ final class TikaTextExtractor implements TextExtractor {
      */
     @Override
     public Map<String, String> getMetadata() {
-        Map<String, String> metadataMap = new TreeMap<>();
+        Map<String, String> metadataMap = new HashMap<>();
         try {
             InputStream stream = new ReadContentInputStream(content);
             ContentHandler doNothingContentHandler = new DefaultHandler();
@@ -534,7 +517,7 @@ final class TikaTextExtractor implements TextExtractor {
             }
         }
     }
-
+    
     /**
      * An implementation of CharSource that just wraps an existing reader and
      * returns it in openStream().

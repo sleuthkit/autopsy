@@ -19,12 +19,18 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.CharSource;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.tika.metadata.Metadata;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -170,8 +176,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * for final statistics at the end of the job.
      *
      * @param ingestJobId id of ingest job
-     * @param fileId      id of file
-     * @param status      ingest status of the file
+     * @param fileId id of file
+     * @param status ingest status of the file
      */
     private static void putIngestStatus(long ingestJobId, long fileId, IngestStatus status) {
         synchronized (ingestStatus) {
@@ -469,8 +475,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * streaming) from the file Divide the file into chunks and index the
          * chunks
          *
-         * @param aFile          file to extract strings from, divide into
-         *                       chunks and index
+         * @param aFile file to extract strings from, divide into chunks and
+         * index
          * @param detectedFormat mime-type detected, or null if none detected
          *
          * @return true if the file was text_ingested, false otherwise
@@ -485,27 +491,52 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             try {
                 TextExtractor extractor = TextExtractorFactory.getExtractor(aFile, extractionContext);
-                Reader extractedTextReader = extractor.getReader();
-                Map<String, String> metadata = extractor.getMetadata();
-                Reader metadataReader = mapToReader(metadata);
+                Reader fileText = extractor.getReader();
+
+                Reader finalReader;
+                try {
+                    Map<String, String> metadata = extractor.getMetadata();
+                    CharSource formattedMetadata = getMetaDataCharSource(metadata);
+                    finalReader = CharSource.concat(new CharSource() {
+                        //Wrap the TikaReader into a CharSource for concatenation
+                        @Override
+                        public Reader openStream() throws IOException {
+                            return fileText;
+                        }
+                    }, formattedMetadata).openStream();
+                } catch (IOException ex) {
+                    logger.log(Level.WARNING, "Could not format extracted metadata for file %s [id=%d]", ex);
+                    //Just send file text.
+                    finalReader = fileText;
+                }
                 //divide into chunks and index
-                return Ingester.getDefault().indexText(extractedTextReader, aFile.getId(), aFile.getName(), aFile, context);
+                return Ingester.getDefault().indexText(finalReader, aFile.getId(), aFile.getName(), aFile, context);
             } catch (TextExtractorFactory.NoTextExtractorFound | TextExtractor.InitReaderException ex) {
                 //No text extractor found... run the default instead
                 return false;
             }
         }
-        
-        //TO-DO, implement this.
-        private <K,V> Reader mapToReader(Map<K, V> input) {
-            return null;
+
+        /**
+         * Format the
+         *
+         * @param metadata The Metadata to wrap as a CharSource
+         *
+         * @return A CharSource for the given MetaData
+         */
+        private CharSource getMetaDataCharSource(Map<String, String> metadata) {
+            return CharSource.wrap(new StringBuilder("\n\n------------------------------METADATA------------------------------\n\n")
+                    .append(metadata.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                            .map(entry -> entry.getKey() + ": " + entry.getValue())
+                            .collect(Collectors.joining("\n"))
+                    ));
         }
 
         /**
          * Extract strings using heuristics from the file and add to index.
          *
          * @param aFile file to extract strings from, divide into chunks and
-         *              index
+         * index
          *
          * @return true if the file was text_ingested, false otherwise
          */
@@ -534,9 +565,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         /**
          * Adds the file to the index. Detects file type, calls extractors, etc.
          *
-         * @param aFile        File to analyze
+         * @param aFile File to analyze
          * @param indexContent False if only metadata should be text_ingested.
-         *                     True if content and metadata should be index.
+         * True if content and metadata should be index.
          */
         private void indexFile(AbstractFile aFile, boolean indexContent) {
             //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());

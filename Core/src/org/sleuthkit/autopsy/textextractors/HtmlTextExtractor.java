@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -87,7 +88,7 @@ final class HtmlTextExtractor implements TextExtractor {
 
     @Override
     public Map<String, String> getMetadata() {
-        Map<String, String> metadataMap = new TreeMap<>();
+        Map<String, String> metadataMap = new HashMap<>();
         try {
             ReadContentInputStream stream = new ReadContentInputStream(file);
             StringBuilder scripts = new StringBuilder();
