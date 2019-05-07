@@ -502,7 +502,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                         }
                     }, formattedMetadata).openStream();
                 } catch (IOException ex) {
-                    logger.log(Level.WARNING, String.format("Could not format extracted metadata for file %s [id=%d]", 
+                    logger.log(Level.WARNING, String.format("Could not format extracted metadata for file %s [id=%d]",
                             aFile.getName(), aFile.getId()), ex);
                     //Just send file text.
                     finalReader = fileText;
@@ -522,8 +522,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          *
          * @return A CharSource for the given Metadata
          */
+        @NbBundle.Messages({
+            "KeywordSearchIngestModule.metadataTitle=METADATA"
+        })
         private CharSource getMetaDataCharSource(Map<String, String> metadata) {
-            return CharSource.wrap(new StringBuilder("\n\n------------------------------METADATA------------------------------\n\n")
+            return CharSource.wrap(new StringBuilder(
+                    String.format("\n\n------------------------------%s------------------------------\n\n",
+                            Bundle.KeywordSearchIngestModule_metadataTitle()))
                     .append(metadata.entrySet().stream().sorted(Map.Entry.comparingByKey())
                             .map(entry -> entry.getKey() + ": " + entry.getValue())
                             .collect(Collectors.joining("\n"))
