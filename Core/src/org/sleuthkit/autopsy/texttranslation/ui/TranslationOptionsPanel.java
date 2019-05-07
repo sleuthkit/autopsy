@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.texttranslation.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
@@ -40,7 +41,7 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
     /**
      * Creates new form TranslationOptionsPanel
      */
-    @Messages({"TranslationOptionsPanel.translationDisabled.text=Disable translation"})
+    @Messages({"TranslationOptionsPanel.translationDisabled.text=Translation disabled"})
     public TranslationOptionsPanel(TranslationOptionsPanelController theController) {
         initComponents();
         controller = theController;
@@ -60,29 +61,33 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
     }
 
     @Messages({"TranslationOptionsPanel.textTranslatorsUnavailable.text=Unable to get selected text translator, translation is disabled.",
-        "TranslationOptionsPanel.noTextTranslatorSelected.text=No text translator selected, translation is disabled."})
+        "TranslationOptionsPanel.noTextTranslatorSelected.text=No text translator selected, translation is disabled.",
+        "TranslationOptionsPanel.noTextTranslators.text=No text translators exist, translation is disabled."})
     private void loadSelectedPanelSettings() {
         translationServicePanel.removeAll();
         if (translatorComboBox.getSelectedItem() != null && !translatorComboBox.getSelectedItem().toString().equals(Bundle.TranslationOptionsPanel_translationDisabled_text())) {
             try {
-                TextTranslationService.getInstance().setSelectedTranslator(translatorComboBox.getSelectedItem().toString());
-                Component panel = TextTranslationService.getInstance().getSelectedTranslator().getComponent();
+                Component panel = TextTranslationService.getInstance().getTranslatorByName(translatorComboBox.getSelectedItem().toString()).getComponent();
                 panel.addPropertyChangeListener(new PropertyChangeListener() {
                     @Override
                     public void propertyChange(PropertyChangeEvent evt) {
                         controller.changed();
                     }
                 });
-                translationServicePanel.add(panel);
+                translationServicePanel.add(panel, BorderLayout.PAGE_START);
                 currentSelection = translatorComboBox.getSelectedItem().toString();
             } catch (NoServiceProviderException ex) {
                 logger.log(Level.WARNING, "Unable to get TextExtractor named: " + translatorComboBox.getSelectedItem().toString(), ex);
                 JLabel label = new JLabel(Bundle.TranslationOptionsPanel_textTranslatorsUnavailable_text());
                 label.setForeground(Color.RED);
-                translationServicePanel.add(label);
+                translationServicePanel.add(label, BorderLayout.PAGE_START);
             }
         } else {
-            translationServicePanel.add(new JLabel(Bundle.TranslationOptionsPanel_noTextTranslatorSelected_text()));
+            if (translatorComboBox.getItemCount() < 2) {
+                translationServicePanel.add(new JLabel(Bundle.TranslationOptionsPanel_noTextTranslators_text()), BorderLayout.PAGE_START);
+            } else {
+                translationServicePanel.add(new JLabel(Bundle.TranslationOptionsPanel_noTextTranslatorSelected_text()), BorderLayout.PAGE_START);
+            }
         }
         revalidate();
         repaint();
@@ -98,11 +103,15 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
 
     void store() {
         UserPreferences.setTextTranslatorName(currentSelection);
-        try {
-            TextTranslationService.getInstance().getSelectedTranslator().saveSettings();
-        } catch (NoServiceProviderException ex) {
-            logger.log(Level.WARNING, "Unable to save selected translators settings", ex);
+        TextTranslationService.getInstance().updateSelectedTranslator();
+        if (currentSelection != null && !currentSelection.equals(Bundle.TranslationOptionsPanel_translationDisabled_text())) {
+            try {
+                TextTranslationService.getInstance().getTranslatorByName(currentSelection).saveSettings();
+            } catch (NoServiceProviderException ex) {
+                logger.log(Level.WARNING, "Unable to save settings for TextTranslator named: " + currentSelection, ex);
+            }
         }
+
     }
 
     /**
@@ -126,16 +135,7 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(translationServiceLabel, org.openide.util.NbBundle.getMessage(TranslationOptionsPanel.class, "TranslationOptionsPanel.translationServiceLabel.text")); // NOI18N
 
-        javax.swing.GroupLayout translationServicePanelLayout = new javax.swing.GroupLayout(translationServicePanel);
-        translationServicePanel.setLayout(translationServicePanelLayout);
-        translationServicePanelLayout.setHorizontalGroup(
-            translationServicePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 462, Short.MAX_VALUE)
-        );
-        translationServicePanelLayout.setVerticalGroup(
-            translationServicePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 222, Short.MAX_VALUE)
-        );
+        translationServicePanel.setLayout(new java.awt.BorderLayout());
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

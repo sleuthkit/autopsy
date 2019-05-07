@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2018-2018 Basis Technology Corp.
+ * Copyright 2018-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,9 @@ package org.sleuthkit.autopsy.texttranslation;
 
 import java.util.Collection;
 import java.util.Collections;
-
+import java.util.Optional;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * Performs a lookup for a TextTranslator service provider and if present, will
@@ -32,27 +33,32 @@ public final class TextTranslationService {
     private final static TextTranslationService tts = new TextTranslationService();
 
     private final Collection<? extends TextTranslator> translators;
-    private TextTranslator selectedTranslator;
+    private Optional<TextTranslator> selectedTranslator;
 
     private TextTranslationService() {
         //Perform look up for Text Translation implementations ONLY ONCE during 
         //class loading.
         translators = Lookup.getDefault().lookupAll(TextTranslator.class);
+        updateSelectedTranslator();
     }
 
     public static TextTranslationService getInstance() {
         return tts;
     }
 
-    public void setSelectedTranslator(String translatorName) throws NoServiceProviderException {
+    /**
+     * Update the translator currently in use to match the one saved to the user
+     * preferences
+     */
+    public void updateSelectedTranslator() {
+        String translatorName = UserPreferences.getTextTranslatorName();
         for (TextTranslator translator : translators) {
             if (translator.getName().equals(translatorName)) {
-                selectedTranslator = translator;
+                selectedTranslator = Optional.ofNullable(translator);
                 return;
             }
         }
-        throw new NoServiceProviderException(
-                "Could not find a TextTranslator service provider");
+        selectedTranslator = Optional.empty();
     }
 
     /**
@@ -70,19 +76,39 @@ public final class TextTranslationService {
      *                                    implementations fail
      */
     public String translate(String input) throws NoServiceProviderException, TranslationException {
-        return getSelectedTranslator().translate(input);
-    }
-
-    public Collection<? extends TextTranslator> getTranslators(){
-        return Collections.unmodifiableCollection(translators);
-    }
-    
-    public TextTranslator getSelectedTranslator() throws NoServiceProviderException {
         if (hasProvider()) {
-            return selectedTranslator;
+            return selectedTranslator.get().translate(input);
         }
         throw new NoServiceProviderException(
                 "Could not find a TextTranslator service provider");
+    }
+
+    /**
+     * Get a specific translator by name
+     *
+     * @param translatorName the name of the translator to get
+     *
+     * @return the translator which matches the name specified
+     *
+     * @throws NoServiceProviderException
+     */
+    public TextTranslator getTranslatorByName(String translatorName) throws NoServiceProviderException {
+        for (TextTranslator translator : translators) {
+            if (translator.getName().equals(translatorName)) {
+                return translator;
+            }
+        }
+        throw new NoServiceProviderException(
+                "Could not find the specified TextTranslator service provider");
+    }
+
+    /**
+     * Get all the TextTranslator implementations which were found to exist
+     *
+     * @return an unmodifiable collection of TextTranslators
+     */
+    public Collection<? extends TextTranslator> getTranslators() {
+        return Collections.unmodifiableCollection(translators);
     }
 
     /**
@@ -92,6 +118,6 @@ public final class TextTranslationService {
      * @return
      */
     public boolean hasProvider() {
-        return selectedTranslator != null;
+        return selectedTranslator.isPresent();
     }
 }
