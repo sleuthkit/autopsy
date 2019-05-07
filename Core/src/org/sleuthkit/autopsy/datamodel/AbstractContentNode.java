@@ -66,7 +66,6 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * @param lookup   The Lookup object for the node.
      */
     AbstractContentNode(T content, Lookup lookup) {
-         //TODO consider child factory for the content children
         super(Children.create(new ContentChildren(content), true), lookup);
         this.content = content;
         //super.setName(ContentUtils.getSystemName(content));

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,13 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import javax.swing.Action;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -105,12 +105,18 @@ public class VolumeNode extends AbstractContentNode<Volume> {
                 if (parent != null) {
                     // Is this a new carved file?
                     if (parent.getName().equals(VirtualDirectory.NAME_CARVED)) {
-                        // Was this new carved file produced from this volume?
-                        if (parent.getParent().getId() == getContent().getId()) {
-                            Children children = getChildren();
-                            if (children != null) {
-//                                ((ContentChildren) children).refreshChildren();
-                                children.getNodesCount();
+                        // Is this new carved file for this data source?
+                        if (newContent.getDataSource().getId() == getContent().getDataSource().getId()) {
+                            // Find the volume (if any) associated with the new content and
+                            // trigger a refresh if it matches the volume wrapped by this node.
+                            while ((parent = parent.getParent()) != null) {
+                                if (parent.getId() == getContent().getId()) {
+                                    EventBus bus = BaseChildFactory.nodeNameToEventBusMap.get(getName());
+                                    if (bus != null) {
+                                        bus.post(new BaseChildFactory.RefreshKeysEvent());
+                                    }
+                                    break;
+                                }
                             }
                         }
                     }

@@ -67,6 +67,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
         isPageSizeChangeEvent = false;
         this.filter = filter;
     }
+
     @Override
     protected void addNotify() {
         onAdd();
@@ -115,6 +116,12 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
         isPageSizeChangeEvent = false;
 
         return true;
+    }
+
+    /**
+     * Event used to trigger recreation of the keys.
+     */
+    public static class RefreshKeysEvent {
     }
 
     /**
@@ -280,6 +287,13 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
 
                 currentPage = 1;
                 isPageSizeChangeEvent = true;
+                refresh(true);
+            }
+        }
+
+        @Subscribe
+        private void subscribeToRefreshKeys(RefreshKeysEvent event) {
+            if (event != null) {
                 refresh(true);
             }
         }
