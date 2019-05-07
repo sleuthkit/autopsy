@@ -111,6 +111,7 @@ public class TranslationOptionsPanel extends javax.swing.JPanel {
         if (currentSelection == null) {
             currentSelection = Bundle.TranslationOptionsPanel_translationDisabled_text();
         }
+        translatorComboBox.setSelectedItem(currentSelection);
         loadSelectedPanelSettings();
     }
 
