@@ -108,6 +108,7 @@ public class CommandLineIngestManager {
                 LOGGER.log(Level.INFO, "Autopsy is running from command line"); //NON-NLS
                 String dataSourcePath = "";
                 String baseCaseName = "";
+                List<CommandLineCommand> commands;
 
                 // first look up all OptionProcessors and get input data from CommandLineOptionProcessor
                 Collection<? extends OptionProcessor> optionProcessors = Lookup.getDefault().lookupAll(OptionProcessor.class);
@@ -119,6 +120,8 @@ public class CommandLineIngestManager {
                         // check if we are running from command line
                         dataSourcePath = ((CommandLineOptionProcessor) processor).getPathToDataSource();
                         baseCaseName = ((CommandLineOptionProcessor) processor).getBaseCaseName();
+                        
+                        commands = ((CommandLineOptionProcessor) processor).getCommands();
                     }
                 }
 

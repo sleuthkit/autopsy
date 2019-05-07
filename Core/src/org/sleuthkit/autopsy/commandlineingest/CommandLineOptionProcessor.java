@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.commandlineingest;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -37,18 +39,22 @@ import org.openide.util.lookup.ServiceProvider;
 public class CommandLineOptionProcessor extends OptionProcessor {
 
     private static final Logger logger = Logger.getLogger(CommandLineOptionProcessor.class.getName());
-    private final Option pathToDataSourceOption = Option.optionalArgument('l', "inputPath");
-    private final Option caseNameOption = Option.optionalArgument('2', "caseName");
+    private final Option caseNameOption = Option.optionalArgument('1', "caseName");
+    private final Option caseBaseDirOption = Option.optionalArgument('2', "caseBaseDir");
+    private final Option dataSourcePathOption = Option.optionalArgument('4', "dataSourcePath");    
     private final Option runFromCommandLineOption = Option.optionalArgument('3', "runFromCommandLine");
     private String pathToDataSource;
     private String baseCaseName;
     private boolean runFromCommandLine = false;
+    
+    private List<CommandLineCommand> commands = new ArrayList<>();
 
     @Override
     protected Set<Option> getOptions() {
         Set<Option> set = new HashSet<>();
-        set.add(pathToDataSourceOption);
         set.add(caseNameOption);
+        set.add(caseBaseDirOption);
+        set.add(dataSourcePathOption);
         set.add(runFromCommandLineOption);
         return set;
     }
@@ -57,25 +63,30 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     protected void process(Env env, Map<Option, String[]> values) throws CommandException {
         logger.log(Level.INFO, "Processing Autopsy command line options"); //NON-NLS
         System.out.println("Processing Autopsy command line options");
-        if (values.containsKey(pathToDataSourceOption) && values.containsKey(caseNameOption) && values.containsKey(runFromCommandLineOption)) {
+        if (values.containsKey(caseNameOption) || values.containsKey(caseBaseDirOption) || values.containsKey(dataSourcePathOption) || values.containsKey(runFromCommandLineOption)) {
             // parse input parameters
-            String inputPath;
+            String inputPath = "C:\\TEST\\Inputs\\Small\\small2.img";
             String inputCaseName;
+            String caseBaseDir;
             String modeString;
-            if (values.size() < 3) {
+            String[] argDirs;
+            if (values.size() < 1) { // ELTODO
                 logger.log(Level.SEVERE, "Insufficient number of input arguments to run command line ingest");
                 System.out.println("Insufficient number of input arguments to run command line ingest");
                 this.runFromCommandLine = false;
                 return;
             } else {
-                String[] argDirs = values.get(pathToDataSourceOption);
-                if (argDirs.length < 1) {
-                    logger.log(Level.SEVERE, "Missing argument 'inputPath'");
-                    System.out.println("Missing argument 'inputPath'");
-                    this.runFromCommandLine = false;
-                    return;
+                if (values.containsKey(dataSourcePathOption)) {
+                    argDirs = values.get(dataSourcePathOption);
+                    if (argDirs.length < 1) {
+                        logger.log(Level.SEVERE, "Missing argument 'dataSourcePath'");
+                        System.out.println("Missing argument 'dataSourcePath'");
+                        this.runFromCommandLine = false;
+                        return;
+
+                    }
+                    inputPath = argDirs[0];
                 }
-                inputPath = argDirs[0];
 
                 argDirs = values.get(caseNameOption);
                 if (argDirs.length < 1) {
@@ -85,6 +96,15 @@ public class CommandLineOptionProcessor extends OptionProcessor {
                     return;
                 }
                 inputCaseName = argDirs[0];
+                
+                argDirs = values.get(caseBaseDirOption);
+                if (argDirs.length < 1) {
+                    logger.log(Level.SEVERE, "Missing argument 'caseBaseDir'");
+                    System.out.println("Missing argument 'caseBaseDir'");
+                    this.runFromCommandLine = false;
+                    return;
+                }
+                caseBaseDir = argDirs[0];                
                 
                 argDirs = values.get(runFromCommandLineOption);
                 if (argDirs.length < 1) {
@@ -133,6 +153,11 @@ public class CommandLineOptionProcessor extends OptionProcessor {
             System.out.println("Input file = " + this.pathToDataSource);
             System.out.println("Case name = " + this.baseCaseName);
             System.out.println("runFromCommandLine = " + this.runFromCommandLine);
+            
+            CommandLineCommand newCommand = new CommandLineCommand(CommandLineCommand.CommandType.CREATE_CASE);
+            newCommand.addInputValue("caseName", inputCaseName);
+            newCommand.addInputValue("caseBaseDir", caseBaseDir);
+            commands.add(newCommand);
         } else {
             System.out.println("Missing input arguments to run command line ingest");
             logger.log(Level.SEVERE, "Missing input arguments to run command line ingest");
@@ -165,4 +190,13 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     public boolean isRunFromCommandLine() {
         return runFromCommandLine;
     }    
+
+    /**
+     * Returns list of all commands passed in via command line.
+     * 
+     * @return list of input commands
+     */
+    List<CommandLineCommand> getCommands() {
+        return commands;
+    }
 }
