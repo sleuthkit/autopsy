@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.translation;
+package org.sleuthkit.autopsy.texttranslation.ui;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -53,7 +53,7 @@ import org.sleuthkit.autopsy.texttranslation.TranslationException;
 import org.sleuthkit.datamodel.Content;
 import java.util.List;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.translation.TranslationContentPanel.DisplayDropdownOptions;
+import org.sleuthkit.autopsy.texttranslation.ui.TranslationContentPanel.DisplayDropdownOptions;
 
 /**
  * A TextViewer that displays machine translation of text.
@@ -204,7 +204,7 @@ public final class TranslatedTextViewer implements TextViewer {
         @Override
         public void done() {
             try {
-                String result = get();          
+                String result = get();
                 if (this.isCancelled()) {
                     throw new InterruptedException();
                 }
@@ -294,12 +294,15 @@ public final class TranslatedTextViewer implements TextViewer {
         /**
          * Fetches text from a file.
          *
-         * @param fileReader Reader instance containing file text
+         * @param source     the AbstractFile source to get a Reader for
+         * @param ocrEnabled true if OCR is enabled false otherwise
          *
          * @return Extracted Text
          *
          * @throws IOException
          * @throws InterruptedException
+         * @throws
+         * org.sleuthkit.autopsy.textextractors.TextExtractor.InitReaderException
          */
         private String extractText(AbstractFile source, boolean ocrEnabled) throws IOException, InterruptedException, TextExtractor.InitReaderException {
             Reader textExtractor = getTextExtractor(source, ocrEnabled);
