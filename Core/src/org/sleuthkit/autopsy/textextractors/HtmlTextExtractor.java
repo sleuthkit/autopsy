@@ -96,11 +96,11 @@ final class HtmlTextExtractor implements TextExtractor {
         Map<String, String> metadataMap = new HashMap<>();
         try {
             ReadContentInputStream stream = new ReadContentInputStream(file);
-            StringBuilder scripts = new StringBuilder();
-            StringBuilder links = new StringBuilder();
-            StringBuilder images = new StringBuilder();
-            StringBuilder comments = new StringBuilder();
-            StringBuilder others = new StringBuilder();
+            StringBuilder scripts = new StringBuilder("\n");
+            StringBuilder links = new StringBuilder("\n");
+            StringBuilder images = new StringBuilder("\n");
+            StringBuilder comments = new StringBuilder("\n");
+            StringBuilder others = new StringBuilder("\n");
             int numScripts = 0;
             int numLinks = 0;
             int numImages = 0;
