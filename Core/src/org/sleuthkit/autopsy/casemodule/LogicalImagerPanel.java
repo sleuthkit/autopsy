@@ -311,7 +311,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         if (fList != null) {
             imageTableModel = new ImageTableModel();
             int row = 0;
-            // Find all directories with name like Logical_Imager_HOSTNAME_20190506_18_46_54
+            // Find all directories with name like Logical_Imager_HOSTNAME_yyyymmdd_HH_MM_SS
             // and has a sparse_image.vhd file in it
             for (File file : fList) {      
                 if (file.isDirectory() 
