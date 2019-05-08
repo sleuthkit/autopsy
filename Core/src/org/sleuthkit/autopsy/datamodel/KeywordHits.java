@@ -508,9 +508,11 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     private abstract class KWHitsNodeBase extends DisplayableItemNode implements Observer {
-
-        private KWHitsNodeBase(Children children, Lookup lookup) {
+        private String displayName;
+        
+        private KWHitsNodeBase(Children children, Lookup lookup, String displayName) {
             super(children, lookup);
+            this.displayName = displayName;
         }
 
         private KWHitsNodeBase(Children children) {
@@ -528,7 +530,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         final void updateDisplayName() {
-            super.setDisplayName(getDisplayName() + " (" + countTotalDescendants() + ")");
+            super.setDisplayName(displayName + " (" + countTotalDescendants() + ")");
         }
 
         abstract int countTotalDescendants();
@@ -543,7 +545,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String listName;
 
         private ListNode(String listName) {
-            super(Children.create(new TermFactory(listName), true), Lookups.singleton(listName));
+            super(Children.create(new TermFactory(listName), true), Lookups.singleton(listName), listName);
             super.setName(listName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             this.listName = listName;
@@ -656,10 +658,9 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String keyword;
 
         private TermNode(String setName, String keyword) {
-            super(Children.create(createChildFactory(setName, keyword), true), Lookups.singleton(keyword));
+            super(Children.create(createChildFactory(setName, keyword), true), Lookups.singleton(keyword), keyword);
 
-            super.setDisplayName(keyword);
-            /**
+           /**
              * We differentiate between the programmatic name and the display
              * name. The programmatic name is used to create an association with
              * an event bus and must be the same as the node name passed by our
@@ -756,8 +757,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String instance;
 
         private RegExpInstanceNode(String setName, String keyword, String instance) {
-            super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(instance));
-            super.setDisplayName(instance);  //the instance represents the name of the keyword hit at this point as the keyword is the regex
+            super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(instance), instance);
+
             /**
              * We differentiate between the programmatic name and the display
              * name. The programmatic name is used to create an association with
