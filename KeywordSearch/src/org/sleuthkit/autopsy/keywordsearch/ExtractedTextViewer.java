@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearch.AdHocSearchChildFactory.AdHocQueryResult;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -47,13 +47,13 @@ import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A content viewer that displays the indexed text associated with a file or an
+ * A text viewer that displays the indexed text associated with a file or an
  * artifact, possibly marked up with HTML to highlight keyword hits.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 4)
-public class ExtractedContentViewer implements DataContentViewer {
+@ServiceProvider(service = TextViewer.class, position = 2)
+public class ExtractedTextViewer implements TextViewer {
 
-    private static final Logger logger = Logger.getLogger(ExtractedContentViewer.class.getName());
+    private static final Logger logger = Logger.getLogger(ExtractedTextViewer.class.getName());
 
     private static final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT_TYPE = new BlackboardAttribute.Type(TSK_ASSOCIATED_ARTIFACT);
     private static final BlackboardAttribute.Type TSK_ACCOUNT_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE);
@@ -63,15 +63,16 @@ public class ExtractedContentViewer implements DataContentViewer {
     private IndexedText currentSource = null;
 
     /**
-     * Constructs a content viewer that displays the indexed text associated
-     * with a file or an artifact, possibly marked up with HTML to highlight
-     * keyword hits.
+     * Constructs a text viewer that displays the indexed text associated with a
+     * file or an artifact, possibly marked up with HTML to highlight keyword
+     * hits.
      */
-    public ExtractedContentViewer() {
+    public ExtractedTextViewer() {
+        // This constructor is intentionally empty.
     }
 
     /**
-     * Sets the node displayed by the content viewer.
+     * Sets the node displayed by the text viewer.
      *
      * @param node The node to display
      */
@@ -88,7 +89,7 @@ public class ExtractedContentViewer implements DataContentViewer {
          * This deals with the known bug with an unknown cause where setNode is
          * sometimes called twice for the same node.
          */
-        if (node == currentNode) {
+        if (node.equals(currentNode)) {
             return;
         } else {
             currentNode = node;
@@ -265,8 +266,8 @@ public class ExtractedContentViewer implements DataContentViewer {
     }
 
     @Override
-    public DataContentViewer createInstance() {
-        return new ExtractedContentViewer();
+    public TextViewer createInstance() {
+        return new ExtractedTextViewer();
     }
 
     @Override
@@ -284,10 +285,10 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
+        panel.updateControls(currentSource);
     }
 
     @Override
@@ -377,7 +378,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             //The presence of an AdHocQueryResult indicates that this is a Keyword Hit and has a high preference for this content viewer
             return 7;
         }
-        
+
         BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
         if (artifact == null) {
             return 4;
@@ -435,6 +436,9 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
+    /**
+     * Listener to select the next match found in the text
+     */
     private class NextFindActionListener implements ActionListener {
 
         @Override
@@ -475,6 +479,9 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
+    /**
+     * Listener to select the previous match found in the text
+     */
     private class PrevFindActionListener implements ActionListener {
 
         @Override
@@ -510,6 +517,9 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
+    /**
+     * Listener to update the text displayed based on the source changing
+     */
     private class SourceChangeActionListener implements ActionListener {
 
         @Override
@@ -522,7 +532,6 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
 
             panel.updateControls(currentSource);
-            panel.updateSearchControls(currentSource);
         }
     }
 
@@ -545,7 +554,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
             //scroll to current selection
-            ExtractedContentViewer.this.scrollToCurrentHit();
+            scrollToCurrentHit();
 
             //update controls if needed
             if (!currentSource.hasNextPage()) {
@@ -578,7 +587,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             panel.updateCurrentPageDisplay(currentSource.getCurrentPage());
 
             //scroll to current selection
-            ExtractedContentViewer.this.scrollToCurrentHit();
+            scrollToCurrentHit();
 
             //update controls if needed
             if (!currentSource.hasPreviousPage()) {
@@ -593,6 +602,9 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
+    /**
+     * Listener to go to the next page of the text
+     */
     private class NextPageActionListener implements ActionListener {
 
         @Override
@@ -601,6 +613,9 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
+    /**
+     * Listener to go to the previous page of the text
+     */
     private class PrevPageActionListener implements ActionListener {
 
         @Override
