@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2019 Basis Technology Corp.
+ * Copyright 2011-2018 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,29 +19,46 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * A LogicalImager data source processor that implements the DataSourceProcessor service
+ * A Raw data source processor that implements the DataSourceProcessor service
  * provider interface to allow integration with the add data source wizard. It
  * also provides a run method overload to allow it to be used independently of
  * the wizard.
  */
-@ServiceProvider(service = DataSourceProcessor.class)
+@ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class)}
+)
 public class LogicalImagerDSProcessor implements DataSourceProcessor {
 
     private final LogicalImagerPanel configPanel;
-    private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(LogicalImagerDSProcessor.class, "LogicalImagerDSProcessor.dsType.text");
+    private static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
+    private static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);   
+    private static final List<FileFilter> filtersList = new ArrayList<>();
+    static {
+        filtersList.add(rawFilter);
+        filtersList.add(encaseFilter);
+    }
+    
+    // By default, split image into 2GB unallocated space chunks
+    private static final long DEFAULT_CHUNK_SIZE = 2000000000L; // 2 GB
+
+    private AddImageTask addImageTask;
     
     /*
-     * Constructs a Logical Imaager data source processor that implements the
+     * Constructs a Raw data source processor that implements the
      * DataSourceProcessor service provider interface to allow integration with
      * the add data source wizard. It also provides a run method overload to
      * allow it to be used independently of the wizard.
@@ -57,8 +74,9 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      *
      * @return A data source type display string for this data source processor.
      */
+    @Messages({"LogicalImagerDSProcessor.dataSourceType=Logical Imager"})
     public static String getType() {
-        return DATA_SOURCE_TYPE;
+        return Bundle.LogicalImagerDSProcessor_dataSourceType();
     }
 
     /**
@@ -70,7 +88,7 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      */
     @Override
     public String getDataSourceType() {
-        return getType();
+        return Bundle.LogicalImagerDSProcessor_dataSourceType();
     }
 
     /**
@@ -117,11 +135,16 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        // TODO
+        Path imagePath = configPanel.getImagePath();
+        System.out.println("ImagePath: " + imagePath.toString());
+        String deviceId = UUID.randomUUID().toString();
+        String timeZone = "America/New_York";
+        boolean ignoreFatOrphanFiles = false;
+        run(deviceId, imagePath.toString(), 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
     }
 
     /**
-     * Adds a "LogicalImager" data source to the case database using a background task in
+     * Adds a "raw" data source to the case database using a background task in
      * a separate thread and the given settings instead of those provided by the
      * selection and configuration panel. Returns as soon as the background task
      * is started and uses the callback object to signal task completion and
@@ -142,10 +165,9 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      *                             during processing.
      * @param callback             Callback to call when processing is done.
      */
-    private void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-//        AddRawImageTask addImageTask = new AddRawImageTask(deviceId, imageFilePath, timeZone, chunkSize, progressMonitor, callback);
-//        new Thread(addImageTask).start();
-//        TODO: 5011 Logical Imager DSP adds data    
+    private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+        addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, progressMonitor, callback);
+        new Thread(addImageTask).start();
     }
 
     @Override

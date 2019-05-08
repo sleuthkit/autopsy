@@ -200,8 +200,6 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         dspList.add(LocalDiskDSProcessor.getType());
         dspList.add(LocalFilesDSProcessor.getType());
         dspList.add(RawDSProcessor.getType());
-        Foo foo = new Foo();
-        dspList.add(foo.bar());
         dspList.add(LogicalImagerDSProcessor.getType());
         // now add any addtional DSPs that haven't already been added
         for (String dspType : datasourceProcessorsMap.keySet()) {
