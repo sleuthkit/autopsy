@@ -1117,16 +1117,17 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql
                 = "SELECT "
                 + tableName
-                + ".id,"
+                + ".id as instance_id,"
                 + tableName
                 + ".value,"
                 + tableName
                 + ".file_obj_id,"
-                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
+                + " cases.*, organizations.org_name, organizations.poc_name, organizations.poc_email, organizations.poc_phone, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
                 + ".case_id=cases.id"
+                + " LEFT JOIN organizations ON cases.org_id=organizations.id"
                 + " LEFT JOIN data_sources ON "
                 + tableName
                 + ".data_source_id=data_sources.id"
@@ -1212,16 +1213,17 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql
                 = "SELECT "
                 + tableName
-                + ".id, "
+                + ".id as instance_id, "
                 + tableName
                 + ".value,"
                 + tableName
                 + ".file_obj_id,"
-                + " cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
+                + " cases.*, organizations.org_name, organizations.poc_name, organizations.poc_email, organizations.poc_phone, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
                 + ".case_id=cases.id"
+                + " LEFT JOIN organizations ON cases.org_id=organizations.id"
                 + " LEFT JOIN data_sources ON "
                 + tableName
                 + ".data_source_id=data_sources.id"
@@ -1937,16 +1939,17 @@ abstract class AbstractSqlEamDb implements EamDb {
         String sql
                 = "SELECT "
                 + tableName
-                + ".id, "
+                + ".id as instance_id, "
                 + tableName
                 + ".value, "
                 + tableName
                 + ".file_obj_id,"
-                + "cases.case_name, cases.case_uid, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
+                + "cases.*, organizations.org_name, organizations.poc_name, organizations.poc_email, organizations.poc_phone, data_sources.id AS data_source_id, data_sources.name, device_id, file_path, known_status, comment, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
                 + ".case_id=cases.id"
+                + " LEFT JOIN organizations ON cases.org_id=organizations.id"
                 + " LEFT JOIN data_sources ON "
                 + tableName
                 + ".data_source_id=data_sources.id"
@@ -1999,11 +2002,14 @@ abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         String sql
-                = "SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id, id, value, file_obj_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
+                = "SELECT cases.*, organizations.org_name, organizations.poc_name, organizations.poc_email, organizations.poc_phone, data_sources.name, device_id, file_path, known_status, comment, "
+                + tableName
+                + ".id as instance_id, value, file_obj_id, data_sources.datasource_obj_id, data_sources.md5, data_sources.sha1, data_sources.sha256 FROM "
                 + tableName
                 + " LEFT JOIN cases ON "
                 + tableName
                 + ".case_id=cases.id"
+                + " LEFT JOIN organizations ON cases.org_id=organizations.id"
                 + " LEFT JOIN data_sources ON "
                 + tableName
                 + ".data_source_id=data_sources.id"
@@ -3321,11 +3327,20 @@ abstract class AbstractSqlEamDb implements EamDb {
         if (null == resultSet) {
             return null;
         }
+
+        EamOrganization eamOrg = new EamOrganization(resultSet.getInt("org_id"),
+                resultSet.getString("org_name"),
+                resultSet.getString("poc_name"),
+                resultSet.getString("poc_email"),
+                resultSet.getString("poc_phone"));
+
         return new CorrelationAttributeInstance(
                 aType,
                 resultSet.getString("value"),
-                resultSet.getInt("id"),
-                new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name")),
+                resultSet.getInt("instance_id"),
+                new CorrelationCase(resultSet.getInt("id"), resultSet.getString("case_uid"), eamOrg, resultSet.getString("case_name"),
+                        resultSet.getString("creation_date"), resultSet.getString("case_number"), resultSet.getString("examiner_name"),
+                        resultSet.getString("examiner_email"), resultSet.getString("examiner_phone"), resultSet.getString("notes")),
                 new CorrelationDataSource(
                         resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name"),
                         resultSet.getLong("datasource_obj_id"), resultSet.getString("md5"), resultSet.getString("sha1"), resultSet.getString("sha256")),
