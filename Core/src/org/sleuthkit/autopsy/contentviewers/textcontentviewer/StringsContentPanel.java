@@ -16,9 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers.textcontentviewer;
 
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -28,9 +27,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import org.openide.nodes.Node;
-import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractResult;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -41,50 +38,59 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Viewer displays strings extracted from contents.
  */
-@ServiceProvider(service = DataContentViewer.class, position = 2)
 @SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class DataContentViewerString extends javax.swing.JPanel implements DataContentViewer {
+public class StringsContentPanel extends javax.swing.JPanel {
 
     private static long currentOffset = 0;
     private static final long PAGE_LENGTH = 16384;
+    private static final long serialVersionUID = 1L;
     private final byte[] data = new byte[(int) PAGE_LENGTH];
     private static int currentPage = 1;
     private Content dataSource;
     //string extract utility
     private final StringExtract stringExtract = new StringExtract();
-    private static final Logger logger = Logger.getLogger(DataContentViewerString.class.getName());
+    private static final Logger logger = Logger.getLogger(StringsContentPanel.class.getName());
 
     /**
-     * Creates new form DataContentViewerString
+     * Creates new form StringsTextViewer
      */
-    public DataContentViewerString() {
+    public StringsContentPanel() {
         initComponents();
         customizeComponents();
-        this.resetComponent();
-        logger.log(Level.INFO, "Created StringView instance: {0}", this); //NON-NLS
+        this.resetDisplay();
     }
 
     private void customizeComponents() {
         outputViewPane.setComponentPopupMenu(rightClickMenu);
-        ActionListener actList = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JMenuItem jmi = (JMenuItem) e.getSource();
-                if (jmi.equals(copyMenuItem)) {
-                    outputViewPane.copy();
-                } else if (jmi.equals(selectAllMenuItem)) {
-                    outputViewPane.selectAll();
-                }
+        ActionListener actList = (ActionEvent e) -> {
+            JMenuItem jmi = (JMenuItem) e.getSource();
+            if (jmi.equals(copyMenuItem)) {
+                outputViewPane.copy();
+            } else if (jmi.equals(selectAllMenuItem)) {
+                outputViewPane.selectAll();
             }
         };
         copyMenuItem.addActionListener(actList);
         selectAllMenuItem.addActionListener(actList);
 
         List<SCRIPT> supportedScripts = StringExtract.getSupportedScripts();
-        for (SCRIPT s : supportedScripts) {
+        supportedScripts.forEach((s) -> {
             languageCombo.addItem(s);
-        }
+        });
 
+    }
+
+    final void resetDisplay() {
+        // clear / reset the fields
+        currentPage = 1;
+        currentOffset = 0;
+        this.dataSource = null;
+        currentPageLabel.setText("");
+        totalPageLabel.setText("");
+        prevPageButton.setEnabled(false);
+        nextPageButton.setEnabled(false);
+        outputViewPane.setText(""); // reset the output view
+        setComponentsVisibility(false); // hides the components that not needed
     }
 
     /**
@@ -99,10 +105,10 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        outputScrollPane = new javax.swing.JScrollPane();
         outputViewPane = new javax.swing.JTextPane();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jPanel2 = new javax.swing.JPanel();
+        controlScrollPane = new javax.swing.JScrollPane();
+        controlPanel = new javax.swing.JPanel();
         totalPageLabel = new javax.swing.JLabel();
         ofLabel = new javax.swing.JLabel();
         currentPageLabel = new javax.swing.JLabel();
@@ -115,39 +121,39 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         languageCombo = new javax.swing.JComboBox<>();
         languageLabel = new javax.swing.JLabel();
 
-        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.copyMenuItem.text")); // NOI18N
+        copyMenuItem.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.copyMenuItem.text")); // NOI18N
         rightClickMenu.add(copyMenuItem);
 
-        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.selectAllMenuItem.text")); // NOI18N
+        selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
         setMinimumSize(new java.awt.Dimension(5, 5));
-        setPreferredSize(new java.awt.Dimension(100, 144));
+        setPreferredSize(new java.awt.Dimension(100, 58));
 
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(640, 402));
+        outputScrollPane.setPreferredSize(new java.awt.Dimension(640, 402));
 
         outputViewPane.setEditable(false);
         outputViewPane.setFont(new java.awt.Font("Courier New", 0, 11)); // NOI18N
-        outputViewPane.setPreferredSize(new java.awt.Dimension(638, 400));
-        jScrollPane1.setViewportView(outputViewPane);
+        outputViewPane.setPreferredSize(new java.awt.Dimension(100, 40));
+        outputScrollPane.setViewportView(outputViewPane);
 
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        controlScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        controlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
 
-        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.totalPageLabel.text_1")); // NOI18N
+        totalPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.totalPageLabel.text_1")); // NOI18N
 
-        ofLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.ofLabel.text_1")); // NOI18N
+        ofLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.ofLabel.text_1")); // NOI18N
 
-        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.currentPageLabel.text_1")); // NOI18N
+        currentPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.currentPageLabel.text_1")); // NOI18N
         currentPageLabel.setMaximumSize(new java.awt.Dimension(18, 14));
         currentPageLabel.setPreferredSize(new java.awt.Dimension(18, 14));
 
-        pageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.pageLabel.text_1")); // NOI18N
+        pageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.pageLabel.text_1")); // NOI18N
         pageLabel.setMaximumSize(new java.awt.Dimension(33, 14));
         pageLabel.setMinimumSize(new java.awt.Dimension(33, 14));
 
         nextPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
-        nextPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.nextPageButton.text")); // NOI18N
+        nextPageButton.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.nextPageButton.text")); // NOI18N
         nextPageButton.setBorderPainted(false);
         nextPageButton.setContentAreaFilled(false);
         nextPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
@@ -160,12 +166,12 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             }
         });
 
-        pageLabel2.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.pageLabel2.text")); // NOI18N
+        pageLabel2.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.pageLabel2.text")); // NOI18N
         pageLabel2.setMaximumSize(new java.awt.Dimension(29, 14));
         pageLabel2.setMinimumSize(new java.awt.Dimension(29, 14));
 
         prevPageButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
-        prevPageButton.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.prevPageButton.text")); // NOI18N
+        prevPageButton.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.prevPageButton.text")); // NOI18N
         prevPageButton.setBorderPainted(false);
         prevPageButton.setContentAreaFilled(false);
         prevPageButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
@@ -178,30 +184,30 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             }
         });
 
-        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.goToPageLabel.text")); // NOI18N
+        goToPageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.goToPageLabel.text")); // NOI18N
 
-        goToPageTextField.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.goToPageTextField.text")); // NOI18N
+        goToPageTextField.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.goToPageTextField.text")); // NOI18N
         goToPageTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 goToPageTextFieldActionPerformed(evt);
             }
         });
 
-        languageCombo.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageCombo.toolTipText")); // NOI18N
+        languageCombo.setToolTipText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.languageCombo.toolTipText")); // NOI18N
         languageCombo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 languageComboActionPerformed(evt);
             }
         });
 
-        languageLabel.setText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageLabel.text")); // NOI18N
-        languageLabel.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerString.class, "DataContentViewerString.languageLabel.toolTipText")); // NOI18N
+        languageLabel.setText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.languageLabel.text")); // NOI18N
+        languageLabel.setToolTipText(org.openide.util.NbBundle.getMessage(StringsContentPanel.class, "StringsContentPanel.languageLabel.toolTipText")); // NOI18N
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
+        javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
+        controlPanel.setLayout(controlPanelLayout);
+        controlPanelLayout.setHorizontalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -220,46 +226,80 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
                 .addComponent(goToPageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(33, 33, 33)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(languageLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(ofLabel)
-                .addComponent(totalPageLabel))
-            .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(goToPageLabel)
-            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(languageLabel))
+        controlPanelLayout.setVerticalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(pageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(currentPageLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(ofLabel)
+                        .addComponent(totalPageLabel))
+                    .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(goToPageLabel)
+                    .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(goToPageTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(languageCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(languageLabel)))
+                .addGap(0, 0, 0))
         );
 
-        jScrollPane2.setViewportView(jPanel2);
+        controlScrollPane.setViewportView(controlPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+            .addComponent(outputScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE))
+                .addComponent(controlScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(7, 7, 7)
+                .addComponent(outputScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void languageComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_languageComboActionPerformed
+        if (dataSource != null) {
+            setDataView(dataSource, currentOffset);
+        }
+    }//GEN-LAST:event_languageComboActionPerformed
+
+    private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
+        String pageNumberStr = goToPageTextField.getText();
+        int pageNumber;
+        int maxPage = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
+        try {
+            pageNumber = Integer.parseInt(pageNumberStr);
+        } catch (NumberFormatException ex) {
+            pageNumber = maxPage + 1;
+        }
+        if (pageNumber > maxPage || pageNumber < 1) {
+            JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(this.getClass(),
+                            "StringsTextViewer.goToPageTextField.msgDlg",
+                            maxPage),
+                    NbBundle.getMessage(this.getClass(),
+                            "StringsTextViewer.goToPageTextField.err"),
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        currentOffset = (pageNumber - 1) * PAGE_LENGTH;
+        currentPage = pageNumber;
+        currentPageLabel.setText(Integer.toString(currentPage));
+        setDataView(dataSource, currentOffset);
+    }//GEN-LAST:event_goToPageTextFieldActionPerformed
 
     private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
         //@@@ this is part of the code dealing with the data viewer. could be copied/removed to implement the scrollbar
@@ -277,50 +317,18 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         setDataView(dataSource, currentOffset);
     }//GEN-LAST:event_nextPageButtonActionPerformed
 
-    private void goToPageTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_goToPageTextFieldActionPerformed
-        String pageNumberStr = goToPageTextField.getText();
-        int pageNumber;
-        int maxPage = Math.round((dataSource.getSize() - 1) / PAGE_LENGTH) + 1;
-        try {
-            pageNumber = Integer.parseInt(pageNumberStr);
-        } catch (NumberFormatException ex) {
-            pageNumber = maxPage + 1;
-        }
-        if (pageNumber > maxPage || pageNumber < 1) {
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "DataContentViewerString.goToPageTextField.msgDlg",
-                            maxPage),
-                    NbBundle.getMessage(this.getClass(),
-                            "DataContentViewerString.goToPageTextField.err"),
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        currentOffset = (pageNumber - 1) * PAGE_LENGTH;
-        currentPage = pageNumber;
-        currentPageLabel.setText(Integer.toString(currentPage));
-        setDataView(dataSource, currentOffset);
-    }//GEN-LAST:event_goToPageTextFieldActionPerformed
-
-    private void languageComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_languageComboActionPerformed
-
-        if (dataSource != null) {
-            setDataView(dataSource, currentOffset);
-        }
-    }//GEN-LAST:event_languageComboActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel controlPanel;
+    private javax.swing.JScrollPane controlScrollPane;
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JLabel goToPageLabel;
     private javax.swing.JTextField goToPageTextField;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JComboBox<SCRIPT> languageCombo;
     private javax.swing.JLabel languageLabel;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel ofLabel;
+    private javax.swing.JScrollPane outputScrollPane;
     private javax.swing.JTextPane outputViewPane;
     private javax.swing.JLabel pageLabel;
     private javax.swing.JLabel pageLabel2;
@@ -336,19 +344,16 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
      * @param dataSource the content that want to be shown
      * @param offset     the starting offset
      */
-    private void setDataView(Content dataSource, long offset) {
+    void setDataView(Content dataSource, long offset) {
         if (dataSource == null) {
             return;
         }
-
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
         this.dataSource = dataSource;
-
         int bytesRead = 0;
         // set the data on the bottom and show it
-   
+
         if (dataSource.getSize() > 0) {
             try {
                 bytesRead = dataSource.read(data, offset, PAGE_LENGTH); // read the data
@@ -363,13 +368,13 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
             stringExtract.setEnabledScript(selScript);
             StringExtractResult res = stringExtract.extract(data, bytesRead, 0);
             text = res.getText();
-            if (text.trim().isEmpty()) {
+            if (StringUtils.isBlank(text)) {
                 text = NbBundle.getMessage(this.getClass(),
-                        "DataContentViewerString.setDataView.errorNoText", currentOffset,
+                        "StringsTextViewer.setDataView.errorNoText", currentOffset,
                         currentOffset + PAGE_LENGTH);
             }
         } else {
-            text = NbBundle.getMessage(this.getClass(), "DataContentViewerString.setDataView.errorText", currentOffset,
+            text = NbBundle.getMessage(this.getClass(), "StringsTextViewer.setDataView.errorText", currentOffset,
                     currentOffset + PAGE_LENGTH);
         }
 
@@ -397,16 +402,14 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         this.setCursor(null);
     }
 
-    private void setDataView(StringContent dataSource) {
+    void setDataView(StringContent dataSource) {
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             this.dataSource = null;
 
             // set the data on the bottom and show it
             String text = dataSource.getString();
-
             nextPageButton.setEnabled(false);
-
             prevPageButton.setEnabled(false);
             currentPage = 1;
 
@@ -440,72 +443,4 @@ public class DataContentViewerString extends javax.swing.JPanel implements DataC
         languageLabel.setVisible(isVisible);
     }
 
-    @Override
-    public void setNode(Node selectedNode) {
-        if ((selectedNode == null) || (!isSupported(selectedNode))) {
-            resetComponent();
-            return;
-        }
-
-        Content content = DataContentViewerUtility.getDefaultContent(selectedNode);
-        if (content != null) {
-            this.setDataView(content, 0);
-            return;
-        } else {
-            StringContent scontent = selectedNode.getLookup().lookup(StringContent.class);
-            if (scontent != null) {
-                this.setDataView(scontent);
-                return;
-            }
-        }
-        resetComponent();
-    }
-
-    @Override
-    public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerString.title");
-    }
-
-    @Override
-    public String getToolTip() {
-        return NbBundle.getMessage(this.getClass(), "DataContentViewerString.toolTip");
-    }
-
-    @Override
-    public DataContentViewer createInstance() {
-        return new DataContentViewerString();
-    }
-
-    @Override
-    public void resetComponent() {
-        // clear / reset the fields
-        currentPage = 1;
-        currentOffset = 0;
-        this.dataSource = null;
-        currentPageLabel.setText("");
-        totalPageLabel.setText("");
-        prevPageButton.setEnabled(false);
-        nextPageButton.setEnabled(false);
-        outputViewPane.setText(""); // reset the output view
-        setComponentsVisibility(false); // hides the components that not needed
-    }
-
-    @Override
-    public boolean isSupported(Node node) {
-        if (node == null) {
-            return false;
-        }
-        Content content = DataContentViewerUtility.getDefaultContent(node);
-        return (content != null && content.getSize() > 0);
-    }
-
-    @Override
-    public int isPreferred(Node node) {
-        return 1;
-    }
-
-    @Override
-    public Component getComponent() {
-        return this;
-    }
 }

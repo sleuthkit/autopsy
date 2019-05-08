@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2018 Basis Technology Corp.
+ * Copyright 2011-2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -51,6 +51,7 @@ import org.sleuthkit.autopsy.coreutils.TextUtil;
 class ExtractedContentPanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
+    private static final long serialVersionUID = 1L;
     private String contentName;
 
     ExtractedContentPanel() {
@@ -65,6 +66,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
          * http://java-sl.com/tip_html_letter_wrap.html.
          */
         HTMLEditorKit editorKit = new HTMLEditorKit() {
+            private static final long serialVersionUID = 1L;
+
             @Override
             public ViewFactory getViewFactory() {
 
@@ -96,17 +99,18 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                             return new ParagraphView(e) {
                                 @Override
                                 protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
-                                    if (r == null) {
-                                        r = new SizeRequirements();
+                                    SizeRequirements requirements = r;
+                                    if (requirements == null) {
+                                        requirements = new SizeRequirements();
                                     }
                                     float pref = layoutPool.getPreferredSpan(axis);
                                     float min = layoutPool.getMinimumSpan(axis);
                                     // Don't include insets, Box.getXXXSpan will include them. 
-                                    r.minimum = (int) min;
-                                    r.preferred = Math.max(r.minimum, (int) pref);
-                                    r.maximum = Integer.MAX_VALUE;
-                                    r.alignment = 0.5f;
-                                    return r;
+                                    requirements.minimum = (int) min;
+                                    requirements.preferred = Math.max(requirements.minimum, (int) pref);
+                                    requirements.maximum = Integer.MAX_VALUE;
+                                    requirements.alignment = 0.5f;
+                                    return requirements;
                                 }
                             };
                         }
@@ -144,10 +148,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        extractedScrollPane = new javax.swing.JScrollPane();
         extractedTextPane = new javax.swing.JTextPane();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jPanel1 = new javax.swing.JPanel();
+        controlScrollPane = new javax.swing.JScrollPane();
+        controlPanel = new javax.swing.JPanel();
         sourceComboBox = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
         pageOfLabel = new javax.swing.JLabel();
@@ -175,22 +179,22 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         setPreferredSize(new java.awt.Dimension(100, 58));
 
-        jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(640, 29));
+        extractedScrollPane.setBackground(new java.awt.Color(255, 255, 255));
+        extractedScrollPane.setPreferredSize(new java.awt.Dimension(640, 29));
 
         extractedTextPane.setEditable(false);
         extractedTextPane.setAutoscrolls(false);
         extractedTextPane.setInheritsPopupMenu(true);
         extractedTextPane.setMaximumSize(new java.awt.Dimension(2000, 2000));
         extractedTextPane.setPreferredSize(new java.awt.Dimension(600, 29));
-        jScrollPane1.setViewportView(extractedTextPane);
+        extractedScrollPane.setViewportView(extractedTextPane);
 
-        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane2.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        jScrollPane2.setPreferredSize(new java.awt.Dimension(600, 100));
+        controlScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        controlScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        controlScrollPane.setPreferredSize(new java.awt.Dimension(600, 100));
 
-        jPanel1.setMinimumSize(new java.awt.Dimension(0, 0));
-        jPanel1.setPreferredSize(new java.awt.Dimension(600, 81));
+        controlPanel.setMinimumSize(new java.awt.Dimension(0, 0));
+        controlPanel.setPreferredSize(new java.awt.Dimension(600, 81));
 
         sourceComboBox.setModel(new javax.swing.DefaultComboBoxModel<org.sleuthkit.autopsy.keywordsearch.IndexedText>());
         sourceComboBox.setMaximumSize(new java.awt.Dimension(150, 32767));
@@ -272,100 +276,98 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 600, Short.MAX_VALUE)
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(hitLabel)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(hitCountLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(hitOfLabel)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(hitButtonsLabel)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        javax.swing.GroupLayout controlPanelLayout = new javax.swing.GroupLayout(controlPanel);
+        controlPanel.setLayout(controlPanelLayout);
+        controlPanelLayout.setHorizontalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(hitLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(hitCountLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(hitOfLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(hitButtonsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(hitPreviousButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(hitNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(pagesLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pageCurLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(pageOfLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pageTotalLabel)
+                .addGap(18, 18, 18)
+                .addComponent(pageButtonsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pagePreviousButton)
+                .addGap(0, 0, 0)
+                .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        controlPanelLayout.setVerticalGroup(
+            controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(controlPanelLayout.createSequentialGroup()
+                .addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(hitPreviousButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 0, 0)
-                    .addComponent(hitNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(18, 18, 18)
-                    .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(18, 18, 18)
-                    .addComponent(pagesLabel)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(pageCurLabel)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(pageOfLabel)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(pageTotalLabel)
-                    .addGap(18, 18, 18)
-                    .addComponent(pageButtonsLabel)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                    .addComponent(pagePreviousButton)
-                    .addGap(0, 0, 0)
-                    .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(18, 18, 18)
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel1)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(hitNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(pageButtonsLabel)
+                    .addComponent(pagePreviousButton)
+                    .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap()))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 81, Short.MAX_VALUE)
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                        .addComponent(hitPreviousButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel1)
-                        .addComponent(hitNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(pageButtonsLabel)
-                        .addComponent(pagePreviousButton)
-                        .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(sourceComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(pagesLabel)
-                        .addComponent(hitLabel)
-                        .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(pageCurLabel)
-                        .addComponent(pageOfLabel)
-                        .addComponent(hitCountLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(pageTotalLabel)
-                        .addComponent(hitOfLabel)
-                        .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(hitButtonsLabel))
-                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(pagesLabel)
+                    .addComponent(hitLabel)
+                    .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(pageCurLabel)
+                    .addComponent(pageOfLabel)
+                    .addComponent(hitCountLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(pageTotalLabel)
+                    .addComponent(hitOfLabel)
+                    .addComponent(hitTotalLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(hitButtonsLabel))
+                .addGap(0, 0, 0))
         );
 
-        jPanel1Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
+        controlPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {hitButtonsLabel, hitCountLabel, hitLabel, hitNextButton, hitOfLabel, hitPreviousButton, hitTotalLabel, jLabel1, jSeparator1, jSeparator2, pageButtonsLabel, pageCurLabel, pageNextButton, pageOfLabel, pagePreviousButton, pageTotalLabel, pagesLabel, sourceComboBox});
 
-        jScrollPane2.setViewportView(jPanel1);
+        controlScrollPane.setViewportView(controlPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+            .addComponent(controlScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
+            .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(controlScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
+                .addComponent(extractedScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel controlPanel;
+    private javax.swing.JScrollPane controlScrollPane;
     private javax.swing.JMenuItem copyMenuItem;
+    private javax.swing.JScrollPane extractedScrollPane;
     private javax.swing.JTextPane extractedTextPane;
     private javax.swing.JLabel hitButtonsLabel;
     private javax.swing.JLabel hitCountLabel;
@@ -375,9 +377,6 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     private javax.swing.JButton hitPreviousButton;
     private javax.swing.JLabel hitTotalLabel;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JLabel pageButtonsLabel;
@@ -404,14 +403,17 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * @param sources     A list of IndexedText that have different 'views' of
      *                    the content.
      */
-    void setSources(String contentName, List<IndexedText> sources) {
+    final void setSources(String contentName, List<IndexedText> sources) {
         this.contentName = contentName;
         setPanelText(null, false);
 
         sourceComboBox.removeAllItems();
         sources.forEach(sourceComboBox::addItem);
         if (false == sources.isEmpty()) {
+            sourceComboBox.setEnabled(true);
             sourceComboBox.setSelectedIndex(0);
+        } else {
+            sourceComboBox.setEnabled(false);
         }
     }
 
@@ -425,18 +427,17 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     private void setPanelText(String text, boolean detectDirection) {
-        text = StringUtils.defaultString(text);
+        String safeText = StringUtils.defaultString(text);
 
         if (detectDirection) {
             //detect text direction using first 1024 chars and set it
             //get first up to 1024 chars, strip <pre> tag and unescape html to get the string on which to detect
-            final int len = text.length();
+            final int len = safeText.length();
             final int prefixLen = "<pre>".length(); //NON-NLS
             if (len > prefixLen) {
                 final int maxOrientChars = Math.min(len, 1024);
-                final String orientDetectText = EscapeUtil.unEscapeHtml(text.substring(prefixLen, maxOrientChars));
+                final String orientDetectText = EscapeUtil.unEscapeHtml(safeText.substring(prefixLen, maxOrientChars));
                 ComponentOrientation direction = TextUtil.getTextDirection(orientDetectText);
-                //logger.log(Level.INFO, "ORIENTATION LEFT TO RIGHT: " + direction.isLeftToRight());
                 extractedTextPane.applyComponentOrientation(direction);
             } else {
                 extractedTextPane.applyComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
@@ -445,7 +446,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             extractedTextPane.applyComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         }
 
-        extractedTextPane.setText(text);
+        extractedTextPane.setText(safeText);
         extractedTextPane.setCaretPosition(0);
     }
 
@@ -454,6 +455,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Update the value displayed as the current match
      *
      * @param current, current hit to update the display with
      */
@@ -466,6 +468,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Update the value dispalyed for the total number of matches
      *
      * @param total total number of hits to update the display with
      */
@@ -478,6 +481,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Update the value displayed for the current page
      *
      * @param current, current page to update the display with
      */
@@ -486,10 +490,11 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     /**
+     * Update the value displayed for the total pages
      *
      * @param total total number of pages to update the display with
      */
-    void updateTotalPageslDisplay(int total) {
+    void updateTotalPagesDisplay(int total) {
         pageTotalLabel.setText(Integer.toString(total));
     }
 
@@ -581,15 +586,15 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             enableNextPageControl(false);
             enablePrevPageControl(false);
             updateCurrentPageDisplay(0);
-            updateTotalPageslDisplay(0);
+            updateTotalPagesDisplay(0);
             return;
         }
 
         updateCurrentPageDisplay(source.getCurrentPage());
         int totalPages = source.getNumberPages();
-        updateTotalPageslDisplay(totalPages);
+        updateTotalPagesDisplay(totalPages);
 
-        if (totalPages == 1) {
+        if (totalPages < 2) {
             enableNextPageControl(false);
             enablePrevPageControl(false);
         } else {
@@ -686,14 +691,12 @@ class ExtractedContentPanel extends javax.swing.JPanel {
                 } else {
                     setPanelText("", false);
                 }
-
             } catch (InterruptedException | CancellationException | ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error getting marked up text", ex); //NON-NLS
                 setPanelText(Bundle.IndexedText_errorMessage_errorGettingText(), true);
             }
 
             updateControls(source);
-
             scrollToCurrentHit(source);
         }
     }

@@ -72,6 +72,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
             TableReportModule tableReport = (TableReportModule) wiz.getProperty("tableModule");
             GeneralReportModule generalReport = (GeneralReportModule) wiz.getProperty("generalModule");
             FileReportModule fileReport = (FileReportModule) wiz.getProperty("fileModule");
+            PortableCaseReportModule portableCaseReport = (PortableCaseReportModule) wiz.getProperty("portableCaseModule");  // NON-NLS
             try {
                 if (tableReport != null) {
                     generator.generateTableReport(tableReport, (Map<BlackboardArtifact.Type, Boolean>) wiz.getProperty("artifactStates"), (Map<String, Boolean>) wiz.getProperty("tagStates")); //NON-NLS
@@ -79,6 +80,8 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
                     generator.generateGeneralReport(generalReport);
                 } else if (fileReport != null) {
                     generator.generateFileListReport(fileReport, (Map<FileReportDataTypes, Boolean>) wiz.getProperty("fileReportOptions")); //NON-NLS
+                } else if (portableCaseReport != null) {
+                    generator.generatePortableCaseReport(portableCaseReport, (PortableCaseReportModule.PortableCaseOptions) wiz.getProperty("portableCaseReportOptions"));
                 }
             } catch (IOException e) {
                 NotifyDescriptor descriptor = new NotifyDescriptor.Message(e.getMessage(), NotifyDescriptor.ERROR_MESSAGE);
