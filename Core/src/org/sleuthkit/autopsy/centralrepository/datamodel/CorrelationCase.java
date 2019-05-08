@@ -51,11 +51,7 @@ public class CorrelationCase implements Serializable {
      * @param displayName 
      */    
     public CorrelationCase(String caseUUID, String displayName) {
-        this(-1, caseUUID, displayName);
-    }
-    
-    CorrelationCase(int ID, String caseUUID, String displayName) {
-        this(ID, caseUUID, null, displayName, DATE_FORMAT.format(new Date()), null, null, null, null, null);
+        this(-1, caseUUID,  null, displayName, DATE_FORMAT.format(new Date()), null, null, null, null, null);
     }
 
     CorrelationCase(int ID,
