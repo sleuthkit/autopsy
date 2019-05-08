@@ -64,12 +64,12 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                 if (f.isDirectory()) {
                     return true;
                 }
-                return FilenameUtils.isExtension(f.getName(), ".vhd");
+                return FilenameUtils.isExtension(f.getName(), "vhd");
             }
 
             @Override
             public String getDescription() {
-                return "sample_image.vhd"; //NON-NLS
+                return "sparse_image.vhd"; //NON-NLS
             }
     };
 
