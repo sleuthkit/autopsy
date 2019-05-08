@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -208,7 +207,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private void initializePagingSupport() {
         if (pagingSupport == null) {
-            pagingSupport = new PagingSupport();
+            pagingSupport = new PagingSupport("");
         }
 
         // Start out with paging controls invisible
@@ -312,19 +311,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                  * Check to see if we have previously created a paging support
                  * class for this node.
                  */
-                pagingSupport = nodeNameToPagingSupportMap.get(rootNode.getName());
+                String nodeName = rootNode.getName();
+                pagingSupport = nodeNameToPagingSupportMap.get(nodeName);
                 if (pagingSupport == null) {
-                    pagingSupport = new PagingSupport();
+                    pagingSupport = new PagingSupport(nodeName);
+                    nodeNameToPagingSupportMap.put(nodeName, pagingSupport);
                 }
-
-                /**
-                 * Get the event bus to use when communicating with the child
-                 * factory for this node and register with the bus.
-                 */
-                EventBus bus = BaseChildFactory.nodeNameToEventBusMap.get(rootNode.getName());
-                pagingSupport.registerWithEventBus(bus);
-
-                nodeNameToPagingSupportMap.put(rootNode.getName(), pagingSupport);
                 pagingSupport.updateControls();
 
                 rootNode.addNodeListener(new NodeListener() {
@@ -786,24 +778,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         private int currentPage;
         private int totalPages;
-        private EventBus eb;
+        private final String nodeName;
 
-        PagingSupport() {
+        PagingSupport(String nodeName) {
             currentPage = 1;
             totalPages = 0;
-            eb = null;
+            this.nodeName = nodeName;
+            initialize();
         }
 
-        void registerWithEventBus(EventBus bus) {
-            if (eb != null && eb.equals(bus)) {
-                return;
+        private void initialize() {
+            if (!nodeName.isEmpty()) {
+                BaseChildFactory.register(nodeName, this);
             }
-
-            if (bus != null) {
-                eb = bus;
-                eb.register(this);
-            }
-
             updateControls();
         }
 
@@ -844,10 +831,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * occurred.
          */
         void postPageChangeEvent() {
-            if (eb != null) {
-                eb.post(new PageChangeEvent(currentPage));
-                DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            try {
+                BaseChildFactory.post(nodeName, new PageChangeEvent(currentPage));
+            } catch (BaseChildFactory.NoSuchEventBusException ex) {
+                LOGGER.log(Level.WARNING, "Failed to post page change event.", ex); //NON-NLS
             }
+            DataResultViewerTable.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             updateControls();
         }
 
@@ -856,15 +845,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * occurred.
          */
         void postPageSizeChangeEvent() {
-            if (eb != null) {
-                // Reset page variables when page size changes
-                currentPage = 1;
-                totalPages = 0;
+            // Reset page variables when page size changes
+            currentPage = 1;
+            totalPages = 0;
 
-                if (this == pagingSupport) {
-                    updateControls();
-                }
-                eb.post(new PageSizeChangeEvent(UserPreferences.getResultsTablePageSize()));
+            if (this == pagingSupport) {
+                updateControls();
+            }
+            try {
+                BaseChildFactory.post(nodeName, new PageSizeChangeEvent(UserPreferences.getResultsTablePageSize()));
+            } catch (BaseChildFactory.NoSuchEventBusException ex) {
+                LOGGER.log(Level.WARNING, "Failed to post page size change event.", ex); //NON-NLS
             }
         }
 

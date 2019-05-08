@@ -27,9 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.stream.Collectors;
 import org.openide.nodes.ChildFactory;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.Content;
 
@@ -41,6 +44,8 @@ import org.sleuthkit.datamodel.Content;
  */
 public abstract class BaseChildFactory<T extends Content> extends ChildFactory.Detachable<T> {
 
+    private static final Logger logger = Logger.getLogger(BaseChildFactory.class.getName());
+
     private Predicate<T> filter;
     private boolean isPageChangeEvent;
     private boolean isPageSizeChangeEvent;
@@ -51,7 +56,50 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
      * This static map is used to facilitate communication between the UI and
      * the child factory.
      */
-    public static Map<String, EventBus> nodeNameToEventBusMap = new ConcurrentHashMap<>();
+    private static Map<String, EventBus> nodeNameToEventBusMap = new ConcurrentHashMap<>();
+
+    @Messages({
+        "# {0} - node name", "BaseChildFactory.NoSuchEventBusException.message=No event bus for node: {0}"
+    })
+    public static class NoSuchEventBusException extends Exception {
+
+        public NoSuchEventBusException(String nodeName) {
+            super(Bundle.BaseChildFactory_NoSuchEventBusException_message(nodeName));
+        }
+    }
+
+    /**
+     * Register the given subscriber for the given node name. Will create the
+     * event bus for the given node name if it does not exist.
+     *
+     * @param nodeName   The name of the node.
+     * @param subscriber The subscriber to register.
+     */
+    public static void register(String nodeName, Object subscriber) {
+        EventBus bus = nodeNameToEventBusMap.get(nodeName);
+        if (bus == null) {
+            bus = new EventBus(nodeName);
+            nodeNameToEventBusMap.put(nodeName, bus);
+        }
+        bus.register(subscriber);
+    }
+
+    /**
+     * Post the given event for the given node name.
+     *
+     * @param nodeName The name of the node.
+     * @param event    The event to post.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException
+     */
+    public static void post(String nodeName, Object event) throws NoSuchEventBusException {
+        EventBus bus = nodeNameToEventBusMap.get(nodeName);
+        if (bus == null) {
+            throw new NoSuchEventBusException(nodeName);
+        }
+        bus.post(event);
+    }
 
     public BaseChildFactory(String nodeName) {
         /**
@@ -183,7 +231,6 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
         private int pageSize;
         private int currentPage;
         private List<List<T>> pages;
-        private EventBus bus;
 
         /**
          * Construct PagingSupport instance for the given node name.
@@ -211,13 +258,7 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
                 }
             });
 
-            if (nodeNameToEventBusMap.containsKey(nodeName)) {
-                bus = nodeNameToEventBusMap.get(nodeName);
-            } else {
-                bus = new EventBus(nodeName);
-                nodeNameToEventBusMap.put(bus.identifier(), bus);
-            }
-            bus.register(this);
+            register(nodeName, this);
         }
 
         /**
@@ -247,8 +288,12 @@ public abstract class BaseChildFactory<T extends Content> extends ChildFactory.D
              */
             pages = Lists.partition(keys, pageSize > 0 ? pageSize : keys.size());
             if (pages.size() != oldPageCount) {
-                // Number of pages has changed so we need to send out a notification.
-                bus.post(new PageCountChangeEvent(pages.size()));
+                try {
+                    // Number of pages has changed so we need to send out a notification.
+                    post(nodeName, new PageCountChangeEvent(pages.size()));
+                } catch (NoSuchEventBusException ex) {
+                    logger.log(Level.WARNING, "Failed to post page change event.", ex);
+                }
             }
         }
 

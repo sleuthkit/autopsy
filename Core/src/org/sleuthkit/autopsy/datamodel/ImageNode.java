@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
@@ -47,6 +46,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
 
 /**
  * This class is used to represent the "Node" for the image. The children of
@@ -230,10 +230,7 @@ public class ImageNode extends AbstractContentNode<Image> {
                             // trigger a refresh if it matches the image wrapped by this node.
                             while ((parent = parent.getParent()) != null) {
                                 if (parent.getId() == getContent().getId()) {
-                                    EventBus bus = BaseChildFactory.nodeNameToEventBusMap.get(getName());
-                                    if (bus != null) {
-                                        bus.post(new BaseChildFactory.RefreshKeysEvent());
-                                    }
+                                    BaseChildFactory.post(getName(), new BaseChildFactory.RefreshKeysEvent());
                                     break;
                                 }
                             }
@@ -242,6 +239,8 @@ public class ImageNode extends AbstractContentNode<Image> {
                 }
             } catch (TskCoreException ex) {
                 // Do nothing.
+            } catch (NoSuchEventBusException ex) {
+                logger.log(Level.WARNING, "Failed to post key refresh event.", ex); // NON-NLS
             }
         } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
             if (evt.getNewValue() == null) {

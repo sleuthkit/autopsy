@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -35,7 +34,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.WeakListeners;
@@ -56,6 +54,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultViewerTable.Score;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.*;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
 import org.sleuthkit.autopsy.datamodel.BaseChildFactory.RefreshKeysEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -170,12 +169,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                     // data sources branch of the tree. The parent nodes in other
                     // branches of the tree (e.g. File Types and Deleted Files) do
                     // not need to be refreshed.
-                    EventBus bus = BaseChildFactory.nodeNameToEventBusMap.get(getParentNode().getName());
-                    if (bus != null) {
-                        bus.post(new RefreshKeysEvent());
-                    }
+                    BaseChildFactory.post(getParentNode().getName(), new RefreshKeysEvent());
                 } catch (NullPointerException ex) {
                     // Skip
+                } catch (NoSuchEventBusException ex) {
+                    logger.log(Level.WARNING, "Failed to post key refresh event", ex); //NON-NLS
                 }
             }
         } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {

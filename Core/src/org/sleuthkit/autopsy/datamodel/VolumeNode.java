@@ -18,16 +18,18 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import com.google.common.eventbus.EventBus;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BaseChildFactory.NoSuchEventBusException;
 import org.sleuthkit.autopsy.directorytree.ExplorerNodeActionVisitor;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -43,6 +45,7 @@ import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
  * root directory of a file system
  */
 public class VolumeNode extends AbstractContentNode<Volume> {
+    private static final Logger logger = Logger.getLogger(VolumeNode.class.getName());
 
     /**
      * Helper so that the display name and the name used in building the path
@@ -111,10 +114,7 @@ public class VolumeNode extends AbstractContentNode<Volume> {
                             // trigger a refresh if it matches the volume wrapped by this node.
                             while ((parent = parent.getParent()) != null) {
                                 if (parent.getId() == getContent().getId()) {
-                                    EventBus bus = BaseChildFactory.nodeNameToEventBusMap.get(getName());
-                                    if (bus != null) {
-                                        bus.post(new BaseChildFactory.RefreshKeysEvent());
-                                    }
+                                    BaseChildFactory.post(getName(), new BaseChildFactory.RefreshKeysEvent());
                                     break;
                                 }
                             }
@@ -123,6 +123,8 @@ public class VolumeNode extends AbstractContentNode<Volume> {
                 }
             } catch (TskCoreException ex) {
                 // Do nothing.
+            } catch (NoSuchEventBusException ex) {
+                logger.log(Level.WARNING, eventType, ex);
             }
         } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
             if (evt.getNewValue() == null) {
