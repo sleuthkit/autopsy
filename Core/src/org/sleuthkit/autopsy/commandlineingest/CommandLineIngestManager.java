@@ -53,9 +53,9 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.autopsy.report.ReportProgressPanel;
-import org.sleuthkit.autopsy.report.caseuco.CaseUcoFormatExporter;
-import org.sleuthkit.autopsy.report.caseuco.ReportCaseUco;
+//import org.sleuthkit.autopsy.report.ReportProgressPanel;
+//import org.sleuthkit.autopsy.report.caseuco.CaseUcoFormatExporter;
+//import org.sleuthkit.autopsy.report.caseuco.ReportCaseUco;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -101,6 +101,10 @@ public class CommandLineIngestManager {
             }
         }
 
+        /**
+         * Requests the list of command line commands from command line options
+         * processor and executes the commands one by one.
+         */
         public void run() {
             LOGGER.log(Level.INFO, "Job processing task started");
 
