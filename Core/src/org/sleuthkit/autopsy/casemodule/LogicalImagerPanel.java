@@ -409,8 +409,10 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     public void reset() {
         //reset the UI elements to default
+        choosenImagePath = null;
         driveList.setListData(EMPTY_LIST_DATA);
-        messageLabel.setText("");
+        clearImageTable();
+        messageLabel.setText(Bundle.LogicalImagerPanel_messageLabel_clickScanOrBrowse());
     }
 
     /**
@@ -428,9 +430,6 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     public void readSettings() {
     }
 
-    /**
-     * Set the focus to the pathTextField.
-     */
     public void select() {
     }
 

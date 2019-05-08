@@ -91,8 +91,7 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      */
     @Override
     public JPanel getPanel() {
-        configPanel.readSettings();
-        configPanel.select();
+        configPanel.reset();
         return configPanel;
     }
 
