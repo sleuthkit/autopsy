@@ -31,9 +31,11 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
@@ -55,11 +57,28 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     private static final String SELECTED_IMAGE_STR = Bundle.LogicalImagerPanel_messageLabel_selectedImage();
     private static final String NO_IMAGE_SELECTED_STR = Bundle.LogicalImagerPanel_messageLabel_noImageSelected();
     private static final String[] EMPTY_LIST_DATA = {};
+
+    private static final FileFilter VHD_FILTER = new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                if (f.isDirectory()) {
+                    return true;
+                }
+                return FilenameUtils.isExtension(f.getName(), ".vhd");
+            }
+
+            @Override
+            public String getDescription() {
+                return "sample_image.vhd"; //NON-NLS
+            }
+    };
+
     private final JFileChooser fileChooser = new JFileChooser();
     private final Pattern regex = Pattern.compile("Logical_Imager_(.+)_(\\d{4})(\\d{2})(\\d{2})_(\\d{2})_(\\d{2})_(\\d{2})");
+    private final String contextName;
     private Path choosenImagePath;
     private TableModel imageTableModel;
-    private final String contextName;
+
     
     /**
      * Creates new form LogicalImagerPanel
@@ -185,12 +204,14 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(150, 150, 150)
+                .addComponent(topLabel)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(28, 28, 28)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(messageLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(messageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 653, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(28, 28, 28)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -206,12 +227,8 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                                 .addGap(28, 28, 28)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(selectAcquisitionFromDriveLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 305, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE))))))
-                .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addGap(150, 150, 150)
-                .addComponent(topLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(imageScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addContainerGap(60, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -253,6 +270,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     })
     private void scanButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scanButtonActionPerformed
         // Scan external drives for sparse_image.vhd
+        clearImageTable();
         messageLabel.setText(Bundle.LogicalImagerPanel_messageLabel_scanningExternalDrives());
         Vector<String> listData = new Vector<>();
         File[] paths = File.listRoots();
@@ -278,12 +296,15 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
     }//GEN-LAST:event_scanButtonActionPerformed
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
+        fileChooser.setFileFilter(VHD_FILTER);
         int retval = fileChooser.showOpenDialog(this);
         if (retval == JFileChooser.APPROVE_OPTION) {
             String path = fileChooser.getSelectedFile().getPath();
             choosenImagePath = Paths.get(path);
             messageLabel.setText(SELECTED_IMAGE_STR + " " + path);
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        } else {
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
         }
     }//GEN-LAST:event_browseButtonActionPerformed
 
@@ -295,6 +316,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } else {
             messageLabel.setText(NO_IMAGE_SELECTED_STR);
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), true, false);
         }        
     }
 
@@ -304,6 +326,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     private void driveListSelect() {
         String selectedStr = driveList.getSelectedValue();
+        if (selectedStr == null) {
+            return;
+        }
         String driveLetter = selectedStr.substring(0, 3);
         File directory = new File(driveLetter);
         File[] fList = directory.listFiles();
@@ -344,8 +369,15 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             if (imageTable.getRowCount() > 0) {
                 imageTable.setRowSelectionInterval(0, 0);
                 imageTableSelect();
+            } else {
+               messageLabel.setText(NO_IMAGE_SELECTED_STR);
             }
         }                
+    }
+    
+    private void clearImageTable() {
+        imageTableModel = new ImageTableModel();
+        imageTable.setModel(imageTableModel);        
     }
     
     private void driveListMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_driveListMouseClicked

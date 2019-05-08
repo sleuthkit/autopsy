@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 
 /**
- * A Raw data source processor that implements the DataSourceProcessor service
+ * A Logical Imager data source processor that implements the DataSourceProcessor service
  * provider interface to allow integration with the add data source wizard. It
  * also provides a run method overload to allow it to be used independently of
  * the wizard.
@@ -44,21 +44,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 public class LogicalImagerDSProcessor implements DataSourceProcessor {
 
     private final LogicalImagerPanel configPanel;
-    private static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
-    private static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);   
-    private static final List<FileFilter> filtersList = new ArrayList<>();
-    static {
-        filtersList.add(rawFilter);
-        filtersList.add(encaseFilter);
-    }
     
-    // By default, split image into 2GB unallocated space chunks
-    private static final long DEFAULT_CHUNK_SIZE = 2000000000L; // 2 GB
-
     private AddImageTask addImageTask;
     
     /*
-     * Constructs a Raw data source processor that implements the
+     * Constructs a Logical Imager data source processor that implements the
      * DataSourceProcessor service provider interface to allow integration with
      * the add data source wizard. It also provides a run method overload to
      * allow it to be used independently of the wizard.
@@ -74,7 +64,7 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      *
      * @return A data source type display string for this data source processor.
      */
-    @Messages({"LogicalImagerDSProcessor.dataSourceType=Logical Imager"})
+    @Messages({"LogicalImagerDSProcessor.dataSourceType=Autopsy Imager"})
     public static String getType() {
         return Bundle.LogicalImagerDSProcessor_dataSourceType();
     }
@@ -136,15 +126,14 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
         Path imagePath = configPanel.getImagePath();
-        System.out.println("ImagePath: " + imagePath.toString());
         String deviceId = UUID.randomUUID().toString();
-        String timeZone = "America/New_York";
+        String timeZone = "America/New_York"; // TODO: temporary
         boolean ignoreFatOrphanFiles = false;
         run(deviceId, imagePath.toString(), 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
     }
 
     /**
-     * Adds a "raw" data source to the case database using a background task in
+     * Adds a "Logical Imager" data source to the case database using a background task in
      * a separate thread and the given settings instead of those provided by the
      * selection and configuration panel. Returns as soon as the background task
      * is started and uses the callback object to signal task completion and
@@ -182,13 +171,5 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
     public void reset() {
         configPanel.reset();
     }
-    
-    private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
-        for (FileFilter filter : filters) {
-            if (filter.accept(file)) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 }
