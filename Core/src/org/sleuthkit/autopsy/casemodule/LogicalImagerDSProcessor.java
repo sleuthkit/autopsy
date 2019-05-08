@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle.Messages;
@@ -125,6 +126,12 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
         Path imagePath = configPanel.getImagePath();
+        if (!imagePath.toFile().exists()) {
+            // TODO: Better ways to detect ejected USB drive?
+            String msg = imagePath.toString() + " not found.\nUSB drive has been ejected.";
+            JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         String deviceId = UUID.randomUUID().toString();
         String timeZone = "America/New_York"; // TODO: temporary
         boolean ignoreFatOrphanFiles = false;
