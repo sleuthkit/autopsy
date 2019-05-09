@@ -48,9 +48,11 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
 
     WindowsRegistryViewer() {
         super(new BorderLayout());
+        System.out.println("CREATED REGISTRY VIEWER");
     }
 
     private void setDataView(Content content) {
+        System.out.println("setDataview called");
         if (content == null) {
             this.resetComponent();
             return;
@@ -80,11 +82,13 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
 
     @Override
     public Component getComponent() {
+                System.out.println("component GOTTEN");
         return this;
     }
 
     @Override
     public void resetComponent() {
+                System.out.println("RESETING COMP");
         // cleanup anything
         if (this.regview != null) {
             this.remove(this.regview);
@@ -92,7 +96,9 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
         }
     }
 
-    private boolean isSupported(AbstractFile file) {
+    @Override
+    public boolean isSupported(AbstractFile file) {
+        System.out.println("IS THIS SUPPORTED?");
         if (file == null) {
             return false;
         }
@@ -111,19 +117,23 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
         RegistryHive hive = new RegistryHiveBuffer(buf);
         try {
             hive.getHeader();
+            System.out.println("is supported " + file.getName());
             return true;
         } catch (RegistryParseException ex) {
+            System.out.println("not supported "+ file.getName());
             return false;
         }
     }
 
     @Override
     public List<String> getSupportedMIMETypes() {
+        System.out.println("GET SUPPORTED MIME TYPES");
         return Arrays.asList(SUPPORTED_MIMETYPES);
     }
 
     @Override
     public void setFile(AbstractFile file) {
+        System.out.println("SET THE FILE");
         if (file == null) {
             resetComponent();
             return;
