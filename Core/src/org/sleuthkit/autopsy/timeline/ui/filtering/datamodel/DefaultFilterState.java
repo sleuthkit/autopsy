@@ -27,6 +27,10 @@ import org.sleuthkit.datamodel.timeline.TimelineFilter;
  */
 public class DefaultFilterState<FilterType extends TimelineFilter> extends AbstractFilterState<FilterType> {
 
+    private final SimpleBooleanProperty selected = new SimpleBooleanProperty(false);
+    private final SimpleBooleanProperty disabled = new SimpleBooleanProperty(false);
+    private final BooleanBinding activeProp = Bindings.and(selected, disabled.not());
+
     /**
      * Selected = false, Disabled = false
      *
