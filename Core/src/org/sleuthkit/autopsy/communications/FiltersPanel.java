@@ -28,7 +28,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -39,7 +38,6 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.casemodule.Case.Events.CURRENT_CASE;
@@ -819,13 +817,16 @@ final public class FiltersPanel extends JPanel {
     private final javax.swing.JButton unCheckAllDevicesButton = new javax.swing.JButton();
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * A simple class that implements CaseDbAccessQueryCallback. Can be used
+     * as an anonymous innerclass with the CaseDbAccessManager select function.
+     */
     class FilterPanelQueryCallback implements CaseDbAccessQueryCallback {
 
         @Override
         public void process(ResultSet rs) {
-            
+            // Subclasses can implement their own process function.
         }
-        
     }
-    
+
 }
