@@ -45,7 +45,7 @@ public class CommandLineOptionProcessor extends OptionProcessor {
     private final Option dataSourcePathOption = Option.optionalArgument('4', "dataSourcePath");
     private boolean runFromCommandLine = false;
 
-    private List<CommandLineCommand> commands = new ArrayList<>();
+    private final List<CommandLineCommand> commands = new ArrayList<>();
 
     @Override
     protected Set<Option> getOptions() {

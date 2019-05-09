@@ -45,8 +45,8 @@ class CommandLineCommand {
         DATA_SOURCE_DIR_PATH;
     }
     
-    private CommandType type;
-    private Map<String, String> inputs = new HashMap<>();
+    private final CommandType type;
+    private final Map<String, String> inputs = new HashMap<>();
     
     CommandLineCommand(CommandType type) {
         this.type = type;
