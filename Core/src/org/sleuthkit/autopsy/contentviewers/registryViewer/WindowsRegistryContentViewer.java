@@ -22,7 +22,6 @@
 package org.sleuthkit.autopsy.contentviewers.registryViewer;
 
 import com.williballenthin.RejistryView.RejView;
-import com.williballenthin.rejistry.REGFHeader;
 import com.williballenthin.rejistry.RegistryHive;
 import com.williballenthin.rejistry.RegistryHiveBuffer;
 import com.williballenthin.rejistry.RegistryParseException;
@@ -33,26 +32,25 @@ import java.nio.ByteBuffer;
 import java.util.logging.Level;
 import javax.swing.JPanel;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 @ServiceProvider(service = DataContentViewer.class)
 public class WindowsRegistryContentViewer extends JPanel implements DataContentViewer {
 
-//    private static final int ONE_HUNDRED_MEGABYTES = 1024 * 1024 * 100;
-    private RejView _regview;
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(WindowsRegistryContentViewer.class.getName());
+    private RejView _regview;
 
     public WindowsRegistryContentViewer() {
         super(new BorderLayout());
-        logger.log(Level.INFO, "Created Windows Registry Viewer instance: {0}", this);
     }
 
     private void setDataView(Content content) {
-        logger.log(Level.INFO, "setDataView: {0}", this);
         if (content == null) {
             this.resetComponent();
             return;
@@ -60,22 +58,15 @@ public class WindowsRegistryContentViewer extends JPanel implements DataContentV
 
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        /*
-         * if (content.getSize() > ONE_HUNDRED_MEGABYTES) {
-         * logger.log(Level.WARNING, "Unable to view Registry hives greater than
-         * 100MB"); return; }
-         */
         if (content.getSize() == 0) {
             return;
         }
 
         byte[] data = new byte[(int) content.getSize()];
 
-        // TODO(wb): Lazy!
-        int bytesRead = 0;
         try {
-            bytesRead += content.read(data, 0x0, content.getSize());
-        } catch (TskException ex) {
+            content.read(data, 0x0, content.getSize());
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to read file content.", ex);
         }
         ByteBuffer buf = ByteBuffer.wrap(data);
@@ -104,34 +95,30 @@ public class WindowsRegistryContentViewer extends JPanel implements DataContentV
         this.setDataView(null);
     }
 
+    @Messages({"WindowsRegistryContentViewer.title.text=Windows Registry View"})
     @Override
     public String getTitle() {
-        logger.log(Level.INFO, "getTitle: " + this);
-        return "Windows Registry View";
+        return Bundle.WindowsRegistryContentViewer_title_text();
     }
 
+    @Messages({"WindowsRegistryContentViewer.tooltip.text=Displays a Windows Registry hive as a tree-like structure of keys and values."})
     @Override
     public String getToolTip() {
-        logger.log(Level.INFO, "getToolTip: " + this);
-        return "Displays a Windows Registry hive as a tree-like structure of "
-                + "keys and values.";
+        return Bundle.WindowsRegistryContentViewer_tooltip_text();
     }
 
     @Override
     public DataContentViewer createInstance() {
-        logger.log(Level.INFO, "createInstance: " + this);
         return new WindowsRegistryContentViewer();
     }
 
     @Override
     public Component getComponent() {
-        logger.log(Level.INFO, "getComponent: " + this);
         return this;
     }
 
     @Override
     public void resetComponent() {
-        logger.log(Level.INFO, "resetComponent: " + this);
         // cleanup anything
         if (this._regview != null) {
             this.remove(this._regview);
@@ -141,34 +128,28 @@ public class WindowsRegistryContentViewer extends JPanel implements DataContentV
 
     @Override
     public boolean isSupported(Node node) {
-        logger.log(Level.INFO, "isSupported: " + this);
         if (node == null) {
             return false;
         }
         Content content = node.getLookup().lookup(Content.class);
-
         if (content == null) {
             return false;
         }
-
         if (content.getSize() == 0) {
             return false;
         }
-
         byte[] header = new byte[0x4000];
 
-        int bytesRead = 0;
         try {
-            // TODO(wb): Lazy!
-            bytesRead += content.read(header, 0x0, Math.min(0x4000, content.getSize()));
-        } catch (TskException ex) {
+            content.read(header, 0x0, Math.min(0x4000, content.getSize()));
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to read file content.", ex);
         }
         ByteBuffer buf = ByteBuffer.wrap(header);
 
         RegistryHive hive = new RegistryHiveBuffer(buf);
         try {
-            REGFHeader h = hive.getHeader();
+            hive.getHeader();
             return true;
         } catch (RegistryParseException ex) {
             return false;
@@ -177,11 +158,6 @@ public class WindowsRegistryContentViewer extends JPanel implements DataContentV
 
     @Override
     public int isPreferred(Node node) {
-        logger.log(Level.INFO, "isPreferred: " + this);
-        if (isSupported(node)) {
-            return 1;
-        } else {
-            return 0;
-        }
+        return 5;
     }
 }
