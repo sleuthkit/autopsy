@@ -52,6 +52,4 @@ interface FileTypeViewer {
      * fine. Otherwise, it is ambiguous.
      */
     void resetComponent();
-    
-    boolean isSupported(AbstractFile file);
 }

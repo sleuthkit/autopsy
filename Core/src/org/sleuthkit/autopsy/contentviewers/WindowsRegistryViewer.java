@@ -42,17 +42,15 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(WindowsRegistryViewer.class.getName());
-    private static final String[] SUPPORTED_MIMETYPES = new String[]{"application/octet-stream"};
+    private static final String[] SUPPORTED_MIMETYPES = new String[]{"custom/windows-nt-registry"};
     private RejView regview;
     private AbstractFile lastFile;
 
     WindowsRegistryViewer() {
         super(new BorderLayout());
-        System.out.println("CREATED REGISTRY VIEWER");
     }
 
     private void setDataView(Content content) {
-        System.out.println("setDataview called");
         if (content == null) {
             this.resetComponent();
             return;
@@ -60,7 +58,7 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
 
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        if (content.getSize() == 0) {
+        if (content.getSize() <= 1024) {
             return;
         }
 
@@ -82,27 +80,24 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
 
     @Override
     public Component getComponent() {
-                System.out.println("component GOTTEN");
         return this;
     }
 
     @Override
     public void resetComponent() {
-                System.out.println("RESETING COMP");
         // cleanup anything
         if (this.regview != null) {
             this.remove(this.regview);
             this.regview = null;
         }
+        lastFile = null;
     }
 
-    @Override
-    public boolean isSupported(AbstractFile file) {
-        System.out.println("IS THIS SUPPORTED?");
+    private boolean isSupported(AbstractFile file) {
         if (file == null) {
             return false;
         }
-        if (file.getSize() == 0) {
+        if (file.getSize() <= 1024) {
             return false;
         }
         byte[] header = new byte[0x4000];
@@ -117,23 +112,19 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
         RegistryHive hive = new RegistryHiveBuffer(buf);
         try {
             hive.getHeader();
-            System.out.println("is supported " + file.getName());
             return true;
         } catch (RegistryParseException ex) {
-            System.out.println("not supported "+ file.getName());
             return false;
         }
     }
 
     @Override
     public List<String> getSupportedMIMETypes() {
-        System.out.println("GET SUPPORTED MIME TYPES");
         return Arrays.asList(SUPPORTED_MIMETYPES);
     }
 
     @Override
     public void setFile(AbstractFile file) {
-        System.out.println("SET THE FILE");
         if (file == null) {
             resetComponent();
             return;
