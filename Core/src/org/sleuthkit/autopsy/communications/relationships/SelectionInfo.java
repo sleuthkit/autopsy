@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.communications.relationships;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -53,7 +53,7 @@ public final class SelectionInfo {
      * @param accountDeviceInstances Selected accountDecivedInstances
      * @param communicationFilter    Currently selected communications filters
      */
-    SelectionInfo(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter communicationFilter) {
+    public SelectionInfo(Set<AccountDeviceInstance> accountDeviceInstances, CommunicationsFilter communicationFilter) {
         this.accountDeviceInstances = accountDeviceInstances;
         this.communicationFilter = communicationFilter;
         

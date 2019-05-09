@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
@@ -35,6 +35,7 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -102,7 +103,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
                 contactPane.setNode(nodes);
             }
         });
-        
+
         tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(nodeFactory, true)), getExplorerManager()), true));
     }
 
@@ -120,7 +121,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
     public void setSelectionInfo(SelectionInfo info) {
         contactPane.setNode(new Node[]{new AbstractNode(Children.LEAF)});
         contactPane.setEnabled(false);
-        
+
         nodeFactory.refresh(info);
     }
 
@@ -159,7 +160,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
     private void initComponents() {
 
         outlineView = new org.openide.explorer.view.OutlineView();
-        contactPane = new org.sleuthkit.autopsy.communications.ContactDetailsPane();
+        contactPane = new org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane();
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -179,7 +180,7 @@ public final class ContactsViewer extends JPanel implements RelationshipsViewer,
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private org.sleuthkit.autopsy.communications.ContactDetailsPane contactPane;
+    private org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane contactPane;
     private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 }

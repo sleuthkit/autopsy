@@ -36,7 +36,7 @@
         <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new org.openide.explorer.view.OutlineView()"/>
       </AuxValues>
     </Component>
-    <Component class="org.sleuthkit.autopsy.communications.ContactDetailsPane" name="contactPane">
+    <Component class="org.sleuthkit.autopsy.communications.relationships.ContactDetailsPane" name="contactPane">
     </Component>
   </SubComponents>
 </Form>

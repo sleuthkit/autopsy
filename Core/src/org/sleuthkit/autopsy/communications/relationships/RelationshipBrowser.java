@@ -16,17 +16,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.Component;
 import javax.swing.JPanel;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 
 /**
  * Displays the Relationship information for the currently selected accounts.
  *
  */
-final class RelationshipBrowser extends JPanel implements Lookup.Provider {
+public final class RelationshipBrowser extends JPanel implements Lookup.Provider {
 
     private SelectionInfo currentSelection;
     

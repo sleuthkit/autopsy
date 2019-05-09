@@ -16,56 +16,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.communications.relationships;
 
 import java.awt.Component;
 import java.awt.KeyboardFocusManager;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.logging.Level;
 import javax.swing.JPanel;
-import javax.swing.ListSelectionModel;
 import static javax.swing.SwingUtilities.isDescendingFrom;
-import org.netbeans.swing.outline.DefaultOutlineModel;
-import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import static org.openide.explorer.ExplorerUtils.createLookup;
 import org.openide.nodes.AbstractNode;
-import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.communications.ModifiableProxyLookup;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
+import org.sleuthkit.datamodel.AbstractContent;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.CommunicationsManager;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Visualation for the messages of the currently selected accounts.
+ *  A Panel that shows the media (thumbnails) for the selected account.
  */
-@ServiceProvider(service = RelationshipsViewer.class)
-public final class MessagesViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
+final class MediaViewer extends JPanel implements RelationshipsViewer, ExplorerManager.Provider, Lookup.Provider {
 
-    private final ExplorerManager tableEM;
-    private final Outline outline;
-    private final ModifiableProxyLookup proxyLookup;
+    private static final Logger logger = Logger.getLogger(MediaViewer.class.getName());
+
+    private final ExplorerManager tableEM = new ExplorerManager();
     private final PropertyChangeListener focusPropertyListener;
-    private final MessagesChildNodeFactory nodeFactory;
+
+    private final ModifiableProxyLookup proxyLookup;
 
     @Messages({
-        "MessageViewer_tabTitle=Messages",
-        "MessageViewer_columnHeader_From=From",
-        "MessageViewer_columnHeader_To=To",
-        "MessageViewer_columnHeader_Date=Date",
-        "MessageViewer_columnHeader_Subject=Subject",
-        "MessageViewer_columnHeader_Attms=Attachments"
+        "MediaViewer_Name=Media"
     })
-
     /**
-     * Visualation for the messages of the currently selected accounts.
+     * Creates new form ThumbnailViewer
      */
-    public MessagesViewer() {
-        tableEM = new ExplorerManager();
+    public MediaViewer() {
         proxyLookup = new ModifiableProxyLookup(createLookup(tableEM, getActionMap()));
-        nodeFactory = new MessagesChildNodeFactory(null);
 
         // See org.sleuthkit.autopsy.timeline.TimeLineTopComponent for a detailed
         // explaination of focusPropertyListener
@@ -79,7 +79,7 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
                 if (isDescendingFrom(newFocusOwner, contentViewer)) {
                     //if the focus owner is within the MessageContentViewer (the attachments table)
                     proxyLookup.setNewLookups(createLookup(((MessageDataContent) contentViewer).getExplorerManager(), getActionMap()));
-                } else if (isDescendingFrom(newFocusOwner, MessagesViewer.this)) {
+                } else if (isDescendingFrom(newFocusOwner, MediaViewer.this)) {
                     //... or if it is within the Results table.
                     proxyLookup.setNewLookups(createLookup(tableEM, getActionMap()));
 
@@ -89,37 +89,18 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
 
         initComponents();
 
-        outline = outlineView.getOutline();
-        outlineView.setPropertyColumns(
-                "From", Bundle.MessageViewer_columnHeader_From(),
-                "To", Bundle.MessageViewer_columnHeader_To(),
-                "Date", Bundle.MessageViewer_columnHeader_Date(),
-                "Subject", Bundle.MessageViewer_columnHeader_Subject(),
-                "Attms", Bundle.MessageViewer_columnHeader_Attms(),
-                "Type", "Type"
-        );
-        outline.setRootVisible(false);
-        ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Type");
-
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                final Node[] nodes = tableEM.getSelectedNodes();
-
-                if (nodes != null && nodes.length == 1) {
-                    contentViewer.setNode(nodes[0]);
-                }
-                else {
-                    contentViewer.setNode(null);
-                }
+                handleNodeSelectionChange();
             }
         });
-        
-         tableEM.setRootContext(new TableFilterNode(new DataResultFilterNode(new AbstractNode(Children.create(nodeFactory, true)), getExplorerManager()), true));
+
+        thumbnailViewer.resetComponent();
     }
 
     @Override
     public String getDisplayName() {
-        return Bundle.MessageViewer_tabTitle();
+        return Bundle.MediaViewer_Name();
     }
 
     @Override
@@ -129,7 +110,28 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
 
     @Override
     public void setSelectionInfo(SelectionInfo info) {
-        nodeFactory.refresh(info);
+        final Set<Content> relationshipSources;
+
+        CommunicationsManager communicationManager;
+        Set<BlackboardArtifact> artifactList = new HashSet<>();
+
+        try {
+            communicationManager = Case.getCurrentCaseThrows().getSleuthkitCase().getCommunicationsManager();
+            relationshipSources = communicationManager.getRelationshipSources(info.getAccountDevicesInstances(), info.getCommunicationsFilter());
+
+            relationshipSources.stream().filter((content) -> (content instanceof BlackboardArtifact)).forEachOrdered((content) -> {
+                artifactList.add((BlackboardArtifact) content);
+            });
+
+        } catch (TskCoreException | NoCurrentCaseException ex) {
+            logger.log(Level.WARNING, "Unable to update selection." , ex);
+        }
+
+        if(artifactList.size() == 0) {
+            thumbnailViewer.resetComponent();
+        }
+
+        thumbnailViewer.setNode(new TableFilterNode(new DataResultFilterNode(new AbstractNode(new AttachmentsChildren(artifactList)), tableEM), true, this.getClass().getName()));
     }
 
     @Override
@@ -158,6 +160,29 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
     }
 
     /**
+     * Handle the change in thumbnail node selection.
+     */
+    private void handleNodeSelectionChange() {
+        final Node[] nodes = tableEM.getSelectedNodes();
+
+        if (nodes != null && nodes.length == 1) {
+            AbstractContent thumbnail = nodes[0].getLookup().lookup(AbstractContent.class);
+            if (thumbnail != null) {
+                try {
+                    Content parentContent = thumbnail.getParent();
+                    if (parentContent != null && parentContent instanceof BlackboardArtifact) {
+                        contentViewer.setNode(new BlackboardArtifactNode((BlackboardArtifact) parentContent));
+                    }
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "Unable to get parent Content from AbstraceContent instance.", ex); //NON-NLS
+                }
+            }
+        } else {
+            contentViewer.setNode(null);
+        }
+    }
+
+    /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
@@ -166,28 +191,43 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        outlineView = new org.openide.explorer.view.OutlineView();
+        thumbnailViewer = new org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail(tableEM);
         contentViewer = new MessageDataContent();
+        separator = new javax.swing.JSeparator();
+
+        thumbnailViewer.setMinimumSize(new java.awt.Dimension(350, 102));
+        thumbnailViewer.setPreferredSize(new java.awt.Dimension(450, 400));
+
+        contentViewer.setPreferredSize(new java.awt.Dimension(450, 400));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(thumbnailViewer, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(contentViewer, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(separator)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+                .addComponent(thumbnailViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(contentViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE))
+                .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(contentViewer, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(3, 3, 3))
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.sleuthkit.autopsy.contentviewers.MessageContentViewer contentViewer;
-    private org.openide.explorer.view.OutlineView outlineView;
+    private javax.swing.JSeparator separator;
+    private org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail thumbnailViewer;
     // End of variables declaration//GEN-END:variables
+
 }

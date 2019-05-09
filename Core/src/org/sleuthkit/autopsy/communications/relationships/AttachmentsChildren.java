@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.communications;
+package org.sleuthkit.autopsy.communications.relationships;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -53,10 +53,10 @@ final class AttachmentsChildren extends Children.Keys<AbstractFile> {
      */
     AttachmentsChildren(Set<BlackboardArtifact> artifacts) {
         super(false);
-        
+
         this.artifacts = artifacts;
-        
-       
+
+
     }
 
     @Override
@@ -67,7 +67,7 @@ final class AttachmentsChildren extends Children.Keys<AbstractFile> {
     @Override
     protected void addNotify() {
         super.addNotify();
-        
+
         Set<AbstractFile> thumbnails = new TreeSet<>((AbstractFile file1, AbstractFile file2) -> {
             int result = Long.compare(file1.getSize(), file2.getSize());
             if (result == 0) {
@@ -88,7 +88,7 @@ final class AttachmentsChildren extends Children.Keys<AbstractFile> {
                 logger.log(Level.WARNING, "Unable to get children from artifact.", ex); //NON-NLS
             }
         });
-        
+
         setKeys(thumbnails);
     }
 

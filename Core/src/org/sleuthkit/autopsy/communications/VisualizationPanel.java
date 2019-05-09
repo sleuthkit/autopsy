@@ -101,6 +101,8 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
+import org.sleuthkit.autopsy.communications.relationships.RelationshipBrowser;
+import org.sleuthkit.autopsy.communications.relationships.SelectionInfo;
 import org.sleuthkit.autopsy.communications.snapshot.CommSnapShotReportWriter;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
