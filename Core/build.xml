@@ -45,7 +45,7 @@
             <fileset dir="${thirdparty.dir}/gstreamer"/>
         </copy>
 		
-		<!--Copy 7-Zip to release-->
+        <!--Copy 7-Zip to release-->
         <copy todir="${basedir}/release/7-Zip" >
             <fileset dir="${thirdparty.dir}/7-Zip"/>
         </copy>
@@ -64,7 +64,8 @@
         <delete file="${gstreamer-base-path}/x86/lib/gstreamer-1.0/libgstlibav.zip" />
 
         <!--Copy other jars-->
-        <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/rejistry/Rejistry-1.1-SNAPSHOT.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/rejistry/RejView.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding-AllPlatforms.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" />
@@ -96,8 +97,8 @@
               tofile="${ext.dir}/mchange-commons-java-0.2.9.jar"/>
         <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
               tofile="${ext.dir}/c3p0-0.9.5.jar"/>
-		<copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
-              tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	  
+        <copy file="${env.TSK_HOME}/bindings/java/lib/SparseBitSet-1.1.jar"
+                      tofile="${ext.dir}/SparseBitSet-1.1.jar"/>	  
     </target>
 
     <target name="download-binlist">
@@ -109,7 +110,7 @@
 
     <target name="getTestDataFiles">
         <mkdir dir="${basedir}/test/qa-functional/data"/>
-	<get src="https://drive.google.com/uc?id=1FkinvA7EFqP4nOSOyTAOli5KefM67ufA" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
+        <get src="https://drive.google.com/uc?id=1FkinvA7EFqP4nOSOyTAOli5KefM67ufA" dest="${test-input}/EmbeddedIM_img1_v2.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=1JACMDyH4y54ypGzFWl82ZzMQf3qbrioP" dest="${test-input}/BitlockerDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=17sGybvmBGsWWJYo1IWKmO04oG9hKpPi3" dest="${test-input}/SqlCipherDetection_img1_v1.vhd" skipexisting="true"/>
         <get src="https://drive.google.com/uc?id=0BxdBkzm5VKGNT0dGY0dqcHVsU3M" dest="${test-input}/IngestFilters_img1_v1.img" skipexisting="true"/>	    
@@ -139,11 +140,11 @@
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve log="quiet"/>
         <ivy:retrieve conf="core" pattern="${ext.dir}/[artifact]-[revision](-[classifier]).[ext]" />
-     </target>
+    </target>
 
-     <target name="init" depends="get-deps,harness.init"/>
+    <target name="init" depends="get-deps,harness.init"/>
   
-     <target name="clean" depends="projectized-common.clean">
+    <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy, 
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
@@ -156,8 +157,8 @@
 
     <target name="copy-bundle">
         <!-- the externalized strings in 'src' are in both the java files as annotations and in the Bundle.property files.
-          The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
-          in and used as a basis for translation efforts -->
+        The strings get merged during compilation.  This target copies that merged file into src so that it can be checked
+        in and used as a basis for translation efforts -->
         <copy todir="src">
             <fileset dir="build/classes">
                 <include name="**/Bundle.properties"/>
