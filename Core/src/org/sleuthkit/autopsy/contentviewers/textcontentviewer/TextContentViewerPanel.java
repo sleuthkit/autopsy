@@ -1,22 +1,22 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2018 Basis Technology Corp.
+ *
+ * Copyright 2019 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.corecomponents;
+package org.sleuthkit.autopsy.contentviewers.textcontentviewer;
 
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
@@ -29,124 +29,111 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
+import org.sleuthkit.autopsy.corecomponentinterfaces.TextViewer;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Data content panel.
+ * A TextContentViewerPanel which displays the content of the TextContentViewer
+ * and its TextViewers
  */
-@SuppressWarnings("PMD.SingularField") // UI widgets cause lots of false positives
-public class DataContentPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
+public class TextContentViewerPanel extends javax.swing.JPanel implements DataContent, ChangeListener {
 
-    private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
-    private final List<UpdateWrapper> viewers = new ArrayList<>();
+    private static final Logger logger = Logger.getLogger(TextContentViewerPanel.class.getName());
+    private static final long serialVersionUID = 1L;
+    private final List<UpdateWrapper> textViewers = new ArrayList<>();
     private Node currentNode;
-    private final boolean isMain;
     private boolean listeningToTabbedPane = false;
 
     /**
-     * Creates new DataContentPanel panel The main data content panel can only
-     * be created by the data content top component, thus this constructor is
-     * not public.
-     *
-     * Use the createInstance factory method to create an external viewer data
-     * content panel.
-     *
+     * Creates new form TextContentViewerPanel
      */
-    DataContentPanel(boolean isMain) {
-        this.isMain = isMain;
+    public TextContentViewerPanel(boolean isMain) {
         initComponents();
-
         // add all implementors of DataContentViewer and put them in the tabbed pane
-        Collection<? extends DataContentViewer> dcvs = Lookup.getDefault().lookupAll(DataContentViewer.class);
-        for (DataContentViewer factory : dcvs) {
-            DataContentViewer dcv;
+        Collection<? extends TextViewer> dcvs = Lookup.getDefault().lookupAll(TextViewer.class);
+        for (TextViewer factory : dcvs) {
+            TextViewer dcv;
             if (isMain) {
                 //use the instance from Lookup for the main viewer
                 dcv = factory;
             } else {
                 dcv = factory.createInstance();
             }
-            viewers.add(new UpdateWrapper(dcv));
+            textViewers.add(new UpdateWrapper(dcv));
             javax.swing.JScrollPane scrollTab = new javax.swing.JScrollPane(dcv.getComponent());
             scrollTab.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-            jTabbedPane1.addTab(dcv.getTitle(), null,
+            textViewerTabbedPane.addTab(dcv.getTitle(), null,
                     scrollTab, dcv.getToolTip());
         }
 
         // disable the tabs
-        int numTabs = jTabbedPane1.getTabCount();
+        int numTabs = textViewerTabbedPane.getTabCount();
         for (int tab = 0; tab < numTabs; ++tab) {
-            jTabbedPane1.setEnabledAt(tab, false);
+            textViewerTabbedPane.setEnabledAt(tab, false);
         }
     }
 
     /**
-     * Factory method to create an external (not main window) data content panel
-     * to be used in an external window
+     * Deterime wether the content viewer which displays this panel isSupported.
+     * This panel is supported if any of the TextViewer's displayed in it are
+     * supported.
      *
-     * @return a new instance of a data content panel
+     * @param node
+     *
+     * @return true if any of the TextViewers are supported, false otherwise
      */
-    public static DataContentPanel createInstance() {
-        return new DataContentPanel(false);
-    }
-
-    public JTabbedPane getTabPanels() {
-        return jTabbedPane1;
+    boolean isSupported(Node node) {
+        for (UpdateWrapper textViewer : textViewers) {
+            if (textViewer.isSupported(node)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
+     * Determine the isPreffered score for the content viewer which is
+     * displaying this panel. Score is depenedent on the score of the supported
+     * TextViewers which exist.
+     *
+     * @param node
+     *
+     * @return the greatest isPreffered value of the supported TextViewers
      */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    int isPreffered(Node node) {
+        int max = 1;
+        for (UpdateWrapper textViewer : textViewers) {
+            if (textViewer.isSupported(node)) {
+                max = Integer.max(max, textViewer.isPreferred(node));
+            }
+        }
+        return max;
+    }
 
-        jTabbedPane1 = new javax.swing.JTabbedPane();
-
-        setMinimumSize(new java.awt.Dimension(5, 5));
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1)
-        );
-    }// </editor-fold>//GEN-END:initComponents
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTabbedPane jTabbedPane1;
-    // End of variables declaration//GEN-END:variables
-
+    @Messages({"TextContentViewerPanel.defaultName=Text"})
     @Override
     public void setNode(Node selectedNode) {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
 
-            String defaultName = NbBundle.getMessage(DataContentTopComponent.class, "CTL_DataContentTopComponent");
+            String defaultName = Bundle.TextContentViewerPanel_defaultName();
             // set the file path
             if (selectedNode == null) {
                 setName(defaultName);
             } else {
                 Content content = selectedNode.getLookup().lookup(Content.class);
                 if (content != null) {
-                    //String path = DataConversion.getformattedPath(ContentUtils.getDisplayPath(selectedNode.getLookup().lookup(Content.class)), 0);
                     String path = defaultName;
                     try {
                         path = content.getUniquePath();
                     } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for {0}", content); //NON-NLS
+                        logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for " + content.toString(), ex); //NON-NLS
                     }
                     setName(path);
                 } else {
@@ -172,23 +159,23 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         // Deferring becoming a listener to the tabbed pane until this point
         // eliminates handling a superfluous stateChanged event during construction.
         if (listeningToTabbedPane == false) {
-            jTabbedPane1.addChangeListener(this);
+            textViewerTabbedPane.addChangeListener(this);
             listeningToTabbedPane = true;
         }
 
-        int currTabIndex = jTabbedPane1.getSelectedIndex();
-        int totalTabs = jTabbedPane1.getTabCount();
+        int currTabIndex = textViewerTabbedPane.getSelectedIndex();
+        int totalTabs = textViewerTabbedPane.getTabCount();
         int maxPreferred = 0;
         int preferredViewerIndex = 0;
         for (int i = 0; i < totalTabs; ++i) {
-            UpdateWrapper dcv = viewers.get(i);
+            UpdateWrapper dcv = textViewers.get(i);
             dcv.resetComponent();
 
             // disable an unsupported tab (ex: picture viewer)
             if ((selectedNode == null) || (dcv.isSupported(selectedNode) == false)) {
-                jTabbedPane1.setEnabledAt(i, false);
+                textViewerTabbedPane.setEnabledAt(i, false);
             } else {
-                jTabbedPane1.setEnabledAt(i, true);
+                textViewerTabbedPane.setEnabledAt(i, true);
 
                 // remember the viewer with the highest preference value
                 int currentPreferred = dcv.isPreferred(selectedNode);
@@ -202,21 +189,22 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         // let the user decide if we should stay with the current viewer
         int tabIndex = UserPreferences.keepPreferredContentViewer() ? currTabIndex : preferredViewerIndex;
 
-        UpdateWrapper dcv = viewers.get(tabIndex);
+        UpdateWrapper dcv = textViewers.get(tabIndex);
         // this is really only needed if no tabs were enabled 
-        if (jTabbedPane1.isEnabledAt(tabIndex) == false) {
+        if (textViewerTabbedPane.isEnabledAt(tabIndex) == false) {
             dcv.resetComponent();
         } else {
             dcv.setNode(selectedNode);
         }
 
         // set the tab to the one the user wants, then set that viewer's node.
-        jTabbedPane1.setSelectedIndex(tabIndex);
-        jTabbedPane1.getSelectedComponent().repaint();
+        textViewerTabbedPane.setSelectedIndex(tabIndex);
+        textViewerTabbedPane.getSelectedComponent().repaint();
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+        //does nothing
     }
 
     @Override
@@ -226,7 +214,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         // Get and set current selected tab
         int currentTab = pane.getSelectedIndex();
         if (currentTab != -1) {
-            UpdateWrapper dcv = viewers.get(currentTab);
+            UpdateWrapper dcv = textViewers.get(currentTab);
             if (dcv.isOutdated()) {
                 // change the cursor to "waiting cursor" for this operation
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -239,12 +227,47 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         }
     }
 
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        textViewerTabbedPane = new javax.swing.JTabbedPane();
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 50, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(textViewerTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 50, Short.MAX_VALUE))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 27, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(textViewerTabbedPane, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE))
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTabbedPane textViewerTabbedPane;
+    // End of variables declaration//GEN-END:variables
+
+    /**
+     * Class to assist in keeping track of which TextViewers need to be updated
+     */
     private static class UpdateWrapper {
 
-        private final DataContentViewer wrapped;
+        private final TextViewer wrapped;
         private boolean outdated;
 
-        UpdateWrapper(DataContentViewer wrapped) {
+        UpdateWrapper(TextViewer wrapped) {
             this.wrapped = wrapped;
             this.outdated = true;
         }
@@ -271,5 +294,4 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
             return this.wrapped.isPreferred(node);
         }
     }
-
 }
