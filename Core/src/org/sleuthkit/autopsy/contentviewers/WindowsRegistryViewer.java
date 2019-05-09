@@ -19,7 +19,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.contentviewers.registryViewer;
+package org.sleuthkit.autopsy.contentviewers;
 
 import com.williballenthin.RejistryView.RejView;
 import com.williballenthin.rejistry.RegistryHive;
@@ -29,24 +29,24 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
-import org.openide.nodes.Node;
-import org.openide.util.NbBundle.Messages;
-import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
-@ServiceProvider(service = DataContentViewer.class)
-public class WindowsRegistryContentViewer extends JPanel implements DataContentViewer {
+class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(WindowsRegistryContentViewer.class.getName());
-    private RejView _regview;
+    private static final Logger logger = Logger.getLogger(WindowsRegistryViewer.class.getName());
+    private static final String[] SUPPORTED_MIMETYPES = new String[]{"application/octet-stream"};
+    private RejView regview;
+    private AbstractFile lastFile;
 
-    public WindowsRegistryContentViewer() {
+    WindowsRegistryViewer() {
         super(new BorderLayout());
     }
 
@@ -72,44 +72,10 @@ public class WindowsRegistryContentViewer extends JPanel implements DataContentV
         ByteBuffer buf = ByteBuffer.wrap(data);
 
         RegistryHive h = new RegistryHiveBuffer(buf);
-        this._regview = new RejView(h);
-        this.add(this._regview, BorderLayout.CENTER);
+        this.regview = new RejView(h);
+        this.add(this.regview, BorderLayout.CENTER);
 
         this.setCursor(null);
-    }
-
-    @Override
-    public void setNode(Node node) {
-        logger.log(Level.INFO, "setNode: {0}", this);
-        if (!isSupported(node)) {
-            setDataView(null);
-            return;
-        }
-        if (node != null) {
-            Content content = (node).getLookup().lookup(Content.class);
-            if (content != null) {
-                this.setDataView(content);
-                return;
-            }
-        }
-        this.setDataView(null);
-    }
-
-    @Messages({"WindowsRegistryContentViewer.title.text=Windows Registry View"})
-    @Override
-    public String getTitle() {
-        return Bundle.WindowsRegistryContentViewer_title_text();
-    }
-
-    @Messages({"WindowsRegistryContentViewer.tooltip.text=Displays a Windows Registry hive as a tree-like structure of keys and values."})
-    @Override
-    public String getToolTip() {
-        return Bundle.WindowsRegistryContentViewer_tooltip_text();
-    }
-
-    @Override
-    public DataContentViewer createInstance() {
-        return new WindowsRegistryContentViewer();
     }
 
     @Override
@@ -120,28 +86,23 @@ public class WindowsRegistryContentViewer extends JPanel implements DataContentV
     @Override
     public void resetComponent() {
         // cleanup anything
-        if (this._regview != null) {
-            this.remove(this._regview);
-            this._regview = null;
+        if (this.regview != null) {
+            this.remove(this.regview);
+            this.regview = null;
         }
     }
 
-    @Override
-    public boolean isSupported(Node node) {
-        if (node == null) {
+    private boolean isSupported(AbstractFile file) {
+        if (file == null) {
             return false;
         }
-        Content content = node.getLookup().lookup(Content.class);
-        if (content == null) {
-            return false;
-        }
-        if (content.getSize() == 0) {
+        if (file.getSize() == 0) {
             return false;
         }
         byte[] header = new byte[0x4000];
 
         try {
-            content.read(header, 0x0, Math.min(0x4000, content.getSize()));
+            file.read(header, 0x0, Math.min(0x4000, file.getSize()));
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Failed to read file content.", ex);
         }
@@ -157,7 +118,22 @@ public class WindowsRegistryContentViewer extends JPanel implements DataContentV
     }
 
     @Override
-    public int isPreferred(Node node) {
-        return 5;
+    public List<String> getSupportedMIMETypes() {
+        return Arrays.asList(SUPPORTED_MIMETYPES);
+    }
+
+    @Override
+    public void setFile(AbstractFile file) {
+        if (file == null) {
+            resetComponent();
+            return;
+        }
+        if (file.equals(lastFile)) {
+            return; //prevent from loading twice if setNode() called mult. times
+        }
+        lastFile = file;
+        if (isSupported(file)) {
+            this.setDataView(file);
+        }
     }
 }
