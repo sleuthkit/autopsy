@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 final class PDFAttachmentExtractor {
 
-    private static Logger logger = Logger.getLogger(PDFAttachmentExtractor.class.getName());
+    private static final Logger logger = Logger.getLogger(PDFAttachmentExtractor.class.getName());
     private final AutoDetectParser parser;
     
     public PDFAttachmentExtractor() {
@@ -175,6 +175,9 @@ final class PDFAttachmentExtractor {
             if (!expression) {
                 throw new IOException(msg);
             }
+        }
+        
+        private ExtractionPreconditions(){
         }
     }
 }
