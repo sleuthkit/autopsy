@@ -31,6 +31,7 @@ import java.io.Reader;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -70,7 +71,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import com.google.common.collect.ImmutableMap; 
-import static java.util.Objects.nonNull;
 
 /**
  * Extracts text from Tika supported content. Protects against Tika parser hangs
@@ -423,7 +423,7 @@ final class TikaTextExtractor implements TextExtractor {
      */
     @Override
     public Map<String, String> getMetadata() {
-        if (nonNull(metadataMap)) {
+        if (metadataMap != null) {
             return ImmutableMap.copyOf(metadataMap);
         }
         
@@ -513,20 +513,20 @@ final class TikaTextExtractor implements TextExtractor {
      */
     @Override
     public void setExtractionSettings(Lookup context) {
-        if (nonNull(context)) {
+        if (context != null) {
             ImageConfig configInstance = context.lookup(ImageConfig.class);
-            if (nonNull(configInstance)) {
-                if (nonNull(configInstance.getOCREnabled())) {
+            if (configInstance != null) {
+                if(Objects.nonNull(configInstance.getOCREnabled())) {
                     this.tesseractOCREnabled = configInstance.getOCREnabled();
                 }
-
-                if (nonNull(configInstance.getOCRLanguages())) {
+                
+                if(Objects.nonNull(configInstance.getOCRLanguages())) {
                     this.languagePacks = formatLanguagePacks(configInstance.getOCRLanguages());
                 }
             }
 
             ProcessTerminator terminatorInstance = context.lookup(ProcessTerminator.class);
-            if (nonNull(terminatorInstance)) {
+            if (terminatorInstance != null) {
                 this.processTerminator = terminatorInstance;
             }
         }
