@@ -3342,7 +3342,7 @@ abstract class AbstractSqlEamDb implements EamDb {
                         resultSet.getString("creation_date"), resultSet.getString("case_number"), resultSet.getString("examiner_name"),
                         resultSet.getString("examiner_email"), resultSet.getString("examiner_phone"), resultSet.getString("notes")),
                 new CorrelationDataSource(
-                        resultSet.getInt("case_id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name"),
+                        resultSet.getInt("id"), resultSet.getInt("data_source_id"), resultSet.getString("device_id"), resultSet.getString("name"),
                         resultSet.getLong("datasource_obj_id"), resultSet.getString("md5"), resultSet.getString("sha1"), resultSet.getString("sha256")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
