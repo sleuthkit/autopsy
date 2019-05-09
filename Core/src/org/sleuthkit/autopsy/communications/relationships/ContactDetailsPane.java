@@ -44,13 +44,13 @@ public final class ContactDetailsPane extends javax.swing.JPanel implements Expl
      * @param nodes List of nodes to set
      */
     public void setNode(Node[] nodes) {
-        if (nodes != null && nodes.length > 0) {
+        if (nodes != null && nodes.length == 1) {
             nameLabel.setText(nodes[0].getDisplayName());
+            propertySheet.setNodes(nodes);
         } else {
             nameLabel.setText("");
+            propertySheet.setNodes(null);
         }
-
-        propertySheet.setNodes(nodes);
     }
 
     @Override

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.communications.relationships;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import org.openide.nodes.Sheet;
@@ -66,13 +67,14 @@ final class ContactNode extends BlackboardArtifactNode {
 
     @Override
     protected Sheet createSheet() {
+        Sheet sheet = super.createSheet();
+        
         final BlackboardArtifact artifact = getArtifact();
         BlackboardArtifact.ARTIFACT_TYPE fromID = BlackboardArtifact.ARTIFACT_TYPE.fromID(artifact.getArtifactTypeID());
         if (fromID != TSK_CONTACT) {
-            return super.createSheet();
+            return sheet;
         }
 
-        Sheet sheet = new Sheet();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {
             sheetSet = Sheet.createPropertiesSet();
@@ -80,55 +82,35 @@ final class ContactNode extends BlackboardArtifactNode {
         }
 
         // Sorting the attributes by type so that the duplicates can be removed
-        // and they can be grouped by type for display.
+        // and they can be grouped by type for display.  The attribute prefixes
+        // are used so that all attributed of that type are found, including 
+        // ones that are not predefined as part of BlackboardAttributes
         try {
-            HashMap<String, BlackboardAttribute> phoneNumList = new HashMap<>();
-            HashMap<String, BlackboardAttribute> emailList = new HashMap<>();
-            HashMap<String, BlackboardAttribute> nameList = new HashMap<>();
-            HashMap<String, BlackboardAttribute> otherList = new HashMap<>();
+            HashMap<String, BlackboardAttribute> phoneNumMap = new HashMap<>();
+            HashMap<String, BlackboardAttribute> emailMap = new HashMap<>();
+            HashMap<String, BlackboardAttribute> nameMap = new HashMap<>();
+            HashMap<String, BlackboardAttribute> otherMap = new HashMap<>();
             for (BlackboardAttribute bba : artifact.getAttributes()) {
-                if (bba.getAttributeType().getTypeName().contains("TSK_PHONE")) {
-                    phoneNumList.put(bba.getDisplayString(), bba);
-                } else if (bba.getAttributeType().getTypeName().contains("TSK_EMAIL")) {
-                    emailList.put(bba.getDisplayString(), bba);
-                } else if (bba.getAttributeType().getTypeName().contains("TSK_NAME")) {
-                    nameList.put(bba.getDisplayString(), bba);
+                if (bba.getAttributeType().getTypeName().startsWith("TSK_PHONE")) {
+                    phoneNumMap.put(bba.getDisplayString(), bba);
+                } else if (bba.getAttributeType().getTypeName().startsWith("TSK_EMAIL")) {
+                    emailMap.put(bba.getDisplayString(), bba);
+                } else if (bba.getAttributeType().getTypeName().startsWith("TSK_NAME")) {
+                    nameMap.put(bba.getDisplayString(), bba);
                 } else {
-                    otherList.put(bba.getDisplayString(), bba);
+                    otherMap.put(bba.getDisplayString(), bba);
                 }
             }
-            String propertyID = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getLabel();
-            int count = 0;
-            for (BlackboardAttribute bba : nameList.values()) {
-                if (count++ > 0) {
-                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
-                } else {
-                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
-                }
-            }
+            
+            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME.getLabel(), 
+                 sheetSet, nameMap);
+            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel(), 
+                 sheetSet, phoneNumMap);
+            addPropertiesToSheet(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getLabel(), 
+                 sheetSet, emailMap);
 
-            propertyID = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER.getLabel();
-            count = 0;
-            for (BlackboardAttribute bba : phoneNumList.values()) {
-                if (count++ > 0) {
-                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
-                } else {
-                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
-                }
-            }
-
-            propertyID = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL.getLabel();
-            count = 0;
-            for (BlackboardAttribute bba : emailList.values()) {
-                if (count++ > 0) {
-                    sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
-                } else {
-                    sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
-                }
-            }
-
-            for (BlackboardAttribute bba1 : otherList.values()) {
-                sheetSet.put(new NodeProperty<>(bba1.getAttributeType().getTypeName(), bba1.getAttributeType().getDisplayName(), "", bba1.getDisplayString()));
+            for (BlackboardAttribute bba : otherMap.values()) {
+                sheetSet.put(new NodeProperty<>(bba.getAttributeType().getTypeName(), bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
             }
 
         } catch (TskCoreException ex) {
@@ -136,6 +118,17 @@ final class ContactNode extends BlackboardArtifactNode {
         }
 
         return sheet;
+    }
+    
+    private void addPropertiesToSheet(String propertyID, Sheet.Set sheetSet, Map<String, BlackboardAttribute> attributeMap) {
+        int count = 0;
+        for (BlackboardAttribute bba : attributeMap.values()) {
+            if (count++ > 0) {
+                sheetSet.put(new NodeProperty<>(propertyID + "_" + count, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+            } else {
+                sheetSet.put(new NodeProperty<>(propertyID, bba.getAttributeType().getDisplayName(), "", bba.getDisplayString()));
+            }
+        }
     }
 
     private static String getAttributeDisplayString(final BlackboardArtifact artifact, final BlackboardAttribute.ATTRIBUTE_TYPE attributeType) {

@@ -33,8 +33,8 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
     
     private final MessagesViewer messagesViewer;
     private final ContactsViewer contactsViewer;
-    private final ThumbnailViewer thumbnailsViewer;
     private final SummaryViewer summaryViewer;
+    private final MediaViewer mediaViewer;
     
     private final ModifiableProxyLookup proxyLookup;
 
@@ -44,8 +44,8 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
     public RelationshipBrowser() {
         messagesViewer = new MessagesViewer();
         contactsViewer = new ContactsViewer();
-        thumbnailsViewer = new ThumbnailViewer();
         summaryViewer = new SummaryViewer();
+        mediaViewer = new MediaViewer();
         
         proxyLookup = new ModifiableProxyLookup(messagesViewer.getLookup());
         
@@ -54,7 +54,7 @@ public final class RelationshipBrowser extends JPanel implements Lookup.Provider
         tabPane.add(summaryViewer.getDisplayName(), summaryViewer);
         tabPane.add(messagesViewer.getDisplayName(), messagesViewer);
         tabPane.add(contactsViewer.getDisplayName(), contactsViewer);
-        tabPane.add(thumbnailsViewer.getDisplayName(), thumbnailsViewer);
+        tabPane.add(mediaViewer.getDisplayName(), mediaViewer);
         
         
     }

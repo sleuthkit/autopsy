@@ -71,8 +71,7 @@ final class MessageNode extends BlackboardArtifactNode {
     
     @Override
     protected Sheet createSheet() {
-        super.createSheet();
-        Sheet sheet = new Sheet();
+        Sheet sheet = super.createSheet();
         List<Tag> tags = getAllTagsFromDatabase();
         Sheet.Set sheetSet = sheet.get(Sheet.PROPERTIES);
         if (sheetSet == null) {

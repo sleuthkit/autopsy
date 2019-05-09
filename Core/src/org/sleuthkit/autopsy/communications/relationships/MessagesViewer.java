@@ -100,14 +100,13 @@ public final class MessagesViewer extends JPanel implements RelationshipsViewer,
                 "Type", "Type"
         );
         outline.setRootVisible(false);
-        outline.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel("Type");
 
         tableEM.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 final Node[] nodes = tableEM.getSelectedNodes();
 
-                if (nodes != null && nodes.length > 0) {
+                if (nodes != null && nodes.length == 1) {
                     contentViewer.setNode(nodes[0]);
                 }
                 else {
