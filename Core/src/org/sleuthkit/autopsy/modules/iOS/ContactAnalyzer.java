@@ -163,6 +163,8 @@ final class ContactAnalyzer {
                     data1 = resultSet.getString("data1"); //NON-NLS
                     mimetype = resultSet.getString("mimetype"); //NON-NLS
                     if (name.equals(oldName) == false) {
+                        bba = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT);
+                        attributes = new ArrayList<>();
                         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
                     }
                     if (mimetype.equals("vnd.android.cursor.item/phone_v2")) { //NON-NLS
@@ -170,6 +172,12 @@ final class ContactAnalyzer {
                     } else {
                         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, moduleName, data1));
                     }
+                    
+                    // TODO: If this code comes back to life, add code to create the account 
+                    // and relationship between the phone numbers & emails. Also 
+                    // investigate if the mimetype "vnd.android.cursor.item/phone_v2"
+                    // makes sense in an ios word
+                    
                     oldName = name;
 
                     bba.addAttributes(attributes);
