@@ -89,7 +89,7 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
         TreePath path = event.getPath();
         DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
 
-        if (node.getChildCount() == 0) {
+        if (node instanceof RejTreeNode && node.getChildCount() == 0) {
             RejTreeNode n = (RejTreeNode) node.getUserObject();
             for (RejTreeNode rejTreeNode : n.getChildren()) {
                 node.add(getTreeNode(rejTreeNode));

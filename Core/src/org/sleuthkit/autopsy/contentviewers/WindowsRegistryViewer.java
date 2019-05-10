@@ -43,6 +43,7 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(WindowsRegistryViewer.class.getName());
     private static final String[] SUPPORTED_MIMETYPES = new String[]{"custom/windows-nt-registry"};
+    private static final int MIN_REGISTRY_FILE_SIZE = 1025; //size in bytes
     private RejView regview;
     private AbstractFile lastFile;
 
@@ -58,7 +59,7 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
 
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        if (content.getSize() == 0) {
+        if (content.getSize() < MIN_REGISTRY_FILE_SIZE) {
             return;
         }
 
@@ -98,7 +99,7 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
         if (file == null) {
             return false;
         }
-        if (file.getSize() == 0) {
+        if (file.getSize() < MIN_REGISTRY_FILE_SIZE) {
             return false;
         }
         byte[] header = new byte[0x4000];
@@ -134,8 +135,6 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
             return; //prevent from loading twice if setNode() called mult. times
         }
         lastFile = file;
-        if (isSupported(file)) {
-            this.setDataView(file);
-        }
+        this.setDataView(file);
     }
 }
