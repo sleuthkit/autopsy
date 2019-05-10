@@ -237,7 +237,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
                                 .addGroup(layout.createSequentialGroup()
                                     .addGap(144, 144, 144)
                                     .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addContainerGap(60, Short.MAX_VALUE))))
+                        .addContainerGap(66, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -447,6 +447,10 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     Path getImagePath() {
         return choosenImagePath;
+    }
+    
+    public void setMessageLabel(String message) {
+        messageLabel.setText(message);
     }
 
     @Override

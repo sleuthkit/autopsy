@@ -19,19 +19,26 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.UUID;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
+import org.apache.commons.io.FileUtils;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.events.AutopsyEventException;
 
 /**
  * A Logical Imager data source processor that implements the DataSourceProcessor service
@@ -44,6 +51,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 )
 public class LogicalImagerDSProcessor implements DataSourceProcessor {
 
+    private static final String LOGICAL_IMAGER_DIR = "LogicalImager"; //NON-NLS
     private final LogicalImagerPanel configPanel;
     
     private AddImageTask addImageTask;
@@ -132,12 +140,43 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
             JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
             return;
         }
+        // Create the LogicalImager directory under ModuleDirectory
+        String moduleDirectory = Case.getCurrentCase().getModuleDirectory();
+        File logicalImagerDir = Paths.get(moduleDirectory, LOGICAL_IMAGER_DIR).toFile();
+        if (!logicalImagerDir.exists()) {
+            if (!logicalImagerDir.mkdir()) {
+                // create failed
+                String msg = "Fail to create directory " + logicalImagerDir;
+                JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+        String imagePathParent = imagePath.getParent().toFile().getName();
+        File dest = Paths.get(logicalImagerDir.toString(), imagePathParent).toFile();
+        if (dest.exists()) {
+            // directory already exists
+            String msg = "Directory " + dest.toString() + " already exists";
+            JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        File src = imagePath.getParent().toFile();
+        try {
+            configPanel.setMessageLabel("Copying " + src.toString() + " directory to " + dest.toString());
+            FileUtils.copyDirectory(src, dest);
+            configPanel.setMessageLabel("");
+        } catch (IOException ex) {
+            // Copy directory failed
+            String msg = "Failed to copy directory " + imagePath.getParent().toString() + " to " + dest.toString() ;
+            JOptionPane.showMessageDialog(null, msg, "ERROR", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         String deviceId = UUID.randomUUID().toString();
-        String timeZone = "America/New_York"; // TODO: temporary
+        String timeZone = Calendar.getInstance().getTimeZone().getID();
         boolean ignoreFatOrphanFiles = false;
         run(deviceId, imagePath.toString(), 0, timeZone, ignoreFatOrphanFiles, null, null, null, progressMonitor, callback);
     }
-
+    
     /**
      * Adds a "Logical Imager" data source to the case database using a background task in
      * a separate thread and the given settings instead of those provided by the
