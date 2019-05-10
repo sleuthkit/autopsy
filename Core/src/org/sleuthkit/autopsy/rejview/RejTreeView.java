@@ -109,15 +109,15 @@ class RejTreeView extends JScrollPane implements TreeExpansionListener, TreeSele
         this.triggerRejTreeNodeSelection((RejTreeNode) node.getUserObject());
     }
 
-    public void addRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
+    void addRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
         this._nodeSelectionListeners.add(l);
     }
 
-    public void removeRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
+    void removeRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
         this._nodeSelectionListeners.remove(l);
     }
 
-    private void triggerRejTreeNodeSelection(RejTreeNode n) {
+    void triggerRejTreeNodeSelection(RejTreeNode n) {
         RejTreeNodeSelectionEvent e = new RejTreeNodeSelectionEvent(n);
         for (RejTreeNodeSelectionListener listener : this._nodeSelectionListeners) {
             listener.nodeSelected(e);
