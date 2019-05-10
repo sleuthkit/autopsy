@@ -58,7 +58,7 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
 
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        if (content.getSize() <= 1024) {
+        if (content.getSize() == 0) {
             return;
         }
 
@@ -93,11 +93,12 @@ class WindowsRegistryViewer extends JPanel implements FileTypeViewer {
         lastFile = null;
     }
 
-    private boolean isSupported(AbstractFile file) {
+    @Override
+    public boolean isSupported(AbstractFile file) {
         if (file == null) {
             return false;
         }
-        if (file.getSize() <= 1024) {
+        if (file.getSize() == 0) {
             return false;
         }
         byte[] header = new byte[0x4000];
