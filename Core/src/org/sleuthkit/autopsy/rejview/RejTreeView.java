@@ -62,8 +62,6 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
         this._tree_model.setAsksAllowsChildren(true);
 
         this._tree = new JTree(this._tree_model);
-        this._tree.addTreeExpansionListener(this);
-        this._tree.addTreeSelectionListener(this);
 
         // here's a bit of a hack to force the children to be loaded and shown
         this._tree.collapsePath(new TreePath(rootNode.getPath()));
@@ -71,6 +69,11 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
 
         setViewportView(this._tree);
         setPreferredSize(new Dimension(250, 400));
+    }
+
+    void addTreeListeners() {
+        this._tree.addTreeExpansionListener(this);
+        this._tree.addTreeSelectionListener(this);
     }
 
     /**

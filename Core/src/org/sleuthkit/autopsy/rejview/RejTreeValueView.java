@@ -116,6 +116,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
                 }
                 default: {
                     HexView hexView = new HexView(data.getAsRawData());
+                    hexView.addCaretListeners();
                     hexView.setBorder(BorderFactory.createTitledBorder("Value"));
                     valueComponent = hexView;
                     break;

@@ -41,6 +41,7 @@ public final class RejView extends JPanel implements RejTreeNodeSelectionListene
         this._hive = hive;
         // have to do these cause they're final
         this._tree_view = new RejTreeView(this._hive);
+        this._tree_view.addTreeListeners();
         this._splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 this._tree_view, new JPanel());
         this.setupUI();
@@ -52,6 +53,7 @@ public final class RejView extends JPanel implements RejTreeNodeSelectionListene
 
         // have to do these cause they're final
         this._tree_view = new RejTreeView(this._hive);
+        this._tree_view.addTreeListeners();
         this._splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 this._tree_view, new JPanel());
         this.setupUI();
