@@ -21,7 +21,7 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-import com.williballenthin.RejistryView.RejView;
+
 import com.williballenthin.rejistry.RegistryHive;
 import com.williballenthin.rejistry.RegistryHiveBuffer;
 import com.williballenthin.rejistry.RegistryParseException;
@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JPanel;
+import org.sleuthkit.autopsy.rejview.RejView;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
