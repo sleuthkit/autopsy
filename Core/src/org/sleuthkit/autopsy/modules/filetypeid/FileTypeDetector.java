@@ -244,10 +244,11 @@ public class FileTypeDetector {
                  */
                 if (!mimeType.equals(MimeTypes.OCTET_STREAM)) {
                     ReadContentInputStream secondPassStream = new ReadContentInputStream(file);
-                    TikaInputStream secondPassTikaStream = TikaInputStream.get(secondPassStream);
-                    tikaType = tika.detect(secondPassTikaStream, file.getName());
-                    mimeType = tikaType.replace("tika-", ""); //NON-NLS
-                    mimeType = removeOptionalParameter(mimeType);
+                    try (TikaInputStream secondPassTikaStream = TikaInputStream.get(secondPassStream)) {
+                        tikaType = tika.detect(secondPassTikaStream, file.getName());
+                        mimeType = tikaType.replace("tika-", ""); //NON-NLS
+                        mimeType = removeOptionalParameter(mimeType);
+                    }
                 }
 
                 /**
