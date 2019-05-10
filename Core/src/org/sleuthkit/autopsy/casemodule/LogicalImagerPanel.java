@@ -480,6 +480,21 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         return choosenImagePath;
     }
 
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+    }
+
+    void storeSettings() {
+    }
+
     private class ImageTableModel extends AbstractTableModel {
         private final List<String> hostnames = new ArrayList<>();
         private final List<String> extractDates = new ArrayList<>();
