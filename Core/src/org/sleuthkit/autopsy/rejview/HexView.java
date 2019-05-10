@@ -51,7 +51,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * estimate it to load three strings with length equal to the given ByteBuffer.
  * So its probably not good to use this view with large files.
  */
-final class HexView extends JPanel implements CaretListener {
+final class HexView extends JPanel {
 
     private final static int DEFAULT_BYTES_PER_LINE = 0x10;
     private final static char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
@@ -59,6 +59,7 @@ final class HexView extends JPanel implements CaretListener {
     private static final long serialVersionUID = 1L;
     private final int bytesPerLine;
     private final ByteBuffer buf;
+    private final HexViewListener listener = new HexViewListener();
     private final JTextComponent offsetView;
     private final JTextComponent hexView;
     private final JTextComponent asciiView;
@@ -155,147 +156,151 @@ final class HexView extends JPanel implements CaretListener {
         this.offsetView.setText(offsetSB.toString());
         this.hexView.setText(hexSB.toString());
         this.asciiView.setText(asciiSB.toString());
-        this.hexView.addCaretListener(this);
-        this.asciiView.addCaretListener(this);
+        this.hexView.addCaretListener(listener);
+        this.asciiView.addCaretListener(listener);
         this.asciiView.setSelectedTextColor(this.asciiView.getForeground());
         this.hexView.setSelectedTextColor(this.asciiView.getForeground());
         this.highlightColor = this.hexView.getSelectionColor();
         this.highlighterPainter = new DefaultHighlighter.DefaultHighlightPainter(this.highlightColor);
     }
 
-    /**
-     * clearHighlight removes any colors applied to the text views.
-     */
-    private void clearHighlight() {
-        this.asciiView.getHighlighter().removeAllHighlights();
-        this.hexView.getHighlighter().removeAllHighlights();
-    }
+    private class HexViewListener implements CaretListener {
 
-    /**
-     * setHighlight colors the given byte range.
-     *
-     * @param startByte The starting byte index of the selection.
-     * @param endByte   The ending byte index of the selection.
-     */
-    private void setHighlight(int startByte, int endByte) {
-        int startRows = (startByte - (startByte % this.bytesPerLine)) / this.bytesPerLine;
-        int endRows = (endByte - (endByte % this.bytesPerLine)) / this.bytesPerLine;
+        @Override
+        public void caretUpdate(CaretEvent e) {
+            if (e.getMark() == e.getDot()) {
+                this.clearHighlight();
+            }
 
-        this.clearHighlight();
+            if (e.getSource() == asciiView) {
+                int startByte = e.getMark();
+                int endByte = e.getDot();
 
-        try {
-            this.asciiView.getHighlighter().addHighlight(startByte + startRows, endByte + endRows, this.highlighterPainter);
-            this.hexView.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows, this.highlighterPainter);
-        } catch (BadLocationException ex) {
-            logger.log(Level.WARNING, "bad location", ex);
+                if (startByte > endByte) {
+                    int t = endByte;
+                    endByte = startByte;
+                    startByte = t;
+                }
+
+                // the number of line endings before the start,end points
+                int startRows = (startByte - (startByte % bytesPerLine)) / bytesPerLine;
+                int endRows = (endByte - (endByte % bytesPerLine)) / bytesPerLine;
+
+                // the byte index of the start,end points in the ASCII view
+                startByte -= startRows;
+                endByte -= endRows;
+
+                // avoid the loop
+                if (asciiLastSelectionStart == startByte && asciiLastSelectionEnd == endByte) {
+                    return;
+                }
+                asciiLastSelectionStart = startByte;
+                asciiLastSelectionEnd = endByte;
+
+                this.setSelection(startByte, endByte);
+            } else if (e.getSource() == hexView) {
+                int startByte = e.getMark();
+                int endByte = e.getDot();
+
+                if (startByte > endByte) {
+                    int t = endByte;
+                    endByte = startByte;
+                    startByte = t;
+                }
+
+                // the number of line endings before the start,end points
+                int startRows = (startByte - (startByte % bytesPerLine)) / (3 * bytesPerLine);
+                int endRows = (endByte - (endByte % bytesPerLine)) / (3 * bytesPerLine);
+
+                // the byte index of the start,end points in the ASCII view
+                startByte -= startRows;
+                startByte /= 3;
+                endByte -= endRows;
+                endByte /= 3;
+
+                if (hexLastSelectionStart == startByte && hexLastSelectionEnd == endByte) {
+                    return;
+                }
+                hexLastSelectionStart = startByte;
+                hexLastSelectionEnd = endByte;
+
+                this.setSelection(startByte, endByte);
+            } else {
+                logger.log(Level.INFO, "from unknown");
+            }
         }
-    }
 
-    /**
-     * setSelection sets the given byte range as "selected", which from a GUI
-     * perspective means the bytes are highlighted, and the status bar updated.
-     *
-     * @param startByte The starting byte index of the selection.
-     * @param endByte   The ending byte index of the selection.
-     */
-    @Messages({"# {0} - startByteD",
-        "# {1} - endByteD",
-        "# {2} - lengthD",
-        "# {3} - startByteH",
-        "# {4} - endByteH",
-        "# {5} - lengthH",
-        "HexView.statusTemplate.nonZeroLength=Selection: {0} to {1} (len: {2}) [{3} to {4} (len: {5})",
-        "# {0} - startByteDec",
-        "# {1} - startByteHex",
-        "HexView.statusTemplate.zeroLength=Position: {0} [{1}])"})
-    private void setSelection(int startByte, int endByte) {
-        this.setHighlight(startByte, endByte);
+        /**
+         * setSelection sets the given byte range as "selected", which from a
+         * GUI perspective means the bytes are highlighted, and the status bar
+         * updated.
+         *
+         * @param startByte The starting byte index of the selection.
+         * @param endByte   The ending byte index of the selection.
+         */
+        @Messages({"# {0} - startByteD",
+            "# {1} - endByteD",
+            "# {2} - lengthD",
+            "# {3} - startByteH",
+            "# {4} - endByteH",
+            "# {5} - lengthH",
+            "HexView.statusTemplate.nonZeroLength=Selection: {0} to {1} (len: {2}) [{3} to {4} (len: {5})",
+            "# {0} - startByteDec",
+            "# {1} - startByteHex",
+            "HexView.statusTemplate.zeroLength=Position: {0} [{1}])"})
+        private void setSelection(int startByte, int endByte) {
+            this.setHighlight(startByte, endByte);
 
-        if (startByte != endByte) {
-            /**
-             * @param 1 Start
-             * @param 2 End
-             * @param 3 Len
-             */
-            int length = endByte - startByte;
-            String text = Bundle.HexView_statusTemplate_nonZeroLength(
-                    startByte,
-                    endByte,
-                    length,
-                    String.format("0x%1$x", startByte),
-                    String.format("0x%1$x", endByte),
-                    String.format("0x%1$x", length));
-            this.statusLabel.setText(text);
-        } else {
-            /**
-             * @param 1 Start
-             */
-            String text = Bundle.HexView_statusTemplate_zeroLength(startByte, String.format("0x%1$x", startByte));
-            this.statusLabel.setText(text);
+            if (startByte != endByte) {
+                /**
+                 * @param 1 Start
+                 * @param 2 End
+                 * @param 3 Len
+                 */
+                int length = endByte - startByte;
+                String text = Bundle.HexView_statusTemplate_nonZeroLength(
+                        startByte,
+                        endByte,
+                        length,
+                        String.format("0x%1$x", startByte),
+                        String.format("0x%1$x", endByte),
+                        String.format("0x%1$x", length));
+                statusLabel.setText(text);
+            } else {
+                /**
+                 * @param 1 Start
+                 */
+                String text = Bundle.HexView_statusTemplate_zeroLength(startByte, String.format("0x%1$x", startByte));
+                statusLabel.setText(text);
+            }
         }
-    }
 
-    @Override
-    public void caretUpdate(CaretEvent e) {
-        if (e.getMark() == e.getDot()) {
+        /**
+         * clearHighlight removes any colors applied to the text views.
+         */
+        private void clearHighlight() {
+            asciiView.getHighlighter().removeAllHighlights();
+            hexView.getHighlighter().removeAllHighlights();
+        }
+
+        /**
+         * setHighlight colors the given byte range.
+         *
+         * @param startByte The starting byte index of the selection.
+         * @param endByte   The ending byte index of the selection.
+         */
+        private void setHighlight(int startByte, int endByte) {
+            int startRows = (startByte - (startByte % bytesPerLine)) / bytesPerLine;
+            int endRows = (endByte - (endByte % bytesPerLine)) / bytesPerLine;
+
             this.clearHighlight();
-        }
 
-        if (e.getSource() == this.asciiView) {
-            int startByte = e.getMark();
-            int endByte = e.getDot();
-
-            if (startByte > endByte) {
-                int t = endByte;
-                endByte = startByte;
-                startByte = t;
+            try {
+                asciiView.getHighlighter().addHighlight(startByte + startRows, endByte + endRows, highlighterPainter);
+                hexView.getHighlighter().addHighlight((startByte * 3) + startRows, (endByte * 3) + endRows, highlighterPainter);
+            } catch (BadLocationException ex) {
+                logger.log(Level.WARNING, "bad location", ex);
             }
-
-            // the number of line endings before the start,end points
-            int startRows = (startByte - (startByte % this.bytesPerLine)) / this.bytesPerLine;
-            int endRows = (endByte - (endByte % this.bytesPerLine)) / this.bytesPerLine;
-
-            // the byte index of the start,end points in the ASCII view
-            startByte -= startRows;
-            endByte -= endRows;
-
-            // avoid the loop
-            if (asciiLastSelectionStart == startByte && asciiLastSelectionEnd == endByte) {
-                return;
-            }
-            asciiLastSelectionStart = startByte;
-            asciiLastSelectionEnd = endByte;
-
-            this.setSelection(startByte, endByte);
-        } else if (e.getSource() == this.hexView) {
-            int startByte = e.getMark();
-            int endByte = e.getDot();
-
-            if (startByte > endByte) {
-                int t = endByte;
-                endByte = startByte;
-                startByte = t;
-            }
-
-            // the number of line endings before the start,end points
-            int startRows = (startByte - (startByte % this.bytesPerLine)) / (3 * this.bytesPerLine);
-            int endRows = (endByte - (endByte % this.bytesPerLine)) / (3 * this.bytesPerLine);
-
-            // the byte index of the start,end points in the ASCII view
-            startByte -= startRows;
-            startByte /= 3;
-            endByte -= endRows;
-            endByte /= 3;
-
-            if (hexLastSelectionStart == startByte && hexLastSelectionEnd == endByte) {
-                return;
-            }
-            hexLastSelectionStart = startByte;
-            hexLastSelectionEnd = endByte;
-
-            this.setSelection(startByte, endByte);
-        } else {
-            logger.log(Level.INFO, "from unknown");
         }
     }
 }

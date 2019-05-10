@@ -38,14 +38,16 @@ import javax.swing.JTree;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-final class RejTreeView extends JScrollPane implements TreeExpansionListener, TreeSelectionListener {
+final class RejTreeView extends JScrollPane {
 
     private static final Logger logger = Logger.getLogger(HexView.class.getName());
     private static final long serialVersionUID = 1L;
     private final DefaultTreeModel treeModel;
+    private final RejTreeViewListener listener = new RejTreeViewListener();
     private final RegistryHive hive;
     private final CopyOnWriteArrayList<RejTreeNodeSelectionListener> nodeSelectionListeners;
     private final JTree tree;
+
     @NbBundle.Messages({"RejTreeView.failureValueName.text=PARSE FAILED"})
     RejTreeView(RegistryHive hive) {
         this.hive = hive;
@@ -63,13 +65,13 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
         this.treeModel.setAsksAllowsChildren(true);
 
         this.tree = new JTree(this.treeModel);
-        this.tree.addTreeExpansionListener(this);
-        this.tree.addTreeSelectionListener(this);
+        this.tree.addTreeExpansionListener(listener);
+        this.tree.addTreeSelectionListener(listener);
         // here's a bit of a hack to force the children to be loaded and shown
         this.tree.collapsePath(new TreePath(rootNode.getPath()));
         this.tree.expandPath(new TreePath(rootNode.getPath()));
         setViewportView(this.tree);
-        setPreferredSize(new Dimension(350,20));
+        setPreferredSize(new Dimension(350, 20));
     }
 
     /**
@@ -83,31 +85,6 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
         return ret;
     }
 
-    @Override
-    public void treeExpanded(TreeExpansionEvent event) {
-        TreePath path = event.getPath();
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-
-        if (node.getChildCount() == 0 && node.getUserObject() instanceof RejTreeNode) {
-            RejTreeNode n = (RejTreeNode) node.getUserObject();
-            for (RejTreeNode rejTreeNode : n.getChildren()) {
-                node.add(getTreeNode(rejTreeNode));
-            }
-            this.treeModel.nodeStructureChanged(node);
-        }
-    }
-
-    @Override
-    public void treeCollapsed(TreeExpansionEvent event) {
-    }
-
-    @Override
-    public void valueChanged(TreeSelectionEvent e) {
-        TreePath path = e.getPath();
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-        this.triggerRejTreeNodeSelection((RejTreeNode) node.getUserObject());
-    }
-
     void addRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
         this.nodeSelectionListeners.add(l);
     }
@@ -116,10 +93,38 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
         this.nodeSelectionListeners.remove(l);
     }
 
-    void triggerRejTreeNodeSelection(RejTreeNode n) {
-        RejTreeNodeSelectionEvent e = new RejTreeNodeSelectionEvent(n);
-        for (RejTreeNodeSelectionListener listener : this.nodeSelectionListeners) {
-            listener.nodeSelected(e);
+    private class RejTreeViewListener implements TreeExpansionListener, TreeSelectionListener {
+
+        @Override
+        public void treeExpanded(TreeExpansionEvent event) {
+            TreePath path = event.getPath();
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+
+            if (node.getChildCount() == 0 && node.getUserObject() instanceof RejTreeNode) {
+                RejTreeNode n = (RejTreeNode) node.getUserObject();
+                for (RejTreeNode rejTreeNode : n.getChildren()) {
+                    node.add(getTreeNode(rejTreeNode));
+                }
+                treeModel.nodeStructureChanged(node);
+            }
+        }
+
+        @Override
+        public void treeCollapsed(TreeExpansionEvent event) {
+        }
+
+        @Override
+        public void valueChanged(TreeSelectionEvent e) {
+            TreePath path = e.getPath();
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+            this.triggerRejTreeNodeSelection((RejTreeNode) node.getUserObject());
+        }
+
+        void triggerRejTreeNodeSelection(RejTreeNode n) {
+            RejTreeNodeSelectionEvent e = new RejTreeNodeSelectionEvent(n);
+            for (RejTreeNodeSelectionListener listener : nodeSelectionListeners) {
+                listener.nodeSelected(e);
+            }
         }
     }
 }
