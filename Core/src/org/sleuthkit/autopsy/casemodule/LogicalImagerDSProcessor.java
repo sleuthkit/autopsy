@@ -18,14 +18,10 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -45,8 +41,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 public class LogicalImagerDSProcessor implements DataSourceProcessor {
 
     private final LogicalImagerPanel configPanel;
-    
-    private AddImageTask addImageTask;
     
     /*
      * Constructs a Logical Imager data source processor that implements the
@@ -161,7 +155,7 @@ public class LogicalImagerDSProcessor implements DataSourceProcessor {
      * @param callback             Callback to call when processing is done.
      */
     private void run(String deviceId, String imagePath, int sectorSize, String timeZone, boolean ignoreFatOrphanFiles, String md5, String sha1, String sha256, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, progressMonitor, callback);
+        AddImageTask addImageTask = new AddImageTask(deviceId, imagePath, sectorSize, timeZone, ignoreFatOrphanFiles, md5, sha1, sha256, null, progressMonitor, callback);
         new Thread(addImageTask).start();
     }
 

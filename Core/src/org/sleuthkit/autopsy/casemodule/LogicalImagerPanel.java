@@ -275,7 +275,9 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
 
     public static String humanReadableByteCount(long bytes, boolean si) {
         int unit = si ? 1000 : 1024;
-        if (bytes < unit) return bytes + " B"; //NON-NLS
+        if (bytes < unit) {
+            return bytes + " B"; //NON-NLS
+        } 
         int exp = (int) (Math.log(bytes) / Math.log(unit));
         String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i"); //NON-NLS
         return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre); //NON-NLS
@@ -311,7 +313,7 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
             i++;
         }
         driveList.setListData(listData);
-        if (listData.size() > 0) {
+        if (!listData.isEmpty()) {
             // auto-select the first external drive, if any
             driveList.setSelectedIndex(firstRemovableDrive == -1 ? 0 : firstRemovableDrive);
             driveListMouseClicked(null);
@@ -474,29 +476,8 @@ public class LogicalImagerPanel extends JPanel implements DocumentListener {
         return choosenImagePath != null && choosenImagePath.toFile().exists();
     }
     
-    public void storeSettings() {
-    }
-
-    public void readSettings() {
-    }
-
-    public void select() {
-    }
-
     Path getImagePath() {
         return choosenImagePath;
-    }
-
-    @Override
-    public void insertUpdate(DocumentEvent e) {
-    }
-
-    @Override
-    public void removeUpdate(DocumentEvent e) {
-    }
-
-    @Override
-    public void changedUpdate(DocumentEvent e) {
     }
 
     private class ImageTableModel extends AbstractTableModel {
