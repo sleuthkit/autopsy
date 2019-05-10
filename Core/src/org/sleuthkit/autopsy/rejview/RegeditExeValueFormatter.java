@@ -95,4 +95,8 @@ class RegeditExeValueFormatter {
         }
         return sb.toString();
     }
+
+    private RegeditExeValueFormatter() {
+        //contrsuctor intentially left blank
+    }
 }

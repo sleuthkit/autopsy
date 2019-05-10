@@ -35,12 +35,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 
-class RejTreeKeyView extends RejTreeNodeView {
+public class RejTreeKeyView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
     private final RejTreeKeyNode _node;
 
-    RejTreeKeyView(RejTreeKeyNode node) {
+    public RejTreeKeyView(RejTreeKeyNode node) {
         super(new BorderLayout());
         this._node = node;
 
@@ -98,12 +98,10 @@ class RejTreeKeyView extends RejTreeNodeView {
                 data[i][2] = RegeditExeValueFormatter.format(val.getValue());
                 i++;
             }
-        } catch (RegistryParseException e) {
+        } catch (RegistryParseException | UnsupportedEncodingException e) {
             // TODO(wb): need to add some warning here...
             // not sure how to do it, though, since some data may have already been added
             // but not necessarily all of it
-        } catch (UnsupportedEncodingException e) {
-            // TODO(wb): need to add some warning here...
         }
 
         JTable table = new JTable(data, columnNames);

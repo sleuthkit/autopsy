@@ -24,15 +24,15 @@ package org.sleuthkit.autopsy.rejview;
 import java.awt.LayoutManager;
 import javax.swing.JPanel;
 
-class RejTreeNodeView extends JPanel {
+public class RejTreeNodeView extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    RejTreeNodeView() {
+    public RejTreeNodeView() {
         super();
     }
 
-    RejTreeNodeView(LayoutManager lm) {
+    public RejTreeNodeView(LayoutManager lm) {
         super(lm);
     }
 }

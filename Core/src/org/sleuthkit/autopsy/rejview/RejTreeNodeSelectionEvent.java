@@ -21,15 +21,15 @@
  */
 package org.sleuthkit.autopsy.rejview;
 
-class RejTreeNodeSelectionEvent {
+public class RejTreeNodeSelectionEvent {
 
     private final RejTreeNode _node;
 
-    RejTreeNodeSelectionEvent(RejTreeNode n) {
+    public RejTreeNodeSelectionEvent(RejTreeNode n) {
         this._node = n;
     }
 
-    RejTreeNode getNode() {
+    public RejTreeNode getNode() {
         return this._node;
     }
 }
