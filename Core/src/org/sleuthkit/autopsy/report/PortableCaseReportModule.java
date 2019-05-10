@@ -18,10 +18,10 @@
  */
 package org.sleuthkit.autopsy.report;
 
-import org.openide.util.lookup.ServiceProvider;
-import javax.swing.JPanel;
 import java.util.logging.Level;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.sql.ResultSet;
@@ -31,12 +31,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.io.FileUtils;
+import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.NoCurrentCaseException;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.datamodel.utils.FileTypeUtils.FileTypeCategory;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -61,13 +64,12 @@ import org.sleuthkit.datamodel.VolumeSystem;
 /**
  * Creates a portable case from tagged files
  */
-@ServiceProvider(service = GeneralReportModule.class)
-public class CreatePortableCaseModule implements GeneralReportModule {
-    private static final Logger logger = Logger.getLogger(CreatePortableCaseModule.class.getName());
-    private static final String FILE_FOLDER_NAME = "PortableCaseFiles";
-    private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";
-    private static final String MAX_ID_TABLE_NAME = "portable_case_max_ids";
-    private CreatePortableCasePanel configPanel;
+class PortableCaseReportModule implements ReportModule {
+    private static final Logger logger = Logger.getLogger(PortableCaseReportModule.class.getName());
+    private static final String FILE_FOLDER_NAME = "PortableCaseFiles";  // NON-NLS
+    private static final String UNKNOWN_FILE_TYPE_FOLDER = "Other";  // NON-NLS
+    private static final String MAX_ID_TABLE_NAME = "portable_case_max_ids";  // NON-NLS
+    private PortableCaseOptions options;
     
     // These are the types for the exported file subfolders
     private static final List<FileTypeCategory> FILE_TYPE_CATEGORIES = Arrays.asList(FileTypeCategory.AUDIO, FileTypeCategory.DOCUMENTS,
@@ -75,6 +77,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     
     private Case currentCase = null;
     private SleuthkitCase portableSkCase = null;
+    private final String caseName;
     private File caseFolder = null;
     private File copiedFilesFolder = null;
     
@@ -96,29 +99,41 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     // Map of old artifact ID to new artifact
     private final Map<Long, BlackboardArtifact> oldArtifactIdToNewArtifact = new HashMap<>();
     
-    public CreatePortableCaseModule() {
-        // Nothing to do here
+    PortableCaseReportModule() {
+        caseName = Case.getCurrentCase().getDisplayName() + " (Portable)"; // NON-NLS
     }
 
     @NbBundle.Messages({
-        "CreatePortableCaseModule.getName.name=Portable Case"
+        "PortableCaseReportModule.getName.name=Portable Case"
     })
     @Override
     public String getName() {
-        return Bundle.CreatePortableCaseModule_getName_name();
+        return Bundle.PortableCaseReportModule_getName_name();
     }
 
     @NbBundle.Messages({
-        "CreatePortableCaseModule.getDescription.description=Copies selected tagged items to a new single-user case that will work anywhere"
+        "PortableCaseReportModule.getDescription.description=Copies selected items to a new single-user case that can be easily shared"
     })
     @Override
     public String getDescription() {
-        return Bundle.CreatePortableCaseModule_getDescription_description();
+        return Bundle.PortableCaseReportModule_getDescription_description();
     }
 
     @Override
     public String getRelativeFilePath() {
-        return "";
+        return caseName;
+    }
+    
+    /**
+     * Convenience method for handling cancellation
+     * 
+     * @param progressPanel  The report progress panel
+     */
+    private void handleCancellation(ReportProgressPanel progressPanel) {
+        logger.log(Level.INFO, "Portable case creation canceled by user"); // NON-NLS
+        progressPanel.setIndeterminate(false);
+        progressPanel.complete(ReportProgressPanel.ReportStatus.CANCELED);
+        cleanup();
     }
     
     /**
@@ -144,53 +159,51 @@ public class CreatePortableCaseModule implements GeneralReportModule {
     }
 
     @NbBundle.Messages({
-        "CreatePortableCaseModule.generateReport.verifying=Verifying selected parameters...",
-        "CreatePortableCaseModule.generateReport.creatingCase=Creating portable case database...",
-        "CreatePortableCaseModule.generateReport.copyingTags=Copying tags...",
+        "PortableCaseReportModule.generateReport.verifying=Verifying selected parameters...",
+        "PortableCaseReportModule.generateReport.creatingCase=Creating portable case database...",
+        "PortableCaseReportModule.generateReport.copyingTags=Copying tags...",
         "# {0} - tag name",
-        "CreatePortableCaseModule.generateReport.copyingFiles=Copying files tagged as {0}...",
+        "PortableCaseReportModule.generateReport.copyingFiles=Copying files tagged as {0}...",
         "# {0} - tag name",
-        "CreatePortableCaseModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...",
+        "PortableCaseReportModule.generateReport.copyingArtifacts=Copying artifacts tagged as {0}...",
         "# {0} - output folder",
-        "CreatePortableCaseModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist",
+        "PortableCaseReportModule.generateReport.outputDirDoesNotExist=Output folder {0} does not exist",
         "# {0} - output folder",
-        "CreatePortableCaseModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder",
-        "CreatePortableCaseModule.generateReport.noTagsSelected=No tags selected for export.",
-        "CreatePortableCaseModule.generateReport.caseClosed=Current case has been closed",
-        "CreatePortableCaseModule.generateReport.errorCopyingTags=Error copying tags",
-        "CreatePortableCaseModule.generateReport.errorCopyingFiles=Error copying tagged files",
-        "CreatePortableCaseModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts",
+        "PortableCaseReportModule.generateReport.outputDirIsNotDir=Output folder {0} is not a folder",
+        "PortableCaseReportModule.generateReport.caseClosed=Current case has been closed",
+        "PortableCaseReportModule.generateReport.interestingItemError=Error loading intersting items",
+        "PortableCaseReportModule.generateReport.noContentToCopy=No interesting files, results, or tagged items to copy",
+        "PortableCaseReportModule.generateReport.errorCopyingTags=Error copying tags",
+        "PortableCaseReportModule.generateReport.errorCopyingFiles=Error copying tagged files",
+        "PortableCaseReportModule.generateReport.errorCopyingArtifacts=Error copying tagged artifacts",
+        "PortableCaseReportModule.generateReport.errorCopyingInterestingFiles=Error copying interesting files",
+        "PortableCaseReportModule.generateReport.errorCopyingInterestingResults=Error copying interesting results",
         "# {0} - attribute type name",
-        "CreatePortableCaseModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
+        "PortableCaseReportModule.generateReport.errorLookingUpAttrType=Error looking up attribute type {0}",
+        "PortableCaseReportModule.generateReport.compressingCase=Compressing case...",
     })
-    @Override
-    public void generateReport(String reportPath, ReportProgressPanel progressPanel) {
+
+    void generateReport(String reportPath, PortableCaseOptions options, ReportProgressPanel progressPanel) {
+        this.options = options;
         progressPanel.setIndeterminate(true);
         progressPanel.start();
-        progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_verifying());
+        progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_verifying());
         
         // Clear out any old values
         cleanup();
         
         // Validate the input parameters
-        File outputDir = new File(configPanel.getOutputFolder());
+        File outputDir = new File(reportPath);
         if (! outputDir.exists()) {
             handleError("Output folder " + outputDir.toString() + " does not exist",
-                    Bundle.CreatePortableCaseModule_generateReport_outputDirDoesNotExist(outputDir.toString()), null, progressPanel);
+                    Bundle.PortableCaseReportModule_generateReport_outputDirDoesNotExist(outputDir.toString()), null, progressPanel); // NON-NLS
             return;
         }
         
         if (! outputDir.isDirectory()) {
             handleError("Output folder " + outputDir.toString() + " is not a folder",
-                    Bundle.CreatePortableCaseModule_generateReport_outputDirIsNotDir(outputDir.toString()), null, progressPanel);
+                    Bundle.PortableCaseReportModule_generateReport_outputDirIsNotDir(outputDir.toString()), null, progressPanel); // NON-NLS
             return;
-        }
-        
-        List<TagName> tagNames = configPanel.getSelectedTagNames();
-        if (tagNames.isEmpty()) {
-            handleError("No tags selected for export",
-                    Bundle.CreatePortableCaseModule_generateReport_noTagsSelected(), null, progressPanel);
-            return;            
         }
         
         // Save the current case object
@@ -198,14 +211,22 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             currentCase = Case.getCurrentCaseThrows();
         } catch (NoCurrentCaseException ex) {
             handleError("Current case has been closed",
-                    Bundle.CreatePortableCaseModule_generateReport_caseClosed(), null, progressPanel);
+                    Bundle.PortableCaseReportModule_generateReport_caseClosed(), null, progressPanel); // NON-NLS
             return;
         } 
         
+        // Check that there will be something to copy
+        List<TagName> tagNames = options.getSelectedTagNames();
+        List<String> setNames = options.getSelectedSetNames();
+        if (tagNames.isEmpty() && setNames.isEmpty()) {  
+            handleError("No content to copy", 
+                    Bundle.PortableCaseReportModule_generateReport_noContentToCopy(), null, progressPanel); // NON-NLS
+            return;
+        }
         
         // Create the case.
         // portableSkCase and caseFolder will be set here.
-        progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_creatingCase());
+        progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_creatingCase());
         createCase(outputDir, progressPanel);
         if (portableSkCase == null) {
             // The error has already been handled
@@ -214,19 +235,19 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         
         // Check for cancellation 
         if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
-            cleanup();
+            handleCancellation(progressPanel);
             return;
         }
         
         // Copy the selected tags
-        progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_copyingTags());
+        progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_copyingTags());
         try {
             for(TagName tagName:tagNames) {
                 TagName newTagName = portableSkCase.addOrUpdateTagName(tagName.getDisplayName(), tagName.getDescription(), tagName.getColor(), tagName.getKnownStatus());
                 oldTagNameToNewTagName.put(tagName, newTagName);
             }
         } catch (TskCoreException ex) {
-            handleError("Error copying tags", Bundle.CreatePortableCaseModule_generateReport_errorCopyingTags(), ex, progressPanel);
+            handleError("Error copying tags", Bundle.PortableCaseReportModule_generateReport_errorCopyingTags(), ex, progressPanel); // NON-NLS
             return;
         }
                 
@@ -239,8 +260,8 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 oldAttrTypeIdToNewAttrType.put(type.getTypeID(), portableSkCase.getAttributeType(type.getLabel()));
             } catch (TskCoreException ex) {
                 handleError("Error looking up attribute name " + type.getLabel(),
-                        Bundle.CreatePortableCaseModule_generateReport_errorLookingUpAttrType(type.getLabel()),
-                        ex, progressPanel);
+                        Bundle.PortableCaseReportModule_generateReport_errorLookingUpAttrType(type.getLabel()),
+                        ex, progressPanel); // NON-NLS
             }
         }        
         
@@ -249,13 +270,20 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             for(TagName tagName:tagNames) {
                 // Check for cancellation 
                 if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    handleCancellation(progressPanel);
                     return;
                 }
-                progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_copyingFiles(tagName.getDisplayName()));
+                progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_copyingFiles(tagName.getDisplayName()));
                 addFilesToPortableCase(tagName, progressPanel);
+                
+                // Check for cancellation 
+                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    handleCancellation(progressPanel);
+                    return;
+                }
             }
         } catch (TskCoreException ex) {
-            handleError("Error copying tagged files", Bundle.CreatePortableCaseModule_generateReport_errorCopyingFiles(), ex, progressPanel);
+            handleError("Error copying tagged files", Bundle.PortableCaseReportModule_generateReport_errorCopyingFiles(), ex, progressPanel); // NON-NLS
             return;
         } 
         
@@ -264,16 +292,87 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             for(TagName tagName:tagNames) {
                 // Check for cancellation 
                 if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    handleCancellation(progressPanel);
                     return;
                 }
-                progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_generateReport_copyingArtifacts(tagName.getDisplayName()));
+                progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_copyingArtifacts(tagName.getDisplayName()));
                 addArtifactsToPortableCase(tagName, progressPanel);
+                
+                // Check for cancellation 
+                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    handleCancellation(progressPanel);
+                    return;
+                }
             }
         } catch (TskCoreException ex) {
-            handleError("Error copying tagged artifacts", Bundle.CreatePortableCaseModule_generateReport_errorCopyingArtifacts(), ex, progressPanel);
+            handleError("Error copying tagged artifacts", Bundle.PortableCaseReportModule_generateReport_errorCopyingArtifacts(), ex, progressPanel); // NON-NLS
             return;
-        }         
+        }
+        
+        // Copy interesting files and results
+        if (! setNames.isEmpty()) {
+            try {
+                List<BlackboardArtifact> interestingFiles = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
+                for (BlackboardArtifact art:interestingFiles) {
+                    // Check for cancellation 
+                    if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                        handleCancellation(progressPanel);
+                        return;
+                    }
+                    
+                    BlackboardAttribute setAttr = art.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                    if (setNames.contains(setAttr.getValueString())) {
+                        copyContentToPortableCase(art, progressPanel);
+                    }
+                }
+            } catch (TskCoreException ex) {
+                handleError("Error copying interesting files", Bundle.PortableCaseReportModule_generateReport_errorCopyingInterestingFiles(), ex, progressPanel); // NON-NLS
+                return;
+            }
 
+            try {
+                List<BlackboardArtifact> interestingResults = currentCase.getSleuthkitCase().getBlackboardArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+                for (BlackboardArtifact art:interestingResults) {
+                    // Check for cancellation 
+                    if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                        handleCancellation(progressPanel);
+                        return;
+                    }
+                    BlackboardAttribute setAttr = art.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+                    if (setNames.contains(setAttr.getValueString())) {
+                        copyContentToPortableCase(art, progressPanel);
+                    }
+                }
+            } catch (TskCoreException ex) {
+                handleError("Error copying interesting results", Bundle.PortableCaseReportModule_generateReport_errorCopyingInterestingResults(), ex, progressPanel); // NON-NLS
+                return;
+            }
+        }        
+        
+        // Check for cancellation 
+        if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+            handleCancellation(progressPanel);
+            return;
+        }
+        
+        // Compress the case (if desired)
+        if (options.shouldCompress()) {
+            progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_generateReport_compressingCase());
+            
+            boolean success = compressCase(progressPanel);
+            
+            // Check for cancellation 
+            if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                handleCancellation(progressPanel);
+                return;
+            }
+            
+            if (! success) {
+                // Errors have been handled already
+                return;
+            }
+        }
+        
         // Close the case connections and clear out the maps
         cleanup();
         
@@ -290,21 +389,20 @@ public class CreatePortableCaseModule implements GeneralReportModule {
      */
     @NbBundle.Messages({
         "# {0} - case folder",
-        "CreatePortableCaseModule.createCase.caseDirExists=Case folder {0} already exists",
-        "CreatePortableCaseModule.createCase.errorCreatingCase=Error creating case",
+        "PortableCaseReportModule.createCase.caseDirExists=Case folder {0} already exists",
+        "PortableCaseReportModule.createCase.errorCreatingCase=Error creating case",
         "# {0} - folder",
-        "CreatePortableCaseModule.createCase.errorCreatingFolder=Error creating folder {0}",
-        "CreatePortableCaseModule.createCase.errorStoringMaxIds=Error storing maximum database IDs",
+        "PortableCaseReportModule.createCase.errorCreatingFolder=Error creating folder {0}",
+        "PortableCaseReportModule.createCase.errorStoringMaxIds=Error storing maximum database IDs",
     })
     private void createCase(File outputDir, ReportProgressPanel progressPanel) {
 
         // Create the case folder
-        String caseName = currentCase.getDisplayName() + " (Portable)";
         caseFolder = Paths.get(outputDir.toString(), caseName).toFile();
 
         if (caseFolder.exists()) {
             handleError("Case folder " + caseFolder.toString() + " already exists",
-                Bundle.CreatePortableCaseModule_createCase_caseDirExists(caseFolder.toString()), null, progressPanel);  
+                Bundle.PortableCaseReportModule_createCase_caseDirExists(caseFolder.toString()), null, progressPanel); // NON-NLS  
             return;
         }
         
@@ -313,7 +411,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             portableSkCase = currentCase.createPortableCase(caseName, caseFolder);
         } catch (TskCoreException ex) {
             handleError("Error creating case " + caseName + " in folder " + caseFolder.toString(),
-                Bundle.CreatePortableCaseModule_createCase_errorCreatingCase(), ex, progressPanel);  
+                Bundle.PortableCaseReportModule_createCase_errorCreatingCase(), ex, progressPanel);   // NON-NLS
             return;
         }
         
@@ -322,7 +420,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             saveHighestIds();
         } catch (TskCoreException ex) {
             handleError("Error storing maximum database IDs",
-                Bundle.CreatePortableCaseModule_createCase_errorStoringMaxIds(), ex, progressPanel);  
+                Bundle.PortableCaseReportModule_createCase_errorStoringMaxIds(), ex, progressPanel);   // NON-NLS
             return;
         }
         
@@ -330,7 +428,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         copiedFilesFolder = Paths.get(caseFolder.toString(), FILE_FOLDER_NAME).toFile();
         if (! copiedFilesFolder.mkdir()) {
             handleError("Error creating folder " + copiedFilesFolder.toString(),
-                    Bundle.CreatePortableCaseModule_createCase_errorCreatingFolder(copiedFilesFolder.toString()), null, progressPanel);
+                    Bundle.PortableCaseReportModule_createCase_errorCreatingFolder(copiedFilesFolder.toString()), null, progressPanel); // NON-NLS
             return;
         }
         
@@ -339,14 +437,14 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             File subFolder = Paths.get(copiedFilesFolder.toString(), cat.getDisplayName()).toFile();
             if (! subFolder.mkdir()) {
                 handleError("Error creating folder " + subFolder.toString(),
-                    Bundle.CreatePortableCaseModule_createCase_errorCreatingFolder(subFolder.toString()), null, progressPanel);   
+                    Bundle.PortableCaseReportModule_createCase_errorCreatingFolder(subFolder.toString()), null, progressPanel);    // NON-NLS
                 return;
             }
         }
         File unknownTypeFolder = Paths.get(copiedFilesFolder.toString(), UNKNOWN_FILE_TYPE_FOLDER).toFile();
         if (! unknownTypeFolder.mkdir()) {
             handleError("Error creating folder " + unknownTypeFolder.toString(),
-                Bundle.CreatePortableCaseModule_createCase_errorCreatingFolder(unknownTypeFolder.toString()), null, progressPanel);   
+                Bundle.PortableCaseReportModule_createCase_errorCreatingFolder(unknownTypeFolder.toString()), null, progressPanel);   // NON-NLS 
             return;
         }
                 
@@ -362,14 +460,14 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         CaseDbAccessManager currentCaseDbManager = currentCase.getSleuthkitCase().getCaseDbAccessManager();
         
         String tableSchema = "( table_name TEXT PRIMARY KEY, "
-                            + " max_id TEXT)";
+                            + " max_id TEXT)"; // NON-NLS
         
         portableSkCase.getCaseDbAccessManager().createTable(MAX_ID_TABLE_NAME, tableSchema);
 
-        currentCaseDbManager.select("max(obj_id) as max_id from tsk_objects", new StoreMaxIdCallback("tsk_objects"));
-        currentCaseDbManager.select("max(tag_id) as max_id from content_tags", new StoreMaxIdCallback("content_tags"));
-        currentCaseDbManager.select("max(tag_id) as max_id from blackboard_artifact_tags", new StoreMaxIdCallback("blackboard_artifact_tags")); 
-        currentCaseDbManager.select("max(examiner_id) as max_id from tsk_examiners", new StoreMaxIdCallback("tsk_examiners")); 
+        currentCaseDbManager.select("max(obj_id) as max_id from tsk_objects", new StoreMaxIdCallback("tsk_objects")); // NON-NLS
+        currentCaseDbManager.select("max(tag_id) as max_id from content_tags", new StoreMaxIdCallback("content_tags")); // NON-NLS
+        currentCaseDbManager.select("max(tag_id) as max_id from blackboard_artifact_tags", new StoreMaxIdCallback("blackboard_artifact_tags"));  // NON-NLS
+        currentCaseDbManager.select("max(examiner_id) as max_id from tsk_examiners", new StoreMaxIdCallback("tsk_examiners"));  // NON-NLS
     }
     
     /**
@@ -399,12 +497,12 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                 
                 // Tag the file
                 if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
-                    throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName());
+                    throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName()); // NON-NLS
                 }
                 portableSkCase.addContentTag(newIdToContent.get(newFileId), oldTagNameToNewTagName.get(tag.getName()), tag.getComment(), tag.getBeginByteOffset(), tag.getEndByteOffset());
             }
         }  
-    }
+    }  
     
     /**
      * Add all artifacts with a given tag to the portable case.
@@ -435,7 +533,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             
             // Tag the artfiact
             if (! oldTagNameToNewTagName.containsKey(tag.getName())) {
-                throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName());
+                throw new TskCoreException("TagName map is missing entry for ID " + tag.getName().getId() + " with display name " + tag.getName().getDisplayName()); // NON-NLS
             }
             portableSkCase.addBlackboardArtifactTag(newArtifact, oldTagNameToNewTagName.get(tag.getName()), tag.getComment());
         }  
@@ -504,7 +602,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                             oldAttr.getValueString()));
                     break;
                 default:
-                    throw new TskCoreException("Unexpected attribute value type found: " + oldAttr.getValueType().getLabel());
+                    throw new TskCoreException("Unexpected attribute value type found: " + oldAttr.getValueType().getLabel()); // NON-NLS
             }
         }
         
@@ -533,7 +631,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             oldArtTypeIdToNewArtTypeId.put(oldArtifact.getArtifactTypeID(), newCustomType.getTypeID());
             return newCustomType.getTypeID();
         } catch (TskDataException ex) {
-            throw new TskCoreException("Error creating new artifact type " + oldCustomType.getTypeName(), ex);
+            throw new TskCoreException("Error creating new artifact type " + oldCustomType.getTypeName(), ex); // NON-NLS
         }
     }
     
@@ -557,7 +655,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             oldAttrTypeIdToNewAttrType.put(oldAttribute.getAttributeType().getTypeID(), newCustomType);
             return newCustomType;
         } catch (TskDataException ex) {
-            throw new TskCoreException("Error creating new attribute type " + oldAttrType.getTypeName(), ex);
+            throw new TskCoreException("Error creating new attribute type " + oldAttrType.getTypeName(), ex); // NON-NLS
         }
     }
 
@@ -573,10 +671,10 @@ public class CreatePortableCaseModule implements GeneralReportModule {
      */
     @NbBundle.Messages({
         "# {0} - File name",
-        "CreatePortableCaseModule.copyContentToPortableCase.copyingFile=Copying file {0}",  
+        "PortableCaseReportModule.copyContentToPortableCase.copyingFile=Copying file {0}",  
     })    
     private long copyContentToPortableCase(Content content, ReportProgressPanel progressPanel) throws TskCoreException {
-        progressPanel.updateStatusLabel(Bundle.CreatePortableCaseModule_copyContentToPortableCase_copyingFile(content.getUniquePath()));
+        progressPanel.updateStatusLabel(Bundle.PortableCaseReportModule_copyContentToPortableCase_copyingFile(content.getUniquePath()));
         return copyContent(content);
     }
     
@@ -651,7 +749,7 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                                 // Get the new parent object in the portable case database
                                 Content oldParent = abstractFile.getParent();
                                 if (! oldIdToNewContent.containsKey(oldParent.getId())) {
-                                    throw new TskCoreException("Parent of file with ID " + abstractFile.getId() + " has not been created");
+                                    throw new TskCoreException("Parent of file with ID " + abstractFile.getId() + " has not been created"); // NON-NLS
                                 }
                                 Content newParent = oldIdToNewContent.get(oldParent.getId());
 
@@ -665,12 +763,12 @@ public class CreatePortableCaseModule implements GeneralReportModule {
                                         newParent, trans);
                             } catch (IOException ex) {
                                 throw new TskCoreException("Error copying file " + abstractFile.getName() + " with original obj ID " 
-                                        + abstractFile.getId(), ex);
+                                        + abstractFile.getId(), ex); // NON-NLS
                             }
                         }
                     }
                 } else {
-                    throw new TskCoreException("Trying to copy unexpected Content type " + content.getClass().getName());
+                    throw new TskCoreException("Trying to copy unexpected Content type " + content.getClass().getName()); // NON-NLS
                 }
                 trans.commit();
             }  catch (TskCoreException ex) {
@@ -715,21 +813,29 @@ public class CreatePortableCaseModule implements GeneralReportModule {
         oldArtTypeIdToNewArtTypeId.clear();
         oldAttrTypeIdToNewAttrType.clear();
         oldArtifactIdToNewArtifact.clear();
+
+        closePortableCaseDatabase();
         
         currentCase = null;
+        caseFolder = null;
+        copiedFilesFolder = null;
+    }
+    
+    /**
+     * Close the portable case
+     */
+    private void closePortableCaseDatabase() {
         if (portableSkCase != null) {
             portableSkCase.close();
             portableSkCase = null;
         }
-        caseFolder = null;
-        copiedFilesFolder = null;
     }
 
-    @Override
+    /*@Override
     public JPanel getConfigurationPanel() {
         configPanel = new CreatePortableCasePanel();
         return configPanel;
-    }    
+    }    */
     
     private class StoreMaxIdCallback implements CaseDbAccessManager.CaseDbAccessQueryCallback {
 
@@ -745,20 +851,224 @@ public class CreatePortableCaseModule implements GeneralReportModule {
             try {
                 while (rs.next()) {
                     try {
-                        Long maxId = rs.getLong("max_id");
-                        String query = " (table_name, max_id) VALUES ('" + tableName + "', '" + maxId + "')";
+                        Long maxId = rs.getLong("max_id"); // NON-NLS
+                        String query = " (table_name, max_id) VALUES ('" + tableName + "', '" + maxId + "')"; // NON-NLS
                         portableSkCase.getCaseDbAccessManager().insert(MAX_ID_TABLE_NAME, query);
 
                     } catch (SQLException ex) {
-                        logger.log(Level.WARNING, "Unable to get maximum ID from result set", ex);
+                        logger.log(Level.WARNING, "Unable to get maximum ID from result set", ex); // NON-NLS
                     } catch (TskCoreException ex) {
-                        logger.log(Level.WARNING, "Unable to save maximum ID from result set", ex);
+                        logger.log(Level.WARNING, "Unable to save maximum ID from result set", ex); // NON-NLS
                     }
                     
                 }
             } catch (SQLException ex) {
-                logger.log(Level.WARNING, "Failed to get maximum ID from result set", ex);
+                logger.log(Level.WARNING, "Failed to get maximum ID from result set", ex); // NON-NLS
             }
+        }
+    }
+    
+    @NbBundle.Messages({
+        "PortableCaseReportModule.compressCase.errorFinding7zip=Could not locate 7-Zip executable",
+        "# {0} - Temp folder path",
+        "PortableCaseReportModule.compressCase.errorCreatingTempFolder=Could not create temporary folder {0}",
+        "PortableCaseReportModule.compressCase.errorCompressingCase=Error compressing case",
+        "PortableCaseReportModule.compressCase.canceled=Compression canceled by user",
+    }) 
+    private boolean compressCase(ReportProgressPanel progressPanel) {
+    
+        // Close the portable case database (we still need some of the variables that would be cleared by cleanup())
+        closePortableCaseDatabase();
+        
+        // Make a temporary folder for the compressed case
+        File tempZipFolder = Paths.get(currentCase.getTempDirectory(), "portableCase" + System.currentTimeMillis()).toFile(); // NON-NLS
+        if (! tempZipFolder.mkdir()) {
+            handleError("Error creating temporary folder " + tempZipFolder.toString(), 
+                    Bundle.PortableCaseReportModule_compressCase_errorCreatingTempFolder(tempZipFolder.toString()), null, progressPanel); // NON-NLS
+            return false;
+        }
+        
+        // Find 7-Zip
+        File sevenZipExe = locate7ZipExecutable();
+        if (sevenZipExe == null) {
+            handleError("Error finding 7-Zip exectuable", Bundle.PortableCaseReportModule_compressCase_errorFinding7zip(), null, progressPanel); // NON-NLS
+            return false;
+        }
+        
+        // Create the chunk option
+        String chunkOption = "";
+        if (options.getChunkSize() != ChunkSize.NONE) {
+            chunkOption = "-v" + options.getChunkSize().getSevenZipParam();
+        }
+        
+        File zipFile = Paths.get(tempZipFolder.getAbsolutePath(), caseName + ".zip").toFile(); // NON-NLS
+        ProcessBuilder procBuilder = new ProcessBuilder();
+        procBuilder.command(
+                sevenZipExe.getAbsolutePath(),
+                "a",     // Add to archive
+                zipFile.getAbsolutePath(),
+                caseFolder.getAbsolutePath(),
+                chunkOption
+        );
+        
+        try {
+            Process process = procBuilder.start();
+            
+            while (process.isAlive()) {
+                if (progressPanel.getStatus() == ReportProgressPanel.ReportStatus.CANCELED) {
+                    process.destroy();
+                    return false;
+                }
+                Thread.sleep(200);
+            }
+            int exitCode = process.exitValue();
+            if (exitCode != 0) {
+                // Save any errors so they can be logged
+                StringBuilder sb = new StringBuilder();
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        sb.append(line).append(System.getProperty("line.separator")); // NON-NLS
+                    }
+                }
+                
+                handleError("Error compressing case\n7-Zip output: " + sb.toString(), Bundle.PortableCaseReportModule_compressCase_errorCompressingCase(), null, progressPanel); // NON-NLS
+                return false;
+            }
+        } catch (IOException | InterruptedException ex) {
+            handleError("Error compressing case", Bundle.PortableCaseReportModule_compressCase_errorCompressingCase(), ex, progressPanel); // NON-NLS
+            return false;
+        }
+        
+        // Delete everything in the case folder then copy over the compressed file(s)
+        try {
+            FileUtils.cleanDirectory(caseFolder);
+            FileUtils.copyDirectory(tempZipFolder, caseFolder);
+            FileUtils.deleteDirectory(tempZipFolder);
+        } catch (IOException ex) {
+            handleError("Error compressing case", Bundle.PortableCaseReportModule_compressCase_errorCompressingCase(), ex, progressPanel); // NON-NLS
+            return false;
+        }
+     
+        return true;
+    }
+    
+    /**
+     * Locate the 7-Zip executable from the release folder.
+     *
+     * @return 7-Zip executable
+     */
+    private static File locate7ZipExecutable() {
+        if (!PlatformUtil.isWindowsOS()) {
+            return null;
+        }
+
+        String executableToFindName = Paths.get("7-Zip", "7z.exe").toString(); // NON-NLS
+        File exeFile = InstalledFileLocator.getDefault().locate(executableToFindName, PortableCaseReportModule.class.getPackage().getName(), false);
+        if (null == exeFile) {
+            return null;
+        }
+
+        if (!exeFile.canExecute()) {
+            return null;
+        }
+
+        return exeFile;
+    }
+    
+    /**
+     * Enum for storing the display name for each chunk type and the
+     * parameter needed for 7-Zip.
+     */
+    enum ChunkSize {
+        
+        NONE("Do not split", ""), // NON-NLS
+        DVD("4.5 GB (DVD)", "4500m"); // NON-NLS
+        
+        private final String displayName;
+        private final String sevenZipParam;
+
+        /**
+         * Create a chunk size object.
+         * 
+         * @param displayName
+         * @param sevenZipParam 
+         */
+        private ChunkSize(String displayName, String sevenZipParam) {
+            this.displayName = displayName;
+            this.sevenZipParam = sevenZipParam;
+        }
+        
+        String getDisplayName() {
+            return displayName;
+        }
+        
+        String getSevenZipParam() {
+            return sevenZipParam;
+        }
+        
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+    
+    /**
+     * Convenience class to hold the options from the config panel.
+     */
+    static class PortableCaseOptions {
+        
+        private final List<TagName> tagNames = new ArrayList<>();
+        private final List<String> setNames = new ArrayList<>();
+        private boolean compress;
+        private ChunkSize chunkSize;
+        
+        PortableCaseOptions(List<String> setNames, List<TagName> tagNames,
+                boolean compress, ChunkSize chunkSize) {
+            this.setNames.addAll(setNames);
+            this.tagNames.addAll(tagNames);
+            this.compress = compress;
+            this.chunkSize = chunkSize;
+        }
+        
+        PortableCaseOptions() {
+            this.compress = false;
+            this.chunkSize = ChunkSize.NONE;
+        }
+        
+        void updateSetNames(List<String> setNames) {
+            this.setNames.clear();
+            this.setNames.addAll(setNames);
+        }
+        
+        void updateTagNames(List<TagName> tagNames) {
+            this.tagNames.clear();
+            this.tagNames.addAll(tagNames);
+        }
+        
+        void updateCompression(boolean compress, ChunkSize chunkSize) {
+            this.compress = compress;
+            this.chunkSize = chunkSize;
+        }
+        
+        boolean isValid() {
+            return (( !setNames.isEmpty()) || ( ! tagNames.isEmpty()));
+        }
+        
+        List<String> getSelectedSetNames() {
+            return new ArrayList<>(setNames);
+        }
+        
+        List<TagName> getSelectedTagNames() {
+            return new ArrayList<>(tagNames);
+        }
+        
+        boolean shouldCompress() {
+            return compress;
+        }
+        
+        ChunkSize getChunkSize() {
+            return chunkSize;
         }
     }
 }

@@ -1008,16 +1008,16 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         org.openide.awt.Mnemonics.setLocalizedText(foundInLabel, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.foundInLabel.text")); // NOI18N
 
         tablesViewerSplitPane.setDividerLocation(450);
-        tablesViewerSplitPane.setResizeWeight(0.5);
+        tablesViewerSplitPane.setResizeWeight(0.75);
 
         caseDatasourceFileSplitPane.setDividerLocation(300);
-        caseDatasourceFileSplitPane.setResizeWeight(0.6);
+        caseDatasourceFileSplitPane.setResizeWeight(0.66);
         caseDatasourceFileSplitPane.setToolTipText("");
 
         caseDatasourceSplitPane.setDividerLocation(150);
         caseDatasourceSplitPane.setResizeWeight(0.5);
 
-        caseScrollPane.setPreferredSize(new java.awt.Dimension(140, 30));
+        caseScrollPane.setPreferredSize(new java.awt.Dimension(150, 30));
 
         casesTable.setAutoCreateRowSorter(true);
         casesTable.setModel(casesTableModel);
@@ -1025,7 +1025,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         caseDatasourceSplitPane.setLeftComponent(caseScrollPane);
 
-        dataSourceScrollPane.setPreferredSize(new java.awt.Dimension(140, 30));
+        dataSourceScrollPane.setPreferredSize(new java.awt.Dimension(150, 30));
 
         dataSourcesTable.setAutoCreateRowSorter(true);
         dataSourcesTable.setModel(dataSourcesTableModel);
@@ -1035,7 +1035,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
 
         caseDatasourceFileSplitPane.setLeftComponent(caseDatasourceSplitPane);
 
-        filesTableScrollPane.setPreferredSize(new java.awt.Dimension(140, 30));
+        filesTableScrollPane.setPreferredSize(new java.awt.Dimension(150, 30));
 
         filesTable.setAutoCreateRowSorter(true);
         filesTable.setModel(filesTableModel);
@@ -1049,7 +1049,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         tablesViewerSplitPane.setLeftComponent(caseDatasourceFileSplitPane);
 
         detailsPanelScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        detailsPanelScrollPane.setPreferredSize(new java.awt.Dimension(200, 100));
+        detailsPanelScrollPane.setPreferredSize(new java.awt.Dimension(300, 100));
         tablesViewerSplitPane.setRightComponent(detailsPanelScrollPane);
 
         javax.swing.GroupLayout tableContainerPanelLayout = new javax.swing.GroupLayout(tableContainerPanel);
@@ -1064,7 +1064,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
                         .addComponent(earliestCaseDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(foundInLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 590, Short.MAX_VALUE))
+                    .addComponent(tablesViewerSplitPane, javax.swing.GroupLayout.DEFAULT_SIZE, 765, Short.MAX_VALUE))
                 .addContainerGap())
         );
         tableContainerPanelLayout.setVerticalGroup(
@@ -1085,7 +1085,7 @@ public class DataContentViewerOtherCases extends JPanel implements DataContentVi
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 775, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

@@ -45,7 +45,6 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
     private static Logger logger = Logger.getLogger(DataContentPanel.class.getName());
     private final List<UpdateWrapper> viewers = new ArrayList<>();
-    ;
     private Node currentNode;
     private final boolean isMain;
     private boolean listeningToTabbedPane = false;
