@@ -31,12 +31,12 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
-public class RejTreeValueView extends RejTreeNodeView {
+class RejTreeValueView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
     private final RejTreeValueNode _node;
 
-    public RejTreeValueView(RejTreeValueNode node) {
+    RejTreeValueView(RejTreeValueNode node) {
         super(new BorderLayout());
         this._node = node;
 

@@ -28,14 +28,14 @@ import java.util.List;
  * model. It may describe both the contents of the node, and how it should be
  * displayed.
  */
-public interface RejTreeNode {
+interface RejTreeNode {
 
     @Override
-    public abstract String toString();
+    abstract String toString();
 
-    public abstract boolean hasChildren();
+    abstract boolean hasChildren();
 
-    public abstract List<RejTreeNode> getChildren();
+    abstract List<RejTreeNode> getChildren();
 
-    public abstract RejTreeNodeView getView();
+    abstract RejTreeNodeView getView();
 }

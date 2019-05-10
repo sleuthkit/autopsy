@@ -50,7 +50,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * estimate it to load three strings with length equal to the given ByteBuffer.
  * So its probably not good to use this view with large files.
  */
-public class HexView extends JPanel implements CaretListener {
+class HexView extends JPanel implements CaretListener {
 
     private final static int DEFAULT_BYTES_PER_LINE = 0x10;
     private final static char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
@@ -64,13 +64,19 @@ public class HexView extends JPanel implements CaretListener {
     private final JLabel _statusLabel;
     private final Color _highlightColor;
     private final DefaultHighlighter.DefaultHighlightPainter _highlighterPainter;
+    // these flags are used to ensure we don't end up in a circular event loop where
+    //   one component fires an event on the other, who volley's it back.
+    private int _hexLastSelectionStart = 0;
+    private int _hexLastSelectionEnd = 0;
+    private int _asciiLastSelectionStart = 0;
+    private int _asciiLastSelectionEnd = 0;
 
     /**
      * Uses the default 0x10 bytes per line.
      *
      * @param buf The binary data to display within this hex view.
      */
-    public HexView(ByteBuffer buf) {
+    HexView(ByteBuffer buf) {
         this(buf, DEFAULT_BYTES_PER_LINE);
     }
 
@@ -78,7 +84,7 @@ public class HexView extends JPanel implements CaretListener {
      * @param buf          The binary data to display within this hex view.
      * @param bytesPerLine The number of bytes to display per line.
      */
-    public HexView(ByteBuffer buf, int bytesPerLine) {
+    HexView(ByteBuffer buf, int bytesPerLine) {
         super(new BorderLayout());
         this._buf = buf;
         this._bytesPerLine = bytesPerLine;
@@ -212,13 +218,6 @@ public class HexView extends JPanel implements CaretListener {
             this._statusLabel.setText(String.format(statusTemplate, startByte));
         }
     }
-
-    // these flags are used to ensure we don't end up in a circular event loop where
-    //   one component fires an event on the other, who volley's it back.
-    private int _hexLastSelectionStart = 0;
-    private int _hexLastSelectionEnd = 0;
-    private int _asciiLastSelectionStart = 0;
-    private int _asciiLastSelectionEnd = 0;
 
     @Override
     public void caretUpdate(CaretEvent e) {

@@ -32,12 +32,12 @@ import java.util.List;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-public class RejTreeKeyNode implements RejTreeNode {
+class RejTreeKeyNode implements RejTreeNode {
 
     private static final Logger logger = Logger.getLogger(RejTreeKeyNode.class.getName());
     private final RegistryKey _key;
 
-    public RejTreeKeyNode(RegistryKey key) {
+    RejTreeKeyNode(RegistryKey key) {
         this._key = key;
     }
 

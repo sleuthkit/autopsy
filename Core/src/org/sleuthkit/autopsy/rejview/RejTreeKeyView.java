@@ -25,7 +25,6 @@ import com.williballenthin.rejistry.RegistryParseException;
 import com.williballenthin.rejistry.RegistryValue;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.io.UnsupportedEncodingException;
@@ -36,12 +35,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 
-public class RejTreeKeyView extends RejTreeNodeView {
+class RejTreeKeyView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
     private final RejTreeKeyNode _node;
 
-    public RejTreeKeyView(RejTreeKeyNode node) {
+    RejTreeKeyView(RejTreeKeyNode node) {
         super(new BorderLayout());
         this._node = node;
 
