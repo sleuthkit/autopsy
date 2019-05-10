@@ -69,7 +69,7 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
         this.tree.collapsePath(new TreePath(rootNode.getPath()));
         this.tree.expandPath(new TreePath(rootNode.getPath()));
         setViewportView(this.tree);
-        setPreferredSize(new Dimension(0,0));
+        setPreferredSize(new Dimension(350,20));
     }
 
     /**

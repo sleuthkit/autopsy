@@ -119,7 +119,7 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         table.setAutoCreateRowSorter(true);
         table.setCellSelectionEnabled(false);
         table.setRowSelectionAllowed(true);
-        table.setIntercellSpacing(new Dimension(0, 0));
+        table.setIntercellSpacing(new Dimension(10, 1));
 
         // inspiration for packing the columns from:
         //   http://jroller.com/santhosh/entry/packing_jtable_columns
