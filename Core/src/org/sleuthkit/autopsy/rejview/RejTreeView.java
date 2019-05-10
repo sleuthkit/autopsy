@@ -38,35 +38,40 @@ import javax.swing.JTree;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * Tree view for registry hive information
+ */
 final class RejTreeView extends JScrollPane {
 
     private static final Logger logger = Logger.getLogger(HexView.class.getName());
     private static final long serialVersionUID = 1L;
     private final DefaultTreeModel treeModel;
-    private final RejTreeViewListener listener = new RejTreeViewListener();
+    private final RejTreeViewListener rejTreeViewListener = new RejTreeViewListener();
     private final RegistryHive hive;
     private final CopyOnWriteArrayList<RejTreeNodeSelectionListener> nodeSelectionListeners;
     private final JTree tree;
 
+    /**
+     * Construct a new RejTreeView given the RegistrHive object
+     *
+     * @param hive the registryhive to construct the RejTreeView for
+     */
     @NbBundle.Messages({"RejTreeView.failureValueName.text=PARSE FAILED"})
     RejTreeView(RegistryHive hive) {
         this.hive = hive;
         DefaultMutableTreeNode rootNode;
         this.nodeSelectionListeners = new CopyOnWriteArrayList<>();
-
         try {
             rootNode = getTreeNode(new RejTreeKeyNode(this.hive.getRoot()));
         } catch (RegistryParseException ex) {
             logger.log(Level.WARNING, "Failed to parse root key", ex);
             rootNode = new DefaultMutableTreeNode(Bundle.RejTreeView_failureValueName_text());
         }
-
         this.treeModel = new DefaultTreeModel(rootNode);
         this.treeModel.setAsksAllowsChildren(true);
-
         this.tree = new JTree(this.treeModel);
-        this.tree.addTreeExpansionListener(listener);
-        this.tree.addTreeSelectionListener(listener);
+        this.tree.addTreeExpansionListener(rejTreeViewListener);
+        this.tree.addTreeSelectionListener(rejTreeViewListener);
         // here's a bit of a hack to force the children to be loaded and shown
         this.tree.collapsePath(new TreePath(rootNode.getPath()));
         this.tree.expandPath(new TreePath(rootNode.getPath()));
@@ -85,14 +90,29 @@ final class RejTreeView extends JScrollPane {
         return ret;
     }
 
-    void addRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
-        this.nodeSelectionListeners.add(l);
+    /**
+     * Add a RejTreeNodeSelectionListener to the list of node selection
+     * listeners the RejTreeView has
+     *
+     * @param selListener the RejTreeNodeSelectionListener to add
+     */
+    void addRejTreeNodeSelectionListener(RejTreeNodeSelectionListener selListener) {
+        this.nodeSelectionListeners.add(selListener);
     }
 
-    void removeRejTreeNodeSelectionListener(RejTreeNodeSelectionListener l) {
-        this.nodeSelectionListeners.remove(l);
+    /**
+     * Remove a RejTreeNodeSelectionListener from the list of node selection
+     * listeners the RejTreeView has
+     *
+     * @param selListener the RejTreeNodeSelectionListener to remove
+     */
+    void removeRejTreeNodeSelectionListener(RejTreeNodeSelectionListener selListener) {
+        this.nodeSelectionListeners.remove(selListener);
     }
 
+    /**
+     * Private listener for TreeExpansionEvents and TreeSelectionEvents
+     */
     private class RejTreeViewListener implements TreeExpansionListener, TreeSelectionListener {
 
         @Override
@@ -120,6 +140,9 @@ final class RejTreeView extends JScrollPane {
             this.triggerRejTreeNodeSelection((RejTreeNode) node.getUserObject());
         }
 
+        /**
+         * Call each of the node selection listeners for a given node
+         */
         void triggerRejTreeNodeSelection(RejTreeNode n) {
             RejTreeNodeSelectionEvent e = new RejTreeNodeSelectionEvent(n);
             for (RejTreeNodeSelectionListener listener : nodeSelectionListeners) {

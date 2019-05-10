@@ -59,7 +59,7 @@ final class HexView extends JPanel {
     private static final long serialVersionUID = 1L;
     private final int bytesPerLine;
     private final ByteBuffer buf;
-    private final HexViewListener listener = new HexViewListener();
+    private final HexViewListener hexViewListener = new HexViewListener();
     private final JTextComponent offsetView;
     private final JTextComponent hexView;
     private final JTextComponent asciiView;
@@ -156,8 +156,8 @@ final class HexView extends JPanel {
         this.offsetView.setText(offsetSB.toString());
         this.hexView.setText(hexSB.toString());
         this.asciiView.setText(asciiSB.toString());
-        this.hexView.addCaretListener(listener);
-        this.asciiView.addCaretListener(listener);
+        this.hexView.addCaretListener(hexViewListener);
+        this.asciiView.addCaretListener(hexViewListener);
         this.asciiView.setSelectedTextColor(this.asciiView.getForeground());
         this.hexView.setSelectedTextColor(this.asciiView.getForeground());
         this.highlightColor = this.hexView.getSelectionColor();

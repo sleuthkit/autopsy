@@ -29,6 +29,9 @@ import java.nio.ByteBuffer;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
+/**
+ * A panel for displaying information from a registry hive file
+ */
 public final class RejView extends JPanel implements RejTreeNodeSelectionListener {
 
     private static final long serialVersionUID = 1L;
@@ -36,6 +39,11 @@ public final class RejView extends JPanel implements RejTreeNodeSelectionListene
     private final RejTreeView treeView;
     private final JSplitPane splitPane;
 
+    /**
+     * Create a new RejView panel given a RegistryHive object
+     *
+     * @param hive the hive file to display information for
+     */
     public RejView(RegistryHive hive) {
         super(new BorderLayout());
         this.hive = hive;
@@ -46,6 +54,11 @@ public final class RejView extends JPanel implements RejTreeNodeSelectionListene
         this.setupUI();
     }
 
+    /**
+     * Create a new RejView panel given a ByteBuffer object
+     *
+     * @param buf the ByteBuffer which represents the Reigstry Hive file
+     */
     public RejView(ByteBuffer buf) {
         super(new BorderLayout());
         this.hive = new RegistryHiveBuffer(buf);
@@ -57,20 +70,28 @@ public final class RejView extends JPanel implements RejTreeNodeSelectionListene
         this.setupUI();
     }
 
+    /**
+     * Set up the ui elements of the panel
+     */
     private void setupUI() {
         this.splitPane.setResizeWeight(0);
         this.splitPane.setOneTouchExpandable(true);
         this.splitPane.setContinuousLayout(true);
         this.add(this.splitPane, BorderLayout.CENTER);
-        this.setPreferredSize(new Dimension(0,0));
+        this.setPreferredSize(new Dimension(0, 0));
         this.treeView.addRejTreeNodeSelectionListener(this);
     }
 
+    /**
+     * Update the the right side of the panel to display the selected node
+     *
+     * @param event the selection event indicating what node was selecteds
+     */
     @Override
-    public void nodeSelected(RejTreeNodeSelectionEvent e) {
-        RejTreeNodeView v = e.getNode().getView();
+    public void nodeSelected(RejTreeNodeSelectionEvent event) {
+        RejTreeNodeView view = event.getNode().getView();
         int curDividerLocation = this.splitPane.getDividerLocation();
-        this.splitPane.setRightComponent(v);
+        this.splitPane.setRightComponent(view);
         this.splitPane.setDividerLocation(curDividerLocation);
     }
 }
