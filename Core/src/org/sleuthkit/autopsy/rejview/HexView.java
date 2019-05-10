@@ -40,6 +40,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -89,7 +90,7 @@ final class HexView extends JPanel implements CaretListener {
         this._buf = buf;
         this._bytesPerLine = bytesPerLine;
 
-        Font font = new Font("Monospaced", Font.PLAIN, 12);
+        Font font = new Font("Monospaced", Font.PLAIN, 12);  //Non-NLS
 
         this._offsetView = new JTextArea();
         this._hexView = new JTextArea();
@@ -201,6 +202,16 @@ final class HexView extends JPanel implements CaretListener {
      * @param startByte The starting byte index of the selection.
      * @param endByte   The ending byte index of the selection.
      */
+    @Messages({"# {0} - startByteD",
+        "# {1} - endByteD",
+        "# {2} - lengthD",
+        "# {3} - startByteH",
+        "# {4} - endByteH",
+        "# {5} - lengthH",
+        "HexView.statusTemplate.nonZeroLength=Selection: {0} to {1} (len: {2}) [{3} to {4} (len: {5})",
+        "# {0} - startByteDec",
+        "# {1} - startByteHex",
+        "HexView.statusTemplate.zeroLength=Position: {0} [{1}])"})
     private void setSelection(int startByte, int endByte) {
         this.setHighlight(startByte, endByte);
 
@@ -210,14 +221,21 @@ final class HexView extends JPanel implements CaretListener {
              * @param 2 End
              * @param 3 Len
              */
-            String statusTemplate = "Selection: %1$d to %2$d (len: %3$d) [0x%1$x to 0x%2$x (len: 0x%3$x)]";
-            this._statusLabel.setText(String.format(statusTemplate, startByte, endByte, endByte - startByte));
+            int length = endByte - startByte;
+            String text = Bundle.HexView_statusTemplate_nonZeroLength(
+                    startByte,
+                    endByte,
+                    length,
+                    String.format("0x%1$x", startByte),
+                    String.format("0x%1$x", endByte),
+                    String.format("0x%1$x", length));
+            this._statusLabel.setText(text);
         } else {
             /**
              * @param 1 Start
              */
-            String statusTemplate = "Position: %1$d [0x%1$x]";
-            this._statusLabel.setText(String.format(statusTemplate, startByte));
+            String text = Bundle.HexView_statusTemplate_zeroLength(startByte, String.format("0x%1$x", startByte));
+            this._statusLabel.setText(text);
         }
     }
 

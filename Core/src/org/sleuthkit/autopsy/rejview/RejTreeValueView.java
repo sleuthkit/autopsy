@@ -30,12 +30,20 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
+import org.openide.util.NbBundle.Messages;
 
 public final class RejTreeValueView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
     private final RejTreeValueNode _node;
 
+    @Messages({"RejTreeValueView.template.name=Name:",
+        "RejTreeValueView.template.type=Type:",
+        "RejTreeValueView.failedToDecode.valueName=FAILED TO DECODE VALUE NAME",
+        "RejTreeValueView.failedToDecode.valueType=FAILED TO PARSE VALUE TYPE",
+        "RejTreeValueView.failedToParse.value=FAILED TO PARSE VALUE VALUE",
+        "RejTreeValueView.metadataBorder.title=Metadata",
+        "RejTreeValueView.valueBorder.title=Value",})
     public RejTreeValueView(RejTreeValueNode node) {
         super(new BorderLayout());
         this._node = node;
@@ -44,11 +52,11 @@ public final class RejTreeValueView extends RejTreeNodeView {
          * @param 1 Name
          * @param 2 Type
          */
-        String metadataTemplate = ""
-                + "<html>"
-                + "<i>Name:</i>  <b>%1$s</b><br/>"
-                + "<i>Type:</i>   %2$s"
-                + "</html>";
+        String metadataTemplate = "<html><i>"
+                + Bundle.RejTreeValueView_template_name()
+                + "</i><b>%1$s</b><br/><i>"
+                + Bundle.RejTreeValueView_template_type()
+                + "</i>   %2$s</html>";
         String valueName;
         String valueType;
 
@@ -62,17 +70,17 @@ public final class RejTreeValueView extends RejTreeNodeView {
         try {
             valueName = this._node.getValue().getName();
         } catch (UnsupportedEncodingException e) {
-            valueName = "FAILED TO DECODE VALUE NAME";
+            valueName = Bundle.RejTreeValueView_failedToDecode_valueName();
         }
 
         try {
             valueType = this._node.getValue().getValueType().toString();
         } catch (RegistryParseException e) {
-            valueType = "FAILED TO PARSE VALUE TYPE";
+            valueType = Bundle.RejTreeValueView_failedToDecode_valueType();
         }
 
         JLabel metadataLabel = new JLabel(String.format(metadataTemplate, valueName, valueType), JLabel.LEFT);
-        metadataLabel.setBorder(BorderFactory.createTitledBorder("Metadata"));
+        metadataLabel.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeValueView_metadataBorder_title()));
         metadataLabel.setVerticalAlignment(SwingConstants.TOP);
 
         // this valueComponent must be set in the follow try/catch block.
@@ -86,7 +94,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
                 case REG_EXPAND_SZ: {
                     String valueValue = data.getAsString();
                     JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue), JLabel.LEFT);
-                    valueLabel.setBorder(BorderFactory.createTitledBorder("Value"));
+                    valueLabel.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeValueView_valueBorder_title()));
                     valueLabel.setVerticalAlignment(SwingConstants.TOP);
                     valueComponent = valueLabel;
                     break;
@@ -99,7 +107,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
                     }
                     String valueValue = sb.toString();
                     JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue), JLabel.LEFT);
-                    valueLabel.setBorder(BorderFactory.createTitledBorder("Value"));
+                    valueLabel.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeValueView_valueBorder_title()));
                     valueLabel.setVerticalAlignment(SwingConstants.TOP);
                     valueComponent = valueLabel;
                     break;
@@ -109,7 +117,7 @@ public final class RejTreeValueView extends RejTreeNodeView {
                 case REG_BIG_ENDIAN: {
                     String valueValue = String.format("0x%x", data.getAsNumber());
                     JLabel valueLabel = new JLabel(String.format(valueTemplate, valueValue), JLabel.LEFT);
-                    valueLabel.setBorder(BorderFactory.createTitledBorder("Value"));
+                    valueLabel.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeValueView_valueBorder_title()));
                     valueLabel.setVerticalAlignment(SwingConstants.TOP);
                     valueComponent = valueLabel;
                     break;
@@ -117,14 +125,14 @@ public final class RejTreeValueView extends RejTreeNodeView {
                 default: {
                     HexView hexView = new HexView(data.getAsRawData());
                     hexView.addCaretListeners();
-                    hexView.setBorder(BorderFactory.createTitledBorder("Value"));
+                    hexView.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeValueView_valueBorder_title()));
                     valueComponent = hexView;
                     break;
                 }
             }
         } catch (RegistryParseException | UnsupportedEncodingException e) {
-            JLabel valueLabel = new JLabel(String.format(valueTemplate, "FAILED TO PARSE VALUE VALUE"), JLabel.LEFT);
-            valueLabel.setBorder(BorderFactory.createTitledBorder("Value"));
+            JLabel valueLabel = new JLabel(String.format(valueTemplate, Bundle.RejTreeValueView_failedToParse_value()), JLabel.LEFT);
+            valueLabel.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeValueView_valueBorder_title()));
             valueLabel.setVerticalAlignment(SwingConstants.TOP);
             valueComponent = valueLabel;
         }

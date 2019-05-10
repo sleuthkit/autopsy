@@ -28,6 +28,7 @@ import com.williballenthin.rejistry.ValueData;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import org.openide.util.NbBundle.Messages;
 
 /**
  * Formats a ValueData to a string similar to Regedit.exe on Windows. For an
@@ -36,6 +37,7 @@ import java.util.Iterator;
  */
 final class RegeditExeValueFormatter {
 
+    @Messages({"RegeditExeValueFormatter.valueNotSet.text=(value not set)"})
     static String format(ValueData val) throws UnsupportedEncodingException, RegistryParseException {
         StringBuilder sb = new StringBuilder();
 
@@ -45,7 +47,7 @@ final class RegeditExeValueFormatter {
 
                 String valString = val.getAsString();
                 if (valString.length() == 0) {
-                    sb.append("(value not set)");
+                    sb.append(Bundle.RegeditExeValueFormatter_valueNotSet_text());
                 } else {
                     sb.append(valString);
                 }

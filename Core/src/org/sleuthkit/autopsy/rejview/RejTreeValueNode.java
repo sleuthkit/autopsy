@@ -30,23 +30,24 @@ import org.openide.util.NbBundle.Messages;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+@Messages({"RejTreeValueNode.defaultValueName.text=(Default)"})
 public final class RejTreeValueNode implements RejTreeNode {
 
     private static final Logger logger = Logger.getLogger(RejTreeValueNode.class.getName());
+    static final String DEFAULT_VALUE_NAME = Bundle.RejTreeValueNode_defaultValueName_text();
     private final RegistryValue _value;
 
     public RejTreeValueNode(RegistryValue value) {
         this._value = value;
     }
 
-    @Messages({"RejTreeValueNode.defaultValueName.text=(Default)",
-        "RejTreeValueNode.failureValueName.text=PARSE FAILED"})
+    @Messages({"RejTreeValueNode.failureValueName.text=PARSE FAILED"})
     @Override
     public String toString() {
         try {
             String valueName = this._value.getName();
             if (valueName.isEmpty()) {
-                return Bundle.RejTreeValueNode_defaultValueName_text();
+                return DEFAULT_VALUE_NAME;
             }
             return valueName;
         } catch (UnsupportedEncodingException ex) {

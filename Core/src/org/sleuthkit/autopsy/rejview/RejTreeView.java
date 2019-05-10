@@ -35,6 +35,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 final class RejTreeView extends JScrollPane implements TreeExpansionListener, TreeSelectionListener {
@@ -45,7 +46,7 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
     private final RegistryHive _hive;
     private final CopyOnWriteArrayList<RejTreeNodeSelectionListener> _nodeSelectionListeners;
     private final JTree _tree;
-
+    @NbBundle.Messages({"RejTreeView.failureValueName.text=PARSE FAILED"})
     RejTreeView(RegistryHive hive) {
         this._hive = hive;
         DefaultMutableTreeNode rootNode;
@@ -55,7 +56,7 @@ final class RejTreeView extends JScrollPane implements TreeExpansionListener, Tr
             rootNode = getTreeNode(new RejTreeKeyNode(this._hive.getRoot()));
         } catch (RegistryParseException ex) {
             logger.log(Level.WARNING, "Failed to parse root key", ex);
-            rootNode = new DefaultMutableTreeNode("PARSE FAILED");
+            rootNode = new DefaultMutableTreeNode(Bundle.RejTreeView_failureValueName_text());
         }
 
         this._tree_model = new DefaultTreeModel(rootNode);

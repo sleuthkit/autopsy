@@ -34,12 +34,22 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import org.openide.util.NbBundle.Messages;
 
 public final class RejTreeKeyView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
     private final RejTreeKeyNode _node;
 
+    @Messages({"RejTreeKeyView.failedToParse.keyName=FAILED TO PARSE KEY NAME",
+        "RejTreeKeyView.columns.name=Name",
+        "RejTreeKeyView.columns.type=Type",
+        "RejTreeKeyView.columns.value=Value",
+        "RejTreeKeyView.metadataBorder.title=Metadata",
+        "RejTreeKeyView.valuesBorder.title=Values",
+        "RejTreeKeyView.template.name=Name:",
+        "RejTreeKeyView.template.numberOfSubkeys=Number of subkeys:",
+        "RejTreeKeyView.template.numberOfValues=Number of values:"})
     public RejTreeKeyView(RejTreeKeyNode node) {
         super(new BorderLayout());
         this._node = node;
@@ -49,39 +59,40 @@ public final class RejTreeKeyView extends RejTreeNodeView {
          * @param 2 Number of subkeys
          * @param 3 Number of values
          */
-        String metadataTemplate = ""
-                + "<html>"
-                + "<i>Name:</i>  <b>%1$s</b><br/>"
-                + "<i>Number of subkeys:</i>   %2$d<br/>"
-                + "<i>Number values:</i>  %3$d<br/>"
-                + "</html>";
+        String metadataTemplate = "<html><i>"
+                + Bundle.RejTreeKeyView_template_name()
+                + "</i><b>%1$s</b><br/><i>"
+                + Bundle.RejTreeKeyView_template_numberOfSubkeys()
+                + "</i>   %2$d<br/><i>"
+                + Bundle.RejTreeKeyView_template_numberOfValues()
+                + "</i>  %3$d<br/></html>";
         String keyName;
         int numSubkeys;
         int numValues;
 
         try {
             keyName = this._node.getKey().getName();
-        } catch (UnsupportedEncodingException e) {
-            keyName = "FAILED TO PARSE KEY NAME";
+        } catch (UnsupportedEncodingException ex) {
+            keyName = Bundle.RejTreeKeyView_failedToParse_keyName();
         }
 
         try {
             numSubkeys = this._node.getKey().getSubkeyList().size();
-        } catch (RegistryParseException e) {
+        } catch (RegistryParseException ex) {
             numSubkeys = -1;
         }
 
         try {
             numValues = this._node.getKey().getValueList().size();
-        } catch (RegistryParseException e) {
+        } catch (RegistryParseException ex) {
             numValues = -1;
         }
 
         JLabel metadataLabel = new JLabel(String.format(metadataTemplate, keyName, numSubkeys, numValues), JLabel.LEFT);
-        metadataLabel.setBorder(BorderFactory.createTitledBorder("Metadata"));
+        metadataLabel.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeKeyView_metadataBorder_title()));
         metadataLabel.setVerticalAlignment(SwingConstants.TOP);
 
-        String[] columnNames = {"Name", "Type", "Value"};
+        String[] columnNames = {Bundle.RejTreeKeyView_columns_name(), Bundle.RejTreeKeyView_columns_type(), Bundle.RejTreeKeyView_columns_value()};
         Object[][] data = new Object[numValues][3];
 
         try {
@@ -90,7 +101,7 @@ public final class RejTreeKeyView extends RejTreeNodeView {
             while (valit.hasNext()) {
                 RegistryValue val = valit.next();
                 if (val.getName().length() == 0) {
-                    data[i][0] = "(Default)";
+                    data[i][0] = RejTreeValueNode.DEFAULT_VALUE_NAME;
                 } else {
                     data[i][0] = val.getName();
                 }
@@ -138,7 +149,7 @@ public final class RejTreeKeyView extends RejTreeNodeView {
         }
 
         JScrollPane valuesPane = new JScrollPane(table);
-        valuesPane.setBorder(BorderFactory.createTitledBorder("Values"));
+        valuesPane.setBorder(BorderFactory.createTitledBorder(Bundle.RejTreeKeyView_valuesBorder_title()));
 
         this.add(metadataLabel, BorderLayout.NORTH);
         this.add(valuesPane, BorderLayout.CENTER);
