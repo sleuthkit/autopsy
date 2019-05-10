@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
-public class RejView extends JPanel implements RejTreeNodeSelectionListener {
+public final class RejView extends JPanel implements RejTreeNodeSelectionListener {
 
     private static final long serialVersionUID = 1L;
     private final RegistryHive _hive;

@@ -30,7 +30,7 @@ import org.openide.util.NbBundle.Messages;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-public class RejTreeValueNode implements RejTreeNode {
+public final class RejTreeValueNode implements RejTreeNode {
 
     private static final Logger logger = Logger.getLogger(RejTreeValueNode.class.getName());
     private final RegistryValue _value;

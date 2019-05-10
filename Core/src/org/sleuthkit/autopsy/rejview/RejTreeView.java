@@ -37,7 +37,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-class RejTreeView extends JScrollPane implements TreeExpansionListener, TreeSelectionListener {
+final class RejTreeView extends JScrollPane implements TreeExpansionListener, TreeSelectionListener {
 
     private static final Logger logger = Logger.getLogger(HexView.class.getName());
     private static final long serialVersionUID = 1L;

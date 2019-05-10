@@ -21,7 +21,6 @@
  */
 package org.sleuthkit.autopsy.contentviewers;
 
-
 import com.williballenthin.rejistry.RegistryHive;
 import com.williballenthin.rejistry.RegistryHiveBuffer;
 import com.williballenthin.rejistry.RegistryParseException;

@@ -31,7 +31,7 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
-public class RejTreeValueView extends RejTreeNodeView {
+public final class RejTreeValueView extends RejTreeNodeView {
 
     private static final long serialVersionUID = 1L;
     private final RejTreeValueNode _node;

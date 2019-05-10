@@ -50,7 +50,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * estimate it to load three strings with length equal to the given ByteBuffer.
  * So its probably not good to use this view with large files.
  */
-class HexView extends JPanel implements CaretListener {
+final class HexView extends JPanel implements CaretListener {
 
     private final static int DEFAULT_BYTES_PER_LINE = 0x10;
     private final static char[] HEX_DIGITS = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};

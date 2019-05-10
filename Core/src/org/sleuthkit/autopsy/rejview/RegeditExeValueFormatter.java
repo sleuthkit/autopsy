@@ -34,7 +34,7 @@ import java.util.Iterator;
  * example, see the nice sample here:
  * http://raja5.files.wordpress.com/2009/08/wincleanup_regedit.jpg
  */
-class RegeditExeValueFormatter {
+final class RegeditExeValueFormatter {
 
     static String format(ValueData val) throws UnsupportedEncodingException, RegistryParseException {
         StringBuilder sb = new StringBuilder();

@@ -21,7 +21,7 @@
  */
 package org.sleuthkit.autopsy.rejview;
 
-public class RejTreeNodeSelectionEvent {
+public final class RejTreeNodeSelectionEvent {
 
     private final RejTreeNode _node;
 

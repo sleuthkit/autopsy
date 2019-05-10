@@ -21,7 +21,7 @@
  */
 package org.sleuthkit.autopsy.rejview;
 
-interface RejTreeNodeSelectionListener {
+public interface RejTreeNodeSelectionListener {
 
-    abstract void nodeSelected(RejTreeNodeSelectionEvent e);
+    public abstract void nodeSelected(RejTreeNodeSelectionEvent e);
 }
